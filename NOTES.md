@@ -33519,3 +33519,35 @@ prices and none, the staged covers-type), `extended-grid.spec.ts`'s figure
 test and `layout-sweep`'s §34 paint sweep on chromium (5 pass), the
 ornament, region-rows, OrnamentMarks, Section and RecordPage8a unit files
 with the spec guard (177 pass), typecheck, lint, build.
+
+## Step 69 built: §59 -- contrast is the rule, and the Images disc yields to its caption (1 Oct)
+
+Two things. The ground report in `layout-sweep.spec.ts` now asserts §59
+on the case it rules: every glyph run over paint is read with its ground
+and contrast (`e2e/ground-reading.ts`, shared), failures are listed with
+size, ground and ratio, and the Images caption over the quarter-disc must
+clear 4.5 : 1 below 40px. On the seeded rich record at every sweep view:
+0 grounds under §59's bound, 0 unmeasured, where the caption read 1.75 : 1
+before. Nothing else on the page was under the bound, so nothing is listed
+for Design.
+
+The quarter-disc (`QuarterDisc` in OrnamentMarks.tsx) now takes a third
+bound: the free height below the lowest glyph within its horizontal reach,
+drawn only where that is greater than zero (`data-disc-state`,
+`data-disc-radius`, `data-disc-free`). It gives way by size: the caption's
+ink is untouched.
+
+**On the real collection, read-only, server localhost:3200**
+(`docs/captures/disc-59-report.md`): at 390 the disc is 56 on all sixteen
+laddered records (56 free below the caption's second line, against 97.5
+from the width term); at 480, 56 on fifteen and 36.5 on the Blues Project
+(no cover, the "No images yet" sentence wraps differently); at 594, 36.5
+on sixteen, where the caption's second line reaches further under the
+disc, and 147.3 on the Blues Project. Worst glyph contrast on any page at
+these widths: none -- no glyph run sits on paint at all now.
+
+Verification, step level: `images-row-56.spec.ts` (§56 and §59 together),
+`layout-sweep`'s §59 contrast test, `extended-grid`'s §53/§59 host test on
+the seventeen and its §29 disc test, `no-cover-54` on chromium (6 pass),
+the OrnamentMarks, ImageGallery and Section unit files (32 pass),
+typecheck, lint, build.

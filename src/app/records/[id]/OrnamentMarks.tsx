@@ -398,38 +398,56 @@ export function Flat({ ladder, flat }: { ladder: RecordLadder | null; flat: (typ
  * left out of the height term: the host's height less those elements and
  * their margins, measured in the browser. With nothing marked, the CSS
  * percentage is the measure, as before, and the server renders that.
+ *
+ * **§59 (step 69): the disc yields to its caption.** Its visible radius is
+ * at most the free height below the lowest glyph in its reach, and it is
+ * not drawn where that is zero: the caption is the section's subject and
+ * the disc is ornament, so the disc gives way by size, not by vanishing
+ * elsewhere, and never by changing the caption's ink.
  */
 function QuarterDisc({ fill }: { fill: string }) {
   const ref = useRef<HTMLDivElement>(null);
-  const [hostHeight, setHostHeight] = useState<number | null>(null);
+  const [disc, setDisc] = useState<{ state: 'measuring' | 'drawn' | 'not-drawn'; radius: number | null; free: number | null }>({ state: 'measuring', radius: null, free: null });
   useEffect(() => {
     const el = ref.current;
     const host = el?.parentElement ?? null;
     if (el === null || host === null) return;
     const measure = () => {
+      const h = host.getBoundingClientRect();
       const excluded = Array.from(host.querySelectorAll<HTMLElement>('[data-not-host-height]'));
-      if (excluded.length === 0) {
-        setHostHeight(null);
-        return;
-      }
       const taken = excluded.reduce((sum, x) => {
         const cs = getComputedStyle(x);
         return sum + x.getBoundingClientRect().height + parseFloat(cs.marginTop) + parseFloat(cs.marginBottom);
       }, 0);
-      setHostHeight(Math.max(0, host.clientHeight - taken));
+      /* §29's two bounds, the height one against the host as §56 states it. */
+      const sized = Math.min(Math.max(0, host.clientHeight - taken) * VISIBLE_OF_HOST_HEIGHT, host.clientWidth * VISIBLE_OF_SECTION_WIDTH);
+      /*
+        §59: "sized to its host's free height below the caption... drawn only
+        where that height is greater than zero." The caption is whatever
+        type the disc would otherwise sit under: every glyph run in the host
+        within the disc's horizontal reach, measured as glyphs (the caption's
+        block spans the section; its letters stop early).
+      */
+      const inReach = typeIn(host, el).flatMap(glyphs).filter((g) => g.right > h.right - sized);
+      const free = h.bottom - Math.max(h.top, ...inReach.map((g) => g.bottom));
+      const radius = Math.min(sized, free);
+      setDisc({ state: radius > 0 ? 'drawn' : 'not-drawn', radius: Math.max(0, radius), free });
     };
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(host);
     return () => observer.disconnect();
   }, []);
-  const visible = hostHeight === null ? VISIBLE_HEIGHT : `${hostHeight * VISIBLE_OF_HOST_HEIGHT}px`;
+  /* Served at the CSS bounds until the browser has measured; then the measured radius, doubled for the full disc. */
+  const visible = disc.radius === null ? VISIBLE_HEIGHT : `${disc.radius}px`;
   return (
     <div
       ref={ref}
       data-ornament="flat"
       data-flat="quarterDisc"
-      data-host-height={hostHeight === null ? undefined : Math.round(hostHeight)}
+      data-disc-state={disc.state}
+      data-disc-radius={disc.radius === null ? undefined : Math.round(disc.radius * 10) / 10}
+      data-disc-free={disc.free === null ? undefined : Math.round(disc.free * 10) / 10}
       aria-hidden="true"
       className="pointer-events-none absolute"
       style={{
@@ -442,6 +460,7 @@ function QuarterDisc({ fill }: { fill: string }) {
         transform: 'translate(50%, 50%)',
         borderRadius: '50%',
         background: fill,
+        ...(disc.state === 'not-drawn' ? { display: 'none' } : {}),
         zIndex: -1,
       }}
     />

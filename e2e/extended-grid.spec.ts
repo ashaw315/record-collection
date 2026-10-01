@@ -1143,7 +1143,7 @@ test('§26 and §21: BOTH flats bleed off a page edge, a third or more outside',
  * row as a pair and gave its surplus to air on the right above the fork, so
  * the host left the page edge at 1680 and 1920 (NOTES, step 61 measured).
  */
-test('§53: the quarter-disc is hosted by Images, at the page’s right edge, above the triangle’s row and within §29’s bound, on every record at seven widths', async ({ page }) => {
+test('§53, §59: the quarter-disc is hosted by Images, at the page’s right edge, above the triangle’s row, within §29’s bound and below its caption, on every record at seven widths', async ({ page }) => {
   test.setTimeout(900_000);
   await login(page);
   const WIDTHS = [390, 768, 1000, 1439, 1440, 1680, 1920];
@@ -1169,17 +1169,29 @@ test('§53: the quarter-disc is hosted by Images, at the page’s right edge, ab
         /* §44: the region has no air below 960 and the triangle rides the upper air from 960, so the region's triangle is laid out only above the fork; an undrawn one has no row to be above. */
         const triDrawn = tri !== null && tri.getClientRects().length > 0 && R(tri).width > 0;
         const triHost = triDrawn ? tri.closest('[data-region="extended-grid"] [data-section], [data-cell="air"]') : null;
-        return { host: host.getAttribute('data-section') ?? host.getAttribute('data-cell'), hostRight: h.right, frameRight: f.right, hostTop: h.top, triangleTop: triHost ? R(triHost).top : null, hostW: h.width, hostH: h.height, visible: Math.max(0, Math.min(d.right, h.right) - Math.max(d.left, h.left)), drawn: d.width > 0 };
+        /* §59: the disc yields to its caption -- the free height below the lowest glyph within the disc's reach at §29's size. */
+        const sized = Math.min(h.height * (2 / 3), h.width / 4);
+        let lowest = h.top;
+        for (const el of Array.from(host.querySelectorAll('*'))) {
+          if (el.closest('[aria-hidden="true"]') !== null) continue;
+          for (const n of Array.from(el.childNodes)) {
+            if (n.nodeType !== Node.TEXT_NODE || (n.textContent ?? '').trim() === '') continue;
+            const range = document.createRange(); range.selectNodeContents(n);
+            for (const g of Array.from(range.getClientRects())) if (g.width > 0 && g.right > h.right - sized) lowest = Math.max(lowest, g.bottom);
+          }
+        }
+        return { host: host.getAttribute('data-section') ?? host.getAttribute('data-cell'), hostRight: h.right, frameRight: f.right, hostTop: h.top, triangleTop: triHost ? R(triHost).top : null, hostW: h.width, hostH: h.height, free: h.bottom - lowest, visible: Math.max(0, Math.min(d.right, h.right) - Math.max(d.left, h.left)), drawn: d.width > 0 };
       });
       const where = `${r.title.split(':')[0]} @${w}`;
       if (m === null) { bad.push(`${where}: no disc, or no host`); line.push(`${w}: none`); continue; }
-      const bound = Math.min(m.hostH * (2 / 3), m.hostW / 4);
+      /* §29's two bounds, and §59's third: the free height below the caption in the disc's reach. */
+      const bound = Math.min(m.hostH * (2 / 3), m.hostW / 4, m.free);
       if (m.host !== 'images') bad.push(`${where}: hosted by ${m.host}, not Images`);
       if (Math.abs(m.hostRight - m.frameRight) >= 1) bad.push(`${where}: the host ends at ${m.hostRight.toFixed(1)}, the page at ${m.frameRight.toFixed(1)}`);
       if (m.triangleTop !== null && !(m.hostTop < m.triangleTop)) bad.push(`${where}: the host's row is not above the triangle's`);
       if (m.visible > bound + 0.5) bad.push(`${where}: visible radius ${m.visible.toFixed(1)} is over §29's bound ${bound.toFixed(1)}`);
       if (m.visible < Math.min(bound, 150) - 1.5) bad.push(`${where}: visible radius ${m.visible.toFixed(1)} is under the bound ${Math.min(bound, 150).toFixed(1)} it should fill`);
-      line.push(`${w}: ${m.host} ${Math.round(m.hostW)}×${Math.round(m.hostH)} r${m.visible.toFixed(0)}/${Math.min(bound, 150).toFixed(0)}${m.triangleTop === null ? ' (only flat)' : ''}`);
+      line.push(`${w}: ${m.host} ${Math.round(m.hostW)}×${Math.round(m.hostH)} r${m.visible.toFixed(0)}/${Math.min(bound, 150).toFixed(0)}${m.free < Math.min(m.hostH * (2 / 3), m.hostW / 4) ? ` (caption: ${m.free.toFixed(0)} free)` : ''}${m.triangleTop === null ? ' (only flat)' : ''}`);
     }
     report.push(`${r.title.split(':')[0]}: ${line.join(' · ')}`);
   }

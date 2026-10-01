@@ -55,7 +55,7 @@ async function seedWithImages(page: Page, types: ReadonlyArray<string | null>): 
   return id;
 }
 
-type Reading = { sectionHeight: number; sectionWidth: number; visibleRadius: number; headings: number; grids: number; tiles: Array<{ type: string | null; top: number; badge: string }>; typeOverDisc: string[] };
+type Reading = { sectionHeight: number; sectionWidth: number; visibleRadius: number; discState: string | null; headings: number; grids: number; tiles: Array<{ type: string | null; top: number; badge: string }>; typeOverDisc: string[]; glyphs: Array<{ right: number; bottom: number }> };
 const READ = `(() => {
   const sec = document.querySelector('[data-section="images"]'); const s = sec.getBoundingClientRect();
   const disc = sec.querySelector('[data-flat="quarterDisc"]'); const d = disc ? disc.getBoundingClientRect() : null;
@@ -80,10 +80,20 @@ const READ = `(() => {
       }
     }
   }
-  return { sectionHeight: s.height, sectionWidth: s.width, visibleRadius, headings: sec.querySelectorAll('h3').length, grids: sec.querySelectorAll('[data-image-grid]').length, tiles, typeOverDisc };
+  /* §59: every visible glyph run in the host, by its right edge and bottom from the section's edges, so the free height below the caption in the disc's reach can be computed outside. */
+  const glyphs = [];
+  for (const el of Array.from(sec.querySelectorAll('*'))) {
+    if (el.closest('[aria-hidden="true"]') !== null) continue;
+    for (const n of Array.from(el.childNodes)) {
+      if (n.nodeType !== Node.TEXT_NODE || (n.textContent || '').trim() === '') continue;
+      const r = document.createRange(); r.selectNodeContents(n);
+      for (const g of Array.from(r.getClientRects())) if (g.width > 0) glyphs.push({ right: g.right - s.left, bottom: g.bottom - s.top });
+    }
+  }
+  return { sectionHeight: s.height, sectionWidth: s.width, visibleRadius, discState: disc ? disc.getAttribute('data-disc-state') : null, headings: sec.querySelectorAll('h3').length, grids: sec.querySelectorAll('[data-image-grid]').length, tiles, typeOverDisc, glyphs };
 })()`;
 
-test('§56: the quarter-disc holds its one-image size at every image count, the tiles flow in one badged grid, and the section grows by tile rows only', async ({ page }) => {
+test('§56, §59: the quarter-disc holds its one-image size at every count and yields to its caption, the tiles flow in one badged grid, and the section grows by tile rows only', async ({ page }) => {
   test.setTimeout(300_000);
   await login(page);
   const ids = new Map<number, string>();
@@ -96,15 +106,22 @@ test('§56: the quarter-disc holds its one-image size at every image count, the 
       await page.setViewportSize({ width: w, height: h });
       await page.goto(`/records/${ids.get(c.n)}`);
       await page.locator('[data-section="images"] [data-flat="quarterDisc"]').waitFor({ state: 'attached', timeout: 20_000 });
+      await page.waitForFunction(`document.querySelector('[data-section="images"] [data-flat="quarterDisc"]')?.getAttribute('data-disc-state') !== 'measuring'`, undefined, { timeout: 10_000 });
       await page.waitForTimeout(400);
       const m = (await page.evaluate(READ)) as Reading;
       if (c.n === 1) reference = m;
       if (reference === null) throw new Error('the one-image record reads first');
-      const bound = Math.min(reference.sectionHeight * VISIBLE_OF_HOST_HEIGHT, m.sectionWidth * VISIBLE_OF_SECTION_WIDTH);
+      const sized = Math.min(reference.sectionHeight * VISIBLE_OF_HOST_HEIGHT, m.sectionWidth * VISIBLE_OF_SECTION_WIDTH);
+      /* §59: the disc yields to its caption -- the free height below the lowest glyph within the disc's reach, drawn only where that is greater than zero. */
+      const inReach = m.glyphs.filter((g) => g.right > m.sectionWidth - sized);
+      const free = m.sectionHeight - Math.max(0, ...inReach.map((g) => g.bottom));
+      const bound = Math.min(sized, free);
       const splits = [...new Set(m.tiles.map((t) => t.type))].filter((type) => new Set(m.tiles.filter((t) => t.type === type).map((t) => t.top)).size > 1);
       const rows = new Set(m.tiles.map((t) => t.top)).size;
       lines.push(`  §56 IMAGES ${c.n} @${w}: section ${Math.round(m.sectionHeight)} (+${Math.round(m.sectionHeight - reference.sectionHeight)} over one image), disc radius ${Math.round(m.visibleRadius * 10) / 10} against bound ${Math.round(bound * 10) / 10}, ${m.tiles.length} tiles in ${rows} row${rows === 1 ? '' : 's'}${splits.length ? `, split across a wrap: ${splits.join(', ')}` : ''}`);
-      if (Math.abs(m.visibleRadius - bound) > 1.5) bad.push(`${c.n} images @${w}: disc radius ${m.visibleRadius.toFixed(1)}, §56 gives ${bound.toFixed(1)} against the one-image section (${Math.round(reference.sectionHeight)})`);
+      if (bound > 0 && Math.abs(m.visibleRadius - bound) > 1.5) bad.push(`${c.n} images @${w}: disc radius ${m.visibleRadius.toFixed(1)}, §56 and §59 give ${bound.toFixed(1)} (sized ${sized.toFixed(1)} against the one-image section, ${free.toFixed(1)} free below the caption)`);
+      if (bound <= 0 && (m.discState !== 'not-drawn' || m.visibleRadius > 0)) bad.push(`${c.n} images @${w}: no free height below the caption, so the disc is not drawn (§59); it is ${m.discState} at ${m.visibleRadius.toFixed(1)}`);
+      if (bound > 0 && m.discState !== 'drawn') bad.push(`${c.n} images @${w}: the disc should be drawn at ${bound.toFixed(1)} and says ${m.discState}`);
       if (m.headings !== 0) bad.push(`${c.n} images @${w}: ${m.headings} group heading(s); §56 drops them`);
       if (c.n > 1 && m.grids !== 1) bad.push(`${c.n} images @${w}: ${m.grids} grids, not one`);
       if (m.tiles.length !== c.n - 1) bad.push(`${c.n} images @${w}: ${m.tiles.length} tiles for ${c.n - 1} non-cover images`);
@@ -112,8 +129,8 @@ test('§56: the quarter-disc holds its one-image size at every image count, the 
       const seen = m.tiles.map((t) => order.indexOf(t.type ?? 'other'));
       if (seen.some((v, i) => i > 0 && v < seen[i - 1])) bad.push(`${c.n} images @${w}: tiles out of type order: ${m.tiles.map((t) => t.type).join(', ')}`);
       if (m.tiles.some((t) => t.badge === '')) bad.push(`${c.n} images @${w}: a tile without its badge`);
-      for (const t of m.typeOverDisc) lines.push(`  §5.2 TYPE ON THE DISC ${c.n} @${w}: ${t}`);
-      for (const t of m.typeOverDisc) if (parseFloat(t) <= 11) bad.push(`${c.n} images @${w}: 11px type on the base-step disc (§5.2): ${t}`);
+      /* §59: the disc gives way to its caption by size, so no glyph of any size sits on it. */
+      for (const t of m.typeOverDisc) bad.push(`${c.n} images @${w}: type on the base-step disc, which §59 sizes below its caption: ${t}`);
       await page.screenshot({ path: `docs/captures/step66-images-${c.n}-${w}x${h}-h${Math.round(m.sectionHeight)}.png`, fullPage: true });
     }
   }
