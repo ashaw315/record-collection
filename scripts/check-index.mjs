@@ -317,31 +317,26 @@ const WITHDRAWAL_PREFIX =
     for (const para of h.html.matchAll(/<p\b[^>]*>([\s\S]*?)<\/p>/g)) {
       const inner = para[1];
       const plain = collapse(stripTags(inner));
-      for (const run of inner.matchAll(/<strong[^>]*>([\s\S]*?)<\/strong>/g)) {
-        const runText = collapse(stripTags(run[1]));
-        /*
-          **A prefix that BEGINS A SENTENCE inside the run, not only the
-          run's first text.** Design flattened its nested bold by merging
-          runs, so `33/three-line-cap`'s sentence now sits mid-run after
-          "…is within the supply." -- with an unchanged quote that equals
-          its sentence exactly. Bold is not a sentence boundary in either
-          direction: the sentence may run past </strong>, and a run may hold
-          more than one sentence.
-        */
-        const starts = [];
-        if (WITHDRAWAL_PREFIX.test(runText)) starts.push(0);
-        for (const b of runText.matchAll(/[.!?] (?=\S)/g)) {
-          if (WITHDRAWAL_PREFIX.test(runText.slice(b.index + 2))) starts.push(b.index + 2);
-        }
-        for (const at of starts) {
-          const head = runText.slice(at, at + Math.min(60, runText.length - at));
-          const start = plain.indexOf(head);
-          if (start === -1) continue;
-          const rest = plain.slice(start);
-          const end = /[.!?](?=\s|$)/.exec(rest);
-          const sentence = end === null ? rest : rest.slice(0, end.index + 1);
-          sentences.push({ section: h.id, sentence });
-        }
+      /*
+        **Plain text, from a prefix wherever it occurs** -- inside a bold
+        run or not, as 9 reads. The bold run was the convention for a
+        reader's eye and, for a round, the detection mechanism too:
+        `28/air-side-at-960` sat in a mono caption, which is already set
+        apart and takes no bold, and 7 could not see it while 9 (which reads
+        plain text) could. Design ruled the convention stays for prose and 7
+        widens to read as 9 does. Not "a prefix that begins a sentence":
+        `7/title-measure-fixed` and `45/measure-grows` follow a semicolon
+        and a colon, which the run start used to forgive, and 9's reading
+        forgives the same way. What neither forgives is a sentence whose
+        full stop is not followed by space: it runs on into its host.
+      */
+      const starts = [];
+      for (const m of plain.matchAll(new RegExp(WITHDRAWAL_PREFIX.source.replace(/^\^/, ''), 'g'))) starts.push(m.index);
+      for (const at of starts) {
+        const rest = plain.slice(at);
+        const end = /[.!?](?=\s|$)/.exec(rest);
+        const sentence = end === null ? rest : rest.slice(0, end.index + 1);
+        sentences.push({ section: h.id, sentence });
       }
     }
   }
