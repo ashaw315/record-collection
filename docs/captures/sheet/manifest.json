@@ -1,6 +1,6 @@
 {
- "takenAt": "2026-09-30T23:52:15.170Z",
- "seconds": 191,
+ "takenAt": "2026-10-01T16:49:49.546Z",
+ "seconds": 193,
  "readings": [
   {
    "record": "The Best Of The Blues Project",
@@ -9,7 +9,7 @@
    "width": 390,
    "height": 900,
    "ladder": "ink",
-   "tint": "oklch(0.19 0.008 60 / 0.55)",
+   "tint": "oklch(0.19 0.008 60)",
    "base": null,
    "coverRendered": false,
    "coverCellFlat": true,
@@ -27,6 +27,7 @@
     "coverFrame",
     "disc",
     "journalEdge",
+    "quarterDisc",
     "releaseYearField",
     "sleeveBar",
     "sleeveBlock"
@@ -40,7 +41,7 @@
    "width": 768,
    "height": 900,
    "ladder": "ink",
-   "tint": "oklch(0.19 0.008 60 / 0.55)",
+   "tint": "oklch(0.19 0.008 60)",
    "base": null,
    "coverRendered": false,
    "coverCellFlat": true,
@@ -58,6 +59,7 @@
     "coverFrame",
     "disc",
     "journalEdge",
+    "quarterDisc",
     "releaseYearField",
     "sleeveBar",
     "sleeveBlock"
@@ -71,7 +73,7 @@
    "width": 1000,
    "height": 900,
    "ladder": "ink",
-   "tint": "oklch(0.19 0.008 60 / 0.55)",
+   "tint": "oklch(0.19 0.008 60)",
    "base": null,
    "coverRendered": false,
    "coverCellFlat": true,
@@ -89,9 +91,11 @@
     "coverFrame",
     "disc",
     "journalEdge",
+    "quarterDisc",
     "releaseYearField",
     "sleeveBar",
-    "sleeveBlock"
+    "sleeveBlock",
+    "triangle"
    ],
    "file": "sheet-the-best-of-the-blues-project-1000x900-ink.png"
   },
@@ -102,7 +106,7 @@
    "width": 1440,
    "height": 900,
    "ladder": "ink",
-   "tint": "oklch(0.19 0.008 60 / 0.55)",
+   "tint": "oklch(0.19 0.008 60)",
    "base": null,
    "coverRendered": false,
    "coverCellFlat": true,
@@ -121,9 +125,11 @@
     "disc",
     "drawn",
     "journalEdge",
+    "quarterDisc",
     "releaseYearField",
     "sleeveBar",
-    "sleeveBlock"
+    "sleeveBlock",
+    "triangle"
    ],
    "file": "sheet-the-best-of-the-blues-project-1440x900-ink.png"
   },
@@ -134,7 +140,7 @@
    "width": 1920,
    "height": 900,
    "ladder": "ink",
-   "tint": "oklch(0.19 0.008 60 / 0.55)",
+   "tint": "oklch(0.19 0.008 60)",
    "base": null,
    "coverRendered": false,
    "coverCellFlat": true,
@@ -153,9 +159,11 @@
     "disc",
     "drawn",
     "journalEdge",
+    "quarterDisc",
     "releaseYearField",
     "sleeveBar",
-    "sleeveBlock"
+    "sleeveBlock",
+    "triangle"
    ],
    "file": "sheet-the-best-of-the-blues-project-1920x900-ink.png"
   },
@@ -166,7 +174,7 @@
    "width": 1440,
    "height": 1200,
    "ladder": "ink",
-   "tint": "oklch(0.19 0.008 60 / 0.55)",
+   "tint": "oklch(0.19 0.008 60)",
    "base": null,
    "coverRendered": false,
    "coverCellFlat": true,
@@ -185,9 +193,11 @@
     "disc",
     "drawn",
     "journalEdge",
+    "quarterDisc",
     "releaseYearField",
     "sleeveBar",
-    "sleeveBlock"
+    "sleeveBlock",
+    "triangle"
    ],
    "file": "sheet-the-best-of-the-blues-project-1440x1200-ink.png"
   },
@@ -198,7 +208,7 @@
    "width": 1920,
    "height": 1200,
    "ladder": "ink",
-   "tint": "oklch(0.19 0.008 60 / 0.55)",
+   "tint": "oklch(0.19 0.008 60)",
    "base": null,
    "coverRendered": false,
    "coverCellFlat": true,
@@ -217,9 +227,11 @@
     "disc",
     "drawn",
     "journalEdge",
+    "quarterDisc",
     "releaseYearField",
     "sleeveBar",
-    "sleeveBlock"
+    "sleeveBlock",
+    "triangle"
    ],
    "file": "sheet-the-best-of-the-blues-project-1920x1200-ink.png"
   },
@@ -292,7 +304,6 @@
    },
    "marks": [
     "disc",
-    "figure",
     "identityField",
     "journalEdge",
     "quarterDisc",
@@ -332,7 +343,6 @@
    },
    "marks": [
     "disc",
-    "figure",
     "identityField",
     "journalEdge",
     "quarterDisc",
@@ -581,7 +591,6 @@
    },
    "marks": [
     "disc",
-    "figure",
     "identityField",
     "journalEdge",
     "quarterDisc",
@@ -621,7 +630,6 @@
    },
    "marks": [
     "disc",
-    "figure",
     "identityField",
     "journalEdge",
     "quarterDisc",
@@ -870,7 +878,6 @@
    },
    "marks": [
     "disc",
-    "figure",
     "identityField",
     "journalEdge",
     "quarterDisc",
@@ -910,7 +917,6 @@
    },
    "marks": [
     "disc",
-    "figure",
     "identityField",
     "journalEdge",
     "quarterDisc",
@@ -1155,7 +1161,6 @@
    },
    "marks": [
     "disc",
-    "figure",
     "identityField",
     "journalEdge",
     "quarterDisc",
@@ -1195,7 +1200,6 @@
    },
    "marks": [
     "disc",
-    "figure",
     "identityField",
     "journalEdge",
     "quarterDisc",
@@ -1444,7 +1448,6 @@
    },
    "marks": [
     "disc",
-    "figure",
     "identityField",
     "journalEdge",
     "quarterDisc",
@@ -1484,7 +1487,6 @@
    },
    "marks": [
     "disc",
-    "figure",
     "identityField",
     "journalEdge",
     "quarterDisc",
@@ -1729,7 +1731,6 @@
    },
    "marks": [
     "disc",
-    "figure",
     "identityField",
     "journalEdge",
     "quarterDisc",
@@ -1769,7 +1770,6 @@
    },
    "marks": [
     "disc",
-    "figure",
     "identityField",
     "journalEdge",
     "quarterDisc",
@@ -1978,7 +1978,6 @@
    },
    "marks": [
     "disc",
-    "figure",
     "identityField",
     "journalEdge",
     "quarterDisc",
@@ -2303,7 +2302,6 @@
    },
    "marks": [
     "disc",
-    "figure",
     "identityField",
     "journalEdge",
     "quarterDisc",
@@ -2343,7 +2341,6 @@
    },
    "marks": [
     "disc",
-    "figure",
     "identityField",
     "journalEdge",
     "quarterDisc",
@@ -2588,7 +2585,6 @@
    },
    "marks": [
     "disc",
-    "figure",
     "identityField",
     "journalEdge",
     "quarterDisc",
@@ -2628,7 +2624,6 @@
    },
    "marks": [
     "disc",
-    "figure",
     "identityField",
     "journalEdge",
     "quarterDisc",
@@ -2877,7 +2872,6 @@
    },
    "marks": [
     "disc",
-    "figure",
     "identityField",
     "journalEdge",
     "quarterDisc",
@@ -2917,7 +2911,6 @@
    },
    "marks": [
     "disc",
-    "figure",
     "identityField",
     "journalEdge",
     "quarterDisc",
@@ -3162,7 +3155,6 @@
    },
    "marks": [
     "disc",
-    "figure",
     "identityField",
     "journalEdge",
     "quarterDisc",
@@ -3202,7 +3194,6 @@
    },
    "marks": [
     "disc",
-    "figure",
     "identityField",
     "journalEdge",
     "matrixSolid",
@@ -3452,7 +3443,6 @@
    },
    "marks": [
     "disc",
-    "figure",
     "identityField",
     "journalEdge",
     "quarterDisc",
@@ -3492,7 +3482,6 @@
    },
    "marks": [
     "disc",
-    "figure",
     "identityField",
     "journalEdge",
     "matrixSolid",
@@ -3742,7 +3731,6 @@
    },
    "marks": [
     "disc",
-    "figure",
     "identityField",
     "journalEdge",
     "quarterDisc",
@@ -3782,7 +3770,6 @@
    },
    "marks": [
     "disc",
-    "figure",
     "identityField",
     "journalEdge",
     "matrixSolid",
@@ -4032,7 +4019,6 @@
    },
    "marks": [
     "disc",
-    "figure",
     "identityField",
     "journalEdge",
     "quarterDisc",
@@ -4072,7 +4058,6 @@
    },
    "marks": [
     "disc",
-    "figure",
     "identityField",
     "journalEdge",
     "quarterDisc",
@@ -4321,7 +4306,6 @@
    },
    "marks": [
     "disc",
-    "figure",
     "identityField",
     "journalEdge",
     "quarterDisc",
@@ -4361,7 +4345,6 @@
    },
    "marks": [
     "disc",
-    "figure",
     "identityField",
     "journalEdge",
     "quarterDisc",
@@ -4614,7 +4597,6 @@
    },
    "marks": [
     "disc",
-    "figure",
     "identityField",
     "journalEdge",
     "quarterDisc",
@@ -4654,7 +4636,6 @@
    },
    "marks": [
     "disc",
-    "figure",
     "identityField",
     "journalEdge",
     "quarterDisc",
