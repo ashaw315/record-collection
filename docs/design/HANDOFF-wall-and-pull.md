@@ -104,6 +104,9 @@ The wall at rest is line, ink and paper; colour arrives with the pull. Everythin
 | §55 | What the real collection confirms | Which fixture figures the real collection supersedes, confirms or has not reached, and why the images row is unruled for more than one image. |
 | §56 | The images row with more than one image | Why the quarter-disc is sized against the one-image section; why the images flow in one grid without group labels. |
 | §57 | Figures yield to type by size | Why §34’s test moves into the figure; why the Price history solo is sized below its entries rather than hidden or moved; why a ruling measured on data the collection lacks is unverified. |
+| §58 | The Price history solo sits beside its entries | Why the solo’s host is the summary column at every width, from a drawing. |
+| §59 | Contrast is the rule, not a size | Why the contrast rule reaches type of any size; why the Images quarter-disc yields to its caption. |
+| §60 | The disc’s reference is a height, not a rendering | Why the Images disc is sized against named fixed parts, and why the cover note’s blank row goes. |
 
 ## Structural sections — pointers
 
@@ -311,17 +314,26 @@ These are the sections the rulings above build on, all in `Record Detail 8a - se
 65. **Done: reported; §56 rules from it.** **§55 — the images row with more than one image.** Before the upload fix reaches Adam: seed records with two, three and six images and render each at 390, 1000, 1440 and 1920. Report the Images section's height, the quarter-disc's size and whether it still clears §26's three conditions, and what the rows beside Images do. Report; do not tune. Claude rules the row from the render.
    > The images row is ruled from its render, not from the code, and the render comes before any real record carries a second image.
 
-66. **§56 — the images row.** Size the Images quarter-disc against the section's one-image height at every image count. Flow every non-cover image in one grid in the fixed type order with its badge; drop the group labels. Re-render the step-65 records at 390, 1000, 1440 and 1920 and report the section's height, the disc's size at each of the four widths, and any type split across a row wrap. Replace the tests that assert grouped rows.
+66. **Part superseded by step 70 on the disc’s reference.** **§56 — the images row.** Size the Images quarter-disc against the section's one-image height at every image count. Flow every non-cover image in one grid in the fixed type order with its badge; drop the group labels. Re-render the step-65 records at 390, 1000, 1440 and 1920 and report the section's height, the disc's size at each of the four widths, and any type split across a row wrap. Replace the tests that assert grouped rows.
    > The quarter-disc in Images is sized against the section as it stands with one image, whatever the count, so it never grows because a record gains a second.
 
-67. **§57 — figures and type.** Add §34's covers-type test to the figure component, against its host's text. Size the Price history solo to the strip's free height below its entries; draw it only where that clears §29's bound. Report per record at 390, 480, 1000, 1440 and 1920 the solo's size or that it is not drawn, and confirm no figure covers text. Replace the tests that assert the solo at 0.855 of the section.
+67. **Part superseded by step 68 on the solo’s host.** **§57 — figures and type.** Add §34's covers-type test to the figure component, against its host's text. Size the Price history solo to the strip's free height below its entries; draw it only where that clears §29's bound. Report per record at 390, 480, 1000, 1440 and 1920 the solo's size or that it is not drawn, and confirm no figure covers text. Replace the tests that assert the solo at 0.855 of the section.
    > The Price history solo is sized to the strip’s free height below its entries, as the matrix solid is sized to its cell’s, and is drawn only where that free height clears §29’s bound.
+
+68. **§58 — the solo in the summary column.** Host the Price history solo in the strip's summary column at every width, sized to that column's free height below its text; keep §57's covers-type test. Report per record at 390, 480, 1000, 1440 and 1920 the solo's size or that it is not drawn, and capture Gaucho at 1440 × 900 and 390 × 900.
+   > The Price history solo’s host is the strip’s summary column at every width, sized to that column’s free height below its text by §57’s rule.
+
+69. **§59 — contrast for any type, and the caption.** Test every glyph run on any ground that is not paper against 4.5 : 1 below 40px and 3 : 1 at 40px and above. Size the Images quarter-disc to its host's free height below the caption; draw it only where that is greater than zero. Report per record at 390, 480 and 594 the disc's radius or that it is not drawn, and the worst glyph contrast anywhere on the page.
+   > Type on any ground that is not paper clears 4.5 : 1 below 40px and 3 : 1 at 40px and above: the rule is the contrast, and 11px was only the size that first met it.
+
+70. **§60 — the disc's stated reference.** A supersession of built step 66 behaviour. Size the Images quarter-disc against the section's heading, padding and one tile row, excluding the cover note at every count; remove the blank note row beside the tiles. Report the disc's radius at 390, 1000, 1440 and 1920 at one, two, three and six images. Replace the tests that assert the blank row.
+   > The Images quarter-disc is sized against a stated reference height: the section’s heading, its padding and one tile row, with the cover note excluded at every count.
 
 **Every row in the table above must appear in a step here.** The completeness check greps the table only, so an index that is current and an order that is eight rulings behind both pass — which is what happened at §W.28–§W.35. Check both.
 
 ## Maintaining this file
 
-**A supersession of a built ruling gets its own build step.** §34 superseded §28's grouping for row 2, and the change went unbuilt because it was sentence four of step 32, which did four other things. §33's fixed rule rows were the same, inside step 29's nine lettered clauses. Nothing in the index catches a supersession: the old tests keep passing because the old behaviour is still there. Steps 22, 23, 24 and 43 to 53 are the convention; step 54 adds a guard and supersedes nothing; steps 55 to 67 are the convention.
+**A supersession of a built ruling gets its own build step.** §34 superseded §28's grouping for row 2, and the change went unbuilt because it was sentence four of step 32, which did four other things. §33's fixed rule rows were the same, inside step 29's nine lettered clauses. Nothing in the index catches a supersession: the old tests keep passing because the old behaviour is still there. Steps 22, 23, 24 and 43 to 53 are the convention; step 54 adds a guard and supersedes nothing; steps 55 to 70 are the convention.
 
 **A test written from a superseded ruling defends the defect.** Building the new ruling turns the suite red, which reads as a regression, so the old behaviour survives every green run. Step 29 alone had three instances: two tests guarding the line cap §33 withdrew, a known-failing test that goes red if the matrix term is built as ruled, and four suites asserting the frame constant §33 retired. So when a section supersedes a built ruling, the tests written from the old one are part of what must change, and the step names them.
 
@@ -345,7 +357,7 @@ So the check is mechanical: **eight assertions, run against all three targets, b
 
 **A provisional is prose with no mechanism to notice its condition is met.** Five sections carried one; three had been met without anyone changing the word. Each provisional names the step or capture that settles it, and that step's report edits the section.
 
-**A declared withdrawal sentence is its own sentence.** It stands after the host sentence's full stop, never spliced into it, and it is the first text of its own strong run. The parser reads a declared sentence from its prefix to the next full stop, so a spliced one runs on into the host and matches no entry, while its verbatim text still passes every check that only looks for the text. Two placement defects in two rounds: `16/inset-stays-372` and `47/stretch-to-cover`.
+**A declared withdrawal sentence is its own sentence.** It may follow a full stop, a colon or a semicolon, and nothing may follow it within the same sentence: a sentence introduced by a colon or semicolon still stands alone, and one with a trailing clause does not. §5.2's was written in the drop that recorded this rule, ending in ", which…", and failed 7 for that reason. It is never spliced into its host, and it is the first text of its own strong run where it is prose. In a caption it stays in the caption’s type: the strong run is for a reader’s eye, and assertion 7 is widened to read plain text as 9 does. The parser reads a declared sentence from its prefix to the next full stop, so a spliced one runs on into the host and matches no entry, while its verbatim text still passes every check that only looks for the text. Two placement defects in two rounds: `16/inset-stays-372` and `47/stretch-to-cover`.
 
 **A half-landed edit is detectable in one direction only.** An edit that lands an entry without its sentence fails assertion 6; one that lands a sentence without its entry fails nothing until the reverse check exists. So an edit that writes both is made in one save and verified from disk, and a no-match on either half stops the save: two scoped sentences in §28 and §33 were written without entries this way.
 
@@ -366,6 +378,10 @@ So the check is mechanical: **eight assertions, run against all three targets, b
 **A build step is a restatement, so it quotes.** Each step names what to build, points at its section, and carries one verbatim clause from that section's live text; the planned assertion 9 will check the clause is there (`scripts/ASSERTIONS-spec.md`, "Planned"). A pointer that has drifted looks exactly like one that has not; a quote fails and names itself when the prose moves. This reverses the round-earlier rule that steps point and never restate: three stale steps in one round, none catchable, motivated it. **The quoting pass over the existing steps is mine and lands before Code implements 9.** Step 29 restated §33's two-line ladder and its journal-first cell after both were withdrawn. **A reference that resolves is not a claim that holds.** Assertion 4 checks that a §N reference resolves to a heading; nothing checks that §N says what the referring sentence claims. §31 said “§33 records the new ones” about the floor figures, and §33 contained neither until a reader looked. It is assertion 5’s blind spot in a new place: the reference is checked, the claim is not. **A row is held to the same rule, and the first quoting step proves why:** in the round step 31 was written to quote rather than restate, §28's row restated a width — "below 1440" in a pointer column — and 8b failed it. The row now reads "below §18's fork", which is a pointer.
 
 ## Proposed changes to ASSERTIONS-spec.md
+
+- **Widen assertion 7 to plain text, as 9 already reads.** The bold-run rule is a convention for prominence, not for detection: a withdrawal in a mono caption is already set apart, and bolding it there would change the document to satisfy the check. `28/air-side-at-960` sits in one, and 7 cannot see it today.
+
+- **Accept Code's assertion 9, the reverse check, as worded, with one sentence added:** it reads every section's plain text wherever a phrasing sits, inside a bold run or not, because assertion 7 reads only bold runs. The two sentences it first found both sat outside one, so the convention that made a withdrawal findable was also what hid the ones that broke it.
 
 - **Assertion 9 requires a distinct quote per step.** Code decided it, and step 27 is still exempt by rule.
 
