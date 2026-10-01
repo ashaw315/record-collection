@@ -578,24 +578,38 @@ export function RecordPage8a({ record, writingConfigured = false }: { record: Pa
           so a vertical-only extension cannot reach one; a neighbour above or
           below is separated by more than 5px of the cell's own 34px padding.
           The drawn box, its height and its underline are untouched.
+
+          **Step 71: the overlay needs a POSITIONED control, not a relative
+          one, and this rule must not outrank a control's own placement.**
+          Unlayered, it did: the tile's Delete control, "absolute top-1
+          right-1" over the image, rendered below the tile at its left on
+          every record with an image. Not specificity -- the utility lives in
+          Tailwind's "@layer utilities", and an unlayered author rule beats
+          every layered one whatever its selector, so even a :where() rule
+          won. In "@layer components", below utilities, a control placed by
+          its own class keeps that placement (an absolute control is
+          positioned, and its ::before overlay works the same), and every
+          other control is relative as before.
         */
-        [data-section] :is(a, button, select, input, label),
-        [data-cell="air"] :is(a, button, select, input, label) { position: relative; }
-        [data-section] :is(a, button, select, input, label)::before,
-        [data-cell="air"] :is(a, button, select, input, label)::before {
-          content: '';
-          position: absolute;
-          left: 0;
-          right: 0;
-          top: 50%;
-          height: ${CONTROL_HEIGHT}px;
-          transform: translateY(-50%);
-          /*
-            No z-index: the overlay is in the control's own stacking context
-            and paints under its text by source order, so it takes the tap
-            without hiding the type. z-index: -1 put it behind the cell's
-            background, where elementFromPoint never reached it.
-          */
+        @layer components {
+          [data-section] :is(a, button, select, input, label),
+          [data-cell="air"] :is(a, button, select, input, label) { position: relative; }
+          [data-section] :is(a, button, select, input, label)::before,
+          [data-cell="air"] :is(a, button, select, input, label)::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            top: 50%;
+            height: ${CONTROL_HEIGHT}px;
+            transform: translateY(-50%);
+            /*
+              No z-index: the overlay is in the control's own stacking context
+              and paints under its text by source order, so it takes the tap
+              without hiding the type. z-index: -1 put it behind the cell's
+              background, where elementFromPoint never reached it.
+            */
+          }
         }
       `}</style>
       {/* IDENTITY BAND — 4 / 3 / 5. */}

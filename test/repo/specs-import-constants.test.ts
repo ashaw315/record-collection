@@ -89,6 +89,8 @@ const GOVERNED = [
   'e2e/images-row-56.spec.ts',
   /* §59 (step 69): the disc yields to its caption; contrast on the real collection. */
   'e2e/sheet/disc-59.sheet.ts',
+  /* Step 71: the tile's Delete control over the tile's top-right corner. */
+  'e2e/delete-control-71.spec.ts',
 ];
 
 /** The values a record-screen spec must not type. */

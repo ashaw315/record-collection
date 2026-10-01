@@ -33571,7 +33571,7 @@ term and §29's width term still apply.
 | 1440 | 518 (tile 337) | 360 | 345.3 | 241 |
 | 1920 | 638 (tile 457) | 480 | 425.3 | 241 |
 
-Re-measured, not carried: step 66 had 160.5 to 161.0 above 390. Under
+(Section heights in this entry predate step 71, which took the Delete control's 24px out of every tile row; step 71's entry has the re-measured heights. The disc's figures are unchanged by it.) Re-measured, not carried: step 66 had 160.5 to 161.0 above 390. Under
 §60 the reference is the section as if it held one tile row, which is
 taller than the cover-only section (518 against 241 at 1440), so the
 height term is 345 at 1440 and 425 at 1920 where the width term does not
@@ -33590,3 +33590,42 @@ two, three and six images), `extended-grid`'s §53/§59/§60 host test on the
 seventeen and its §29 disc test, `layout-sweep`'s §59 contrast test on
 chromium (4 pass), the images-disc, ImageGallery, OrnamentMarks and Section
 unit files (35 pass), typecheck, lint, build.
+
+## Step 71 built: the tile's Delete control sits over the tile's top-right corner; the cause was a cascade layer, not a selector (1 Oct)
+
+**Where it landed.** On every record with a non-cover image the control
+rendered below the tile at its left: at 1440, 4px left of the image's edge
+and 343px below its top (the image 337 tall), the same shape at 390, 1000
+and 1920 (`e2e/delete-control-71.spec.ts`, which lists every stylesheet
+rule the button matches that sets a position, in cascade order).
+
+**Which rule beat the tile's.** The record page's hit-area stylesheet
+(§28's 44px floor, `RecordPage8a.tsx`) set every control in a section to
+"position: relative" so its ::before overlay has a box. The button's own
+class is "absolute top-1 right-1". The first fix lowered the rule's
+specificity to nothing with :where(), and the control stayed relative --
+because specificity was never the mechanism. Tailwind's utilities live in
+"@layer utilities", and an unlayered author rule beats every layered rule
+whatever either selector says. The rule now sits in "@layer components",
+below utilities: a control placed by its own class keeps that placement
+(an absolute control is positioned, so its overlay works the same), and
+every other control is relative as before. §28's touch-floor test still
+passes. Reported as the step asked, and fixed in the same turn since the
+classes state the one correct answer; §34 and §26 do not govern a control
+over a photograph.
+
+**What else moved.** The tile row lost the control's 24px below the
+image, so the Images section heights step 70 reported shrink by 26 to 52
+and its captures are retaken: two or three images 443, 547, 579 and 699
+at 390, 1000, 1440 and 1920 (step 70 reported 469, 574, 605, 725); six
+images 814, 881, 945 and 1185 (893, 934, 997, 1237). The disc's figures do
+not move, since §60's reference never held the control. The §29 disc test
+in `extended-grid.spec.ts` is re-bounded against §60's reference and §59's
+caption term, and reads the disc settled rather than at the CSS bounds it
+is served at, which had made it flaky.
+
+Verification, step level: `delete-control-71.spec.ts`, `record-page-28`'s
+touch-floor test, `images-row-56.spec.ts`, `images.spec.ts`'s gallery
+tests and `extended-grid`'s two disc tests on chromium (16 pass), the
+RecordPage8a unit file with the spec guard (51 pass), typecheck, lint,
+build.

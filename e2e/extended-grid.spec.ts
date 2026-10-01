@@ -1023,7 +1023,7 @@ test('a figure’s faces are the ladder’s top, base and shade; a flat is tint 
   }
 });
 
-test('the quarter-disc is sized against its host and bleeds off the right page edge (§29)', async ({ page }) => {
+test('the quarter-disc is sized against §60’s reference within §29’s bounds and §59’s caption, and bleeds off the right page edge', async ({ page }) => {
   /**
    * **§29: a flat's size follows its host, and no section fixes it at 150.**
    *
@@ -1042,14 +1042,31 @@ test('the quarter-disc is sized against its host and bleeds off the right page e
   await page.setViewportSize({ width: 1440, height: NO_SCROLL_HEIGHT });
   await page.goto(`/records/${id}`);
   await page.locator('[data-region="extended-grid"] [data-ornament="flat"]').first().waitFor({ timeout: 20_000 });
+  /* §59, §60: the disc measures in the browser; read it settled, not at the CSS bounds it is served at. */
+  await page.waitForFunction(`document.querySelector('[data-flat="quarterDisc"]')?.getAttribute('data-disc-state') !== 'measuring'`, undefined, { timeout: 10_000 });
 
-  const disc = await page.evaluate(() => {
+  const disc = await page.evaluate((referenceJs) => {
     const el = document.querySelector('[data-flat="quarterDisc"]');
     if (el === null) return null;
     const d = el.getBoundingClientRect();
-    const host = el.closest('[data-region="extended-grid"] [data-section], [data-cell="air"]')!.getBoundingClientRect();
+    const hostEl = el.closest('[data-region="extended-grid"] [data-section], [data-cell="air"]')!;
+    const host = hostEl.getBoundingClientRect();
     const frame = document.querySelector('[data-testid="record-page-8a"]')!.getBoundingClientRect();
+    /* §60: the height term is against the stated reference, not the host's rendering; §59: and the free height below the caption in the disc's reach. */
+    const reference = (new Function('return ' + referenceJs)() as (sec: Element) => { reference: number })(hostEl).reference;
+    const sized = Math.min(reference * (2 / 3), host.width / 4);
+    let lowest = host.top;
+    for (const t of Array.from(hostEl.querySelectorAll('*'))) {
+      if (t.closest('[aria-hidden="true"]') !== null) continue;
+      for (const n of Array.from(t.childNodes)) {
+        if (n.nodeType !== Node.TEXT_NODE || (n.textContent ?? '').trim() === '') continue;
+        const range = document.createRange(); range.selectNodeContents(n);
+        for (const g of Array.from(range.getClientRects())) if (g.width > 0 && g.right > host.right - sized) lowest = Math.max(lowest, g.bottom);
+      }
+    }
     return {
+      reference,
+      free: host.bottom - lowest,
       width: d.width,
       radius: getComputedStyle(el).borderRadius,
       visibleWidth: Math.max(0, Math.min(d.right, host.right) - Math.max(d.left, host.left)),
@@ -1058,7 +1075,7 @@ test('the quarter-disc is sized against its host and bleeds off the right page e
       hostWidth: host.width,
       hostEndsAtPageEdge: Math.abs(host.right - frame.right) < 1,
     };
-  });
+  }, DISC_REFERENCE_JS);
   expect(disc, 'the disc renders').not.toBeNull();
   if (disc === null) return;
 
@@ -1071,8 +1088,8 @@ test('the quarter-disc is sized against its host and bleeds off the right page e
     rule, so two-thirds of it is a fraction of a pixel under two-thirds of
     the border box the test measures.
   */
-  const bound = Math.min(disc.hostHeight * (2 / 3), disc.hostWidth * (1 / 4));
-  expect(disc.visibleWidth, `visible radius against §29's bound on a ${Math.round(disc.hostHeight)}px host`).toBeGreaterThan(bound - 1.5);
+  const bound = Math.min(disc.reference * (2 / 3), disc.hostWidth * (1 / 4), disc.free);
+  expect(disc.visibleWidth, `visible radius against §29's bound on a reference of ${Math.round(disc.reference)} (§60) with ${Math.round(disc.free)} free below the caption (§59), host ${Math.round(disc.hostHeight)} tall`).toBeGreaterThan(bound - 1.5);
   expect(disc.visibleWidth, 'and never over it').toBeLessThanOrEqual(bound + 0.5);
   expect(disc.visibleHeight, 'and the same up the page').toBeGreaterThan(bound - 1.5);
   /* Exactly one quadrant: the disc is twice the visible radius on each axis. */
