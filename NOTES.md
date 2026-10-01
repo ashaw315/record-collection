@@ -24,7 +24,7 @@ here. They are one defect seen from two sides: an assertion with no failing
 input, and an observation with no subject. Both produce green. If you are
 looking at something that passes and you are not sure why, start in those two.
 
-Generated from 126 declared rules. Regenerate with
+Generated from 127 declared rules. Regenerate with
 `npx tsx scripts/notes-index.ts --write`.
 
 ### Measurements that do not govern
@@ -139,6 +139,7 @@ Generated from 126 declared rules. Regenerate with
 | a defect has two plausible readings and you are about to fix the likelier one | [1093 DIAGNOSED after nine sightings: both candidate readings were wrong, and the predicate matches WHITE](#1093-diagnosed-after-nine-sightings-both-candidate-readings-were-wrong-and-the-predicate-matches-white) |
 | a failure has a number attached and you have not run it more than once | [427 MEASURED over three runs rather than assumed — and it is NOT a rate](#427-measured-over-three-runs-rather-than-assumed-and-it-is-not-a-rate) |
 | a mark, field or state is identical across every record and you are about to remove it as texture | [A constant is retired for why it is constant, not for being constant](#a-constant-is-retired-for-why-it-is-constant-not-for-being-constant) |
+| you are quoting or building against a drop you read earlier in the session rather than the files on disk at build time | [A drop can be replaced before it is taken, so an earlier read is not the drop (30 Sep)](#a-drop-can-be-replaced-before-it-is-taken-so-an-earlier-read-is-not-the-drop-30-sep) |
 | a long test reads fixtures other specs can touch, and its last clean run is being cited as evidence | [A MEASUREMENT THAT PASSED BY SCHEDULING LUCK IS NOT A MEASUREMENT](#a-measurement-that-passed-by-scheduling-luck-is-not-a-measurement) |
 | a written measurement is being carried forward and you have not re-read the source | [A note that implied a difference, and a payload that did not](#a-note-that-implied-a-difference-and-a-payload-that-did-not) |
 | you are about to derive a per-member value from a property of the members, and have not looked at the spread of that property | [A rule deriving variety from an axis the set does not vary along produces none](#a-rule-deriving-variety-from-an-axis-the-set-does-not-vary-along-produces-none) |
@@ -32833,3 +32834,65 @@ The seeded seventeen all carry `#a25829` and none carries null, so the only
 §5.3 record in the collection was never rendered by any test, spec or
 capture from the day the construction shipped until the sheet ran against
 the real database. Fourth instance of the shape in the boundary rule below.
+
+## A drop can be replaced before it is taken, so an earlier read is not the drop (30 Sep)
+
+**Shape:** sample-as-population
+**You are here if:** you are quoting or building against a drop you read earlier in the session rather than the files on disk at build time
+
+The §54 drop was read once, between two other tasks, and quoted in a
+report as a derived ladder from ink with three figures. By the time it was
+taken Design had replaced it with a flat one: "54 · The record with no
+cover is ink, flat", §5.3 standing as written, no 5.3/ entry in
+WITHDRAWALS, and the three figures nowhere in the file. The quote was of a
+file that no longer existed. Neighbour of "a drop is read whole": the
+drop is what is on disk when it is taken or built, and a read from
+earlier in the session is a sample of a population that has moved.
+
+## Step 62, held one more round: two corrections the inventory forces into §54 and the step (30 Sep)
+
+Not built as written. (a) §54 and step 62 say three marks are omitted and
+name the provenance quarter-circle among them. The re-probe by the Plane's
+real attribute shows it draws from 1440 up and hides below 1440 by its own
+covers-type rule, which reads the host's type and not the ladder. The gate
+omits two: the corner triangle (`RecordPage8a.tsx:753`) and the
+quarter-disc in Images (`Section.tsx:167-168`). Built literally, the step
+would "draw" a mark that already draws and leave the arc's below-1440
+absence, which is not the ladder's doing, untouched. (b) The step says
+"remove the ink at 0.55 alpha", one constant, where there are two: the
+Plane's ink-at-0.14 fallback at `RecordPage8a.tsx:164` is the other, and
+the arc renders at it. §54's rule is every §5.1 mark at ink at full
+strength, so 0.14 goes with 0.55; a step written against one constant
+leaves full-strength marks beside a 14% arc. Both with Design.
+
+## The sheet's counts supersede the fixture's: eleven and six, not twelve and eight (30 Sep)
+
+Measured on the seeded seventeen (step 58, this file at "Step 58 built",
+the sentence "Eight drawn at 1440 × 900, twelve at the two 1200-tall
+windows"): twelve fields drawn at 1200 tall, eight at 900. Measured on the
+real collection by the contact sheet: eleven at 1200 tall (The Hurdy Gurdy
+Man is suppressed there on the real record as on the fixture; the twelfth
+was never real), six at 900 (Bitches Brew and Mind Games, drawn at their
+113.9 gap on the fixture, are suppressed by the gap on the real records,
+whose pressing blocks run a line longer; and The Best Of The Blues Project
+has no field at all). Both figures were measured, so this is a
+supersession against the manifest, not a correction. The only other place
+a fixture count of this family is written is the build target's §50
+sentence "against ink, twelve of seventeen fields at 1440 × 1200
+outweighed the mark", which is the cap-binding count on the fixture and
+Design's to re-measure or withdraw. SPEC.md and HANDOFF carry neither
+figure.
+
+## The Hurdy Gurdy Man loses its field when the window grows: the mechanism (30 Sep)
+
+The only record in the collection where a taller viewport removes the
+field. At 1440 × 900 the supply is 510 and the ladder's demands are 721,
+617, 515 and 275 at 144, 120, 96 and 72, so with the 24 only 72/40 fits:
+gap 210.7, stack 175.3, cap 127.2, field 127.1 by the cap. At 1440 × 1200
+the supply is 692, so 120/66 fits (617 + 24 ≤ 692) and the ladder steps up
+two rungs; the gap is then 692 − 617 − 24 = 50.8, an 8.7 : 1 band, and the
+field is suppressed by the gap. The cell gained 182 and the title took
+342 of it. §45's composition working as ruled ("the title is the largest
+that fits, and the ground is what it leaves"), reported in §50's own words
+for the fixture at 70.3 and now measured on the real record at 50.8.
+Identical at 1920 × 1200.
