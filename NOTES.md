@@ -33551,3 +33551,42 @@ Verification, step level: `images-row-56.spec.ts` (§56 and §59 together),
 the seventeen and its §29 disc test, `no-cover-54` on chromium (6 pass),
 the OrnamentMarks, ImageGallery and Section unit files (32 pass),
 typecheck, lint, build.
+
+## Step 70 built: §60 -- the disc's reference is a stated height, the blank note row is gone (1 Oct)
+
+The Images quarter-disc's height term is §60's reference: the section's
+heading (the label cell), §33's padding above and below the content, and
+one notional tile row -- the column width at that viewport (two columns
+below 640, three below 1024, four from 1024, as the grid's own breakpoints
+lay them) plus one badge line and one caption line measured from the
+gallery's type by a probe (`images-disc.ts`, passed to the section's flat
+as `flatReference`). No rendering is in it, so the blank note row §56
+needed is removed and the grid carries no exclusion mark. §59's caption
+term and §29's width term still apply.
+
+| width | reference | §29 width term | disc at two, three and six images | disc at one image |
+|---|---|---|---|---|
+| 390 | 338 (71 + 68 + 157 + 20.5 + 22) | 97.5 | 97.5 | 56 (the caption, §59) |
+| 1000 | 486 (tile 305) | 250 | 250 | 241 (the section's height) |
+| 1440 | 518 (tile 337) | 360 | 345.3 | 241 |
+| 1920 | 638 (tile 457) | 480 | 425.3 | 241 |
+
+Re-measured, not carried: step 66 had 160.5 to 161.0 above 390. Under
+§60 the reference is the section as if it held one tile row, which is
+taller than the cover-only section (518 against 241 at 1440), so the
+height term is 345 at 1440 and 425 at 1920 where the width term does not
+bind; and on a record with only a cover the host is 241 tall, so the
+visible quadrant is clipped to 241 by the section itself. **That is a
+step at the second image again -- 241 to 345 at 1440 -- from the other
+side**: the reference is the same at every count, but the host the disc is
+clipped by is not. The sixteen real records all have one image today, so
+on the live collection the disc is 241 at 1000 and up, the full height of
+the Images section, and 56 at 390. Reported for Design with the captures
+`docs/captures/step70-images-<n>-<w>x<h>-h<section height>.png`; the step
+66 set is removed as superseded.
+
+Verification, step level: `images-row-56.spec.ts` (§56, §59, §60 on one,
+two, three and six images), `extended-grid`'s §53/§59/§60 host test on the
+seventeen and its §29 disc test, `layout-sweep`'s §59 contrast test on
+chromium (4 pass), the images-disc, ImageGallery, OrnamentMarks and Section
+unit files (35 pass), typecheck, lint, build.

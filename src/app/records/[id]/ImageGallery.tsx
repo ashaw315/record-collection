@@ -8,6 +8,7 @@ import { CONTROL_HEIGHT, FIELD_HEIGHT } from './extended-grid';
 import { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { IMAGE_TYPE_ORDER, imageTypeLabel, orderImages, type GalleryImage } from './gallery-order';
+import { imagesDiscReference } from './images-disc';
 import { MAX_IMAGE_BYTES } from '@/lib/storage/image-type';
 
 /**
@@ -114,7 +115,7 @@ export function ImageGallery({
   }
 
   return (
-    <Section name="images" title="Images" base={base} shape="one" ladder={ladder}>
+    <Section name="images" title="Images" base={base} shape="one" ladder={ladder} flatReference={imagesDiscReference}>
       <div data-testid="image-gallery">
       <div className="mb-3 flex flex-wrap items-center gap-[10px]">
         <label htmlFor="image-type" className="sr-only">
@@ -214,21 +215,7 @@ export function ImageGallery({
           </p>
         )
       ) : (
-        /*
-          §56 (step 66): the quarter-disc is sized "against the section as it
-          stands with one image, whatever the count", and that section
-          carries the cover note's row. With tiles the note's sentence is
-          stale, so its ROW is kept and its text is not: the same line of
-          height, invisible and hidden from readers, so the host above the
-          grid is identical at every image count and the disc is too. The
-          grid below is what the disc's host measure leaves out.
-        */
         <>
-        {images.some((image) => image.imageType === 'cover') && (
-          <p data-testid="gallery-note-row" aria-hidden="true" className="text-prose" style={{ visibility: 'hidden' }}>
-            The cover is shown above.
-          </p>
-        )}
         {/*
           §56 (step 66): one flowing grid in the fixed type order, each tile
           carrying its type badge; the group headings are gone. Grouped, each
@@ -237,15 +224,16 @@ export function ImageGallery({
           names the type, so a heading repeated it; the accepted loss is
           that a type may split across a row wrap.
 
-          `data-not-host-height`: with one image there is no grid, so the
-          grid is what the disc's host measure leaves out (`QuarterDisc` in
-          OrnamentMarks.tsx).
+          §60 (step 70): the disc beside this grid is sized against a stated
+          reference -- heading, padding, one notional tile row
+          (`imagesDiscReference`) -- so nothing here is kept or marked for
+          it; the blank note row §56 needed is gone.
 
           Two columns on a phone, four on desktop. Capped at three, a
           1280px page rendered three 226px tiles beside an empty half —
           caught in the screenshot, not by any assertion.
         */}
-        <ul data-image-grid data-not-host-height data-testid="image-grid" className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+        <ul data-image-grid data-testid="image-grid" className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
           {tiles.map(({ type, image }) => (
             <li key={image.id} data-testid="gallery-image" data-image-type={type} className="group relative">
               {/*

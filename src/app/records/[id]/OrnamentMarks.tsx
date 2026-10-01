@@ -337,12 +337,12 @@ const VISIBLE_WIDTH = `${VISIBLE_OF_SECTION_WIDTH * 100}%`;
  * section or over one of the structural rules, which is ornament overriding
  * structure. A page edge has nothing behind it.
  */
-export function Flat({ ladder, flat }: { ladder: RecordLadder | null; flat: (typeof FLATS)[keyof typeof FLATS] }) {
+export function Flat({ ladder, flat, reference }: { ladder: RecordLadder | null; flat: (typeof FLATS)[keyof typeof FLATS]; reference?: (host: HTMLElement) => number }) {
   /* §54 (step 62): on a record with no cover the flats draw at ink, flat, by their usual placement; the gate that dropped them omitted two of §5.1's eight. */
   const fill = ladder === null ? INK_CSS : flat.step === 'base' ? ladder.base : ladder.tint;
 
   if (flat.shape === 'quarterDisc') {
-    return <QuarterDisc fill={fill} />;
+    return <QuarterDisc fill={fill} reference={reference} />;
   }
   return (
     <div
@@ -390,14 +390,14 @@ export function Flat({ ladder, flat }: { ladder: RecordLadder | null; flat: (typ
  * bounds sit on their own axes -- `maxHeight` the height bound, `maxWidth`
  * the width bound, `aspectRatio` keeping it a circle whichever binds.
  *
- * **§56 (step 66): sized against the host as it stands with one image.**
+ * **§56 then §60: sized against a stated reference, not a rendering.**
  * The Images section grows by rows of tiles, and a disc sized against the
  * grown section more than doubled the moment a record gained a second
  * image -- a mark encoding the count, which §21 rules ornament does not.
- * Anything in the host marked `data-not-host-height` (the tile grid) is
- * left out of the height term: the host's height less those elements and
- * their margins, measured in the browser. With nothing marked, the CSS
- * percentage is the measure, as before, and the server renders that.
+ * §60 names the height term's parts (heading, padding, one notional tile
+ * row), which the host supplies as `reference`; a host that supplies none
+ * is measured by its own height, as before, and the server renders the
+ * CSS bounds until the browser has measured.
  *
  * **§59 (step 69): the disc yields to its caption.** Its visible radius is
  * at most the free height below the lowest glyph in its reach, and it is
@@ -405,22 +405,22 @@ export function Flat({ ladder, flat }: { ladder: RecordLadder | null; flat: (typ
  * the disc is ornament, so the disc gives way by size, not by vanishing
  * elsewhere, and never by changing the caption's ink.
  */
-function QuarterDisc({ fill }: { fill: string }) {
+function QuarterDisc({ fill, reference }: { fill: string; reference?: (host: HTMLElement) => number }) {
   const ref = useRef<HTMLDivElement>(null);
-  const [disc, setDisc] = useState<{ state: 'measuring' | 'drawn' | 'not-drawn'; radius: number | null; free: number | null }>({ state: 'measuring', radius: null, free: null });
+  const [disc, setDisc] = useState<{ state: 'measuring' | 'drawn' | 'not-drawn'; radius: number | null; free: number | null; reference: number | null }>({ state: 'measuring', radius: null, free: null, reference: null });
   useEffect(() => {
     const el = ref.current;
     const host = el?.parentElement ?? null;
     if (el === null || host === null) return;
     const measure = () => {
       const h = host.getBoundingClientRect();
-      const excluded = Array.from(host.querySelectorAll<HTMLElement>('[data-not-host-height]'));
-      const taken = excluded.reduce((sum, x) => {
-        const cs = getComputedStyle(x);
-        return sum + x.getBoundingClientRect().height + parseFloat(cs.marginTop) + parseFloat(cs.marginBottom);
-      }, 0);
-      /* §29's two bounds, the height one against the host as §56 states it. */
-      const sized = Math.min(Math.max(0, host.clientHeight - taken) * VISIBLE_OF_HOST_HEIGHT, host.clientWidth * VISIBLE_OF_SECTION_WIDTH);
+      /*
+        §29's two bounds. The height one is against §60's stated reference
+        where the host supplies it (Images: heading, padding, one notional
+        tile row), and against the host's own height where it does not.
+      */
+      const heightBasis = reference === undefined ? host.clientHeight : reference(host);
+      const sized = Math.min(heightBasis * VISIBLE_OF_HOST_HEIGHT, host.clientWidth * VISIBLE_OF_SECTION_WIDTH);
       /*
         §59: "sized to its host's free height below the caption... drawn only
         where that height is greater than zero." The caption is whatever
@@ -431,13 +431,13 @@ function QuarterDisc({ fill }: { fill: string }) {
       const inReach = typeIn(host, el).flatMap(glyphs).filter((g) => g.right > h.right - sized);
       const free = h.bottom - Math.max(h.top, ...inReach.map((g) => g.bottom));
       const radius = Math.min(sized, free);
-      setDisc({ state: radius > 0 ? 'drawn' : 'not-drawn', radius: Math.max(0, radius), free });
+      setDisc({ state: radius > 0 ? 'drawn' : 'not-drawn', radius: Math.max(0, radius), free, reference: heightBasis });
     };
     measure();
     const observer = new ResizeObserver(measure);
     observer.observe(host);
     return () => observer.disconnect();
-  }, []);
+  }, [reference]);
   /* Served at the CSS bounds until the browser has measured; then the measured radius, doubled for the full disc. */
   const visible = disc.radius === null ? VISIBLE_HEIGHT : `${disc.radius}px`;
   return (
@@ -448,6 +448,7 @@ function QuarterDisc({ fill }: { fill: string }) {
       data-disc-state={disc.state}
       data-disc-radius={disc.radius === null ? undefined : Math.round(disc.radius * 10) / 10}
       data-disc-free={disc.free === null ? undefined : Math.round(disc.free * 10) / 10}
+      data-disc-reference={disc.reference === null ? undefined : Math.round(disc.reference * 10) / 10}
       aria-hidden="true"
       className="pointer-events-none absolute"
       style={{

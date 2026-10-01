@@ -81,18 +81,10 @@ describe('the gallery says which kind of empty it is', () => {
     /* The badge names the type on the tile, in the fixed order: back before label. */
     const badges = Array.from(html.matchAll(/data-testid="image-badge"[^>]*>([^<]*)</g)).map((m) => m[1]);
     expect(badges).toEqual(['Back', 'Label']);
-    /* §56: the quarter-disc is sized against the section as it stands with one image, so the grid is marked out of the host's height and the note's row is kept, blank. */
-    expect(html, 'the grid is excluded from the disc’s host height').toMatch(/data-image-grid[^>]*data-not-host-height|data-not-host-height[^>]*data-image-grid/);
-    expect(html, 'the cover note’s row stays as height, not as a sentence').toMatch(/data-testid="gallery-note-row"[^>]*aria-hidden="true"[^>]*visibility:hidden/);
+    /* §60: the disc's reference is a stated height, so nothing in the rendering is kept or marked for it: no blank note row, no exclusion mark on the grid. */
+    expect(html, 'no blank row stands in for the cover note').not.toContain('gallery-note-row');
     expect(html, 'the stale sentence is not shown').not.toContain('data-testid="gallery-cover-note"');
-  });
-
-  it('§56: without a cover there is no note row to keep, so none is rendered beside the tiles', () => {
-    const html = renderToStaticMarkup(
-      <ImageGallery recordId="r1" images={[image('b', 'back')]} base="oklch(0.7 0.06 60)" />,
-    );
-    expect(html).not.toContain('gallery-note-row');
-    expect(html).toContain('data-image-grid');
+    expect(html, 'the grid is not marked out of a host measure').not.toContain('data-not-host-height');
   });
 
   it('never renders the cover itself', () => {

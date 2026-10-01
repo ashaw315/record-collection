@@ -52,6 +52,7 @@ export function Section({
   span,
   start,
   ladder = null,
+  flatReference,
 }: {
   name: SectionName;
   title: string;
@@ -73,6 +74,8 @@ export function Section({
   /** False when another item follows in the row, which is what draws the rule. */
   /** The record's ladder, for §25's figures and §26's flats. Null when there is no cover. */
   ladder?: RecordLadder | null;
+  /** §60: the flat's height term as a stated reference read from this section, in place of the section's own height. The Images gallery supplies it. */
+  flatReference?: (host: HTMLElement) => number;
 }) {
   const split = CONTENT_SPLITS[shape];
   /* Step 18b builds the 12-column region; step 20 turns §28's other widths on. */
@@ -167,7 +170,7 @@ export function Section({
       */}
       {ladder !== null && figure !== null && <Figure ladder={ladder} figure={figure} host={'strip'} />}
       {/* §54: the flat draws on a null ladder too, at ink; the figure is §25's and keeps its gate. §57: the figure tests itself against this host's type, and the Price history solo sizes itself to the strip's free height. */}
-      {flat !== null && <Flat ladder={ladder} flat={flat} />}
+      {flat !== null && <Flat ladder={ladder} flat={flat} reference={flatReference} />}
 
       {/*
         **The label above the content**, at the section's own left edge. §9.3's

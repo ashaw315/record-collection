@@ -5,6 +5,8 @@ import { registerCleanup, trackArtist } from './cleanup';
 import { seedImage } from './seed';
 import { GRID_FORK, NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
 import { VISIBLE_OF_HOST_HEIGHT, VISIBLE_OF_SECTION_WIDTH } from '../src/app/records/[id]/OrnamentMarks';
+import { CELL_PADDING } from '../src/app/records/[id]/extended-grid';
+import { DISC_REFERENCE_JS } from './disc-reading';
 
 registerCleanup();
 
@@ -55,7 +57,7 @@ async function seedWithImages(page: Page, types: ReadonlyArray<string | null>): 
   return id;
 }
 
-type Reading = { sectionHeight: number; sectionWidth: number; visibleRadius: number; discState: string | null; headings: number; grids: number; tiles: Array<{ type: string | null; top: number; badge: string }>; typeOverDisc: string[]; glyphs: Array<{ right: number; bottom: number }> };
+type Reading = { sectionHeight: number; sectionWidth: number; visibleRadius: number; discState: string | null; discReference: number | null; reference: { heading: number; tile: number; badge: number; caption: number; reference: number }; headings: number; grids: number; noteRows: number; tiles: Array<{ type: string | null; top: number; badge: string }>; typeOverDisc: string[]; glyphs: Array<{ right: number; bottom: number }> };
 const READ = `(() => {
   const sec = document.querySelector('[data-section="images"]'); const s = sec.getBoundingClientRect();
   const disc = sec.querySelector('[data-flat="quarterDisc"]'); const d = disc ? disc.getBoundingClientRect() : null;
@@ -90,10 +92,11 @@ const READ = `(() => {
       for (const g of Array.from(r.getClientRects())) if (g.width > 0) glyphs.push({ right: g.right - s.left, bottom: g.bottom - s.top });
     }
   }
-  return { sectionHeight: s.height, sectionWidth: s.width, visibleRadius, discState: disc ? disc.getAttribute('data-disc-state') : null, headings: sec.querySelectorAll('h3').length, grids: sec.querySelectorAll('[data-image-grid]').length, tiles, typeOverDisc, glyphs };
+  const reference = (${DISC_REFERENCE_JS})(sec);
+  return { sectionHeight: s.height, sectionWidth: s.width, visibleRadius, discState: disc ? disc.getAttribute('data-disc-state') : null, discReference: disc && disc.getAttribute('data-disc-reference') !== null ? Number(disc.getAttribute('data-disc-reference')) : null, reference, headings: sec.querySelectorAll('h3').length, grids: sec.querySelectorAll('[data-image-grid]').length, noteRows: sec.querySelectorAll('[data-testid="gallery-note-row"]').length, tiles, typeOverDisc, glyphs };
 })()`;
 
-test('§56, §59: the quarter-disc holds its one-image size at every count and yields to its caption, the tiles flow in one badged grid, and the section grows by tile rows only', async ({ page }) => {
+test('§56, §59, §60: the quarter-disc is sized against the stated reference at every count and yields to its caption, the tiles flow in one badged grid with no blank row, and the section grows by tile rows only', async ({ page }) => {
   test.setTimeout(300_000);
   await login(page);
   const ids = new Map<number, string>();
@@ -111,15 +114,18 @@ test('§56, §59: the quarter-disc holds its one-image size at every count and y
       const m = (await page.evaluate(READ)) as Reading;
       if (c.n === 1) reference = m;
       if (reference === null) throw new Error('the one-image record reads first');
-      const sized = Math.min(reference.sectionHeight * VISIBLE_OF_HOST_HEIGHT, m.sectionWidth * VISIBLE_OF_SECTION_WIDTH);
+      /* §60: §29's height term is taken against the stated reference -- heading, padding, one notional tile row -- not against any rendering. */
+      const sized = Math.min(m.reference.reference * VISIBLE_OF_HOST_HEIGHT, m.sectionWidth * VISIBLE_OF_SECTION_WIDTH);
+      if (m.discReference === null || Math.abs(m.discReference - m.reference.reference) > 1) bad.push(`${c.n} images @${w}: the disc states a reference of ${m.discReference}, the named parts give ${m.reference.reference.toFixed(1)} (heading ${Math.round(m.reference.heading)}, padding ${2 * CELL_PADDING}, tile ${Math.round(m.reference.tile)}, badge ${m.reference.badge.toFixed(1)}, caption ${m.reference.caption.toFixed(1)})`);
+      if (m.noteRows !== 0) bad.push(`${c.n} images @${w}: a blank note row is still rendered; §60 removes it`);
       /* §59: the disc yields to its caption -- the free height below the lowest glyph within the disc's reach, drawn only where that is greater than zero. */
       const inReach = m.glyphs.filter((g) => g.right > m.sectionWidth - sized);
       const free = m.sectionHeight - Math.max(0, ...inReach.map((g) => g.bottom));
       const bound = Math.min(sized, free);
       const splits = [...new Set(m.tiles.map((t) => t.type))].filter((type) => new Set(m.tiles.filter((t) => t.type === type).map((t) => t.top)).size > 1);
       const rows = new Set(m.tiles.map((t) => t.top)).size;
-      lines.push(`  §56 IMAGES ${c.n} @${w}: section ${Math.round(m.sectionHeight)} (+${Math.round(m.sectionHeight - reference.sectionHeight)} over one image), disc radius ${Math.round(m.visibleRadius * 10) / 10} against bound ${Math.round(bound * 10) / 10}, ${m.tiles.length} tiles in ${rows} row${rows === 1 ? '' : 's'}${splits.length ? `, split across a wrap: ${splits.join(', ')}` : ''}`);
-      if (bound > 0 && Math.abs(m.visibleRadius - bound) > 1.5) bad.push(`${c.n} images @${w}: disc radius ${m.visibleRadius.toFixed(1)}, §56 and §59 give ${bound.toFixed(1)} (sized ${sized.toFixed(1)} against the one-image section, ${free.toFixed(1)} free below the caption)`);
+      lines.push(`  §56 IMAGES ${c.n} @${w}: section ${Math.round(m.sectionHeight)} (+${Math.round(m.sectionHeight - reference.sectionHeight)} over one image), disc radius ${Math.round(m.visibleRadius * 10) / 10} against bound ${Math.round(bound * 10) / 10} (reference ${Math.round(m.reference.reference)}: heading ${Math.round(m.reference.heading)} + padding ${2 * CELL_PADDING} + tile ${Math.round(m.reference.tile)} + badge ${Math.round(m.reference.badge * 10) / 10} + caption ${Math.round(m.reference.caption * 10) / 10}; width term ${Math.round(m.sectionWidth * VISIBLE_OF_SECTION_WIDTH)}; ${Math.round(free)} free below the caption), ${m.tiles.length} tiles in ${rows} row${rows === 1 ? '' : 's'}${splits.length ? `, split across a wrap: ${splits.join(', ')}` : ''}`);
+      if (bound > 0 && Math.abs(m.visibleRadius - bound) > 1.5) bad.push(`${c.n} images @${w}: disc radius ${m.visibleRadius.toFixed(1)}, §60 and §59 give ${bound.toFixed(1)} (sized ${sized.toFixed(1)} against the stated reference ${m.reference.reference.toFixed(1)}, ${free.toFixed(1)} free below the caption)`);
       if (bound <= 0 && (m.discState !== 'not-drawn' || m.visibleRadius > 0)) bad.push(`${c.n} images @${w}: no free height below the caption, so the disc is not drawn (§59); it is ${m.discState} at ${m.visibleRadius.toFixed(1)}`);
       if (bound > 0 && m.discState !== 'drawn') bad.push(`${c.n} images @${w}: the disc should be drawn at ${bound.toFixed(1)} and says ${m.discState}`);
       if (m.headings !== 0) bad.push(`${c.n} images @${w}: ${m.headings} group heading(s); §56 drops them`);
@@ -131,7 +137,7 @@ test('§56, §59: the quarter-disc holds its one-image size at every count and y
       if (m.tiles.some((t) => t.badge === '')) bad.push(`${c.n} images @${w}: a tile without its badge`);
       /* §59: the disc gives way to its caption by size, so no glyph of any size sits on it. */
       for (const t of m.typeOverDisc) bad.push(`${c.n} images @${w}: type on the base-step disc, which §59 sizes below its caption: ${t}`);
-      await page.screenshot({ path: `docs/captures/step66-images-${c.n}-${w}x${h}-h${Math.round(m.sectionHeight)}.png`, fullPage: true });
+      await page.screenshot({ path: `docs/captures/step70-images-${c.n}-${w}x${h}-h${Math.round(m.sectionHeight)}.png`, fullPage: true });
     }
   }
   for (const line of lines) console.log(line);
