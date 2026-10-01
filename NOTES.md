@@ -33270,3 +33270,68 @@ candidates were set aside: a sentence in the build target that quotes
 "Withdrawn within §33: …" as an example of the prefix contract, and one in
 the wall file that matched once tags were stripped without inserting
 spaces, which the script's own helper does.
+
+## Step 67 built: §57 -- figures yield to type by size (1 Oct)
+
+Every figure now tests itself against its host's type, as the plane does
+under §34, and the Price history solo is sized to its strip's free height
+below its entries, as the matrix solid is to its cell's under §33. The
+figure is a client component for it: it reads its host's box, finds the
+content cell under its right edge, measures that column's text by its
+glyphs, and takes 0.855 of the room from the lowest glyph to the 34px
+inset, drawn only where the narrowest face as drawn keeps §29's six pixels
+(`smallestFaceRatio` in `ornament.ts`, the rod's face at the ruled size
+being the check: 6.0 at 171). The pair keeps 0.855 of its air column and
+the bleed below its foot. A figure whose box would sit over a glyph is not
+displayed and says so (`data-figure-state="covers-type"`); one under the
+bound says `below-bound`; the solo is served `measuring` and not displayed
+until the browser has sized it.
+
+**Two things the box test could not see, found by staging.** First, the
+section label is a block that spans the whole strip while its letters stop
+a hundred pixels in, so a covers test on element boxes found every solo
+under "Price history" -- the same lesson `layout-sweep` learned on the year
+figure, now in the component: type is its glyphs. Second, an air column is
+`aria-hidden` as a whole, so a filter that skipped anything inside a hidden
+subtree skipped the very type §57 rules the test in for; hidden now counts
+only inside the host. Both were found by `e2e/figures-type-57.spec.ts`
+failing for a reason the unit layer cannot reach, and both stay as its
+cases: a no-prices record whose solo draws at 1000 and 1440 under the label
+line, and a paragraph staged in the pair's air column that hides the pair
+when its host resizes.
+
+**On the real collection, read-only, server localhost:3200**
+(`docs/captures/figures-57-report.md`, from `e2e/sheet/figures-57.sheet.ts`):
+
+| width | solo drawn | not drawn | why |
+|---|---|---|---|
+| 390 | 15 of 16 | 1 | On The Radio: no prices, the strip too shallow |
+| 480 | 15 of 16 | 1 | the same |
+| 1000 | 1 of 16 | 15 | the entries reach the foot: 2px free below them |
+| 1440 | 1 of 16 | 15 | the same |
+| 1920 | 1 of 16 | 15 | the same |
+
+The Blues Project has no ladder and no figures. No figure covers type at
+any of the five widths on any record, which was the defect: the solid had
+covered text on 8 records at 390 and 15 from 480 to 1440.
+
+**Two readings for Design.** From 1000 up the Price history strip's two
+columns sit side by side and on every record with prices the entries fill
+their column to the foot, so the free height is two pixels and the solo is
+not drawn on fifteen of sixteen -- §57's "drawn only where that clears
+§29's bound" removes the mark from the collection above 1000, which the
+section said was a smaller loss than the overlap but is now a measured
+one. At 390 and 480 the columns are still side by side, each half the
+strip, and the solo's right edge (two columns in from the strip's right
+edge, 240px) lands in the LEFT column, the summary's, so the solo draws
+below the sparkline at a uniform 116 × 222 at 390 (bound by the column's
+width) beside the entries rather than under them. Both follow the ruling
+as written; whether either is the drawing is Design's.
+
+Verification, step level: `figures-type-57.spec.ts` (two width sweeps on
+seeded records with nine prices and none, the staged covers-type) and
+`extended-grid.spec.ts`'s figure test on chromium, `layout-sweep`'s §34
+paint sweep (945 overlaps behind type, 0 in front) and `row-clip-29h` on
+chromium, the ornament, rules-33, OrnamentMarks and Section unit files (45
+pass), `test/repo` (246 pass after governing the two new specs), typecheck,
+lint, build.

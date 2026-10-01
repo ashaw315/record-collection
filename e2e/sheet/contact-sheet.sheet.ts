@@ -1,8 +1,9 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { GRID_FORK, NO_SCROLL_HEIGHT } from '../../src/app/records/[id]/band-geometry';
 import { readSeventeen } from '../seventeen';
+import { login } from './login';
 
 /**
  * **The contact sheet: every record of the real collection at seven
@@ -25,37 +26,6 @@ const WINDOWS: ReadonlyArray<readonly [number, number]> = [[390, NO_SCROLL_HEIGH
 const OUT = process.env.SHEET_OUT ?? join('docs', 'captures', 'sheet');
 const NO_LADDER_RECORD = 'The Best Of The Blues Project';
 
-/*
-  Two ways in, neither of which is the test hash. `E2E_PASSWORD` is the
-  collection's password, read at run time and nowhere else. `SHEET_SESSION_FILE`
-  names a file holding a session token minted locally from the signing secret
-  the server itself reads (`createSessionToken`), for an operator who has the
-  server's environment and not the password; the token is read from the file
-  and never printed. With neither, the sheet refuses to start.
-*/
-const password = process.env.E2E_PASSWORD;
-const sessionFile = process.env.SHEET_SESSION_FILE;
-if ((password === undefined || password === '') && (sessionFile === undefined || sessionFile === '')) {
-  throw new Error('Neither E2E_PASSWORD nor SHEET_SESSION_FILE is set. The contact sheet logs in to the collection and never falls back to the test hash: run as  E2E_PASSWORD=\'…\' npx playwright test --config playwright.sheet.config.ts');
-}
-const PASSWORD: string = password ?? '';
-
-async function login(page: Page) {
-  if (sessionFile !== undefined && sessionFile !== '') {
-    const { readFileSync } = await import('node:fs');
-    const token = readFileSync(sessionFile, 'utf8').trim();
-    const origin = new URL(process.env.SHEET_BASE_URL ?? `http://localhost:${process.env.SHEET_PORT ?? '3200'}`);
-    await page.context().addCookies([{ name: 'rc_session', value: token, domain: origin.hostname, path: '/', httpOnly: true, sameSite: 'Lax' }]);
-    await page.goto('/');
-    await expect(page, 'the minted session signs in').toHaveURL('/', { timeout: 15_000 });
-    return;
-  }
-  await page.goto('/login');
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page, 'the password in E2E_PASSWORD signs in').toHaveURL('/', { timeout: 15_000 });
-}
 
 type Reading = {
   record: string; id: string; viewport: string; width: number; height: number;
@@ -170,16 +140,12 @@ test('the contact sheet: seventeen records at seven windows, full page, with a m
       ladder names and resolve to ink, so the step attribute is the wrong
       channel and the fill is the right one.
 
-      CHANGE-DETECTOR, not a spec check: §5.3 fixes the value as ink, §5.1
-      says colour marks are drawn "never at an opacity variant", and §5.5
-      makes every coloured pixel one of three MIX steps, so ink at 0.55 alpha
-      is a fourth value the spec does not have. It exists only in
-      ConstructionStill.tsx (fe75669, 12 Sep), where a flat ink would collapse
-      the disc into the faces. This line holds that constant where it is and
-      fails when it moves; whether it should exist is with Design (NOTES, the
-      contact sheet entry).
+      §54 (step 62): the disc is ink at full strength. The 0.55 alpha this
+      line held as a change-detector from the first sheet (ConstructionStill,
+      fe75669, 12 Sep) was §5.5's fourth value; §54 ruled it out, so the fill
+      is the token itself and this line now fails if an alpha returns.
     */
-    expect(x.tint, `${x.viewport}: the disc at the source's ink fallback (change-detector)`).toBe('oklch(0.19 0.008 60 / 0.55)');
+    expect(x.tint, `${x.viewport}: the disc at ink, full strength (§54)`).toBe('oklch(0.19 0.008 60)');
     /*
       CONFOUNDED on the only real record: §5.3 keys the fallback on "no
       cover", the build keys the ladder on the spine colour (null -> no

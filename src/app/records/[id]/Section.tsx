@@ -165,7 +165,7 @@ export function Section({
         flow, and neither can leave this section.
       */}
       {ladder !== null && figure !== null && <Figure ladder={ladder} figure={figure} host={'strip'} />}
-      {/* §54: the flat draws on a null ladder too, at ink; the figure is §25's and keeps its gate. */}
+      {/* §54: the flat draws on a null ladder too, at ink; the figure is §25's and keeps its gate. §57: the figure tests itself against this host's type, and the Price history solo sizes itself to the strip's free height. */}
       {flat !== null && <Flat ladder={ladder} flat={flat} />}
 
       {/*
@@ -360,7 +360,7 @@ ExtendedGrid.Air = function Air({
       }}
     >
       {ladder !== null && figure !== null && <Figure ladder={ladder} figure={figure} host={'air'} />}
-      {/* §54: the flat draws on a null ladder too, at ink; the figure is §25's and keeps its gate. */}
+      {/* §54: the flat draws on a null ladder too, at ink; the figure is §25's and keeps its gate. §57: the figure tests itself against this host's type, and the Price history solo sizes itself to the strip's free height. */}
       {flat !== null && <Flat ladder={ladder} flat={flat} />}
     </div>
   );

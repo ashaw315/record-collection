@@ -49,13 +49,21 @@ export function freeHeightSolid({
   textBottom,
   cellWidth,
   inset = 0,
+  aspect = ARCHETYPE_WIDTH / ARCHETYPE_HEIGHT,
+  smallestFaceRatio = SMALLEST_FACE_RATIO,
 }: {
   cellHeight: number;
-  /** Where the matrix text ends, measured from the cell's top. */
   textBottom: number;
   cellWidth: number;
-  /** The bottom inset the solid sits on; the room below the text ends there. */
   inset?: number;
+  /**
+   * §57 sizes the Price history solo by this same rule, "as the matrix solid
+   * is sized to its cell's": the figure's own projected width over height,
+   * and its narrowest face per pixel of height for §29's bound. The defaults
+   * are the matrix drawing's.
+   */
+  aspect?: number;
+  smallestFaceRatio?: number;
 }): SolidFit {
   /*
     The free height is the room the solid can occupy: from the text's bottom
@@ -65,7 +73,7 @@ export function freeHeightSolid({
   */
   const free = Math.max(0, cellHeight - inset - textBottom);
   let height = free * SOLID_OF_FREE_HEIGHT;
-  let width = height * (ARCHETYPE_WIDTH / ARCHETYPE_HEIGHT);
+  let width = height * aspect;
 
   /*
     The cell's width binds where the free height is tall — the rule gives a
@@ -74,7 +82,7 @@ export function freeHeightSolid({
   */
   if (width > cellWidth) {
     width = cellWidth;
-    height = width * (ARCHETYPE_HEIGHT / ARCHETYPE_WIDTH);
+    height = width / aspect;
   }
 
   /*
@@ -82,7 +90,7 @@ export function freeHeightSolid({
     solid the rule says must be absent, which is the same shape as a skip
     reported as a pass: the reader sees a mark and reads it as data.
   */
-  const smallestFace = height * SMALLEST_FACE_RATIO;
+  const smallestFace = height * smallestFaceRatio;
   if (smallestFace < MIN_FACE) return { drawn: false, width: 0, height: 0 };
 
   return { drawn: true, width, height };

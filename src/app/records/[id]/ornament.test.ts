@@ -18,6 +18,7 @@ import {
   pairBoxRatio,
   projectedAspect,
   silhouettesOverlap,
+  smallestFaceRatio,
   solidSize,
   visibleRatio,
   type OrnamentArchetype,
@@ -40,9 +41,23 @@ import {
  * right beside About this record. Weight lightens down the page.
  */
 
-describe('the size rule (§25)', () => {
+describe('the size rule (§25), which §57 keeps for the pair and takes from the Price history solo', () => {
   it('is 0.855 of the section height — the gate itself, raised from 0.62', () => {
     expect(SIZE_RATIO).toBe(0.855);
+  });
+
+  /**
+   * §57: "The Price history solo is sized to the strip's free height below
+   * its entries, as the matrix solid is sized to its cell's... the pair keeps
+   * 0.855." The table carries the ruling so the component reads it from the
+   * figure and not from the section's name.
+   */
+  it('§57: the Price history solo is the one figure sized by its free height; the pair keeps the section rule', () => {
+    const solo = figureAt('price-history', 'strip');
+    expect(solo?.kind === 'solo' && solo.sizing, 'the solo is sized by the free height below its entries').toBe('free-height');
+    const pair = figureAt('pressing-detail', 'air');
+    expect(pair?.kind, 'the pair is a pair').toBe('pair');
+    expect(pair !== null && 'sizing' in pair, 'and carries no free-height ruling: it keeps 0.855 of its air column').toBe(false);
   });
 
   it('shows exactly the two-thirds ceiling: what bleeds below the foot is the difference', () => {
@@ -93,6 +108,27 @@ describe('the library (§21, §25): six solids, three curves, three pairs', () =
     /* The rod passes at 12px at the ruled size and is ineligible at any smaller one. */
     expect(solidSize(200, 'rod').width).toBe(12);
     expect(solidSize(100, 'rod').width, 'half the size, half the width').toBeLessThan(MIN_FACE_WIDTH + 1);
+  });
+
+  /**
+   * §57 draws the solo "only where that free height clears §29's bound", and
+   * §29's bound is a FACE width — "no face narrower than 6px as drawn" — not
+   * a figure height. The ratio turns a drawn height into the narrowest face's
+   * width, so the bound can be applied to any figure at any height; the rod
+   * is §25's own instance of it ("passes at 12px at the ruled size": two
+   * faces of six).
+   */
+  it('§57: smallestFaceRatio gives the narrowest face per pixel of drawn height, and the rod is at the bound at the ruled size', () => {
+    const rod = smallestFaceRatio({ kind: 'solo', form: 'rod' });
+    expect(rod * SPECIMEN_HEIGHT, 'the rod’s face at 171 tall is §29’s six pixels').toBeCloseTo(MIN_FACE_WIDTH, 0);
+    /* The panel's narrow face is 0.35 units projected at cos 30° over a box 4.585 tall: 11.3px at the ruled size, so it clears the bound down to about 91px. */
+    const panel = smallestFaceRatio({ kind: 'solo', form: 'panel' });
+    expect(panel * SPECIMEN_HEIGHT).toBeCloseTo(11.3, 1);
+    expect(MIN_FACE_WIDTH / panel, 'the smallest drawn height at which the Price history panel keeps a six-pixel face').toBeCloseTo(90.8, 0);
+    /* A pair's ratio is its narrower form's, over the pair's own taller box. */
+    const pair = smallestFaceRatio({ kind: 'pair', forms: ['slab', 'beam'] });
+    expect(pair, 'the beam’s 0.81 face over the pair’s box').toBeLessThan(smallestFaceRatio({ kind: 'solo', form: 'beam' }));
+    expect(pair).toBeGreaterThan(0);
   });
 
   it('pairs earn their box: footprints disjoint, silhouettes overlapping, area ≥ 1.2× the larger solo', () => {

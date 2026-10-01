@@ -179,3 +179,27 @@ describe('§54: a flat with no ladder draws at ink, full strength', () => {
     expect(html).not.toMatch(/0\.19 0\.008 60 \//);
   });
 });
+
+/**
+ * §57: "§34's rule that no mark paints over type is enforced in the figure
+ * as well as the plane... The Price history solo is sized to the strip's free
+ * height below its entries... drawn only where that free height clears §29's
+ * bound." The measuring happens in the browser (`e2e/figures-type-57.spec.ts`
+ * stages it); this holds the initial render, which is what the server sends.
+ */
+describe('§57: a figure is tested against type, and the free-height solo is sized in the browser', () => {
+  it('renders the free-height solo measuring and not displayed, with no section-ratio height', () => {
+    const html = renderToStaticMarkup(<Figure ladder={ladder} figure={{ kind: 'solo', form: 'panel', sizing: 'free-height' }} host="strip" />);
+    expect(html).toContain('data-figure-state="measuring"');
+    expect(html, 'nothing is painted at a size the host has not given').toContain('display:none');
+    expect(html, 'the height is not 0.855 of the section').not.toContain('85.5%');
+    expect(html, 'it sits on the strip’s inset, not below its foot').toContain('bottom:34px');
+  });
+
+  it('renders a section-sized figure drawn at 0.855 of its host with the bleed, until the browser finds it covering type', () => {
+    const html = renderToStaticMarkup(<Figure ladder={ladder} figure={{ kind: 'pair', forms: ['slab', 'beam'] }} host="air" />);
+    expect(html).toContain('data-figure-state="drawn"');
+    expect(html).not.toContain('display:none');
+    expect(html).toContain('85.5%');
+  });
+});

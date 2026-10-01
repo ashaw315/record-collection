@@ -108,12 +108,14 @@ describe('a section is an item in its row (§26)', () => {
     expect(section, 'the section may shrink to its span').toContain('min-width:0');
   });
 
-  it('carries the stacking layer itself, so a figure sizes against the SECTION', () => {
+  it('carries the stacking layer itself, so a figure measures against the SECTION, and the solo starts measuring', () => {
     /*
-      §25 sizes a figure at 0.855 of the SECTION's height. A percentage
-      resolves against the positioned ancestor, so that ancestor must be the
-      section: when the cell inside it was the positioned box, the figure was
-      measured against something shorter and the gate stopped binding.
+      §25 sizes a figure against the SECTION's height, and §57 sizes the
+      Price history solo by the section's free height below its entries. A
+      percentage resolves against the positioned ancestor, and the solo
+      measures its parent, so that ancestor must be the section: when the
+      cell inside it was the positioned box, the figure was measured against
+      something shorter and the gate stopped binding.
     */
     const html = render(
       <Section name="price-history" title="Price history" base={null} shape="pair" span={12} start={1} ladder={ladder}>
@@ -124,6 +126,7 @@ describe('a section is an item in its row (§26)', () => {
     expect(section, 'the section is the positioned box').toContain('position:relative');
     expect(section, 'and clips its own ornament — §26: a figure’s clip is its own cell').toContain('overflow:hidden');
     expect(html, 'the solo renders inside it').toContain('data-ornament="figure"');
+    expect(html, '§57: served measuring, sized by the browser against the entries').toContain('data-figure-state="measuring"');
   });
 });
 

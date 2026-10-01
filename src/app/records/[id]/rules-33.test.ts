@@ -91,3 +91,27 @@ describe('§33: the matrix solid takes its free height', () => {
     expect(solid.drawn).toBe(false);
   });
 });
+
+/**
+ * §57 sizes the Price history solo "as the matrix solid is sized to its
+ * cell's", so the rule takes the figure's own projected aspect and §29 face
+ * ratio in place of the matrix drawing's 120 × 104 and 36 / 104. The defaults
+ * are the matrix solid's, so every case above still describes it.
+ */
+describe('§57: the free-height rule takes a figure’s own aspect and face ratio', () => {
+  it('sizes by the given aspect: 0.855 of the free height, the width from it', () => {
+    const fit = freeHeightSolid({ cellHeight: 300, textBottom: 100, cellWidth: 1000, inset: 34, aspect: 0.5, smallestFaceRatio: 0.066 });
+    expect(fit.drawn).toBe(true);
+    expect(fit.height).toBeCloseTo((300 - 34 - 100) * SOLID_OF_FREE_HEIGHT, 1);
+    expect(fit.width, 'the width follows the given aspect, not the matrix drawing’s').toBeCloseTo(fit.height * 0.5, 1);
+  });
+
+  it('applies §29’s bound through the given face ratio: a face under six pixels suppresses the figure', () => {
+    /* 0.855 of 100 free is 85.5 tall; at 0.066 per pixel the narrowest face is 5.6, under the bound. */
+    const thin = freeHeightSolid({ cellHeight: 234, textBottom: 100, cellWidth: 1000, inset: 34, aspect: 0.5, smallestFaceRatio: 0.066 });
+    expect(thin.drawn, 'a 5.6px face is not drawn').toBe(false);
+    /* The same free height with the matrix ratio (36 / 104) has a 29.6px face and is drawn: the ratio is what decides. */
+    const matrix = freeHeightSolid({ cellHeight: 234, textBottom: 100, cellWidth: 1000, inset: 34, aspect: 0.5 });
+    expect(matrix.drawn).toBe(true);
+  });
+});

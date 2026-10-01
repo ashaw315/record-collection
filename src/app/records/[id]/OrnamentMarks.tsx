@@ -1,7 +1,12 @@
+'use client';
+
+import { useEffect, useRef, useState } from 'react';
 import type { RecordLadder } from '@/lib/colour/record-ladder';
 import { INK_CSS } from '@/lib/colour/ink';
 import { project } from './construction';
 import { GRID_COLUMN } from './band-geometry';
+import { CELL_PADDING } from './extended-grid';
+import { freeHeightSolid } from './rules-33';
 import { FIGURE_INSET_COLUMNS, type FigureHost } from './region-rows';
 import {
   BLEED_RATIO,
@@ -10,6 +15,7 @@ import {
   SECTION_CELL_DELTA,
   SIZE_RATIO,
   figureBox,
+  smallestFaceRatio,
   type Figure as FigureSpec,
 } from './ornament';
 
@@ -28,6 +34,13 @@ import {
  * section, of which two-thirds shows above the cell's foot and the rest
  * bleeds below it — the gate binds exactly. Width follows the figure's
  * projected box; nothing is measured in pixels but the inset.
+ *
+ * **§57 takes the Price history solo out of that rule and tests every figure
+ * against type.** The solo is sized to its strip's free height below its
+ * entries, as the matrix solid is to its cell's (`rules-33.ts`), and drawn
+ * only where that clears §29's six-pixel face; and every figure, whatever
+ * its host, is hidden where its box would sit over the host's text, as the
+ * plane is (§34). Both need the host's box, so this is a client component.
  *
  * **No z-index of its own beyond the cell's floor.** The cell isolates and
  * clips (`Section`), so the figure sits at the bottom of that stacking
@@ -49,26 +62,112 @@ export function Figure({
   host: FigureHost;
 }) {
   const box = figureBox(figure);
+  const aspect = box.width / box.height;
+  const freeHeight = figure.kind === 'solo' && figure.sizing === 'free-height';
+  const faceRatio = smallestFaceRatio(figure);
+  const ref = useRef<SVGSVGElement>(null);
+  /*
+    §57: every figure is tested against its host's type, and the free-height
+    solo is sized by the host; both need the host's box, which only the
+    browser has. A section-sized figure is served DRAWN and hidden if the
+    test finds it over type, as the plane is; a free-height figure is served
+    MEASURING and not displayed, because no size the server could send is
+    the host's.
+  */
+  const [fit, setFit] = useState<{ state: FigureState; height: number | null }>({ state: freeHeight ? 'measuring' : 'drawn', height: null });
+
+  useEffect(() => {
+    const el = ref.current;
+    const hostEl = el?.parentElement ?? null;
+    if (el === null || hostEl === null) return;
+    const test = () => {
+      const h = hostEl.getBoundingClientRect();
+      const type = typeIn(hostEl, el);
+      const inset = FIGURE_INSET_COLUMNS * GRID_COLUMN;
+      let size: { width: number; height: number };
+      let bottom: number;
+      if (freeHeight) {
+        /*
+          "The strip's free height below its entries", as the matrix solid
+          takes its cell's: the text that bounds the solo is the text in its
+          own column -- the content cell under the solo's right edge -- not
+          the strip's other column, which the §34 test below still guards.
+        */
+        const xRight = h.right - inset;
+        const column = Array.from(hostEl.querySelectorAll<HTMLElement>('[data-cell^="content-"]')).find((c) => {
+          const cb = c.getBoundingClientRect();
+          return cb.left <= xRight - 1 && xRight - 1 <= cb.right && cb.top <= h.bottom - CELL_PADDING - 1 && h.bottom - CELL_PADDING - 1 <= cb.bottom;
+        });
+        const columnType = column === undefined ? type : typeIn(column, el);
+        const textBottom = Math.max(0, ...columnType.flatMap(glyphs).map((g) => g.bottom - h.top));
+        const columnLeft = column === undefined ? h.left : column.getBoundingClientRect().left;
+        const sized = freeHeightSolid({
+          cellHeight: h.height,
+          textBottom,
+          cellWidth: xRight - (columnLeft + CELL_PADDING),
+          inset: CELL_PADDING,
+          aspect,
+          smallestFaceRatio: faceRatio,
+        });
+        if (!sized.drawn) {
+          setFit({ state: 'below-bound', height: 0 });
+          return;
+        }
+        size = sized;
+        bottom = h.bottom - CELL_PADDING;
+      } else {
+        const height = h.height * SIZE_RATIO + SIZE_RATIO * SECTION_CELL_DELTA;
+        size = { height, width: height * aspect };
+        bottom = h.bottom + BLEED_RATIO * h.height + BLEED_RATIO * SECTION_CELL_DELTA;
+      }
+      /*
+        The box is computed from the host, as the plane's is, so a hidden
+        figure can be re-tested; and it is clipped to the host first, since
+        what bleeds below the foot is cut and cannot cover anything.
+      */
+      const right = host === 'strip' ? h.right - inset : h.left + h.width / 2 + size.width / 2;
+      const clipped = { left: Math.max(right - size.width, h.left), right: Math.min(right, h.right), top: Math.max(bottom - size.height, h.top), bottom: Math.min(bottom, h.bottom) };
+      const covers = type.flatMap(glyphs).some((b) => b.left < clipped.right && clipped.left < b.right && b.top < clipped.bottom && clipped.top < b.bottom);
+      setFit({ state: covers ? 'covers-type' : 'drawn', height: freeHeight ? size.height : null });
+    };
+    test();
+    const observer = new ResizeObserver(test);
+    observer.observe(hostEl);
+    return () => observer.disconnect();
+  }, [host, freeHeight, aspect, faceRatio]);
+
   const face = (points: ReadonlyArray<readonly [number, number]>) =>
     points.map(([x, y]) => `${x.toFixed(3)},${y.toFixed(3)}`).join(' ');
 
   return (
     <svg
+      ref={ref}
       data-ornament="figure"
       data-figure={figure.kind}
+      data-figure-state={fit.state}
       aria-hidden="true"
       viewBox={`${box.minX} ${box.minY} ${box.width} ${box.height}`}
       preserveAspectRatio="xMidYMid meet"
       className="pointer-events-none absolute"
       style={{
-        /*
-          A percentage resolves against the CELL, which is `SECTION_CELL_DELTA`
-          shorter than its section (the section carries the rule); the pixel
-          term restores the section as the measure so the rendered height is
-          0.855 of the section and not of something 1px smaller.
-        */
-        height: `calc(${SIZE_RATIO * 100}% + ${SIZE_RATIO * SECTION_CELL_DELTA}px)`,
-        aspectRatio: `${box.width / box.height} / 1`,
+        ...(freeHeight
+          ? {
+              /* §57: the free height the browser measured, on the strip's inset; nothing until it has. */
+              height: fit.height ?? 0,
+              bottom: CELL_PADDING,
+            }
+          : {
+              /*
+                A percentage resolves against the CELL, which is `SECTION_CELL_DELTA`
+                shorter than its section (the section carries the rule); the pixel
+                term restores the section as the measure so the rendered height is
+                0.855 of the section and not of something 1px smaller.
+              */
+              height: `calc(${SIZE_RATIO * 100}% + ${SIZE_RATIO * SECTION_CELL_DELTA}px)`,
+              /* The part below the foot: the ruled size less the gate. */
+              bottom: `calc(${-BLEED_RATIO * 100}% - ${BLEED_RATIO * SECTION_CELL_DELTA}px)`,
+            }),
+        aspectRatio: `${aspect} / 1`,
         /*
           Two rules, keyed to the host. A strip has no air of its own, so the
           figure is set against the page edge by a module; an air column IS
@@ -79,8 +178,8 @@ export function Figure({
         ...(host === 'strip'
           ? { right: FIGURE_INSET_COLUMNS * GRID_COLUMN }
           : { left: '50%', transform: 'translateX(-50%)' }),
-        /* The part below the foot: the ruled size less the gate. */
-        bottom: `calc(${-BLEED_RATIO * 100}% - ${BLEED_RATIO * SECTION_CELL_DELTA}px)`,
+        /* §34, §57: a figure over type, or one without a size yet, is not drawn. `hidden` is an HTML attribute and an SVG element in an HTML document does not take its style. */
+        ...(fit.state === 'drawn' ? {} : { display: 'none' }),
         zIndex: -1,
       }}
     >
@@ -99,6 +198,46 @@ export function Figure({
         );
       })}
     </svg>
+  );
+}
+
+/** §57's states: served measuring (free-height) or drawn; the browser then finds it drawn, over type, or under §29's bound. */
+type FigureState = 'measuring' | 'drawn' | 'covers-type' | 'below-bound';
+
+/**
+ * A text element's extent is its GLYPHS, not its box: the section label is a
+ * block that spans the whole strip while its letters stop a hundred pixels
+ * in, and the box test found every Price history solo under "Price history".
+ * `e2e/layout-sweep.spec.ts` learned the same on the year figure. An element
+ * whose own text lays out no rect keeps its box.
+ */
+function glyphs(el: HTMLElement): DOMRect[] {
+  const rects: DOMRect[] = [];
+  for (const node of Array.from(el.childNodes)) {
+    if (node.nodeType !== Node.TEXT_NODE || (node.textContent ?? '').trim() === '') continue;
+    const range = document.createRange();
+    range.selectNodeContents(node);
+    for (const rect of Array.from(range.getClientRects())) if (rect.width > 0 && rect.height > 0) rects.push(rect);
+  }
+  if (rects.length > 0) return rects;
+  const box = el.getBoundingClientRect();
+  return box.width > 0 && box.height > 0 ? [box] : [];
+}
+
+/**
+ * The host's type: elements carrying their own text, outside the figure and
+ * outside anything hidden from readers WITHIN the host. The host's own
+ * `aria-hidden` does not count -- an air column is hidden from readers as a
+ * whole, and type placed in it is still painted type, which is exactly the
+ * case §57 rules the test in for.
+ */
+function typeIn(root: HTMLElement, figure: Element): HTMLElement[] {
+  const hiddenInside = (t: HTMLElement) => {
+    for (let a: HTMLElement | null = t; a !== null && a !== root; a = a.parentElement) if (a.getAttribute('aria-hidden') === 'true') return true;
+    return false;
+  };
+  return Array.from(root.querySelectorAll<HTMLElement>('*')).filter(
+    (t) => t !== figure && !figure.contains(t) && !hiddenInside(t) && Array.from(t.childNodes).some((n) => n.nodeType === Node.TEXT_NODE && (n.textContent ?? '').trim() !== ''),
   );
 }
 

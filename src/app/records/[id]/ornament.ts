@@ -1,3 +1,4 @@
+import { COS30 } from '@/app/wall/geometry';
 import { project } from './construction';
 
 /**
@@ -185,7 +186,19 @@ export function silhouettesOverlap(a: PlacedForm, b: PlacedForm): boolean {
 }
 
 /** §26's two figures, keyed by the section and the place in its row they occupy. */
-export type Figure = { kind: 'pair'; forms: readonly [OrnamentArchetype, OrnamentArchetype] } | { kind: 'solo'; form: OrnamentArchetype };
+export type Figure =
+  | { kind: 'pair'; forms: readonly [OrnamentArchetype, OrnamentArchetype] }
+  | {
+      kind: 'solo';
+      form: OrnamentArchetype;
+      /**
+       * §57: "The Price history solo is sized to the strip's free height
+       * below its entries, as the matrix solid is sized to its cell's, and is
+       * drawn only where that free height clears §29's bound." Absent, the
+       * figure takes §25's 0.855 of its section, which the pair keeps.
+       */
+      sizing?: 'free-height';
+    };
 
 /** The placed forms of a figure and their projected bounds — the box a figure is sized and drawn by. */
 export function figureBox(figure: Figure): { forms: PlacedForm[]; minX: number; minY: number; width: number; height: number } {
@@ -241,8 +254,23 @@ export const FIGURES: Readonly<Record<string, Figure>> = {
   /* Pressing detail's air column, row one. §26 does not name the pair; §25 lists three and this is its first. */
   'pressing-detail:air': { kind: 'pair', forms: ['slab', 'beam'] },
   /* Price history's full-width strip, row three. The archetype is §9.2's for this section. */
-  'price-history:strip': { kind: 'solo', form: 'panel' },
+  'price-history:strip': { kind: 'solo', form: 'panel', sizing: 'free-height' },
 };
+
+/**
+ * §29's bound is a FACE width, "no face narrower than 6px as drawn", and a
+ * figure sized by its free height (§57) has to apply it at whatever height it
+ * lands on. This is the narrowest face's projected width per pixel of the
+ * figure's drawn height: a form's left face spans its first extent and its
+ * right face its second, each foreshortened by cos 30°, over the box the
+ * figure is drawn into. The rod at the ruled size is the check: 0.12 × cos 30°
+ * over a 2.97 box is 6px at 171.
+ */
+export function smallestFaceRatio(figure: Figure): number {
+  const box = figureBox(figure);
+  const narrowest = Math.min(...box.forms.map(({ archetype }) => Math.min(EXTENTS[archetype][0], EXTENTS[archetype][1]) * COS30));
+  return narrowest / box.height;
+}
 export function figureAt(section: string, place: FigurePlace): Figure | null {
   return FIGURES[`${section}:${place}`] ?? null;
 }

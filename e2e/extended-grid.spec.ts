@@ -870,7 +870,7 @@ test('places figures only where §26 does, never in consecutive sections', async
   expect(await page.locator('[data-ornament="fill"]').count(), 'no full fill anywhere').toBe(0);
 });
 
-test('a figure is 0.855 of its section, shows two-thirds, and is cut by its foot alone', async ({ page }) => {
+test('the pair is 0.855 of its air column, shows two-thirds, and is cut by its foot alone; the solo sits inside the strip on its inset (§57)', async ({ page }) => {
   /**
    * **The size rule is the gate itself.** Height is the governed term and it
    * is the SECTION's; the visible part is exactly the two-thirds ceiling and
@@ -880,6 +880,12 @@ test('a figure is 0.855 of its section, shows two-thirds, and is cut by its foot
    * **Clipping is a boundary, not a treatment**: the clip is the figure's own
    * cell, and a figure is cut by at most one edge — its foot. A second cut
    * edge reads as a figure too big for its box.
+   *
+   * **§57 takes the Price history solo out of the section rule**: it is sized
+   * to the strip's free height below its entries and drawn only where that
+   * clears §29's bound, so here it is asserted inside the strip, on the
+   * inset, cut by no edge, or not shown at all. Its size against the entries
+   * is `figures-type-57.spec.ts`'s.
    */
   const suffix = makeSuffix();
   const id = await richRecord(page, suffix);
@@ -887,7 +893,10 @@ test('a figure is 0.855 of its section, shows two-thirds, and is cut by its foot
   for (const width of [1440, GRID_FORK, 2560, 3440]) {
     await page.setViewportSize({ width, height: NO_SCROLL_HEIGHT });
     await page.goto(`/records/${id}`);
-    await page.locator('[data-region="extended-grid"] [data-ornament="figure"]').first().waitFor({ timeout: 20_000 });
+    /* Attached, not visible: §57 hides a figure over type or under §29's bound, and the solo is served measuring. */
+    await page.locator('[data-region="extended-grid"] [data-ornament="figure"]').first().waitFor({ state: 'attached', timeout: 20_000 });
+    await page.waitForFunction(`Array.from(document.querySelectorAll('[data-region="extended-grid"] [data-ornament="figure"]')).every((f) => f.getAttribute('data-figure-state') !== 'measuring')`, undefined, { timeout: 10_000 });
+    await page.waitForTimeout(250);
 
     const figures = await page.evaluate(() =>
       Array.from(document.querySelectorAll('[data-region="extended-grid"] [data-ornament="figure"]')).map((figure) => {
@@ -902,7 +911,11 @@ test('a figure is 0.855 of its section, shows two-thirds, and is cut by its foot
         return {
           name: host.getAttribute('data-section') ?? 'air',
           kind: figure.getAttribute('data-figure'),
+          state: figure.getAttribute('data-figure-state'),
+          shown: getComputedStyle(figure).display !== 'none',
           sectionHeight: c.height,
+          sectionBottom: c.bottom,
+          bottom: f.bottom,
           height: f.height,
           width: f.width,
           visible: Math.max(0, Math.min(f.bottom, c.bottom) - Math.max(f.top, c.top)),
@@ -915,6 +928,14 @@ test('a figure is 0.855 of its section, shows two-thirds, and is cut by its foot
 
     for (const figure of figures) {
       const label = `${figure.name} (${figure.kind}) at ${width}: ${Math.round(figure.height)}px in a ${Math.round(figure.sectionHeight)}px section`;
+      if (figure.name === 'price-history') {
+        expect(['drawn', 'below-bound'], `${label}: §57 sizes the solo by its free height, drawn or not`).toContain(figure.state);
+        if (!figure.shown) continue;
+        expect(figure.cutEdges, `${label}: inside the strip, cut by no edge`).toBe(0);
+        expect(figure.sectionBottom - figure.bottom, `${label}: on the strip's inset`).toBeCloseTo(CELL_PADDING, 0);
+        expect(figure.height / figure.sectionHeight, `${label}: not the section rule`).not.toBeCloseTo(SIZE_RATIO, 2);
+        continue;
+      }
       expect(figure.height / figure.sectionHeight, label).toBeCloseTo(SIZE_RATIO, 2);
       expect(figure.visible / figure.sectionHeight, `${label}: visible`).toBeCloseTo(GATE_RATIO, 2);
       expect(figure.cutFoot, `${label}: bleeds below the foot`).toBe(true);
