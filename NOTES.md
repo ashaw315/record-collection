@@ -33708,6 +33708,16 @@ each stored and none shown -- a successful request with no visible result.
 The default is now Back, the next type in examination order and the first
 the gallery draws; Cover stays in the list. No feedback UI was added.
 
+**§61 gives the durable reason, ruled while this was being built.** Under
+§61 the record shows its newest cover and re-derives its colour from it,
+so a stray cover upload is the opposite of invisible: it takes over the
+sleeve and re-colours the record. Defaulting away from Cover is right
+under either rule, and the second reason outlives the first. The
+"smallest honest addition" proposed below describes the oldest-cover
+behaviour §61 withdraws, was never carried to Design, and is withdrawn
+here; whether anything needs proposing is re-asked after step 72, when an
+upload of every type has a visible result.
+
 **What the uploader shows today.** In between: "Working…" beside the
 controls while the request runs, the file input disabled. On failure: one
 line in the destructive ink under the limits line, from the server's
