@@ -101,6 +101,7 @@ The wall at rest is line, ink and paper; colour arrives with the pull. Everythin
 | §52 | The ink cap is taken at the construction’s minimum | Why a cap against the construction’s current size forks at every breakpoint, and why its minimum across widths does not; what that costs, and which records it suppresses. |
 | §53 | The About has one cell | Why the lower About row goes; what the cell carries at rest and while editing; where the by-line’s qualifier goes; the two figures needed before build. |
 | §54 | The record with no cover is ink, flat | Why §5.3 stands as written; why the opacity goes and the disc merging into the faces is accepted; which three marks the build omits and why that is the defect; why the tint field is not drawn. |
+| §55 | What the real collection confirms | Which fixture figures the real collection supersedes, confirms or has not reached, and why the images row is unruled for more than one image. |
 
 ## Structural sections — pointers
 
@@ -299,14 +300,20 @@ These are the sections the rulings above build on, all in `Record Detail 8a - se
 62. **§54 — the record with no cover.** Remove every opacity on a no-cover record, the ink at 0.55 and the Plane's ink-at-0.14 fallback alike: every §5.1 mark is ink at full strength, and the construction's grey faces keep their neutral. Draw the corner triangle and the quarter-disc in Images at ink on that record, by their usual placement rules; the provenance arc keeps §34's rule. Draw no tint field. Add a no-cover record to the extremes fixture and capture it at 1440 × 900 and 390.
    > §5.3 stands as written: with no cover, every one of §5.1’s marks is ink, flat and at full strength, and tint and shade have no role, because there is nothing to derive them from.
 
-63. **Per-record counts on the real collection.** Produce one table of every "of seventeen" count and every per-record figure in the build target, each with its real-collection value from the manifest beside it, §50's twelve of seventeen first. Report; do not edit. Claude withdraws the class in one pass from the table and re-reads §50 against its figure.
-   > Held for re-measurement on the real collection:
+63. **Done: answered by Code’s table before this step was written; §55 withdrew from it.** **Per-record counts on the real collection.** Produce one table of every "of seventeen" count and every per-record figure in the build target, each with its real-collection value from the manifest beside it, §50's twelve of seventeen first. Report; do not edit. Claude withdraws the class in one pass from the table and re-reads §50 against its figure.
+   > Re-measured on the real collection in step 63:
+
+64. **§55 — re-measure the fork's pair changes on the real collection.** Measure every record's pair at 1439 and 1440 on the manifest and report how many change and by how many steps, against §47's nine of seventeen. Report; do not edit.
+   > The real collection confirms or supersedes every per-record figure measured on the fixture, and a figure it has not reached is marked unconfirmed rather than left reading as measured.
+
+65. **§55 — the images row with more than one image.** Before the upload fix reaches Adam: seed records with two, three and six images and render each at 390, 1000, 1440 and 1920. Report the Images section's height, the quarter-disc's size and whether it still clears §26's three conditions, and what the rows beside Images do. Report; do not tune. Claude rules the row from the render.
+   > The images row is ruled from its render, not from the code, and the render comes before any real record carries a second image.
 
 **Every row in the table above must appear in a step here.** The completeness check greps the table only, so an index that is current and an order that is eight rulings behind both pass — which is what happened at §W.28–§W.35. Check both.
 
 ## Maintaining this file
 
-**A supersession of a built ruling gets its own build step.** §34 superseded §28's grouping for row 2, and the change went unbuilt because it was sentence four of step 32, which did four other things. §33's fixed rule rows were the same, inside step 29's nine lettered clauses. Nothing in the index catches a supersession: the old tests keep passing because the old behaviour is still there. Steps 22, 23, 24 and 43 to 53 are the convention; step 54 adds a guard and supersedes nothing; steps 55 to 63 are the convention.
+**A supersession of a built ruling gets its own build step.** §34 superseded §28's grouping for row 2, and the change went unbuilt because it was sentence four of step 32, which did four other things. §33's fixed rule rows were the same, inside step 29's nine lettered clauses. Nothing in the index catches a supersession: the old tests keep passing because the old behaviour is still there. Steps 22, 23, 24 and 43 to 53 are the convention; step 54 adds a guard and supersedes nothing; steps 55 to 65 are the convention.
 
 **A test written from a superseded ruling defends the defect.** Building the new ruling turns the suite red, which reads as a regression, so the old behaviour survives every green run. Step 29 alone had three instances: two tests guarding the line cap §33 withdrew, a known-failing test that goes red if the matrix term is built as ruled, and four suites asserting the frame constant §33 retired. So when a section supersedes a built ruling, the tests written from the old one are part of what must change, and the step names them.
 
