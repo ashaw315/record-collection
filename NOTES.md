@@ -32716,7 +32716,9 @@ only §5.3 record -- no cover, no spine colour -- never rendered by any
 fixture, so two of §5.1's eight marks went undrawn on it for eighteen
 days. A fixture that carries one value where the world carries many, or
 none where the world carries one, is an adapter replaced by a spy in a
-different coat. The rule, as
+different coat. Fifth, one level up: every per-record count Code measured
+into the design files came from that fixture, not only the ones tripped
+over (the table "Every per-record count in the design files"). The rule, as
 proposed and kept:
 
 **Every external boundary -- blob store, mail, payment, any third-party SDK
@@ -32896,3 +32898,73 @@ field is suppressed by the gap. The cell gained 182 and the title took
 that fits, and the ground is what it leaves"), reported in §50's own words
 for the fixture at 70.3 and now measured on the real record at 50.8.
 Identical at 1920 × 1200.
+
+## The image upload 500, run again on request (30 Sep, 21:18)
+
+Path (a) again, exactly as specified: the ordinary-environment server, a
+minted session, a 179-byte PNG posted as a back image to Bitches Brew
+through the running app. It threw before the insert; nothing was written:
+
+    [POST /api/records/:id/images] The image could not be stored.
+    ← caused by: Vercel Blob: OIDC is enabled for this project, but not for
+    the "development" environment.
+    at Object.put (…/.next/dev/server/chunks/[root-of-the-server]….js:3012)
+
+The same line as on the first run (this file, "The image upload 500: the
+blob SDK chose OIDC"). (b) was answered by identity on the first run: the
+read-write token is present for Production and Preview, created 36 days
+ago on the day the cover upload last worked, never updated, sensitive so
+not pullable, its store segment matching `BLOB_STORE_ID`; it is not used,
+because the SDK resolves OIDC first. (c) is not reached. Not fixed.
+
+## Every per-record count in the design files, in one table (30 Sep)
+
+Fifth example of the boundary rule, one level up: the fixture was the
+source of every per-record count Code measured into the file, not only the
+ones tripped over. Nothing withdrawn here; the list is Design's. "Fixture"
+means measured on the seeded seventeen (one spine colour, no null, seeded
+prices, snippets, journal and genres); "real data" means read from the
+production database; "real covers" means computed from the stored cover
+colours. Where the contact sheet's manifest can tell, the real figure
+follows.
+
+| file §  | the count, as written | source | the manifest says |
+|---|---|---|---|
+| build §22 | every one of the seventeen has an eligible carrier at drawn scale; the worst of the seventeen is 0.387% | fixture, but the construction is hashed from the id alone, so it holds on the real records | not in the manifest |
+| build §31 | none of the seventeen changed when the clamp came out | same | — |
+| build §32 | the spread measured across the seventeen, 35 | same | — |
+| build §33 | bound on 5 of 17 records | fixture-era frame | — |
+| build §33 | 13 of 17 have no About, one of 17 a journal entry; four records have an About at 745, 580, 555, 482 chars | real data (August) | the sheet does not read Abouts; the counts hold today |
+| build §34 | both arcs cover the cell's text on all 17 at 390, 480, 960, 1000; provenanceArc drawn on every record above the fork; aboutArc not drawn on the four with an About | fixture | arc behaviour is type-driven; on the no-cover record the arc hides below 1440 and draws above (probe) |
+| build §34 | 535 for The Hurdy Gurdy Man and 552 for Bitches Brew across the four records | real Abouts | — |
+| build §35 | twelve of seventeen show the diagonal; crossed its label on all twelve | real data (no About) | — |
+| build §36 | on the twelve records with neither About nor entry | real data | — |
+| build §36 | measured on the seventeen real records at §33's fit: every record clears; at 480 five of seventeen clear, at 390 none | fixture | — |
+| build §38 | Tags absent on sixteen of seventeen; the rule stood against empty grid on 16 of 17 at 1000 and 1440 | fixture genres (seeded identically) | — |
+| build §39 | measured on all seventeen: the ceiling under 480 at every window, widest 449; breached on 15 of 17 at 900, 12 at 950, 7 at 1080 at eighteen columns | fixture, construction geometry, holds on real | — |
+| build §41 | over §30's ceiling on all seventeen at 1200 | same | — |
+| build §43 | agrees with the DOM on 339 of 340 placements across seventeen records | fixture pressing, matrix and price data | not measured on real |
+| build §46 | none of the seventeen does, widest The Soft Parade at 449 | fixture, construction, holds on real | — |
+| build §47 | nine of seventeen changed pair across 1439 to 1440 | fixture (the supply depends on the pressing block, which differs on real records) | pairs at 1440 × 900 on real: 72/40 ×4, 96/54 ×4, 120/66 ×5, 144/80 ×4 |
+| build §48 | five records exceed the ceiling at 1439 × 900 | fixture, construction, holds on real | — |
+| build §49 | nine records change pair across 1679 to 1680 and four across 1919 to 1920 | fixture | the sheet has no 1679 or 1919 column |
+| build §50 | twelve of seventeen fields at 1440 × 1200 outweighed the mark, up to 2.07 | fixture, and pre-cap: the field it measured no longer exists | — |
+| build §50 | capped by ink, thirteen records draw in a band of 2.5 : 1 to 3.4 : 1, four fall past 4 : 1 (Grave New World, Wired, On The Radio, The Hurdy Gurdy Man) | fixture, predicted | real at 1440 × 1200: eleven draw, 2.76 : 1 to 3.79 : 1, all by the cap; six do not: The Best Of The Blues Project (no ladder), Grave New World, On The Radio and The Hurdy Gurdy Man (gap), Wired and Bridge Over Troubled Water (cap) |
+| build §51 | §50's cap binds on twelve records at 1440 × 1200; fields ran into the pressing block on four | fixture | real: the cap binds on all eleven that draw |
+| build §52 | eight records differ across 959 to 960 at 1200 | fixture | no 959 column |
+| build §52 | twelve draw at 1200 high, eight at 900 (already carries "Superseded by §54: eleven and six" in the untaken drop) | fixture | real: eleven at 1200, six at 900 |
+| settled §4.2 | the field shrinks on two records and vanishes on one; all seventeen records' construction legibility | fixture-era corner field | — |
+| settled §5.2 | five of sixteen near-grey; eleven keyed, five quiet; 5 of 16 / 1 of 17 | real covers | 16 colours served, one ink; the near-grey five render grey-cast on the sheet |
+| settled §5.5, §6, §7 | 16 of 17 no journal, 14 no price, 13 no source; sleeve 1 of 17; fourteen of seventeen | real data (August); prices and journal entries have since been added on real records | not read by the sheet |
+| settled §8.1 | sixteen of seventeen control-only Images; three records of seventeen; No images yet on all seventeen | real data (August) | 16 of 17 covers rendered, 1 flat |
+| settled §8.3 | seventeen of seventeen have exactly one image, the cover | real data (August) | 16 of 17 today; The Best Of The Blues Project has none |
+| settled §9.4 | on sixteen of seventeen the marked set is Images and Journal alone | real data (August) | — |
+| HANDOFF §14 | the id→title map wrong on three of four records | fixture | — |
+
+**The record behind twelve-to-eleven at 1200 is The Best Of The Blues
+Project.** On the fixture it carried the seeded terracotta and drew a
+172.5 field at its gap at 1440 × 1200 (step 58's table); on the real
+collection it has no spine colour, so no ladder and no field, ever. The
+fixture gave it a field it can never have. Eight-to-six at 900 is Bitches
+Brew and Mind Games, drawn at their 113.9 gap on the fixture and suppressed
+by the gap on the real pages, whose pressing blocks run a line longer.
