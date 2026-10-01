@@ -329,6 +329,10 @@ These are the sections the rulings above build on, all in `Record Detail 8a - se
 70. **§60 — the disc's stated reference.** A supersession of built step 66 behaviour. Size the Images quarter-disc against the section's heading, padding and one tile row, excluding the cover note at every count; remove the blank note row beside the tiles. Report the disc's radius at 390, 1000, 1440 and 1920 at one, two, three and six images. Replace the tests that assert the blank row.
    > The Images quarter-disc is sized against a stated reference height: the section’s heading, its padding and one tile row, with the cover note excluded at every count.
 
+**The record-detail screen is closed at 7983d4d, on 1 October 2026,** by Adam’s pass over the 119 captures, which found nothing that changes what a reader understands about a record. Steps run 0 to 71. This is the baseline the record modal builds against: its marks, its type ladder and its colour system.
+
+**Left open at close, deliberately:** §60’s corner mark still steps at a record’s second image, from the host’s side, invisible until a record has two; §55’s eight unconfirmed figures, which no real record exercises yet; §9’s specimen, which still draws the lower About row §53 removed; and the author-stated rule count in the NOTES index footer.
+
 **Every row in the table above must appear in a step here.** The completeness check greps the table only, so an index that is current and an order that is eight rulings behind both pass — which is what happened at §W.28–§W.35. Check both.
 
 ## Maintaining this file
