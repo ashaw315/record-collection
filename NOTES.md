@@ -24,7 +24,7 @@ here. They are one defect seen from two sides: an assertion with no failing
 input, and an observation with no subject. Both produce green. If you are
 looking at something that passes and you are not sure why, start in those two.
 
-Generated from 127 declared rules. Regenerate with
+Generated from 129 declared rules. Regenerate with
 `npx tsx scripts/notes-index.ts --write`.
 
 ### Measurements that do not govern
@@ -124,6 +124,7 @@ Generated from 127 declared rules. Regenerate with
 | several captures of one record and window differ only in a prefix, and the wrong one can reach a reader without anyone noticing | [A capture's name carries the figure that differs, not only a step prefix (30 Sep)](#a-captures-name-carries-the-figure-that-differs-not-only-a-step-prefix-30-sep) |
 | an output names a thing and you have not checked the thing exists | [A FABRICATED IDENTIFIER IS A DIFFERENT FAILURE CLASS FROM AN UNCERTAIN CLAIM](#a-fabricated-identifier-is-a-different-failure-class-from-an-uncertain-claim) |
 | you are about to start anything that checks out, stashes or rewrites files while a run that reads those files is live | [A lint baseline stashed under a running Playwright job is scheduling luck (30 Sep)](#a-lint-baseline-stashed-under-a-running-playwright-job-is-scheduling-luck-30-sep) |
+| a probe is pointed at a base URL and something other than the probe may be listening there | [A measurement run names the server it hit (1 Oct)](#a-measurement-run-names-the-server-it-hit-1-oct) |
 | a mutation failed nothing and you are reading that as dead code | [A mutation that fails nothing does not mean the code is dead. Three](#a-mutation-that-fails-nothing-does-not-mean-the-code-is-dead-three) |
 | a rule's stated ground describes what the code does, and nobody has checked that it does | [A predicate correctly applied to a false fact about the build](#a-predicate-correctly-applied-to-a-false-fact-about-the-build) |
 | you built a view to judge something and the view has its own layout rules | [A view that normalises away the signal it was made to show — third instance](#a-view-that-normalises-away-the-signal-it-was-made-to-show-third-instance) |
@@ -143,6 +144,7 @@ Generated from 127 declared rules. Regenerate with
 | a long test reads fixtures other specs can touch, and its last clean run is being cited as evidence | [A MEASUREMENT THAT PASSED BY SCHEDULING LUCK IS NOT A MEASUREMENT](#a-measurement-that-passed-by-scheduling-luck-is-not-a-measurement) |
 | a written measurement is being carried forward and you have not re-read the source | [A note that implied a difference, and a payload that did not](#a-note-that-implied-a-difference-and-a-payload-that-did-not) |
 | you are about to derive a per-member value from a property of the members, and have not looked at the spread of that property | [A rule deriving variety from an axis the set does not vary along produces none](#a-rule-deriving-variety-from-an-axis-the-set-does-not-vary-along-produces-none) |
+| a figure, a floor or a fit was measured on the collection as it stood and the collection has since filled in the field the rule depends on | [A rule measured against data the collection does not yet have is unverified, not verified (1 Oct)](#a-rule-measured-against-data-the-collection-does-not-yet-have-is-unverified-not-verified-1-oct) |
 | a search came back empty and you are about to conclude the thing does not exist | [A search whose scope cannot contain the answer](#a-search-whose-scope-cannot-contain-the-answer) |
 | a placement rule was written against the cases in front of you and you have not counted how many positions it actually permits | [Half a column, because a rule permitting one position is not a rule](#half-a-column-because-a-rule-permitting-one-position-is-not-a-rule) |
 | a failure resembles an earlier one and you are applying the same diagnosis | [RULE: "same family" is a hypothesis, not a diagnosis. Measure which](#rule-same-family-is-a-hypothesis-not-a-diagnosis-measure-which) |
@@ -33172,3 +33174,60 @@ over type"; the Plane obeys it and the solid does not. Not fixed; Design
 rules what the solid does, at 390 and at the five other widths where it
 overlaps. Measured through my own development server after an earlier
 attempt against a server on port 3000 that was not mine ended mid-run.
+
+## Every figure on the record screen against every text line box: one defect, not a class (1 Oct)
+
+The screen draws two figures by the ornament table and one more solid:
+the pair in Pressing detail's air column, the solo in Price history's
+strip, and the matrix cell's solid. Each measured on all seventeen real
+records at 390, 480, 768, 960, 1000, 1440 and 1920, read-only, against
+every text line box on the page, with the figure's box CLIPPED to its host
+first -- the section is the positioned, clipping box (`Section.tsx:34-43`,
+step 29(h)), so the part that bleeds past the foot is never painted. An
+unclipped first pass counted the bleed and reported the Images label under
+the solo at 390 and the Market heading under the pair at 1440; both were
+under the box and not under paint, and the clipped pass is the one that
+stands. Server: my own, port 3200.
+
+| figure | host | sizing | drawn on | text under paint |
+|---|---|---|---|---|
+| the pair (slab, beam) | Pressing detail's air column, 1440 and 1920 only (§28's air rule) | `Figure`, 0.855 of the section's height, centred in the air | 15 records | none, at either width: painted 156 × 129 after the clip |
+| the matrix solid | the matrix cell, where a runout exists | `MatrixSolid`, the cell's free height BELOW its text or the width inside the insets, whichever is smaller, with §29's six-pixel face minimum | 3 records at 960 and 1000, 6 at 1440 and 1920 | none: it is sized around the text by construction |
+| the solo (panel) | Price history's strip | `Figure`, 0.855 of the section's height, 240 from the right edge | 16 records | 8 at 390, 15 at 480, 768, 960, 1000 and 1440, none at 1920; worst 158 px |
+
+So §34 is unenforced by `Figure` but breached by one of its two instances.
+The pair survives by placement: an air column carries no text. The solo
+breaches because its strip carries the entries, and because its height
+follows a section that grew with the data. The fix, if Design wants it,
+is one change in `Figure`, the covers-type test the Plane already has,
+rather than a rule per mark. Not wired.
+
+## A rule measured against data the collection does not yet have is unverified, not verified (1 Oct)
+
+**Shape:** sample-as-population
+**You are here if:** a figure, a floor or a fit was measured on the collection as it stood and the collection has since filled in the field the rule depends on
+
+Sibling of the boundary rule. The price-history solid is 0.855 of its
+section's height, and in August almost no record had prices, so the mark
+was measured against a short section and fit; sixteen of seventeen now
+carry five to nine entries, the section grew, and the solid grew over the
+entries. Third instance in a week of a rule written against degenerate
+data breaking when the data arrived: the fixture's single spine colour (one
+where the collection has sixteen), one image per record (no record has
+ever held two), and no price history. A measurement taken while a field is
+empty verifies the empty case only; the filled case is unverified until a
+record fills it, and NOTES should say so at the time rather than let the
+figure read as measured.
+
+## A measurement run names the server it hit (1 Oct)
+
+**Shape:** observer-without-subject
+**You are here if:** a probe is pointed at a base URL and something other than the probe may be listening there
+
+The first price-history pass went to a development server on port 3000
+that was not mine -- started seconds before, on the default port, by
+something else -- and ended mid-run when that server went away; eight
+records were measured against it and the rest against my own on 3200,
+and nothing in the output said which. Every measurement run now prints
+the base URL it hit as its first line (`SERVER …`), and the NOTES entry
+names it. A server one did not start is a subject one did not choose.
