@@ -849,7 +849,9 @@ test('places figures only where §26 does, never in consecutive sections', async
   const suffix = makeSuffix();
   const id = await richRecord(page, suffix);
   await page.goto(`/records/${id}`);
-  await page.locator('[data-region="extended-grid"] [data-ornament="figure"]').first().waitFor({ timeout: 20_000 });
+  /* Attached and settled, not visible: §58 hosts the solo in a column that may leave it below §29's bound and hidden; what this test reads survives that. */
+  await page.locator('[data-region="extended-grid"] [data-ornament="figure"]').first().waitFor({ state: 'attached', timeout: 20_000 });
+  await page.waitForFunction(`Array.from(document.querySelectorAll('[data-region="extended-grid"] [data-ornament="figure"]')).every((f) => f.getAttribute('data-figure-state') !== 'measuring')`, undefined, { timeout: 10_000 });
 
   const placed = await figureSections(page);
   const carrying = placed.filter((row) => row.figures > 0).map((row) => row.name);
@@ -972,7 +974,9 @@ test('a figure’s faces are the ladder’s top, base and shade; a flat is tint 
   const suffix = makeSuffix();
   const id = await richRecord(page, suffix);
   await page.goto(`/records/${id}`);
-  await page.locator('[data-region="extended-grid"] [data-ornament="figure"]').first().waitFor({ timeout: 20_000 });
+  /* Attached and settled, not visible: §58 hosts the solo in a column that may leave it below §29's bound and hidden; what this test reads survives that. */
+  await page.locator('[data-region="extended-grid"] [data-ornament="figure"]').first().waitFor({ state: 'attached', timeout: 20_000 });
+  await page.waitForFunction(`Array.from(document.querySelectorAll('[data-region="extended-grid"] [data-ornament="figure"]')).every((f) => f.getAttribute('data-figure-state') !== 'measuring')`, undefined, { timeout: 10_000 });
 
   const drawn = await page.evaluate(() => {
     const read = (el: Element) => getComputedStyle(el);

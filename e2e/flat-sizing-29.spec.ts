@@ -6,6 +6,7 @@ import { seedExtreme } from './identity-extremes';
 import { EMPTIEST, WORST } from '../src/app/records/[id]/identity-extremes';
 import { NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
 import { VISIBLE_OF_HOST_HEIGHT, VISIBLE_OF_SECTION_WIDTH } from '../src/app/records/[id]/OrnamentMarks';
+import { DISC_REFERENCE_JS } from './disc-reading';
 
 registerCleanup();
 
@@ -41,37 +42,57 @@ async function seedWithColour(page: Page, extreme: typeof WORST | typeof EMPTIES
   return id;
 }
 
-type Measured = { shape: string; visible: number; hostHeight: number; hostWidth: number; bound: string };
+type Measured = { shape: string; visible: number; hostHeight: number; hostWidth: number; heightBasis: number; free: number; bound: string };
 
 async function flatsAt(page: Page, id: string, width: number, height: number): Promise<Measured[]> {
   await page.setViewportSize({ width, height });
   await page.goto(`/records/${id}`);
   await page.locator('[data-region="extended-grid"] [data-section]').first().waitFor({ timeout: 20_000 });
+  /* §59, §60: the quarter-disc measures in the browser; read it settled. */
+  await page.waitForFunction(`(() => { const d = document.querySelector('[data-flat="quarterDisc"]'); return d === null || d.getAttribute('data-disc-state') !== 'measuring'; })()`, undefined, { timeout: 10_000 });
 
   return page.evaluate(
-    ({ ofHeight, ofWidth }) =>
+    ({ ofHeight, ofWidth, referenceJs }) =>
       Array.from(document.querySelectorAll('[data-ornament="flat"]'))
         .filter((el) => el.getClientRects().length > 0)
         .map((el) => {
-          const host = el.closest('[data-region="extended-grid"] [data-section], [data-cell="air"]')!.getBoundingClientRect();
+          const hostEl = el.closest('[data-region="extended-grid"] [data-section], [data-cell="air"]')!;
+          const host = hostEl.getBoundingClientRect();
           const box = el.getBoundingClientRect();
           /* The part inside its host is what shows; the rest is off the page edge. */
           const visible = Math.max(0, Math.min(box.right, host.right) - Math.max(box.left, host.left));
-          const byHeight = host.height * ofHeight;
+          const shape = el.getAttribute('data-flat') ?? '?';
+          /* §60: the quarter-disc's height term is the stated reference, not its host's rendering; §59: and it yields to the caption in its reach. The triangle keeps §29's host height. */
+          const heightBasis = shape === 'quarterDisc' ? (new Function('return ' + referenceJs)() as (sec: Element) => { reference: number })(hostEl).reference : host.height;
+          const byHeight = heightBasis * ofHeight;
           const byWidth = host.width * ofWidth;
+          let lowest = host.top;
+          if (shape === 'quarterDisc') {
+            const sized = Math.min(byHeight, byWidth);
+            for (const t of Array.from(hostEl.querySelectorAll('*'))) {
+              if (t.closest('[aria-hidden="true"]') !== null) continue;
+              for (const n of Array.from(t.childNodes)) {
+                if (n.nodeType !== Node.TEXT_NODE || (n.textContent ?? '').trim() === '') continue;
+                const range = document.createRange(); range.selectNodeContents(n);
+                for (const g of Array.from(range.getClientRects())) if (g.width > 0 && g.right > host.right - sized) lowest = Math.max(lowest, g.bottom);
+              }
+            }
+          }
           return {
-            shape: el.getAttribute('data-flat') ?? '?',
+            shape,
             visible: Math.round(visible * 10) / 10,
             hostHeight: Math.round(host.height),
             hostWidth: Math.round(host.width),
+            heightBasis: Math.round(heightBasis * 10) / 10,
+            free: shape === 'quarterDisc' ? Math.round((host.bottom - lowest) * 10) / 10 : Number.POSITIVE_INFINITY,
             bound: byHeight <= byWidth ? 'height' : 'width',
           };
         }),
-    { ofHeight: VISIBLE_OF_HOST_HEIGHT, ofWidth: VISIBLE_OF_SECTION_WIDTH },
+    { ofHeight: VISIBLE_OF_HOST_HEIGHT, ofWidth: VISIBLE_OF_SECTION_WIDTH, referenceJs: DISC_REFERENCE_JS },
   );
 }
 
-test('§29: every flat is bounded by its host, at both extremes and both named viewports', async ({ page }) => {
+test('§29: every flat is bounded by its host (the quarter-disc by §60’s reference and §59’s caption), at both extremes and both named viewports', async ({ page }) => {
   await login(page);
   const fullest = await seedWithColour(page, WORST);
   const emptiest = await seedWithColour(page, EMPTIEST);
@@ -86,9 +107,9 @@ test('§29: every flat is bounded by its host, at both extremes and both named v
       expect(flats.length, `${label} at ${width}: flats drawn`).toBeGreaterThan(0);
 
       for (const flat of flats) {
-        const bound = Math.min(flat.hostHeight * VISIBLE_OF_HOST_HEIGHT, flat.hostWidth * VISIBLE_OF_SECTION_WIDTH);
+        const bound = Math.min(flat.heightBasis * VISIBLE_OF_HOST_HEIGHT, flat.hostWidth * VISIBLE_OF_SECTION_WIDTH, flat.free);
         report.push(
-          `${label} @${width}  ${flat.shape.padEnd(12)} visible ${String(flat.visible).padStart(6)}px  host ${flat.hostWidth}×${flat.hostHeight}  bound by ${flat.bound} (${bound.toFixed(1)})`,
+          `${label} @${width}  ${flat.shape.padEnd(12)} visible ${String(flat.visible).padStart(6)}px  host ${flat.hostWidth}×${flat.hostHeight}${flat.shape === 'quarterDisc' ? ` reference ${flat.heightBasis} free ${flat.free}` : ''}  bound by ${flat.bound} (${bound.toFixed(1)})`,
         );
         smallest.push(flat.visible);
 
