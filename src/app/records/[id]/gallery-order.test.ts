@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { IMAGE_TYPE_ORDER, groupImages, imageTypeLabel } from './gallery-order';
+import { IMAGE_TYPE_ORDER, imageTypeLabel, orderImages } from './gallery-order';
 
 /**
  * How the gallery arranges §4.2's image types (six since §10b's gatefold).
@@ -39,75 +39,71 @@ describe('IMAGE_TYPE_ORDER', () => {
   });
 });
 
-describe('groupImages', () => {
-  it('returns groups in IMAGE_TYPE_ORDER, whatever order the rows arrive in', () => {
-    /* Not a cover among them: the frame owns that one, so ordering it here
-       would assert a group the gallery no longer produces. */
-    const groups = groupImages([
+describe('orderImages (§56: one flowing grid, the fixed type order, no groups)', () => {
+  it('returns every non-cover image in IMAGE_TYPE_ORDER, whatever order the rows arrive in', () => {
+    /* Not a cover among them: the frame owns that one. */
+    const tiles = orderImages([
       image('a', 'matrix'),
       image('b', 'back'),
       image('c', 'label'),
     ]);
 
-    expect(groups.map((group) => group.type)).toEqual(['back', 'label', 'matrix']);
+    expect(tiles.map((tile) => tile.type)).toEqual(['back', 'label', 'matrix']);
+    expect(tiles.map((tile) => tile.image.id)).toEqual(['b', 'c', 'a']);
   });
 
-  it('omits a type with no images rather than showing an empty heading', () => {
-    // An empty "Back" heading asserts a back photo exists and failed to load —
-    // absence rendered as something, which is the family this build keeps
-    // meeting. Nothing is the honest rendering of nothing.
-    const groups = groupImages([image('a', 'back')]);
+  it('is one flat list, not groups: two images of one type are two tiles in sequence', () => {
+    /* §56: "The images that are not the cover flow in one grid in the fixed type order... group labels are dropped." */
+    const tiles = orderImages([image('a', 'label'), image('b', 'back'), image('c', 'label', '2026-02-01T00:00:00Z')]);
 
-    expect(groups).toHaveLength(1);
-    expect(groups[0].type).toBe('back');
+    expect(tiles.map((tile) => `${tile.type}:${tile.image.id}`)).toEqual(['back:b', 'label:a', 'label:c']);
   });
 
-  it('keeps an untyped image rather than dropping it', () => {
+  it('keeps an untyped image rather than dropping it, filed as other', () => {
     /**
      * `image_type` is nullable in §4.2, and an upload with no type chosen is
      * legal. Dropping it would lose a file the user successfully stored — the
      * upload said 201 and the gallery would show nothing, with no way to tell
      * that from a failed upload.
      */
-    const groups = groupImages([image('a', null)]);
+    const tiles = orderImages([image('a', null)]);
 
-    expect(groups).toHaveLength(1);
-    expect(groups[0].type).toBe('other');
-    expect(groups[0].images).toHaveLength(1);
+    expect(tiles).toHaveLength(1);
+    expect(tiles[0].type).toBe('other');
   });
 
-  it('files an untyped image alongside genuinely "other" ones', () => {
-    const groups = groupImages([image('a', 'other'), image('b', null)]);
+  it('files an untyped image alongside genuinely "other" ones, after every known type', () => {
+    /* Distinct times: within a type the order is oldest first, and these two share the type. */
+    const tiles = orderImages([image('b', null, '2026-02-01T00:00:00Z'), image('a', 'other', '2026-01-01T00:00:00Z'), image('m', 'matrix')]);
 
-    expect(groups).toHaveLength(1);
-    expect(groups[0].images.map((row) => row.id)).toEqual(['a', 'b']);
+    expect(tiles.map((tile) => tile.image.id)).toEqual(['m', 'a', 'b']);
+    expect(tiles.map((tile) => tile.type)).toEqual(['matrix', 'other', 'other']);
   });
 
-  it('orders within a group oldest first, so the first upload stays first', () => {
+  it('orders within a type oldest first, so the first upload stays first', () => {
     // The gallery is a record of a physical object, not a feed. A newest-first
     // order would move an image every time another is added.
-    const groups = groupImages([
+    const tiles = orderImages([
       image('newer', 'back', '2026-03-01T00:00:00Z'),
       image('older', 'back', '2026-01-01T00:00:00Z'),
     ]);
 
-    expect(groups[0].images.map((row) => row.id)).toEqual(['older', 'newer']);
+    expect(tiles.map((tile) => tile.image.id)).toEqual(['older', 'newer']);
   });
 
   it('handles a record with no images at all', () => {
-    expect(groupImages([])).toEqual([]);
+    expect(orderImages([])).toEqual([]);
   });
 
-  it('does not invent a group for an unknown type from the database', () => {
+  it('does not invent a type for an unknown value from the database', () => {
     /**
      * The enum constrains writes, but this function receives whatever the row
      * holds — a future migration adding a type would otherwise render an
-     * unlabelled group. Filed under "other" so the image is still reachable.
+     * unlabelled tile. Filed under "other" so the image is still reachable.
      */
-    const groups = groupImages([image('a', 'sleeve-detail')]);
+    const tiles = orderImages([image('a', 'sleeve-detail')]);
 
-    expect(groups.map((group) => group.type)).toEqual(['other']);
-    expect(groups[0].images).toHaveLength(1);
+    expect(tiles.map((tile) => tile.type)).toEqual(['other']);
   });
 });
 
@@ -165,14 +161,14 @@ describe('gatefold — §10b\'s third state', () => {
     expect(imageTypeLabel('gatefold_left')).not.toBe(imageTypeLabel('gatefold_right'));
   });
 
-  it('groups a gatefold image rather than dropping it as unknown', () => {
+  it('orders a gatefold image under its own type rather than dropping it as unknown', () => {
     /**
-     * The discriminating case. `groupImages` filters through
-     * `isKnownType`, so a value present in the database but absent from
-     * `IMAGE_TYPE_ORDER` is silently discarded — the image would upload
-     * successfully, sit in the table, and never render.
+     * The discriminating case. `orderImages` files through `isKnownType`,
+     * so a value present in the database but absent from `IMAGE_TYPE_ORDER`
+     * would be filed as other — the image would upload successfully, sit in
+     * the table, and lose its name.
      */
-    const groups = groupImages([
+    const tiles = orderImages([
       {
         id: 'g1',
         url: 'https://blob.example/inner.jpg',
@@ -182,9 +178,8 @@ describe('gatefold — §10b\'s third state', () => {
       },
     ]);
 
-    expect(groups).toHaveLength(1);
-    expect(groups[0].type).toBe('gatefold_left');
-    expect(groups[0].images).toHaveLength(1);
+    expect(tiles).toHaveLength(1);
+    expect(tiles[0].type).toBe('gatefold_left');
   });
 });
 
@@ -197,16 +192,16 @@ describe('the frame owns the cover, so the gallery does not repeat it', () => {
    * in the frame has no fuller version, so it is repetition rather than depth.
    *
    * Excluded here rather than in the component, because "which images the
-   * gallery shows" is the grouping function's question and a component-level
-   * filter would leave `groupImages` claiming to group every image.
+   * gallery shows" is the ordering function's question and a component-level
+   * filter would leave `orderImages` claiming to order every image.
    */
-  it('leaves the cover out of the groups', () => {
-    const groups = groupImages([
+  it('leaves the cover out of the tiles', () => {
+    const tiles = orderImages([
       { id: '1', url: 'u1', imageType: 'cover', caption: null, createdAt: '2024-01-01' },
       { id: '2', url: 'u2', imageType: 'back', caption: null, createdAt: '2024-01-02' },
     ]);
 
-    expect(groups.map((group) => group.type)).toEqual(['back']);
+    expect(tiles.map((tile) => tile.type)).toEqual(['back']);
   });
 
   it('returns nothing for a record whose only image is its cover', () => {
@@ -216,7 +211,7 @@ describe('the frame owns the cover, so the gallery does not repeat it', () => {
       so this is what the gallery renders on all seventeen — not an edge case.
     */
     expect(
-      groupImages([
+      orderImages([
         { id: '1', url: 'u1', imageType: 'cover', caption: null, createdAt: '2024-01-01' },
       ]),
     ).toEqual([]);
@@ -230,10 +225,10 @@ describe('the frame owns the cover, so the gallery does not repeat it', () => {
      * it is; this asserts the two really are identical at this layer so the
      * fix cannot be attempted here.
      */
-    const onlyCover = groupImages([
+    const onlyCover = orderImages([
       { id: '1', url: 'u1', imageType: 'cover', caption: null, createdAt: '2024-01-01' },
     ]);
 
-    expect(onlyCover).toEqual(groupImages([]));
+    expect(onlyCover).toEqual(orderImages([]));
   });
 });

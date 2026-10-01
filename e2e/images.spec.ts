@@ -99,7 +99,8 @@ test('flow 9: an uploaded image appears in the gallery', async ({ page }) => {
   await page.reload();
 
   await expect(page.getByTestId('gallery-image')).toHaveCount(1);
-  await expect(page.getByRole('heading', { name: 'Back' })).toBeVisible();
+  /* §56: the tile's badge names its type; there is no group heading. */
+  await expect(page.getByTestId('image-badge')).toHaveText(/back/i);
   // The rendered <img> carries the stored URL, rather than the row merely
   // existing in the DOM as text.
   await expect(page.getByTestId('gallery-image').locator('img')).toHaveAttribute(
@@ -110,11 +111,13 @@ test('flow 9: an uploaded image appears in the gallery', async ({ page }) => {
   await removeImagesFor(recordId);
 });
 
-test('the gallery groups by type, in examination order', async ({ page }) => {
+test('the gallery flows by type in examination order, badged, with no group headings (§56)', async ({ page }) => {
   /**
-   * §4.2's five types rendered as sections. The order is the one someone
+   * §4.2's types rendered as one grid. The order is the one someone
    * examines a record in — front, back, centre label, dead wax — and it is
-   * asserted here as RENDERED headings, not just as the pure function's output.
+   * asserted here as RENDERED badges, not just as the pure function's output.
+   * §56 dropped the group headings: "the badge already names the type, so
+   * the label repeated it."
    */
   const { recordId } = await seedRecord(page);
 
@@ -126,24 +129,23 @@ test('the gallery groups by type, in examination order', async ({ page }) => {
 
   await page.goto(`/records/${recordId}`);
 
-  const headings = await page
-    .getByTestId('image-gallery')
-    .getByRole('heading', { level: 3 })
-    .allInnerTexts();
+  const badges = await page.getByTestId('image-badge').allInnerTexts();
 
   /**
    * Compared case-insensitively. `innerText` returns text as RENDERED, and the
-   * headings carry `uppercase` — so an exact comparison would pin a styling
+   * badges carry `uppercase` — so an exact comparison would pin a styling
    * choice rather than the ORDER, which is what this test is about. (The
    * uppercase-vs-DOM difference is the same `innerText`/`textContent` gap as
    * the collection-widths rule, seen from the other side.)
    */
-  expect(headings.map((heading) => heading.toLowerCase())).toEqual([
+  expect(badges.map((badge) => badge.toLowerCase())).toEqual([
     'back',
     'label',
     'matrix / runout',
   ]);
   await expect(page.getByTestId('gallery-image')).toHaveCount(3);
+  await expect(page.getByTestId('image-gallery').getByRole('heading', { level: 3 }), 'no group headings').toHaveCount(0);
+  await expect(page.getByTestId('image-grid'), 'one grid').toHaveCount(1);
 
   await removeImagesFor(recordId);
 });
@@ -158,7 +160,7 @@ test('an untyped image is still shown, rather than silently dropped', async ({ p
   await page.goto(`/records/${recordId}`);
 
   await expect(page.getByTestId('gallery-image')).toHaveCount(1);
-  await expect(page.getByRole('heading', { name: 'Other' })).toBeVisible();
+  await expect(page.getByTestId('image-badge')).toHaveText(/other/i);
 
   await removeImagesFor(recordId);
 });

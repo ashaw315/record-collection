@@ -85,6 +85,8 @@ const GOVERNED = [
   /* §57 (step 67): figures against type, on seeded records and on the real collection. */
   'e2e/figures-type-57.spec.ts',
   'e2e/sheet/figures-57.sheet.ts',
+  /* §56 (step 66): the images row with one to six images, the disc against the one-image host. */
+  'e2e/images-row-56.spec.ts',
 ];
 
 /** The values a record-screen spec must not type. */

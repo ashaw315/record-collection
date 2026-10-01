@@ -70,13 +70,29 @@ describe('the gallery says which kind of empty it is', () => {
     expect(html).toContain('data-testid="gallery-cover-note"');
   });
 
-  it('shows the groups when there is a non-cover image, and no empty sentence', () => {
+  it('§56: flows every non-cover image in one grid, each tile badged with its type, with no group heading and no empty sentence', () => {
     const html = renderToStaticMarkup(
-      <ImageGallery recordId="r1" images={[image('c', 'cover'), image('b', 'back')]} base="oklch(0.7 0.06 60)" />,
+      <ImageGallery recordId="r1" images={[image('c', 'cover'), image('l', 'label'), image('b', 'back')]} base="oklch(0.7 0.06 60)" />,
     );
 
     expect(html).not.toContain('No images yet');
-    expect(html).toContain('Back');
+    expect(html.match(/data-image-grid/g), 'one grid').toHaveLength(1);
+    expect(html, 'no group heading').not.toMatch(/<h3/);
+    /* The badge names the type on the tile, in the fixed order: back before label. */
+    const badges = Array.from(html.matchAll(/data-testid="image-badge"[^>]*>([^<]*)</g)).map((m) => m[1]);
+    expect(badges).toEqual(['Back', 'Label']);
+    /* §56: the quarter-disc is sized against the section as it stands with one image, so the grid is marked out of the host's height and the note's row is kept, blank. */
+    expect(html, 'the grid is excluded from the disc’s host height').toMatch(/data-image-grid[^>]*data-not-host-height|data-not-host-height[^>]*data-image-grid/);
+    expect(html, 'the cover note’s row stays as height, not as a sentence').toMatch(/data-testid="gallery-note-row"[^>]*aria-hidden="true"[^>]*visibility:hidden/);
+    expect(html, 'the stale sentence is not shown').not.toContain('data-testid="gallery-cover-note"');
+  });
+
+  it('§56: without a cover there is no note row to keep, so none is rendered beside the tiles', () => {
+    const html = renderToStaticMarkup(
+      <ImageGallery recordId="r1" images={[image('b', 'back')]} base="oklch(0.7 0.06 60)" />,
+    );
+    expect(html).not.toContain('gallery-note-row');
+    expect(html).toContain('data-image-grid');
   });
 
   it('never renders the cover itself', () => {

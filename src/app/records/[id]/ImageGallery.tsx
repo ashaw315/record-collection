@@ -7,7 +7,7 @@ import { Section } from './Section';
 import { CONTROL_HEIGHT, FIELD_HEIGHT } from './extended-grid';
 import { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { IMAGE_TYPE_ORDER, groupImages, imageTypeLabel, type GalleryImage } from './gallery-order';
+import { IMAGE_TYPE_ORDER, imageTypeLabel, orderImages, type GalleryImage } from './gallery-order';
 import { MAX_IMAGE_BYTES } from '@/lib/storage/image-type';
 
 /**
@@ -45,7 +45,7 @@ export function ImageGallery({
   const [error, setError] = useState<string | undefined>(undefined);
   const [imageType, setImageType] = useState<string>('cover');
 
-  const groups = groupImages(images);
+  const tiles = orderImages(images);
 
   async function upload(file: File) {
     setError(undefined);
@@ -185,10 +185,10 @@ export function ImageGallery({
         </p>
       )}
 
-      {groups.length === 0 ? (
+      {tiles.length === 0 ? (
         /*
           **Two empty states, because there are two kinds of empty.** The frame
-          owns the cover, so `groupImages` returns nothing both for a record
+          owns the cover, so `orderImages` returns nothing both for a record
           with no images and for one whose only image is its cover — and those
           want opposite sentences. "No images yet" is FALSE for the second, and
           the reader can see it is false: the cover is on the same screen.
@@ -201,7 +201,7 @@ export function ImageGallery({
           unphotographed collection against a schema with four image types.
           When a gatefold is photographed the cover-only state stops being the
           common case and this branch stops rendering for that record — by
-          construction, since `groups` is non-empty — so nothing here hardens
+          construction, since `tiles` is non-empty — so nothing here hardens
           one image per record into an assumption.
         */
         images.some((image) => image.imageType === 'cover') ? (
@@ -214,58 +214,73 @@ export function ImageGallery({
           </p>
         )
       ) : (
-        groups.map((group) => (
-          <div key={group.type} className="mb-4">
-            {/*
-              Uppercase INTER was the only one on the page — a second label
-              treatment standing beside §4's. Same words, one definition.
-            */}
-            <h3 className={`mb-1.5 ${LABEL}`}>
-              {imageTypeLabel(group.type)}
-            </h3>
+        /*
+          §56 (step 66): the quarter-disc is sized "against the section as it
+          stands with one image, whatever the count", and that section
+          carries the cover note's row. With tiles the note's sentence is
+          stale, so its ROW is kept and its text is not: the same line of
+          height, invisible and hidden from readers, so the host above the
+          grid is identical at every image count and the disc is too. The
+          grid below is what the disc's host measure leaves out.
+        */
+        <>
+        {images.some((image) => image.imageType === 'cover') && (
+          <p data-testid="gallery-note-row" aria-hidden="true" className="text-prose" style={{ visibility: 'hidden' }}>
+            The cover is shown above.
+          </p>
+        )}
+        {/*
+          §56 (step 66): one flowing grid in the fixed type order, each tile
+          carrying its type badge; the group headings are gone. Grouped, each
+          type took its own tile row, so a group of one cost a full row
+          beside empty cells and six images ran to 1829px at 1440. The badge
+          names the type, so a heading repeated it; the accepted loss is
+          that a type may split across a row wrap.
 
-            {/*
-              Two columns on a phone, four on desktop. Capped at three, a
-              1280px page rendered three 226px tiles beside an empty half —
-              caught in the screenshot, not by any assertion.
-            */}
-            <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
-              {group.images.map((image) => (
-                <li key={image.id} data-testid="gallery-image" className="group relative">
-                  {/*
-                    A plain <img>, not next/image: these are blob URLs on a host
-                    the optimizer is not configured for, and §13 does not ask
-                    for image optimization. Sized by the grid cell.
-                  */}
-                  {/* eslint-disable-next-line @next/next/no-img-element -- see above */}
-                  <img
-                    src={image.url}
-                    alt={image.caption ?? `${imageTypeLabel(group.type)} of this record`}
-                    loading="lazy"
-                    referrerPolicy="no-referrer"
-                    className="aspect-square w-full border border-border object-cover"
-                  />
+          `data-not-host-height`: with one image there is no grid, so the
+          grid is what the disc's host measure leaves out (`QuarterDisc` in
+          OrnamentMarks.tsx).
 
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    disabled={busy}
-                    onClick={() => void remove(image.id, imageTypeLabel(group.type))}
-                    className="absolute top-1 right-1 h-6 bg-background/90 px-1.5 text-label"
-                    aria-label={`Delete this ${imageTypeLabel(group.type).toLowerCase()} image`}
-                  >
-                    Delete
-                  </Button>
-
-                  {image.caption !== null && (
-                    <p className="mt-1 text-caption text-muted-foreground">{image.caption}</p>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))
+          Two columns on a phone, four on desktop. Capped at three, a
+          1280px page rendered three 226px tiles beside an empty half —
+          caught in the screenshot, not by any assertion.
+        */}
+        <ul data-image-grid data-not-host-height data-testid="image-grid" className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+          {tiles.map(({ type, image }) => (
+            <li key={image.id} data-testid="gallery-image" data-image-type={type} className="group relative">
+              {/*
+                A plain <img>, not next/image: these are blob URLs on a host
+                the optimizer is not configured for, and §13 does not ask
+                for image optimization. Sized by the grid cell.
+              */}
+              {/* eslint-disable-next-line @next/next/no-img-element -- see above */}
+              <img
+                src={image.url}
+                alt={image.caption ?? `${imageTypeLabel(type)} of this record`}
+                loading="lazy"
+                referrerPolicy="no-referrer"
+                className="aspect-square w-full border border-border object-cover"
+              />
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled={busy}
+                onClick={() => void remove(image.id, imageTypeLabel(type))}
+                className="absolute top-1 right-1 h-6 bg-background/90 px-1.5 text-label"
+                aria-label={`Delete this ${imageTypeLabel(type).toLowerCase()} image`}
+              >
+                Delete
+              </Button>
+              {/* The badge: §4's one label treatment, under the tile rather than over the photograph (§34). */}
+              <span data-testid="image-badge" className={`mt-1 block ${LABEL}`}>{imageTypeLabel(type)}</span>
+              {image.caption !== null && (
+                <p className="mt-1 text-caption text-muted-foreground">{image.caption}</p>
+              )}
+            </li>
+          ))}
+        </ul>
+        </>
       )}
       </div>
     </Section>

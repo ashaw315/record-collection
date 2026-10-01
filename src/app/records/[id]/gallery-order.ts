@@ -38,7 +38,8 @@ export type GalleryImage = {
   createdAt: string | Date;
 };
 
-export type ImageGroup = { type: GalleryImageType; images: GalleryImage[] };
+/** One tile of §56's flowing grid: the image and the type it is filed under. */
+export type ImageTile = { type: GalleryImageType; image: GalleryImage };
 
 const LABELS: Record<GalleryImageType, string> = {
   cover: 'Cover',
@@ -69,43 +70,33 @@ function time(value: string | Date): number {
 }
 
 /**
- * Groups images by type, in `IMAGE_TYPE_ORDER`, dropping empty groups.
+ * §56 (step 66): the non-cover images as ONE ordered list, in
+ * `IMAGE_TYPE_ORDER` and oldest first within a type, each filed under the
+ * type its badge names. The gallery flows them in one grid "so a row fills
+ * before it wraps"; the group a type once made is gone, and with it the
+ * row a group of one cost beside empty cells. The order is the one someone
+ * examines a record in -- front, back, inside, label, dead wax.
  *
- * An untyped image — `image_type` is nullable (§4.2) — is filed under "other"
- * rather than discarded. The upload returned 201 and the file exists; showing
- * nothing would be indistinguishable from a failed upload, which is the
- * absence-as-success failure this build keeps meeting. An unrecognised value
- * from a future migration is filed the same way, for the same reason.
+ * The frame owns the cover, so it is left out: a cover shown whole in the
+ * frame has no fuller version below the fold. Every record in the
+ * collection has exactly one image and it is a cover, so for all of them
+ * this returns [] -- which the component must not read as "no images"
+ * (see `ImageGallery`).
+ *
+ * An unknown value from the database is filed under other, so a stored
+ * image is always reachable; the enum constrains writes, not what a row
+ * may hold after a later migration.
  */
-export function groupImages(images: GalleryImage[]): ImageGroup[] {
-  /*
-    **The cover belongs to the frame.** 8a's sleeve cell renders it at six
-    columns, so a gallery copy below the fold is the same image twice on one
-    screen. §8 makes the sections below the fold the full set behind the
-    frame's summary — but a cover shown whole has no fuller version, which is
-    what separates this from the price list or the journal.
-
-    Note what this does to the common case TODAY: every record in the
-    collection has exactly one image and it is a cover, so `groupImages` returns
-    [] for all of them. That is correct here and WRONG in the component, which
-    says "No images yet" — see `ImageGallery`.
-
-    **"Every record has one image" is today's data, not the schema.** The schema
-    carries cover, gatefold left, gatefold right and back; one per record is a
-    backlog. Nothing here assumes one — a record with a back photograph gets a
-    group — and nothing should be written that silently becomes wrong when the
-    first gatefold is photographed.
-  */
+export function orderImages(images: GalleryImage[]): ImageTile[] {
   const withoutCover = images.filter((image) => image.imageType !== 'cover');
-
-  return IMAGE_TYPE_ORDER.map((type) => ({
-    type,
-    images: withoutCover
+  return IMAGE_TYPE_ORDER.flatMap((type) =>
+    withoutCover
       .filter((image) =>
         type === 'other' ? !isKnownType(image.imageType) || image.imageType === 'other' : image.imageType === type,
       )
       // Oldest first: the gallery records a physical object, not a feed, and a
       // newest-first order would move every image whenever one is added.
-      .sort((a, b) => time(a.createdAt) - time(b.createdAt)),
-  })).filter((group) => group.images.length > 0);
+      .sort((a, b) => time(a.createdAt) - time(b.createdAt))
+      .map((image) => ({ type, image })),
+  );
 }

@@ -322,39 +322,8 @@ export function Flat({ ladder, flat }: { ladder: RecordLadder | null; flat: (typ
   const fill = ladder === null ? INK_CSS : flat.step === 'base' ? ladder.base : ladder.tint;
 
   if (flat.shape === 'quarterDisc') {
-    /*
-      The disc is twice the visible radius, centred on the corner: half of it
-      lies outside on each axis, so exactly one quadrant shows.
-    */
-    return (
-      <div
-        data-ornament="flat"
-        data-flat="quarterDisc"
-        aria-hidden="true"
-        className="pointer-events-none absolute"
-        style={{
-          /*
-            Twice the visible radius, centred on the corner: half lies outside
-            on each axis, so exactly one quadrant shows. The bounds are
-            doubled with it — `maxHeight` is §29's height bound, `maxWidth`
-            its width bound, and `aspectRatio` keeps it a circle whichever
-            binds.
-          */
-          height: `calc(${VISIBLE_HEIGHT} * 2)`,
-          maxHeight: `calc(${VISIBLE_HEIGHT} * 2)`,
-          maxWidth: `calc(${VISIBLE_WIDTH} * 2)`,
-          aspectRatio: '1 / 1',
-          right: 0,
-          bottom: 0,
-          transform: 'translate(50%, 50%)',
-          borderRadius: '50%',
-          background: fill,
-          zIndex: -1,
-        }}
-      />
-    );
+    return <QuarterDisc fill={fill} />;
   }
-
   return (
     <div
       data-ornament="flat"
@@ -388,6 +357,70 @@ export function Flat({ ladder, flat }: { ladder: RecordLadder | null; flat: (typ
         left: `calc(${VISIBLE_WIDTH} / ${1 - FLAT_OUTSIDE} * ${-FLAT_OUTSIDE})`,
         bottom: 0,
         clipPath: 'polygon(0 100%, 0 0, 100% 100%)',
+        background: fill,
+        zIndex: -1,
+      }}
+    />
+  );
+}
+
+/**
+ * The quarter-disc: a full disc whose centre sits on the host's bottom-right
+ * corner, twice the visible radius, so exactly one quadrant shows. §29's two
+ * bounds sit on their own axes -- `maxHeight` the height bound, `maxWidth`
+ * the width bound, `aspectRatio` keeping it a circle whichever binds.
+ *
+ * **§56 (step 66): sized against the host as it stands with one image.**
+ * The Images section grows by rows of tiles, and a disc sized against the
+ * grown section more than doubled the moment a record gained a second
+ * image -- a mark encoding the count, which §21 rules ornament does not.
+ * Anything in the host marked `data-not-host-height` (the tile grid) is
+ * left out of the height term: the host's height less those elements and
+ * their margins, measured in the browser. With nothing marked, the CSS
+ * percentage is the measure, as before, and the server renders that.
+ */
+function QuarterDisc({ fill }: { fill: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [hostHeight, setHostHeight] = useState<number | null>(null);
+  useEffect(() => {
+    const el = ref.current;
+    const host = el?.parentElement ?? null;
+    if (el === null || host === null) return;
+    const measure = () => {
+      const excluded = Array.from(host.querySelectorAll<HTMLElement>('[data-not-host-height]'));
+      if (excluded.length === 0) {
+        setHostHeight(null);
+        return;
+      }
+      const taken = excluded.reduce((sum, x) => {
+        const cs = getComputedStyle(x);
+        return sum + x.getBoundingClientRect().height + parseFloat(cs.marginTop) + parseFloat(cs.marginBottom);
+      }, 0);
+      setHostHeight(Math.max(0, host.clientHeight - taken));
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(host);
+    return () => observer.disconnect();
+  }, []);
+  const visible = hostHeight === null ? VISIBLE_HEIGHT : `${hostHeight * VISIBLE_OF_HOST_HEIGHT}px`;
+  return (
+    <div
+      ref={ref}
+      data-ornament="flat"
+      data-flat="quarterDisc"
+      data-host-height={hostHeight === null ? undefined : Math.round(hostHeight)}
+      aria-hidden="true"
+      className="pointer-events-none absolute"
+      style={{
+        height: `calc(${visible} * 2)`,
+        maxHeight: `calc(${visible} * 2)`,
+        maxWidth: `calc(${VISIBLE_WIDTH} * 2)`,
+        aspectRatio: '1 / 1',
+        right: 0,
+        bottom: 0,
+        transform: 'translate(50%, 50%)',
+        borderRadius: '50%',
         background: fill,
         zIndex: -1,
       }}

@@ -33407,3 +33407,64 @@ not kept as a test because its subject, the section-sized solo, no longer
 exists; the method -- hit-test the painted faces, not the box -- is what
 `figures-type-57.spec.ts` would need if a figure's silhouette ever mattered
 to a bound.
+
+## Step 66 built: §56 -- the images row flows, and the disc holds its one-image size (1 Oct)
+
+The non-cover images flow in one grid in the fixed type order, each tile
+with its type badge under it (§4's one label treatment, below the
+photograph rather than over it), and the group headings are gone
+(`orderImages` replaces `groupImages`; one `<ul data-image-grid>`). The
+Images quarter-disc is sized against the section as it stands with one
+image at every count: the grid is marked `data-not-host-height`, and the
+disc (`QuarterDisc` in OrnamentMarks.tsx) measures its host's height less
+what is marked, in the browser; with nothing marked the CSS percentage is
+the measure, as before, so every other host is untouched.
+
+| images | 390 | 1000 | 1440 | 1920 |
+|---|---|---|---|---|
+| one | 305 | 241 | 241 | 241 |
+| two | 489 (was 487) | 593 (was 592) | 625 (was 623) | 745 (was 743) |
+| three | 489 (was 709) | 593 (was 962) | 625 (was 1025) | 745 (was 1265) |
+| six | 912 (was 1153) | 953 (was 1702) | 1017 (was 1829) | 1257 (was 2309) |
+
+Section heights in px, step 65's in brackets. Two tiles now fit one row
+at every width, so three images cost what two did; six images are two
+rows at 1000 and up (three at 390), 1017 at 1440 against 1829. The disc's
+visible radius is 97.5 at 390 (the width term) and 160.5 to 161.0 at 1000,
+1440 and 1920 at every count, against 160.7 on the one-image section --
+one figure, not a step at the second image. The type split across a row
+wrap, §56's accepted loss, happens once in these records: the two
+"other" tiles, at 390 (rows of two), 1440 and 1920 (rows of four, the
+fifth tile alone on the second row); none at 1000, where three fit a row
+and the split falls between matrix and other.
+
+**One reading for Design, and I chose the literal rule.** The one-image
+section carries the cover note's line ("The cover is shown above.
+Photograph the back..."); with tiles that sentence is stale and the
+component does not say it. Measured as section-less-grid, the host was
+therefore one 13px line shorter than the one-image section, and the disc
+stepped from 160.7 to 147.7 the moment a record gained a second image --
+an 8% step keyed to the count, which is what §56 rules out. So the note's
+ROW is kept with tiles present: the same line of height, invisible and
+hidden from readers (`gallery-note-row`), and the host above the grid is
+identical at every count. The cost is one blank text line between the
+limits line and the grid on records with more than the cover. The other
+reading -- the fixed part of the section, 147.7 from two images up -- is
+one line in the component if Design prefers it.
+
+**§5.2 checked in the same run:** no 11px type sits on the disc at any
+count or width; the badges stay in the grid's rows above the quadrant.
+The one text on the disc is the 13px cover note at 390 on the one-image
+record, the finding already filed from the ground report.
+
+**Observed, not touched:** the tile's Delete control renders below the
+tile at its left on both the old and the new layout (the step 65 and 66
+captures agree), while its classes say top-right over the image. Not
+§56's; recorded for a step of its own.
+
+Verification, step level: `images-row-56.spec.ts`, `images.spec.ts` and
+`extended-grid.spec.ts`'s gallery and quarter-disc tests on chromium (13
+pass), the gallery-order, ImageGallery, OrnamentMarks, Section and
+RecordPage8a unit files with the spec guard (132 pass), typecheck, lint
+(0 errors, the 29 pre-existing warnings), build. Captures
+`docs/captures/step66-images-<n>-<w>x<h>-h<section height>.png`, sixteen.
