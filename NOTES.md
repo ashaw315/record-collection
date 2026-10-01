@@ -33072,9 +33072,12 @@ sides, with the supply 510 and the measure 443 identical at both widths on
 all seventeen. §47's nine of seventeen was measured before §48 put the
 identity at 520 and §49 made the measure 443 everywhere; the fixture's
 equal-pairs assertion at step 57 already held zero, and the real
-collection confirms it. The pressing block, which differs on real records,
-does not reach the pair at the fork because nothing about the cell changes
-across it any more.
+collection confirms it. **The supersession is by mechanism, not by
+measurement**: §55 listed the nine as fixture-measured with a supply that
+depends on the pressing block, but the pressing block never reaches the
+pair at the fork, because §48 and §49 removed any change across it -- the
+cell is the same cell on both sides. The fork is not a place the fixture
+can still mislead; there is nothing there to measure differently.
 
 ## Step 65 reported: the images row with one, two, three and six images, from the render (1 Oct)
 
@@ -33098,13 +33101,16 @@ Section heights in px, with the growth over the one-image row. Six images
 at 1920 make the Images section 2309 tall, two and a half screens; at 390
 it is 1153, one and a third phone screens, with four groups stacked.
 
-**The quarter-disc grows with its host and has no ceiling.** §29 sizes the
-visible radius to the smaller of two-thirds of the host's height and a
-quarter of the section's width, and "no section fixes a flat at 150px";
-with the row full width, the width term is 360 at 1440 and 480 at 1920,
-and once the section is taller than 540 the height term stops binding. So
-the disc is 97.5 at 390 at any count, 250 at 1000, 360 at 1440 and 480 at
-1920 from two images up -- a 960px disc at 1920, a quadrant of it showing.
+**The section grows without bound; the quarter-disc steps once and
+holds.** §29 sizes the visible radius to the smaller of two-thirds of the
+host's height and a quarter of the section's width, and "no section fixes
+a flat at 150px". With the row full width the width term is 97.5 at 390,
+250 at 1000, 360 at 1440 and 480 at 1920, and once the section is taller
+than about 540 the height term stops binding. So the disc is 160.7 on the
+one-image row at 1440 and 360 from two images up, flat at every count
+above one -- one step, then held at the width term, a 960px disc at 1920
+with a quadrant showing -- while the section keeps growing with every
+group.
 It clears §26's three conditions at every count and width: the host ends
 at the page's right edge, its row is above the triangle's where the
 triangle is drawn (1440 and 1920), and the visible radius sits exactly on
@@ -33120,3 +33126,49 @@ so the region regroups per §38; the measurement is of the images row and
 the journal row, which do not depend on them.
 
 Report only; nothing tuned.
+
+## The price-history solid paints over its own section's text on fifteen of seventeen real records, from 480 to 1440 (1 Oct)
+
+Seen in the step 65 captures at 390 and measured on the real collection
+at seven widths, read-only: every text line box in the Price history
+section against the solid's box.
+
+| width | solid (w × h, left) | records with text under it | worst overlap | what is under it |
+|---|---|---|---|---|
+| 390 | 385 × 736 at −235 | 8 of 17 | 116 px | the two lines of "Prices are a record of observations"; on On The Radio, 8 of 9 lines of "No prices recorded yet" |
+| 480 | 307 × 586 at −67 | 15 of 17 | 158 px | the same sentence |
+| 768 | 228 × 436 at 300 | 15 of 17 | 110 px | the entries themselves: 15 to 24 line boxes of dates, prices and "what someone wanted" |
+| 960 | 158 × 303 at 562 | 15 of 17 | 73 px | the entries |
+| 1000 | 158 × 303 at 602 | 15 of 17 | 93 px | the entries |
+| 1440 | 158 × 303 at 1042 | 15 of 17 | 43 to 100 px | the "what someone wanted -- nobody paid this" annotations |
+| 1920 | 158 × 303 at 1522 | 0 of 17 | — | — |
+
+The two never overlapped: The Best Of The Blues Project, which has no
+ladder and so no figure, and On The Radio above 390, which has no price
+history and so no entries under it. Sixteen of seventeen real records
+carry price history today (five to nine entries each; August's figure of
+fourteen with none is stale), so this is the live collection's normal
+page, not an edge. For Adam at 390: Wired, where the solid covers 116 px of
+"Prices are a record of observations"; and On The Radio, where it covers
+the "No prices recorded yet" sentence almost whole.
+
+**What sizes it and what it is keyed to.** The solid is §25's solo (a
+panel) placed in Price history's strip by `ornament.ts:244` and rendered
+by `Section.tsx:167`; `Figure` in `OrnamentMarks.tsx:37` sizes it: height
+0.855 of the SECTION's height (`SIZE_RATIO`, the §29 gate), width from the
+form's aspect, set 240 px from the section's right edge
+(`FIGURE_INSET_COLUMNS * GRID_COLUMN`, `region-rows.ts:745`), bled past the
+foot. The section's height follows its content, so a longer price history
+makes a taller solid, and the entries sit right-aligned in the strip the
+solid occupies. Below 960 the strip is the whole row and the solid is
+taller than the text column, so it sits under the sentence instead.
+
+**§34's mechanism was never wired to it.** The Plane (`Plane.tsx:25-48`)
+reads its host's text at render and hides itself when its sized box would
+cover any of it, which is why the provenance arc is absent below 1440 on
+every record. `Figure` has no such test: it is sized and placed by
+constants and never looks at the type beside it. §34 says "no mark paints
+over type"; the Plane obeys it and the solid does not. Not fixed; Design
+rules what the solid does, at 390 and at the five other widths where it
+overlaps. Measured through my own development server after an earlier
+attempt against a server on port 3000 that was not mine ended mid-run.
