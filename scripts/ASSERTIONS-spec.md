@@ -66,9 +66,9 @@ Test cases, all of which the grammar must yield unchanged: `31/whole` (a colon a
 2. Step references: `steps? \d+` (case-insensitive)
 3. Artefact names: `\b[A-Z]\d+[a-z]?\b` (D2, A75) and `\b\d{1,2}[a-z]\b` (5b, 7a, 8a). **Not** `\d+px` or other units: those are figures.
 
-## The eight assertions
+## The ten assertions, 0 to 9, and one not built
 
-Each prints `PASS n` or `FAIL n` followed by one line per offender, then the script exits non-zero if any failed.
+Ten are built and numbered 0 to 9. Assertion 8 has two parts, so the script reports eleven ids: 0, 1, 2, 3, 4, 5, 6, 7, 8a, 8b, 9. Assertion 10 is specified below and is NOT BUILT; the script does not run it. Each built assertion prints `PASS n` or `FAIL n` followed by one line per offender, then the script exits non-zero if any failed.
 
 0. **The spec is the committed spec.** `scripts/ASSERTIONS-spec.md` is tracked and does not differ from `HEAD`. It was overwritten by three of Design's exports while it lived in `docs/design/`; a stray copy now fails by exit code. Fail: `0 spec-untracked PATH` or `0 spec-modified PATH differs from HEAD`.
 
@@ -113,11 +113,16 @@ Each prints `PASS n` or `FAIL n` followed by one line per offender, then the scr
      Fail: `8b §ID tokens=…`.
    The allow-list is the only exemption. Do not add a digit-width or magnitude exemption; that was tried and let through `1 : 1` and `2px`.
 
-## Planned: assertion 9
+9. **Every withdrawal sentence in a target has an entry: the reverse of 6.** Scan every section's plain text in `L`, `S` and `W` for the six declared prefixes, wherever they sit, and take each from its prefix to its own sentence end. A prefix inside quotation marks is an example of the form, not a declaration, and is not counted; the match is case-sensitive. Each sentence must equal the `quote` of an entry for its section. Prints the count of sentences with no entry and the count of sections scanned.
+   Fail: `9 §SEC unentered "sentence"`.
+   **Report-only by default:** the script lists the offenders and passes; it fails on them only with `--strict-reverse`. A run with offenders is therefore green unless the flag is given, and the offender lines are the result.
+   **Why (1 Oct):** 6 checks every entry's quote is in its section, which is one direction only. A sentence in withdrawal form with no entry passed every assertion, which is how §28 and §33 each carried a withdrawal narrowing the Price history solo with nothing filed.
 
-**Not a named assertion yet, so the no-count rule does not reach it and the suite does not run it.** It becomes assertion 9, and moves into the numbered list above, in the round the quoting pass over the build steps lands; until then the spec has eight assertions.
+## Assertion 10 — NOT BUILT
 
-**Every build step quotes its section.** Input: each numbered step in the handoff's build order. Each step carries `> ` a verbatim clause and names one § or §W section; the clause must occur in that section's live text (outside any withdrawn passage, per 8a). Prints the count of steps checked; fails if zero. Fail: `9 STEP no-quote`, `9 STEP not-in-§SEC`. Motivated by three stale steps in one round — 29(a)'s two-line cap and 24px, 29(d)'s "else note", §33's row — that no assertion read.
+**NOT BUILT. The script does not run it, so the no-count rule does not reach it and the suite does not run it.** It was planned as assertion 9; the number went to the reverse check, which was built first, so this is 10. It moves into the numbered list above in the round the quoting pass over the build steps lands.
+
+**Every build step quotes its section.** Input: each numbered step in the handoff's build order. Each step carries `> ` a verbatim clause and names one § or §W section; the clause must occur in that section's live text (outside any withdrawn passage, per 8a). Prints the count of steps checked; fails if zero. Fail: `10 STEP no-quote`, `10 STEP not-in-§SEC`. Motivated by three stale steps in one round — 29(a)'s two-line cap and 24px, 29(d)'s "else note", §33's row — that no assertion read.
 
 ## Changing this spec
 
