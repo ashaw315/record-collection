@@ -14,6 +14,7 @@
 import { readFileSync, existsSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { parseBullets, serialize, shippedComment, unenteredWithdrawals, withdrawalSentencesIn } from './withdrawals.mjs';
+import { doneStepsAbsent, isDone, parseSteps, stepSequence } from './build-order.mjs';
 import {
   collapse,
   decodeEntities,
@@ -152,20 +153,43 @@ const report = (n, ok) => console.log(`${ok ? 'PASS' : 'FAIL'} ${n}`);
   report(2, failures.length === before);
 }
 
-/* 3. Steps are contiguous, and none follows the closing paragraph. */
+/*
+  3. Steps run 0 to N with no gaps and no duplicates, none follows the
+  closing paragraph, and no step the committed order marked done is absent.
+
+  **The direction nobody was looking (1 Oct).** Design's exports replace H
+  wholesale, so a step inserted between two exports is overwritten without a
+  trace; step 71 went that way twice. The first version of this check
+  compared each number with its position, which fails on such a tree but
+  names the step after the gap (`gap-at 72`, then 73), and could not tell a
+  duplicate from a gap. The absent number is what a reader restores, so it
+  is what is named. The done marks are read from HEAD's copy of H, because
+  an export that drops a step drops its mark with it: the tree cannot say
+  what it lost, and the committed order can.
+*/
 {
   const before = failures.length;
+  const steps = parseSteps(orderBlock);
+  if (steps.length === 0) fail('3 empty');
+  const { missing, duplicates } = stepSequence(steps);
+  for (const n of missing) fail(`3 missing ${n}`);
+  for (const n of duplicates) fail(`3 duplicate ${n}`);
+
   const lines = orderBlock.split('\n');
-  const steps = [];
-  lines.forEach((line, i) => {
-    const m = /^(\d+)\. /.exec(line);
-    if (m !== null) steps.push({ n: Number(m[1]), i });
-  });
-  steps.forEach((s, k) => {
-    if (s.n !== k) fail(`3 gap-at ${s.n}`);
-  });
   const closeAt = lines.findIndex((l) => l.includes('Every row in the table above'));
-  if (closeAt >= 0) for (const s of steps) if (s.i > closeAt) fail(`3 step-after-close ${s.n}`);
+  if (closeAt >= 0) for (const s of steps) if (s.line > closeAt) fail(`3 step-after-close ${s.n}`);
+
+  /* Three states: HEAD unreadable (broken, named), no marks (counted as zero, which the suite refuses), marks present (checked). */
+  const committed = spawnSync('git', ['show', `HEAD:docs/design/${FILES.H}`], { encoding: 'utf8' });
+  let doneInHead = 0;
+  if (committed.status !== 0) {
+    fail(`3 head-unreadable ${FILES.H}`);
+  } else {
+    const previous = parseSteps(between(decode(committed.stdout), '## Build order', '## Maintaining'));
+    doneInHead = previous.filter((s) => isDone(s.text)).length;
+    for (const s of doneStepsAbsent(previous, steps)) fail(`3 done-absent ${s.n} "${s.text.slice(0, 80)}"`);
+  }
+  console.log(`     3: ${steps.length} steps in the tree, ${doneInHead} marked done in HEAD`);
   report(3, failures.length === before);
 }
 

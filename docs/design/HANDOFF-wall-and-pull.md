@@ -108,6 +108,7 @@ The wall at rest is line, ink and paper; colour arrives with the pull. Everythin
 | §59 | Contrast is the rule, not a size | Why the contrast rule reaches type of any size; why the Images quarter-disc yields to its caption. |
 | §60 | The disc’s reference is a height, not a rendering | Why the Images disc is sized against named fixed parts, and why the cover note’s blank row goes. |
 | §61 | The cover the record shows, and the colour that follows it | Why the newest cover displays and the colour follows it; why the page’s geometry does not read the colour, so no acceptance is about one colour; what a re-coloured record re-opens and what it does not. |
+| §62 | What the Images count counts | Why the count is what the page shows, and how covers the page does not show are named. |
 
 ## Structural sections — pointers
 
@@ -334,6 +335,9 @@ These are the sections the rulings above build on, all in `Record Detail 8a - se
 
 72. **§61 — the newest cover, and the colour that follows it.** A supersession of built cover and colour behaviour. Display the newest cover row; re-derive the spine colour from the displayed cover whenever it changes, including on deletion. Report, for every record, the colour re-derived from its newest cover, and §59's worst glyph contrast under it; stop and report if any fails. Replace the tests that assert the oldest cover or a colour set once.
    > The record shows its newest cover, and its spine colour is derived from the cover it shows, so a new cover re-colours the record.
+
+73. **§62 — the Images count.** Build after step 72. Count the displayed cover and the gallery's tiles; where the record holds covers it does not display, add “· N earlier covers” before Manage. Report the line on every record. Measure how the extended control line wraps in the About cell at 390, 960, 1000, 1439, 1440 and 1920, at the largest earlier-cover count the collection holds, and report rows taken and whether the prose region keeps §53's seven-line floor. **If it wraps to more rows than §53 ruled, or the prose falls under seven lines, stop and report: that is §53's to re-rule, not this step's to absorb.** Replace the tests that assert the count of all image rows.
+   > The Images count counts what the page shows: the displayed cover and the gallery’s tiles, and nothing the page does not draw.
 
 **The record-detail screen is closed at 7983d4d, on 1 October 2026,** by Adam’s pass over the 119 captures, which found nothing that changes what a reader understands about a record. Steps run 0 to 71; step 72 follows the close and changes values, not structure. This is the baseline the record modal builds against: its marks, its type ladder and its colour system.
 

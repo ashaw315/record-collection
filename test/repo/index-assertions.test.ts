@@ -60,6 +60,16 @@ describe('the design index passes its own assertions', () => {
     }
 
     const count = (label: RegExp) => Number(label.exec(output)?.[1] ?? 0);
+    /*
+      **3 reads two orders, and both counts must be non-zero.** The tree's
+      steps are what the sequence check runs over; the committed order's
+      done-marked steps are what the done-absent check runs over, read from
+      HEAD because an export that drops a step drops its mark with it. A
+      zero in the second place means the script could not read HEAD, and a
+      silent zero there would pass exactly the loss the check exists for.
+    */
+    expect(count(/3: (\d+) steps in the tree/), 'assertion 3 checked steps').toBeGreaterThan(0);
+    expect(count(/3: \d+ steps in the tree, (\d+) marked done in HEAD/), 'assertion 3 read done marks from HEAD').toBeGreaterThan(0);
     expect(count(/6: (\d+) entries checked/), 'assertion 6 checked entries').toBeGreaterThan(0);
     expect(count(/7: (\d+) declared/), 'assertion 7 found declared sentences').toBeGreaterThan(0);
     /*

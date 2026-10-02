@@ -78,8 +78,9 @@ Each prints `PASS n` or `FAIL n` followed by one line per offender, then the scr
 2. **Every governs row is in the build order.** For each governs row id, the build order must contain `§ID` not followed by `[\d.]`.
    Fail: `2 §ID not-in-order`.
 
-3. **Steps are contiguous.** Step numbers in order must equal 0, 1, 2, …; the last step must come before the closing paragraph.
-   Fail: `3 gap-at N` or `3 step-after-close N`.
+3. **Steps run 0 to N, each once, and no done step is absent.** Step numbers must cover 0 to the highest number with no gaps and no duplicates; the last step must come before the closing paragraph; and every step marked done (a bold `Done` or `Built` opening) in `HEAD`'s copy of `H` must still be numbered in the tree's. Prints the tree's step count and the count of done marks read from `HEAD`; fails if the order is empty or `HEAD` cannot be read.
+   Fail: `3 missing N`, `3 duplicate N`, `3 step-after-close N`, `3 done-absent N "TEXT"`, `3 empty`, `3 head-unreadable FILE`.
+   **Why (1 Oct):** Design's exports replace `H` wholesale, so a step inserted between exports is overwritten without a trace; step 71 was lost that way twice. The earlier form compared each number with its position and named the step after the gap (`3 gap-at 72`), could not tell a duplicate from a gap, and never said the lost step had been done. The done marks are read from `HEAD` because the export that drops a step drops its mark with it.
 
 4. **Cross-file references resolve.** In each file, with tags stripped and the renumbering note at the head of `W` excluded:
    - every `§W.N` in `L` or `S` names a heading in `W`;

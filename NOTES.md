@@ -33786,3 +33786,32 @@ Verification, step level: the gallery-order unit file, the record-images,
 images-delete, shelf and discogs-cover integration files and the
 page-record guard (125 pass); `images.spec`, `no-cover-54` and the grid's
 ladder-faces test on chromium (14 pass); typecheck, lint, build.
+
+## Index assertion 3 names the lost step: 0 to N, no gaps, no duplicates, no done step absent (2 Oct)
+
+Design's exports replace the handoff wholesale, so a step inserted between
+exports is overwritten without a trace; step 71 went that way twice. The
+old assertion 3 compared each number with its position, so it failed on
+such a tree but named the steps after the gap (`gap-at 72`, `gap-at 73`),
+could not tell a duplicate from a gap, and said nothing about the lost
+step having been done. `scripts/build-order.mjs` now parses the order and
+`check-index.mjs` reports `3 missing N`, `3 duplicate N` and
+`3 done-absent N`, the last against HEAD's copy of the handoff, since the
+export that drops a step drops its done mark with it. The spec's
+assertion 3 is rewritten to match.
+
+**What it finds on the current tree:** `3 missing 71` and
+`3 done-absent 71` -- the uncommitted drop that adds step 73 (§62) carries
+the italic placeholder where step 71 was, again. `6 comment-stale` is the
+same drop's, cleared by `derive-withdrawals.mjs`. Neither is fixed here:
+taking the drop in is its own unit.
+
+**Limit, stated:** only five steps carry a done mark (57, 63, 64, 65, 71).
+A built step with no mark is covered by the gap check alone, and the
+done-absent check compares against HEAD, so once a drop that lost a step
+is committed the mark is gone from HEAD too. The gap check still fails
+then; it is the commit that must not happen on a red index.
+
+**Taken in the same day.** Step 71 restored from HEAD's line in place of
+the placeholder, the withdrawal comment re-derived (99 entries), and the
+§62 drop committed with the check. Step 73 is §62's, unbuilt.
