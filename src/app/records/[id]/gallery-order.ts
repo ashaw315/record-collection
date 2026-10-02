@@ -115,3 +115,22 @@ export function displayedCover(images: GalleryImage[]): GalleryImage | null {
   }
   return newest;
 }
+
+/**
+ * §62 (step 73): what the Images line counts. "The Images count counts what
+ * the page shows: the displayed cover and the gallery's tiles, and nothing
+ * the page does not draw." A count beside a page reads as a count of that
+ * page; it counted every row, so a record with four covers and a back read
+ * 5 above one sleeve and one tile. The covers the page does not show "are
+ * named, not folded into the count", since the line is the only place a
+ * reader learns they exist.
+ *
+ * Built from the two functions that decide what is drawn, so the count
+ * cannot drift from the page: `displayedCover` for the frame, `orderImages`
+ * for the gallery.
+ */
+export function imagesShown(images: GalleryImage[]): { shown: number; earlierCovers: number } {
+  const cover = displayedCover(images) === null ? 0 : 1;
+  const covers = images.filter((image) => image.imageType === 'cover').length;
+  return { shown: cover + orderImages(images).length, earlierCovers: covers - cover };
+}

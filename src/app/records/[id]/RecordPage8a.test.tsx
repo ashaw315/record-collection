@@ -43,6 +43,7 @@ const record = (spineColour: string | null): PageRecord => ({
   aboutEditedAt: null,
   about: null,
   imageCount: 0,
+  earlierCovers: 0,
   coverUrl: null,
   spineColour,
 });
@@ -560,5 +561,46 @@ describe('§49: the measure is 443 at every width from 480 up (step 57)', () => 
     const style = /<style>([\s\S]*?)<\/style>/.exec(html)?.[1] ?? '';
     const above = style.slice(style.indexOf('@media (min-width: 1440px)'));
     expect(above, 'from 1440 up the identity content is padded to the measure').toMatch(/\[data-cell="identity-content"\]\s*\{[^}]*padding-left:\s*calc\(\(100% - 443px\) \/ 2\)/);
+  });
+});
+
+/**
+ * §62 (step 73): the line reads the count of what the page shows, then names
+ * the covers it does not show "as '· N earlier covers', still before Manage".
+ * "Bitches Brew then reads Images 2 · 3 earlier covers · Manage. A record
+ * that holds only what it shows carries no clause."
+ */
+describe('§62: the Images line counts what the page shows and names earlier covers before Manage', () => {
+  const lineOf = (html: string) => {
+    const at = html.indexOf('data-field="images-line"');
+    expect(at, 'the Images line renders').toBeGreaterThan(-1);
+    const inner = html.slice(html.indexOf('>', at) + 1, html.indexOf('</div>', at));
+    return inner.replace(/<!-- -->/g, '').replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+  };
+
+  /* Fails against the earlier-covers clause in RecordPage8a's Images line. */
+  it('reads “Images 2 · 3 earlier covers · Manage →” on a record showing two and holding three more covers', () => {
+    const html = renderToStaticMarkup(<RecordPage8a record={{ ...record('#95484a'), imageCount: 2, earlierCovers: 3 }} />);
+    expect(lineOf(html)).toBe('Images 2 · 3 earlier covers · Manage →');
+  });
+
+  /* Fails against the clause's condition: at zero the line is the one §53 placed, with no separator left behind. */
+  it('carries no clause and no separator where the record holds only what it shows', () => {
+    const html = renderToStaticMarkup(<RecordPage8a record={{ ...record('#95484a'), imageCount: 1, earlierCovers: 0 }} />);
+    expect(lineOf(html)).toBe('Images 1 Manage →');
+    expect(html).not.toContain('data-field="earlier-covers"');
+  });
+
+  /* Fails against the plural: one earlier cover is "1 earlier cover". A reading for Design -- §62 writes the plural form only. */
+  it('says “1 earlier cover” for one', () => {
+    const html = renderToStaticMarkup(<RecordPage8a record={{ ...record('#95484a'), imageCount: 1, earlierCovers: 1 }} />);
+    expect(lineOf(html)).toBe('Images 1 · 1 earlier cover · Manage →');
+  });
+
+  /* Fails against the link: the clause sits before Manage and is not part of it. */
+  it('keeps Manage as the link, with the clause outside it', () => {
+    const html = renderToStaticMarkup(<RecordPage8a record={{ ...record('#95484a'), imageCount: 2, earlierCovers: 3 }} />);
+    const link = /<a href="#images"[^>]*>([\s\S]*?)<\/a>/.exec(html)?.[1] ?? '';
+    expect(link.replace(/<!-- -->/g, '').trim()).toBe('Manage →');
   });
 });

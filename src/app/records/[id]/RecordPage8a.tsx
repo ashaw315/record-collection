@@ -59,7 +59,10 @@ export type PageRecord = {
   about: string | null;
   /** When the user last edited the About (ISO), or null when it is the model's or absent: §10b's attribution. */
   aboutEditedAt: string | null;
+  /** §62: the images the page shows -- the displayed cover and the gallery's tiles. */
   imageCount: number;
+  /** §62: covers the record holds and the page does not show; named beside the count, never folded into it. */
+  earlierCovers: number;
   coverUrl: string | null;
   spineColour: string | null;
 };
@@ -115,6 +118,16 @@ function EmptyMark({ diagonal }: { diagonal: Exclude<Diagonal, 'none'> }) {
  * which form renders "follows the same key that decides whether the row's
  * button renders".
  */
+/** §62 writes "N earlier covers"; one is "1 earlier cover", a reading for Design, which gives the plural only. */
+function earlierCoversClause(n: number): string {
+  return `${n} earlier ${n === 1 ? 'cover' : 'covers'}`;
+}
+
+/** The Images line as one string, for the cell's text measure; the markup below draws the same words. */
+function imagesLineText(shown: number, earlierCovers: number): string {
+  return earlierCovers > 0 ? `Images ${shown} · ${earlierCoversClause(earlierCovers)} · Manage →` : `Images ${shown} Manage →`;
+}
+
 export function RecordPage8a({ record, writingConfigured = false }: { record: PageRecord; writingConfigured?: boolean }) {
   const modules = gridModules({
     catalogNumber: record.pressingLine === '' ? null : record.pressingLine,
@@ -201,7 +214,7 @@ export function RecordPage8a({ record, writingConfigured = false }: { record: Pa
       ...(aboutState.kind === 'about' ? [{ text: aboutState.text, register: 'prose' as const, wraps: true }]
         : aboutState.kind === 'entry' ? [{ text: aboutState.entryDate, register: 'label' as const }, { text: aboutState.text, register: 'prose' as const, wraps: true }]
         : writingConfigured ? [{ text: 'Write one', register: 'label' as const }] : []),
-      { text: `Images ${record.imageCount} Manage →`, register: 'label' }] },
+      { text: imagesLineText(record.imageCount, record.earlierCovers), register: 'label' }] },
   ];
 
   /**
@@ -1112,11 +1125,21 @@ export function RecordPage8a({ record, writingConfigured = false }: { record: Pa
             className="mt-[14px] w-[220px] max-w-full"
             style={{ borderTop: `1px solid ${RULE}` }}
           />
-          <div className={`${LABEL} relative mt-[14px]`} style={{ color: INK }}>
+          <div data-field="images-line" className={`${LABEL} relative mt-[14px]`} style={{ color: INK }}>
             Images{' '}
             <span data-field="image-count" className="font-mono">
               {record.imageCount}
             </span>{' '}
+            {/*
+              §62: covers the page does not show "are named, not folded into
+              the count ... still before Manage, which is where they are kept
+              or deleted". No clause, and no separator, where there are none.
+            */}
+            {record.earlierCovers > 0 && (
+              <span data-field="earlier-covers">
+                · {earlierCoversClause(record.earlierCovers)} ·{' '}
+              </span>
+            )}
             <a href="#images" className="underline underline-offset-2">
               Manage →
             </a>

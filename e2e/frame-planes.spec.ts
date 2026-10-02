@@ -315,32 +315,35 @@ test('an About longer than its cell scrolls inside it: focusable, labelled, the 
   await expect(about).not.toHaveAttribute('data-scrolls');
 });
 
-test('the frame counts the images and links to their editor', async ({ page }) => {
+test('the frame counts the images the page shows, names earlier covers, and links to their editor (§62)', async ({ page }) => {
   /**
    * **`Images N Manage →`, in the About cell.** §9.4 marks Images on the
    * ground "the frame shows a count, never the images" — and for two days the
    * frame showed neither: `imageCount` was declared in `PageRecord`, passed by
    * the route, and never rendered. A field with no consumer.
    *
-   * The count is kept where the date was struck, and the rule that decides it
-   * splits on WHY a constant is constant. purchase_date is constant because the
-   * app abandoned the field — nothing will ever write it. The image count is
-   * constant because the collection is unphotographed: the schema carries
-   * cover, gatefold left, gatefold right and back, so one image per record is a
-   * backlog rather than a ceiling. A rule reading texture from an unfilled
-   * field measures the backlog rather than the design.
+   * **§62 (step 73): the count is what the page shows.** It counted every
+   * image row, covers included, so Bitches Brew read Images 5 above one tile.
+   * "The Images count counts what the page shows: the displayed cover and
+   * the gallery's tiles, and nothing the page does not draw", and the covers
+   * it does not show are named "· N earlier covers" before Manage.
    *
-   * Asserted with TWO counts, so a hard-coded "1" cannot pass: a record with
-   * one image and a record with two.
+   * Asserted with THREE records, so a hard-coded figure cannot pass, and each
+   * count is checked against the page it sits beside: the sleeve drawn in the
+   * frame plus the tiles drawn in the gallery.
    */
   const suffix = makeSuffix();
   const one = await aRecord(page, suffix);
   const two = await aRecord(page, `${suffix}b`);
   await seedImage({ recordId: two, imageType: 'back' });
+  const many = await aRecord(page, `${suffix}c`);
+  for (let i = 0; i < 3; i += 1) await seedImage({ recordId: many, imageType: 'cover' });
+  await seedImage({ recordId: many, imageType: 'back' });
 
-  for (const [id, expected] of [
-    [one, 1],
-    [two, 2],
+  for (const [id, expected, earlier] of [
+    [one, 1, 0],
+    [two, 2, 0],
+    [many, 2, 3],
   ] as const) {
     await page.goto(`/records/${id}`);
     await page.getByTestId('record-page-8a').waitFor({ timeout: 20_000 });
@@ -349,7 +352,15 @@ test('the frame counts the images and links to their editor', async ({ page }) =
     const count = cell.locator('[data-field="image-count"]');
 
     await expect(count, 'the count renders').toHaveCount(1);
-    await expect(count, `${expected} image(s)`).toHaveText(String(expected));
+    await expect(count, `${expected} image(s) shown`).toHaveText(String(expected));
+
+    /* The count against the page: one sleeve in the frame, and the gallery's tiles. */
+    const drawn = (await page.locator('[data-cover]').count()) + (await page.locator('#images [data-testid="gallery-image"]').count());
+    expect(drawn, 'the count is the number of images the page draws').toBe(expected);
+
+    const clause = cell.locator('[data-field="earlier-covers"]');
+    if (earlier === 0) await expect(clause, 'no clause where the record holds only what it shows').toHaveCount(0);
+    else await expect(cell.locator('[data-field="images-line"]'), 'the earlier covers are named before Manage').toHaveText(new RegExp(`Images\\s*${expected}\\s*·\\s*${earlier} earlier covers\\s*·\\s*Manage`, 'i'));
 
     /* Manage is the same vocabulary as the genres count: a link to the editor. */
     const manage = cell.getByRole('link', { name: /Manage/ });
@@ -360,3 +371,163 @@ test('the frame counts the images and links to their editor', async ({ page }) =
     await expect(page.locator('#images[data-section="images"]')).toHaveCount(1);
   }
 });
+
+/**
+ * §62 (step 73): "Measure how the extended control line wraps in the About
+ * cell at 390, 960, 1000, 1439, 1440 and 1920, at the largest earlier-cover
+ * count the collection holds, and report rows taken and whether the prose
+ * region keeps §53's seven-line floor." The largest count is three: Bitches
+ * Brew's four covers. The About is a generated one, whose by-line is the
+ * longer of the two.
+ *
+ * **The claim is a comparison, because the floor alone would blame §62 for
+ * what it did not do.** Measured 2 Oct on this fixture: the line is one row
+ * at all six widths and the prose holds the same lines with the clause as
+ * without it -- 10 at 390, 4 at 960 and 1000, 3 at 1439, 8 at 1440 and 1920.
+ * From 960 to 1439 the prose is under seven lines with or without the
+ * clause: §53 measured its floor in the 1440 cell ("at 263") and the packed
+ * band below the fork is shorter. That is recorded in NOTES for Design and
+ * is not this line's doing, so the floor is asserted only where §53 ruled
+ * it and the comparison is asserted everywhere.
+ *
+ * **What this cannot reach, and what does:** `.env.test` leaves writing
+ * unconfigured, so the control line on a seeded record has no "Write a new
+ * one" and rests one row, where a configured page's rests two. The prose
+ * figure here at 1440 and above is therefore 8 with 17px to spare; the
+ * configured page's is 8 with none, and is held by the probe tests below.
+ */
+for (const width of [390, 960, 1000, 1439, 1440, 1920]) {
+  test(`§62 at ${width}: the Images line with three earlier covers is one row inside the cell, and costs the prose no line`, async ({ page }) => {
+    await login(page);
+    const id = await aRecord(page, makeSuffix());
+    for (let i = 0; i < 3; i += 1) await seedImage({ recordId: id, imageType: 'cover' });
+    await seedImage({ recordId: id, imageType: 'back' });
+    await getTestDb().execute(
+      sql`UPDATE records SET snippet = ${'A long About, so the region scrolls and its budget is what the cell can hold. '.repeat(8)}, snippet_edited_at = NULL WHERE id = ${id}::uuid`,
+    );
+    await page.setViewportSize({ width, height: width === 390 ? 844 : NO_SCROLL_HEIGHT });
+
+    const measure = async () => {
+      await page.goto(`/records/${id}`);
+      await page.getByTestId('record-page-8a').waitFor({ timeout: 20_000 });
+      await page.locator('[data-field="about"][data-line-budget]').waitFor({ timeout: 10_000 });
+      return page.evaluate(() => {
+        const cell = document.querySelector('[data-cell="note"]');
+        const line = cell?.querySelector('[data-field="images-line"]') ?? null;
+        let lineRows: number | null = null;
+        if (line !== null) {
+          const range = document.createRange();
+          range.selectNodeContents(line);
+          lineRows = new Set(Array.from(range.getClientRects()).filter((r) => r.width > 0).map((r) => Math.round(r.top))).size;
+        }
+        const foot = line?.getBoundingClientRect();
+        const box = cell?.getBoundingClientRect();
+        return {
+          text: (line?.textContent ?? '').replace(/\s+/g, ' ').trim().toLowerCase(),
+          lineRows,
+          budget: Number(cell?.querySelector('[data-field="about"]')?.getAttribute('data-line-budget')),
+          footCut: foot === undefined || box === undefined ? null : Math.round(foot.bottom - box.bottom),
+        };
+      });
+    };
+
+    const extended = await measure();
+    /* The baseline: the same record holding only the cover it shows. */
+    await getTestDb().execute(
+      sql`DELETE FROM images WHERE record_id = ${id}::uuid AND image_type = 'cover'
+            AND id NOT IN (SELECT id FROM images WHERE record_id = ${id}::uuid AND image_type = 'cover' ORDER BY created_at DESC, id DESC LIMIT 1)`,
+    );
+    const plain = await measure();
+    test.info().annotations.push({ type: '§62 measure', description: `${width}: extended ${JSON.stringify(extended)} plain ${JSON.stringify(plain)}` });
+
+    /* The preconditions, asserted: the two pages differ by the clause and nothing else. */
+    expect(extended.text, 'the line under test is the extended one').toBe('images 2 · 3 earlier covers · manage →');
+    expect(plain.text, 'and the baseline carries no clause').toBe('images 2 manage →');
+
+    expect(extended.lineRows, `the Images line's rows at ${width}`).toBe(1);
+    expect(extended.footCut, 'the line is inside the cell, not clipped at its floor').toBeLessThanOrEqual(0);
+    expect(extended.budget, `the prose holds as many lines with the clause as without, at ${width}`).toBe(plain.budget);
+    if (width >= GRID_FORK) expect(extended.budget, `§53's seven-line floor, in the cell it was ruled for, at ${width}`).toBeGreaterThanOrEqual(7);
+  });
+}
+
+/**
+ * §62 against the FULL control line -- "Written by Claude · Edit · Delete ·
+ * Write a new one", the one §53 measured at 51 characters and two rows.
+ *
+ * The seeded-record tests above run where writing is unconfigured, so their
+ * control line is a row shorter and their prose figure flatters a real
+ * page: the region there is 173px, 8.9 lines, and reads 8; with the full
+ * line it is 156px, exactly 8.0 at 19.5px. The probe page renders the
+ * configured form (`?configured=1`), which is the only place this line can
+ * be drawn beside the extended Images line.
+ *
+ * Measured 2 Oct at 1440 and 1920: 8 lines with the clause and without it.
+ * The Images line holds 41 characters in its 322px, so "Images 2 · 9999
+ * earlier covers · Manage →" is one row and 10000 is two; the second row
+ * takes the prose to 7, which is §53's floor met exactly. Those two counts
+ * are the headroom step 73 asks for, pinned here from both sides.
+ */
+async function probeAbout(page: Page, width: number, earlier: number) {
+  await page.setViewportSize({ width, height: NO_SCROLL_HEIGHT });
+  await page.goto(`/wall/probe/page8a?case=richest&generated=1&configured=1&earlier=${earlier}`);
+  await page.locator('[data-field="about"][data-line-budget]').waitFor({ timeout: 15_000 });
+  return page.evaluate(() => {
+    const cell = document.querySelector('[data-cell="note"]');
+    const about = cell?.querySelector('[data-field="about"]') ?? null;
+    const controls = cell?.querySelector('[data-field="about-controls"]') ?? null;
+    const line = cell?.querySelector('[data-field="images-line"]') ?? null;
+    /*
+      Rows as height over line height. Counting distinct rect tops read the
+      control block as four rows: its buttons and text sit at slightly
+      different tops within one row.
+    */
+    const rowsOf = (el: Element | null) => {
+      if (el === null) return null;
+      return Math.round(el.getBoundingClientRect().height / parseFloat(getComputedStyle(el).lineHeight));
+    };
+    const lineHeight = about === null ? NaN : parseFloat(getComputedStyle(about).lineHeight);
+    return {
+      controls: (controls?.textContent ?? '').replace(/\s+/g, ' ').trim(),
+      controlRows: rowsOf(controls),
+      lineRows: rowsOf(line),
+      budget: Number(about?.getAttribute('data-line-budget')),
+      /* The region's height in lines, unfloored: the slack the budget attribute hides. */
+      linesExact: about === null ? NaN : about.clientHeight / lineHeight,
+      footCut: line === null || cell === null || cell === undefined ? null : Math.round(line.getBoundingClientRect().bottom - cell.getBoundingClientRect().bottom),
+    };
+  });
+}
+
+for (const width of [1440, 1920]) {
+  test(`§62 at ${width}, full control line: three earlier covers cost the prose no line, and it keeps §53's seven`, async ({ page }) => {
+    await login(page);
+    const plain = await probeAbout(page, width, 0);
+    const extended = await probeAbout(page, width, 3);
+    test.info().annotations.push({ type: '§62 measure', description: `${width}: plain ${JSON.stringify(plain)} extended ${JSON.stringify(extended)}` });
+
+    /* The precondition this test exists for: the control line is the full one, on its two rows. */
+    expect(extended.controls, 'the control line is the configured one').toBe('Written by Claude · Edit · Delete · Write a new one');
+    expect(extended.controlRows, 'and rests on the two rows §53 measured').toBe(2);
+
+    expect(extended.lineRows, 'the Images line is one row').toBe(1);
+    expect(extended.footCut, 'inside the cell').toBeLessThanOrEqual(0);
+    expect(extended.budget, 'the prose holds as many lines with the clause as without').toBe(plain.budget);
+    expect(extended.linesExact, 'and the same height, not only the same floored count').toBe(plain.linesExact);
+    expect(extended.budget, "§53's seven-line floor").toBeGreaterThanOrEqual(7);
+  });
+
+  test(`§62 at ${width}, full control line: the Images line takes a second row at 10000 earlier covers, not at 9999, and the prose is then seven`, async ({ page }) => {
+    await login(page);
+    const last = await probeAbout(page, width, 9999);
+    const first = await probeAbout(page, width, 10000);
+    test.info().annotations.push({ type: '§62 headroom', description: `${width}: 9999 ${JSON.stringify(last)} 10000 ${JSON.stringify(first)}` });
+
+    expect(last.controlRows, 'the full control line, at both counts').toBe(2);
+    expect(last.lineRows, '9999 earlier covers is still one row').toBe(1);
+    expect(first.lineRows, '10000 is the first count that takes another').toBe(2);
+    expect(first.footCut, 'the second row is inside the cell, not clipped at its floor').toBeLessThanOrEqual(0);
+    expect(first.budget, 'the second row costs the prose one line').toBe(last.budget - 1);
+    expect(first.budget, "and leaves §53's floor met, not broken").toBeGreaterThanOrEqual(7);
+  });
+}

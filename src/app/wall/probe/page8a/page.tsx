@@ -64,6 +64,7 @@ const CASES: Record<string, PageRecord> = {
     aboutEditedAt: null,
     about: 'Classic pressing with the original inner sleeve.',
     imageCount: 1,
+    earlierCovers: 0,
     coverUrl: COVER,
     spineColour: '#a25829',
   },
@@ -94,6 +95,7 @@ const CASES: Record<string, PageRecord> = {
     aboutEditedAt: null,
     about: null,
     imageCount: 1,
+    earlierCovers: 0,
     coverUrl: COVER,
     spineColour: '#44946b',
   },
@@ -121,6 +123,7 @@ const CASES: Record<string, PageRecord> = {
     aboutEditedAt: null,
     about: null,
     imageCount: 0,
+    earlierCovers: 0,
     coverUrl: COVER,
     spineColour: '#363129',
   },
@@ -161,14 +164,17 @@ CASES.nocover = {
   spineColour: null,
 };
 
+/** Long enough to scroll at every width, so the region's line budget is the cell's and not the text's. */
+const GENERATED_ABOUT = 'A long About, so the region scrolls and its budget is what the cell can hold. '.repeat(8);
+
 export default async function Page8aProbe({
   searchParams,
 }: {
-  searchParams: Promise<{ case?: string; configured?: string }>;
+  searchParams: Promise<{ case?: string; configured?: string; earlier?: string; generated?: string }>;
 }) {
   if (process.env.NODE_ENV === 'production') notFound();
 
-  const { case: which, configured } = await searchParams;
+  const { case: which, configured, earlier, generated } = await searchParams;
   const name = which ?? 'richest';
   const record = CASES[name];
 
@@ -195,7 +201,21 @@ export default async function Page8aProbe({
   return (
     <>
       <AppHeader />
-      <RecordPage8a record={record} writingConfigured={configured === '1'} />
+      {/*
+        §62 (step 73): `?earlier=N` draws the Images line with N earlier
+        covers, and `?generated=1` an About Claude wrote, whose control line
+        is the full one -- "Written by Claude", Edit, Delete, Write a new
+        one. The E2E server has no key, so this probe is the only place the
+        line §53 measured can be rendered beside the extended Images line.
+      */}
+      <RecordPage8a
+        record={{
+          ...record,
+          ...(earlier === undefined ? {} : { imageCount: 2, earlierCovers: Number(earlier) }),
+          ...(generated === '1' ? { about: GENERATED_ABOUT, aboutEditedAt: null } : {}),
+        }}
+        writingConfigured={configured === '1'}
+      />
     </>
   );
 }

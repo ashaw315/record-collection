@@ -33815,3 +33815,103 @@ then; it is the commit that must not happen on a red index.
 **Taken in the same day.** Step 71 restored from HEAD's line in place of
 the placeholder, the withdrawal comment re-derived (99 entries), and the
 §62 drop committed with the check. Step 73 is §62's, unbuilt.
+
+## Step 72's colour applied to production (2 Oct)
+
+Pushed at 49a9764, then `rederive-spine-colours.mts --apply`: Bitches Brew
+#adad85 to #95484a, the one record that differed. Read back with a second
+read-only run: colour held #95484a, re-derived from the newest cover (of
+four, 1 Oct) #95484a, sixteen unchanged, none would change. The "Not
+applied" paragraph under step 72 is superseded by this. The live page was
+not looked at; that check is Adam's.
+
+## Step 73 built: §62 -- the Images count is what the page shows, and earlier covers are named (2 Oct)
+
+`imagesShown` in `gallery-order.ts` is built from the two functions that
+decide what is drawn (`displayedCover`, `orderImages`), so the count cannot
+drift from the page. The line reads `Images N Manage →` where the record
+holds only what it shows and `Images N · K earlier covers · Manage →`
+where it holds more covers. The delete dialog still counts every row,
+since it deletes every row. The E2E count test is replaced: three records,
+each count checked against the sleeve and tiles the page draws; staged
+against the old count it read 5 where the page drew 2.
+
+**The line on every record (production, read-only):** Bitches Brew, five
+rows, reads `Images 2 · 3 earlier covers · Manage →`. The Blues Project
+reads `Images 0 Manage →`. The other fifteen hold one cover and read
+`Images 1 Manage →`, as before.
+
+**The wrap, at three earlier covers, on a seeded record with a generated
+About (chromium):**
+
+| width | Images line rows | prose lines with the clause | without |
+|---|---|---|---|
+| 390 | 1 | 10 | 10 |
+| 960 | 1 | 4 | 4 |
+| 1000 | 1 | 4 | 4 |
+| 1439 | 1 | 3 | 3 |
+| 1440 | 1 | 8 | 8 |
+| 1920 | 1 | 8 | 8 |
+
+The line never wraps and costs the prose no line at any width, so the
+step's stop condition is not met by §62.
+
+**For Design, outside this step: from 960 to 1439 the prose region is
+under §53's seven lines with or without the clause** -- four lines at 960
+and 1000, three at 1439, in a cell 206 and 186 high. §53 measured its
+floor "at 263", the 1440 cell; the packed band below the fork is shorter.
+Seen on a seeded record, not on the seventeen: the packed band's height
+follows its content, so the real figures need their own read before
+anyone rules. Nothing was changed for it.
+
+**Two readings for Design.** §62 writes "N earlier covers" only; one is
+drawn "1 earlier cover". §62's example ends "· Manage"; the built link
+keeps its arrow, "Manage →", as §53's line had it.
+
+**Re-measured against the full control line (2 Oct), because the table
+above flatters a real page at 1440 and 1920.** `.env.test` leaves writing
+unconfigured, so a seeded record's control line has no "Write a new one"
+and rests one row; §53's 51 characters and two rows included it. The
+probe page renders the configured form, and now takes `?earlier=N` and
+`?generated=1`:
+
+| 1440 and 1920 | control rows | prose region | lines |
+|---|---|---|---|
+| short line, no clause | 1 | 173px | 8.9, reads 8 |
+| full line, no clause | 2 | 156px | 8.0 |
+| full line, three earlier covers | 2 | 156px | 8.0 |
+| full line, 10000 earlier covers | 2 | 140px | 7.2, reads 7 |
+
+So a configured page holds eight lines exactly, with no slack, and the
+clause costs nothing. The earlier sentence that §53's eight "leaves one
+line of room" was right about the count and silent about the slack: the
+unconfigured page's 8 hid 17px the configured page does not have.
+
+**Headroom, against the full line.** The Images line holds 41 characters
+in its 322px at 1440 and 1920. "Images 2 · 9999 earlier covers · Manage →"
+is one row; 10000 is the first count that takes a second, and the prose
+is then seven, the floor met exactly. A third row would break it, and no
+count to a million reaches one. The digits of both counts share the row:
+five between them fit, six wrap, so a record showing ten or more images
+would wrap at 1000 earlier covers (derived from the 41-character row in
+a mono face, not measured). At 390, 960, 1000 and 1439 the line stays
+one row to a million earlier covers; from 960 to 1439 the prose is under
+seven before any cover is added, as noted above.
+
+**Apparatus, caught once here:** counting rows by distinct rect tops read
+the control block as four rows, since its buttons sit at slightly
+different tops within a row. Rows are height over line height.
+
+The mobile project does not include `frame-planes.spec.ts`, so the 390
+figure is chromium at 390 wide.
+
+**The third drop of §62 (2 Oct)** adds the headroom report to step 73 and
+the rule that Claude leaves Code's step numbers absent rather than
+writing a placeholder. Step 71 was absent as that rule says, the
+sequence check named it, and it is restored from HEAD's line a third
+time; the withdrawal comment re-derived.
+
+Verification, step level: gallery-order, RecordPage8a component and
+page-record guard (90 pass); frame-planes on chromium (16 pass), images,
+about-row-36, record-controls and no-cover-54 on chromium (19 pass);
+typecheck, lint, build.

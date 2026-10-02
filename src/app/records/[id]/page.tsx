@@ -1,4 +1,4 @@
-import { displayedCover } from './gallery-order';
+import { displayedCover, imagesShown } from './gallery-order';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { AppHeader } from '@/components/AppHeader';
@@ -214,7 +214,9 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
                 /* §33: the About is §10b's snippet, `records.snippet`. */
                 about: record.snippet,
                 aboutEditedAt: record.snippetEditedAt === null ? null : new Date(record.snippetEditedAt).toISOString(),
-                imageCount: record.images.length,
+                /* §62: what the page shows, and the covers it does not; the delete dialog above still counts every row, since it deletes every row. */
+                imageCount: imagesShown(record.images).shown,
+                earlierCovers: imagesShown(record.images).earlierCovers,
                 /* §61: the newest cover, not the first; the shelf (`shelf.ts`) reads the same. */
                 coverUrl: displayedCover(record.images)?.url ?? null,
                 spineColour: record.spineColour,

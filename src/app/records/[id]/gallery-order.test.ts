@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { IMAGE_TYPE_ORDER, displayedCover, imageTypeLabel, orderImages } from './gallery-order';
+import { IMAGE_TYPE_ORDER, displayedCover, imageTypeLabel, imagesShown, orderImages } from './gallery-order';
 
 /**
  * How the gallery arranges §4.2's image types (six since §10b's gatefold).
@@ -256,5 +256,42 @@ describe('displayedCover (§61: the newest cover)', () => {
   it('is null with no cover at all, which is §54’s record', () => {
     expect(displayedCover([image('b', 'back')])).toBeNull();
     expect(displayedCover([])).toBeNull();
+  });
+});
+
+/**
+ * §62 (step 73): "The Images count counts what the page shows: the displayed
+ * cover and the gallery's tiles, and nothing the page does not draw. ...
+ * Covers the page does not show are named, not folded into the count."
+ * It counted every row, so Bitches Brew read Images 5 above one tile.
+ */
+describe('imagesShown (§62: the count is what the page draws; earlier covers are named beside it)', () => {
+  /* Fails against the `shown` sum in imagesShown: counting rows gives 5. */
+  it('counts the displayed cover and the tiles, and names the other covers: four covers and a back are 2 and 3', () => {
+    const rows = [
+      image('c1', 'cover', '2026-08-01T00:00:00Z'),
+      image('c2', 'cover', '2026-10-01T20:50:00Z'),
+      image('c3', 'cover', '2026-10-01T20:51:00Z'),
+      image('c4', 'cover', '2026-10-01T20:53:18Z'),
+      image('b', 'back', '2026-10-01T21:00:00Z'),
+    ];
+    expect(imagesShown(rows)).toEqual({ shown: 2, earlierCovers: 3 });
+  });
+
+  /* Fails against `earlierCovers`: a record that holds only what it shows carries no clause, so the figure must be 0, not 1. */
+  it('names no earlier cover on a record that holds only what it shows', () => {
+    expect(imagesShown([image('c', 'cover')])).toEqual({ shown: 1, earlierCovers: 0 });
+    expect(imagesShown([image('c', 'cover'), image('b', 'back'), image('l', 'label')])).toEqual({ shown: 3, earlierCovers: 0 });
+  });
+
+  /* Fails against the cover term: with no cover the frame draws none, so only tiles count and nothing is "earlier". */
+  it('counts only the tiles where there is no cover, and nothing at all on an empty record', () => {
+    expect(imagesShown([image('b', 'back'), image('m', 'matrix')])).toEqual({ shown: 2, earlierCovers: 0 });
+    expect(imagesShown([])).toEqual({ shown: 0, earlierCovers: 0 });
+  });
+
+  /* Fails against the tile term reading known types only: an untyped row is drawn as an Other tile, so it is counted. */
+  it('counts an untyped image, which the gallery draws under Other', () => {
+    expect(imagesShown([image('c', 'cover'), image('u', null)])).toEqual({ shown: 2, earlierCovers: 0 });
   });
 });
