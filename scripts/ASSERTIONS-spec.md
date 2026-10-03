@@ -78,7 +78,7 @@ Ten are built and numbered 0 to 9. Assertion 8 has two parts, so the script repo
 1. **Every heading has exactly one row.** Collect heading ids from `L`, `S`, `W`. Count rows by id across both tables in `H`.
    Fail on: a heading with 0 or ≥2 rows (`1 §ID rows=K`), and a row with no heading (`1 §ID no-heading`).
 
-2. **Every governs row is in the build order.** For each governs row id, the build order must contain `§ID` not followed by `[\d.]`.
+2. **Every governs row is in the build order.** For each governs row id, the build order must contain `§ID` not followed by a digit, or by a full stop and a digit (`(?!\.?\d)`). Until 3 Oct the rule was "not followed by `[\d.]`", which also refused the full stop ending a sentence, so the declaration "No step: §G.7." could not satisfy it.
    Fail: `2 §ID not-in-order`.
 
 3. **Steps run 0 to N, each once, and no done step is absent.** Step numbers must cover 0 to the highest number with no gaps and no duplicates; the last step must come before the closing paragraph; and every step marked done (a bold `Done` or `Built` opening) in `HEAD`'s copy of `H` must still be numbered in the tree's. Prints the tree's step count and the count of done marks read from `HEAD`; fails if the order is empty or `HEAD` cannot be read.

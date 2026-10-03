@@ -34076,3 +34076,26 @@ prefix unchecked. A check that is too loose passes silently and hides the
 fault; a check that is too tight fails loudly and costs a round. The loud
 failure is the safer one. The withdrawal parser crashing on a §G id while
 assertion 4 waved the same id through was the same pair in one run.
+
+## Assertion 2 is loose and tight at once, on the same section (3 Oct)
+
+Design's declaration "No step: §G.7. It rules nothing." sat in the build
+order and assertion 2 still failed §G.7. The check accepted an id only
+when "not followed by [\d.]", a guard so §G.7 cannot match §G.71 or
+§G.7.1; it also refused the full stop that ends a sentence. Now the id is
+refused only when followed by a digit, or by a full stop and a digit:
+"§G.7." and "§G.7," and a line-final "§G.7" are accepted, "§G.71" and
+"§G.7.1" refused. Script and spec in one change; a staged test with every
+other §G.7 mention removed failed first on the sentence-final id, and a
+guard shows §G.71 and §G.7.1 still do not count.
+
+**Assertion 2 is loose and tight at once, on the same section.** Any
+incidental mention of §G.7 satisfied it for rounds, and then a sentence
+written specifically to satisfy it could not reach it, because the guard
+against §G.7 matching §G.71 also rejected the full stop ending a
+sentence. The looseness is in what counts as appearing in a step; the
+tightness is in how the id is recognised. They are different dimensions,
+so one check can fail in both directions at once, and fixing either
+leaves the other. This fix is to the recognition only; what counts as
+appearing in a step is still any mention, and the stricter rule for that
+is with Adam.

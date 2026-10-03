@@ -121,6 +121,37 @@ describe('assertion 8 reads a §G reference as a reference, not a figure', () =>
   });
 });
 
+/**
+ * **Assertion 2 recognised an id only when "not followed by [\\d.]" (3 Oct).**
+ * The guard exists so §G.7 does not match §G.71 or §G.7.1, but it also
+ * refused the full stop ending a sentence, so Design's declaration "No
+ * step: §G.7." -- written to satisfy the check -- could not reach it. The
+ * rule now refuses a following digit, or a full stop and a digit.
+ */
+describe('assertion 2 recognises an id that ends a sentence', () => {
+  /** The build order with every §G.7 mention removed and one sentence put back. */
+  const orderWith = (sentence: string) => (d: string) => {
+    const p = join(d, 'HANDOFF-wall-and-pull.md');
+    const text = readFileSync(p, 'utf8');
+    const start = text.indexOf('## Build order');
+    const end = text.indexOf('## Maintaining', start);
+    const order = text.slice(start, end).replace(/§G\.7(?!\d)/g, 'the unsettled section');
+    writeFileSync(p, `${text.slice(0, start)}${order}${sentence}\n\n${text.slice(end)}`);
+  };
+
+  /* Fails against the lookahead in assertion 2: "§G.7." was refused for the full stop after it. */
+  it('counts "§G.7." at the end of a sentence as naming §G.7', () => {
+    const { out } = run(stage(orderWith('No step: §G.7. It rules nothing.')));
+    expect(out).not.toContain('2 §G.7 not-in-order');
+  });
+
+  /* A guard on the fix, not a fail-first test: it passed before the change and must still pass after. §G.71 is not §G.7. */
+  it('does not count §G.71 or §G.7.1 as naming §G.7', () => {
+    const { out } = run(stage(orderWith('See §G.71 and §G.7.1.')));
+    expect(out).toContain('2 §G.7 not-in-order');
+  });
+});
+
 describe('a run that stops partway names the ids it never reached', () => {
   /* Fails against the uncaught throw: the run ended after "PASS 5" with a stack trace and no line for 6 onward. */
   it('prints ABSENT for every id after the stop, and a summary that counts them', () => {

@@ -168,7 +168,8 @@ const report = (n, ok) => {
 {
   const before = failures.length;
   for (const r of governs) {
-    const re = new RegExp(`§${r.id.replace('.', '\\.')}(?![\\d.])`);
+    /* Not followed by a digit, or by a full stop and a digit: refuses §G.71 and §G.7.1, accepts the full stop ending a sentence (3 Oct). */
+    const re = new RegExp(`§${r.id.replace('.', '\\.')}(?!\\.?\\d)`);
     if (!re.test(orderBlock)) fail(`2 §${r.id} not-in-order`);
   }
   report(2, failures.length === before);
