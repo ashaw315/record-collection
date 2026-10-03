@@ -27,14 +27,38 @@ import {
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const DESIGN = join(dirname(fileURLToPath(import.meta.url)), '..', 'docs', 'design');
+/* `INDEX_DESIGN_DIR` points a run at a staged copy of the inputs, which is how the tests break a tree on purpose. */
+const DESIGN = process.env.INDEX_DESIGN_DIR ?? join(dirname(fileURLToPath(import.meta.url)), '..', 'docs', 'design');
 const FILES = {
   H: 'HANDOFF-wall-and-pull.md',
   L: 'Record Detail 8a - build target.dc.html',
   S: 'Record Detail 8a - settled 1-10.dc.html',
   W: 'Wall and Pull - build target.dc.html',
+  G: 'Nav - build target.dc.html',
   D: 'WITHDRAWALS.md',
 };
+
+/*
+  **Every id gets a line, even when the run stops.** The ids in run order;
+  each is PASS, FAIL or, if the run stopped before it, ABSENT. On 2 Oct the
+  withdrawal parser threw after 5, and the run ended in five PASS lines and a
+  stack trace: to someone skimming for FAIL, a clean run. An id with no
+  result is now named as one, and the last line counts all three.
+*/
+const IDS = ['0', '1', '2', '3', '4', '5', '6', '7', '8a', '8b', '9'];
+const results = new Map();
+function stop(reason) {
+  console.log(`RUN STOPPED: ${reason}`);
+  for (const id of IDS) if (!results.has(id)) console.log(`ABSENT ${id} (the run stopped before it)`);
+  summarise();
+  process.exit(2);
+}
+function summarise() {
+  const n = (v) => [...results.values()].filter((r) => r === v).length;
+  const absent = IDS.length - results.size;
+  console.log(`RESULT: ${n('PASS')} PASS, ${n('FAIL')} FAIL, ${absent} ABSENT of ${IDS.length}${absent > 0 ? ' -- INCOMPLETE' : ''}`);
+}
+process.on('uncaughtException', (error) => stop(error instanceof Error ? error.message.split('\n').join(' / ') : String(error)));
 
 /** Spec: decode these two entities before any text comparison. */
 const decode = decodeEntities;
@@ -42,13 +66,12 @@ const decode = decodeEntities;
 const read = (key) => {
   const path = join(DESIGN, FILES[key]);
   if (!existsSync(path)) {
-    console.error(`missing input ${key}: ${FILES[key]}`);
-    process.exit(2);
+    stop(`missing input ${key}: ${FILES[key]}`);
   }
   return decode(readFileSync(path, 'utf8'));
 };
 
-const src = { H: read('H'), L: read('L'), S: read('S'), W: read('W'), D: read('D') };
+const src = { H: read('H'), L: read('L'), S: read('S'), W: read('W'), G: read('G'), D: read('D') };
 
 /**
  * Headings of one target file — delegated to `design-target-parser.mjs`, the
@@ -58,7 +81,7 @@ const src = { H: read('H'), L: read('L'), S: read('S'), W: read('W'), D: read('D
  */
 const headings = (key) => sections(src[key], { prefixW: key === 'W' });
 
-const ALL = [...headings('L'), ...headings('S'), ...headings('W')];
+const ALL = [...headings('L'), ...headings('S'), ...headings('W'), ...headings('G')];
 const byId = new Map(ALL.map((h) => [h.id, h]));
 
 /*
@@ -108,7 +131,10 @@ const fail = (line) => failures.push(line);
   the PROVISIONAL state it existed for. Withdrawals are found by the six
   declared prefixes and by the list's quotes, never by keywords.
 */
-const report = (n, ok) => console.log(`${ok ? 'PASS' : 'FAIL'} ${n}`);
+const report = (n, ok) => {
+  results.set(String(n), ok ? 'PASS' : 'FAIL');
+  console.log(`${ok ? 'PASS' : 'FAIL'} ${n}`);
+};
 
 /*
   0. The spec this script implements is the committed one. It lived in
@@ -199,18 +225,31 @@ const report = (n, ok) => console.log(`${ok ? 'PASS' : 'FAIL'} ${n}`);
     const note = text.indexOf('Renumbering');
     return note < 0 ? text : text.slice(0, note) + text.slice(text.indexOf('. ', note + 200) + 1);
   };
-  for (const key of ['L', 'S']) {
+  /*
+    **§G, both directions (2 Oct).** Before the nav target was an input, 4
+    recognised only W and bare-number shapes, so "Superseded in part by
+    §G.8" in §24 was not a reference to it at all, and 4 passed on it while
+    the withdrawal parser, ten lines later, refused the same id by line
+    number. Every §G.N in any target names a heading in G; G's own W and
+    bare-number references follow the same rules as W's.
+  */
+  for (const key of ['L', 'S', 'G']) {
     for (const m of bodyOf(key).matchAll(/§(W\.\d+(?:\.\d+)?)/g)) {
       if (!has(m[1])) fail(`4 ${key}→§${m[1]}`);
     }
   }
-  for (const key of ['L', 'W']) {
+  for (const key of ['L', 'S', 'W', 'G']) {
+    for (const m of bodyOf(key).matchAll(/§(G\.\d+(?:\.\d+)?)/g)) {
+      if (!has(m[1])) fail(`4 ${key}→§${m[1]}`);
+    }
+  }
+  for (const key of ['L', 'W', 'G']) {
     for (const m of bodyOf(key).matchAll(/§(\d{1,2}(?:\.\d+)?)/g)) {
       const n = Number(m[1].split('.')[0]);
       if (n >= 1 && n <= 10 && !has(m[1])) fail(`4 ${key}→§${m[1]}`);
     }
   }
-  for (const key of ['S', 'W']) {
+  for (const key of ['S', 'W', 'G']) {
     for (const m of bodyOf(key).matchAll(/§(\d{1,2}(?:\.\d+)?)/g)) {
       const n = Number(m[1].split('.')[0]);
       if (n >= 12 && !has(m[1])) fail(`4 ${key}→§${m[1]}`);
@@ -510,4 +549,5 @@ const WITHDRAWAL_PREFIX =
 }
 
 for (const line of failures) console.log(line);
-process.exit(failures.length > 0 ? 1 : 0);
+summarise();
+process.exit(failures.length > 0 || results.size < IDS.length ? 1 : 0);

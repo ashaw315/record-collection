@@ -21,7 +21,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
  * by-clause is what keeps `26/0-78-scale`'s inner period and `31/whole`'s
  * colon out of it.
  */
-const BULLET = /^- \*\*`([^`]+)`\*\*: §([0-9]+(?:\.[0-9]+)?|W(?:\.[0-9]+)*), withdrawn by §([0-9]+(?:\.[0-9]+)?|W(?:\.[0-9]+)*)\. (.+)$/;
+const BULLET = /^- \*\*`([^`]+)`\*\*: §([0-9]+(?:\.[0-9]+)?|W(?:\.[0-9]+)*|G(?:\.[0-9]+)+), withdrawn by §([0-9]+(?:\.[0-9]+)?|W(?:\.[0-9]+)*|G(?:\.[0-9]+)+)\. (.+)$/;
 const QUOTE = /^\s*> (.+)$/;
 export const COMMENT = /<!--\s*machine-readable:\s*(\[[\s\S]*?\])\s*-->/;
 

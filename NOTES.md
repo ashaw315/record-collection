@@ -33943,3 +33943,46 @@ the auth rules are an exact set and an anchored matcher; the
 The header captures (`docs/captures/header/`, 48 and a manifest) are named
 by the header's height and its bar's width, `-h53-w1152`, so a capture of
 the defect reads `-w1920` at 1920 and is visible by name.
+
+## The nav target is an index input, and a stopped run names what it did not reach (2 Oct)
+
+The first record-detail withdrawal replaced by a section in another file,
+`24/in-line-no-height` (§24 withdrawn by §G.8), broke the index two ways
+in one run, ten lines apart.
+
+**Assertion 4 passed on a reference it could not see.** Its job is
+cross-file references; it recognised only W and bare-number shapes, so
+"Superseded in part by §G.8" was not a reference to it at all, and it
+reported PASS. The withdrawal parser, reading the same id, refused it and
+named line 49. A check that ignores what it does not understand reports
+success; a parser that refuses what it does not understand reports the
+line number. Both fired on the same cause.
+
+**The ids after the stop had no result, and the output did not say so.**
+The parser's throw ended the run after `PASS 5` with a stack trace; 6, 7,
+8a, 8b and 9 were absences, not passes and not failures, and a reader
+skimming for FAIL saw five PASS lines and nothing else. Every id now gets
+a line: a stopped run prints `RUN STOPPED: reason` and `ABSENT n` for each
+id it did not reach, and every run ends `RESULT: p PASS, f FAIL, a ABSENT
+of 11`, marked INCOMPLETE when any is absent, and exits non-zero.
+
+**The fix is the input, not the grammar alone.** Accepting G ids in the
+bullet grammar would have stopped the crash and left §G.8 unchecked: a
+loud failure traded for a silent pass. So the nav target is input G: the
+shared parser's id pattern and the bullet grammar accept `G.N`, every
+heading in it joins the set 1, 5, 6, 7, 8a and 9 range over, and
+assertion 4 resolves `§G.N` from every target and G's own W and
+bare-number references, both directions. The spec changed in the same
+commit. `test/repo/index-inputs.test.ts` stages broken copies of the
+inputs (`INDEX_DESIGN_DIR`) and holds each: a missing §G heading named
+from L, a missing record-detail section named from G, ABSENT for 6 to 9
+on a refused bullet, and a complete run's RESULT line.
+
+**What the index reports once the nav target is read:** assertion 1 fails
+for §G.1 to §G.8, which have no rows in the handoff's tables. Those are
+the pointer rows Design's handoff says follow once the target is an
+input; the handoff is Design's.
+
+**The nav target is ignored by git.** `.gitignore` excludes `docs/design/*`
+and the tracked files there were force-added, so a new design file is
+never committed by a plain `git add` and nothing says so.

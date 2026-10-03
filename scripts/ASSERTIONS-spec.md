@@ -14,14 +14,15 @@ Implement these as one script (suggested: `scripts/check-index.mjs`) and run it 
 | `L` | `Record Detail 8a - build target.dc.html` (live) |
 | `S` | `Record Detail 8a - settled 1-10.dc.html` (closed, §1–§10) |
 | `W` | `Wall and Pull - build target.dc.html` (§W, §W.1–§W.N) |
+| `G` | `Nav - build target.dc.html` (§G.1–§G.N, the AppHeader) |
 | `D` | `WITHDRAWALS.md` (the withdrawal list) |
 
-Read all four as UTF-8. Decode `&rsquo;` → `’` and `&amp;` → `&` before any text comparison.
+Read every input as UTF-8. Decode `&rsquo;` → `’` and `&amp;` → `&` before any text comparison.
 
 ## Shared definitions
 
 **Heading.** In `L`, `S` and `W`: any `<p …>` whose `style` contains `text-transform:uppercase` and whose text starts with an optional `§`, then a section id, then ` · `.
-Section id pattern: `W` | `W\.\d+(\.\d+)?` | `\d{1,2}(\.\d+)?`.
+Section id pattern: `W` | `W\.\d+(\.\d+)?` | `G\.\d+(\.\d+)?` | `\d{1,2}(\.\d+)?`.
 In `W`, a bare numeric id is prefixed `W.`.
 **Never match headings inside `<svg>`**: SVG text holds cell labels like `1 · Cover`.
 
@@ -44,7 +45,7 @@ In `W`, a bare numeric id is prefixed `W.`.
 ```
 
 - `ID` is `S/slug`, in backticks inside the bold, unique across the list.
-- `S` and `BY` are section ids: `\d{1,2}(\.\d+)?` or `W(\.\d+)*`.
+- `S` and `BY` are section ids: `\d{1,2}(\.\d+)?`, `W(\.\d+)*` or `G(\.\d+)+`.
 - `WHAT` runs from the character after the by-clause's own `. ` to the end of the line and is carried **verbatim** into the entry: its capital, its trailing period, any colon or inner period, and apostrophes straight or curly as written. No assertion reads `WHAT`; it is for people.
 - `QUOTE` is the whole of the next line after `> `, verbatim; it is what 6 and 7 compare, so it is never normalised.
 - A line beginning `- ` that does not match, or a bullet with no `> ` line after it, **fails the parse loudly** with its line number. An entry is never dropped silently.
@@ -70,6 +71,8 @@ Test cases, all of which the grammar must yield unchanged: `31/whole` (a colon a
 
 Ten are built and numbered 0 to 9. Assertion 8 has two parts, so the script reports eleven ids: 0, 1, 2, 3, 4, 5, 6, 7, 8a, 8b, 9. Assertion 10 is specified below and is NOT BUILT; the script does not run it. Each built assertion prints `PASS n` or `FAIL n` followed by one line per offender, then the script exits non-zero if any failed.
 
+**Every id gets a line, and the last line counts them.** If the run stops before an id (an input missing, a parse refused), the script prints `RUN STOPPED: reason`, then `ABSENT n` for every id it did not reach, and exits non-zero. Every run ends `RESULT: p PASS, f FAIL, a ABSENT of 11`, with ` -- INCOMPLETE` when `a` is not zero. **Why (2 Oct):** the withdrawal parser threw after 5, and the run ended in five PASS lines and a stack trace; to a reader skimming for FAIL, 6 to 9 looked clean. An id with no result is neither a pass nor a failure, and is named as what it is.
+
 0. **The spec is the committed spec.** `scripts/ASSERTIONS-spec.md` is tracked and does not differ from `HEAD`. It was overwritten by three of Design's exports while it lived in `docs/design/`; a stray copy now fails by exit code. Fail: `0 spec-untracked PATH` or `0 spec-modified PATH differs from HEAD`.
 
 1. **Every heading has exactly one row.** Collect heading ids from `L`, `S`, `W`. Count rows by id across both tables in `H`.
@@ -83,10 +86,12 @@ Ten are built and numbered 0 to 9. Assertion 8 has two parts, so the script repo
    **Why (1 Oct):** Design's exports replace `H` wholesale, so a step inserted between exports is overwritten without a trace; step 71 was lost that way twice. The earlier form compared each number with its position and named the step after the gap (`3 gap-at 72`), could not tell a duplicate from a gap, and never said the lost step had been done. The done marks are read from `HEAD` because the export that drops a step drops its mark with it.
 
 4. **Cross-file references resolve.** In each file, with tags stripped and the renumbering note at the head of `W` excluded:
-   - every `§W.N` in `L` or `S` names a heading in `W`;
-   - every `§N` with 1 ≤ N ≤ 10 in `L` or `W` names a heading in `S`;
-   - every `§N` with N ≥ 12 in `S` or `W` names a heading in `L`. No upper bound: the live set is `L`'s own headings, and a bound restates them and goes stale each time a section is added (it sat at 32 while §33 and §34 were referenced unchecked).
+   - every `§W.N` in `L`, `S` or `G` names a heading in `W`;
+   - every `§G.N` in `L`, `S`, `W` or `G` names a heading in `G`;
+   - every `§N` with 1 ≤ N ≤ 10 in `L`, `W` or `G` names a heading in `S`;
+   - every `§N` with N ≥ 12 in `S`, `W` or `G` names a heading in `L`. No upper bound: the live set is `L`'s own headings, and a bound restates them and goes stale each time a section is added (it sat at 32 while §33 and §34 were referenced unchecked).
    Fail: `4 FILE→§REF`.
+   **Why the §G clauses (2 Oct):** 4 recognised only W and bare-number shapes, so "Superseded in part by §G.8" in §24 was not a reference to it, and it passed on a section it could not see. In the same run the bullet parser refused the same id with a line number. A check that ignores what it does not understand reports success; every reference shape the targets use is now one 4 reads.
 
 5. **Each row's subject matches its section.** Take the row title, cut it at the first of `( : ; , —`, lowercase, normalise `’`→`'`, collapse whitespace, keep the first 24 characters. It must occur in the same-normalised heading text plus the first 600 characters of the section text.
    Fail: `5 §ID title="…" heading="…"`.
