@@ -373,6 +373,29 @@ test('the page caps, and the header caps with it', async ({ page }) => {
   }
 });
 
+test('the header on /records/new caps at 1152 and centres, like every screen that is not a record', async ({ page }) => {
+  /**
+   * **"new" is a reserved segment, not a record id.** The header decided the
+   * record screen with `/^\/records\/[^/]+$/`, which any single segment
+   * satisfies, so /records/new took the record page's uncapped measure on a
+   * page whose stylesheet never supplies one: at 1920 the wordmark sat at the
+   * far left above a narrow centred form. Asserted on geometry, the channel
+   * the claim is about: the bar is 1152 wide and its left edge is the
+   * centring offset.
+   */
+  for (const width of [1440, 1920]) {
+    await page.setViewportSize({ width, height: NO_SCROLL_HEIGHT });
+    await page.goto('/records/new');
+    await page.locator('[data-app-nav]').waitFor({ timeout: 20_000 });
+    const bar = await page.evaluate(() => {
+      const r = (document.querySelector('[data-app-nav] > div') as HTMLElement).getBoundingClientRect();
+      return { w: Math.round(r.width), left: Math.round(r.left) };
+    });
+    expect(bar.w, `header width on /records/new at ${width}`).toBe(1152);
+    expect(bar.left, `header centred on /records/new at ${width}`).toBe((width - 1152) / 2);
+  }
+});
+
 test('the journal is named once, on its own section', async ({ page }) => {
   /**
    * **This test has now been superseded twice, and both times the claim

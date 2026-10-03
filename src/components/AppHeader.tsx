@@ -51,6 +51,16 @@ const LINKS = [
  * rather than `bg-border`, so it resolves to the token itself rather than
  * through the colour-mix Tailwind's utilities emit.
  */
+/*
+  The record screen is `/records/<uuid>` and nothing else under `/records/`.
+  Any single segment used to match, so `/records/new` took the record page's
+  uncapped measure on a page that never supplies one. Matching the id's own
+  shape, rather than excluding "new", keeps any future reserved segment out
+  too. The same pattern as `isUuid` in `lib/api/errors.ts`, which this
+  client component cannot import.
+*/
+const RECORD_SCREEN = /^\/records\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 export function AppHeader({ actions }: { actions?: React.ReactNode } = {}) {
   const pathname = usePathname();
 
@@ -60,7 +70,7 @@ export function AppHeader({ actions }: { actions?: React.ReactNode } = {}) {
     1152 the app has used throughout. Matched on the route rather than passed as
     a prop so a screen cannot forget to say which it is and silently misalign.
   */
-  const wide = /^\/records\/[^/]+$/.test(pathname) || pathname.startsWith('/wall/probe/page8a');
+  const wide = RECORD_SCREEN.test(pathname) || pathname.startsWith('/wall/probe/page8a');
 
   /*
     §W.13: the wall starts directly under this nav and takes the full height,

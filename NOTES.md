@@ -33915,3 +33915,31 @@ Verification, step level: gallery-order, RecordPage8a component and
 page-record guard (90 pass); frame-planes on chromium (16 pass), images,
 about-row-36, record-controls and no-cover-54 on chromium (19 pass);
 typecheck, lint, build.
+
+## AppHeader took /records/new for a record screen (2 Oct)
+
+Found by the header inventory's captures. The header chose the record
+page's measure with `/^\/records\/[^/]+$/`, which any single segment
+satisfies, so `/records/new` dropped the 1152 cap the other screens use;
+the record page's stylesheet, which supplies the record screen's own cap,
+is not on that page, so nothing capped it. At 1920 the wordmark sat at the
+far left above a narrow centred form.
+
+**Fixed by matching the id's shape**, `/records/<uuid>`, the same pattern
+as `isUuid` (which the client component cannot import, its module being
+server code). Not by excluding "new": any future reserved segment under
+`/records/` would have hit the same rule. Test: `record-page-8a.spec.ts`,
+"the header on /records/new caps at 1152 and centres", seen failing
+(1440 wide where 1152 was expected) and then passing; the existing test
+that the record page's header takes the page's measure still passes.
+
+**Other route decisions made by matching a path, none colliding today:**
+the header's current-link rule is `pathname.startsWith(link.href)` with no
+segment boundary, so a future `/stats-archive` or `/manager` would mark
+Stats or Manage current; middleware's `/api/` prefix carries its slash;
+the auth rules are an exact set and an anchored matcher; the
+`/wall/probe/page8a` prefix is a development probe.
+
+The header captures (`docs/captures/header/`, 48 and a manifest) are named
+by the header's height and its bar's width, `-h53-w1152`, so a capture of
+the defect reads `-w1920` at 1920 and is visible by name.
