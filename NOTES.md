@@ -33986,3 +33986,67 @@ input; the handoff is Design's.
 **The nav target is ignored by git.** `.gitignore` excludes `docs/design/*`
 and the tracked files there were force-added, so a new design file is
 never committed by a plain `git add` and nothing says so.
+
+## Assertion 2 checks a mention, not a step, and never reads the settled sections (2 Oct)
+
+**The handoff's rule is "Every row in the table above must appear in a
+step here." The check is that the id appears anywhere in the build-order
+block.** The gap between those two sentences is the whole defect. The
+spec states the check ("the build order must contain `§ID` not followed by
+`[\d.]`"), so the code does what it says; what it says is weaker than the
+rule it is read as enforcing. A step's prose, a sentence between steps,
+and a sentence saying not to build a section all count.
+
+It surfaced when step 74's head named "§G.1 to §G.4": §G.2 and §G.3 had no
+mention, and failed. §G.7 passed, because step 76 says "build nothing that
+depends on it until §G.7 records his decision" -- a reference to where a
+decision will be written, not a step building it. Of 97 governs rows, nine
+pass on something other than a step's opening line:
+
+| Row | What names it | Reading |
+|---|---|---|
+| §W.20 | step 2: "plus §W.20's viewpoint" | built by that step |
+| §39 | step 44's head, after a bold "Part superseded" | built by that step |
+| §32 | step 19: "becomes §32's frame-fills-cell" | built by that step |
+| §17 | step 12: "(§17 is withdrawn by §20)" | a deliberate note that it needs no step |
+| §31 | step 22, a superseded step, quoting its figures | withdrawn in whole; covered only by mentions |
+| §W.15 | step 2: "NOT §W.15's tiling" | a deliberate don't-build |
+| §W.2 | prose between steps: "Do not build §W.2 or §W.14 as written" | a deliberate don't-build, outside any step |
+| §W.14 | the same sentence | the same |
+| §G.7 | step 76: "until §G.7 records his decision" | a reference; nothing says whether it needs a step |
+
+The stricter check, not built: a governs row must be named inside a
+numbered step, and a section needing none says so in a declared form the
+check accepts and nothing looser. The exemption sentences are Design's
+edit and land first, or the check fails on §17, §31, §W.2, §W.14, §W.15
+and §G.7. With Adam, with the assertion 0 extension, as one decision.
+
+**§3 and §4.1 -- the clauses the record detail closed without -- were
+never in assertion 2's scope at all.** Assertion 2 reads the governs
+table only. §1-§10 are the settled file's, and their rows are in the
+pointer table, whose own heading says "They are not build steps; the
+steps build on them." §3 rules "The active nav item carries a 2px ink
+underline, 7px below the baseline"; §4.1 counts "Five nav items, one
+wordmark ... Mono, uppercase, .10em tracking". Both are clauses that need
+building, inside sections declared not to need steps, so no check could
+ask for a step and none did. Step 74 now names both sections, which is
+the first time either appears in a step.
+
+So the two findings are one family and two mechanisms. This morning's is
+**scope**: a buildable clause inside a section the index treats as
+foundation. Tonight's is **matching**: a governs row satisfied by any
+mention. The stricter check closes the second and not the first. Closing
+the first needs either the settled sections' buildable clauses carried
+into governs rows, or a declared statement in each pointer row that it
+holds nothing left to build.
+
+**Amended the same night: no tracking discrepancy.** This entry first
+recorded §4.1 as giving the nav .10em against step 74's .12em. That was a
+half-sentence read. §4.1 says, in full, "Mono, uppercase, .10em tracking
+-- .12em in the nav strip only": the clause after the dash is the nav's
+rule, and it reverses the one before it. The measurements agreed all
+along: every character measured 7.92px, a 6.60px glyph plus 1.32px of
+tracking, and 1.32 / 11 is .12em exactly, so the nav figures (584, 768)
+were taken at the ruled tracking. It is the third citation today read to
+its dash and no further; a quoted clause is read to its sentence end
+before it is called a disagreement.
