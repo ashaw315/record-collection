@@ -6,7 +6,7 @@
  * edited the index is not. Run it in CI and before any handoff is exported.
  *
  * Built from the spec rather than from the handoff or from the repo's own
- * earlier index test: the spec records, for six of the eight assertions, the
+ * earlier index test: the spec records, for most of its ten assertions, the
  * defect that motivated it and the weaker version that passed on it. Those
  * notes are the reason each check has the shape it has, and are reproduced
  * at the assertions they belong to.
@@ -62,9 +62,10 @@ const ALL = [...headings('L'), ...headings('S'), ...headings('W')];
 const byId = new Map(ALL.map((h) => [h.id, h]));
 
 /*
-  Spec: live text is the section text with every `[data-withdrawn-by]`
-  element removed. There is no keyword list — withdrawn text is DECLARED.
-  Both helpers come from the shared parser.
+  Spec: live text is a section's text with every entry's quote for that
+  section removed (8a builds it). Nothing in a target marks a withdrawal;
+  the list's quotes are the only record. The parsing helpers come from the
+  shared parser.
 */
 
 /* ---- tables in H ---------------------------------------------------- */
@@ -95,23 +96,17 @@ const orderBlock = between(src.H, '## Build order', '## Maintaining');
 const failures = [];
 const fail = (line) => failures.push(line);
 /*
-  **The `--candidates` bootstrap is gone, and with it the last thing here
-  that guessed.**
+  **Two kinds of offender, and only one is fatal.** Assertions 0 to 8b are
+  PASS or FAIL, and every offender they print fails the run. Assertion 9 is
+  report-only: it prints its offenders and still reports PASS, failing only
+  with --strict-reverse. So a run with no FAIL line is not a run with no
+  offenders: read 9's count and its lines. (Until c9efd90 every assertion
+  was fatal, and this comment said so after it stopped being true.)
 
-  The spec's own instruction retired it: "After the pass, delete
-  `--candidates` and the pattern with it, so nothing in the script guesses."
-  The marking pass has landed, so the trigger is met.
-
-  What it carried was an eleven-keyword regex over every sentence in three
-  files — the exact machinery the declared-mark design replaced, because a
-  list derived from the phrasings seen so far fits those and misses the next
-  one. It missed "reversed", which this corpus uses constantly. Leaving it
-  reachable behind a flag left the guessing in the script; a flag is not a
-  deletion.
-
-  The PROVISIONAL state went with it. It existed to say "the marking pass has
-  not landed, so 6, 7 and 8a cannot be judged either way". They can be judged
-  now, so every assertion is PASS or FAIL and every offender is fatal.
+  **Nothing here guesses.** The `--candidates` bootstrap, an eleven-keyword
+  regex over every sentence that missed "reversed", is deleted, and with it
+  the PROVISIONAL state it existed for. Withdrawals are found by the six
+  declared prefixes and by the list's quotes, never by keywords.
 */
 const report = (n, ok) => console.log(`${ok ? 'PASS' : 'FAIL'} ${n}`);
 
@@ -239,9 +234,11 @@ const report = (n, ok) => console.log(`${ok ? 'PASS' : 'FAIL'} ${n}`);
   report(5, failures.length === before);
 }
 
-/* The declared withdrawal marks, and the reader's note's list. */
+/* The withdrawal list, read from WITHDRAWALS.md's bullets. */
 /**
- * The withdrawal list, from `WITHDRAWALS.md`'s machine-readable block.
+ * The withdrawal list, parsed from `WITHDRAWALS.md`'s bulleted entries. The
+ * machine-readable comment is derived from them and is never read as a
+ * source; 6 compares it as a claim (below).
  *
  * **Nothing in the targets marks a withdrawal.** A mark written into a target
  * did not survive its export: across eleven exports the targets carried no
@@ -264,12 +261,11 @@ const textOf = (id) => {
 };
 
 /**
- * Spec: a withdrawal sentence "starts at a declared prefix that begins a
- * sentence inside a `<strong>` run outside a heading -- the run's first
- * text, or the text after a sentence end within the run -- and runs to its
- * own sentence end." (This comment quoted an older, stricter wording --
- * "as the first text of a `<strong>` run" -- for a round while the code
- * below implemented the spec's; the two are one reading now.)
+ * The six declared prefixes. Spec: a withdrawal sentence "starts at a
+ * declared prefix wherever it occurs in a paragraph outside a heading, and
+ * runs to its own sentence end." 7 searches for them anywhere in a
+ * paragraph's plain text; the anchor here is for testing an entry's quote,
+ * which must itself begin with one.
  */
 const WITHDRAWAL_PREFIX =
   /^(Withdrawn by §|Withdrawn in part by §|Withdrawn in whole by §|Withdrawn within §|Superseded by §|Superseded in part by §)/;
@@ -325,15 +321,15 @@ const WITHDRAWAL_PREFIX =
   const before = failures.length;
 
   /*
-    Spec: a declared sentence "starts at a declared prefix that begins a
-    sentence inside a <strong> run outside a heading -- the run's first
-    text, or the text after a sentence end within the run -- and runs to
-    its own sentence end": the first `. `, `? ` or `! ` after the prefix,
-    or the end of its paragraph. Bold is not a sentence boundary.
+    Spec: a declared sentence "starts at a declared prefix wherever it
+    occurs in a paragraph outside a heading, and runs to its own sentence
+    end": the first `. `, `? ` or `! ` after the prefix, or the end of its
+    paragraph. Bold is not a sentence boundary in either direction.
 
-    So the paragraph's plain text is what is sliced, and the strong run only
-    says where a sentence STARTS. Matching is on the whole sentence, one to
-    one -- a 40-character slice once let 7 pass with an entry deleted.
+    So the paragraph's plain text is what is sliced, and a bold run plays no
+    part in finding a sentence (see the comment in the loop below for why it
+    once did). Matching is on the whole sentence, one to one -- a
+    40-character slice once let 7 pass with an entry deleted.
   */
   const sentences = [];
   /* L, S and W alike: the wall had four declared withdrawals and, for as long as this loop skipped W, nothing checked them. */
