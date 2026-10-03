@@ -488,15 +488,16 @@ const WITHDRAWAL_PREFIX =
 
 /*
   9 -- the reverse direction (1 Oct). 6 checks every entry's quote is in its
-  section; 7 finds declared sentences only where they start a <strong> run or
-  follow a sentence end inside one. A sentence in withdrawal form anywhere
-  else passed with no entry filed, which is how §28 and §33 each carried one
-  narrowing the Price history solo. This scans every section's plain text
-  for the phrasings the file uses, wherever they sit (a phrasing inside
-  quotation marks is an example, not a declaration), and names each sentence
-  no entry's quote matches. REPORT-ONLY until Design has filed what it finds:
-  it fails the run only with --strict-reverse, and the proposal for
-  ASSERTIONS-spec.md goes to Design with its first report.
+  section. When 9 was written, 7 found declared sentences only where they
+  started a <strong> run, so a sentence in withdrawal form anywhere else
+  passed with no entry filed, which is how §28 and §33 each carried one
+  narrowing the Price history solo. 7 has read plain text since 328d497, as
+  this does; 9 differs in reading every section of L, S and W for sentences
+  with NO entry, where 7 pairs sentences and entries one to one. This scans
+  every section's plain text for the phrasings the file uses, wherever they
+  sit (a phrasing inside quotation marks is an example, not a declaration),
+  and names each sentence no entry's quote matches. REPORT-ONLY: it fails
+  the run only with --strict-reverse. The spec numbers it 9 (ab837cc).
 */
 {
   const strict = process.argv.includes('--strict-reverse');
