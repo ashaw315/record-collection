@@ -88,6 +88,39 @@ describe('assertion 4 resolves §G references in both directions', () => {
   });
 });
 
+/**
+ * **Assertion 8 strips section references before reading figures, and did
+ * not strip §G (3 Oct).** §G.7's pointer, "held until §G.8 recorded Adam's
+ * choice", is correct -- it points rather than restates -- but "§G.8" was
+ * left as "G.8", and 8b read its 8 as a figure in a pointer column. A false
+ * failure, the first of the week; every other gap found was a false pass.
+ * 8a reads the same stripped text from the title and the pointer, so the
+ * same reference would have sent it looking for an 8 in the row's section.
+ */
+describe('assertion 8 reads a §G reference as a reference, not a figure', () => {
+  const editRow = (from: string, to: string) => (d: string) => {
+    const p = join(d, 'HANDOFF-wall-and-pull.md');
+    const text = readFileSync(p, 'utf8');
+    if (!text.includes(from)) throw new Error(`staging anchor missing: ${from}`);
+    writeFileSync(p, text.replace(from, to));
+  };
+
+  /* Fails against the stripping in assertion 8: §G.6's text has no 8, so "§G.8" in its pointer failed 8a as a missing figure and 8b as a token. */
+  it('passes 8a and 8b on a governs row whose pointer names a §G section', () => {
+    const dir = stage(editRow('| §G.6 | The header is not sticky | Why the header scrolls away with the page. |', '| §G.6 | The header is not sticky | Why the header scrolls away with the page, unlike §G.8’s open menu. |'));
+    const { out } = run(dir);
+    expect(out).not.toMatch(/^8a §G\.6 /m);
+    expect(out).not.toMatch(/^8b §G\.6 /m);
+  });
+
+  /* Fails against the same stripping read from the title: 8a takes figures from the title as well as the pointer; 8b reads the pointer only. */
+  it('passes 8a on a governs row whose title names a §G section', () => {
+    const dir = stage(editRow('| §G.6 | The header is not sticky |', '| §G.6 | The header is not sticky; see §G.7 |'));
+    const { out } = run(dir);
+    expect(out).not.toMatch(/^8a §G\.6 /m);
+  });
+});
+
 describe('a run that stops partway names the ids it never reached', () => {
   /* Fails against the uncaught throw: the run ended after "PASS 5" with a stack trace and no line for 6 onward. */
   it('prints ABSENT for every id after the stop, and a summary that counts them', () => {

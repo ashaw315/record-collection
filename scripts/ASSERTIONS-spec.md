@@ -63,7 +63,7 @@ Test cases, all of which the grammar must yield unchanged: `31/whole` (a colon a
 **Known limit: a whole-section withdrawal removes one sentence, not the section.** An entry quotes a sentence, so withdrawing a section "in whole" leaves the rest of its body in live text. §31 is withdrawn in whole and most of it is live — correct for a section kept as a record, but it means 8a checks such a section's row figures against retired reasoning. §31's row carries no figures, so nothing is wrong today.
 
 **Stripping for assertion 8.** Remove, in order:
-1. Section references: `§W\.\d+(\.\d+)?`, `§W\b`, `§\d+(\.\d+)?`
+1. Section references: `§W\.\d+(\.\d+)?`, `§W\b`, `§G\.\d+(\.\d+)?`, `§\d+(\.\d+)?`. (§G was missing until 3 Oct, so §G.7's pointer, "held until §G.8 recorded Adam's choice", failed 8b on the 8 of a section reference.)
 2. Step references: `steps? \d+` (case-insensitive)
 3. Artefact names: `\b[A-Z]\d+[a-z]?\b` (D2, A75) and `\b\d{1,2}[a-z]\b` (5b, 7a, 8a). **Not** `\d+px` or other units: those are figures.
 

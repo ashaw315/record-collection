@@ -34050,3 +34050,29 @@ tracking, and 1.32 / 11 is .12em exactly, so the nav figures (584, 768)
 were taken at the ruled tracking. It is the third citation today read to
 its dash and no further; a quoted clause is read to its sentence end
 before it is called a disagreement.
+
+## Assertion 8 read a §G reference as a figure: the week's first false failure (3 Oct)
+
+Taking the drop with the first same-section G entry, 8b failed on §G.7's
+row: its pointer reads "where the breakpoint was held until §G.8 recorded
+Adam's choice", and 8b reported a digit in a pointer column. Assertion 8
+strips section references before reading figures, and its list had §W and
+bare-number shapes but not §G, which I did not extend when the nav target
+became an input. "§G.8" was left as "G.8", and its 8 read as a figure.
+The same gap would have sent 8a looking for an 8 in the row's own section
+whenever a title or pointer named a §G section; that had not fired yet.
+Fixed in the script and the spec's stripping list in one change;
+`index-inputs.test.ts` stages a §G reference in §G.6's pointer (8a and 8b)
+and in its title (8a), whose section text has no 7 or 8, and both failed
+before the fix.
+
+**§G.7's pointer is correct.** It points rather than restates, which is
+what 8b exists to require. The check misread a section reference as a
+figure, so this was a false failure, not a defect in the file.
+
+**Every other gap found this week was a false pass** -- assertion 2
+satisfied by a mention, assertion 4 blind to §G, the entry identifier's
+prefix unchecked. A check that is too loose passes silently and hides the
+fault; a check that is too tight fails loudly and costs a round. The loud
+failure is the safer one. The withdrawal parser crashing on a §G id while
+assertion 4 waved the same id through was the same pair in one run.

@@ -442,6 +442,8 @@ const WITHDRAWAL_PREFIX =
     s
       .replace(/§W\.\d+(\.\d+)?/g, ' ')
       .replace(/§W\b/g, ' ')
+      /* §G too (3 Oct): left unstripped, "§G.8" read as a figure 8 in §G.7's pointer. */
+      .replace(/§G\.\d+(\.\d+)?/g, ' ')
       .replace(/§\d+(\.\d+)?/g, ' ')
       .replace(/steps? \d+/gi, ' ')
       .replace(/\b[A-Z]\d+[a-z]?\b/g, ' ')
