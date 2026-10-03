@@ -1,0 +1,4634 @@
+[
+ {
+  "screen": "collection",
+  "path": "/",
+  "status": 200,
+  "width": 390,
+  "file": "header-collection-390-h85-w390.png",
+  "header": {
+   "x": 0,
+   "y": 0,
+   "w": 390,
+   "h": 85
+  },
+  "inner": {
+   "x": 0,
+   "y": 0,
+   "w": 390,
+   "h": 84,
+   "maxWidth": "1152px"
+  },
+  "background": "rgba(0, 0, 0, 0)",
+  "position": "static",
+  "borderBottom": "1px lab(67.5318 0.226438 1.50546)",
+  "wordmark": {
+   "text": "Record Collection",
+   "font": "14px 600",
+   "x": 16,
+   "y": 16,
+   "w": 105,
+   "h": 20
+  },
+  "navRows": 2,
+  "links": [
+   {
+    "text": "Collection",
+    "href": "/",
+    "current": "page",
+    "colour": "lab(6.18075 1.20374 2.12039)",
+    "weight": "500",
+    "x": 141,
+    "y": 12,
+    "w": 77,
+    "h": 28
+   },
+   {
+    "text": "Want list",
+    "href": "/want-list",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 223,
+    "y": 12,
+    "w": 67,
+    "h": 28
+   },
+   {
+    "text": "Look up",
+    "href": "/lookup",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 294,
+    "y": 12,
+    "w": 64,
+    "h": 28
+   },
+   {
+    "text": "Stats",
+    "href": "/stats",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 141,
+    "y": 44,
+    "w": 47,
+    "h": 28
+   },
+   {
+    "text": "Manage",
+    "href": "/manage",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 192,
+    "y": 44,
+    "w": 65,
+    "h": 28
+   }
+  ],
+  "slot": null,
+  "pageScrolls": true,
+  "navHeightVar": "85px",
+  "afterScroll": {
+   "scrolled": 85,
+   "headerTop": -85
+  }
+ },
+ {
+  "screen": "collection",
+  "path": "/",
+  "status": 200,
+  "width": 1000,
+  "file": "header-collection-1000-h53-w1000.png",
+  "header": {
+   "x": 0,
+   "y": 0,
+   "w": 1000,
+   "h": 53
+  },
+  "inner": {
+   "x": 0,
+   "y": 0,
+   "w": 1000,
+   "h": 52,
+   "maxWidth": "1152px"
+  },
+  "background": "rgba(0, 0, 0, 0)",
+  "position": "static",
+  "borderBottom": "1px lab(67.5318 0.226438 1.50546)",
+  "wordmark": {
+   "text": "Record Collection",
+   "font": "14px 600",
+   "x": 16,
+   "y": 16,
+   "w": 105,
+   "h": 20
+  },
+  "navRows": 1,
+  "links": [
+   {
+    "text": "Collection",
+    "href": "/",
+    "current": "page",
+    "colour": "lab(6.18075 1.20374 2.12039)",
+    "weight": "500",
+    "x": 141,
+    "y": 12,
+    "w": 77,
+    "h": 28
+   },
+   {
+    "text": "Want list",
+    "href": "/want-list",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 223,
+    "y": 12,
+    "w": 67,
+    "h": 28
+   },
+   {
+    "text": "Look up",
+    "href": "/lookup",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 294,
+    "y": 12,
+    "w": 64,
+    "h": 28
+   },
+   {
+    "text": "Stats",
+    "href": "/stats",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 362,
+    "y": 12,
+    "w": 47,
+    "h": 28
+   },
+   {
+    "text": "Manage",
+    "href": "/manage",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 413,
+    "y": 12,
+    "w": 65,
+    "h": 28
+   }
+  ],
+  "slot": null,
+  "pageScrolls": true,
+  "navHeightVar": "53px",
+  "afterScroll": {
+   "scrolled": 85,
+   "headerTop": -85
+  }
+ },
+ {
+  "screen": "collection",
+  "path": "/",
+  "status": 200,
+  "width": 1440,
+  "file": "header-collection-1440-h53-w1152.png",
+  "header": {
+   "x": 0,
+   "y": 0,
+   "w": 1440,
+   "h": 53
+  },
+  "inner": {
+   "x": 144,
+   "y": 0,
+   "w": 1152,
+   "h": 52,
+   "maxWidth": "1152px"
+  },
+  "background": "rgba(0, 0, 0, 0)",
+  "position": "static",
+  "borderBottom": "1px lab(67.5318 0.226438 1.50546)",
+  "wordmark": {
+   "text": "Record Collection",
+   "font": "14px 600",
+   "x": 160,
+   "y": 16,
+   "w": 105,
+   "h": 20
+  },
+  "navRows": 1,
+  "links": [
+   {
+    "text": "Collection",
+    "href": "/",
+    "current": "page",
+    "colour": "lab(6.18075 1.20374 2.12039)",
+    "weight": "500",
+    "x": 285,
+    "y": 12,
+    "w": 77,
+    "h": 28
+   },
+   {
+    "text": "Want list",
+    "href": "/want-list",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 367,
+    "y": 12,
+    "w": 67,
+    "h": 28
+   },
+   {
+    "text": "Look up",
+    "href": "/lookup",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 438,
+    "y": 12,
+    "w": 64,
+    "h": 28
+   },
+   {
+    "text": "Stats",
+    "href": "/stats",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 506,
+    "y": 12,
+    "w": 47,
+    "h": 28
+   },
+   {
+    "text": "Manage",
+    "href": "/manage",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 557,
+    "y": 12,
+    "w": 65,
+    "h": 28
+   }
+  ],
+  "slot": null,
+  "pageScrolls": false,
+  "navHeightVar": "53px",
+  "afterScroll": {
+   "scrolled": 0,
+   "headerTop": 0
+  }
+ },
+ {
+  "screen": "collection",
+  "path": "/",
+  "status": 200,
+  "width": 1920,
+  "file": "header-collection-1920-h53-w1152.png",
+  "header": {
+   "x": 0,
+   "y": 0,
+   "w": 1920,
+   "h": 53
+  },
+  "inner": {
+   "x": 384,
+   "y": 0,
+   "w": 1152,
+   "h": 52,
+   "maxWidth": "1152px"
+  },
+  "background": "rgba(0, 0, 0, 0)",
+  "position": "static",
+  "borderBottom": "1px lab(67.5318 0.226438 1.50546)",
+  "wordmark": {
+   "text": "Record Collection",
+   "font": "14px 600",
+   "x": 400,
+   "y": 16,
+   "w": 105,
+   "h": 20
+  },
+  "navRows": 1,
+  "links": [
+   {
+    "text": "Collection",
+    "href": "/",
+    "current": "page",
+    "colour": "lab(6.18075 1.20374 2.12039)",
+    "weight": "500",
+    "x": 525,
+    "y": 12,
+    "w": 77,
+    "h": 28
+   },
+   {
+    "text": "Want list",
+    "href": "/want-list",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 607,
+    "y": 12,
+    "w": 67,
+    "h": 28
+   },
+   {
+    "text": "Look up",
+    "href": "/lookup",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 678,
+    "y": 12,
+    "w": 64,
+    "h": 28
+   },
+   {
+    "text": "Stats",
+    "href": "/stats",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 746,
+    "y": 12,
+    "w": 47,
+    "h": 28
+   },
+   {
+    "text": "Manage",
+    "href": "/manage",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 797,
+    "y": 12,
+    "w": 65,
+    "h": 28
+   }
+  ],
+  "slot": null,
+  "pageScrolls": false,
+  "navHeightVar": "53px",
+  "afterScroll": {
+   "scrolled": 0,
+   "headerTop": 0
+  }
+ },
+ {
+  "screen": "want-list",
+  "path": "/want-list",
+  "status": 200,
+  "width": 390,
+  "file": "header-want-list-390-h85-w390.png",
+  "header": {
+   "x": 0,
+   "y": 0,
+   "w": 390,
+   "h": 85
+  },
+  "inner": {
+   "x": 0,
+   "y": 0,
+   "w": 390,
+   "h": 84,
+   "maxWidth": "1152px"
+  },
+  "background": "rgba(0, 0, 0, 0)",
+  "position": "static",
+  "borderBottom": "1px lab(67.5318 0.226438 1.50546)",
+  "wordmark": {
+   "text": "Record Collection",
+   "font": "14px 600",
+   "x": 16,
+   "y": 16,
+   "w": 105,
+   "h": 20
+  },
+  "navRows": 2,
+  "links": [
+   {
+    "text": "Collection",
+    "href": "/",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 141,
+    "y": 12,
+    "w": 76,
+    "h": 28
+   },
+   {
+    "text": "Want list",
+    "href": "/want-list",
+    "current": "page",
+    "colour": "lab(6.18075 1.20374 2.12039)",
+    "weight": "500",
+    "x": 221,
+    "y": 12,
+    "w": 69,
+    "h": 28
+   },
+   {
+    "text": "Look up",
+    "href": "/lookup",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 293,
+    "y": 12,
+    "w": 64,
+    "h": 28
+   },
+   {
+    "text": "Stats",
+    "href": "/stats",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 141,
+    "y": 44,
+    "w": 47,
+    "h": 28
+   },
+   {
+    "text": "Manage",
+    "href": "/manage",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 192,
+    "y": 44,
+    "w": 65,
+    "h": 28
+   }
+  ],
+  "slot": null,
+  "pageScrolls": true,
+  "navHeightVar": "85px",
+  "afterScroll": {
+   "scrolled": 334,
+   "headerTop": -334
+  }
+ },
+ {
+  "screen": "want-list",
+  "path": "/want-list",
+  "status": 200,
+  "width": 1000,
+  "file": "header-want-list-1000-h53-w1000.png",
+  "header": {
+   "x": 0,
+   "y": 0,
+   "w": 1000,
+   "h": 53
+  },
+  "inner": {
+   "x": 0,
+   "y": 0,
+   "w": 1000,
+   "h": 52,
+   "maxWidth": "1152px"
+  },
+  "background": "rgba(0, 0, 0, 0)",
+  "position": "static",
+  "borderBottom": "1px lab(67.5318 0.226438 1.50546)",
+  "wordmark": {
+   "text": "Record Collection",
+   "font": "14px 600",
+   "x": 16,
+   "y": 16,
+   "w": 105,
+   "h": 20
+  },
+  "navRows": 1,
+  "links": [
+   {
+    "text": "Collection",
+    "href": "/",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 141,
+    "y": 12,
+    "w": 76,
+    "h": 28
+   },
+   {
+    "text": "Want list",
+    "href": "/want-list",
+    "current": "page",
+    "colour": "lab(6.18075 1.20374 2.12039)",
+    "weight": "500",
+    "x": 221,
+    "y": 12,
+    "w": 69,
+    "h": 28
+   },
+   {
+    "text": "Look up",
+    "href": "/lookup",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 293,
+    "y": 12,
+    "w": 64,
+    "h": 28
+   },
+   {
+    "text": "Stats",
+    "href": "/stats",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 362,
+    "y": 12,
+    "w": 47,
+    "h": 28
+   },
+   {
+    "text": "Manage",
+    "href": "/manage",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 412,
+    "y": 12,
+    "w": 65,
+    "h": 28
+   }
+  ],
+  "slot": null,
+  "pageScrolls": true,
+  "navHeightVar": "53px",
+  "afterScroll": {
+   "scrolled": 31,
+   "headerTop": -31
+  }
+ },
+ {
+  "screen": "want-list",
+  "path": "/want-list",
+  "status": 200,
+  "width": 1440,
+  "file": "header-want-list-1440-h53-w1152.png",
+  "header": {
+   "x": 0,
+   "y": 0,
+   "w": 1440,
+   "h": 53
+  },
+  "inner": {
+   "x": 144,
+   "y": 0,
+   "w": 1152,
+   "h": 52,
+   "maxWidth": "1152px"
+  },
+  "background": "rgba(0, 0, 0, 0)",
+  "position": "static",
+  "borderBottom": "1px lab(67.5318 0.226438 1.50546)",
+  "wordmark": {
+   "text": "Record Collection",
+   "font": "14px 600",
+   "x": 160,
+   "y": 16,
+   "w": 105,
+   "h": 20
+  },
+  "navRows": 1,
+  "links": [
+   {
+    "text": "Collection",
+    "href": "/",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 285,
+    "y": 12,
+    "w": 76,
+    "h": 28
+   },
+   {
+    "text": "Want list",
+    "href": "/want-list",
+    "current": "page",
+    "colour": "lab(6.18075 1.20374 2.12039)",
+    "weight": "500",
+    "x": 365,
+    "y": 12,
+    "w": 69,
+    "h": 28
+   },
+   {
+    "text": "Look up",
+    "href": "/lookup",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 437,
+    "y": 12,
+    "w": 64,
+    "h": 28
+   },
+   {
+    "text": "Stats",
+    "href": "/stats",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 506,
+    "y": 12,
+    "w": 47,
+    "h": 28
+   },
+   {
+    "text": "Manage",
+    "href": "/manage",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 556,
+    "y": 12,
+    "w": 65,
+    "h": 28
+   }
+  ],
+  "slot": null,
+  "pageScrolls": true,
+  "navHeightVar": "53px",
+  "afterScroll": {
+   "scrolled": 31,
+   "headerTop": -31
+  }
+ },
+ {
+  "screen": "want-list",
+  "path": "/want-list",
+  "status": 200,
+  "width": 1920,
+  "file": "header-want-list-1920-h53-w1152.png",
+  "header": {
+   "x": 0,
+   "y": 0,
+   "w": 1920,
+   "h": 53
+  },
+  "inner": {
+   "x": 384,
+   "y": 0,
+   "w": 1152,
+   "h": 52,
+   "maxWidth": "1152px"
+  },
+  "background": "rgba(0, 0, 0, 0)",
+  "position": "static",
+  "borderBottom": "1px lab(67.5318 0.226438 1.50546)",
+  "wordmark": {
+   "text": "Record Collection",
+   "font": "14px 600",
+   "x": 400,
+   "y": 16,
+   "w": 105,
+   "h": 20
+  },
+  "navRows": 1,
+  "links": [
+   {
+    "text": "Collection",
+    "href": "/",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 525,
+    "y": 12,
+    "w": 76,
+    "h": 28
+   },
+   {
+    "text": "Want list",
+    "href": "/want-list",
+    "current": "page",
+    "colour": "lab(6.18075 1.20374 2.12039)",
+    "weight": "500",
+    "x": 605,
+    "y": 12,
+    "w": 69,
+    "h": 28
+   },
+   {
+    "text": "Look up",
+    "href": "/lookup",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 677,
+    "y": 12,
+    "w": 64,
+    "h": 28
+   },
+   {
+    "text": "Stats",
+    "href": "/stats",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 746,
+    "y": 12,
+    "w": 47,
+    "h": 28
+   },
+   {
+    "text": "Manage",
+    "href": "/manage",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 796,
+    "y": 12,
+    "w": 65,
+    "h": 28
+   }
+  ],
+  "slot": null,
+  "pageScrolls": true,
+  "navHeightVar": "53px",
+  "afterScroll": {
+   "scrolled": 31,
+   "headerTop": -31
+  }
+ },
+ {
+  "screen": "want-list-new",
+  "path": "/want-list/new",
+  "status": 200,
+  "width": 390,
+  "file": "header-want-list-new-390-h85-w390.png",
+  "header": {
+   "x": 0,
+   "y": 0,
+   "w": 390,
+   "h": 85
+  },
+  "inner": {
+   "x": 0,
+   "y": 0,
+   "w": 390,
+   "h": 84,
+   "maxWidth": "1152px"
+  },
+  "background": "rgba(0, 0, 0, 0)",
+  "position": "static",
+  "borderBottom": "1px lab(67.5318 0.226438 1.50546)",
+  "wordmark": {
+   "text": "Record Collection",
+   "font": "14px 600",
+   "x": 16,
+   "y": 16,
+   "w": 105,
+   "h": 20
+  },
+  "navRows": 2,
+  "links": [
+   {
+    "text": "Collection",
+    "href": "/",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 141,
+    "y": 12,
+    "w": 76,
+    "h": 28
+   },
+   {
+    "text": "Want list",
+    "href": "/want-list",
+    "current": "page",
+    "colour": "lab(6.18075 1.20374 2.12039)",
+    "weight": "500",
+    "x": 221,
+    "y": 12,
+    "w": 69,
+    "h": 28
+   },
+   {
+    "text": "Look up",
+    "href": "/lookup",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 293,
+    "y": 12,
+    "w": 64,
+    "h": 28
+   },
+   {
+    "text": "Stats",
+    "href": "/stats",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 141,
+    "y": 44,
+    "w": 47,
+    "h": 28
+   },
+   {
+    "text": "Manage",
+    "href": "/manage",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 192,
+    "y": 44,
+    "w": 65,
+    "h": 28
+   }
+  ],
+  "slot": null,
+  "pageScrolls": true,
+  "navHeightVar": "85px",
+  "afterScroll": {
+   "scrolled": 233,
+   "headerTop": -233
+  }
+ },
+ {
+  "screen": "want-list-new",
+  "path": "/want-list/new",
+  "status": 200,
+  "width": 1000,
+  "file": "header-want-list-new-1000-h53-w1000.png",
+  "header": {
+   "x": 0,
+   "y": 0,
+   "w": 1000,
+   "h": 53
+  },
+  "inner": {
+   "x": 0,
+   "y": 0,
+   "w": 1000,
+   "h": 52,
+   "maxWidth": "1152px"
+  },
+  "background": "rgba(0, 0, 0, 0)",
+  "position": "static",
+  "borderBottom": "1px lab(67.5318 0.226438 1.50546)",
+  "wordmark": {
+   "text": "Record Collection",
+   "font": "14px 600",
+   "x": 16,
+   "y": 16,
+   "w": 105,
+   "h": 20
+  },
+  "navRows": 1,
+  "links": [
+   {
+    "text": "Collection",
+    "href": "/",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 141,
+    "y": 12,
+    "w": 76,
+    "h": 28
+   },
+   {
+    "text": "Want list",
+    "href": "/want-list",
+    "current": "page",
+    "colour": "lab(6.18075 1.20374 2.12039)",
+    "weight": "500",
+    "x": 221,
+    "y": 12,
+    "w": 69,
+    "h": 28
+   },
+   {
+    "text": "Look up",
+    "href": "/lookup",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 293,
+    "y": 12,
+    "w": 64,
+    "h": 28
+   },
+   {
+    "text": "Stats",
+    "href": "/stats",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 362,
+    "y": 12,
+    "w": 47,
+    "h": 28
+   },
+   {
+    "text": "Manage",
+    "href": "/manage",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 412,
+    "y": 12,
+    "w": 65,
+    "h": 28
+   }
+  ],
+  "slot": null,
+  "pageScrolls": true,
+  "navHeightVar": "53px",
+  "afterScroll": {
+   "scrolled": 72,
+   "headerTop": -72
+  }
+ },
+ {
+  "screen": "want-list-new",
+  "path": "/want-list/new",
+  "status": 200,
+  "width": 1440,
+  "file": "header-want-list-new-1440-h53-w1152.png",
+  "header": {
+   "x": 0,
+   "y": 0,
+   "w": 1440,
+   "h": 53
+  },
+  "inner": {
+   "x": 144,
+   "y": 0,
+   "w": 1152,
+   "h": 52,
+   "maxWidth": "1152px"
+  },
+  "background": "rgba(0, 0, 0, 0)",
+  "position": "static",
+  "borderBottom": "1px lab(67.5318 0.226438 1.50546)",
+  "wordmark": {
+   "text": "Record Collection",
+   "font": "14px 600",
+   "x": 160,
+   "y": 16,
+   "w": 105,
+   "h": 20
+  },
+  "navRows": 1,
+  "links": [
+   {
+    "text": "Collection",
+    "href": "/",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 285,
+    "y": 12,
+    "w": 76,
+    "h": 28
+   },
+   {
+    "text": "Want list",
+    "href": "/want-list",
+    "current": "page",
+    "colour": "lab(6.18075 1.20374 2.12039)",
+    "weight": "500",
+    "x": 365,
+    "y": 12,
+    "w": 69,
+    "h": 28
+   },
+   {
+    "text": "Look up",
+    "href": "/lookup",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 437,
+    "y": 12,
+    "w": 64,
+    "h": 28
+   },
+   {
+    "text": "Stats",
+    "href": "/stats",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 506,
+    "y": 12,
+    "w": 47,
+    "h": 28
+   },
+   {
+    "text": "Manage",
+    "href": "/manage",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 556,
+    "y": 12,
+    "w": 65,
+    "h": 28
+   }
+  ],
+  "slot": null,
+  "pageScrolls": true,
+  "navHeightVar": "53px",
+  "afterScroll": {
+   "scrolled": 72,
+   "headerTop": -72
+  }
+ },
+ {
+  "screen": "want-list-new",
+  "path": "/want-list/new",
+  "status": 200,
+  "width": 1920,
+  "file": "header-want-list-new-1920-h53-w1152.png",
+  "header": {
+   "x": 0,
+   "y": 0,
+   "w": 1920,
+   "h": 53
+  },
+  "inner": {
+   "x": 384,
+   "y": 0,
+   "w": 1152,
+   "h": 52,
+   "maxWidth": "1152px"
+  },
+  "background": "rgba(0, 0, 0, 0)",
+  "position": "static",
+  "borderBottom": "1px lab(67.5318 0.226438 1.50546)",
+  "wordmark": {
+   "text": "Record Collection",
+   "font": "14px 600",
+   "x": 400,
+   "y": 16,
+   "w": 105,
+   "h": 20
+  },
+  "navRows": 1,
+  "links": [
+   {
+    "text": "Collection",
+    "href": "/",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 525,
+    "y": 12,
+    "w": 76,
+    "h": 28
+   },
+   {
+    "text": "Want list",
+    "href": "/want-list",
+    "current": "page",
+    "colour": "lab(6.18075 1.20374 2.12039)",
+    "weight": "500",
+    "x": 605,
+    "y": 12,
+    "w": 69,
+    "h": 28
+   },
+   {
+    "text": "Look up",
+    "href": "/lookup",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 677,
+    "y": 12,
+    "w": 64,
+    "h": 28
+   },
+   {
+    "text": "Stats",
+    "href": "/stats",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 746,
+    "y": 12,
+    "w": 47,
+    "h": 28
+   },
+   {
+    "text": "Manage",
+    "href": "/manage",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 796,
+    "y": 12,
+    "w": 65,
+    "h": 28
+   }
+  ],
+  "slot": null,
+  "pageScrolls": true,
+  "navHeightVar": "53px",
+  "afterScroll": {
+   "scrolled": 72,
+   "headerTop": -72
+  }
+ },
+ {
+  "screen": "want-list-item",
+  "path": "/want-list/:want",
+  "status": 200,
+  "width": 390,
+  "file": "header-want-list-item-390-h85-w390.png",
+  "header": {
+   "x": 0,
+   "y": 0,
+   "w": 390,
+   "h": 85
+  },
+  "inner": {
+   "x": 0,
+   "y": 0,
+   "w": 390,
+   "h": 84,
+   "maxWidth": "1152px"
+  },
+  "background": "rgba(0, 0, 0, 0)",
+  "position": "static",
+  "borderBottom": "1px lab(67.5318 0.226438 1.50546)",
+  "wordmark": {
+   "text": "Record Collection",
+   "font": "14px 600",
+   "x": 16,
+   "y": 16,
+   "w": 105,
+   "h": 20
+  },
+  "navRows": 2,
+  "links": [
+   {
+    "text": "Collection",
+    "href": "/",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 141,
+    "y": 12,
+    "w": 76,
+    "h": 28
+   },
+   {
+    "text": "Want list",
+    "href": "/want-list",
+    "current": "page",
+    "colour": "lab(6.18075 1.20374 2.12039)",
+    "weight": "500",
+    "x": 221,
+    "y": 12,
+    "w": 69,
+    "h": 28
+   },
+   {
+    "text": "Look up",
+    "href": "/lookup",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 293,
+    "y": 12,
+    "w": 64,
+    "h": 28
+   },
+   {
+    "text": "Stats",
+    "href": "/stats",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 141,
+    "y": 44,
+    "w": 47,
+    "h": 28
+   },
+   {
+    "text": "Manage",
+    "href": "/manage",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 192,
+    "y": 44,
+    "w": 65,
+    "h": 28
+   }
+  ],
+  "slot": null,
+  "pageScrolls": false,
+  "navHeightVar": "85px",
+  "afterScroll": {
+   "scrolled": 0,
+   "headerTop": 0
+  }
+ },
+ {
+  "screen": "want-list-item",
+  "path": "/want-list/:want",
+  "status": 200,
+  "width": 1000,
+  "file": "header-want-list-item-1000-h53-w1000.png",
+  "header": {
+   "x": 0,
+   "y": 0,
+   "w": 1000,
+   "h": 53
+  },
+  "inner": {
+   "x": 0,
+   "y": 0,
+   "w": 1000,
+   "h": 52,
+   "maxWidth": "1152px"
+  },
+  "background": "rgba(0, 0, 0, 0)",
+  "position": "static",
+  "borderBottom": "1px lab(67.5318 0.226438 1.50546)",
+  "wordmark": {
+   "text": "Record Collection",
+   "font": "14px 600",
+   "x": 16,
+   "y": 16,
+   "w": 105,
+   "h": 20
+  },
+  "navRows": 1,
+  "links": [
+   {
+    "text": "Collection",
+    "href": "/",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 141,
+    "y": 12,
+    "w": 76,
+    "h": 28
+   },
+   {
+    "text": "Want list",
+    "href": "/want-list",
+    "current": "page",
+    "colour": "lab(6.18075 1.20374 2.12039)",
+    "weight": "500",
+    "x": 221,
+    "y": 12,
+    "w": 69,
+    "h": 28
+   },
+   {
+    "text": "Look up",
+    "href": "/lookup",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 293,
+    "y": 12,
+    "w": 64,
+    "h": 28
+   },
+   {
+    "text": "Stats",
+    "href": "/stats",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 362,
+    "y": 12,
+    "w": 47,
+    "h": 28
+   },
+   {
+    "text": "Manage",
+    "href": "/manage",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 412,
+    "y": 12,
+    "w": 65,
+    "h": 28
+   }
+  ],
+  "slot": null,
+  "pageScrolls": false,
+  "navHeightVar": "53px",
+  "afterScroll": {
+   "scrolled": 0,
+   "headerTop": 0
+  }
+ },
+ {
+  "screen": "want-list-item",
+  "path": "/want-list/:want",
+  "status": 200,
+  "width": 1440,
+  "file": "header-want-list-item-1440-h53-w1152.png",
+  "header": {
+   "x": 0,
+   "y": 0,
+   "w": 1440,
+   "h": 53
+  },
+  "inner": {
+   "x": 144,
+   "y": 0,
+   "w": 1152,
+   "h": 52,
+   "maxWidth": "1152px"
+  },
+  "background": "rgba(0, 0, 0, 0)",
+  "position": "static",
+  "borderBottom": "1px lab(67.5318 0.226438 1.50546)",
+  "wordmark": {
+   "text": "Record Collection",
+   "font": "14px 600",
+   "x": 160,
+   "y": 16,
+   "w": 105,
+   "h": 20
+  },
+  "navRows": 1,
+  "links": [
+   {
+    "text": "Collection",
+    "href": "/",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 285,
+    "y": 12,
+    "w": 76,
+    "h": 28
+   },
+   {
+    "text": "Want list",
+    "href": "/want-list",
+    "current": "page",
+    "colour": "lab(6.18075 1.20374 2.12039)",
+    "weight": "500",
+    "x": 365,
+    "y": 12,
+    "w": 69,
+    "h": 28
+   },
+   {
+    "text": "Look up",
+    "href": "/lookup",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 437,
+    "y": 12,
+    "w": 64,
+    "h": 28
+   },
+   {
+    "text": "Stats",
+    "href": "/stats",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 506,
+    "y": 12,
+    "w": 47,
+    "h": 28
+   },
+   {
+    "text": "Manage",
+    "href": "/manage",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 556,
+    "y": 12,
+    "w": 65,
+    "h": 28
+   }
+  ],
+  "slot": null,
+  "pageScrolls": false,
+  "navHeightVar": "53px",
+  "afterScroll": {
+   "scrolled": 0,
+   "headerTop": 0
+  }
+ },
+ {
+  "screen": "want-list-item",
+  "path": "/want-list/:want",
+  "status": 200,
+  "width": 1920,
+  "file": "header-want-list-item-1920-h53-w1152.png",
+  "header": {
+   "x": 0,
+   "y": 0,
+   "w": 1920,
+   "h": 53
+  },
+  "inner": {
+   "x": 384,
+   "y": 0,
+   "w": 1152,
+   "h": 52,
+   "maxWidth": "1152px"
+  },
+  "background": "rgba(0, 0, 0, 0)",
+  "position": "static",
+  "borderBottom": "1px lab(67.5318 0.226438 1.50546)",
+  "wordmark": {
+   "text": "Record Collection",
+   "font": "14px 600",
+   "x": 400,
+   "y": 16,
+   "w": 105,
+   "h": 20
+  },
+  "navRows": 1,
+  "links": [
+   {
+    "text": "Collection",
+    "href": "/",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 525,
+    "y": 12,
+    "w": 76,
+    "h": 28
+   },
+   {
+    "text": "Want list",
+    "href": "/want-list",
+    "current": "page",
+    "colour": "lab(6.18075 1.20374 2.12039)",
+    "weight": "500",
+    "x": 605,
+    "y": 12,
+    "w": 69,
+    "h": 28
+   },
+   {
+    "text": "Look up",
+    "href": "/lookup",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 677,
+    "y": 12,
+    "w": 64,
+    "h": 28
+   },
+   {
+    "text": "Stats",
+    "href": "/stats",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 746,
+    "y": 12,
+    "w": 47,
+    "h": 28
+   },
+   {
+    "text": "Manage",
+    "href": "/manage",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 796,
+    "y": 12,
+    "w": 65,
+    "h": 28
+   }
+  ],
+  "slot": null,
+  "pageScrolls": false,
+  "navHeightVar": "53px",
+  "afterScroll": {
+   "scrolled": 0,
+   "headerTop": 0
+  }
+ },
+ {
+  "screen": "want-list-item-edit",
+  "path": "/want-list/:want/edit",
+  "status": 200,
+  "width": 390,
+  "file": "header-want-list-item-edit-390-h85-w390.png",
+  "header": {
+   "x": 0,
+   "y": 0,
+   "w": 390,
+   "h": 85
+  },
+  "inner": {
+   "x": 0,
+   "y": 0,
+   "w": 390,
+   "h": 84,
+   "maxWidth": "1152px"
+  },
+  "background": "rgba(0, 0, 0, 0)",
+  "position": "static",
+  "borderBottom": "1px lab(67.5318 0.226438 1.50546)",
+  "wordmark": {
+   "text": "Record Collection",
+   "font": "14px 600",
+   "x": 16,
+   "y": 16,
+   "w": 105,
+   "h": 20
+  },
+  "navRows": 2,
+  "links": [
+   {
+    "text": "Collection",
+    "href": "/",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 141,
+    "y": 12,
+    "w": 76,
+    "h": 28
+   },
+   {
+    "text": "Want list",
+    "href": "/want-list",
+    "current": "page",
+    "colour": "lab(6.18075 1.20374 2.12039)",
+    "weight": "500",
+    "x": 221,
+    "y": 12,
+    "w": 69,
+    "h": 28
+   },
+   {
+    "text": "Look up",
+    "href": "/lookup",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 293,
+    "y": 12,
+    "w": 64,
+    "h": 28
+   },
+   {
+    "text": "Stats",
+    "href": "/stats",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 141,
+    "y": 44,
+    "w": 47,
+    "h": 28
+   },
+   {
+    "text": "Manage",
+    "href": "/manage",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 192,
+    "y": 44,
+    "w": 65,
+    "h": 28
+   }
+  ],
+  "slot": null,
+  "pageScrolls": true,
+  "navHeightVar": "85px",
+  "afterScroll": {
+   "scrolled": 245,
+   "headerTop": -245
+  }
+ },
+ {
+  "screen": "want-list-item-edit",
+  "path": "/want-list/:want/edit",
+  "status": 200,
+  "width": 1000,
+  "file": "header-want-list-item-edit-1000-h53-w1000.png",
+  "header": {
+   "x": 0,
+   "y": 0,
+   "w": 1000,
+   "h": 53
+  },
+  "inner": {
+   "x": 0,
+   "y": 0,
+   "w": 1000,
+   "h": 52,
+   "maxWidth": "1152px"
+  },
+  "background": "rgba(0, 0, 0, 0)",
+  "position": "static",
+  "borderBottom": "1px lab(67.5318 0.226438 1.50546)",
+  "wordmark": {
+   "text": "Record Collection",
+   "font": "14px 600",
+   "x": 16,
+   "y": 16,
+   "w": 105,
+   "h": 20
+  },
+  "navRows": 1,
+  "links": [
+   {
+    "text": "Collection",
+    "href": "/",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 141,
+    "y": 12,
+    "w": 76,
+    "h": 28
+   },
+   {
+    "text": "Want list",
+    "href": "/want-list",
+    "current": "page",
+    "colour": "lab(6.18075 1.20374 2.12039)",
+    "weight": "500",
+    "x": 221,
+    "y": 12,
+    "w": 69,
+    "h": 28
+   },
+   {
+    "text": "Look up",
+    "href": "/lookup",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 293,
+    "y": 12,
+    "w": 64,
+    "h": 28
+   },
+   {
+    "text": "Stats",
+    "href": "/stats",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 362,
+    "y": 12,
+    "w": 47,
+    "h": 28
+   },
+   {
+    "text": "Manage",
+    "href": "/manage",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 412,
+    "y": 12,
+    "w": 65,
+    "h": 28
+   }
+  ],
+  "slot": null,
+  "pageScrolls": true,
+  "navHeightVar": "53px",
+  "afterScroll": {
+   "scrolled": 84,
+   "headerTop": -84
+  }
+ },
+ {
+  "screen": "want-list-item-edit",
+  "path": "/want-list/:want/edit",
+  "status": 200,
+  "width": 1440,
+  "file": "header-want-list-item-edit-1440-h53-w1152.png",
+  "header": {
+   "x": 0,
+   "y": 0,
+   "w": 1440,
+   "h": 53
+  },
+  "inner": {
+   "x": 144,
+   "y": 0,
+   "w": 1152,
+   "h": 52,
+   "maxWidth": "1152px"
+  },
+  "background": "rgba(0, 0, 0, 0)",
+  "position": "static",
+  "borderBottom": "1px lab(67.5318 0.226438 1.50546)",
+  "wordmark": {
+   "text": "Record Collection",
+   "font": "14px 600",
+   "x": 160,
+   "y": 16,
+   "w": 105,
+   "h": 20
+  },
+  "navRows": 1,
+  "links": [
+   {
+    "text": "Collection",
+    "href": "/",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 285,
+    "y": 12,
+    "w": 76,
+    "h": 28
+   },
+   {
+    "text": "Want list",
+    "href": "/want-list",
+    "current": "page",
+    "colour": "lab(6.18075 1.20374 2.12039)",
+    "weight": "500",
+    "x": 365,
+    "y": 12,
+    "w": 69,
+    "h": 28
+   },
+   {
+    "text": "Look up",
+    "href": "/lookup",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 437,
+    "y": 12,
+    "w": 64,
+    "h": 28
+   },
+   {
+    "text": "Stats",
+    "href": "/stats",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 506,
+    "y": 12,
+    "w": 47,
+    "h": 28
+   },
+   {
+    "text": "Manage",
+    "href": "/manage",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 556,
+    "y": 12,
+    "w": 65,
+    "h": 28
+   }
+  ],
+  "slot": null,
+  "pageScrolls": true,
+  "navHeightVar": "53px",
+  "afterScroll": {
+   "scrolled": 84,
+   "headerTop": -84
+  }
+ },
+ {
+  "screen": "want-list-item-edit",
+  "path": "/want-list/:want/edit",
+  "status": 200,
+  "width": 1920,
+  "file": "header-want-list-item-edit-1920-h53-w1152.png",
+  "header": {
+   "x": 0,
+   "y": 0,
+   "w": 1920,
+   "h": 53
+  },
+  "inner": {
+   "x": 384,
+   "y": 0,
+   "w": 1152,
+   "h": 52,
+   "maxWidth": "1152px"
+  },
+  "background": "rgba(0, 0, 0, 0)",
+  "position": "static",
+  "borderBottom": "1px lab(67.5318 0.226438 1.50546)",
+  "wordmark": {
+   "text": "Record Collection",
+   "font": "14px 600",
+   "x": 400,
+   "y": 16,
+   "w": 105,
+   "h": 20
+  },
+  "navRows": 1,
+  "links": [
+   {
+    "text": "Collection",
+    "href": "/",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 525,
+    "y": 12,
+    "w": 76,
+    "h": 28
+   },
+   {
+    "text": "Want list",
+    "href": "/want-list",
+    "current": "page",
+    "colour": "lab(6.18075 1.20374 2.12039)",
+    "weight": "500",
+    "x": 605,
+    "y": 12,
+    "w": 69,
+    "h": 28
+   },
+   {
+    "text": "Look up",
+    "href": "/lookup",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 677,
+    "y": 12,
+    "w": 64,
+    "h": 28
+   },
+   {
+    "text": "Stats",
+    "href": "/stats",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 746,
+    "y": 12,
+    "w": 47,
+    "h": 28
+   },
+   {
+    "text": "Manage",
+    "href": "/manage",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 796,
+    "y": 12,
+    "w": 65,
+    "h": 28
+   }
+  ],
+  "slot": null,
+  "pageScrolls": true,
+  "navHeightVar": "53px",
+  "afterScroll": {
+   "scrolled": 84,
+   "headerTop": -84
+  }
+ },
+ {
+  "screen": "lookup",
+  "path": "/lookup",
+  "status": 200,
+  "width": 390,
+  "file": "header-lookup-390-h85-w390.png",
+  "header": {
+   "x": 0,
+   "y": 0,
+   "w": 390,
+   "h": 85
+  },
+  "inner": {
+   "x": 0,
+   "y": 0,
+   "w": 390,
+   "h": 84,
+   "maxWidth": "1152px"
+  },
+  "background": "rgba(0, 0, 0, 0)",
+  "position": "static",
+  "borderBottom": "1px lab(67.5318 0.226438 1.50546)",
+  "wordmark": {
+   "text": "Record Collection",
+   "font": "14px 600",
+   "x": 16,
+   "y": 16,
+   "w": 105,
+   "h": 20
+  },
+  "navRows": 2,
+  "links": [
+   {
+    "text": "Collection",
+    "href": "/",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 141,
+    "y": 12,
+    "w": 76,
+    "h": 28
+   },
+   {
+    "text": "Want list",
+    "href": "/want-list",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 221,
+    "y": 12,
+    "w": 67,
+    "h": 28
+   },
+   {
+    "text": "Look up",
+    "href": "/lookup",
+    "current": "page",
+    "colour": "lab(6.18075 1.20374 2.12039)",
+    "weight": "500",
+    "x": 292,
+    "y": 12,
+    "w": 65,
+    "h": 28
+   },
+   {
+    "text": "Stats",
+    "href": "/stats",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 141,
+    "y": 44,
+    "w": 47,
+    "h": 28
+   },
+   {
+    "text": "Manage",
+    "href": "/manage",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 192,
+    "y": 44,
+    "w": 65,
+    "h": 28
+   }
+  ],
+  "slot": null,
+  "pageScrolls": false,
+  "navHeightVar": "85px",
+  "afterScroll": {
+   "scrolled": 0,
+   "headerTop": 0
+  }
+ },
+ {
+  "screen": "lookup",
+  "path": "/lookup",
+  "status": 200,
+  "width": 1000,
+  "file": "header-lookup-1000-h53-w1000.png",
+  "header": {
+   "x": 0,
+   "y": 0,
+   "w": 1000,
+   "h": 53
+  },
+  "inner": {
+   "x": 0,
+   "y": 0,
+   "w": 1000,
+   "h": 52,
+   "maxWidth": "1152px"
+  },
+  "background": "rgba(0, 0, 0, 0)",
+  "position": "static",
+  "borderBottom": "1px lab(67.5318 0.226438 1.50546)",
+  "wordmark": {
+   "text": "Record Collection",
+   "font": "14px 600",
+   "x": 16,
+   "y": 16,
+   "w": 105,
+   "h": 20
+  },
+  "navRows": 1,
+  "links": [
+   {
+    "text": "Collection",
+    "href": "/",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 141,
+    "y": 12,
+    "w": 76,
+    "h": 28
+   },
+   {
+    "text": "Want list",
+    "href": "/want-list",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 221,
+    "y": 12,
+    "w": 67,
+    "h": 28
+   },
+   {
+    "text": "Look up",
+    "href": "/lookup",
+    "current": "page",
+    "colour": "lab(6.18075 1.20374 2.12039)",
+    "weight": "500",
+    "x": 292,
+    "y": 12,
+    "w": 65,
+    "h": 28
+   },
+   {
+    "text": "Stats",
+    "href": "/stats",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 361,
+    "y": 12,
+    "w": 47,
+    "h": 28
+   },
+   {
+    "text": "Manage",
+    "href": "/manage",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 412,
+    "y": 12,
+    "w": 65,
+    "h": 28
+   }
+  ],
+  "slot": null,
+  "pageScrolls": false,
+  "navHeightVar": "53px",
+  "afterScroll": {
+   "scrolled": 0,
+   "headerTop": 0
+  }
+ },
+ {
+  "screen": "lookup",
+  "path": "/lookup",
+  "status": 200,
+  "width": 1440,
+  "file": "header-lookup-1440-h53-w1152.png",
+  "header": {
+   "x": 0,
+   "y": 0,
+   "w": 1440,
+   "h": 53
+  },
+  "inner": {
+   "x": 144,
+   "y": 0,
+   "w": 1152,
+   "h": 52,
+   "maxWidth": "1152px"
+  },
+  "background": "rgba(0, 0, 0, 0)",
+  "position": "static",
+  "borderBottom": "1px lab(67.5318 0.226438 1.50546)",
+  "wordmark": {
+   "text": "Record Collection",
+   "font": "14px 600",
+   "x": 160,
+   "y": 16,
+   "w": 105,
+   "h": 20
+  },
+  "navRows": 1,
+  "links": [
+   {
+    "text": "Collection",
+    "href": "/",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 285,
+    "y": 12,
+    "w": 76,
+    "h": 28
+   },
+   {
+    "text": "Want list",
+    "href": "/want-list",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 365,
+    "y": 12,
+    "w": 67,
+    "h": 28
+   },
+   {
+    "text": "Look up",
+    "href": "/lookup",
+    "current": "page",
+    "colour": "lab(6.18075 1.20374 2.12039)",
+    "weight": "500",
+    "x": 436,
+    "y": 12,
+    "w": 65,
+    "h": 28
+   },
+   {
+    "text": "Stats",
+    "href": "/stats",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 505,
+    "y": 12,
+    "w": 47,
+    "h": 28
+   },
+   {
+    "text": "Manage",
+    "href": "/manage",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 556,
+    "y": 12,
+    "w": 65,
+    "h": 28
+   }
+  ],
+  "slot": null,
+  "pageScrolls": false,
+  "navHeightVar": "53px",
+  "afterScroll": {
+   "scrolled": 0,
+   "headerTop": 0
+  }
+ },
+ {
+  "screen": "lookup",
+  "path": "/lookup",
+  "status": 200,
+  "width": 1920,
+  "file": "header-lookup-1920-h53-w1152.png",
+  "header": {
+   "x": 0,
+   "y": 0,
+   "w": 1920,
+   "h": 53
+  },
+  "inner": {
+   "x": 384,
+   "y": 0,
+   "w": 1152,
+   "h": 52,
+   "maxWidth": "1152px"
+  },
+  "background": "rgba(0, 0, 0, 0)",
+  "position": "static",
+  "borderBottom": "1px lab(67.5318 0.226438 1.50546)",
+  "wordmark": {
+   "text": "Record Collection",
+   "font": "14px 600",
+   "x": 400,
+   "y": 16,
+   "w": 105,
+   "h": 20
+  },
+  "navRows": 1,
+  "links": [
+   {
+    "text": "Collection",
+    "href": "/",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 525,
+    "y": 12,
+    "w": 76,
+    "h": 28
+   },
+   {
+    "text": "Want list",
+    "href": "/want-list",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 605,
+    "y": 12,
+    "w": 67,
+    "h": 28
+   },
+   {
+    "text": "Look up",
+    "href": "/lookup",
+    "current": "page",
+    "colour": "lab(6.18075 1.20374 2.12039)",
+    "weight": "500",
+    "x": 676,
+    "y": 12,
+    "w": 65,
+    "h": 28
+   },
+   {
+    "text": "Stats",
+    "href": "/stats",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 745,
+    "y": 12,
+    "w": 47,
+    "h": 28
+   },
+   {
+    "text": "Manage",
+    "href": "/manage",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 796,
+    "y": 12,
+    "w": 65,
+    "h": 28
+   }
+  ],
+  "slot": null,
+  "pageScrolls": false,
+  "navHeightVar": "53px",
+  "afterScroll": {
+   "scrolled": 0,
+   "headerTop": 0
+  }
+ },
+ {
+  "screen": "stats",
+  "path": "/stats",
+  "status": 200,
+  "width": 390,
+  "file": "header-stats-390-h85-w390.png",
+  "header": {
+   "x": 0,
+   "y": 0,
+   "w": 390,
+   "h": 85
+  },
+  "inner": {
+   "x": 0,
+   "y": 0,
+   "w": 390,
+   "h": 84,
+   "maxWidth": "1152px"
+  },
+  "background": "rgba(0, 0, 0, 0)",
+  "position": "static",
+  "borderBottom": "1px lab(67.5318 0.226438 1.50546)",
+  "wordmark": {
+   "text": "Record Collection",
+   "font": "14px 600",
+   "x": 16,
+   "y": 16,
+   "w": 105,
+   "h": 20
+  },
+  "navRows": 2,
+  "links": [
+   {
+    "text": "Collection",
+    "href": "/",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 141,
+    "y": 12,
+    "w": 76,
+    "h": 28
+   },
+   {
+    "text": "Want list",
+    "href": "/want-list",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 221,
+    "y": 12,
+    "w": 67,
+    "h": 28
+   },
+   {
+    "text": "Look up",
+    "href": "/lookup",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 292,
+    "y": 12,
+    "w": 64,
+    "h": 28
+   },
+   {
+    "text": "Stats",
+    "href": "/stats",
+    "current": "page",
+    "colour": "lab(6.18075 1.20374 2.12039)",
+    "weight": "500",
+    "x": 141,
+    "y": 44,
+    "w": 48,
+    "h": 28
+   },
+   {
+    "text": "Manage",
+    "href": "/manage",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 193,
+    "y": 44,
+    "w": 65,
+    "h": 28
+   }
+  ],
+  "slot": null,
+  "pageScrolls": true,
+  "navHeightVar": "85px",
+  "afterScroll": {
+   "scrolled": 450,
+   "headerTop": -450
+  }
+ },
+ {
+  "screen": "stats",
+  "path": "/stats",
+  "status": 200,
+  "width": 1000,
+  "file": "header-stats-1000-h53-w1000.png",
+  "header": {
+   "x": 0,
+   "y": 0,
+   "w": 1000,
+   "h": 53
+  },
+  "inner": {
+   "x": 0,
+   "y": 0,
+   "w": 1000,
+   "h": 52,
+   "maxWidth": "1152px"
+  },
+  "background": "rgba(0, 0, 0, 0)",
+  "position": "static",
+  "borderBottom": "1px lab(67.5318 0.226438 1.50546)",
+  "wordmark": {
+   "text": "Record Collection",
+   "font": "14px 600",
+   "x": 16,
+   "y": 16,
+   "w": 105,
+   "h": 20
+  },
+  "navRows": 1,
+  "links": [
+   {
+    "text": "Collection",
+    "href": "/",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 141,
+    "y": 12,
+    "w": 76,
+    "h": 28
+   },
+   {
+    "text": "Want list",
+    "href": "/want-list",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 221,
+    "y": 12,
+    "w": 67,
+    "h": 28
+   },
+   {
+    "text": "Look up",
+    "href": "/lookup",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 292,
+    "y": 12,
+    "w": 64,
+    "h": 28
+   },
+   {
+    "text": "Stats",
+    "href": "/stats",
+    "current": "page",
+    "colour": "lab(6.18075 1.20374 2.12039)",
+    "weight": "500",
+    "x": 360,
+    "y": 12,
+    "w": 48,
+    "h": 28
+   },
+   {
+    "text": "Manage",
+    "href": "/manage",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 412,
+    "y": 12,
+    "w": 65,
+    "h": 28
+   }
+  ],
+  "slot": null,
+  "pageScrolls": true,
+  "navHeightVar": "53px",
+  "afterScroll": {
+   "scrolled": 450,
+   "headerTop": -450
+  }
+ },
+ {
+  "screen": "stats",
+  "path": "/stats",
+  "status": 200,
+  "width": 1440,
+  "file": "header-stats-1440-h53-w1152.png",
+  "header": {
+   "x": 0,
+   "y": 0,
+   "w": 1440,
+   "h": 53
+  },
+  "inner": {
+   "x": 144,
+   "y": 0,
+   "w": 1152,
+   "h": 52,
+   "maxWidth": "1152px"
+  },
+  "background": "rgba(0, 0, 0, 0)",
+  "position": "static",
+  "borderBottom": "1px lab(67.5318 0.226438 1.50546)",
+  "wordmark": {
+   "text": "Record Collection",
+   "font": "14px 600",
+   "x": 160,
+   "y": 16,
+   "w": 105,
+   "h": 20
+  },
+  "navRows": 1,
+  "links": [
+   {
+    "text": "Collection",
+    "href": "/",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 285,
+    "y": 12,
+    "w": 76,
+    "h": 28
+   },
+   {
+    "text": "Want list",
+    "href": "/want-list",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 365,
+    "y": 12,
+    "w": 67,
+    "h": 28
+   },
+   {
+    "text": "Look up",
+    "href": "/lookup",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 436,
+    "y": 12,
+    "w": 64,
+    "h": 28
+   },
+   {
+    "text": "Stats",
+    "href": "/stats",
+    "current": "page",
+    "colour": "lab(6.18075 1.20374 2.12039)",
+    "weight": "500",
+    "x": 504,
+    "y": 12,
+    "w": 48,
+    "h": 28
+   },
+   {
+    "text": "Manage",
+    "href": "/manage",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 556,
+    "y": 12,
+    "w": 65,
+    "h": 28
+   }
+  ],
+  "slot": null,
+  "pageScrolls": true,
+  "navHeightVar": "53px",
+  "afterScroll": {
+   "scrolled": 450,
+   "headerTop": -450
+  }
+ },
+ {
+  "screen": "stats",
+  "path": "/stats",
+  "status": 200,
+  "width": 1920,
+  "file": "header-stats-1920-h53-w1152.png",
+  "header": {
+   "x": 0,
+   "y": 0,
+   "w": 1920,
+   "h": 53
+  },
+  "inner": {
+   "x": 384,
+   "y": 0,
+   "w": 1152,
+   "h": 52,
+   "maxWidth": "1152px"
+  },
+  "background": "rgba(0, 0, 0, 0)",
+  "position": "static",
+  "borderBottom": "1px lab(67.5318 0.226438 1.50546)",
+  "wordmark": {
+   "text": "Record Collection",
+   "font": "14px 600",
+   "x": 400,
+   "y": 16,
+   "w": 105,
+   "h": 20
+  },
+  "navRows": 1,
+  "links": [
+   {
+    "text": "Collection",
+    "href": "/",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 525,
+    "y": 12,
+    "w": 76,
+    "h": 28
+   },
+   {
+    "text": "Want list",
+    "href": "/want-list",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 605,
+    "y": 12,
+    "w": 67,
+    "h": 28
+   },
+   {
+    "text": "Look up",
+    "href": "/lookup",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 676,
+    "y": 12,
+    "w": 64,
+    "h": 28
+   },
+   {
+    "text": "Stats",
+    "href": "/stats",
+    "current": "page",
+    "colour": "lab(6.18075 1.20374 2.12039)",
+    "weight": "500",
+    "x": 744,
+    "y": 12,
+    "w": 48,
+    "h": 28
+   },
+   {
+    "text": "Manage",
+    "href": "/manage",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 796,
+    "y": 12,
+    "w": 65,
+    "h": 28
+   }
+  ],
+  "slot": null,
+  "pageScrolls": true,
+  "navHeightVar": "53px",
+  "afterScroll": {
+   "scrolled": 450,
+   "headerTop": -450
+  }
+ },
+ {
+  "screen": "manage",
+  "path": "/manage",
+  "status": 200,
+  "width": 390,
+  "file": "header-manage-390-h85-w390.png",
+  "header": {
+   "x": 0,
+   "y": 0,
+   "w": 390,
+   "h": 85
+  },
+  "inner": {
+   "x": 0,
+   "y": 0,
+   "w": 390,
+   "h": 84,
+   "maxWidth": "1152px"
+  },
+  "background": "rgba(0, 0, 0, 0)",
+  "position": "static",
+  "borderBottom": "1px lab(67.5318 0.226438 1.50546)",
+  "wordmark": {
+   "text": "Record Collection",
+   "font": "14px 600",
+   "x": 16,
+   "y": 16,
+   "w": 105,
+   "h": 20
+  },
+  "navRows": 2,
+  "links": [
+   {
+    "text": "Collection",
+    "href": "/",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 141,
+    "y": 12,
+    "w": 76,
+    "h": 28
+   },
+   {
+    "text": "Want list",
+    "href": "/want-list",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 221,
+    "y": 12,
+    "w": 67,
+    "h": 28
+   },
+   {
+    "text": "Look up",
+    "href": "/lookup",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 292,
+    "y": 12,
+    "w": 64,
+    "h": 28
+   },
+   {
+    "text": "Stats",
+    "href": "/stats",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 141,
+    "y": 44,
+    "w": 47,
+    "h": 28
+   },
+   {
+    "text": "Manage",
+    "href": "/manage",
+    "current": "page",
+    "colour": "lab(6.18075 1.20374 2.12039)",
+    "weight": "500",
+    "x": 192,
+    "y": 44,
+    "w": 66,
+    "h": 28
+   }
+  ],
+  "slot": null,
+  "pageScrolls": true,
+  "navHeightVar": "85px",
+  "afterScroll": {
+   "scrolled": 409,
+   "headerTop": -409
+  }
+ },
+ {
+  "screen": "manage",
+  "path": "/manage",
+  "status": 200,
+  "width": 1000,
+  "file": "header-manage-1000-h53-w1000.png",
+  "header": {
+   "x": 0,
+   "y": 0,
+   "w": 1000,
+   "h": 53
+  },
+  "inner": {
+   "x": 0,
+   "y": 0,
+   "w": 1000,
+   "h": 52,
+   "maxWidth": "1152px"
+  },
+  "background": "rgba(0, 0, 0, 0)",
+  "position": "static",
+  "borderBottom": "1px lab(67.5318 0.226438 1.50546)",
+  "wordmark": {
+   "text": "Record Collection",
+   "font": "14px 600",
+   "x": 16,
+   "y": 16,
+   "w": 105,
+   "h": 20
+  },
+  "navRows": 1,
+  "links": [
+   {
+    "text": "Collection",
+    "href": "/",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 141,
+    "y": 12,
+    "w": 76,
+    "h": 28
+   },
+   {
+    "text": "Want list",
+    "href": "/want-list",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 221,
+    "y": 12,
+    "w": 67,
+    "h": 28
+   },
+   {
+    "text": "Look up",
+    "href": "/lookup",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 292,
+    "y": 12,
+    "w": 64,
+    "h": 28
+   },
+   {
+    "text": "Stats",
+    "href": "/stats",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 360,
+    "y": 12,
+    "w": 47,
+    "h": 28
+   },
+   {
+    "text": "Manage",
+    "href": "/manage",
+    "current": "page",
+    "colour": "lab(6.18075 1.20374 2.12039)",
+    "weight": "500",
+    "x": 411,
+    "y": 12,
+    "w": 66,
+    "h": 28
+   }
+  ],
+  "slot": null,
+  "pageScrolls": true,
+  "navHeightVar": "53px",
+  "afterScroll": {
+   "scrolled": 324,
+   "headerTop": -324
+  }
+ },
+ {
+  "screen": "manage",
+  "path": "/manage",
+  "status": 200,
+  "width": 1440,
+  "file": "header-manage-1440-h53-w1152.png",
+  "header": {
+   "x": 0,
+   "y": 0,
+   "w": 1440,
+   "h": 53
+  },
+  "inner": {
+   "x": 144,
+   "y": 0,
+   "w": 1152,
+   "h": 52,
+   "maxWidth": "1152px"
+  },
+  "background": "rgba(0, 0, 0, 0)",
+  "position": "static",
+  "borderBottom": "1px lab(67.5318 0.226438 1.50546)",
+  "wordmark": {
+   "text": "Record Collection",
+   "font": "14px 600",
+   "x": 160,
+   "y": 16,
+   "w": 105,
+   "h": 20
+  },
+  "navRows": 1,
+  "links": [
+   {
+    "text": "Collection",
+    "href": "/",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 285,
+    "y": 12,
+    "w": 76,
+    "h": 28
+   },
+   {
+    "text": "Want list",
+    "href": "/want-list",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 365,
+    "y": 12,
+    "w": 67,
+    "h": 28
+   },
+   {
+    "text": "Look up",
+    "href": "/lookup",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 436,
+    "y": 12,
+    "w": 64,
+    "h": 28
+   },
+   {
+    "text": "Stats",
+    "href": "/stats",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 504,
+    "y": 12,
+    "w": 47,
+    "h": 28
+   },
+   {
+    "text": "Manage",
+    "href": "/manage",
+    "current": "page",
+    "colour": "lab(6.18075 1.20374 2.12039)",
+    "weight": "500",
+    "x": 555,
+    "y": 12,
+    "w": 66,
+    "h": 28
+   }
+  ],
+  "slot": null,
+  "pageScrolls": true,
+  "navHeightVar": "53px",
+  "afterScroll": {
+   "scrolled": 324,
+   "headerTop": -324
+  }
+ },
+ {
+  "screen": "manage",
+  "path": "/manage",
+  "status": 200,
+  "width": 1920,
+  "file": "header-manage-1920-h53-w1152.png",
+  "header": {
+   "x": 0,
+   "y": 0,
+   "w": 1920,
+   "h": 53
+  },
+  "inner": {
+   "x": 384,
+   "y": 0,
+   "w": 1152,
+   "h": 52,
+   "maxWidth": "1152px"
+  },
+  "background": "rgba(0, 0, 0, 0)",
+  "position": "static",
+  "borderBottom": "1px lab(67.5318 0.226438 1.50546)",
+  "wordmark": {
+   "text": "Record Collection",
+   "font": "14px 600",
+   "x": 400,
+   "y": 16,
+   "w": 105,
+   "h": 20
+  },
+  "navRows": 1,
+  "links": [
+   {
+    "text": "Collection",
+    "href": "/",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 525,
+    "y": 12,
+    "w": 76,
+    "h": 28
+   },
+   {
+    "text": "Want list",
+    "href": "/want-list",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 605,
+    "y": 12,
+    "w": 67,
+    "h": 28
+   },
+   {
+    "text": "Look up",
+    "href": "/lookup",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 676,
+    "y": 12,
+    "w": 64,
+    "h": 28
+   },
+   {
+    "text": "Stats",
+    "href": "/stats",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 744,
+    "y": 12,
+    "w": 47,
+    "h": 28
+   },
+   {
+    "text": "Manage",
+    "href": "/manage",
+    "current": "page",
+    "colour": "lab(6.18075 1.20374 2.12039)",
+    "weight": "500",
+    "x": 795,
+    "y": 12,
+    "w": 66,
+    "h": 28
+   }
+  ],
+  "slot": null,
+  "pageScrolls": true,
+  "navHeightVar": "53px",
+  "afterScroll": {
+   "scrolled": 324,
+   "headerTop": -324
+  }
+ },
+ {
+  "screen": "suggestions",
+  "path": "/suggestions",
+  "status": 200,
+  "width": 390,
+  "file": "header-suggestions-390-h85-w390.png",
+  "header": {
+   "x": 0,
+   "y": 0,
+   "w": 390,
+   "h": 85
+  },
+  "inner": {
+   "x": 0,
+   "y": 0,
+   "w": 390,
+   "h": 84,
+   "maxWidth": "1152px"
+  },
+  "background": "rgba(0, 0, 0, 0)",
+  "position": "static",
+  "borderBottom": "1px lab(67.5318 0.226438 1.50546)",
+  "wordmark": {
+   "text": "Record Collection",
+   "font": "14px 600",
+   "x": 16,
+   "y": 16,
+   "w": 105,
+   "h": 20
+  },
+  "navRows": 2,
+  "links": [
+   {
+    "text": "Collection",
+    "href": "/",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 141,
+    "y": 12,
+    "w": 76,
+    "h": 28
+   },
+   {
+    "text": "Want list",
+    "href": "/want-list",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 221,
+    "y": 12,
+    "w": 67,
+    "h": 28
+   },
+   {
+    "text": "Look up",
+    "href": "/lookup",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 292,
+    "y": 12,
+    "w": 64,
+    "h": 28
+   },
+   {
+    "text": "Stats",
+    "href": "/stats",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 141,
+    "y": 44,
+    "w": 47,
+    "h": 28
+   },
+   {
+    "text": "Manage",
+    "href": "/manage",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 192,
+    "y": 44,
+    "w": 65,
+    "h": 28
+   }
+  ],
+  "slot": null,
+  "pageScrolls": true,
+  "navHeightVar": "85px",
+  "afterScroll": {
+   "scrolled": 450,
+   "headerTop": -450
+  }
+ },
+ {
+  "screen": "suggestions",
+  "path": "/suggestions",
+  "status": 200,
+  "width": 1000,
+  "file": "header-suggestions-1000-h53-w1000.png",
+  "header": {
+   "x": 0,
+   "y": 0,
+   "w": 1000,
+   "h": 53
+  },
+  "inner": {
+   "x": 0,
+   "y": 0,
+   "w": 1000,
+   "h": 52,
+   "maxWidth": "1152px"
+  },
+  "background": "rgba(0, 0, 0, 0)",
+  "position": "static",
+  "borderBottom": "1px lab(67.5318 0.226438 1.50546)",
+  "wordmark": {
+   "text": "Record Collection",
+   "font": "14px 600",
+   "x": 16,
+   "y": 16,
+   "w": 105,
+   "h": 20
+  },
+  "navRows": 1,
+  "links": [
+   {
+    "text": "Collection",
+    "href": "/",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 141,
+    "y": 12,
+    "w": 76,
+    "h": 28
+   },
+   {
+    "text": "Want list",
+    "href": "/want-list",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 221,
+    "y": 12,
+    "w": 67,
+    "h": 28
+   },
+   {
+    "text": "Look up",
+    "href": "/lookup",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 292,
+    "y": 12,
+    "w": 64,
+    "h": 28
+   },
+   {
+    "text": "Stats",
+    "href": "/stats",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 360,
+    "y": 12,
+    "w": 47,
+    "h": 28
+   },
+   {
+    "text": "Manage",
+    "href": "/manage",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 411,
+    "y": 12,
+    "w": 65,
+    "h": 28
+   }
+  ],
+  "slot": null,
+  "pageScrolls": true,
+  "navHeightVar": "53px",
+  "afterScroll": {
+   "scrolled": 450,
+   "headerTop": -450
+  }
+ },
+ {
+  "screen": "suggestions",
+  "path": "/suggestions",
+  "status": 200,
+  "width": 1440,
+  "file": "header-suggestions-1440-h53-w1152.png",
+  "header": {
+   "x": 0,
+   "y": 0,
+   "w": 1440,
+   "h": 53
+  },
+  "inner": {
+   "x": 144,
+   "y": 0,
+   "w": 1152,
+   "h": 52,
+   "maxWidth": "1152px"
+  },
+  "background": "rgba(0, 0, 0, 0)",
+  "position": "static",
+  "borderBottom": "1px lab(67.5318 0.226438 1.50546)",
+  "wordmark": {
+   "text": "Record Collection",
+   "font": "14px 600",
+   "x": 160,
+   "y": 16,
+   "w": 105,
+   "h": 20
+  },
+  "navRows": 1,
+  "links": [
+   {
+    "text": "Collection",
+    "href": "/",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 285,
+    "y": 12,
+    "w": 76,
+    "h": 28
+   },
+   {
+    "text": "Want list",
+    "href": "/want-list",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 365,
+    "y": 12,
+    "w": 67,
+    "h": 28
+   },
+   {
+    "text": "Look up",
+    "href": "/lookup",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 436,
+    "y": 12,
+    "w": 64,
+    "h": 28
+   },
+   {
+    "text": "Stats",
+    "href": "/stats",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 504,
+    "y": 12,
+    "w": 47,
+    "h": 28
+   },
+   {
+    "text": "Manage",
+    "href": "/manage",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 555,
+    "y": 12,
+    "w": 65,
+    "h": 28
+   }
+  ],
+  "slot": null,
+  "pageScrolls": true,
+  "navHeightVar": "53px",
+  "afterScroll": {
+   "scrolled": 450,
+   "headerTop": -450
+  }
+ },
+ {
+  "screen": "suggestions",
+  "path": "/suggestions",
+  "status": 200,
+  "width": 1920,
+  "file": "header-suggestions-1920-h53-w1152.png",
+  "header": {
+   "x": 0,
+   "y": 0,
+   "w": 1920,
+   "h": 53
+  },
+  "inner": {
+   "x": 384,
+   "y": 0,
+   "w": 1152,
+   "h": 52,
+   "maxWidth": "1152px"
+  },
+  "background": "rgba(0, 0, 0, 0)",
+  "position": "static",
+  "borderBottom": "1px lab(67.5318 0.226438 1.50546)",
+  "wordmark": {
+   "text": "Record Collection",
+   "font": "14px 600",
+   "x": 400,
+   "y": 16,
+   "w": 105,
+   "h": 20
+  },
+  "navRows": 1,
+  "links": [
+   {
+    "text": "Collection",
+    "href": "/",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 525,
+    "y": 12,
+    "w": 76,
+    "h": 28
+   },
+   {
+    "text": "Want list",
+    "href": "/want-list",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 605,
+    "y": 12,
+    "w": 67,
+    "h": 28
+   },
+   {
+    "text": "Look up",
+    "href": "/lookup",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 676,
+    "y": 12,
+    "w": 64,
+    "h": 28
+   },
+   {
+    "text": "Stats",
+    "href": "/stats",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 744,
+    "y": 12,
+    "w": 47,
+    "h": 28
+   },
+   {
+    "text": "Manage",
+    "href": "/manage",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 795,
+    "y": 12,
+    "w": 65,
+    "h": 28
+   }
+  ],
+  "slot": null,
+  "pageScrolls": true,
+  "navHeightVar": "53px",
+  "afterScroll": {
+   "scrolled": 450,
+   "headerTop": -450
+  }
+ },
+ {
+  "screen": "record-new",
+  "path": "/records/new",
+  "status": 200,
+  "width": 390,
+  "file": "header-record-new-390-h85-w390.png",
+  "header": {
+   "x": 0,
+   "y": 0,
+   "w": 390,
+   "h": 85
+  },
+  "inner": {
+   "x": 0,
+   "y": 0,
+   "w": 390,
+   "h": 84,
+   "maxWidth": "1152px"
+  },
+  "background": "rgba(0, 0, 0, 0)",
+  "position": "static",
+  "borderBottom": "1px lab(67.5318 0.226438 1.50546)",
+  "wordmark": {
+   "text": "Record Collection",
+   "font": "14px 600",
+   "x": 16,
+   "y": 16,
+   "w": 105,
+   "h": 20
+  },
+  "navRows": 2,
+  "links": [
+   {
+    "text": "Collection",
+    "href": "/",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 141,
+    "y": 12,
+    "w": 76,
+    "h": 28
+   },
+   {
+    "text": "Want list",
+    "href": "/want-list",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 221,
+    "y": 12,
+    "w": 67,
+    "h": 28
+   },
+   {
+    "text": "Look up",
+    "href": "/lookup",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 292,
+    "y": 12,
+    "w": 64,
+    "h": 28
+   },
+   {
+    "text": "Stats",
+    "href": "/stats",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 141,
+    "y": 44,
+    "w": 47,
+    "h": 28
+   },
+   {
+    "text": "Manage",
+    "href": "/manage",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 192,
+    "y": 44,
+    "w": 65,
+    "h": 28
+   }
+  ],
+  "slot": null,
+  "pageScrolls": false,
+  "navHeightVar": "85px",
+  "afterScroll": {
+   "scrolled": 0,
+   "headerTop": 0
+  }
+ },
+ {
+  "screen": "record-new",
+  "path": "/records/new",
+  "status": 200,
+  "width": 1000,
+  "file": "header-record-new-1000-h53-w1000.png",
+  "header": {
+   "x": 0,
+   "y": 0,
+   "w": 1000,
+   "h": 53
+  },
+  "inner": {
+   "x": 0,
+   "y": 0,
+   "w": 1000,
+   "h": 52,
+   "maxWidth": "1152px"
+  },
+  "background": "rgba(0, 0, 0, 0)",
+  "position": "static",
+  "borderBottom": "1px lab(67.5318 0.226438 1.50546)",
+  "wordmark": {
+   "text": "Record Collection",
+   "font": "14px 600",
+   "x": 16,
+   "y": 16,
+   "w": 105,
+   "h": 20
+  },
+  "navRows": 1,
+  "links": [
+   {
+    "text": "Collection",
+    "href": "/",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 141,
+    "y": 12,
+    "w": 76,
+    "h": 28
+   },
+   {
+    "text": "Want list",
+    "href": "/want-list",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 221,
+    "y": 12,
+    "w": 67,
+    "h": 28
+   },
+   {
+    "text": "Look up",
+    "href": "/lookup",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 292,
+    "y": 12,
+    "w": 64,
+    "h": 28
+   },
+   {
+    "text": "Stats",
+    "href": "/stats",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 360,
+    "y": 12,
+    "w": 47,
+    "h": 28
+   },
+   {
+    "text": "Manage",
+    "href": "/manage",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 411,
+    "y": 12,
+    "w": 65,
+    "h": 28
+   }
+  ],
+  "slot": null,
+  "pageScrolls": false,
+  "navHeightVar": "53px",
+  "afterScroll": {
+   "scrolled": 0,
+   "headerTop": 0
+  }
+ },
+ {
+  "screen": "record-new",
+  "path": "/records/new",
+  "status": 200,
+  "width": 1440,
+  "file": "header-record-new-1440-h53-w1152.png",
+  "header": {
+   "x": 0,
+   "y": 0,
+   "w": 1440,
+   "h": 53
+  },
+  "inner": {
+   "x": 144,
+   "y": 0,
+   "w": 1152,
+   "h": 52,
+   "maxWidth": "1152px"
+  },
+  "background": "rgba(0, 0, 0, 0)",
+  "position": "static",
+  "borderBottom": "1px lab(67.5318 0.226438 1.50546)",
+  "wordmark": {
+   "text": "Record Collection",
+   "font": "14px 600",
+   "x": 160,
+   "y": 16,
+   "w": 105,
+   "h": 20
+  },
+  "navRows": 1,
+  "links": [
+   {
+    "text": "Collection",
+    "href": "/",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 285,
+    "y": 12,
+    "w": 76,
+    "h": 28
+   },
+   {
+    "text": "Want list",
+    "href": "/want-list",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 365,
+    "y": 12,
+    "w": 67,
+    "h": 28
+   },
+   {
+    "text": "Look up",
+    "href": "/lookup",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 436,
+    "y": 12,
+    "w": 64,
+    "h": 28
+   },
+   {
+    "text": "Stats",
+    "href": "/stats",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 504,
+    "y": 12,
+    "w": 47,
+    "h": 28
+   },
+   {
+    "text": "Manage",
+    "href": "/manage",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 555,
+    "y": 12,
+    "w": 65,
+    "h": 28
+   }
+  ],
+  "slot": null,
+  "pageScrolls": false,
+  "navHeightVar": "53px",
+  "afterScroll": {
+   "scrolled": 0,
+   "headerTop": 0
+  }
+ },
+ {
+  "screen": "record-new",
+  "path": "/records/new",
+  "status": 200,
+  "width": 1920,
+  "file": "header-record-new-1920-h53-w1152.png",
+  "header": {
+   "x": 0,
+   "y": 0,
+   "w": 1920,
+   "h": 53
+  },
+  "inner": {
+   "x": 384,
+   "y": 0,
+   "w": 1152,
+   "h": 52,
+   "maxWidth": "1152px"
+  },
+  "background": "rgba(0, 0, 0, 0)",
+  "position": "static",
+  "borderBottom": "1px lab(67.5318 0.226438 1.50546)",
+  "wordmark": {
+   "text": "Record Collection",
+   "font": "14px 600",
+   "x": 400,
+   "y": 16,
+   "w": 105,
+   "h": 20
+  },
+  "navRows": 1,
+  "links": [
+   {
+    "text": "Collection",
+    "href": "/",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 525,
+    "y": 12,
+    "w": 76,
+    "h": 28
+   },
+   {
+    "text": "Want list",
+    "href": "/want-list",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 605,
+    "y": 12,
+    "w": 67,
+    "h": 28
+   },
+   {
+    "text": "Look up",
+    "href": "/lookup",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 676,
+    "y": 12,
+    "w": 64,
+    "h": 28
+   },
+   {
+    "text": "Stats",
+    "href": "/stats",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 744,
+    "y": 12,
+    "w": 47,
+    "h": 28
+   },
+   {
+    "text": "Manage",
+    "href": "/manage",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 795,
+    "y": 12,
+    "w": 65,
+    "h": 28
+   }
+  ],
+  "slot": null,
+  "pageScrolls": false,
+  "navHeightVar": "53px",
+  "afterScroll": {
+   "scrolled": 0,
+   "headerTop": 0
+  }
+ },
+ {
+  "screen": "record",
+  "path": "/records/:record",
+  "status": 200,
+  "width": 390,
+  "file": "header-record-390-h126-w390.png",
+  "header": {
+   "x": 0,
+   "y": 0,
+   "w": 390,
+   "h": 126
+  },
+  "inner": {
+   "x": 0,
+   "y": 0,
+   "w": 390,
+   "h": 125,
+   "maxWidth": "1920px"
+  },
+  "background": "rgba(0, 0, 0, 0)",
+  "position": "static",
+  "borderBottom": "1px lab(67.5318 0.226438 1.50546)",
+  "wordmark": {
+   "text": "Record Collection",
+   "font": "14px 600",
+   "x": 16,
+   "y": 16,
+   "w": 105,
+   "h": 20
+  },
+  "navRows": 2,
+  "links": [
+   {
+    "text": "Collection",
+    "href": "/",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 141,
+    "y": 12,
+    "w": 76,
+    "h": 28
+   },
+   {
+    "text": "Want list",
+    "href": "/want-list",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 221,
+    "y": 12,
+    "w": 67,
+    "h": 28
+   },
+   {
+    "text": "Look up",
+    "href": "/lookup",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 292,
+    "y": 12,
+    "w": 64,
+    "h": 28
+   },
+   {
+    "text": "Stats",
+    "href": "/stats",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 141,
+    "y": 44,
+    "w": 47,
+    "h": 28
+   },
+   {
+    "text": "Manage",
+    "href": "/manage",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 192,
+    "y": 44,
+    "w": 65,
+    "h": 28
+   }
+  ],
+  "slot": {
+   "text": "EditDelete record",
+   "x": 16,
+   "y": 96,
+   "w": 358,
+   "h": 17
+  },
+  "pageScrolls": true,
+  "navHeightVar": "125.5px",
+  "afterScroll": {
+   "scrolled": 450,
+   "headerTop": -450
+  }
+ },
+ {
+  "screen": "record",
+  "path": "/records/:record",
+  "status": 200,
+  "width": 1000,
+  "file": "header-record-1000-h94-w1000.png",
+  "header": {
+   "x": 0,
+   "y": 0,
+   "w": 1000,
+   "h": 94
+  },
+  "inner": {
+   "x": 0,
+   "y": 0,
+   "w": 1000,
+   "h": 93,
+   "maxWidth": "1920px"
+  },
+  "background": "rgba(0, 0, 0, 0)",
+  "position": "static",
+  "borderBottom": "1px lab(67.5318 0.226438 1.50546)",
+  "wordmark": {
+   "text": "Record Collection",
+   "font": "14px 600",
+   "x": 16,
+   "y": 16,
+   "w": 105,
+   "h": 20
+  },
+  "navRows": 1,
+  "links": [
+   {
+    "text": "Collection",
+    "href": "/",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 141,
+    "y": 12,
+    "w": 76,
+    "h": 28
+   },
+   {
+    "text": "Want list",
+    "href": "/want-list",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 221,
+    "y": 12,
+    "w": 67,
+    "h": 28
+   },
+   {
+    "text": "Look up",
+    "href": "/lookup",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 292,
+    "y": 12,
+    "w": 64,
+    "h": 28
+   },
+   {
+    "text": "Stats",
+    "href": "/stats",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 360,
+    "y": 12,
+    "w": 47,
+    "h": 28
+   },
+   {
+    "text": "Manage",
+    "href": "/manage",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 411,
+    "y": 12,
+    "w": 65,
+    "h": 28
+   }
+  ],
+  "slot": {
+   "text": "EditDelete record",
+   "x": 16,
+   "y": 64,
+   "w": 968,
+   "h": 17
+  },
+  "pageScrolls": true,
+  "navHeightVar": "93.5px",
+  "afterScroll": {
+   "scrolled": 450,
+   "headerTop": -450
+  }
+ },
+ {
+  "screen": "record",
+  "path": "/records/:record",
+  "status": 200,
+  "width": 1440,
+  "file": "header-record-1440-h53-w1440.png",
+  "header": {
+   "x": 0,
+   "y": 0,
+   "w": 1440,
+   "h": 53
+  },
+  "inner": {
+   "x": 0,
+   "y": 0,
+   "w": 1440,
+   "h": 52,
+   "maxWidth": "1920px"
+  },
+  "background": "rgba(0, 0, 0, 0)",
+  "position": "static",
+  "borderBottom": "1px lab(67.5318 0.226438 1.50546)",
+  "wordmark": {
+   "text": "Record Collection",
+   "font": "14px 600",
+   "x": 16,
+   "y": 16,
+   "w": 105,
+   "h": 20
+  },
+  "navRows": 1,
+  "links": [
+   {
+    "text": "Collection",
+    "href": "/",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 141,
+    "y": 12,
+    "w": 76,
+    "h": 28
+   },
+   {
+    "text": "Want list",
+    "href": "/want-list",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 221,
+    "y": 12,
+    "w": 67,
+    "h": 28
+   },
+   {
+    "text": "Look up",
+    "href": "/lookup",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 292,
+    "y": 12,
+    "w": 64,
+    "h": 28
+   },
+   {
+    "text": "Stats",
+    "href": "/stats",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 360,
+    "y": 12,
+    "w": 47,
+    "h": 28
+   },
+   {
+    "text": "Manage",
+    "href": "/manage",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 411,
+    "y": 12,
+    "w": 65,
+    "h": 28
+   }
+  ],
+  "slot": {
+   "text": "EditDelete record",
+   "x": 1270,
+   "y": 19,
+   "w": 154,
+   "h": 17
+  },
+  "pageScrolls": true,
+  "navHeightVar": "53px",
+  "afterScroll": {
+   "scrolled": 450,
+   "headerTop": -450
+  }
+ },
+ {
+  "screen": "record",
+  "path": "/records/:record",
+  "status": 200,
+  "width": 1920,
+  "file": "header-record-1920-h53-w1920.png",
+  "header": {
+   "x": 0,
+   "y": 0,
+   "w": 1920,
+   "h": 53
+  },
+  "inner": {
+   "x": 0,
+   "y": 0,
+   "w": 1920,
+   "h": 52,
+   "maxWidth": "1920px"
+  },
+  "background": "rgba(0, 0, 0, 0)",
+  "position": "static",
+  "borderBottom": "1px lab(67.5318 0.226438 1.50546)",
+  "wordmark": {
+   "text": "Record Collection",
+   "font": "14px 600",
+   "x": 16,
+   "y": 16,
+   "w": 105,
+   "h": 20
+  },
+  "navRows": 1,
+  "links": [
+   {
+    "text": "Collection",
+    "href": "/",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 141,
+    "y": 12,
+    "w": 76,
+    "h": 28
+   },
+   {
+    "text": "Want list",
+    "href": "/want-list",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 221,
+    "y": 12,
+    "w": 67,
+    "h": 28
+   },
+   {
+    "text": "Look up",
+    "href": "/lookup",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 292,
+    "y": 12,
+    "w": 64,
+    "h": 28
+   },
+   {
+    "text": "Stats",
+    "href": "/stats",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 360,
+    "y": 12,
+    "w": 47,
+    "h": 28
+   },
+   {
+    "text": "Manage",
+    "href": "/manage",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 411,
+    "y": 12,
+    "w": 65,
+    "h": 28
+   }
+  ],
+  "slot": {
+   "text": "EditDelete record",
+   "x": 1750,
+   "y": 19,
+   "w": 154,
+   "h": 17
+  },
+  "pageScrolls": true,
+  "navHeightVar": "53px",
+  "afterScroll": {
+   "scrolled": 450,
+   "headerTop": -450
+  }
+ },
+ {
+  "screen": "record-edit",
+  "path": "/records/:record/edit",
+  "status": 200,
+  "width": 390,
+  "file": "header-record-edit-390-h85-w390.png",
+  "header": {
+   "x": 0,
+   "y": 0,
+   "w": 390,
+   "h": 85
+  },
+  "inner": {
+   "x": 0,
+   "y": 0,
+   "w": 390,
+   "h": 84,
+   "maxWidth": "1152px"
+  },
+  "background": "rgba(0, 0, 0, 0)",
+  "position": "static",
+  "borderBottom": "1px lab(67.5318 0.226438 1.50546)",
+  "wordmark": {
+   "text": "Record Collection",
+   "font": "14px 600",
+   "x": 16,
+   "y": 16,
+   "w": 105,
+   "h": 20
+  },
+  "navRows": 2,
+  "links": [
+   {
+    "text": "Collection",
+    "href": "/",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 141,
+    "y": 12,
+    "w": 76,
+    "h": 28
+   },
+   {
+    "text": "Want list",
+    "href": "/want-list",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 221,
+    "y": 12,
+    "w": 67,
+    "h": 28
+   },
+   {
+    "text": "Look up",
+    "href": "/lookup",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 292,
+    "y": 12,
+    "w": 64,
+    "h": 28
+   },
+   {
+    "text": "Stats",
+    "href": "/stats",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 141,
+    "y": 44,
+    "w": 47,
+    "h": 28
+   },
+   {
+    "text": "Manage",
+    "href": "/manage",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 192,
+    "y": 44,
+    "w": 65,
+    "h": 28
+   }
+  ],
+  "slot": null,
+  "pageScrolls": true,
+  "navHeightVar": "85px",
+  "afterScroll": {
+   "scrolled": 450,
+   "headerTop": -450
+  }
+ },
+ {
+  "screen": "record-edit",
+  "path": "/records/:record/edit",
+  "status": 200,
+  "width": 1000,
+  "file": "header-record-edit-1000-h53-w1000.png",
+  "header": {
+   "x": 0,
+   "y": 0,
+   "w": 1000,
+   "h": 53
+  },
+  "inner": {
+   "x": 0,
+   "y": 0,
+   "w": 1000,
+   "h": 52,
+   "maxWidth": "1152px"
+  },
+  "background": "rgba(0, 0, 0, 0)",
+  "position": "static",
+  "borderBottom": "1px lab(67.5318 0.226438 1.50546)",
+  "wordmark": {
+   "text": "Record Collection",
+   "font": "14px 600",
+   "x": 16,
+   "y": 16,
+   "w": 105,
+   "h": 20
+  },
+  "navRows": 1,
+  "links": [
+   {
+    "text": "Collection",
+    "href": "/",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 141,
+    "y": 12,
+    "w": 76,
+    "h": 28
+   },
+   {
+    "text": "Want list",
+    "href": "/want-list",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 221,
+    "y": 12,
+    "w": 67,
+    "h": 28
+   },
+   {
+    "text": "Look up",
+    "href": "/lookup",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 292,
+    "y": 12,
+    "w": 64,
+    "h": 28
+   },
+   {
+    "text": "Stats",
+    "href": "/stats",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 360,
+    "y": 12,
+    "w": 47,
+    "h": 28
+   },
+   {
+    "text": "Manage",
+    "href": "/manage",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 411,
+    "y": 12,
+    "w": 65,
+    "h": 28
+   }
+  ],
+  "slot": null,
+  "pageScrolls": true,
+  "navHeightVar": "53px",
+  "afterScroll": {
+   "scrolled": 450,
+   "headerTop": -450
+  }
+ },
+ {
+  "screen": "record-edit",
+  "path": "/records/:record/edit",
+  "status": 200,
+  "width": 1440,
+  "file": "header-record-edit-1440-h53-w1152.png",
+  "header": {
+   "x": 0,
+   "y": 0,
+   "w": 1440,
+   "h": 53
+  },
+  "inner": {
+   "x": 144,
+   "y": 0,
+   "w": 1152,
+   "h": 52,
+   "maxWidth": "1152px"
+  },
+  "background": "rgba(0, 0, 0, 0)",
+  "position": "static",
+  "borderBottom": "1px lab(67.5318 0.226438 1.50546)",
+  "wordmark": {
+   "text": "Record Collection",
+   "font": "14px 600",
+   "x": 160,
+   "y": 16,
+   "w": 105,
+   "h": 20
+  },
+  "navRows": 1,
+  "links": [
+   {
+    "text": "Collection",
+    "href": "/",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 285,
+    "y": 12,
+    "w": 76,
+    "h": 28
+   },
+   {
+    "text": "Want list",
+    "href": "/want-list",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 365,
+    "y": 12,
+    "w": 67,
+    "h": 28
+   },
+   {
+    "text": "Look up",
+    "href": "/lookup",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 436,
+    "y": 12,
+    "w": 64,
+    "h": 28
+   },
+   {
+    "text": "Stats",
+    "href": "/stats",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 504,
+    "y": 12,
+    "w": 47,
+    "h": 28
+   },
+   {
+    "text": "Manage",
+    "href": "/manage",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 555,
+    "y": 12,
+    "w": 65,
+    "h": 28
+   }
+  ],
+  "slot": null,
+  "pageScrolls": true,
+  "navHeightVar": "53px",
+  "afterScroll": {
+   "scrolled": 450,
+   "headerTop": -450
+  }
+ },
+ {
+  "screen": "record-edit",
+  "path": "/records/:record/edit",
+  "status": 200,
+  "width": 1920,
+  "file": "header-record-edit-1920-h53-w1152.png",
+  "header": {
+   "x": 0,
+   "y": 0,
+   "w": 1920,
+   "h": 53
+  },
+  "inner": {
+   "x": 384,
+   "y": 0,
+   "w": 1152,
+   "h": 52,
+   "maxWidth": "1152px"
+  },
+  "background": "rgba(0, 0, 0, 0)",
+  "position": "static",
+  "borderBottom": "1px lab(67.5318 0.226438 1.50546)",
+  "wordmark": {
+   "text": "Record Collection",
+   "font": "14px 600",
+   "x": 400,
+   "y": 16,
+   "w": 105,
+   "h": 20
+  },
+  "navRows": 1,
+  "links": [
+   {
+    "text": "Collection",
+    "href": "/",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 525,
+    "y": 12,
+    "w": 76,
+    "h": 28
+   },
+   {
+    "text": "Want list",
+    "href": "/want-list",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 605,
+    "y": 12,
+    "w": 67,
+    "h": 28
+   },
+   {
+    "text": "Look up",
+    "href": "/lookup",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 676,
+    "y": 12,
+    "w": 64,
+    "h": 28
+   },
+   {
+    "text": "Stats",
+    "href": "/stats",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 744,
+    "y": 12,
+    "w": 47,
+    "h": 28
+   },
+   {
+    "text": "Manage",
+    "href": "/manage",
+    "current": null,
+    "colour": "lab(39.6559 2.06429 4.02272)",
+    "weight": "400",
+    "x": 795,
+    "y": 12,
+    "w": 65,
+    "h": 28
+   }
+  ],
+  "slot": null,
+  "pageScrolls": true,
+  "navHeightVar": "53px",
+  "afterScroll": {
+   "scrolled": 450,
+   "headerTop": -450
+  }
+ }
+]
