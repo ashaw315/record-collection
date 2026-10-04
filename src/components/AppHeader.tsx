@@ -2,9 +2,10 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useRef } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { GRID_FORK } from '@/app/records/[id]/band-geometry';
+import { currentSection } from './nav-current';
 
 /**
  * The application's one piece of persistent chrome.
@@ -61,8 +62,68 @@ const LINKS = [
 */
 const RECORD_SCREEN = /^\/records\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
+/**
+ * §G.1 (step 74): the header is set in the record detail's system, as §4.1
+ * counts it -- "Five nav items, one wordmark", mono 11, uppercase, ".12em in
+ * the nav strip only" -- at line height 1 (§G.2), so the type's own box is
+ * what is centred. No padding of its own (§G.3).
+ */
+const NAV_TYPE = 'font-mono text-[11px] leading-none uppercase tracking-[0.12em] whitespace-nowrap';
+
+/*
+  §G.8 (step 76): the widths the header changes form at, measured on step
+  74's header (4 Oct) and asserted from both sides in `nav-menu-76.spec.ts`.
+  584: the wordmark and five links set on one row; below it, the menu, on
+  every screen. 762: the record detail's slot also fits beside the links.
+  449: the slot fits beside the wordmark and the control. Constants rather
+  than measured at run time, so the first paint is the right form; the type
+  is fixed-pitch, so the widths are the type's and do not vary by screen.
+  The classes below spell them as `max-[584px]` (below 584), `max-[762px]`
+  and `min-[449px]`, because Tailwind cannot read a constant into a class.
+*/
+export const MENU_BELOW = 584;
+export const SLOT_WITH_LINKS = 762;
+export const SLOT_WITH_CONTROL = 449;
+
+/** Not current: the label colour (§G.1); current: ink and 500 with §3's underline. */
+function linkTone(active: boolean) {
+  return active ? 'font-medium text-foreground' : 'font-normal text-[oklch(0.44_0.008_70)] hover:text-foreground';
+}
+
+/*
+  §3: "The active nav item carries a 2px ink underline, 7px below the
+  baseline", as wide as the link (§G.4). At 11px and line height 1 the
+  baseline sits 9 below the box's top, so the rule's top is 16; the specs
+  measure it from the baseline.
+*/
+function CurrentMark() {
+  return <span data-current-mark="" aria-hidden="true" className="absolute top-[16px] right-0 left-0 h-[2px] bg-foreground" />;
+}
+
 export function AppHeader({ actions }: { actions?: React.ReactNode } = {}) {
   const pathname = usePathname();
+  const section = currentSection(pathname);
+
+  /*
+    §G.8: the menu. Open state belongs to the path it was opened on, so a
+    chosen link renders the next screen closed without an effect resetting
+    it. It does not close on scroll or on a click elsewhere: it covers
+    nothing. Escape closes it and returns focus to the control.
+  */
+  const [openOn, setOpenOn] = useState<string | null>(null);
+  const open = openOn === pathname;
+  const listId = useId();
+  const controlRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      setOpenOn(null);
+      controlRef.current?.focus();
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [open]);
 
   /*
     The record detail screen is 8a's GRID_FORK measure (§18: twelve fixed
@@ -120,8 +181,16 @@ export function AppHeader({ actions }: { actions?: React.ReactNode } = {}) {
       */}
       <div
         className={cn(
-          'mx-auto flex w-full items-baseline gap-6 px-4 py-3',
-          actions !== undefined && 'flex-wrap',
+          /*
+            §G.2 and §G.3 (step 74): the one-row height is the box's, 52 and
+            the 1px rule below it making 53, with the type centred in it; the
+            inset is 18 at every width, measured from the cap's edge. The 52
+            is the FIRST row's (wordmark and nav each fill it), not the bar's:
+            as the bar's minimum, a second row -- the slot below 1440, the
+            nav's own wrap at 390 -- was squeezed inside it and pushed the
+            first row off centre.
+          */
+          'mx-auto flex w-full flex-wrap items-center gap-x-6 px-[18px]',
         )}
         /*
           On the record screen the measure is §30's and comes from that
@@ -147,7 +216,8 @@ export function AppHeader({ actions }: { actions?: React.ReactNode } = {}) {
             link regardless so its position never shifts between screens. */}
         <Link
           href="/"
-          className="font-heading text-sm font-semibold tracking-tight whitespace-nowrap"
+          data-wordmark=""
+          className={`${NAV_TYPE} flex h-[52px] items-center font-medium text-foreground`}
         >
           Record Collection
         </Link>
@@ -179,13 +249,12 @@ export function AppHeader({ actions }: { actions?: React.ReactNode } = {}) {
         */}
         <nav
           aria-label="Main"
-          className={cn('-mx-1 flex min-w-0 flex-wrap gap-1', actions !== undefined && 'basis-0 grow')}
+          /* §G.5: the nav never wraps. Below 584 its links are in the menu. */
+          className="flex h-[52px] items-center gap-x-6 max-[584px]:hidden"
         >
           {LINKS.map((link) => {
-            // `/manage` must not light up on `/manage/anything`, and `/` would
-            // prefix-match everything, so home is compared exactly.
-            const active =
-              link.href === '/' ? pathname === '/' : pathname.startsWith(link.href);
+            /* §G.4: the section the screen belongs to, not the link's own path. */
+            const active = section === link.href;
 
             return (
               <Link
@@ -193,13 +262,18 @@ export function AppHeader({ actions }: { actions?: React.ReactNode } = {}) {
                 href={link.href}
                 aria-current={active ? 'page' : undefined}
                 className={cn(
-                  'rounded-xs px-2 py-1 text-sm whitespace-nowrap transition-colors',
-                  active
-                    ? 'text-foreground font-medium'
-                    : 'text-muted-foreground hover:text-foreground',
+                  `relative ${NAV_TYPE} transition-colors`,
+                  /*
+                    The hit area is a 44 overlay centred on the type, as the
+                    record page gives its controls (CONTROL_HEIGHT): the
+                    link's own box is the 11 of its type and moves nothing.
+                  */
+                  "before:absolute before:inset-x-0 before:top-1/2 before:h-[44px] before:-translate-y-1/2 before:content-['']",
+                  linkTone(active),
                 )}
               >
                 {link.label}
+                {active && <CurrentMark />}
               </Link>
             );
           })}
@@ -215,10 +289,61 @@ export function AppHeader({ actions }: { actions?: React.ReactNode } = {}) {
           the record screen, which is the fixed grid above it and one column
           below.
         */}
+        {/*
+          §G.8: §9.3's control -- 44 tall, a 1px ink box, no fill, no radius,
+          border-box -- labelled MENU, CLOSE while open, at the row's right
+          end. As wide as CLOSE plus 18 a side in both states, so it does not
+          jump: five fixed-pitch advances (5ch) and their tracking (5 x .12em).
+        */}
+        <button
+          ref={controlRef}
+          type="button"
+          data-menu-control=""
+          aria-expanded={open}
+          aria-controls={listId}
+          onClick={() => setOpenOn(open ? null : pathname)}
+          className={`${NAV_TYPE} ml-auto box-border flex h-[44px] w-[calc(5ch+0.6em+36px)] shrink-0 items-center justify-center border border-foreground font-normal text-foreground min-[584px]:hidden`}
+        >
+          {open ? 'Close' : 'Menu'}
+        </button>
+
+        {open && (
+          <nav
+            aria-label="Main"
+            id={listId}
+            data-menu-list=""
+            /* In flow below the row, pushing the page down; before the slot's own row. */
+            className="order-1 basis-full min-[584px]:hidden"
+          >
+            {LINKS.map((link) => {
+              const active = section === link.href;
+              return (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  aria-current={active ? 'page' : undefined}
+                  className={cn(`${NAV_TYPE} box-border flex h-[44px] items-center border-b border-border`, linkTone(active))}
+                >
+                  <span className="relative">
+                    {link.label}
+                    {active && <CurrentMark />}
+                  </span>
+                </Link>
+              );
+            })}
+          </nav>
+        )}
+
         {actions !== undefined && (
           <div
             data-slot="actions"
-            className="ml-auto flex shrink-0 items-baseline gap-3 whitespace-nowrap max-[1439px]:basis-full max-[1439px]:justify-end"
+            /*
+              §G.8's four forms: in line after the links from 762; its own
+              row, right-aligned, from 584 to 761; in line after the control
+              from 449 to 583; its own row below 449. Its own row is drawn 44,
+              which no ruling gives.
+            */
+            className="ml-auto flex shrink-0 items-center gap-3 whitespace-nowrap max-[762px]:order-2 max-[762px]:h-[44px] max-[762px]:basis-full max-[762px]:justify-end max-[584px]:ml-0 min-[449px]:max-[584px]:order-none min-[449px]:max-[584px]:h-auto min-[449px]:max-[584px]:basis-auto"
           >
             <span
               data-hairline=""

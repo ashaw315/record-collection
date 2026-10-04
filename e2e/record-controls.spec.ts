@@ -135,13 +135,13 @@ test('§24: Edit then Delete record, far right, behind a 1 × 16 hairline, in th
   expect(m.navIsSameHeightAsBefore, 'the nav stays one line').toBeLessThan(60);
 });
 
-test('§24 at 390: the slot takes its own row and the nav keeps its two-row wrap', async ({ page }) => {
+test('§24 at 390: the slot takes its own row below the header’s row, right-aligned (§G.8)', async ({ page }) => {
   /*
-    §24 rules the desktop placement; §10 makes mobile equal priority. The
-    first build put the nowrap slot on the nav's row, and because the nav can
-    give up its width it did — five links stacked one per line, a five-row
-    bar on the one screen that has the slot. Measured, not assumed: the nav's
-    height with the slot present must match its height without it.
+    Step 76 replaced the wrapped nav this test pinned ("the nav keeps its
+    two-row wrap") with a menu below 584; §G.5 assigns the wrapping tests to
+    that step. What §24 and §G.8 keep at 390: the wordmark and the control
+    hold the 52 row, unchanged by the slot, and the slot takes a row of its
+    own below it at the right -- 24/in-line-no-height's narrow case.
   */
   await login(page);
   const { id } = await seed(page);
@@ -149,30 +149,25 @@ test('§24 at 390: the slot takes its own row and the nav keeps its two-row wrap
 
   await page.goto('/want-list');
   const without = await page.evaluate(() => {
-    const nav = document.querySelector('[data-app-nav] nav')!.getBoundingClientRect();
-    const mark = document.querySelector('[data-app-nav] a[href="/"]')!.getBoundingClientRect();
-    return { navH: nav.height, navTop: nav.top, markTop: mark.top };
+    const c = document.querySelector('[data-app-nav] [data-menu-control]')!.getBoundingClientRect();
+    const mark = document.querySelector('[data-app-nav] [data-wordmark]')!.getBoundingClientRect();
+    return { controlTop: c.top, markCentre: (mark.top + mark.bottom) / 2 };
   });
-  /* No other screen changes (§24): without the slot the nav still shares the wordmark's row. */
-  expect(Math.abs(without.navTop - without.markTop), 'on a screen without the slot, nav and wordmark share a row').toBeLessThan(12);
-  const withoutSlot = without.navH;
 
   await page.goto(`/records/${id}`);
   await page.waitForTimeout(400);
   const m = await page.evaluate(() => {
-    const nav = document.querySelector('[data-app-nav] nav')!.getBoundingClientRect();
+    const c = document.querySelector('[data-app-nav] [data-menu-control]')!.getBoundingClientRect();
     const slot = document.querySelector('[data-slot="actions"]')!.getBoundingClientRect();
-    const bar = document.querySelector('[data-app-nav]')!.getBoundingClientRect();
-    const mark = document.querySelector('[data-app-nav] a[href="/"]')!.getBoundingClientRect();
-    return { navH: nav.height, navTop: nav.top, markTop: mark.top, navBottom: nav.bottom, slotTop: slot.top, slotRight: slot.right, barRight: bar.right, barH: bar.height };
+    const bar = document.querySelector('[data-app-nav] > div')!.getBoundingClientRect();
+    const mark = document.querySelector('[data-app-nav] [data-wordmark]')!.getBoundingClientRect();
+    return { controlTop: c.top, markCentre: (mark.top + mark.bottom) / 2, rowBottom: bar.top + 52, slotTop: slot.top, slotRight: slot.right, barRight: bar.right };
   });
 
-  /* And with the slot, the wordmark's row is unchanged too: the slot is what moved, not the nav. */
-  expect(Math.abs(m.navTop - m.markTop), 'nav and wordmark still share a row').toBeLessThan(12);
-
-  expect(m.navH, 'the nav wraps exactly as it does without the slot').toBeCloseTo(withoutSlot, 0);
-  expect(m.slotTop, 'the slot sits below the nav').toBeGreaterThanOrEqual(m.navBottom - 2);
-  expect(m.barRight - m.slotRight, 'and at the right').toBeLessThanOrEqual(20);
+  expect(m.controlTop, 'the control sits where it does without the slot').toBeCloseTo(without.controlTop, 0);
+  expect(m.markCentre, 'and so does the wordmark').toBeCloseTo(without.markCentre, 0);
+  expect(m.slotTop, 'the slot sits below the 52 row').toBeGreaterThanOrEqual(m.rowBottom - 0.5);
+  expect(m.barRight - m.slotRight, 'at the right, on the 18 inset').toBeCloseTo(18, 0);
 });
 
 test('§24: the eyebrow returns to Collection alone and the foot row is gone', async ({ page }) => {

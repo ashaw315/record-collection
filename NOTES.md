@@ -34116,3 +34116,71 @@ second visual line; it is one sentence.
 Built on the header as pushed (`e02e34e`); step 74's work was set aside
 uncommitted, so this commit carries none of it, and the page's header
 changes with steps 74 and 76.
+## Steps 74 and 76, one commit: the header in the record detail's system, and the menu (4 Oct)
+
+**Why one commit.** Step 74 alone draws the nav at 390 as two rows of 11px
+links 23 apart, where no hit area works: 23 fails nav-mobile's 24 floor and
+24 lands a tap at Collection's lower edge on Look up (measured). Step 76
+removes that layout, and §G.5 assigns the wrapping tests to it, so 74 never
+reaches a commit alone. Step 75 went first, alone (bd2ac87).
+
+**Which change is whose, for a bisect.**
+- *Step 74 (§G.1-§G.4, §G.6):* Geist Mono 11, uppercase, .12em, line height
+  1; wordmark and current link ink at 500, others the label colour at 400;
+  the first row 52 plus its rule, type centred; 18 inset; links 24 apart,
+  no padding; §3's underline on the current link; `nav-current.ts`, the
+  current section per screen with a segment boundary. Tests:
+  `nav-type-74.spec.ts`, `nav-current.test.ts`.
+- *Step 76 (§G.5, §G.8):* the menu below 584 on every screen -- the MENU /
+  CLOSE control, the open list in flow, keyboard, open state keyed to the
+  path; the slot's four forms; the 44 ::before overlay on the row's links
+  (Design's ruling, the record page's mechanism). Tests:
+  `nav-menu-76.spec.ts`; nav-mobile's two wrapping tests and
+  record-controls' 390 wrap test replaced, as §G.5 assigns; stats' "reachable
+  from the nav" carried through the menu at 390; step 74's second-row test
+  moved from 1000 to 390, since 76 put the slot in line at 1000.
+
+**Measured for Design to carry (step 74's header, before 76 was built):**
+the links set on one row from 584 on five screens; with the slot (154.05,
+tracked .09em, not .12em) from 762, against the estimated 768; the control
+75.61 wide (CLOSE 39.61 + 36); the wordmark and control from 271, under the
+320 stop; wordmark, control and slot from 449, against 454. Weights 500 and
+400 do not change Geist Mono's advance. Baseline 9 below the type's top, so
+§3's underline sits at 16. The slot's own row is drawn 44, which no ruling
+gives; it set the record detail's height at 390 and between 584 and 761.
+
+**The record detail's header, for step 77's before and after.** Before is
+the pushed state at e02e34e, where the slot's own row was 41 below 1440:
+94 at 1000, 126 at 390, 53 at 1440 and 1920. After is the four forms, in
+`docs/captures/nav-menu-76/`. At 1000 the slot is now in line: 53, a 44px
+reduction from 97 under step 74 alone, and 41 from 94 as pushed. Above 762
+the slot fits the row, so §24's "in line with the nav, costs no height"
+holds there again; 24/in-line-no-height's scope is the narrow forms only.
+
+**nav-mobile's box measure could not pass against the app's own mechanism.**
+It read each link's box, but the 44 overlay is a ::before layer the browser
+does not count in a link's box, so every link measures 11 with the overlay
+in place. The record page's controls take their hit area the same way, so
+the same assertion would fail there too. Its subject moved to 76; its method
+was replaced by a tap test (`nav-menu-76`, "a tap anywhere in the 44 around
+a link lands on that link"), which asks where a tap lands.
+
+**Gate, before commit (4 Oct):** chromium 442 passed, 1 skipped (22.7m);
+mobile 196 passed, 1 skipped, with stats' nav test failing until it was
+carried through the menu, then passing on both projects; unit 4012 passed,
+1 failed -- the design index, failing on the untaken Design drop in the
+tree (step 71 absent, comment stale). With that drop set aside, the index
+is 11 of 11 on exactly what this commit carries.
+
+**For Design, seen in the captures:** on a screen without the slot, the
+open menu's last row has its hairline below (§G.8) and the header has its
+own rule 1px under it, so the two read as one 2px rule under MANAGE. Drawn
+as ruled, not resolved. And §G.7's eyebrow observation stands: COLLECTION
+appears as the current menu row and as the record's eyebrow a few rows
+apart.
+
+**Pre-existing, outside this step:** `shelf.spec.ts`, "the rail's sort
+reorders the wall itself (§W.24)", failed twice run alone at "the direction
+reaches the wall too", with or without this step's header change, so on
+main as pushed; it passed in the full chromium gate. Intermittent, not
+investigated.

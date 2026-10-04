@@ -76,94 +76,69 @@ test.beforeEach(async ({ page }) => {
   await login(page);
 });
 
-test('every nav link is reachable at 390px', async ({ page }) => {
-  await page.setViewportSize({ width: MOBILE_WIDTH, height: 844 });
+/**
+ * **Step 76 (§G.5, §G.8) replaced the wrapped nav with a menu below 584, and
+ * these two tests with it.** §G.5 assigns the tests that pin the wrapping to
+ * that step. The claim they carried survives: at a phone width every section
+ * is reachable, inside the viewport, tappable, and overlapping no other. It
+ * is now asserted where the sections are -- the open menu's rows -- and the
+ * tap size is read as the row's box, which is the hit area there (44, §9.3).
+ *
+ * The links in the row above 584 have a 44 overlay rather than a 44 box, so a
+ * box measure there would read 11 against a hit area of 44: `nav-menu-76`
+ * taps it instead.
+ */
+for (const width of [MOBILE_WIDTH, 320]) {
+  /* Fails against step 74's header: below 584 there was no menu, so no rows to reach. */
+  test(`every section is reachable through the menu at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto('/want-list');
+    await page.locator('[data-menu-control]').click();
+    const list = page.locator('[data-menu-list]');
+    await expect(list).toBeVisible();
 
-  const nav = page.getByRole('navigation', { name: 'Main' });
-  await expect(nav).toBeVisible();
+    /* The vacuity guard: a list of zero rows passes everything below. */
+    await expect(list.getByRole('link')).toHaveCount(NAV_LINKS.length);
 
-  /*
-   * The vacuity guard. Without it, a nav rendering zero links passes every
-   * assertion below by iterating over nothing — the empty-payload shape §9.2's
-   * disclosure test was paired against for the same reason.
-   */
-  await expect(nav.getByRole('link')).toHaveCount(NAV_LINKS.length);
-
-  const boxes: { label: string; box: { x: number; y: number; width: number; height: number } }[] =
-    [];
-
-  for (const label of NAV_LINKS) {
-    const link = nav.getByRole('link', { name: label, exact: true });
-    await expect(link).toBeVisible();
-
-    const box = await link.boundingBox();
-    expect(box, `${label} has no bounding box`).not.toBeNull();
-    if (!box) continue;
-
-    // 1. Inside the viewport. The original defect: Stats at 409, Manage at 478.
-    expect(
-      box.x,
-      `"${label}" starts at x=${box.x}, left of the viewport`,
-    ).toBeGreaterThanOrEqual(0);
-    expect(
-      box.x + box.width,
-      `"${label}" ends at x=${box.x + box.width}, past the ${MOBILE_WIDTH}px viewport`,
-    ).toBeLessThanOrEqual(MOBILE_WIDTH);
-
-    // 2. Tappable. A wrap that collapses its rows satisfies (1) and not this.
-    expect(box.height, `"${label}" is ${box.height}px tall, too small to tap`).toBeGreaterThanOrEqual(
-      24,
-    );
-
-    boxes.push({ label, box });
-  }
-
-  // 3. No two links overlap. The assertion a stacked wrap fails and (1) does not.
-  for (let i = 0; i < boxes.length; i += 1) {
-    for (let j = i + 1; j < boxes.length; j += 1) {
-      const a = boxes[i];
-      const b = boxes[j];
-      const overlaps =
-        a.box.x < b.box.x + b.box.width &&
-        b.box.x < a.box.x + a.box.width &&
-        a.box.y < b.box.y + b.box.height &&
-        b.box.y < a.box.y + a.box.height;
-
-      expect(
-        overlaps,
-        `"${a.label}" and "${b.label}" overlap: ` +
-          `${a.label} at (${a.box.x}, ${a.box.y}) ${a.box.width}x${a.box.height}, ` +
-          `${b.label} at (${b.box.x}, ${b.box.y}) ${b.box.width}x${b.box.height}`,
-      ).toBe(false);
+    const boxes: { label: string; box: { x: number; y: number; width: number; height: number } }[] = [];
+    for (const label of NAV_LINKS) {
+      const link = list.getByRole('link', { name: label, exact: true });
+      await expect(link).toBeVisible();
+      const box = await link.boundingBox();
+      expect(box, `${label} has no bounding box`).not.toBeNull();
+      if (!box) continue;
+      expect(box.x, `"${label}" starts left of the viewport`).toBeGreaterThanOrEqual(0);
+      expect(box.x + box.width, `"${label}" ends past the ${width}px viewport`).toBeLessThanOrEqual(width);
+      expect(box.height, `"${label}" is ${box.height}px tall; a menu row is 44`).toBeGreaterThanOrEqual(44);
+      boxes.push({ label, box });
     }
-  }
-});
+    for (let i = 0; i < boxes.length; i += 1) {
+      for (let j = i + 1; j < boxes.length; j += 1) {
+        const a = boxes[i].box;
+        const b = boxes[j].box;
+        const overlaps = a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+        expect(overlaps, `"${boxes[i].label}" and "${boxes[j].label}" overlap`).toBe(false);
+      }
+    }
+  });
+}
 
 /**
- * The measurement, asserted rather than eyeballed.
- *
- * NOTES has carried `scrollWidth 337 / clientWidth 237` as prose since step 12,
- * and prose is what let it survive three steps. A row that fits its container
- * has nothing hidden behind a scroll — so this is the same defect as the test
- * above, stated as the number that was actually measured, and it fails against
- * `AppHeader.tsx`'s `overflow-x-auto` nav for a reason a bounding box cannot
- * express: **there is nothing scrolled out of view.**
- *
- * Kept separate from the geometry test because it can survive a change that
- * breaks the other: a nav could fit its container while a link is clipped by an
- * ancestor, and a nav could show every link while still being horizontally
- * scrollable by a pixel or two of padding.
+ * The original defect, a horizontal scroll hiding the tail, asserted on the
+ * header's row rather than the nav: below 584 the nav's links are not in the
+ * row at all, so a nav measure there would pass on an empty box. A guard,
+ * not a fail-first test: step 74's wrapped row did not overflow either.
  */
-test('the nav has no hidden horizontal scroll at 390px', async ({ page }) => {
-  await page.setViewportSize({ width: MOBILE_WIDTH, height: 844 });
-
-  const metrics = await page
-    .getByRole('navigation', { name: 'Main' })
-    .evaluate((el) => ({ scrollWidth: el.scrollWidth, clientWidth: el.clientWidth }));
-
-  expect(
-    metrics.scrollWidth,
-    `the nav scrolls: scrollWidth ${metrics.scrollWidth} in clientWidth ${metrics.clientWidth}, ` +
-      `so ${metrics.scrollWidth - metrics.clientWidth}px is hidden behind a horizontal scroll`,
-  ).toBeLessThanOrEqual(metrics.clientWidth);
-});
+for (const width of [MOBILE_WIDTH, 320]) {
+  test(`the header's row has no hidden horizontal scroll at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto('/want-list');
+    const metrics = await page
+      .locator('[data-app-nav] > div')
+      .evaluate((el) => ({ scrollWidth: el.scrollWidth, clientWidth: el.clientWidth }));
+    expect(
+      metrics.scrollWidth,
+      `the row scrolls: scrollWidth ${metrics.scrollWidth} in clientWidth ${metrics.clientWidth}`,
+    ).toBeLessThanOrEqual(metrics.clientWidth);
+  });
+}

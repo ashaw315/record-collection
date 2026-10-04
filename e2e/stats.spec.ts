@@ -147,7 +147,15 @@ test('the stats screen is reachable from the nav, not only by URL', async ({ pag
    * not the same as reachable.
    */
   await page.goto('/');
-  await page.getByRole('navigation').getByRole('link', { name: 'Stats' }).click();
+  /*
+    Below 584 the nav's links are in the menu (§G.8, step 76), so at the
+    mobile project's 390 the route to Stats goes through the control. This
+    test relied on the wrapped nav putting every link in the row; step 76
+    replaced that. The claim -- reachable from the nav -- is unchanged.
+  */
+  const menu = page.locator('[data-menu-control]');
+  if (await menu.isVisible()) await menu.click();
+  await page.getByRole('navigation', { name: 'Main' }).getByRole('link', { name: 'Stats' }).click();
 
   await expect(page).toHaveURL(/\/stats$/);
   await expect(page.getByRole('heading', { name: 'Stats', level: 1 })).toBeVisible();
