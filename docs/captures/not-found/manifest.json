@@ -1,0 +1,74 @@
+[
+ {
+  "way": "unknown-path",
+  "path": "/no-such-screen",
+  "width": 390,
+  "status": 404,
+  "headerHeight": 85,
+  "line": "Nothing was found at /no-such-screen.",
+  "file": "not-found-unknown-path-390-h85-s404.png"
+ },
+ {
+  "way": "unknown-path",
+  "path": "/no-such-screen",
+  "width": 1000,
+  "status": 404,
+  "headerHeight": 53,
+  "line": "Nothing was found at /no-such-screen.",
+  "file": "not-found-unknown-path-1000-h53-s404.png"
+ },
+ {
+  "way": "unknown-path",
+  "path": "/no-such-screen",
+  "width": 1440,
+  "status": 404,
+  "headerHeight": 53,
+  "line": "Nothing was found at /no-such-screen.",
+  "file": "not-found-unknown-path-1440-h53-s404.png"
+ },
+ {
+  "way": "unknown-path",
+  "path": "/no-such-screen",
+  "width": 1920,
+  "status": 404,
+  "headerHeight": 53,
+  "line": "Nothing was found at /no-such-screen.",
+  "file": "not-found-unknown-path-1920-h53-s404.png"
+ },
+ {
+  "way": "dead-record",
+  "path": "/records/00000000-0000-4000-8000-000000000000",
+  "width": 390,
+  "status": 404,
+  "headerHeight": 85,
+  "line": "Nothing was found at /records/00000000-0000-4000-8000-000000000000.",
+  "file": "not-found-dead-record-390-h85-s404.png"
+ },
+ {
+  "way": "dead-record",
+  "path": "/records/00000000-0000-4000-8000-000000000000",
+  "width": 1000,
+  "status": 404,
+  "headerHeight": 53,
+  "line": "Nothing was found at /records/00000000-0000-4000-8000-000000000000.",
+  "file": "not-found-dead-record-1000-h53-s404.png"
+ },
+ {
+  "way": "dead-record",
+  "path": "/records/00000000-0000-4000-8000-000000000000",
+  "width": 1440,
+  "status": 404,
+  "headerHeight": 53,
+  "line": "Nothing was found at /records/00000000-0000-4000-8000-000000000000.",
+  "file": "not-found-dead-record-1440-h53-s404.png"
+ },
+ {
+  "way": "dead-record",
+  "path": "/records/00000000-0000-4000-8000-000000000000",
+  "width": 1920,
+  "status": 404,
+  "headerHeight": 53,
+  "line": "Nothing was found at /records/00000000-0000-4000-8000-000000000000.",
+  "file": "not-found-dead-record-1920-h53-s404.png"
+ }
+]

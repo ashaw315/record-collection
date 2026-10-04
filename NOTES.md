@@ -34099,3 +34099,20 @@ so one check can fail in both directions at once, and fixing either
 leaves the other. This fix is to the recognition only; what counts as
 appearing in a step is still any mention, and the stricter rule for that
 is with Adam.
+
+## Step 75 built: the not-found page carries the header (4 Oct)
+
+§G.5: the app has its own not-found page, with the header and one line,
+"Nothing was found at <address>." A not-found page receives no route
+parameters, so the line reads the path the reader asked for, the one fact
+true of every way in. Both ways in answer 404 with the header: a path no
+route matches, and a dead record link (a well-formed id naming no record,
+which the record page answers with notFound()). `not-found-75.spec.ts`
+failed first on the header's absence; Login's lack of a header is held by
+a guard. Captured from the real app at 390, 1000, 1440 and 1920 in
+`docs/captures/not-found/`, both ways in. At 390 the address wraps to a
+second visual line; it is one sentence.
+
+Built on the header as pushed (`e02e34e`); step 74's work was set aside
+uncommitted, so this commit carries none of it, and the page's header
+changes with steps 74 and 76.
