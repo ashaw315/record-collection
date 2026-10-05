@@ -216,6 +216,49 @@ describe('the modal target is read: §M references resolve, and §M is not a fig
   });
 });
 
+/**
+ * **Assertion 7's exemption was a category, and the category was a hole
+ * (5 Oct).** The spec exempts "a superseded first wording of the same
+ * section, so its `s` equals its `by`" and names two entries. The script
+ * tested only `s` equals `by`, so every same-section entry -- twenty, of
+ * which eighteen happen to carry a prefix -- could drop its prefix and pass.
+ * Staged: with "Withdrawn within §33:" removed from 33/about-clamped in the
+ * entry and the prose, the index was 11 of 11; 6 found the quote, 7 exempted
+ * it, and 9, which looks for the same prefixes, could not see the sentence.
+ * The exemption is now the two ids by name.
+ */
+describe('assertion 7 exempts two entries by name, not every same-section entry', () => {
+  const OLD = 'Withdrawn within §33: the frame shows the About clamped, and the lower About row keeps it whole.';
+  const NEW = 'The frame shows the About clamped, and the lower About row keeps it whole.';
+
+  /* Fails against `if (e.s !== e.by)`: an unprefixed §33-by-§33 entry was skipped as exempt. */
+  it('fails a same-section entry that lost its declared prefix, by name', () => {
+    const dir = stage((d) => {
+      const w = join(d, 'WITHDRAWALS.md');
+      const text = readFileSync(w, 'utf8');
+      if (!text.includes(OLD)) throw new Error('staging anchor missing: the 33/about-clamped quote');
+      writeFileSync(w, text.split(OLD).join(NEW));
+      const t = join(d, 'Record Detail 8a - build target.dc.html');
+      const html = readFileSync(t, 'utf8');
+      const prose = /Withdrawn within §33: ((?:<[^>]+>)*)the frame shows the About clamped/;
+      if (!prose.test(html)) throw new Error('staging anchor missing: the §33 sentence');
+      writeFileSync(t, html.replace(prose, '$1The frame shows the About clamped'));
+    });
+    const { out } = run(dir);
+    expect(out).toMatch(/^FAIL 7$/m);
+    expect(out).toContain('7 33/about-clamped undeclared');
+  });
+
+  /* Fails against a rule that exempts by category: the tree's exempt list must be exactly the spec's two. */
+  it('exempts exactly the two entries the spec names, on the tree as it stands', () => {
+    const { out } = run();
+    const line = /7: \d+ declared withdrawal sentences against \d+ entries: \d+ paired, \d+ exempt by name \(([^)]*)\)/.exec(out);
+    expect(line, 'assertion 7 prints its exempt entries by name').not.toBeNull();
+    expect((line?.[1] ?? '').split(', ').sort()).toEqual(['26/first-wording-of-placement', '34/acceptance-against-143']);
+    expect(out).toMatch(/^PASS 7$/m);
+  });
+});
+
 describe('a run that stops partway names the ids it never reached', () => {
   /* Fails against the uncaught throw: the run ended after "PASS 5" with a stack trace and no line for 6 onward. */
   it('prints ABSENT for every id after the stop, and a summary that counts them', () => {

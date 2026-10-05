@@ -312,6 +312,13 @@ const textOf = (id) => {
  * paragraph's plain text; the anchor here is for testing an entry's quote,
  * which must itself begin with one.
  */
+/**
+ * Spec, assertion 7: the entries that may carry a quote with no declared
+ * prefix. Each records a section's own first wording being replaced. An
+ * allow-list, so it changes in the spec first and here second.
+ */
+const UNDECLARED_BY_NAME = new Set(['26/first-wording-of-placement', '34/acceptance-against-143']);
+
 const WITHDRAWAL_PREFIX =
   /^(Withdrawn by §|Withdrawn in part by §|Withdrawn in whole by §|Withdrawn within §|Superseded by §|Superseded in part by §)/;
 
@@ -423,12 +430,15 @@ const WITHDRAWAL_PREFIX =
   for (const e of withdrawals) {
     if (!WITHDRAWAL_PREFIX.test(collapse(e.quote))) {
       /*
-        Spec: an undeclared entry is legal for one case only -- a superseded
-        first wording of the SAME section (`s` equals `by`); 6 checks its
-        quote and 7 skips it. Any other undeclared withdrawal is a defect in
-        the prose: a ruling withdrawn without a declared sentence.
+        Spec: an undeclared entry is legal for the two entries the spec
+        names and no other. This tested `s` equals `by` until 5 Oct, which
+        exempted every same-section entry: twenty, of which eighteen carry a
+        prefix only because Design writes one. Staged, 33/about-clamped lost
+        its prefix in the entry and the prose and the index stayed 11 of 11;
+        9 looks for the same prefixes, so nothing knew it was a withdrawal.
+        6 checks an exempt entry's quote and 7 skips it.
       */
-      if (e.s !== e.by) fail(`7 ${e.id} undeclared`);
+      if (!UNDECLARED_BY_NAME.has(e.id)) fail(`7 ${e.id} undeclared`);
       continue;
     }
     const n = sentences.filter((s) => s.section === e.s && s.sentence === collapse(e.quote)).length;
@@ -439,13 +449,14 @@ const WITHDRAWAL_PREFIX =
   /*
     6 counts entries and 7 counts declared sentences, so the line says how
     they meet: entries with a declared prefix paired one to one with a
-    sentence, and entries exempt as a section's own first wording (s equals
-    by). Asked about on 5 Oct, when 108 against 106 read as 7 passing over
-    two unpaired entries; they were the two exempt ones.
+    sentence, and the entries exempt by name. Asked about on 5 Oct, when 108
+    against 106 read as 7 passing over two unpaired entries.
   */
   const paired = withdrawals.filter((e) => WITHDRAWAL_PREFIX.test(collapse(e.quote)) && sentences.filter((x) => x.section === e.s && x.sentence === collapse(e.quote)).length === 1);
-  const exempt = withdrawals.filter((e) => !WITHDRAWAL_PREFIX.test(collapse(e.quote)) && e.s === e.by);
-  console.log(`     7: ${sentences.length} declared withdrawal sentences against ${withdrawals.length} entries: ${paired.length} paired, ${exempt.length} exempt as a section's own first wording (${exempt.map((e) => e.id).join(', ')})`);
+  const exempt = withdrawals.filter((e) => !WITHDRAWAL_PREFIX.test(collapse(e.quote)) && UNDECLARED_BY_NAME.has(e.id));
+  /* A named exemption with no entry behind it is a stale allow-list, the dead case rather than the absent one. */
+  for (const id of UNDECLARED_BY_NAME) if (!withdrawals.some((e) => e.id === id)) fail(`7 exempt-absent ${id}`);
+  console.log(`     7: ${sentences.length} declared withdrawal sentences against ${withdrawals.length} entries: ${paired.length} paired, ${exempt.length} exempt by name (${exempt.map((e) => e.id).join(', ')})`);
   report(7, failures.length === before);
 }
 

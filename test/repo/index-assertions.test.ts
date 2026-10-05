@@ -82,7 +82,7 @@ describe('the design index passes its own assertions', () => {
     */
     const entries = count(/6: (\d+) entries checked/);
     const declared = count(/7: (\d+) declared/);
-    const exempt = count(/7: \d+ declared withdrawal sentences against \d+ entries: \d+ paired, (\d+) exempt/);
+    const exempt = count(/7: \d+ declared withdrawal sentences against \d+ entries: \d+ paired, (\d+) exempt by name/);
     const paired = count(/7: \d+ declared withdrawal sentences against \d+ entries: (\d+) paired/);
     expect(paired, 'every declared sentence is paired').toBe(declared);
     expect(paired + exempt, `paired and exempt account for every entry (${paired} + ${exempt} against ${entries})`).toBe(entries);

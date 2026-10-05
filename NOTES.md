@@ -34402,3 +34402,32 @@ staged tests failed first, one per rule. The target is tracked by its own
 Step 83, as exported, does not yet name the portrait fixtures (951 x 1000,
 949 x 1000) or the precondition assertions; Design is amending it. Build
 step 83 from the amended text, not this one.
+
+## Assertion 7's exemption was a category, and the category was a hole (5 Oct)
+
+The spec exempted an unprefixed entry as "a superseded first wording of the
+same section, so its `s` equals its `by`", naming two entries. The script
+tested only that `s` equals `by`. That exempts every same-section entry:
+twenty today, eighteen of which carry a prefix only because Design writes
+one. Staged in a scratch copy, not reasoned: with "Withdrawn within §33:"
+removed from 33/about-clamped in the entry and the §33 prose, and the
+comment re-derived, the index was 11 of 11. 6 found the quote, 7 filed the
+entry as exempt, and 9 -- the reverse check -- could not see the sentence,
+because it looks for the same prefixes. Once a sentence loses its prefix in
+both places, nothing knows it was a withdrawal.
+
+The count line added the same day did not close it: 105 paired and 3
+exempt still sum to 108. It pinned the totals, not the class.
+
+Now the exemption is the two ids by name, in the spec and mirrored in the
+script, as 8b's allow-list is. Any other unprefixed entry fails as
+`7 ID undeclared`; a named id with no entry behind it fails as
+`7 exempt-absent ID`. The staged test failed first; the count test asserts
+the exempt list is exactly the two.
+
+**The semantic and the structural are different properties, and only one
+is testable.** "Records a section's own first wording" is what the rule
+means; "`s` equals `by`" is what could be checked. Implementing the
+checkable consequence in place of the meaning is how a narrow exemption
+became a wide one. Where a rule's meaning cannot be tested, enumerate what
+it covers.
