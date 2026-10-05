@@ -59,6 +59,15 @@ test.describe('§G.1: the shared label style is .10em in all four areas it reach
   test('the record detail and its market panel', async ({ page }) => {
     const id = await seedRecordWithRelease(page);
     await page.setViewportSize({ width: 1440, height: NO_SCROLL_HEIGHT });
+    /*
+      The panel loads its market data on arrival, and its "check" control --
+      the one element on this page that carries the label style inside the
+      panel -- is replaced as soon as that request settles. Waiting for it
+      raced the request, and lost once in a full run (5 Oct). The request is
+      held open, never answered, so the control stays to be read. Nothing
+      reaches Discogs: the route is intercepted before the server.
+    */
+    await page.route('**/api/discogs/market/**', () => { /* held: never fulfilled */ });
     await page.goto(`/records/${id}`);
     await page.locator('[data-field="images-line"]').waitFor({ timeout: 20_000 });
     expect(await trackingOf(page, '[data-field="images-line"]'), 'the record detail: the Images line').toBe(TEN);
