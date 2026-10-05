@@ -33890,7 +33890,9 @@ unconfigured page's 8 hid 17px the configured page does not have.
 **Headroom, against the full line.** The Images line holds 41 characters
 in its 322px at 1440 and 1920. "Images 2 · 9999 earlier covers · Manage →"
 is one row; 10000 is the first count that takes a second, and the prose
-is then seven, the floor met exactly. A third row would break it, and no
+is then seven, the floor met exactly. [Superseded by step 80, 5 Oct: at .10em
+the second row comes at 1,000 earlier covers, not 10,000, with the prose
+still at seven.] A third row would break it, and no
 count to a million reaches one. The digits of both counts share the row:
 five between them fit, six wrap, so a record showing ten or more images
 would wrap at 1000 earlier covers (derived from the 41-character row in
@@ -34144,7 +34146,9 @@ reaches a commit alone. Step 75 went first, alone (bd2ac87).
 the links set on one row from 584 on five screens; with the slot (154.05,
 tracked .09em, not .12em) from 762, against the estimated 768; the control
 75.61 wide (CLOSE 39.61 + 36); the wordmark and control from 271, under the
-320 stop; wordmark, control and slot from 449, against 454. Weights 500 and
+320 stop; wordmark, control and slot from 449, against 454. [Superseded by
+step 80, 5 Oct: the slot now takes .12em, 159.66 wide, and the two
+boundaries re-measured by layout are 768 and 454.] Weights 500 and
 400 do not change Geist Mono's advance. Baseline 9 below the type's top, so
 §3's underline sits at 16. The slot's own row is drawn 44, which no ruling
 gives; it set the record detail's height at 390 and between 584 and 761.
@@ -34184,3 +34188,100 @@ reorders the wall itself (§W.24)", failed twice run alone at "the direction
 reaches the wall too", with or without this step's header change, so on
 main as pushed; it passed in the full chromium gate. Intermittent, not
 investigated.
+
+## A null result looks the same whether the instrument works or is switched off (5 Oct)
+
+Probing what the label system's .09em literal would move at .10em, the
+first run returned "nothing changes height" on every page at every width:
+the collection, its table view and three seeded records, at 390, 1000,
+1440 and 1920. Before believing it, a second run confirmed the injected
+style had moved the computed tracking from 0.99px to 1.10px on all 23
+labels and that four or five of them grew wider, by up to 3px. Only then
+was "no height changes" a result rather than a silence.
+
+The same week's other half: a probe reported no seats on the wall at 390
+because it looked for the near view's `data-seat`, while the overview marks
+its seats `data-far-seat`. Design wrote "the test environment drew no seats
+at that width" into §G.2 on the strength of it. Remeasured with the right
+selector: 17 seats, re-fitting from 81.9 x 133.8 to 53.7 x 87.7 when the
+menu opens.
+
+The family is the guard-that-runs-where-the-real-thing-isn't: an
+instrument that cannot see its subject reports the same as a subject with
+nothing to see. **A null result needs a positive control before it is
+reported** -- show the probe can register the thing (the computed value
+moved, the selector matches something) and then report its absence.
+
+## Step 80 built: the label system at .10em, the slot in the nav's own type (5 Oct)
+
+**The headroom first, as the step orders.** At .10em the Images line takes
+a second row from 1,000 earlier covers, not 10,000 (two images shown, full
+control line, 1440 and 1920); the prose is then seven lines (7.18) and
+eight below that count. It never falls below seven up to 10,000, so the
+stop did not fire. The .09em run reproduced step 73's 10,000 first, as the
+positive control.
+
+**Built.** The shared label style (`LABEL`, `grid-type.ts`) is .10em: the
+record detail, the market panel, the collection's filters and the wall's
+rail, panel and sleeves. The header's type string moved to its own module,
+`src/components/nav-type.ts`, because the record page that renders Edit is
+a server component and cannot read a value exported from the client
+header; the header, Edit and Delete record all take it, so §24's "the nav's
+own type" is one string in the code. The slot's line box goes 16.5 to 11;
+both are centred in the 52 row, so no glyph moves and the hover underline,
+measured from the glyph, does not either.
+
+**Measured, by layout with the slot forced in line:** the slot 159.66
+wide; beside the links from 768, beside the control from 454. Design's
+figures were about 768 and 455; 454 stands. The 455 was a double-rounded
+sum: 448.29 at .09em was rounded to 449, then 5.61 added and rounded again.
+768 matched by luck of the same method, not by it.
+
+**The four-forms test was too weak, and passed against the old classes.**
+Between 762 and 767, and between 449 and 453, the old classes set the slot
+in line where it no longer fits, and flex wrapping dropped it below the 52
+anyway: "below the row" was satisfied by an accident -- a 16 row, and below
+584 at the left. The test now asserts the ruled own row (header 97, step
+77's 44) and the slot's right edge on the 18 inset; it failed at 767 (69,
+not 97) before the classes moved.
+
+**455 was carried by a commit.** git: the nav target's committed versions
+are 8adf382, e02e34e and d8115e0; d8115e0 (5 Oct, the drop with steps 77 to
+80) contains "455" three times, the other two none. §G.8 says 455 was
+corrected "before any drop carried it"; a drop did. By WITHDRAWALS.md's
+test the figure was in force when it was corrected, so an entry is owed.
+
+**Superseded figures.** Commit 0521a33's message records 762 and 449 and
+cannot change; these figures are superseded by this step: the slot at
+154.05 "tracked .09em", the boundaries 762 and 449 (steps 74 and 76 entry,
+marked), and step 73's 10,000 (marked). The constants' comments in the
+header and `nav-menu-76.spec.ts` now carry 768 and 454.
+
+Tests: `label-tracking-80.spec.ts` reads computed tracking in all four
+areas and the slot's full type against a nav link; it failed first at
+0.99px in all three tests. The captures the record detail closed on were
+not regenerated; step 80's go beside them.
+
+**Step 73's headroom pins moved with it.** `frame-planes.spec.ts` pinned
+"9999 is one row, 10000 is two" at .09em; the gate failed both at 1440 and
+1920 on exactly this change, and they now pin 999 and 1000, prose still at
+seven. They are the change-detectors on the left-open list, detecting the
+change they were for.
+
+**The record-screen guard has a gap.** `specs-import-constants.test.ts`
+names every spec that drives the record screen by three patterns; the new
+spec matched the third (a goto to `/records/${...}`) and joined the list,
+with its 900 replaced by `NO_SCROLL_HEIGHT`. But `nav-type-74.spec.ts` and
+`nav-menu-76.spec.ts` drive the record screen through a helper, match none
+of the three, and type 900 as a viewport height unseen. Recorded, not
+widened here.
+
+Verification, gate, before commit: chromium 443 passed, 2 failed (the two
+headroom pins above, since moved and passing); mobile 197 passed; unit
+4011 passed, 2 failed -- the design index on the untaken Design drop (11 of
+11 without it) and the record-screen guard (fixed above, 52 of 52). The
+eighteen closed-set captures the chromium run rewrote were restored.
+Captures beside the closed set: `docs/captures/step80-sheet/` (the contact
+sheet, 119) and `docs/captures/step80-header/` (48); the slot measures 160
+wide in the header sheet.
+

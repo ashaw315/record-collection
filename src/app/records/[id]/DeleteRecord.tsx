@@ -12,7 +12,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { deleteConsequence, deleteFailureMessage } from './delete-record';
-import { LABEL } from './grid-type';
+import { NAV_TYPE } from '@/components/nav-type';
 
 /**
  * Deleting a record (SPEC.md §5.2), with §7.3's confirmation rule applied.
@@ -95,8 +95,8 @@ export function DeleteRecord({
         type="button"
         data-control="delete"
         onClick={() => setConfirming(true)}
-        className={`${LABEL} underline-offset-2 hover:underline`}
-        style={{ color: 'var(--foreground)' }}
+        /* §24: the nav's own type, the header's string itself (step 80). */
+        className={`${NAV_TYPE} text-foreground underline-offset-2 hover:underline`}
       >
         Delete record
       </button>

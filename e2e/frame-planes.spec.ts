@@ -463,10 +463,12 @@ for (const width of [390, 960, 1000, 1439, 1440, 1920]) {
  * be drawn beside the extended Images line.
  *
  * Measured 2 Oct at 1440 and 1920: 8 lines with the clause and without it.
- * The Images line holds 41 characters in its 322px, so "Images 2 · 9999
- * earlier covers · Manage →" is one row and 10000 is two; the second row
- * takes the prose to 7, which is §53's floor met exactly. Those two counts
- * are the headroom step 73 asks for, pinned here from both sides.
+ * At the labels' .09em the Images line set "Images 2 · 9999 earlier covers
+ * · Manage →" on one row and 10000 took two. Step 80 (5 Oct) set the label
+ * system at .10em and the boundary moved: 999 is one row and 1000 is two,
+ * re-measured. The second row takes the prose to 7, §53's floor met
+ * exactly, at either tracking. The counts are the headroom step 73 asks
+ * for, pinned here from both sides.
  */
 async function probeAbout(page: Page, width: number, earlier: number) {
   await page.setViewportSize({ width, height: NO_SCROLL_HEIGHT });
@@ -517,15 +519,15 @@ for (const width of [1440, 1920]) {
     expect(extended.budget, "§53's seven-line floor").toBeGreaterThanOrEqual(7);
   });
 
-  test(`§62 at ${width}, full control line: the Images line takes a second row at 10000 earlier covers, not at 9999, and the prose is then seven`, async ({ page }) => {
+  test(`§62 at ${width}, full control line: the Images line takes a second row at 1000 earlier covers, not at 999, and the prose is then seven`, async ({ page }) => {
     await login(page);
-    const last = await probeAbout(page, width, 9999);
-    const first = await probeAbout(page, width, 10000);
-    test.info().annotations.push({ type: '§62 headroom', description: `${width}: 9999 ${JSON.stringify(last)} 10000 ${JSON.stringify(first)}` });
+    const last = await probeAbout(page, width, 999);
+    const first = await probeAbout(page, width, 1000);
+    test.info().annotations.push({ type: '§62 headroom', description: `${width}: 999 ${JSON.stringify(last)} 1000 ${JSON.stringify(first)}` });
 
     expect(last.controlRows, 'the full control line, at both counts').toBe(2);
-    expect(last.lineRows, '9999 earlier covers is still one row').toBe(1);
-    expect(first.lineRows, '10000 is the first count that takes another').toBe(2);
+    expect(last.lineRows, '999 earlier covers is still one row').toBe(1);
+    expect(first.lineRows, '1000 is the first count that takes another').toBe(2);
     expect(first.footCut, 'the second row is inside the cell, not clipped at its floor').toBeLessThanOrEqual(0);
     expect(first.budget, 'the second row costs the prose one line').toBe(last.budget - 1);
     expect(first.budget, "and leaves §53's floor met, not broken").toBeGreaterThanOrEqual(7);

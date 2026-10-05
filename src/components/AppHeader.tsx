@@ -6,6 +6,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { GRID_FORK } from '@/app/records/[id]/band-geometry';
 import { currentSection } from './nav-current';
+import { NAV_TYPE } from './nav-type';
 
 /**
  * The application's one piece of persistent chrome.
@@ -62,28 +63,23 @@ const LINKS = [
 */
 const RECORD_SCREEN = /^\/records\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
-/**
- * §G.1 (step 74): the header is set in the record detail's system, as §4.1
- * counts it -- "Five nav items, one wordmark", mono 11, uppercase, ".12em in
- * the nav strip only" -- at line height 1 (§G.2), so the type's own box is
- * what is centred. No padding of its own (§G.3).
- */
-const NAV_TYPE = 'font-mono text-[11px] leading-none uppercase tracking-[0.12em] whitespace-nowrap';
 
 /*
-  §G.8 (step 76): the widths the header changes form at, measured on step
-  74's header (4 Oct) and asserted from both sides in `nav-menu-76.spec.ts`.
-  584: the wordmark and five links set on one row; below it, the menu, on
-  every screen. 762: the record detail's slot also fits beside the links.
-  449: the slot fits beside the wordmark and the control. Constants rather
-  than measured at run time, so the first paint is the right form; the type
-  is fixed-pitch, so the widths are the type's and do not vary by screen.
-  The classes below spell them as `max-[584px]` (below 584), `max-[762px]`
-  and `min-[449px]`, because Tailwind cannot read a constant into a class.
+  §G.8 (step 76): the widths the header changes form at, measured and
+  asserted from both sides in `nav-menu-76.spec.ts`. 584: the wordmark and
+  five links set on one row; below it, the menu, on every screen. 768: the
+  record detail's slot also fits beside the links. 454: the slot fits
+  beside the wordmark and the control. The two slot widths were 762 and
+  449 with the slot at .09em; step 80 gave it the header's .12em (159.66)
+  and they were re-measured by layout. Constants rather than measured at
+  run time, so the first paint is the right form; the type is fixed-pitch,
+  so the widths are the type's and do not vary by screen. The classes
+  below spell them as `max-[584px]` (below 584), `max-[768px]` and
+  `min-[454px]`, because Tailwind cannot read a constant into a class.
 */
 export const MENU_BELOW = 584;
-export const SLOT_WITH_LINKS = 762;
-export const SLOT_WITH_CONTROL = 449;
+export const SLOT_WITH_LINKS = 768;
+export const SLOT_WITH_CONTROL = 454;
 
 /** Not current: the label colour (§G.1); current: ink and 500 with §3's underline. */
 function linkTone(active: boolean) {
@@ -338,12 +334,12 @@ export function AppHeader({ actions }: { actions?: React.ReactNode } = {}) {
           <div
             data-slot="actions"
             /*
-              §G.8's four forms: in line after the links from 762; its own
-              row, right-aligned, from 584 to 761; in line after the control
-              from 449 to 583; its own row below 449. Its own row is drawn 44,
+              §G.8's four forms: in line after the links from 768; its own
+              row, right-aligned, from 584 to 767; in line after the control
+              from 454 to 583; its own row below 454. Its own row is drawn 44,
               which no ruling gives.
             */
-            className="ml-auto flex shrink-0 items-center gap-3 whitespace-nowrap max-[762px]:order-2 max-[762px]:h-[44px] max-[762px]:basis-full max-[762px]:justify-end max-[584px]:ml-0 min-[449px]:max-[584px]:order-none min-[449px]:max-[584px]:h-auto min-[449px]:max-[584px]:basis-auto"
+            className="ml-auto flex shrink-0 items-center gap-3 whitespace-nowrap max-[768px]:order-2 max-[768px]:h-[44px] max-[768px]:basis-full max-[768px]:justify-end max-[584px]:ml-0 min-[454px]:max-[584px]:order-none min-[454px]:max-[584px]:h-auto min-[454px]:max-[584px]:basis-auto"
           >
             <span
               data-hairline=""

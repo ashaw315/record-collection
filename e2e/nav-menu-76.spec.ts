@@ -8,16 +8,18 @@ registerCleanup();
  * becomes a menu.
  *
  * Widths measured on step 74's header before this was built (4 Oct): the
- * wordmark and five links set on one row from 584 on every screen; with the
- * record detail's slot (154.05, tracked .09em) from 762; the wordmark and the
- * control (CLOSE 39.61 + 18 a side = 75.61) from 271; the wordmark, control
- * and slot from 449. Each boundary is asserted on both sides.
+ * wordmark and five links set on one row from 584 on every screen; the
+ * wordmark and the control (CLOSE 39.61 + 18 a side = 75.61) from 271.
+ * The slot's two boundaries were 762 and 449 with the slot at .09em; step
+ * 80 (5 Oct) gave the slot the header's own .12em (159.66 wide) and they
+ * were re-measured by layout, the slot forced in line: 768 beside the links,
+ * 454 beside the control. Each boundary is asserted on both sides.
  */
 
 const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
 const MENU_BELOW = 584;
-const SLOT_WITH_LINKS = 762;
-const SLOT_WITH_CONTROL = 449;
+const SLOT_WITH_LINKS = 768;
+const SLOT_WITH_CONTROL = 454;
 const SECTIONS = ['Collection', 'Want list', 'Look up', 'Stats', 'Manage'];
 const INK = 'oklch(0.19 0.008 60)';
 
@@ -62,6 +64,7 @@ const readForm = (page: Page) =>
       linksShown: links.length > 0 && links.every(shown),
       controlShown: shown(ctl),
       slotTop: slot === null ? null : slot.getBoundingClientRect().top - bar.top,
+      slotRightGap: slot === null ? null : bar.right - slot.getBoundingClientRect().right,
       overflow: (header.firstElementChild as HTMLElement).scrollWidth > (header.firstElementChild as HTMLElement).clientWidth + 0.5,
     };
   });
@@ -220,7 +223,7 @@ test.describe('§G.8: the open menu', () => {
 
 test.describe('§G.8: the record detail’s four forms, each boundary from both sides', () => {
   /* Fails against step 74's header: the slot took its own row everywhere below 1440 and the links wrapped below 584. */
-  test('links and slot in line from 762; links with the slot below from 584; control and slot in line from 449; control with the slot below under it', async ({ page }) => {
+  test('links and slot in line from 768; links with the slot below from 584; control and slot in line from 454; control with the slot below under it', async ({ page }) => {
     const id = await seedRecord(page);
     const cases: Array<[number, boolean, boolean]> = [
       /* width, links shown, slot in line */
@@ -242,9 +245,16 @@ test.describe('§G.8: the record detail’s four forms, each boundary from both 
       if (inline) {
         expect(f.height, `${width}: one row, 53`).toBe(53);
       } else {
+        /*
+          Its own row as ruled, not a wrap that happens to land below: a slot
+          set in line where it no longer fits also drops below the 52, but on
+          a row of its own height and, below 584, at the left. So the row is
+          44 (step 77) and the slot ends on the 18 inset.
+        */
         expect(f.slotTop, `${width}: the slot on its own row below the 52`).toBeGreaterThanOrEqual(52);
-        expect(f.height, `${width}: 53 and the slot's row`).toBeGreaterThan(53);
+        expect(f.height, `${width}: 53 and the slot's 44 row`).toBe(97);
       }
+      expect(f.slotRightGap, `${width}: the slot ends on the 18 inset`).toBeCloseTo(18, 0);
     }
   });
 

@@ -73,6 +73,8 @@ const GOVERNED = [
   'e2e/identity-band-holds.spec.ts',
   'e2e/identity-measure.spec.ts',
   'e2e/record-controls.spec.ts',
+  /* §G.1 (step 80): the label system's tracking and the slot's type, read on the record screen. */
+  'e2e/label-tracking-80.spec.ts',
   'e2e/identity-band-23.spec.ts',
   'e2e/identity-extremes.spec.ts',
   'e2e/images.spec.ts',

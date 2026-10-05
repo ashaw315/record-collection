@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { AppHeader } from '@/components/AppHeader';
 import { DeleteRecord } from './DeleteRecord';
+import { NAV_TYPE } from '@/components/nav-type';
 import { ImageGallery } from './ImageGallery';
 import { MarketPanel } from '@/app/market/MarketPanel';
 import { PriceHistory } from './PriceHistory';
@@ -13,7 +14,6 @@ import { RecordDetail } from './RecordDetail';
 import { RecordPage8a } from './RecordPage8a';
 import { pressingLine } from './page-record';
 import { recordLadder } from '@/lib/colour/record-ladder';
-import { LABEL } from './grid-type';
 import { Section } from './Section';
 import { marketFigures } from './market-median';
 import { listPricesForRecord } from '@/lib/db/queries/prices';
@@ -103,8 +103,8 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
             <Link
               data-control="edit"
               href={`/records/${id}/edit`}
-              className={`${LABEL} no-underline hover:underline`}
-              style={{ color: 'var(--foreground)' }}
+              /* §24: the nav's own type, the header's string itself (step 80). */
+              className={`${NAV_TYPE} text-foreground no-underline hover:underline`}
             >
               Edit
             </Link>

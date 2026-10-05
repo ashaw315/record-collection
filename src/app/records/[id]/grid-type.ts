@@ -28,7 +28,7 @@
 export const LABEL_INK = 'oklch(0.44 0.008 70)';
 
 /** §4's field and section label: 11px mono, uppercase, tracked, one grey. */
-export const LABEL = 'text-label font-mono uppercase tracking-[0.09em] text-[oklch(0.44_0.008_70)]';
+export const LABEL = 'text-label font-mono uppercase tracking-[0.10em] text-[oklch(0.44_0.008_70)]';
 
 /** The ink everything on this screen is set in. */
 export const INK = 'text-[oklch(0.19_0.008_60)]';
