@@ -34285,3 +34285,38 @@ Captures beside the closed set: `docs/captures/step80-sheet/` (the contact
 sheet, 119) and `docs/captures/step80-header/` (48); the slot measures 160
 wide in the header sheet.
 
+
+## Assert the ruled geometry, not the relation it implies (5 Oct)
+
+A layout assertion that checks only that something moved can be satisfied
+by the wrong mechanism moving it. Step 76's four-forms test asked that the
+record detail's slot sit below the 52 row where it takes its own row. When
+step 80 widened the slot, the old breakpoints set it in line where it no
+longer fit, and flex wrapping put it below the row anyway: 16px tall, and
+below 584 left-aligned. The ruling is a 44px row with the slot's right edge
+on the 18 inset. "Below the row" was true and meaningless. **Assert the
+ruled geometry, not the relation that the ruled geometry implies.**
+
+Two of this kind in one step: the other is the record-screen guard, which
+finds specs that drive the record screen by three source patterns and so
+cannot see `nav-type-74.spec.ts` or `nav-menu-76.spec.ts`, which drive it
+through a helper. Both checks held a true statement about the wrong thing.
+
+## Committed captures are protected: a flag for the writers, a check for the rest (5 Oct)
+
+Two specs, `no-cover-54` and `images-row-56`, screenshotted into fixed
+committed paths on every run, so each gate rewrote eighteen of the captures
+the record detail closed on (found 4 and 5 Oct, by reading `git status`).
+Now they write only with `WRITE_CAPTURES=1` (`e2e/write-captures.ts`), and
+`test/repo/captures-unchanged.test.ts` fails if any tracked file under
+`docs/captures/` differs from HEAD or is gone. Seen working: a byte appended
+to a committed capture failed it by name; `no-cover-54` run before the flag
+failed it on its two files; after the flag both specs run and nothing
+changes. New evidence goes to new paths, which the check allows.
+
+**Its reach, stated so it is not read as total.** It runs in the unit
+suite. A gate runs Playwright first, so it catches that run's rewrites; a
+Playwright-only run is caught at the next unit run, not by itself. It also
+covers the sheets, which default to committed directories when `SHEET_OUT`
+is not set -- the contact sheet's default is the closed set's own
+`docs/captures/sheet/`.

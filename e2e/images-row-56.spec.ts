@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { WRITE_CAPTURES } from './write-captures';
 import { sql } from 'drizzle-orm';
 import { getTestDb } from '../test/helpers/db';
 import { registerCleanup, trackArtist } from './cleanup';
@@ -137,7 +138,7 @@ test('§56, §59, §60: the quarter-disc is sized against the stated reference a
       if (m.tiles.some((t) => t.badge === '')) bad.push(`${c.n} images @${w}: a tile without its badge`);
       /* §59: the disc gives way to its caption by size, so no glyph of any size sits on it. */
       for (const t of m.typeOverDisc) bad.push(`${c.n} images @${w}: type on the base-step disc, which §59 sizes below its caption: ${t}`);
-      await page.screenshot({ path: `docs/captures/step70-images-${c.n}-${w}x${h}-h${Math.round(m.sectionHeight)}.png`, fullPage: true });
+      if (WRITE_CAPTURES) await page.screenshot({ path: `docs/captures/step70-images-${c.n}-${w}x${h}-h${Math.round(m.sectionHeight)}.png`, fullPage: true });
     }
   }
   for (const line of lines) console.log(line);

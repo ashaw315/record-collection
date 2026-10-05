@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { WRITE_CAPTURES } from './write-captures';
 import { GRID_FORK, NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
 import { registerCleanup, trackArtist } from './cleanup';
 
@@ -60,7 +61,7 @@ test('§54: on the extremes fixture’s no-cover record every frame mark is ink 
     }, { INK, GREY });
     if (w === GRID_FORK && m.arcState !== 'drawn') bad.push(`${GRID_FORK}: the provenance arc is ${m.arcState}, not drawn`);
     for (const o of m.out) bad.push(`${w}×${h}: ${o}`);
-    await page.screenshot({ path: `docs/captures/step62-no-cover-${w}x${h}-ink.png`, fullPage: true });
+    if (WRITE_CAPTURES) await page.screenshot({ path: `docs/captures/step62-no-cover-${w}x${h}-ink.png`, fullPage: true });
     console.log(`  §54 NO COVER @${w}×${h}: triangles drawn ${m.triangleDrawn}, arc ${m.arcState}, ${m.out.length} findings`);
   }
   expect(bad, `§54 not met:\n  ${bad.join('\n  ')}`).toEqual([]);
