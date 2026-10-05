@@ -1,0 +1,34 @@
+[
+ {
+  "file": "cover-inside-1000x951.png",
+  "width": 1000,
+  "height": 951,
+  "ratio": 0.951,
+  "bound": 0.95,
+  "expected": "crop"
+ },
+ {
+  "file": "cover-at-bound-1000x950.png",
+  "width": 1000,
+  "height": 950,
+  "ratio": 0.95,
+  "bound": 0.95,
+  "expected": "crop"
+ },
+ {
+  "file": "cover-outside-1000x949.png",
+  "width": 1000,
+  "height": 949,
+  "ratio": 0.949,
+  "bound": 0.95,
+  "expected": "fit"
+ },
+ {
+  "file": "cover-far-1200x900.png",
+  "width": 1200,
+  "height": 900,
+  "ratio": 0.75,
+  "bound": 0.95,
+  "expected": "fit"
+ }
+]
