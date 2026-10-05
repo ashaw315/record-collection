@@ -64,6 +64,27 @@ describe('the shared parser and the bullet grammar read §G ids', () => {
   });
 });
 
+/**
+ * **M, the record modal's target, ahead of anything citing it (5 Oct).** The
+ * two grammars accept `M.N` before a heading or an entry uses one, so the
+ * first §M citation is read rather than refused -- G's first entry met a
+ * parser that refused it and an assertion that could not see it. Written on
+ * inline text: the target is not yet a tracked input.
+ */
+describe('the shared parser and the bullet grammar read §M ids', () => {
+  /* Fails against SECTION_ID, which accepts W, G and bare numbers only. */
+  it('finds headings written M.1 onward', () => {
+    const html = '<p style="font-size:11px;text-transform:uppercase">M.1 · Where the modal opens</p><p>Body.</p><p style="text-transform:uppercase">M.12 · A later one</p>';
+    expect(sections(html).map((h: { id: string }) => h.id)).toEqual(['M.1', 'M.12']);
+  });
+
+  /* Fails against BULLET, whose section slots accept numbers, W and G only. */
+  it('parses an entry withdrawn in and by an §M section', () => {
+    const md = '- **`M.4/fitted`**: §M.4, withdrawn by §M.4. A first wording.\n  > Withdrawn within §M.4: a sentence.\n';
+    expect(parseBullets(md)).toEqual([{ id: 'M.4/fitted', s: 'M.4', by: 'M.4', what: 'A first wording.', quote: 'Withdrawn within §M.4: a sentence.' }]);
+  });
+});
+
 describe('assertion 4 resolves §G references in both directions', () => {
   /* Fails against assertion 4's reference rules: before G, "§G.99" was not a reference it could see, so it passed. */
   it('fails a §G reference in the record-detail target that names no nav heading', () => {
