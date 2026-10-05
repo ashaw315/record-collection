@@ -75,6 +75,8 @@ const GOVERNED = [
   'e2e/record-controls.spec.ts',
   /* §G.1 (step 80): the label system's tracking and the slot's type, read on the record screen. */
   'e2e/label-tracking-80.spec.ts',
+  /* §33 (step 83): the cover's bounded crop, read as pixels on fixtures. */
+  'e2e/cover-fit-83.spec.ts',
   'e2e/identity-band-23.spec.ts',
   'e2e/identity-extremes.spec.ts',
   'e2e/images.spec.ts',

@@ -34431,3 +34431,47 @@ means; "`s` equals `by`" is what could be checked. Implementing the
 checkable consequence in place of the meaning is how a narrow exemption
 became a wide one. Where a rule's meaning cannot be tested, enumerate what
 it covers.
+
+## Step 83 built: §33 -- the cover is cropped within 95% and fitted beyond it (5 Oct)
+
+`coverTreatment` (`cover-fit.ts`) decides: crop where the photograph's
+shorter side is at least 95% of its longer, fit beyond. The comparison is
+shorter against longer, written on integers so 950 x 1000 does not hang on
+a rounded quotient. `SleeveCover.tsx` draws the cover and applies the rule
+when the photograph has loaded; fitted, it sits centred in the same square
+on stated paper, since the sleeve cell behind it is the record's tint above
+the fork.
+
+**Evidence is the six fixtures, read as pixels**, at 390 and 1440. Each
+test first checks its fixture's dimensions and ratio against the manifest
+(CLAUDE.md §2). A cropped photograph has its flanks' frame on the square's
+edge and no frame at its ends; a fitted one has paper beyond its flanks and
+all four frame sides drawn. Seen failing twice before passing: against a
+cover that always crops, the six fit cases failed on frame where paper
+belongs; against a rule comparing height with width, every landscape
+fixture passed and only the portrait photograph beyond the bound failed --
+the bug the portrait pair was added for, caught.
+
+**No real cover changes.** Read on the real collection after the build: 64
+of 64 covers (sixteen records at four widths) cropped as before, in the
+same boxes; the Blues Project still has none.
+
+**A limit, stated: a photograph beyond the bound is first painted cropped
+and becomes fitted once it has loaded.** Its shape is not stored, so
+nothing says it is not square until the browser has it. Deciding before the
+first paint needs the dimensions stored at upload -- a schema change SPEC.md
+§4 does not give, so it is recorded here and not built. No cover in the
+collection is beyond the bound, so none takes that path today; the first
+phone photograph will.
+
+The closed set's captures were not regenerated.
+
+Verification, gate: unit 4029 passed; chromium 456 passed, 1 failed;
+mobile 197 passed; typecheck, lint and build clean. The one chromium
+failure was `label-tracking-80`'s market-panel test, not this step's: it
+waited for the panel's "check" control, which exists only until the panel's
+own request settles, so it raced and lost once in a full run. The test now
+holds that request open and reads the control while it stays (five runs,
+five passes). A test that waits for a transient element is reading a
+moment, not a state. No committed capture changed: the two writers are
+behind their flag, and the capture check passed in the unit run.

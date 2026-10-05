@@ -1,6 +1,7 @@
 import { BANDS, GRID_COLUMN, GRID_COLUMNS, GRID_FORK, IDENTITY_SPANS, LOWER_SPANS, STILL_MARGIN } from './band-geometry';
 import { BAND_AT_REFERENCE, REFERENCE_HEIGHT, regionStylesheet, widePageStylesheet } from './region-rows';
 import { Plane } from './Plane';
+import { SleeveCover } from './SleeveCover';
 import { Flat } from './OrnamentMarks';
 import { FLATS } from './ornament';
 import { CONTROL_HEIGHT } from './extended-grid';
@@ -761,7 +762,7 @@ export function RecordPage8a({ record, writingConfigured = false }: { record: Pa
             {record.coverUrl === null ? (
               <div data-mark="coverFrame" style={{ border: `1px solid ${RULE}` }} />
             ) : (
-              <img data-cover="" src={record.coverUrl} alt="" className="block object-cover" />
+              <SleeveCover url={record.coverUrl} />
             )}
             <div data-mark="sleeveBar" style={{ background: base }} />
             <div data-mark="sleeveBlock" style={{ background: INK }} />
