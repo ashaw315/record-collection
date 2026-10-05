@@ -2,12 +2,12 @@ import { describe, expect, it } from 'vitest';
 import { backFaceDetails, backFaceGroups } from './back-face';
 
 /**
- * §10b: "**The back face is never empty.** Most records will have a front cover
- * from Discogs and nothing else for a long time. Rather than a blank or a
- * placeholder image, the back renders what is known: label, catalogue number,
- * pressing details, matrix runout, condition, what was paid and where."
+ * A pulled record's facts for the wall's panel. Not the back face: the
+ * §10b sentence this was written for ("The back face is never empty") was
+ * replaced by A19 a day later, and the back with no photograph is a plain
+ * sleeve carrying label and catalogue number only. See the module's header.
  *
- * Pure, because what a back sleeve says is a set of decisions — which fields,
+ * Pure, because what a facts list says is a set of decisions — which fields,
  * in what order, and what to do when one is missing. A component test would
  * confirm whatever markup was produced without stating what should be on it.
  */
@@ -46,7 +46,7 @@ describe('backFaceDetails', () => {
 
   it('omits a field that is not recorded rather than printing a dash', () => {
     /**
-     * §10b's "never empty" is about the FACE, not about every row. An empty
+     * An unrecorded field is left out rather than shown empty. An empty
      * "Matrix —" line asserts the field was looked at and found blank; absence
      * says nothing, which is the truth. Same rule as the gallery's headings.
      */

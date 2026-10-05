@@ -2,21 +2,25 @@ import { formatPrice } from '@/app/collection-format';
 import { conditionLabel } from '@/app/records/record-detail-format';
 
 /**
- * §10b's back face, as data.
+ * A pulled record's facts, as data, for the panel beside it on the wall.
  *
- * "**The back face is never empty.** Most records will have a front cover from
- * Discogs and nothing else for a long time. Rather than a blank or a
- * placeholder image, the back renders what is known: label, catalogue number,
- * pressing details, matrix runout, condition, what was paid and where. That is
- * close to what a real back sleeve carries, and it means every record is a
- * two-sided object from the day it is entered."
+ * **Not the back face, whatever the names say.** This module was written for
+ * a §10b sentence -- "The back face is never empty", a back rendering label,
+ * catalogue number, pressing, matrix, condition and price -- that was in
+ * SPEC.md for one day (8c57f6e, 17 Aug) and was replaced by A19 (c36b0fd):
+ * "The faces carry artwork and nothing else". Where no back photograph
+ * exists the back is a plain sleeve in the record's spine colour, carrying
+ * label and catalogue number and no body text (§10b, SPEC.md; §11 flow 7),
+ * and that is what the wall draws. These rows now feed the panel
+ * (`panel.ts`, `summary.ts`), which is where A19 moved every fact. The
+ * `backFace` names are the module's history, not its job.
  *
- * Pure, because what a back sleeve says is a set of decisions — which fields,
+ * Pure, because what a facts list says is a set of decisions — which fields,
  * in what order, and what to do when one is missing — and a component test
  * would confirm whatever markup was produced without stating what should be on
  * it.
  *
- * **"Never empty" is about the FACE, not about every row.** A field that was
+ * **An unrecorded field is left out, not shown empty.** A field that was
  * never recorded is omitted rather than printed with a dash: an empty
  * "Matrix —" asserts the field was looked at and found blank, where absence
  * says nothing, which is the truth. A record with nothing recorded yields no
