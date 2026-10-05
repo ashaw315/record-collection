@@ -34320,3 +34320,34 @@ Playwright-only run is caught at the next unit run, not by itself. It also
 covers the sheets, which default to committed directories when `SHEET_OUT`
 is not set -- the contact sheet's default is the closed set's own
 `docs/captures/sheet/`.
+
+## The nav target's "no drop carried it" claims, checked against every commit (5 Oct)
+
+Four claims in the nav target say a figure was replaced before any drop
+carried it, so no entry is owed. The 455 one was false (d8115e0 carried it).
+The other three were checked against the three committed versions,
+8adf382, e02e34e and d8115e0, by reading every sentence that carries the
+figure in any form, not by matching one wording:
+
+- **§G.3's 34 inset: holds.** Every sentence with 34 (as 34 or 34px) in all
+  three is the correction's own account of why 34 was wrong; none rules it.
+  The one 34px in the styling is the design document's page padding, not
+  the header. The positive control is that the search found those.
+- **§G.5's "nothing hides and there is no menu": holds.** The only matches
+  are the correction itself and the built app's having no menu; every
+  version rules the opposite ("The nav never wraps ... it becomes a menu").
+- **§G.8's 273 and 317 as the list's height: holds.** Absent from 8adf382
+  and e02e34e; in d8115e0 only in the correction sentence and as an
+  unrelated coordinate (a rule from 272 to 273). d8115e0's "corrected before
+  any drop carried it" is about these figures, and is true.
+
+The new drop's own claim, that the 455 clause was never committed, is true:
+the only such sentence in d8115e0 is the 273/317 one.
+
+## Photos the record modal could show, on the real collection (5 Oct)
+
+Read-only, production: 17 records; 1 has a back photo (Bitches Brew); 0
+have a left inside photo, 0 a right, 0 both. Image rows: 19 cover, 1 back.
+So the gatefold, which opens only when both inside photos exist, reaches no
+record today, and the back is a photograph on one record and §10b's plain
+back on sixteen.
