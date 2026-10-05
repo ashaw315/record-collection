@@ -15,6 +15,7 @@ Implement these as one script (suggested: `scripts/check-index.mjs`) and run it 
 | `S` | `Record Detail 8a - settled 1-10.dc.html` (closed, §1–§10) |
 | `W` | `Wall and Pull - build target.dc.html` (§W, §W.1–§W.N) |
 | `G` | `Nav - build target.dc.html` (§G.1–§G.N, the AppHeader) |
+| `M` | `Record Modal - build target.dc.html` (§M.1–§M.N, the record modal) |
 | `D` | `WITHDRAWALS.md` (the withdrawal list) |
 
 Read every input as UTF-8. Decode `&rsquo;` → `’` and `&amp;` → `&` before any text comparison.
@@ -63,7 +64,7 @@ Test cases, all of which the grammar must yield unchanged: `31/whole` (a colon a
 **Known limit: a whole-section withdrawal removes one sentence, not the section.** An entry quotes a sentence, so withdrawing a section "in whole" leaves the rest of its body in live text. §31 is withdrawn in whole and most of it is live — correct for a section kept as a record, but it means 8a checks such a section's row figures against retired reasoning. §31's row carries no figures, so nothing is wrong today.
 
 **Stripping for assertion 8.** Remove, in order:
-1. Section references: `§W\.\d+(\.\d+)?`, `§W\b`, `§G\.\d+(\.\d+)?`, `§\d+(\.\d+)?`. (§G was missing until 3 Oct, so §G.7's pointer, "held until §G.8 recorded Adam's choice", failed 8b on the 8 of a section reference.)
+1. Section references: `§W\.\d+(\.\d+)?`, `§W\b`, `§G\.\d+(\.\d+)?`, `§M\.\d+(\.\d+)?`, `§\d+(\.\d+)?`. (§G was missing until 3 Oct, so §G.7's pointer, "held until §G.8 recorded Adam's choice", failed 8b on the 8 of a section reference.)
 2. Step references: `steps? \d+` (case-insensitive)
 3. Artefact names: `\b[A-Z]\d+[a-z]?\b` (D2, A75) and `\b\d{1,2}[a-z]\b` (5b, 7a, 8a). **Not** `\d+px` or other units: those are figures.
 
@@ -86,10 +87,11 @@ Ten are built and numbered 0 to 9. Assertion 8 has two parts, so the script repo
    **Why (1 Oct):** Design's exports replace `H` wholesale, so a step inserted between exports is overwritten without a trace; step 71 was lost that way twice. The earlier form compared each number with its position and named the step after the gap (`3 gap-at 72`), could not tell a duplicate from a gap, and never said the lost step had been done. The done marks are read from `HEAD` because the export that drops a step drops its mark with it.
 
 4. **Cross-file references resolve.** In each file, with tags stripped and the renumbering note at the head of `W` excluded:
-   - every `§W.N` in `L`, `S` or `G` names a heading in `W`;
-   - every `§G.N` in `L`, `S`, `W` or `G` names a heading in `G`;
-   - every `§N` with 1 ≤ N ≤ 10 in `L`, `W` or `G` names a heading in `S`;
-   - every `§N` with N ≥ 12 in `S`, `W` or `G` names a heading in `L`. No upper bound: the live set is `L`'s own headings, and a bound restates them and goes stale each time a section is added (it sat at 32 while §33 and §34 were referenced unchecked).
+   - every `§W.N` in `L`, `S`, `G` or `M` names a heading in `W`;
+   - every `§G.N` in `L`, `S`, `W`, `G` or `M` names a heading in `G`;
+   - every `§M.N` in `L`, `S`, `W`, `G` or `M` names a heading in `M`;
+   - every `§N` with 1 ≤ N ≤ 10 in `L`, `W`, `G` or `M` names a heading in `S`;
+   - every `§N` with N ≥ 12 in `S`, `W`, `G` or `M` names a heading in `L`. No upper bound: the live set is `L`'s own headings, and a bound restates them and goes stale each time a section is added (it sat at 32 while §33 and §34 were referenced unchecked).
    Fail: `4 FILE→§REF`.
    **Why the §G clauses (2 Oct):** 4 recognised only W and bare-number shapes, so "Superseded in part by §G.8" in §24 was not a reference to it, and it passed on a section it could not see. In the same run the bullet parser refused the same id with a line number. A check that ignores what it does not understand reports success; every reference shape the targets use is now one 4 reads.
 

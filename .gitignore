@@ -130,6 +130,8 @@ docs/design/*
 # rule. It was force-added until this line existed; a tracked file's changes
 # show whatever this file says, so the gap was a new or re-added copy.
 !docs/design/Nav - build target.dc.html
+# The modal target (§M), the index's input M since 5 Oct. Same reachability rule.
+!docs/design/Record Modal - build target.dc.html
 
 # The same artefacts' STALE root copies, from before they moved into
 # docs/design/. Each root file is smaller than its docs/design counterpart, so

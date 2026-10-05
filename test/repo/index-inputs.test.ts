@@ -29,7 +29,7 @@ afterEach(() => {
 /** A copy of the design inputs the script reads, for a run over a deliberately broken tree. */
 function stage(edit: (dir: string) => void): string {
   staged = mkdtempSync(join(tmpdir(), 'index-inputs-'));
-  for (const f of ['HANDOFF-wall-and-pull.md', 'Record Detail 8a - build target.dc.html', 'Record Detail 8a - settled 1-10.dc.html', 'Wall and Pull - build target.dc.html', 'Nav - build target.dc.html', 'WITHDRAWALS.md']) {
+  for (const f of ['HANDOFF-wall-and-pull.md', 'Record Detail 8a - build target.dc.html', 'Record Detail 8a - settled 1-10.dc.html', 'Wall and Pull - build target.dc.html', 'Nav - build target.dc.html', 'Record Modal - build target.dc.html', 'WITHDRAWALS.md']) {
     cpSync(join(DESIGN, f), join(staged, f));
   }
   edit(staged);
@@ -170,6 +170,49 @@ describe('assertion 2 recognises an id that ends a sentence', () => {
   it('does not count §G.71 or §G.7.1 as naming §G.7', () => {
     const { out } = run(stage(orderWith('See §G.71 and §G.7.1.')));
     expect(out).toContain('2 §G.7 not-in-order');
+  });
+});
+
+/**
+ * **M, the record modal's target, as input M (5 Oct)**, with the same two
+ * directions G was given and the same stripping in assertion 8, so the first
+ * §M citation is checked rather than waved through.
+ */
+describe('the modal target is read: §M references resolve, and §M is not a figure', () => {
+  /* Fails before input M: "§M.99" in a record-detail target was no reference assertion 4 could see. */
+  it('fails a §M reference in the record-detail target that names no modal heading', () => {
+    const dir = stage((d) => {
+      const p = join(d, 'Record Detail 8a - build target.dc.html');
+      writeFileSync(p, readFileSync(p, 'utf8').replace('</body>', '<p>See §M.99 for the sleeve.</p></body>'));
+    });
+    const { out } = run(dir);
+    expect(out).toMatch(/^FAIL 4$/m);
+    expect(out).toContain('4 L→§M.99');
+  });
+
+  /* Fails before input M: the modal target's own references were read by nothing. */
+  it('fails a reference from the modal target to a record-detail section that does not exist', () => {
+    const dir = stage((d) => {
+      const p = join(d, 'Record Modal - build target.dc.html');
+      writeFileSync(p, readFileSync(p, 'utf8').replace(/(M\.2 · [^<]*<\/p>)/, '$1<p>As §97 rules.</p>'));
+    });
+    const { out } = run(dir);
+    expect(out).toMatch(/^FAIL 4$/m);
+    expect(out).toContain('4 M→§97');
+  });
+
+  /* Fails before §M joins assertion 8's stripping: the 9 of "§M.9" read as a figure in §G.6's pointer. */
+  it('reads a §M reference in a governs row as a reference, not a figure', () => {
+    const dir = stage((d) => {
+      const p = join(d, 'HANDOFF-wall-and-pull.md');
+      const text = readFileSync(p, 'utf8');
+      const from = '| §G.6 | The header is not sticky | Why the header scrolls away with the page. |';
+      if (!text.includes(from)) throw new Error('staging anchor missing');
+      writeFileSync(p, text.replace(from, '| §G.6 | The header is not sticky | Why the header scrolls away with the page, unlike §M.9’s sleeve. |'));
+    });
+    const { out } = run(dir);
+    expect(out).not.toMatch(/^8a §G\.6 /m);
+    expect(out).not.toMatch(/^8b §G\.6 /m);
   });
 });
 

@@ -34388,3 +34388,17 @@ Each case is checked on its own evidence.
   square at all four, so the share is the same at each); Believer, 581 x
   600, shows 96.8%. Three exact squares lose nothing. A 4:3 phone photo
   would lose a quarter.
+
+## The modal target is input M (5 Oct)
+
+Taken with the drop that gives §M its six governs rows and steps 81 to 83,
+in one commit: with the rows and no input, assertion 1 fails on rows with
+no heading; with the input and no rows, on headings with no row. Assertion
+4 resolves §M from every target and the modal target's own W and
+bare-number references; assertion 8 strips §M before reading figures. Three
+staged tests failed first, one per rule. The target is tracked by its own
+.gitignore exception line, not a force-add.
+
+Step 83, as exported, does not yet name the portrait fixtures (951 x 1000,
+949 x 1000) or the precondition assertions; Design is amending it. Build
+step 83 from the amended text, not this one.

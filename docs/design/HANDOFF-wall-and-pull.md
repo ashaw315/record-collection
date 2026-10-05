@@ -117,6 +117,12 @@ The wall at rest is line, ink and paper; colour arrives with the pull. Everythin
 | §G.6 | The header is not sticky | Why the header scrolls away with the page. |
 | §G.7 | Not yet settled | What waits on Code’s second pass, hover and focus; where the breakpoint was held until §G.8 recorded Adam’s choice; and the eyebrow observation. |
 | §G.8 | The menu | Where the menu takes over and which row defines it, the header’s four forms as measured, the control, the open state with its rule and its keyboard, what opening it does to the screen below, and the record detail’s slot with its scoping of §24. |
+| §M.1 | Where the modal opens, and what it is | Where the modal opens and its trigger, what it is, how it closes, and Back. |
+| §M.2 | Which photo of each face | Which photo each face shows, and why the wall’s back order follows it. |
+| §M.3 | The back with no back photo | What the back is where there is no back photo, and the summary it corrects. |
+| §M.4 | Shape: every photo is fitted, never cropped | Fit against crop, the sleeve’s size, and how opening moves it. |
+| §M.5 | The turn and the opening | How the turn and the opening move, and what reduced motion makes of them. |
+| §M.6 | Controls, hover and focus | The modal’s controls, when the gatefold opens, and their hover and focus. |
 
 ## Structural sections — pointers
 
@@ -347,9 +353,9 @@ These are the sections the rulings above build on, all in `Record Detail 8a - se
 73. **§62 — the Images count.** Build after step 72. Count the displayed cover and the gallery's tiles; where the record holds covers it does not display, add “· N earlier covers” before Manage. Report the line on every record. Measure how the extended control line wraps in the About cell at 390, 960, 1000, 1439, 1440 and 1920, at the largest earlier-cover count the collection holds, and report rows taken and whether the prose region keeps §53's seven-line floor. **If it wraps to more rows than §53 ruled, or the prose falls under seven lines, stop and report: that is §53's to re-rule, not this step's to absorb.** Also report the earlier-cover count at which the line would first take another row, or the prose would first fall under seven lines, at each width, so the headroom is known before Adam adds a cover. Replace the tests that assert the count of all image rows.
    > The Images count counts what the page shows: the displayed cover and the gallery’s tiles, and nothing the page does not draw.
 
-## The record modal target
+## The record modal target, §M
 
-`Record Modal - build target.dc.html` rules the record modal: the sleeve turning over and the gatefold opening. Its prefix is M. Nothing in it is built. **This section names no section of it yet, because the index does not know the prefix, and a reference in a shape the index does not know is invisible to it.** Code, confirm M is free as a file key, add the target as an input, and add M to the grammars. Its governs rows and build steps follow once that lands, each naming its own ids. The steps will include a supersession of the wall's built back order, oldest-first to newest-first, which is built behaviour and has its own step.
+`Record Modal - build target.dc.html` rules the record modal: the sleeve turning over and the gatefold opening. Its sections are §M.1 to §M.6, and its rows are in the governs table above. M is free in the index, from dbeebfd. **The target becomes an input with this drop:** Code adds it, its `.gitignore` line and assertion 4's §M rules together, because its headings with no rows would fail assertion 1. Steps 81 and 82 build it; both are confirmed free.
 
 ## The nav target, §G
 
@@ -377,6 +383,15 @@ Its rows are in the governs table above, one per section; this section does not 
 
 80. **§G.1 — the label tracking.** A supersession of the built .09em, which no ruling gave, in its own step. **First, re-measure §62's headroom at .10em: if the About prose falls below seven lines at any count a record could plausibly carry, stop and report.** Report the count at which the Images line takes a second row, but do not stop on it moving. Then set the shared label style in `grid-type.ts` to .10em, unsplit, and give the record detail's slot the header's own type from a shared module, at .12em, not the label style with an override. Report the slot's width against 159.66. Measure, for the first time, the widths at which the links and slot, and the control and slot, set on one row, against Code's estimates of 768 and 454; §G.8 takes the measured figures. Confirm that no glyph in the slot moves. Add a test pinning .10em on the shared style and .12em on the slot. Do not regenerate the captures the record detail closed on; new captures go beside them under this step.
    > The shared label style is tracked .10em in all four areas it reaches, and the slot is tracked .12em.
+
+81. **§M.1, §M.3, §M.4, §M.5 and §M.6 — the record modal.** New, nothing superseded. Make the record page's displayed cover a button named “Open the sleeve”, opening a full-viewport view on opaque paper with a 53 top row, CLOSE at the right, and the sleeve centred with its controls beneath. Opening adds one history entry at the same URL; Back, CLOSE and Escape close it, and focus returns to the cover. Draw the plain back from the wall's own component. Fit every photo in a square with a hairline edge, sized once on opening, the same closed size on every record. Turn about the vertical centre line; open by rotating the front panel about its left edge while the sleeve moves right by half a square, scaling down where two squares do not fit, on one curve. Under reduced motion, change face at once. Show the face label in every mode. Controls are §9.3's: TURN OVER on front and back, OPEN on the front only and only where both inside photos exist, FOLD and CLOSE when open. Hover underlines the label 1px, 3 below the baseline; keyboard focus draws a 2px ink outline offset 2. Propose the turn's and the opening's duration and curve, and record both for Adam. Add a tap test on the cover. Capture the modal closed, turned and open at 390 and 1440, on a record whose gatefold opens and one whose does not.
+   > The modal is a view of the object, not a dialog over the page.
+
+82. **§M.2 — newest photo of each face.** A supersession of the wall's built back order, in its own step, after step 81. Show the newest back and the newest of each inside leaf in the modal, and the newest back on the wall. Evidence is a fixture record with two dated backs and a test that the wall and the modal both show the newer; no capture, because the one real record with a back photo has one.
+   > The wall moves to newest-first too, and this file does not keep two rules.
+
+83. **§33 — the cover beyond the bound.** A supersession of the built crop, which crops every cover, in its own step. Crop the cover to fill its square where the photograph's shorter side is at least 95% of its longer; beyond that, fit it in the square on paper, centred, keeping the square's place. **Evidence is fixtures, not captures of real records:** every one of the seventeen covers is inside the bound, so nothing on a real record changes and a capture proves nothing. Test the boundary from both sides, as step 76's breakpoints were: one fixture just inside the bound, one just outside, and Code's 4:3 at 1200 × 900 as the far case. Assert the inside one fills and is flush, and the outside two are fitted, show the whole photograph, and are not flush. Confirm no real record's cover changes. Do not regenerate the captures the record detail closed on.
+   > The cover is cropped to fill its square where the photograph’s shorter side is at least 95% of its longer, and fitted in the square on paper beyond that.
 
 No step: §G.7. It rules nothing. Hover and focus wait on Code's second pass, the breakpoint is settled and recorded in §G.8, and the eyebrow repetition is an observation, not a ruling.
 
