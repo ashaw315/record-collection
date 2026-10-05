@@ -126,6 +126,10 @@ docs/design/*
 # from it is read, and at the same revision. A script whose spec is not in the
 # repo cannot be reviewed against it.
 !docs/design/Wall and Pull - build target.dc.html
+# The nav target (§G), the index's input G since 2 Oct. Same reachability
+# rule. It was force-added until this line existed; a tracked file's changes
+# show whatever this file says, so the gap was a new or re-added copy.
+!docs/design/Nav - build target.dc.html
 
 # The same artefacts' STALE root copies, from before they moved into
 # docs/design/. Each root file is smaller than its docs/design counterpart, so
