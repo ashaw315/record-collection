@@ -34351,3 +34351,40 @@ have a left inside photo, 0 a right, 0 both. Image rows: 19 cover, 1 back.
 So the gatefold, which opens only when both inside photos exist, reaches no
 record today, and the back is a photograph on one record and §10b's plain
 back on sixteen.
+
+## A result in one case is not evidence about the next case of the same shape (5 Oct)
+
+Four claims in the nav target said a figure was replaced before any drop
+carried it. The first checked, 455, was false. The prediction that 273 and
+317 would break too came from that result, not from anything about 273 or
+317: they were corrected in the same stretch of rounds, so they looked like
+the same case. Checked, they held. The shape was shared; the fact was not.
+Each case is checked on its own evidence.
+
+## Answers for the modal target's draft (5 Oct)
+
+- **M is free:** not a file key in the index (H, L, S, W, G, D), not a
+  section prefix, and no `§M` or M-number id in any input or in SPEC.md.
+  Both grammars accept M.N (this commit's predecessor); the input waits on
+  §M's governs rows.
+- **The plain back is SPEC.md §10b at line 1763 (A19)**, "The faces carry
+  artwork and nothing else ... a plain sleeve in the record's stored spine
+  colour", with §11 flow 7's "carrying label and catalogue number and no
+  body text". The "back face is never empty" field list it replaced was in
+  §10b for one day (8c57f6e to c36b0fd). `back-face.ts` still quotes the
+  retired sentence as §10b's; the module now feeds the wall's panel, not a
+  face. The wall builds A19: label and catalogue number on the plain sleeve.
+- **Nothing binds a click on the record page's displayed cover:** a plain
+  `<img data-cover>` in the sleeve cell, no handler, no link.
+- **No §W prose orders the backs.** "Oldest" does not occur in the wall's
+  target; the shelf query's comment gives the reason as matching the
+  gallery's first image. The record-detail targets mention "oldest" only of
+  the cover §61 replaced.
+- **"Never cropped" is false against the build, slightly.** Settled §7,
+  "The cover is fitted, not cropped", and live §33, "the largest square its
+  cell holds ... never cropped". The cover is `object-fit: cover` in a
+  square box, so any photo not exactly square is cropped. On the real
+  collection, 13 of 16 covers lose 0.2% to 3.2% at every width (the box is
+  square at all four, so the share is the same at each); Believer, 581 x
+  600, shows 96.8%. Three exact squares lose nothing. A 4:3 phone photo
+  would lose a quarter.
