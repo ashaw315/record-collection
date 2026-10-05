@@ -25,6 +25,14 @@ export const FIXTURES = [
   { file: 'cover-at-bound-1000x950.png', width: 1000, height: 950 },
   { file: 'cover-outside-1000x949.png', width: 1000, height: 949 },
   { file: 'cover-far-1200x900.png', width: 1200, height: 900 },
+  /*
+    Portrait, for a specific bug: the rule compares the shorter side with
+    the longer, so code that compares width with height passes every
+    landscape case and fails these. Believer, 581 x 600, the only real cover
+    near the bound, is portrait.
+  */
+  { file: 'cover-inside-portrait-951x1000.png', width: 951, height: 1000 },
+  { file: 'cover-outside-portrait-949x1000.png', width: 949, height: 1000 },
 ];
 
 const crcTable = new Uint32Array(256).map((_, n) => {

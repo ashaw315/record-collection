@@ -30,5 +30,21 @@
   "ratio": 0.75,
   "bound": 0.95,
   "expected": "fit"
+ },
+ {
+  "file": "cover-inside-portrait-951x1000.png",
+  "width": 951,
+  "height": 1000,
+  "ratio": 0.951,
+  "bound": 0.95,
+  "expected": "crop"
+ },
+ {
+  "file": "cover-outside-portrait-949x1000.png",
+  "width": 949,
+  "height": 1000,
+  "ratio": 0.949,
+  "bound": 0.95,
+  "expected": "fit"
  }
 ]
