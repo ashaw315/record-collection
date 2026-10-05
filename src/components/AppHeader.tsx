@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useEffect, useId, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { GRID_FORK } from '@/app/records/[id]/band-geometry';
 import { currentSection } from './nav-current';
@@ -78,6 +78,8 @@ const RECORD_SCREEN = /^\/records\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89a
   `min-[454px]`, because Tailwind cannot read a constant into a class.
 */
 export const MENU_BELOW = 584;
+/** §G.2: the header's row is 52, and the 1px rule beneath it makes the 53. */
+const ROW_HEIGHT = 52;
 export const SLOT_WITH_LINKS = 768;
 export const SLOT_WITH_CONTROL = 454;
 
@@ -101,25 +103,77 @@ export function AppHeader({ actions }: { actions?: React.ReactNode } = {}) {
   const section = currentSection(pathname);
 
   /*
-    §G.8: the menu. Open state belongs to the path it was opened on, so a
-    chosen link renders the next screen closed without an effect resetting
-    it. It does not close on scroll or on a click elsewhere: it covers
-    nothing. Escape closes it and returns focus to the control.
+    §G.8 (step 84): the menu covers. Open, a fixed panel of opaque paper runs
+    from the header's rule to the viewport's bottom; the header's own row
+    stays, its height does not change, and the page beneath is held where it
+    was -- so the wall, which sizes itself from this header's height, does not
+    move. Step 76 pushed the page down instead; Adam used that on a phone
+    and ruled this.
+
+    Open state belongs to the path it was opened on, so a chosen link renders
+    the next screen closed without an effect resetting it.
   */
+  const bar = useRef<HTMLElement>(null);
   const [openOn, setOpenOn] = useState<string | null>(null);
   const open = openOn === pathname;
   const listId = useId();
   const controlRef = useRef<HTMLButtonElement>(null);
+  const [panelTop, setPanelTop] = useState(52);
+
+  /*
+    Opening adds one history entry at the same URL, so Back closes the menu
+    rather than leaving the screen. Closing by any other means goes back
+    over that entry, so entries do not pile up; a chosen link replaces it.
+    Next's own history state is carried through, so the router still knows
+    where it is.
+  */
+  const closeMenu = useCallback(() => {
+    setOpenOn(null);
+    if ((window.history.state as { appMenu?: boolean } | null)?.appMenu === true) window.history.back();
+  }, []);
+  const openMenu = useCallback(() => {
+    window.history.pushState({ ...(window.history.state as object | null), appMenu: true }, '');
+    setOpenOn(pathname);
+  }, [pathname]);
+
   useEffect(() => {
     if (!open) return;
+    /* Where the header's row ends in the window: the panel starts there. */
+    const place = () => {
+      const row = bar.current?.firstElementChild?.getBoundingClientRect();
+      if (row !== undefined) setPanelTop(row.top + ROW_HEIGHT);
+    };
+    place();
     const onKey = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return;
-      setOpenOn(null);
+      closeMenu();
       controlRef.current?.focus();
     };
+    /* Back, or anything else that leaves the menu's entry: the menu is closed. */
+    const onPop = () => {
+      if ((window.history.state as { appMenu?: boolean } | null)?.appMenu !== true) setOpenOn(null);
+    };
+    /* §G.8: "If the viewport widens past the breakpoint while the menu is open, the menu closes and the links show." */
+    const wide = window.matchMedia(`(min-width: ${MENU_BELOW}px)`);
+    const onWide = () => {
+      if (wide.matches) closeMenu();
+    };
+    /* "The page beneath is held where it was": it does not scroll under the panel. */
+    const root = document.documentElement;
+    const overflow = root.style.overflow;
+    root.style.overflow = 'hidden';
     document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [open]);
+    window.addEventListener('popstate', onPop);
+    window.addEventListener('resize', place);
+    wide.addEventListener('change', onWide);
+    return () => {
+      root.style.overflow = overflow;
+      document.removeEventListener('keydown', onKey);
+      window.removeEventListener('popstate', onPop);
+      window.removeEventListener('resize', place);
+      wide.removeEventListener('change', onWide);
+    };
+  }, [open, closeMenu]);
 
   /*
     The record detail screen is 8a's GRID_FORK measure (§18: twelve fixed
@@ -135,7 +189,6 @@ export function AppHeader({ actions }: { actions?: React.ReactNode } = {}) {
     subtracts from the viewport — measured rather than declared, since the
     bar's height is its type's.
   */
-  const bar = useRef<HTMLElement>(null);
   useEffect(() => {
     const el = bar.current;
     if (el === null) return;
@@ -297,37 +350,53 @@ export function AppHeader({ actions }: { actions?: React.ReactNode } = {}) {
           data-menu-control=""
           aria-expanded={open}
           aria-controls={listId}
-          onClick={() => setOpenOn(open ? null : pathname)}
+          onClick={() => (open ? closeMenu() : openMenu())}
           className={`${NAV_TYPE} ml-auto box-border flex h-[44px] w-[calc(5ch+0.6em+36px)] shrink-0 items-center justify-center border border-foreground font-normal text-foreground min-[584px]:hidden`}
         >
           {open ? 'Close' : 'Menu'}
         </button>
 
         {open && (
-          <nav
-            aria-label="Main"
-            id={listId}
-            data-menu-list=""
-            /* In flow below the row, pushing the page down; before the slot's own row. */
-            className="order-1 basis-full min-[584px]:hidden"
+          /*
+            §G.8: the panel. Fixed, opaque paper, full width, from the row's
+            end to the viewport's bottom; its top edge is the header's rule,
+            so the 53 row keeps its rule on a record too, where the header's
+            own rule lies under the slot's row. `z-50` raises it above the
+            wall, whose transforms each make a stacking layer; asserted on
+            the wall itself in `nav-menu-84.spec.ts`. Where the window is
+            shorter than the list, the list scrolls within the panel. A tap
+            on the panel's paper, anywhere off the list, closes it.
+          */
+          <div
+            data-menu-panel=""
+            data-menu-scroll=""
+            onClick={(event) => {
+              if (!(event.target as HTMLElement).closest('[data-menu-list]')) closeMenu();
+            }}
+            style={{ top: panelTop }}
+            className="fixed inset-x-0 bottom-0 z-50 overflow-y-auto overscroll-contain border-t border-border bg-background min-[584px]:hidden"
           >
-            {LINKS.map((link) => {
-              const active = section === link.href;
-              return (
-                <Link
-                  key={link.href}
-                  href={link.href}
-                  aria-current={active ? 'page' : undefined}
-                  className={cn(`${NAV_TYPE} box-border flex h-[44px] items-center border-b border-border`, linkTone(active))}
-                >
-                  <span className="relative">
-                    {link.label}
-                    {active && <CurrentMark />}
-                  </span>
-                </Link>
-              );
-            })}
-          </nav>
+            <nav aria-label="Main" id={listId} data-menu-list="" className="px-[18px]">
+              {LINKS.map((link) => {
+                const active = section === link.href;
+                return (
+                  <Link
+                    key={link.href}
+                    href={link.href}
+                    /* A chosen link replaces the menu's history entry (§G.8). */
+                    replace
+                    aria-current={active ? 'page' : undefined}
+                    className={cn(`${NAV_TYPE} box-border flex h-[44px] items-center border-b border-border`, linkTone(active))}
+                  >
+                    <span className="relative">
+                      {link.label}
+                      {active && <CurrentMark />}
+                    </span>
+                  </Link>
+                );
+              })}
+            </nav>
+          </div>
         )}
 
         {actions !== undefined && (

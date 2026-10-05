@@ -20,7 +20,6 @@ const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
 const MENU_BELOW = 584;
 const SLOT_WITH_LINKS = 768;
 const SLOT_WITH_CONTROL = 454;
-const SECTIONS = ['Collection', 'Want list', 'Look up', 'Stats', 'Manage'];
 const INK = 'oklch(0.19 0.008 60)';
 
 async function login(page: Page) {
@@ -147,37 +146,22 @@ test.describe('§G.8: one row, or a menu, at one width on every screen', () => {
   });
 });
 
+/**
+ * **Step 84 superseded the pushed menu, and four tests here with it.** Each
+ * claim has its successor in `nav-menu-84.spec.ts`:
+ *   - "pushes the page down with five 44 rows ..." -> "the list sits at the
+ *     panel's top ..." and "the header, the wall's region, the page's length
+ *     and the seats are the same open as closed";
+ *   - "the wall's height variable follows the open menu" -> the same test,
+ *     which asserts the variable does NOT change;
+ *   - "it stays open on scroll and on a click elsewhere ..." -> "a tap on
+ *     the panel below the list closes it ... scrolling does not" and the
+ *     history test;
+ *   - "open at 390, the slot sits below the list, outside it" -> "on a
+ *     record at 390, the slot's row is under the panel".
+ * What stays here is what covering did not change: the keyboard.
+ */
 test.describe('§G.8: the open menu', () => {
-  /* Fails against step 74's header: there is no control to open. */
-  test('pushes the page down with five 44 rows in nav order, hairlines between and below, the current one underlined', async ({ page }) => {
-    await open(page, '/want-list', 390);
-    const mainBefore = await page.evaluate(() => (document.querySelector('main') as HTMLElement).getBoundingClientRect().top);
-    await control(page).click();
-    await expect(control(page)).toHaveAttribute('aria-expanded', 'true');
-    const listId = await control(page).getAttribute('aria-controls');
-    expect(listId, 'aria-controls names the list').toBeTruthy();
-    const m = await page.evaluate((id) => {
-      const list = document.getElementById(id as string) as HTMLElement;
-      const bar = (document.querySelector('[data-app-nav] > div') as HTMLElement).getBoundingClientRect();
-      const rows = Array.from(list.querySelectorAll('a')).map((a) => {
-        const r = a.getBoundingClientRect();
-        const range = document.createRange();
-        range.selectNodeContents(a.firstChild as Node);
-        const t = range.getBoundingClientRect();
-        return { text: (a.textContent ?? '').trim(), height: r.height, top: r.top - bar.top, labelLeft: t.left - bar.left, border: getComputedStyle(a).borderBottomWidth, current: a.getAttribute('aria-current'), mark: a.querySelector('[data-current-mark]') !== null };
-      });
-      return { rows, main: (document.querySelector('main') as HTMLElement).getBoundingClientRect().top, listTop: list.getBoundingClientRect().top - bar.top, listHeight: list.getBoundingClientRect().height };
-    }, listId);
-    expect(m.rows.map((r) => r.text)).toEqual(SECTIONS);
-    for (const r of m.rows) {
-      expect(r.height, `${r.text}: 44`).toBe(44);
-      expect(r.labelLeft, `${r.text}: label at the 18 inset`).toBeCloseTo(18, 0);
-      expect(r.border, `${r.text}: a hairline below`).toBe('1px');
-    }
-    expect(m.listTop, 'directly below the 52 row').toBe(52);
-    expect(m.rows.filter((r) => r.current === 'page').map((r) => [r.text, r.mark])).toEqual([['Want list', true]]);
-    expect(m.main - mainBefore, 'the page moved down by the list').toBeCloseTo(m.listHeight, 0);
-  });
 
   /* Fails against step 74's header: no control, so no keyboard to drive it. */
   test('Enter and Space toggle it; Escape closes it and returns focus to the control', async ({ page }) => {
@@ -195,30 +179,7 @@ test.describe('§G.8: the open menu', () => {
     expect(await page.evaluate(() => document.activeElement?.hasAttribute('data-menu-control') ?? false), 'focus is back on the control').toBe(true);
   });
 
-  /* Fails against step 74's header: no control. */
-  test('it stays open on scroll and on a click elsewhere, and a chosen link renders the next screen closed', async ({ page }) => {
-    await open(page, '/want-list', 390, 500);
-    await control(page).click();
-    await page.mouse.wheel(0, 300);
-    await page.waitForTimeout(200);
-    await page.mouse.click(200, 480);
-    await expect(control(page)).toHaveAttribute('aria-expanded', 'true');
-    await page.evaluate(() => window.scrollTo(0, 0));
-    await page.locator('[data-menu-list] a', { hasText: 'Stats' }).click();
-    await expect(page).toHaveURL(/\/stats$/);
-    await expect(control(page)).toHaveAttribute('aria-expanded', 'false');
-    await expect(page.locator('[data-menu-list]')).toHaveCount(0);
-  });
 
-  /* Fails against step 74's header: no menu to open. */
-  test('the wall’s height variable follows the open menu', async ({ page }) => {
-    await open(page, '/', 390);
-    await control(page).click();
-    await page.waitForTimeout(200);
-    const m = await page.evaluate(() => ({ header: (document.querySelector('[data-app-nav]') as HTMLElement).getBoundingClientRect().height, variable: parseFloat(document.documentElement.style.getPropertyValue('--app-nav-height')) }));
-    expect(m.header, 'the open header is taller than 53').toBeGreaterThan(53);
-    expect(m.variable, 'and the variable says so').toBeCloseTo(m.header, 0);
-  });
 });
 
 test.describe('§G.8: the record detail’s four forms, each boundary from both sides', () => {
@@ -258,19 +219,6 @@ test.describe('§G.8: the record detail’s four forms, each boundary from both 
     }
   });
 
-  /* Fails against step 74's header: no menu. The slot is the record's, not the app's, so it stays out of the list and below it. */
-  test('open at 390, the slot sits below the list, outside it', async ({ page }) => {
-    const id = await seedRecord(page);
-    await open(page, `/records/${id}`, 390);
-    await control(page).click();
-    const m = await page.evaluate(() => {
-      const list = document.querySelector('[data-menu-list]') as HTMLElement;
-      const slot = document.querySelector('[data-slot="actions"]') as HTMLElement;
-      return { listBottom: list.getBoundingClientRect().bottom, slotTop: slot.getBoundingClientRect().top, inList: list.contains(slot) };
-    });
-    expect(m.inList, 'not in the menu').toBe(false);
-    expect(m.slotTop, 'below the list').toBeGreaterThanOrEqual(m.listBottom - 0.5);
-  });
 });
 
 test.describe('the links’ hit area is a 44 overlay, not the link’s box', () => {

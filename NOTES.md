@@ -34475,3 +34475,67 @@ holds that request open and reads the control while it stays (five runs,
 five passes). A test that waits for a transient element is reading a
 moment, not a state. No committed capture changed: the two writers are
 behind their flag, and the capture check passed in the unit run.
+
+## Step 84 built: §G.8 -- the menu covers, and nothing beneath it moves (5 Oct)
+
+The open list sits on a fixed panel of opaque paper from the header's rule
+to the viewport's bottom, full width; the header's 53 row stays above it
+and its height does not change, so the wall does not move and the page
+does not grow. A supersession of the pushed menu steps 76, 78 and 79 built.
+The mechanism: `position: fixed` from the row's end, its top edge the rule
+(so the row keeps its rule on a record, where the header's own lies under
+the slot's row); `z-50`; the page's scroll held while open. Opening pushes
+one history entry at the same URL; Back, CLOSE, Escape, a tap on the
+panel's paper off the list, and widening past 584 close it, each going back
+over that entry; a chosen link replaces it. In a window shorter than the
+list, the list scrolls within the panel.
+
+**Tests: `nav-menu-84.spec.ts`, ten.** Four step 76 tests that pinned the
+pushed menu are replaced, each with a named successor in the spec's own
+note. Measured on Collection at 390 by 844: header 53, page 929, far
+region 791, the same open as closed; the seats the same size.
+
+**Stacking: my warning named the wrong screen, twice corrected.** I said
+the wall's transforms would outrank a panel. Below 584 the wall is always
+the overview (the near view needs more than 590), and its seats sit in no
+layer: staged with the z-index removed, every seat assertion still passed.
+Then I said nothing on Collection outranks a fixed panel -- also wrong:
+eleven positioned elements sit below the header there, in the rail. What
+is true is that the SEATS are unlayered. So the wall test has three parts:
+a precondition that the wall is the overview and no seat has a positioned
+or transformed ancestor (staged with a layered overview, it fails naming
+three); the seats covered, as Design ruled; and every positioned element
+on the page under the panel covered too, which fails without the z-index.
+A second test on a record's absolutely positioned cover fails the same
+way. A property measured in one view was carried to a width where that
+view does not render -- the same error as the 173/156 figures.
+
+**Two staged breaks did not take, and passed.** A second tracking class on
+one element lost to the stylesheet's order; a second `style` attribute was
+discarded as a duplicate. Each "break" changed nothing and the test passed,
+which read for a moment as the test being unable to fail. A staged break
+is confirmed to have taken -- the computed value moved, the type checker is
+clean -- before its result is read.
+
+**The captures' first set recorded a difference that was not real.** The
+record page read 4037 long closed and 4110 open; it was still growing as
+images arrived when the closed shot was taken. Settled, it is 4110 both
+ways, and the sheet now waits. Captures: `docs/captures/nav-menu-84/`,
+twelve, Collection and a record closed and open at 390 and 320 and at
+390 by 240.
+
+**A limit:** holding the page's scroll removes a classic scrollbar, which
+on a desktop in a narrow window would widen the page by its width. Not
+testable here, where the page's width equals the window's either way.
+
+**Behind the cover's square, measured for §33.** With the photograph held
+back from loading, the pixel at the square's centre is paper at 390 and
+1000 and the record's tint at 1440: the tint is the sleeve cell's
+background above the fork only (§40). A sentence saying the square shows
+the tint before the photograph loads is false below 1440.
+
+Verification, gate: unit 4028 passed, 1 failed (the design index, on the
+untaken step 85 drop; 11 of 11 without it); chromium 463 passed; mobile 197
+passed; typecheck, lint and build clean. The precondition and the
+positioned-element check were added to the wall test after the gate and
+run with the spec, 10 of 10.
