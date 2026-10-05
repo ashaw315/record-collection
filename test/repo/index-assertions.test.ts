@@ -73,6 +73,20 @@ describe('the design index passes its own assertions', () => {
     expect(count(/6: (\d+) entries checked/), 'assertion 6 checked entries').toBeGreaterThan(0);
     expect(count(/7: (\d+) declared/), 'assertion 7 found declared sentences').toBeGreaterThan(0);
     /*
+      **6 and 7 count different things, so the run says how they meet (5 Oct).**
+      6 counts every entry; 7 counts declared sentences, which the entries
+      with a declared prefix pair with one to one. The rest are exempt only
+      as a section's own first wording (s equals by). A gap between the two
+      figures read as 7 passing over unpaired entries until it was asked
+      about; the line now states the sum, and this holds it.
+    */
+    const entries = count(/6: (\d+) entries checked/);
+    const declared = count(/7: (\d+) declared/);
+    const exempt = count(/7: \d+ declared withdrawal sentences against \d+ entries: \d+ paired, (\d+) exempt/);
+    const paired = count(/7: \d+ declared withdrawal sentences against \d+ entries: (\d+) paired/);
+    expect(paired, 'every declared sentence is paired').toBe(declared);
+    expect(paired + exempt, `paired and exempt account for every entry (${paired} + ${exempt} against ${entries})`).toBe(entries);
+    /*
       **In-scope, not the list total.** 8a iterates governs rows and §1-§10
       have pointer rows, so the settled file's eight entries are permanently
       beyond it; comparing against the list length showed a clean run as a

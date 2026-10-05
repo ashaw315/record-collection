@@ -436,7 +436,16 @@ const WITHDRAWAL_PREFIX =
     else if (n > 1) fail(`7 ${e.id} matches-many ${n}`);
   }
 
-  console.log(`     7: ${sentences.length} declared withdrawal sentences against ${withdrawals.length} entries`);
+  /*
+    6 counts entries and 7 counts declared sentences, so the line says how
+    they meet: entries with a declared prefix paired one to one with a
+    sentence, and entries exempt as a section's own first wording (s equals
+    by). Asked about on 5 Oct, when 108 against 106 read as 7 passing over
+    two unpaired entries; they were the two exempt ones.
+  */
+  const paired = withdrawals.filter((e) => WITHDRAWAL_PREFIX.test(collapse(e.quote)) && sentences.filter((x) => x.section === e.s && x.sentence === collapse(e.quote)).length === 1);
+  const exempt = withdrawals.filter((e) => !WITHDRAWAL_PREFIX.test(collapse(e.quote)) && e.s === e.by);
+  console.log(`     7: ${sentences.length} declared withdrawal sentences against ${withdrawals.length} entries: ${paired.length} paired, ${exempt.length} exempt as a section's own first wording (${exempt.map((e) => e.id).join(', ')})`);
   report(7, failures.length === before);
 }
 
