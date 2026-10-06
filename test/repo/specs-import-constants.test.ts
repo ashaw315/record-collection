@@ -77,6 +77,8 @@ const GOVERNED = [
   'e2e/label-tracking-80.spec.ts',
   /* §33 (step 83): the cover's bounded crop, read as pixels on fixtures. */
   'e2e/cover-fit-83.spec.ts',
+  'e2e/cover-wait-85.spec.ts',
+  'e2e/sheet/cover-boxes.sheet.ts',
   'e2e/identity-band-23.spec.ts',
   'e2e/identity-extremes.spec.ts',
   'e2e/images.spec.ts',

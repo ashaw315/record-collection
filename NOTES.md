@@ -34606,3 +34606,55 @@ way. The compensation has to equal the scrollbar that was there.
 **Step level:** scroll-hold unit tests (4); nav-menu-84, nav-menu-76,
 nav-type-74 and nav-mobile on both projects, 34 passed; typecheck, lint
 (0 errors), build.
+
+## Step 85 built: §33 -- the cover waits for its shape (5 Oct)
+
+A supersession of step 83's paint. The cover is in the server's markup,
+hidden (`invisible`), and becomes visible in the render that gives it its
+treatment. Its square keeps its size and the cell's ground shows through.
+
+**The defect was not where the step's wording pointed, and the test had to
+find it.** A photograph that has not arrived paints nothing in any build, so
+holding the photograph alone passes against step 83's cover. The cropped
+paint happens when the photograph HAS arrived and the page's scripts have
+not yet read its shape. So `e2e/cover-wait-85.spec.ts` has two waits:
+
+- scripts held, photograph through (the 1200 x 900 fixture and the 1000 x
+  951 one, at 390, 1000 and 1440): the square is read as pixels at 25
+  points, each the cell's ground. Red against step 83 at all six: the
+  photograph's own colours where ground should be.
+- photograph held, scripts through (the 1200 x 900 fixture, three widths):
+  the same pixel read, which step 83 also passes, and a per-frame sampler,
+  which it does not.
+
+**"At no frame" is covered two ways, and one is a proxy.** The pixel read
+covers the held state. For frames after release, a sampler installed before
+the page's scripts records each animation frame's loaded, treatment and
+computed visibility, and the test asks that no frame be visible with no
+treatment. That is the style and not the pixels; it is what is reachable
+for a frame that cannot be stopped on.
+
+**The grounds, as preconditions:** paper (231,230,227) at 390 and 1000, the
+tint (212,149,114 for the fixture's spine colour) at 1440. The first run had
+no spine colour on the seeded record, so 1440 was paper too and the test
+said so before reading anything.
+
+**No real cover changes, and this time the readings are kept.** Step 83's
+"64 of 64" was a count from a probe that was not kept, so there was nothing
+to compare against. `e2e/sheet/cover-boxes.sheet.ts` now writes each real
+cover's box, treatment, visibility and natural size at four widths. Run
+before and after this change on the real collection, read-only: the two
+files are identical, 64 covers cropped and visible in the same boxes, and
+four readings with no cover (The Blues Project). Kept at
+`docs/captures/cover-wait-85/real-covers-64-unchanged.jsonl`.
+
+**Costs, stated.** A cover whose photograph fails to load, or a page whose
+scripts never run, shows an empty square for good; before, the second
+showed the photograph cropped. And the wait is unmarked: at 390 the square
+is empty paper. Captures for Adam, written with WRITE_CAPTURES=1:
+`docs/captures/cover-wait-85/`, waiting and arrived at 390, 1000 and 1440.
+
+**Step level:** cover-wait-85 (9) with cover-fit-83, frame-planes,
+floor-ceiling-measure, nav-menu-84, identity-band-23, layout-sweep,
+wall-cover and real-records-paint on both projects, 61 passed; the record
+and repo unit tests, 831 passed; typecheck, lint (0 errors), build.

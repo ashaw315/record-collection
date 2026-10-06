@@ -11,12 +11,13 @@ import { coverTreatment, type CoverTreatment } from './cover-fit';
  * treatment turns on it (step 83). `data-cover-treatment` appears when the
  * shape has been read, and names what was decided.
  *
- * **So a photograph beyond the bound is first painted cropped, and fitted
- * once it has loaded.** Until then nothing says it is not square, and the
- * built treatment stands. Deciding before the first paint needs the
- * dimensions stored at upload, which is a schema change SPEC.md §4 does not
- * give; recorded in NOTES with this step. No cover in the collection is
- * beyond the bound, so none takes that path today.
+ * **The cover is not shown until its shape is read (step 85, §33).** It is
+ * in the markup from the server, hidden, so its square keeps its size and
+ * the cell's ground shows through; it becomes visible in the same render
+ * that gives it its treatment. Before this a photograph beyond the bound
+ * was painted cropped for as long as the page's scripts took, and then
+ * jumped to fitted. Hidden and not unrendered, so the browser fetches the
+ * photograph as early as it did.
  *
  * Fitted, the photograph sits centred in the same square on paper: the
  * square keeps its place and its size, and the paper is stated, because the
@@ -37,7 +38,7 @@ export function SleeveCover({ url }: { url: string }) {
       src={url}
       alt=""
       onLoad={(event) => read(event.currentTarget)}
-      className={treatment === 'fit' ? 'block bg-background object-contain' : 'block object-cover'}
+      className={treatment === null ? 'invisible block object-cover' : treatment === 'fit' ? 'block bg-background object-contain' : 'block object-cover'}
     />
   );
 }
