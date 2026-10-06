@@ -80,6 +80,8 @@ const GOVERNED = [
   'e2e/cover-wait-85.spec.ts',
   /* §M.1 (step 81): the record modal's view, opened from the cover. */
   'e2e/record-modal-81.spec.ts',
+  /* §M.2 (step 82): the newest back, on the wall and in the modal. */
+  'e2e/back-newest-82.spec.ts',
   'e2e/sheet/cover-boxes.sheet.ts',
   'e2e/sheet/record-modal.sheet.ts',
   'e2e/identity-band-23.spec.ts',

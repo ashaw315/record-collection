@@ -209,22 +209,25 @@ export async function shelfRecords(
       ORDER BY rg.record_id, rg2.name, r.root_id
     ),
     /**
-     * One image per type per record, OLDEST first.
+     * One image per type per record, the NEWEST of each.
      *
      * DISTINCT ON rather than a plain join: a record with three images would
      * otherwise appear three times, putting three spines on the wall — the same
      * fan-out the multi-genre join has, one table over.
      *
-     * Oldest wins, matching the gallery's "the first upload stays first". If
-     * the two disagreed, the front of a pulled record would differ from the
-     * first image of its own gallery.
+     * Newest wins, for every face (§M.2, step 82): "Every face shows the
+     * newest photo of its type... The wall moves to newest-first too." The
+     * owner's own photograph of their own copy is a better source than the
+     * image that arrived first, and an upload should not sit unseen behind an
+     * older one. This replaces oldest-first for the back and the inside
+     * leaves, whose reason was matching the gallery's first image; the
+     * gallery shows every image, and its first is not a face.
      */
     image AS (
       SELECT DISTINCT ON (record_id, image_type) record_id, image_type, url
       FROM images
       WHERE image_type IN ('cover', 'back', 'gatefold_left', 'gatefold_right')
-      -- §61 (step 72): the cover is the NEWEST, as the frame shows it; every other face keeps the gallery's oldest-first.
-      ORDER BY record_id, image_type, (CASE WHEN image_type = 'cover' THEN created_at END) DESC NULLS LAST, created_at ASC, id
+      ORDER BY record_id, image_type, created_at DESC, id
     )
     SELECT
       records.id,

@@ -35323,3 +35323,54 @@ grammar stops all eleven assertions; the genres test's budget measured (seed
 100, time it once, state the figure); and what Soft Rock and Ballad are.
 
 Stage 1 of the §10b work is done: 7261b2a, both sentences in SPEC.md.
+
+## Step 82 built: §M.2 -- the newest back, on the wall as in the modal (6 Oct)
+
+**Built.** The shelf query's `image` CTE orders every face newest first
+(`created_at DESC, id`) where it took the newest cover and the oldest of
+everything else. The modal already took the newest back (`newestOfType`,
+step 81's second unit). One rule for the cover, the back and both inside
+leaves, as §M.2 says.
+
+**A test was rewritten, and it was the old contract's.**
+`test/integration/shelf.test.ts` held "the cover is the newest while the
+back stays the oldest, so... the back matches the gallery". Step 82 is
+ruled as a supersession of exactly that, so the test now states §M.2 for
+all four types, with the newer row inserted first for two types and last
+for two. Red against the query as built (back-first for back-second).
+
+**The fixture, as the step asks, and no capture.**
+`e2e/back-newest-82.spec.ts`: a record with two backs, the newer by date
+inserted first, that precondition asserted from the database. The wall's
+pulled and turned record and the modal's back both carry the newer
+photograph. Both passed as built (the modal's half was built in step 81),
+so each was shown red against its own staged oldest-first, confirmed taken:
+the query's order reversed (wall red, modal green), and the page's pick
+reversed (modal red, wall green).
+
+**Step level, and it is NOT green: 83 passed, 2 failed, ledger clean.**
+Green: back-newest-82, record-modal-81, the eight wall specs; the shelf
+integration tests with the wall, record and repo unit tests, 1187 passed;
+typecheck, lint (0 errors), build. Red, on both attempts:
+
+- `[chromium] e2e/shelf.spec.ts:304`, "the rail's sort reorders the wall
+  itself". Under `sort=title:desc` it reads Alpha, Echo, Delta, Charlie,
+  Bravo where it expects Alpha last. It orders seats by x alone.
+- `[mobile] e2e/shelf-narrow.spec.ts:40`. Its tap on its own record's seat
+  never lands: a shelf upright's polygon is over the seat.
+
+**Not caused by step 82: both fail the same way with the committed query
+put back** (13 passed, 2 failed). Both passed in the green gate an hour
+earlier (5.3s and 3.3s), and the rail-sort test also failed once and
+passed once in the two subset runs of the leak unit.
+
+**The cause is not known, and I stopped after two attempts.** Running the
+pair on yesterday's pushed commit in a separate worktree, to tell "fails
+whenever run alone" from "broken today", did not get as far as a test:
+Turbopack panicked on the worktree's linked dependencies. What the
+evidence fits, and does not show: both tests depend on where a seat lands,
+which depends on what else is on the wall, so each passes among the other
+specs' records and fails among the seventeen alone. If that is right the
+rail-sort test's x-only ordering is wrong whenever its five records wrap
+onto two rows, and the narrow test's seat is sometimes under an upright.
+Next check, cheap: read the y of the five seats in the failing state.

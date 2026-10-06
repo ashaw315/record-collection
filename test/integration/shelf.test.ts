@@ -638,7 +638,7 @@ describe('shelfRecords — what pulling a record needs (§10b)', () => {
     });
   });
 
-  it('takes the NEWEST cover (§61) and the oldest of each other type, matching the gallery', async () => {
+  it('takes the NEWEST cover (§61)', async () => {
     /**
      * A record can have two covers. The gallery orders within a type oldest
      * first — "the first upload stays first" — and the shelf must agree, or the
@@ -660,20 +660,41 @@ describe('shelfRecords — what pulling a record needs (§10b)', () => {
       createdAt: new Date('2026-06-01T00:00:00Z'),
     });
 
-    /* §61 (step 72): the shelf shows the record's NEWEST cover, as the frame does; the other faces keep the gallery's oldest-first. */
+    /* §61 (step 72): the shelf shows the record's NEWEST cover, as the frame does. */
     expect((await shelfRecords())[0].coverUrl).toBe('https://blob.example/second.jpg');
   });
 
-  it('§61: the cover is the newest while the back stays the oldest, so the front matches the frame and the back matches the gallery', async () => {
+  /*
+    §M.2 (step 82), superseding the built order this test used to pin ("the
+    back stays the oldest, so... the back matches the gallery"): "Every face
+    shows the newest photo of its type: the front the newest cover... the
+    back the newest back, and each inside leaf the newest of its own type...
+    The wall moves to newest-first too, and this file does not keep two
+    rules." The gallery's reason gives way because the gallery shows every
+    image and its first is not a face.
+
+    Fails against the query as built at step 72, which took the oldest of
+    every type but the cover.
+  */
+  it('§M.2: every face is the newest photo of its type -- cover, back and each inside leaf', async () => {
     const punk = await genre('Punk');
     const id = await record('Hear Nothing', await artist('Discharge'), { genreIds: [punk] });
-    await db.insert(images).values({ recordId: id, url: 'https://blob.example/back-first.jpg', imageType: 'back', createdAt: new Date('2026-01-01T00:00:00Z') });
-    await db.insert(images).values({ recordId: id, url: 'https://blob.example/back-second.jpg', imageType: 'back', createdAt: new Date('2026-06-01T00:00:00Z') });
-    await db.insert(images).values({ recordId: id, url: 'https://blob.example/cover-first.jpg', imageType: 'cover', createdAt: new Date('2026-01-01T00:00:00Z') });
-    await db.insert(images).values({ recordId: id, url: 'https://blob.example/cover-second.jpg', imageType: 'cover', createdAt: new Date('2026-06-01T00:00:00Z') });
+    const old = new Date('2026-01-01T00:00:00Z');
+    const recent = new Date('2026-06-01T00:00:00Z');
+    /* Newer rows inserted first for two types and last for two, so neither insertion order nor id order can stand in for the date. */
+    await db.insert(images).values({ recordId: id, url: 'https://blob.example/back-second.jpg', imageType: 'back', createdAt: recent });
+    await db.insert(images).values({ recordId: id, url: 'https://blob.example/back-first.jpg', imageType: 'back', createdAt: old });
+    await db.insert(images).values({ recordId: id, url: 'https://blob.example/cover-first.jpg', imageType: 'cover', createdAt: old });
+    await db.insert(images).values({ recordId: id, url: 'https://blob.example/cover-second.jpg', imageType: 'cover', createdAt: recent });
+    await db.insert(images).values({ recordId: id, url: 'https://blob.example/left-second.jpg', imageType: 'gatefold_left', createdAt: recent });
+    await db.insert(images).values({ recordId: id, url: 'https://blob.example/left-first.jpg', imageType: 'gatefold_left', createdAt: old });
+    await db.insert(images).values({ recordId: id, url: 'https://blob.example/right-first.jpg', imageType: 'gatefold_right', createdAt: old });
+    await db.insert(images).values({ recordId: id, url: 'https://blob.example/right-second.jpg', imageType: 'gatefold_right', createdAt: recent });
     const [row] = await shelfRecords();
     expect(row.coverUrl).toBe('https://blob.example/cover-second.jpg');
-    expect(row.backUrl).toBe('https://blob.example/back-first.jpg');
+    expect(row.backUrl).toBe('https://blob.example/back-second.jpg');
+    expect(row.gatefoldLeftUrl).toBe('https://blob.example/left-second.jpg');
+    expect(row.gatefoldRightUrl).toBe('https://blob.example/right-second.jpg');
   });
 
   it('does not multiply a record by its images', async () => {
