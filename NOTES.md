@@ -34725,3 +34725,59 @@ database, and other manage tests that move and re-nest genres ran in
 other workers at the same moment. That is a guess and not a finding. Passing in
 isolation is not evidence the commits are clean (CLAUDE.md §10), so the
 push is held for Adam to decide.
+
+## manage.spec.ts:179 in the full run: the cause is leaked genres, found by keeping the condition (5 Oct)
+
+Pushed at 6f562a3 on Adam's decision, with the mobile failure open.
+
+**My first check removed the condition, which is the rule written three
+entries above.** Running the manage spec alone starts from a truncated
+database. And my hypothesis, cross-worker contention, was wrong: the spec
+alone already runs on two workers, and doubling to four (45 of 45 passed)
+only took the test from 5s to 10s.
+
+**What reproduces it is the number of genres in the database.** The test
+alone, one worker, with N extra genres seeded first:
+
+| extra genres | chromium | mobile | result |
+|---|---|---|---|
+| 0 | 4.6s | 3.3s | pass |
+| 150 | 25.9s | 22.9s | pass |
+| 400 | 37.8s | 34.0s | both FAIL |
+
+At 400 the mobile failure is the gate's own: `toHaveValue` received `""` at
+line 248. The gate's timings (15.1s on chromium, 34.7s on mobile, which runs
+second and so later) sit on this curve. The first seeding attempt did not
+take, because the mobile project's `testMatch` skipped the probe; the genre
+count read after the run (9) showed it, and the figures above are from the
+run where the count read 162 and 412.
+
+**So it is not the collection-filters weakness.** That one is a select read
+before hydration. This one is a test with a 30s budget on a screen whose
+cost grows with every genre the run has left behind: each genre row draws a
+move select offering every other genre. Waiting for the select's own
+readiness would not fix it; the test runs out of time.
+
+**Two things follow, neither fixed here.** Specs leave genres behind over a
+full run (9 remain after the manage spec alone, with its own cleanup); which
+specs is not yet enumerated. And the genres screen is quadratic in the
+number of genres, which the real collection is far below but which is a
+product fact and not only a test one.
+
+## The no-photo state: what draws, and what rules it (5 Oct)
+
+For Design's step 87. **Drawn** (`RecordPage8a.tsx`, `coverFrame`): an empty
+square in the cover's exact box, a 1px hairline border, no fill; the sleeve
+bar and the black block stay drawn. **Ruled by** the settled file's §6
+("What each cell does when its field is empty", Sleeve row: "Frame at paper
+luminance at the square's exact size... the bar and the black block stay
+drawn") and §5.3's last sentence ("a frame at paper luminance, never a
+filled rectangle at cover size"). §54 rules the marks' ink on such a record.
+
+**The gap step 87 would open.** Every rule above assumes no cover means no
+colour: §5.3 "No cover means no derivation". A photograph that fails to
+load belongs to a record that still HAS its derived colour. So "the same as
+a record with none" is two different pages: the square alone becomes the
+frame, or the whole page falls back to ink. And the built frame has no fill,
+so above the fork it would show the tint inside the hairline and not paper.
+The real collection: 19 covers on 16 records, 1 back, 0 gatefold photos.
