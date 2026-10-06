@@ -24,7 +24,7 @@ import { SleeveModal } from './SleeveModal';
  * square keeps its place and its size, and the paper is stated, because the
  * sleeve cell behind it is the record's tint above the fork.
  */
-export function SleeveCover({ url }: { url: string }) {
+export function SleeveCover({ url, backUrl }: { url: string; backUrl: string | null }) {
   const [treatment, setTreatment] = useState<CoverTreatment | null>(null);
   const read = useCallback((img: HTMLImageElement | null) => {
     /* A cached image is complete before React attaches its handler, so the ref reads it too. */
@@ -85,7 +85,7 @@ export function SleeveCover({ url }: { url: string }) {
           className={treatment === null ? 'invisible block object-cover' : treatment === 'fit' ? 'block bg-background object-contain' : 'block object-cover'}
         />
       </button>
-      {open && <SleeveModal onClose={closeSleeve} />}
+      {open && <SleeveModal onClose={closeSleeve} front={url} back={backUrl} />}
     </>
   );
 }

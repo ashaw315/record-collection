@@ -66,6 +66,7 @@ const CASES: Record<string, PageRecord> = {
     imageCount: 1,
     earlierCovers: 0,
     coverUrl: COVER,
+    backUrl: null,
     spineColour: '#a25829',
   },
   /* 16 of 17 render this: no journal, no price, no source. */
@@ -97,6 +98,7 @@ const CASES: Record<string, PageRecord> = {
     imageCount: 1,
     earlierCovers: 0,
     coverUrl: COVER,
+    backUrl: null,
     spineColour: '#44946b',
   },
   /* The emptiest: no Discogs release, so the market mark is CROSSED. */
@@ -125,6 +127,7 @@ const CASES: Record<string, PageRecord> = {
     imageCount: 0,
     earlierCovers: 0,
     coverUrl: COVER,
+    backUrl: null,
     spineColour: '#363129',
   },
 };
@@ -161,6 +164,7 @@ CASES.nocover = {
   conditionMedia: 'VG',
   conditionSleeve: 'G+',
   coverUrl: null,
+  backUrl: null,
   spineColour: null,
 };
 

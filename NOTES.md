@@ -34934,3 +34934,68 @@ leaves: one `gatefold_left` and one `gatefold_right`, both uploaded 6 Oct
 one back is from 1 Oct. Collection totals: 22 covers on 16 records, 1 back,
 1 left leaf, 1 right leaf. The morning's "zero" predates the upload. So the
 gatefold opens on one record, and step 88's hold has lost its reason.
+
+## Step 81, second unit built: §M.4, §M.5's label, §M.6 -- the sleeve, its faces and controls (6 Oct)
+
+**Not to be pushed alone either:** TURN OVER changes the face at once, and
+the turn is the third unit's. The plain back is not drawn: its ground is
+held for Design, so a record with no back photograph turns to an empty
+square under the label BACK.
+
+**Built.** In the view: the sleeve as a square with a 1px hairline edge,
+its side `sleeveSquare(width, height)` taken once on opening; each photo
+fitted in it on paper (`object-contain`); the face label beneath, in the
+shared label style, announced politely; TURN OVER beneath that, as a §9.3
+control. The front is the page's displayed cover; the back is the newest
+back photograph (`newestOfType`, which `displayedCover` now is). Hover and
+focus are on TURN OVER and on the top row's CLOSE.
+
+**Three things the ruling does not give, proposed here and stated in the
+tests:** the label's line is 11 and sits 12 below the sleeve with the
+controls 12 below it, so the square is the window's height less 53 and
+115, or its width less 36, whichever is smaller (354 at 390 x 844, 732 at
+1440 x 900). The sleeve, label and controls are centred as one column in
+the space below the row. And the control's label is the header's type at
+.12em, as CLOSE is; §M.6 says "11px mono uppercase ink" and no tracking.
+
+**Step 81 says "TURN OVER on front and back, and CLOSE".** Read as the top
+row's CLOSE; there is one CLOSE, not a second in the row beneath.
+
+**The extraction is mechanical, shown and not asserted.** The wall's plain
+back imprint is now `src/app/wall/PlainBackImprint.tsx`, drawn by
+`WallLabelled`. Before and after, the pulled and turned record's face at
+1440 x 900 on two records: 0 pixels differ in 563 x 563. The instrument was
+checked both ways: two runs before the change were identical on that face
+(the whole page was not: spines right of the record differ by antialiasing
+run to run, 1,270 pixels, which is why the read is the face alone), and a
+control with the imprint's padding at 17 for 16 moved 591 pixels. The
+modal does not use the component yet.
+
+**Tested.** Unit: `sleeveSquare` in four cases and `newestOfType` in three,
+red against a width-only square and a first-match pick. End to end, nine
+tests added to `record-modal-81.spec.ts`, all red against the first unit's
+empty view, then four breaks staged and confirmed taken: a cropped face
+(four red), a square following the window (one), no ring or hover (two),
+no ground (three). Fitted is read as pixels on fixtures: all four frame
+sides and paper bands, on a photo the page itself crops, a 4:3 one, and a
+portrait back. The focus ring is read as pixels on four sides; the hover
+underline is read as computed style, and the test's name says so.
+
+**A test of the first unit's was changed, and why.** "It covers the whole
+viewport in paper" read every point below the row as paper, which was true
+of an empty view. With the sleeve in it the claim that stands is that
+nothing of the page shows through, so it now reads points outside the
+sleeve's column and asserts at least 24 remain. It still fails with the
+view's ground removed (break D).
+
+**Fan-out, said out loud:** `backUrl` on the page's record type put one
+`backUrl: null` into the probe page's four fixtures and the component
+test's one. Thirteen files in the unit; the judgements are the three above.
+
+**Captures, generated from the build on the real collection, read-only:**
+`docs/captures/record-modal-81/`, Bitches Brew front and back at 390 x 844
+and 1440 x 900, with a manifest. No capture of a plain back: held.
+
+**Step level:** record-modal-81 (20), the eight wall specs and eight cover
+specs on both projects, 125 passed; record, wall and repo unit tests;
+typecheck, lint (0 errors), build.

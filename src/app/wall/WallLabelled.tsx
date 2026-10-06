@@ -3,7 +3,7 @@ import { PAPER_CSS } from '@/lib/colour/paper';
 import { paintOrder, seatBounds } from './paint-sort';
 import { FACE_FILL, PLANE_FILL, TOP_FILL, points } from './WallOverview';
 import type { WallSeat } from './shelf-runs';
-import { WALL_PAPER_HEX, pullFill, returnFill } from './pull-colour';
+import { pullFill, returnFill } from './pull-colour';
 import { wallLayout } from './wall-layout';
 import type { View } from './view';
 import { GROWTH, OUT_MS, RETURN_MS, easeInOutCubic, gestureFaces, outTime, poseAt, type GestureState } from './gesture';
@@ -13,6 +13,7 @@ import { recordLadder } from '@/lib/colour/record-ladder';
 import { MICRO_PX } from '../type-scale';
 import { LABEL } from '../records/[id]/grid-type';
 import { SLEEVE_LEADING, sleeveTitle } from './sleeve-type';
+import { PlainBackImprint } from './PlainBackImprint';
 
 /**
  * The wall at 1:1 — faces plus labels (The Wall 5b §4, D2; §W).
@@ -205,10 +206,7 @@ export function WallLabelled({
             ) : (
               sleeve(
                 <foreignObject data-back-plain="" width={inner} height={inner} pointerEvents="none">
-                  <div className={`flex h-full flex-col justify-end p-[16px] ${LABEL}`} style={{ color: WALL_PAPER_HEX }}>
-                    <div>{record.labelName ?? ''}</div>
-                    <div>{record.catalogNumber ?? ''}</div>
-                  </div>
+                  <PlainBackImprint labelName={record.labelName} catalogNumber={record.catalogNumber} />
                 </foreignObject>,
               )
             )

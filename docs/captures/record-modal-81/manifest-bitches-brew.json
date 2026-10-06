@@ -1,0 +1,78 @@
+[
+ {
+  "record": "Bitches Brew",
+  "width": 390,
+  "height": 844,
+  "face": "front",
+  "photographed": true,
+  "file": "modal-bitches-brew-0390x844-front-s354.png",
+  "square": [
+   18,
+   232,
+   354,
+   354
+  ],
+  "label": "Front",
+  "natural": [
+   600,
+   600
+  ]
+ },
+ {
+  "record": "Bitches Brew",
+  "width": 390,
+  "height": 844,
+  "face": "back",
+  "photographed": true,
+  "file": "modal-bitches-brew-0390x844-back-s354.png",
+  "square": [
+   18,
+   232,
+   354,
+   354
+  ],
+  "label": "Back",
+  "natural": [
+   780,
+   780
+  ]
+ },
+ {
+  "record": "Bitches Brew",
+  "width": 1440,
+  "height": 900,
+  "face": "front",
+  "photographed": true,
+  "file": "modal-bitches-brew-1440x900-front-s732.png",
+  "square": [
+   354,
+   71,
+   732,
+   732
+  ],
+  "label": "Front",
+  "natural": [
+   600,
+   600
+  ]
+ },
+ {
+  "record": "Bitches Brew",
+  "width": 1440,
+  "height": 900,
+  "face": "back",
+  "photographed": true,
+  "file": "modal-bitches-brew-1440x900-back-s732.png",
+  "square": [
+   354,
+   71,
+   732,
+   732
+  ],
+  "label": "Back",
+  "natural": [
+   780,
+   780
+  ]
+ }
+]

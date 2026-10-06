@@ -65,6 +65,8 @@ export type PageRecord = {
   /** §62: covers the record holds and the page does not show; named beside the count, never folded into it. */
   earlierCovers: number;
   coverUrl: string | null;
+  /** §M.2: the newest back photograph, for the record modal's back; null where the record has none. */
+  backUrl: string | null;
   spineColour: string | null;
 };
 
@@ -762,7 +764,7 @@ export function RecordPage8a({ record, writingConfigured = false }: { record: Pa
             {record.coverUrl === null ? (
               <div data-mark="coverFrame" style={{ border: `1px solid ${RULE}` }} />
             ) : (
-              <SleeveCover url={record.coverUrl} />
+              <SleeveCover url={record.coverUrl} backUrl={record.backUrl} />
             )}
             <div data-mark="sleeveBar" style={{ background: base }} />
             <div data-mark="sleeveBlock" style={{ background: INK }} />

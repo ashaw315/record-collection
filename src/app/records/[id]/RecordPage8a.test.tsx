@@ -45,6 +45,7 @@ const record = (spineColour: string | null): PageRecord => ({
   imageCount: 0,
   earlierCovers: 0,
   coverUrl: null,
+  backUrl: null,
   spineColour,
 });
 

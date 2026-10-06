@@ -108,9 +108,19 @@ export function orderImages(images: GalleryImage[]): ImageTile[] {
  * catalogue. Null is §54's record: no cover at all.
  */
 export function displayedCover(images: GalleryImage[]): GalleryImage | null {
+  return newestOfType(images, 'cover');
+}
+
+/**
+ * §M.2: "Every face shows the newest photo of its type: the front the
+ * newest cover, as §61 rules for the page, the back the newest back, and
+ * each inside leaf the newest of its own type." One rule for every face, so
+ * the displayed cover is this function asked for a cover.
+ */
+export function newestOfType(images: GalleryImage[], type: GalleryImageType): GalleryImage | null {
   let newest: GalleryImage | null = null;
   for (const image of images) {
-    if (image.imageType !== 'cover') continue;
+    if (image.imageType !== type) continue;
     if (newest === null || time(image.createdAt) > time(newest.createdAt)) newest = image;
   }
   return newest;

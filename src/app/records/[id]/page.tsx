@@ -1,4 +1,4 @@
-import { displayedCover, imagesShown } from './gallery-order';
+import { displayedCover, imagesShown, newestOfType } from './gallery-order';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { AppHeader } from '@/components/AppHeader';
@@ -219,6 +219,7 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
                 earlierCovers: imagesShown(record.images).earlierCovers,
                 /* §61: the newest cover, not the first; the shelf (`shelf.ts`) reads the same. */
                 coverUrl: displayedCover(record.images)?.url ?? null,
+                backUrl: newestOfType(record.images, 'back')?.url ?? null,
                 spineColour: record.spineColour,
               }}
               writingConfigured={isAnthropicConfigured()}

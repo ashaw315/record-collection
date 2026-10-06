@@ -1,9 +1,11 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { holdScroll } from '@/components/scroll-hold';
 import { NAV_TYPE } from '@/components/nav-type';
+import { LABEL } from './grid-type';
+import { MODAL_CONTROL_GAP, MODAL_LABEL_GAP, MODAL_LABEL_LINE, sleeveSquare, type SleeveFace } from './sleeve-modal';
 
 /**
  * The record modal's view (§M.1): "a view of the object, not a dialog over
@@ -20,8 +22,23 @@ import { NAV_TYPE } from '@/components/nav-type';
  * steps back through the history entry it added, and the entry going is
  * what closes it, so Back, CLOSE and Escape are one path.
  */
-export function SleeveModal({ onClose, children }: { onClose: () => void; children?: React.ReactNode }) {
+/**
+ * §M.6: "44 tall, a 1px ink box, no fill, no radius, border-box, with an
+ * 11px mono uppercase ink label." Hover: "the label takes a 1px ink
+ * underline, 3 below its baseline, and nothing else changes." Keyboard
+ * focus: "a 2px ink outline, offset 2 outside the box, on keyboard focus
+ * only." The label is the header's own type, as the top row's CLOSE is.
+ */
+const CONTROL = `${NAV_TYPE} box-border flex h-[44px] shrink-0 cursor-pointer items-center justify-center border border-foreground font-normal text-foreground decoration-1 underline-offset-[3px] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground`;
+
+const FACE_NAME: Record<SleeveFace, string> = { front: 'Front', back: 'Back' };
+
+export function SleeveModal({ onClose, front, back }: { onClose: () => void; front: string; back: string | null }) {
   const view = useRef<HTMLDivElement>(null);
+  /* §M.4: "The sizes are taken once when the modal opens and do not change while it is open." */
+  const [side] = useState(() => sleeveSquare(window.innerWidth, window.innerHeight));
+  const [face, setFace] = useState<SleeveFace>('front');
+  const shown = face === 'front' ? front : back;
   const close = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -58,13 +75,34 @@ export function SleeveModal({ onClose, children }: { onClose: () => void; childr
           type="button"
           data-sleeve-close=""
           onClick={onClose}
-          className={`${NAV_TYPE} ml-auto box-border flex h-[44px] w-[calc(5ch+0.6em+36px)] shrink-0 cursor-pointer items-center justify-center border border-foreground font-normal text-foreground`}
+          className={`${CONTROL} ml-auto w-[calc(5ch+0.6em+36px)]`}
         >
           Close
         </button>
       </div>
-      <div data-sleeve-stage="" className="min-h-0 flex-1">
-        {children}
+      {/*
+        §M.4: the sleeve centred below the row, with the face label and the
+        controls beneath it. The square is a box with a hairline edge, and
+        every photograph is fitted inside it on paper, never cropped, so a
+        face keeps its size and framing across a turn.
+      */}
+      <div data-sleeve-stage="" className="flex min-h-0 flex-1 flex-col items-center justify-center">
+        <div data-sleeve="" data-face={face} className="relative box-border shrink-0 border border-border bg-background" style={{ width: side, height: side }}>
+          {shown !== null && (
+            // eslint-disable-next-line @next/next/no-img-element -- blob and data URLs the optimizer is not configured for, as in ImageGallery
+            <img key={face} data-sleeve-face={face} src={shown} alt="" className="block h-full w-full object-contain" />
+          )}
+        </div>
+        {/* §M.5: "a label beneath the sleeve names the face shown... It shows in every mode... the label is announced politely." */}
+        <div data-face-label="" aria-live="polite" className={`${LABEL} shrink-0 leading-none`} style={{ marginTop: MODAL_LABEL_GAP, height: MODAL_LABEL_LINE }}>
+          {FACE_NAME[face]}
+        </div>
+        <div data-sleeve-controls="" className="flex shrink-0" style={{ marginTop: MODAL_LABEL_GAP, gap: MODAL_CONTROL_GAP }}>
+          {/* §M.6: "TURN OVER shows on the front and on the back, and keeps its label on both". */}
+          <button type="button" data-sleeve-control="turn" onClick={() => setFace((now) => (now === 'front' ? 'back' : 'front'))} className={`${CONTROL} px-[18px]`}>
+            Turn over
+          </button>
+        </div>
       </div>
     </div>,
     document.body,
