@@ -145,7 +145,7 @@ test.describe('§33: a photograph that has arrived is not shown until its shape 
   for (const f of [FAR, INSIDE]) {
     for (const width of WIDTHS) {
       /* Fails against SleeveCover as built at step 83, whose image is visible from the server's markup: the square reads the photograph, cropped, for as long as the scripts take. */
-      test(`${f.file} at ${width}: loaded with the page’s scripts held, the square reads as the cell’s ground at every point; released, it is ${f.expected === 'fit' ? 'fitted' : 'cropped'}, and no frame shows it undecided`, async ({ page }) => {
+      test(`${f.file} at ${width}: loaded with the page’s scripts held, the square reads as the cell’s ground at every point; released, it is ${f.expected === 'fit' ? 'fitted' : 'cropped'}, and in no sampled frame is its computed visibility visible without a treatment`, async ({ page }) => {
         const { id, url } = await seedRecord(page, f, f.expected);
         const scripts = gate();
         await page.route(`**${url}`, (route) => route.fulfill({ contentType: 'image/png', body: readFileSync(join(FIXTURES, f.file)) }));
@@ -191,7 +191,7 @@ test.describe('§33: a photograph that has not arrived leaves its square empty',
       frame count is the line that fails against step 83: its cover is
       visible in every frame before the photograph arrives.
     */
-    test(`${FAR.file} at ${width}: with the photograph held, the square reads as the cell’s ground; when it arrives it is fitted, and no frame shows it undecided`, async ({ page }) => {
+    test(`${FAR.file} at ${width}: with the photograph held, the square reads as the cell’s ground; when it arrives it is fitted, and in no sampled frame is its computed visibility visible without a treatment`, async ({ page }) => {
       const { id, url } = await seedRecord(page, FAR, 'held');
       const photograph = gate();
       await page.route(`**${url}`, async (route) => { await photograph.opened; await route.fulfill({ contentType: 'image/png', body: readFileSync(join(FIXTURES, FAR.file)) }); });

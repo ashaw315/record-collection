@@ -34658,3 +34658,41 @@ is empty paper. Captures for Adam, written with WRITE_CAPTURES=1:
 floor-ceiling-measure, nav-menu-84, identity-band-23, layout-sweep,
 wall-cover and real-records-paint on both projects, 61 passed; the record
 and repo unit tests, 831 passed; typecheck, lint (0 errors), build.
+
+## A verification that removes the condition the defect needs cannot see the defect (5 Oct)
+
+Step 85's verification, as written by Design and agreed by Adam and by me,
+said: throttle the network, and read the square before the photograph
+loads. Step 83's defect is a photograph painted cropped before its shape is
+read. That paint needs two things at once: the photograph ARRIVED, and the
+scripts not yet run. Throttling the photograph takes away the first, so the
+state the defect lives in never occurs, and the check passes against the
+unfixed build. It would have gone green on day one and been reported as
+proof.
+
+It was caught only because the spec was run against step 83's cover before
+anything was changed, and one of the two waits did not go red on pixels.
+
+**The rule.** Before staging a verification, write down the conditions the
+defect needs, and check the staging leaves every one of them in place. A
+throttle, a mock, a held request or a stub each removes something; ask
+whether what it removes is something the defect depends on. The fail-first
+run is the instrument that finds this, which is the reason it is not
+optional even when the verification was written by three parties.
+
+Same family as the null result without a positive control, and the staged
+break that did not take: in each the apparatus could not have produced the
+failing answer.
+
+## Step 85: "at no frame" is a proxy, and the tests now say so in their names (5 Oct)
+
+The per-frame sampler reads the cover's COMPUTED VISIBILITY each animation
+frame, not its pixels. A frame cannot be stopped on to be read as pixels
+after release, so this is what is reachable. The pixel reads cover the two
+held states only. The nine tests were named "no frame shows it undecided",
+which claims more than the assertion supports; they now read "in no sampled
+frame is its computed visibility visible without a treatment".
+
+**Open, routed to Design, not built:** a photograph that fails to load, and
+a page whose scripts never run, leave the square empty for good. No
+fallback until Design rules.
