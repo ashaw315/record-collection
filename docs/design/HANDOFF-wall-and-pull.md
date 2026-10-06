@@ -123,6 +123,7 @@ The wall at rest is line, ink and paper; colour arrives with the pull. Everythin
 | §M.4 | Shape: every photo is fitted, never cropped | Fit against crop, the sleeve’s size, and how opening moves it. |
 | §M.5 | The turn and the opening | How the turn and the opening move, and what reduced motion makes of them. |
 | §M.6 | Controls, hover and focus | The modal’s controls, when the gatefold opens, and their hover and focus. |
+| §M.7 | The cover travels | How the modal opens and closes from the page’s cover, what comes with it and after it, presses during the travel, and reduced motion. |
 
 ## Structural sections — pointers
 
@@ -355,7 +356,7 @@ These are the sections the rulings above build on, all in `Record Detail 8a - se
 
 ## The record modal target, §M
 
-`Record Modal - build target.dc.html` rules the record modal: the sleeve turning over and the gatefold opening. Its sections are §M.1 to §M.6, and its rows are in the governs table above. M is free in the index, from dbeebfd. **The target becomes an input with this drop:** Code adds it, its `.gitignore` line and assertion 4's §M rules together, because its headings with no rows would fail assertion 1. Steps 81 and 82 build it; both are confirmed free.
+`Record Modal - build target.dc.html` rules the record modal: the sleeve turning over and the gatefold opening. Its sections are §M.1 to §M.7, and its rows are in the governs table above. M is free in the index, from dbeebfd. **The target becomes an input with this drop:** Code adds it, its `.gitignore` line and assertion 4's §M rules together, because its headings with no rows would fail assertion 1. Steps 81 and 82 build it; both are confirmed free.
 
 ## The nav target, §G
 
@@ -417,6 +418,9 @@ Its rows are in the governs table above, one per section; this section does not 
 91. **§M.5 — the turn's swell and a press while turning.** Measure the near edge's swell from frames, at 390 and 1440 and at the perspective strength Adam picks, against Code's computed 25 and 52; if it reaches the top row, lengthen the viewing distance until it does not, and report the distance. Keep a press on TURN OVER, OPEN or FOLD ignored while that motion is under way, and add a test that two presses within one turn yield one turn.
    > A press on TURN OVER while the sleeve is turning is ignored.
 
+92. **§M.7 — the cover travels.** A supersession of step 81's modal appearing at once, in its own step. On open, draw a copy of the page's cover, without the focus ring, travelling from the page's square to the modal's square on an ease-out cubic, position, size and crop to fit together; the paper rises from clear to opaque, with the top row, over the same duration. One duration at every width; propose it, and the label-and-controls fade that starts at landing, and record both for Adam at 390 × 844 and 1440 × 900. On close, by CLOSE, Escape or Back alike, fade the label and controls, show the front folded, then travel back to the square measured at close while the paper clears; return focus once landed. Ignore presses on the cover during travel; a close during the opening travel reverses from where the cover is. Under reduced motion, open and close at once. **Test that Back plays the same return as CLOSE,** by frames, not by the end state alone. Confirm the no-cover frame is not a trigger.
+   > The modal does not appear: the cover the reader pressed travels from its square on the record page to the modal’s square, growing into place.
+
 No step: §G.7. It rules nothing. Hover and focus wait on Code's second pass, the breakpoint is settled and recorded in §G.8, and the eyebrow repetition is an observation, not a ruling.
 
 **The record-detail screen is closed at 7983d4d, on 1 October 2026,** by Adam’s pass over the 119 captures, which found nothing that changes what a reader understands about a record. Steps run 0 to 71; steps 72 and 73 follow the close and change values, not structure. This is the baseline the record modal builds against: its marks, its type ladder and its colour system.
@@ -439,6 +443,7 @@ SPEC.md is Code's, so a withdrawal sentence in §10b crosses as text for Code to
 Logged against a screen's future pass, not patched. Nothing here is a ruling, and nothing here is a build step.
 
 - **Collection, at 390:** SEARCH, SHELF, TABLE, GRID and ADD RECORD all set on one line, and the search field's rule runs into SHELF. Adam says it reads awkwardly. Found while he used the menu on his phone.
+- **Manage, the move-select:** it holds one option per genre for every row it draws, so its cost grows as the square of the genre count, up to the screen's page of 200 rows. Code measured it: 6 genres give 36 options and 0.2s; 156 give 24,336 and 2.3s; 406 give 200 rows at 40,000 and 3.5s. Code recorded this rather than fixing it, because what the move control holds is a design question, not a performance one. The test's budget stays at 30 seconds, which today's end state, 13 genres with a measured peak of 22, clears with room. **The finding is that the control's shape is unruled, and the ruling decides the cost.** Found while closing the genre leak.
 
 ## Maintaining this file
 
