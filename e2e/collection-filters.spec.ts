@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { registerCleanup, trackArtist } from './cleanup';
+import { registerCleanup, trackArtist, trackCreated } from './cleanup';
 import { removeRecordsFor, seedRecords } from './seed';
 
 /* Records and artists removed after each test — see e2e/cleanup.ts. */
@@ -73,7 +73,9 @@ async function seed(page: Page): Promise<Fixture> {
   const post = async (path: string, data: unknown) => {
     const response = await page.request.post(path, { data, failOnStatusCode: false });
     expect(response.status(), `${path} ${JSON.stringify(data)}`).toBe(201);
-    return response.json();
+    const body = await response.json();
+    trackCreated(path, body);
+    return body;
   };
 
   const punk = await post('/api/genres', { name: `Punk-${suffix}` });

@@ -1,5 +1,6 @@
 import { config } from 'dotenv';
-import { closeTestDb, holdTestDatabase, truncateAll } from '../test/helpers/db';
+import { readLedger, saveStart } from './ledger';
+import { closeTestDb, holdTestDatabase, truncateAll, getTestDb } from '../test/helpers/db';
 import { seedSeventeen } from './seventeen';
 
 /**
@@ -66,6 +67,8 @@ export default async function globalSetup(): Promise<void> {
   const started = Date.now();
   await seedSeventeen({ base: BASE, password: PASSWORD });
   process.stdout.write(`[global-setup] seeded the seventeen in ${Date.now() - started}ms\n`);
+  /* The ledger's start: what the run begins with, after seeding and before any test. */
+  saveStart(await readLedger(getTestDb()));
   await closeTestDb();
 }
 

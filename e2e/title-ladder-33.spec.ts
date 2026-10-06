@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { registerCleanup, trackArtist, trackRecord } from './cleanup';
+import { registerCleanup, trackArtist, trackRecord, trackCreated } from './cleanup';
 import { GRID_FORK, NO_SCROLL_HEIGHT, BANDS } from '../src/app/records/[id]/band-geometry';
 import { IDENTITY_PADDING, STEP_GAP } from '../src/app/records/[id]/title-steps';
 
@@ -12,7 +12,12 @@ async function login(page: Page) {
   await page.getByRole('button', { name: 'Sign in' }).click();
   await expect(page).toHaveURL('/');
 }
-async function post(page: Page, path: string, data: unknown) { return (await page.request.post(path, { data })).json(); }
+async function post(page: Page, path: string, data: unknown) {
+  const response = await page.request.post(path, { data });
+  const body = await response.json();
+  if (response.status() === 201) trackCreated(path, body);
+  return body;
+}
 
 type Ladder = { supply: number; measure: number; below: number; steps: Array<{ size: number; artist: number; lines: number; demand: number; widest: number; artistLines: number }>; chosen: number; pair: { title: number; artist: number }; artistLowered: boolean };
 

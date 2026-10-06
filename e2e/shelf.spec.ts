@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { registerCleanup, trackArtist } from './cleanup';
+import { registerCleanup, trackArtist, trackGenre } from './cleanup';
 import { getTestDb } from '../test/helpers/db';
 import { sql } from 'drizzle-orm';
 
@@ -215,6 +215,7 @@ test('the wall shows the records the heading says it does', async ({ page }) => 
   const genre = await page.request.post('/api/genres', { data: { name: `Filtered-${suffixed}` } });
   expect(genre.status(), 'the fixture genre must exist').toBe(201);
   const genreId = (await genre.json()).id as string;
+  trackGenre(genreId);
 
   // Two records in the genre, one outside it — so a correct filter changes the
   // answer and an ignored filter does not.
@@ -351,6 +352,7 @@ test('genre and sort from the rail narrow and order the wall without leaving it 
   const genre = await page.request.post('/api/genres', { data: { name: `Rail-${stamp}` } });
   expect(genre.status()).toBe(201);
   const genreId = (await genre.json()).id as string;
+  trackGenre(genreId);
   const artist = await page.request.post('/api/artists', { data: { name: `Rail-${stamp}` } });
   const artistId = (await artist.json()).id as string;
   trackArtist(artistId);
@@ -400,8 +402,10 @@ test('a filter empties seats rather than re-seating them, and the emptied seats 
   const stamp = suffix();
   const target = await page.request.post('/api/genres', { data: { name: `AShape-${stamp}` } });
   const targetId = (await target.json()).id as string;
+  trackGenre(targetId);
   const other = await page.request.post('/api/genres', { data: { name: `BShape-${stamp}` } });
   const otherId = (await other.json()).id as string;
+  trackGenre(otherId);
   const artist = await page.request.post('/api/artists', { data: { name: `Shape-${stamp}` } });
   const artistId = (await artist.json()).id as string;
   trackArtist(artistId);

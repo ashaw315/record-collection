@@ -104,6 +104,41 @@ export function trackRecord(recordId: string): void {
 
 const trackedRecords: string[] = [];
 
+/**
+ * **A genre a test creates is tracked where it is created, and deleted when
+ * that test ends.**
+ *
+ * Before this, nothing deleted a spec's genres. A full run ended with 210 in
+ * the test database (measured 6 Oct, against 6 at its start), and the genres
+ * screen draws one page of 200 and the square of them in options, so
+ * `manage.spec.ts:179` ran out of its 30s on every gate. The one cleanup
+ * that did exist, manage's own, looked its genres up by name in the first
+ * 200 rows, and so stopped deleting anything once the others' leaks had
+ * pushed its rows off that page: a cleanup that ran where the writes were
+ * not.
+ *
+ * So the tracking is at the write and the delete is by id. Only what a test
+ * tracked is deleted: every spec names its genres with its own suffix, so
+ * no other worker's test can be holding one, which a sweep of "whatever is
+ * unused" could not promise on a database two workers share.
+ */
+export function trackGenre(genreId: string): void {
+  trackedGenres.push(genreId);
+}
+const trackedGenres: string[] = [];
+
+/** For a genre created through the page, where the test knows its unique name and not its id. */
+export function trackGenreNamed(name: string): void {
+  trackedGenreNames.push(name);
+}
+const trackedGenreNames: string[] = [];
+
+/** For a spec's own `post` helper: tracks what a reference-data POST created, from its path and its body. */
+export function trackCreated(path: string, body: unknown): void {
+  const id = (body as { id?: unknown } | null)?.id;
+  if (path === '/api/genres' && typeof id === 'string') trackGenre(id);
+}
+
 export function trackArtist(artistId: string): void {
   trackedArtists.push(artistId);
 }
@@ -179,6 +214,41 @@ export function registerCleanup(): void {
         );
       } catch {
         // Swallowed deliberately — see above.
+      }
+    }
+
+    /*
+      Genres last: a genre in use is not deleted (§7.4), so this test's
+      records go first, above. Children before parents, by repeating until a
+      pass deletes nothing. A genre still referenced after that is left, and
+      the run's ledger (`global-teardown.ts`) names it.
+    */
+    const ids = trackedGenres.splice(0);
+    const names = trackedGenreNames.splice(0);
+    if (ids.length > 0 || names.length > 0) {
+      const idList = `{${ids.join(',')}}`;
+      /*
+        Both lists go as Postgres array literals. A JavaScript array handed
+        to the query expands to a row, and an empty one to `()`, a syntax
+        error this block's catch swallowed: the first build deleted nothing,
+        and only the ledger said so.
+      */
+      const nameList = `{${names.map((name) => `"${name.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`).join(',')}}`;
+      try {
+        for (let pass = 0; pass < 8; pass += 1) {
+          const gone = await db.execute(
+            sql`DELETE FROM genres g
+                 WHERE (g.id = ANY(${idList}::uuid[]) OR g.name = ANY(${nameList}::text[]))
+                   AND NOT EXISTS (SELECT 1 FROM genres c WHERE c.parent_genre_id = g.id)
+                   AND NOT EXISTS (SELECT 1 FROM record_genres r WHERE r.genre_id = g.id)
+                   AND NOT EXISTS (SELECT 1 FROM want_list_genres w WHERE w.genre_id = g.id)
+                   AND NOT EXISTS (SELECT 1 FROM artist_genres a WHERE a.genre_id = g.id)
+               RETURNING g.id`,
+          );
+          if ((gone.rows ?? []).length === 0) break;
+        }
+      } catch {
+        /* A failed cleanup must not turn a passing test red; the ledger reports what stayed. */
       }
     }
   });

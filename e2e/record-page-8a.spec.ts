@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { registerCleanup, trackArtist } from './cleanup';
+import { registerCleanup, trackArtist, trackCreated } from './cleanup';
 import { BANDS, NO_SCROLL_HEIGHT, GRID_FORK } from '../src/app/records/[id]/band-geometry';
 import { pageWidthAt } from '../src/app/records/[id]/region-rows';
 import { contrastRatio } from '../src/lib/colour/record-colour';
@@ -50,7 +50,10 @@ function makeSuffix(): string {
 async function post(page: Page, path: string, data: unknown) {
   const response = await page.request.post(path, { data, failOnStatusCode: false });
   expect([200, 201], `${path} ${JSON.stringify(data)}`).toContain(response.status());
-  return response.json();
+  const body = await response.json();
+  /* Only what this call created: a 200 is a row found, which is someone else's. */
+  if (response.status() === 201) trackCreated(path, body);
+  return body;
 }
 
 /**

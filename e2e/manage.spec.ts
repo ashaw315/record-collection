@@ -1,5 +1,5 @@
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
-import { registerCleanup, trackArtist } from './cleanup';
+import { registerCleanup, trackArtist, trackGenre, trackGenreNamed } from './cleanup';
 import { seedMatchCandidate } from './seed';
 
 /* Records and artists removed after each test — see e2e/cleanup.ts. */
@@ -44,7 +44,15 @@ async function openResource(page: Page, label: string, search = '') {
 
 /** Unique per run so repeated runs against one database do not collide. */
 function unique(prefix: string): string {
-  return `${prefix}-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
+  const name = `${prefix}-${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
+  /*
+    Every genre this spec makes through the page is named by this function,
+    so the name is tracked here and the shared cleanup deletes the genre by
+    it when the test ends, passed or failed. A name that became a tag or a
+    label instead matches no genre and deletes nothing.
+  */
+  trackGenreNamed(name);
+  return name;
 }
 
 /**
@@ -633,7 +641,9 @@ test('the artist list defaults to what you collect, and says what it is hiding',
 async function seedGenre(page: Page, name: string): Promise<string> {
   const response = await page.request.post('/api/genres', { data: { name } });
   expect(response.status(), `seeding ${name} must succeed`).toBe(201);
-  return ((await response.json()) as { id: string }).id;
+  const id = ((await response.json()) as { id: string }).id;
+  trackGenre(id);
+  return id;
 }
 
 test('a suggested hierarchy is grouped, evidenced, and applied only where accepted', async ({

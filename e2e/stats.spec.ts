@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { registerCleanup, trackArtist } from './cleanup';
+import { registerCleanup, trackArtist, trackCreated } from './cleanup';
 
 /* Records and artists removed after each test — see e2e/cleanup.ts. */
 registerCleanup();
@@ -33,7 +33,9 @@ function makeSuffix(): string {
 async function post(page: Page, path: string, data: unknown) {
   const response = await page.request.post(path, { data, failOnStatusCode: false });
   expect(response.status(), `${path} ${JSON.stringify(data)}`).toBe(201);
-  return response.json();
+  const body = await response.json();
+  trackCreated(path, body);
+  return body;
 }
 
 test.beforeEach(async ({ page }) => {

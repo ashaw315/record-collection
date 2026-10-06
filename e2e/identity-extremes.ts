@@ -1,5 +1,5 @@
 import { expect, type Page } from '@playwright/test';
-import { trackArtist } from './cleanup';
+import { trackArtist, trackCreated } from './cleanup';
 import type { IdentityExtreme } from '../src/app/records/[id]/identity-extremes';
 
 /**
@@ -41,7 +41,9 @@ export async function seedExtreme(page: Page, extreme: IdentityExtreme): Promise
     const r = await page.request.post(path, { data, failOnStatusCode: false });
     /* Pressings are shared and found-or-created (§4), so the same catalogue posted twice is a 200 the second time. */
     expect([200, 201], `${path} returned ${r.status()}`).toContain(r.status());
-    return r.json();
+    const body = await r.json();
+    if (r.status() === 201) trackCreated(path, body);
+    return body;
   };
   const artist = await post('/api/artists', { name: artistName });
   trackArtist(artist.id);

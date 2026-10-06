@@ -35163,3 +35163,80 @@ input.
 that the back is a plain sleeve in the record's spine colour carrying label
 and catalogue number and no body text") restates the withdrawn wording as
 an acceptance check. Not edited: no sentence was proposed for it.
+
+## The genre leak, closed, and the gate green (6 Oct)
+
+Both halves the unit was asked to name.
+
+**(a) Specs no longer leave their genres behind.**
+
+*Enumeration, by measurement.* Each of the 210 genres the red gate left was
+mapped to the test running when it was created, from the genres'
+`created_at` and the run's own report (start time and duration of every
+test). Six were the seed's. Of 204: collection-filters 80, stats 22 and
+most of 4 shared with suggestions, manage 20 and more, record-page-8a 14,
+discogs-prefill 7, record-form 4, shelf 4, record-detail 2, title-ladder-33
+1, and 37 from the shared `identity-extremes` helper under the specs that
+call it. 50 fell in a moment when two files were running and were settled
+by name.
+
+*A cleanup that ran where the writes were not.* manage.spec's own
+`cleanupGenres` looked its genres up by name in `GET /api/genres?pageSize=200`.
+Once the others' leaks passed 200 rows its genres were off that page and it
+deleted nothing, silently, on passed tests.
+
+*The fix.* `e2e/cleanup.ts` gains `trackGenre`, `trackGenreNamed` and
+`trackCreated`; each spec's own `post` helper tracks what a POST to
+`/api/genres` created, at the write; shelf and manage track by id, and
+manage's page-made genres by the unique name its `unique()` gives. The
+shared `afterEach` deletes tracked genres by id after the test's records,
+children first, never one in use. Only what a test tracked: every spec
+suffixes its names, so no other worker can be holding one.
+
+*The ledger, so this is read and not inferred.* `e2e/ledger.ts`: the
+global setup records every table's count and the genres by name after
+seeding; the global teardown compares, prints each table that moved, and
+fails the run naming any genre left that is not a Discogs fixture's own
+genre or style. Unit-tested in `test/repo/ledger.test.ts`, each rule shown
+red against a staged break.
+
+*The guard was staged for real by my own defect.* The first build passed a
+JavaScript array into the delete, which rendered `ANY(()::text[])`, a
+syntax error the block's catch swallowed. Every spec passed and the ledger
+failed with 179 names. Reproduced outside the run, fixed, 7 left.
+
+*The 7 that stand.* Ambient, Ballad, Hardcore, Punk, Soft Rock, Stage &
+Screen, Video Game Music: made by the app's own find-or-create when a
+prefill test saves a record from a fixture. Plain names shared between the
+two workers, so a test deleting one could take it from under the other
+worker's test. Bounded by the fixtures, not by the run. Two of them (Soft
+Rock, Ballad) are attached to no record at the end, which means something
+creates a genre before a save; not looked into.
+
+**(b) The genres screen's cost: recorded, not fixed.** It is the defect
+entry of this morning (6 genres, 36 options, 0.2s; 156, 24,336, 2.3s; 406
+drawn as 200 rows, 40,000, 3.5s). Changing what a move select holds is a
+design decision. **The test's budget stays at 30s.** At 156 genres the test
+took 23 to 26s, so 30s holds to roughly 150 genres. Sampled every 2s
+through this gate, 824 samples, the database never held more than 22. The
+test took 5.2s on chromium and 4.3s on mobile in this run, read from the
+run's log, against 14.5s and a 33s failure in the last.
+
+**Gate: full suites, both projects, on the working tree over 99a4b8e.**
+
+- Unit: 4056 passed, 2 skipped, 0 failed.
+- Playwright: 691 passed, 12 skipped, 0 failed, 0 flaky, in 28.9m.
+  Chromium 494, mobile 197.
+- Ledger: genres 6 at the start, 13 at the end, the 7 above; "none left
+  behind by a spec".
+
+**What the ledger prints and does not yet fail on.** The run ends with
+more than it began in: labels 1 to 65, pressings 1 to 88, artists 17 to
+30, records 17 to 31, record_genres 102 to 128, formats 7 to 13, stores 0
+to 10, tags 0 to 5, discogs_cache 0 to 5, artist_match_candidates 0 to 4.
+So "the database holds what it held at the start" is true of genres left
+by specs and false of the database. Labels are the next to reach manage's
+page of 200. Each becomes a failing rule when its cleanup exists.
+
+**Deployment of eb89a95,** read from Vercel:
+`dpl_Ennwd7GGdAmRuNokvn4evkDNG1co`, Ready, production.
