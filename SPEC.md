@@ -1762,7 +1762,11 @@ That means the affordance is driven by §4.2's `image_type` values rather than b
 
 **The faces carry artwork and nothing else.** Where a `back` photograph exists it is used. Where one does not — which is most records, since Discogs supplies a front cover and nothing more — the back is **a plain sleeve in the record's stored spine colour**, carrying label and catalogue number as a small imprint and nothing further.
 
+Superseded by §5.2 and §W.2: the plain back is the record’s clamped field, not its stored colour, and ink where there is no stored colour, by §W.3 and §W.8.
+
 The front is the `cover` image. A record with no cover gets a plain sleeve there too, in the same colour, by the same reasoning that gives it a plain spine on the wall: an honest absence rather than a placeholder. Both cases are ordinary and neither is an error state.
+
+Superseded by §W.3: a record with no cover has no colour, so its front is not a plain sleeve in the same colour.
 
 That is honest in the way the plain spine is honest: it does not invent a back that was never photographed, it reuses a colour already computed from the record's own cover, and a plain back is a real thing rather than a placeholder. Repeating the front would assert something false, and a stock sleeve texture would be a photograph of someone else's record.
 

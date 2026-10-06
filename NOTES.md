@@ -35140,3 +35140,26 @@ What the push deploys that is not finished: the record modal turns a
 record with no back photograph to an empty square (step 90, the plain
 back's ground, is not built), and the cover's keyboard focus ring is not
 painted (step 89).
+
+## Stage 1 of the §10b withdrawals: the two sentences are in SPEC.md (6 Oct)
+
+Written into SPEC.md §10b, each directly under the paragraph of A19 it
+withdraws, copied by script from the handoff's "Withdrawals held for Code's
+region" so they match it character for character:
+
+- "Superseded by §5.2 and §W.2: the plain back is the record’s clamped
+  field, not its stored colour, and ink where there is no stored colour, by
+  §W.3 and §W.8."
+- "Superseded by §W.3: a record with no cover has no colour, so its front
+  is not a plain sleeve in the same colour."
+
+**Nothing reads them.** The index does not take SPEC.md as an input, so
+until stage 2 they can be edited or lost and no check notices. Stage 2, in
+the machinery round, first verifies both still match the handoff's held
+text exactly, and files the two entries in the commit that makes SPEC.md an
+input.
+
+**One sentence the two do not reach:** §11's flow 7 (SPEC.md, "verify...
+that the back is a plain sleeve in the record's spine colour carrying label
+and catalogue number and no body text") restates the withdrawn wording as
+an acceptance check. Not edited: no sentence was proposed for it.
