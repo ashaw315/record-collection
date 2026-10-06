@@ -34696,3 +34696,32 @@ frame is its computed visibility visible without a treatment".
 **Open, routed to Design, not built:** a photograph that fails to load, and
 a page whose scripts never run, leave the square empty for good. No
 fallback until Design rules.
+
+## The full gate on 8513678 is RED by one test, and nothing was pushed (5 Oct)
+
+Gate: full suites, both projects, on 8513678 (steps 86 and 85, the drop,
+and the NOTES and test-name commit).
+
+- Unit: 4035 passed, 2 skipped, 0 failed.
+- Playwright: 668 passed, 12 skipped, **1 failed**, in 30.8m. Chromium 472,
+  mobile 196.
+
+**The failure:** `[mobile] e2e/manage.spec.ts:179`, "moves a genre under
+another with the select, on touch and pointer alike". It failed on the
+first attempt and on its retry, differently: first the select's value
+stayed empty after choosing the parent (line 248); on retry `selectOption`
+waited 30s for the select to be "visible and enabled" (line 223). The same
+test passed on chromium in the same run.
+
+**What is known.** None of the four commits touches `/manage` or anything
+it imports except the header, whose changed code runs only while the menu
+is open, and this test does not open it. The whole spec alone on mobile,
+four times over with no retries: 60 of 60 passed, this test four of four.
+It did not fail in the gate on d8eb24b.
+
+**What is not known: the cause.** Failing twice in a row in the full run
+and never alone is the pattern of cross-test interference in the shared
+database, and other manage tests that move and re-nest genres ran in
+other workers at the same moment. That is a guess and not a finding. Passing in
+isolation is not evidence the commits are clean (CLAUDE.md §10), so the
+push is held for Adam to decide.
