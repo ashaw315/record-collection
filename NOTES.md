@@ -34539,3 +34539,29 @@ untaken step 85 drop; 11 of 11 without it); chromium 463 passed; mobile 197
 passed; typecheck, lint and build clean. The precondition and the
 positioned-element check were added to the wall test after the gate and
 run with the spec, 10 of 10.
+
+## The full gate on d8eb24b, step 84 as committed (5 Oct)
+
+Step 84's first gate ran before the wall test's precondition and
+positioned-element check went in; only the two menu specs ran after. So the
+commit that went live had not had the full suites. Run again on d8eb24b
+with the untaken step 85 drop set aside, so the tree was the commit: unit
+4029 passed; chromium 463 passed; mobile 196 passed and 1 flaky.
+
+**The flaky one predates step 84 and is not its collateral.**
+`collection-filters.spec.ts`, "clicking through to a filtered view equals
+loading that URL directly", on mobile: in a fresh context the Sort select
+read "" where `releaseYear:desc` was expected, the locator resolving
+fourteen times. The test's own comment records this exact failure from
+5 Sep: a controlled select carries `value=""` until hydration. Its guard
+waits for the first `data-hydrated` element on the page, which need not be
+that select, so the race can still be lost under load. It passed on retry
+and eight times out of eight alone. The path never opens the menu, and
+step 84 added no hydration marker. Not fixed here.
+
+**The commit is green; the working tree is red only while an untaken drop
+sits in it.** The unit suite reads the design files from disk, so the index
+fails on a raw export (step 71 absent, comment stale). A fresh checkout of
+the commit passes. On this machine a new index failure looks the same as
+that known one until the drop is taken, which is the reason to run a gate
+with the drop aside.
