@@ -35125,3 +35125,18 @@ point the two §10b entries are filed, after first verifying the sentences
 in SPEC.md still match the handoff's held text exactly; and a decision on
 whether one bullet outside the grammar should stop all eleven assertions,
 as it does today, or fail one.
+
+## Pushed with one known red test (6 Oct)
+
+The eleven commits to 6888acf were pushed on Adam's decision with the gate
+red by one: `[mobile] e2e/manage.spec.ts:179`. **Cause, in one line: a full
+run leaves 210 genres in the test database, and the genres screen draws one
+page of 200 and the square of them in options, so the test runs out of its
+30s.** No commit in the push touches that screen. A second full run could
+not have told anything new. The leak and the screen's cost are the next
+unit, before the next gate.
+
+What the push deploys that is not finished: the record modal turns a
+record with no back photograph to an empty square (step 90, the plain
+back's ground, is not built), and the cover's keyboard focus ring is not
+painted (step 89).
