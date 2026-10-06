@@ -34781,3 +34781,46 @@ a record with none" is two different pages: the square alone becomes the
 frame, or the whole page falls back to ink. And the built frame has no fill,
 so above the fork it would show the tint inside the hairline and not paper.
 The real collection: 19 covers on 16 records, 1 back, 0 gatefold photos.
+
+## DEFECT: the genres screen draws N squared options, and stops at 200 genres (6 Oct)
+
+Measured on `/manage`, Genres open, chromium, one worker, genres seeded
+straight into the test database. This is a finding about the screen. The
+test that exposed it should not have its budget raised: that would hide it.
+
+| genres in the database | move selects drawn | option elements | elements on the page | time to open |
+|---|---|---|---|---|
+| 6 | 6 | 36 | 230 | 0.2s |
+| 156 | 156 | 24,336 | 27,380 | 2.3s |
+| 406 | 200 | 40,000 | 43,880 | 3.5s |
+
+**It is N squared, exactly:** 6 x 6 and 156 x 156. Every genre row draws a
+move select holding every genre.
+
+**And a second thing the count showed, which corrects the entry above.**
+`src/app/manage/page.tsx` lists one page of 200 for every resource, on the
+stated ground that "reference data is small". With 406 genres 200 are
+drawn. So the 400 row of the earlier table failed for a different reason
+from the one I gave: a genre the test had just added was likely outside the
+first 200 and never appeared (chromium's error there was "element(s) not
+found" for the new row). The 150 row is the clean evidence for cost: 3.3s to
+22.9s with nothing capped. Whether the gate's run had passed 200 genres when
+it failed was not measured, so which of the two caused the gate's failure
+is not known.
+
+**For a user:** past 200 genres some cannot be reached on this screen, and
+before that each action re-renders tens of thousands of options. The real
+collection is far below both today. Not fixed; no ruling asked yet.
+
+**Open, test hygiene:** which specs leave genres behind over a full run is
+not enumerated. A suite whose result depends on what earlier specs left in
+the database has history as a hidden condition. To do: find them, and have
+each clean up or use its own data.
+
+## Deployment of 6f562a3 (6 Oct)
+
+Read from Vercel: `dpl_EVqAEEXLgbg7wAZLuyyeCro5MLv7`, Ready, production,
+built from 6f562a3, created 5 Oct 22:21 EDT. Aliases on it:
+record-collection-rust.vercel.app, record-collection-ashaw315s-projects
+.vercel.app, record-collection-git-main-ashaw315s-projects.vercel.app. No
+migration in the five commits. No page was loaded and nothing was judged.
