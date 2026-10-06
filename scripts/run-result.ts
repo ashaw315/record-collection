@@ -102,7 +102,7 @@ export function readRunResult({
     "nothing failed" from "nothing reported" is the original bug with extra
     steps.
   */
-  if (passed === null) {
+  if (passed === null && failed === 0) {
     return { ...base, ok: false, reason: 'no summary line found — the run did not report' };
   }
 
@@ -126,11 +126,11 @@ export function readRunResult({
     return { ...base, ok: false, reason: `non-zero exit (${exitCode})` };
   }
 
-  if (expectAtLeast !== undefined && passed < expectAtLeast) {
+  if (expectAtLeast !== undefined && base.passed < expectAtLeast) {
     return {
       ...base,
       ok: false,
-      reason: `expected at least ${expectAtLeast} passing, saw ${passed} — the run was cut short`,
+      reason: `expected at least ${expectAtLeast} passing, saw ${base.passed} — the run was cut short`,
     };
   }
 

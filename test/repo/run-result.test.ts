@@ -183,3 +183,23 @@ describe('an end-to-end run is judged by its ledger as well as its counts', () =
     expect(result.reason).toMatch(/ledger/);
   });
 });
+
+/**
+ * Found on 6 Oct while staging a failure: a run in which every test failed
+ * prints "1 failed" and no "passed" line at all. The verdict was right and
+ * the reason was wrong: "no summary line found — the run did not report",
+ * of a run that had reported its failure plainly.
+ */
+describe('a run in which nothing passed', () => {
+  /* Fails against a judgement that takes a missing "passed" count for a missing summary before it looks at the failures. */
+  it('is reported as its failures, not as a run that did not report', () => {
+    const result = readRunResult({ output: '  1 failed\n    [chromium] › e2e/shelf.spec.ts:304:5 › the rail’s sort\n', exitCode: 1 });
+    expect(result.ok).toBe(false);
+    expect(result.reason).toBe('1 failed');
+    expect(summarise(result)).toMatch(/^0 passed, 1 failed/);
+  });
+
+  it('is still a run that did not report when there are no counts of any kind', () => {
+    expect(readRunResult({ output: 'Error: something crashed\n', exitCode: 1 }).reason).toMatch(/did not report/);
+  });
+});

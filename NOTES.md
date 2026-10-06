@@ -35374,3 +35374,80 @@ specs' records and fails among the seventeen alone. If that is right the
 rail-sort test's x-only ordering is wrong whenever its five records wrap
 onto two rows, and the narrow test's seat is sometimes under an upright.
 Next check, cheap: read the y of the five seats in the failing state.
+
+## The two shelf failures: tests that passed on records they never created (6 Oct)
+
+Cause measured for both, and neither is step 82 or a flake. Both tests'
+results came from what other specs had left on the wall.
+
+**`shelf.spec.ts:304`, the rail's sort.** The wall seats the whole
+collection, and the test's five records sit among it. It read their order
+by x alone. Under title descending, with N extra records on the wall:
+
+| N | the five, ordered by x | old test |
+|---|---|---|
+| 0 | Alpha, Echo, Delta, Charlie, Bravo | fails |
+| 4 | Charlie, Bravo, Alpha, Echo, Delta | fails |
+| 10 | Echo, Delta, Charlie, Bravo, Alpha | passes |
+| 20 | Alpha, Echo, Delta, Charlie, Bravo | fails |
+
+Alpha at N = 0 is at y 294 where the other four are at 198 to 240: on the
+next shelf, at its left. **The sort had been applied every time**: the
+positions were the same at 500ms and at 3,500ms, so the other hypothesis,
+an assertion running before the rail settled, is ruled out. Fixed in the
+test: order is shelf then position, the shelf read as `top − left × tan 30°`
+(constant along a shelf within 1px, about 198 between shelves).
+
+**`shelf-narrow.spec.ts:40`, the tap.** It clicked the middle of its seat's
+bounding box. In the overview a spine is a slanted sliver of its box; among
+the seventeen alone its record fell beside an upright, 30 of 49 sampled
+points of the box were the upright's, 12 the seat's, and the click never
+arrived. Fixed in the test: it taps a point the page says is the seat's
+own, and fails if there is none. Not a defect in the wall as far as this
+shows: every seat's box in the overview is mostly its neighbours' (4 of 49
+points its own on the seventeen), and the visible sliver takes the tap.
+
+**Shown both ways.** Corrected, both specs pass among the seventeen alone
+(15 passed) and with 4 and with 20 ambient records left on the wall for the
+run (16 passed each; 21 and 37 records in the database at the end, so the
+staging took). The rail test still fails where it should: given ascending
+where descending was asked, "the direction reaches the wall too".
+
+**Was the leak fix what turned them red? Not shown, and I doubt it as
+stated.** The leak fix deletes genres; records were already deleted by each
+test before it. What the evidence shows is narrower: the rail test's result
+depends on the count of records on the wall when it runs, it passed in two
+full gates and failed in one subset run before any of today's shelf work,
+and it fails every time it runs alone. An older commit could not be run to
+compare (the worktree's server crashed).
+
+**A defect found on the way, fixed with its test:** the judged line gave a
+run in which every test failed the reason "no summary line found — the run
+did not report". Such a run prints "1 failed" and no "passed" line. The
+verdict was right and the reason wrong; `run-result.ts` now reports it as
+its failures.
+
+**Step 82, step level, now green:** `85 passed, ledger clean — OK` for
+back-newest-82, record-modal-81, shelf, shelf-narrow and the eight wall
+specs on both projects, through `scripts/run-tests.ts`.
+
+## Which gate reports came from which instrument (6 Oct)
+
+Every gate and step-level Playwright result in NOTES before the entry
+"The ledger caught its own author" was read from Playwright's own summary
+lines in a log file, by grep: the counts are what the run printed, but that
+is the line that can read green over a non-zero run, and before today there
+was no ledger for it to miss. From 6 Oct, 16:30 or so, results quoted as
+`N passed, ledger clean — OK` come from `scripts/run-tests.ts` and its last
+line. Nothing is redone; the green gate of the leak unit was read both
+ways, its ledger lines included.
+
+## §M.7's premise holds: the modal holds the page with step 86's module (6 Oct)
+
+`SleeveModal.tsx` calls `holdScroll(document.documentElement, window)`, the
+same function the nav menu calls (`src/components/scroll-hold.ts`), and
+releases it on close. So opening the modal keeps the page's width by the
+scrollbar it removes, as the menu does. As with the menu, that is the
+computation under unit test; the end-to-end shift is untested, because the
+harness draws no classic scrollbar. The modal's own test asserts only that
+the page beneath does not scroll.

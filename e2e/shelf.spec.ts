@@ -317,14 +317,36 @@ test('the rail’s sort reorders the wall itself (§W.24)', async ({ page }) => 
     expect(record.status()).toBe(201);
   }
 
-  /** The wall's own left-to-right order, by each spine's accessible name. */
+  /**
+   * The wall's own reading order, by each spine's accessible name: shelf by
+   * shelf from the top, and left to right along each.
+   *
+   * **It was left to right only, and that made the test depend on records it
+   * never created.** The wall seats the whole collection and this test's five
+   * sit among it, so how they fall across shelves depends on how many other
+   * records there are. Measured on 6 Oct with N extra records on the wall,
+   * under title descending, ordered by x: N = 0, Alpha first (it had wrapped
+   * to the next shelf, at the left); N = 4, Charlie, Bravo, Alpha, Echo,
+   * Delta; N = 10, the expected order; N = 20, Alpha first again. It passed
+   * in full runs on whatever other specs had left on the wall, and failed
+   * among the seventeen alone. The sort itself was applied every time.
+   *
+   * Along one shelf the drawing runs down to the right at 30 degrees, so
+   * `top − left × tan 30°` is the same for every seat on it (within 1px,
+   * measured) and steps by about 198 from one shelf to the next. That is the
+   * shelf; the seat's left is its place along it.
+   */
   const order = () =>
-    page.evaluate(() =>
-      Array.from(document.querySelectorAll('a[data-seat]'))
-        .map((el) => ({ x: el.getBoundingClientRect().left, title: (el.getAttribute('aria-label') ?? '').split('·').pop()?.trim() }))
-        .sort((a, b) => a.x - b.x)
-        .map((seat) => seat.title),
-    );
+    page.evaluate(() => {
+      const TAN30 = Math.tan(Math.PI / 6);
+      return Array.from(document.querySelectorAll('a[data-seat]'))
+        .map((el) => {
+          const box = el.getBoundingClientRect();
+          return { x: box.left, shelf: Math.round((box.top - box.left * TAN30) / 60), title: (el.getAttribute('aria-label') ?? '').split('·').pop()?.trim() };
+        })
+        .sort((a, b) => a.shelf - b.shelf || a.x - b.x)
+        .map((seat) => seat.title);
+    });
 
   await page.goto(`/?artistId=${artistId}&sort=title%3Aasc`);
   await expect(page.locator('[data-wall="labelled"]')).toBeVisible({ timeout: 30_000 });

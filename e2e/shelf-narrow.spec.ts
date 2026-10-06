@@ -83,7 +83,31 @@ test('at 390px the shelf is the far view in one column, the rail one band, and a
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
 
   /* A tap goes to the record screen; nothing is pulled. */
-  await page.locator(`[data-wall="overview"] a[data-far-seat="${recordId}"]`).click();
+  /*
+    **Tapped where the seat is drawn, not at the middle of its box.** In the
+    overview a spine is a slanted sliver of its bounding box; the rest of the
+    box belongs to its neighbours and to the shelf's uprights. A tap at the
+    box's centre landed on this seat or not according to where the record
+    fell on the wall, which depends on how many other records there are:
+    among the seventeen alone it fell beside an upright, 30 of 49 sampled
+    points of its box were the upright's, and the tap never arrived (6 Oct).
+    It passed in full runs on what other specs had left on the wall. So the
+    point is found by asking the page which point of the box is the seat's
+    own, and the test says so if there is none.
+  */
+  const seat = page.locator(`[data-wall="overview"] a[data-far-seat="${recordId}"]`);
+  const own = await seat.evaluate((el) => {
+    const r = el.getBoundingClientRect();
+    for (let i = 1; i < 16; i += 1) for (let j = 1; j < 16; j += 1) {
+      const x = r.left + (r.width * i) / 16; const y = r.top + (r.height * j) / 16;
+      const hit = document.elementFromPoint(x, y);
+      if (hit !== null && el.contains(hit)) return { x, y };
+    }
+    return null;
+  });
+  expect(own, 'some point of the seat’s box is the seat’s own to tap').not.toBeNull();
+  if (own === null) return;
+  await page.mouse.click(own.x, own.y);
   await expect(page).toHaveURL(new RegExp(`/records/${recordId}`));
   expect(await page.locator('[data-pulled]').count()).toBe(0);
 });
