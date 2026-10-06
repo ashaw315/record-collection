@@ -34565,3 +34565,44 @@ fails on a raw export (step 71 absent, comment stale). A fresh checkout of
 the commit passes. On this machine a new index failure looks the same as
 that known one until the drop is taken, which is the reason to run a gate
 with the drop aside.
+
+## Step 86 built: §G.8 -- the page keeps its width by the scrollbar it had (5 Oct)
+
+A defect fix to step 84 in its own step. d8eb24b held the page with
+`overflow: hidden` and no compensation, so where holding the page removes a
+classic scrollbar the page widens by it and everything shifts sideways.
+
+**What was built.** `src/components/scroll-hold.ts`: `holdScroll(root, win)`
+measures the scrollbar as the window's width less the root's, adds it to the
+root's own computed right padding, sets `overflow: hidden`, and returns a
+release that writes back the two inline values it found. The header's effect
+calls it in place of the three lines it had.
+
+**What is tested, and on what.** Four unit tests on stub objects, no browser:
+window 500 against root 485 gives 15px; equal widths write no padding; a
+root with its own 10px and `overflow: clip` reads 25px held and 10px and
+`clip` released; a compensated hold releases to no inline padding. The first
+and third were red against d8eb24b's hold. The other two pass against it,
+because it is right in those cases, so each was shown red against a staged
+break that was confirmed to have taken: `bar >= 0` (a `0px` written),
+the restore line deleted, and the restore writing a blank.
+
+**What is NOT tested: the shift itself.** No end-to-end test opens the menu
+on a page with a classic scrollbar and reads that nothing moved. Two
+attempts to stage one in this harness failed (the page did not scroll; a
+styled 15px scrollbar measured 0). That headless browsers draw overlay
+scrollbars is a guess, not a finding. The shared Playwright configuration
+was not changed, by ruling.
+
+**Two expectations outside the unit test, expected and not shown.** That
+right padding on the root is the right place for every screen's layout; and
+that the fixed panel, positioned against the viewport, spans its full width
+whatever the root's padding. If something shifts sideways, look there first.
+
+**Why not `scrollbar-gutter: stable`.** It reserves a gutter whether or not
+the page had a scrollbar, so a page too short to scroll shifts the other
+way. The compensation has to equal the scrollbar that was there.
+
+**Step level:** scroll-hold unit tests (4); nav-menu-84, nav-menu-76,
+nav-type-74 and nav-mobile on both projects, 34 passed; typecheck, lint
+(0 errors), build.

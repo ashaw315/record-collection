@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { GRID_FORK } from '@/app/records/[id]/band-geometry';
 import { currentSection } from './nav-current';
 import { NAV_TYPE } from './nav-type';
+import { holdScroll } from './scroll-hold';
 
 /**
  * The application's one piece of persistent chrome.
@@ -159,15 +160,13 @@ export function AppHeader({ actions }: { actions?: React.ReactNode } = {}) {
       if (wide.matches) closeMenu();
     };
     /* "The page beneath is held where it was": it does not scroll under the panel. */
-    const root = document.documentElement;
-    const overflow = root.style.overflow;
-    root.style.overflow = 'hidden';
+    const release = holdScroll(document.documentElement, window);
     document.addEventListener('keydown', onKey);
     window.addEventListener('popstate', onPop);
     window.addEventListener('resize', place);
     wide.addEventListener('change', onWide);
     return () => {
-      root.style.overflow = overflow;
+      release();
       document.removeEventListener('keydown', onKey);
       window.removeEventListener('popstate', onPop);
       window.removeEventListener('resize', place);
