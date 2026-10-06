@@ -18,13 +18,38 @@
  * Exits 0 only when the summary line says so.
  */
 
-import { spawn } from 'node:child_process';
-import { readRunResult, summarise } from './run-result';
+import { execFileSync, spawn } from 'node:child_process';
+import { readRunResult, summarise, type TreeState } from './run-result';
 
 const USAGE = `usage: run-tests.ts [--expect-at-least N] <command> [args...]
 
 Runs the command, parses its summary line and exits non-zero unless the
 summary says the run passed. A run that reports nothing is NOT a pass.`;
+
+/**
+ * The tree's fingerprint, from git: the commit, and each modified or
+ * untracked file with a hash of what it holds now. Ignored files are left
+ * out, which is where a run's own output goes. Null where this is not a git
+ * tree; the judged line then says nothing about the tree.
+ */
+function treeState(): TreeState | null {
+  try {
+    const git = (...args: string[]) => execFileSync('git', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 64 * 1024 * 1024 });
+    const state: TreeState = { HEAD: git('rev-parse', 'HEAD').trim() };
+    const paths = git('status', '--porcelain=v1', '-z', '--untracked-files=all').split('\0').filter((entry) => entry.length > 3).map((entry) => entry.slice(3));
+    for (const path of paths) {
+      try {
+        state[path] = git('hash-object', '--', path).trim();
+      } catch {
+        /* Deleted, or the old name of a rename: its going is the state. */
+        state[path] = 'absent';
+      }
+    }
+    return state;
+  } catch {
+    return null;
+  }
+}
 
 async function main(argv: string[]): Promise<number> {
   const args = [...argv];
@@ -61,6 +86,7 @@ async function main(argv: string[]): Promise<number> {
     reports nothing is not evidence, and "still running, I cannot see" is not a
     status. The judgement below is unchanged -- only the shell.
   */
+  const treeAtStart = treeState();
   const child = spawn(command, rest, { stdio: ['ignore', 'pipe', 'pipe'], shell: false });
 
   let output = '';
@@ -93,7 +119,9 @@ async function main(argv: string[]): Promise<number> {
     return 1;
   }
 
-  const result = readRunResult({ output, exitCode, expectAtLeast });
+  const treeAtEnd = treeState();
+  const tree = treeAtStart === null || treeAtEnd === null ? undefined : { start: treeAtStart, end: treeAtEnd };
+  const result = readRunResult({ output, exitCode, expectAtLeast, tree });
 
   process.stdout.write(`\n${summarise(result)}\n`);
 

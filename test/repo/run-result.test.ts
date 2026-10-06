@@ -203,3 +203,60 @@ describe('a run in which nothing passed', () => {
     expect(readRunResult({ output: 'Error: something crashed\n', exitCode: 1 }).reason).toMatch(/did not report/);
   });
 });
+
+/**
+ * **A run over a tree that changed is not a result.**
+ *
+ * On 6 Oct a Design export landed in the working tree while a gate's unit
+ * suite was running, and the index check read a tree that was not the one
+ * the run began on. That time the verdict was a failure and informative.
+ * The same thing later in a run reads as a pass about a tree nobody
+ * committed: it happened again an hour on, during the Playwright half, and
+ * nothing said so. So the runner fingerprints the tree at the start and at
+ * the end, and the judged line carries the comparison.
+ */
+describe('a run is judged against the tree it began on', () => {
+  const COUNTS = '      Tests  4064 passed (4064)\n';
+  const start = { HEAD: 'f6fb36d', 'docs/captures/bridge-768x900.png': 'aaa' };
+
+  it('passes a run whose tree is the same at the end, and the line says the tree was checked', () => {
+    const result = readRunResult({ output: COUNTS, exitCode: 0, tree: { start, end: { ...start } } });
+    expect(result.ok).toBe(true);
+    expect(summarise(result)).toMatch(/4064 passed, tree unchanged — OK/);
+  });
+
+  /* Fails against a judgement that reads only what the run printed: the counts are clean and the exit is zero. */
+  it('fails a run during which a file changed, with clean counts and a zero exit, and names the file', () => {
+    const end = { ...start, 'docs/design/HANDOFF-wall-and-pull.md': 'bbb' };
+    const result = readRunResult({ output: COUNTS, exitCode: 0, tree: { start, end } });
+    expect(result.ok).toBe(false);
+    expect(result.reason).toMatch(/tree changed during the run/);
+    expect(result.reason).toMatch(/docs\/design\/HANDOFF-wall-and-pull\.md/);
+    expect(summarise(result)).toMatch(/4064 passed, tree CHANGED — NOT OK/);
+  });
+
+  /* Fails against a comparison of which files are dirty: the same file is dirty at both ends. */
+  it('sees a file that was already modified change again', () => {
+    const dirty = { ...start, 'NOTES.md': 'one' };
+    const result = readRunResult({ output: COUNTS, exitCode: 0, tree: { start: dirty, end: { ...dirty, 'NOTES.md': 'two' } } });
+    expect(result.ok).toBe(false);
+    expect(result.reason).toMatch(/NOTES\.md/);
+  });
+
+  it('sees a commit made during the run, and a file that went away', () => {
+    expect(readRunResult({ output: COUNTS, exitCode: 0, tree: { start, end: { ...start, HEAD: '64ff1f7' } } }).reason).toMatch(/HEAD/);
+    expect(readRunResult({ output: COUNTS, exitCode: 0, tree: { start, end: { HEAD: 'f6fb36d' } } }).reason).toMatch(/bridge-768x900\.png/);
+  });
+
+  it('says both when a test failed and the tree changed', () => {
+    const result = readRunResult({ output: '      Tests  1 failed | 4063 passed (4064)\n', exitCode: 1, tree: { start, end: { ...start, HEAD: 'x' } } });
+    expect(result.reason).toMatch(/1 failed/);
+    expect(result.reason).toMatch(/tree changed/);
+  });
+
+  it('claims nothing about a tree it was not shown', () => {
+    const result = readRunResult({ output: COUNTS, exitCode: 0 });
+    expect(result.ok).toBe(true);
+    expect(summarise(result)).not.toMatch(/tree/);
+  });
+});

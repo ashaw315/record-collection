@@ -35,7 +35,25 @@ export type RunResult = {
    * ledger to report; `absent` for an end-to-end run that ended without one.
    */
   ledger: 'clean' | 'failed' | 'absent' | 'none';
+  /**
+   * Whether the working tree at the end of the run was the one it began on.
+   * `unchecked` where the caller gave no fingerprints.
+   */
+  tree: 'unchanged' | 'changed' | 'unchecked';
 };
+
+/**
+ * A fingerprint of the tree: `HEAD` and its commit, and every modified or
+ * untracked file with a hash of its contents (`scripts/run-tests.ts` takes
+ * it from git). Comparing contents and not names is the point: a file that
+ * is dirty at both ends and changed in between is a changed tree.
+ */
+export type TreeState = Record<string, string>;
+
+/** The paths whose state differs between two fingerprints, in order. */
+export function changedPaths(start: TreeState, end: TreeState): string[] {
+  return [...new Set([...Object.keys(start), ...Object.keys(end)])].filter((path) => start[path] !== end[path]).sort();
+}
 
 /*
   The ledger prints AFTER Playwright's summary, from the global teardown, so
@@ -76,6 +94,7 @@ export function readRunResult({
   output,
   exitCode,
   expectAtLeast,
+  tree,
 }: {
   output: string;
   exitCode: number;
@@ -85,6 +104,12 @@ export function readRunResult({
    * which otherwise reports a clean summary for the tests it managed to reach.
    */
   expectAtLeast?: number;
+  /**
+   * The tree's fingerprint when the run began and when it ended. A run over
+   * a tree that changed is not a result about either tree: on 6 Oct a design
+   * export landed mid-gate, twice, and the second time nothing said so.
+   */
+  tree?: { start: TreeState; end: TreeState };
 }): RunResult {
   const passed = countOf(output, 'passed');
   const failed = countOf(output, 'failed') ?? 0;
@@ -92,7 +117,11 @@ export function readRunResult({
   const skipped = countOf(output, 'skipped') ?? 0;
 
   const ledger = ledgerOf(output);
-  const base = { passed: passed ?? 0, failed, flaky, skipped, ledger: ledger.state };
+  const moved = tree === undefined ? [] : changedPaths(tree.start, tree.end);
+  const treeState: RunResult['tree'] = tree === undefined ? 'unchecked' : moved.length === 0 ? 'unchanged' : 'changed';
+  const treeFault =
+    moved.length === 0 ? null : `the tree changed during the run (${moved.slice(0, 4).join(', ')}${moved.length > 4 ? `, and ${moved.length - 4} more` : ''}) — not a result`;
+  const base = { passed: passed ?? 0, failed, flaky, skipped, ledger: ledger.state, tree: treeState };
   const ledgerFault =
     ledger.state === 'failed' ? `the ledger failed: ${ledger.said}` : ledger.state === 'absent' ? 'the ledger did not report — the run ended without its teardown' : null;
 
@@ -107,15 +136,15 @@ export function readRunResult({
   }
 
   if (failed > 0) {
-    return { ...base, ok: false, reason: ledgerFault === null ? `${failed} failed` : `${failed} failed, and ${ledgerFault}` };
+    return { ...base, ok: false, reason: [`${failed} failed`, ledgerFault, treeFault].filter((part) => part !== null).join(', and ') };
   }
 
   /*
     Before the status, because the status is what this file exists not to
     need: a ledger failure is named as one, whatever the run exited with.
   */
-  if (ledgerFault !== null) {
-    return { ...base, ok: false, reason: ledgerFault };
+  if (ledgerFault !== null || treeFault !== null) {
+    return { ...base, ok: false, reason: [ledgerFault, treeFault].filter((part) => part !== null).join(', and ') };
   }
 
   /*
@@ -153,6 +182,8 @@ export function summarise(result: RunResult): string {
   if (result.ledger === 'clean') parts.push('ledger clean');
   if (result.ledger === 'failed') parts.push('ledger FAILED');
   if (result.ledger === 'absent') parts.push('ledger ABSENT');
+  if (result.tree === 'unchanged') parts.push('tree unchanged');
+  if (result.tree === 'changed') parts.push('tree CHANGED');
 
   const verdict = result.ok ? 'OK' : `NOT OK — ${result.reason}`;
 

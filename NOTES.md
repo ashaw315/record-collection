@@ -35451,3 +35451,76 @@ scrollbar it removes, as the menu does. As with the menu, that is the
 computation under unit test; the end-to-end shift is untested, because the
 harness draws no classic scrollbar. The modal's own test asserts only that
 the page beneath does not scroll.
+
+## The gate on f6fb36d is green, read through the runner, and pushed (6 Oct)
+
+Gate: full suites, both projects, on f6fb36d (step 82, the shelf tests'
+corrections, the judged line, and the drops to step 92).
+
+- Unit, `scripts/run-tests.ts npm test`: `4064 passed, 2 skipped — OK`.
+- Playwright, `scripts/run-tests.ts npx playwright test`:
+  `693 passed, 12 skipped, ledger clean — OK`. Chromium 496, mobile 197,
+  29.7m. Playwright's own lines say the same: 693 passed, 12 skipped.
+
+**The comparison the gate was run for.** The green gate before it, on
+nearly this tree and read from Playwright's own lines, was 691 passed and
+12 skipped with the same ledger; this is 693, the two more being step 82's
+fixture tests. The new line and the old instrument agree. Pushed.
+
+**The tree changed under this gate twice, and that is now a guard.** A
+design export landed during the first unit run; the index check failed on
+it (`4063 passed, 1 failed`), the drop was taken and the unit suite re-run
+on a clean tree. A second export landed during the Playwright run. It
+touched only design files, which Playwright does not read, and nothing
+reported it. The runner now fingerprints the tree at the start and the end
+of a run (the commit, and every modified or untracked file by a hash of its
+contents) and the judged line says `tree unchanged` or `tree CHANGED`; a
+changed tree fails the result as "not a result". Six tests in
+`run-result.test.ts`, five red first. Staged for real, each confirmed to
+have taken by reading the file afterwards: a file appearing mid-run, and a
+file dirty at both ends changing in between, both `tree CHANGED — NOT OK`;
+the same dirty file left alone, and a real Playwright run, `tree unchanged`.
+
+## Corrections and findings carried from the gate (6 Oct)
+
+**The coordinator's correction, recorded as theirs.** The hypothesis was
+that the leak fix turned the two shelf tests red by removing ambient
+records. It removes genres; each spec was already deleting its own records.
+And "give the spec its own records" could not have fixed the rail test,
+because other workers' records are on the same wall while it runs. What
+the evidence carries is the narrower claim in the entry above.
+
+**The narrow test, for the reader's case.** At 390, each seat's own drawn
+shape was sampled (not its bounding box) and each point asked what is
+topmost there and whether that thing is painted. On all 18 seats every
+covered point lies under a painted shape, a neighbour's spine or an
+upright's face; no point lies under an unpainted element. So nothing
+invisible takes a tap meant for a spine, and what the reader sees as the
+spine is what takes it. Closed.
+
+*For Design, not ruled here:* the last record on a shelf is drawn mostly
+behind the upright (the test's record: 65% of its shape under the upright's
+faces, 35% visible), and the smallest visible share of any spine among the
+seventeen is about 18%, hidden mainly by its neighbours.
+
+**§M.7's premise is UNVERIFIED end to end.** §M.7 rules that the page does
+not move while the modal covers it, so the cover returns to the square it
+left. The modal holds the page with step 86's `holdScroll`, whose
+arithmetic is unit-tested on stub objects. Whether the page actually keeps
+its width when a classic scrollbar is removed has never been observed: this
+harness draws none. The unit test is not end-to-end evidence for §M.7. One
+look on a desktop with a classic scrollbar closes it; that is Adam's.
+
+**Which export carried "never recomputed".** f6fb36d did: its §M.4 ends
+"...and the gatefold's spread is never recomputed while the modal is open."
+47a28c7 did not. The clause was committed at 19:02 and pushed with the
+gate. The export that drops it also brings the entry
+`M.4/sizes-never-change`, taken together at 64ff1f7; the entry's `what`
+says "the sleeve's sizes" and does not name the gatefold's spread.
+
+**Step 93, what "settles" is built as: proposed, not ruled.** A viewport is
+settled when 150ms have passed with no resize event. iOS fires resize
+throughout a rotation, so the last one restarts the wait and the sleeve is
+re-measured once, 150ms after the rotation's last event. Long enough to
+outlast the gaps between a rotation's events, short enough to read as at
+once. To be stated in the step's test and replaced by a ruling.
