@@ -35240,3 +35240,86 @@ page of 200. Each becomes a failing rule when its cleanup exists.
 
 **Deployment of eb89a95,** read from Vercel:
 `dpl_Ennwd7GGdAmRuNokvn4evkDNG1co`, Ready, production.
+
+## The ledger caught its own author, and the result line now carries it (6 Oct)
+
+**The first time a guard built here caught a member of the family it was
+built for.** The genre cleanup's first build deleted nothing: a swallowed
+SQL error, every spec passing, exactly "a cleanup that runs where the
+writes are not". The ledger, an hour old, failed the run with 179 names.
+Without it the fix would have been reported done on the strength of specs
+passing, which is the inference the ledger exists to replace with a read.
+
+**The line every reader uses could still read green over that.** The
+ledger fails from the global teardown, and Playwright's summary counts
+tests. So `scripts/run-result.ts` now reads the ledger's own lines and the
+judged line carries the verdict in three states: `ledger clean`, `ledger
+FAILED` with what it said, and `ledger ABSENT` for an end-to-end run that
+ended without its teardown, which is not a pass. A ledger failure fails the
+result whatever the exit status. Five tests in `run-result.test.ts`, four
+red first.
+
+Staged for real, through `scripts/run-tests.ts`, with one spec's tracking
+removed. The break was confirmed to have taken by reading the database
+(`UK82-mux4wnbs5826` present after the run) before the line was read:
+
+    2 passed, ledger FAILED — NOT OK — the ledger failed: 1 genres left behind: UK82-mux4wnbs5826
+
+Restored: `2 passed, ledger clean — OK`.
+
+**And the instrument was not being used.** The last three gates were read
+from Playwright's own summary in a log, by grep, not through
+`run-tests.ts`. From here a gate's Playwright run goes through it and the
+report quotes its last line.
+
+## Does the test database reset between runs? Yes, every run (6 Oct)
+
+Read from the setup, not from the numbers: `e2e/global-setup.ts` line 45
+calls `truncateAll()` (`test/helpers/db.ts`), which truncates every table
+in `public`, and then seeds the seventeen. So 210 genres at the end of one
+gate and 6 at the start of the next is the reset, not a hand clean.
+
+**So the other tables are bounded by the suite's size, not by the number of
+gates.** Per full run, from the green gate's ledger:
+
+| table | start | end | per run | on a 200-row page? | does a test open it? |
+|---|---|---|---|---|---|
+| pressings | 1 | 88 | +87 | no: not on the manage screen | no |
+| labels | 1 | 65 | +64 | yes, manage | no test opens Labels |
+| artists | 17 | 30 | +13 | yes, manage (collected only by default) | 3 tests |
+| stores | 0 | 10 | +10 | yes, manage | no |
+| genres | 6 | 13 | +7, the fixtures' own | yes, manage | 4 tests |
+| formats | 7 | 13 | +6 | yes, manage | 1 test |
+| tags | 0 | 5 | +5 | yes, manage | 2 tests |
+
+`src/app/manage/page.tsx` loads all six resources at `limit: 200` on every
+visit. The tables a test drives through that page grow by 5, 6 and 13 a
+run and reset. **Predicted, not discovered: none of them reaches 200
+unless the suite grows by an order of magnitude; pressings, the fastest,
+has no such page.** Genres were different in kind as well as size: every
+row draws a select of every genre, so cost went as the square. No other
+resource on the screen was found to do that; not measured for artists.
+The cleanups for these tables are eventual, not urgent.
+
+## Two corrections to the leak entry, and the machinery round at eight (6 Oct)
+
+**"Roughly 150 genres" is a margin with a basis, not a crossing.** Its
+basis is one seeded measurement this morning under the pre-fix cleanup, one
+worker: the test at 156 genres took 22.9s on mobile and 25.9s on chromium,
+4 to 7s inside the 30s. Where it crosses 30s was never measured; the 406
+run failed for the page's cap as well, so it is not a point on the curve.
+
+**Soft Rock and Ballad are undecided.** They end a run attached to no
+record. If the app creates a genre before a save, an abandoned prefill
+leaves an orphan in production, which is a defect on a real screen and not
+test residue. Not checked.
+
+**The machinery round, after the modal, eight items:** assertion 10; the
+stricter assertion 2; the scope fix for settled sections; record-screen
+guard patterns for helper-driven specs; SPEC.md as an index input, with
+stage 2 verifying the two §10b sentences against the handoff's held text
+before filing their entries; a decision on whether one bullet outside the
+grammar stops all eleven assertions; the genres test's budget measured (seed
+100, time it once, state the figure); and what Soft Rock and Ballad are.
+
+Stage 1 of the §10b work is done: 7261b2a, both sentences in SPEC.md.

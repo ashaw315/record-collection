@@ -29,6 +29,31 @@ export type RunResult = {
   skipped: number;
   /** Why it is not ok, when it is not. */
   reason: string | null;
+  /**
+   * The end-to-end ledger's verdict (`e2e/ledger.ts`): what the run left in
+   * the test database. `none` for a run that is not end-to-end and has no
+   * ledger to report; `absent` for an end-to-end run that ended without one.
+   */
+  ledger: 'clean' | 'failed' | 'absent' | 'none';
+};
+
+/*
+  The ledger prints AFTER Playwright's summary, from the global teardown, so
+  the summary's counts cannot carry it. Its own lines are read here: a
+  `FAILED` line, or the line that says no spec left a genre behind. An
+  end-to-end run is known by the global setup's line, which every such run
+  prints first; one that ends with neither ledger line did not run its
+  teardown, and that is not a pass.
+*/
+const LEDGER_FAILED = /^\[ledger\] FAILED: (.*)$/m;
+const LEDGER_CLEAN = /^\[ledger\] genres: none left behind by a spec$/m;
+const END_TO_END = /^\[global-setup\] /m;
+
+const ledgerOf = (output: string): { state: RunResult['ledger']; said: string | null } => {
+  const failed = LEDGER_FAILED.exec(output);
+  if (failed !== null) return { state: 'failed', said: failed[1].length > 160 ? `${failed[1].slice(0, 160)}…` : failed[1] };
+  if (LEDGER_CLEAN.test(output)) return { state: 'clean', said: null };
+  return { state: END_TO_END.test(output) ? 'absent' : 'none', said: null };
 };
 
 /*
@@ -66,7 +91,10 @@ export function readRunResult({
   const flaky = countOf(output, 'flaky') ?? 0;
   const skipped = countOf(output, 'skipped') ?? 0;
 
-  const base = { passed: passed ?? 0, failed, flaky, skipped };
+  const ledger = ledgerOf(output);
+  const base = { passed: passed ?? 0, failed, flaky, skipped, ledger: ledger.state };
+  const ledgerFault =
+    ledger.state === 'failed' ? `the ledger failed: ${ledger.said}` : ledger.state === 'absent' ? 'the ledger did not report — the run ended without its teardown' : null;
 
   /*
     **No summary is the WORST case, not the best.** A crashed run, a killed run
@@ -79,7 +107,15 @@ export function readRunResult({
   }
 
   if (failed > 0) {
-    return { ...base, ok: false, reason: `${failed} failed` };
+    return { ...base, ok: false, reason: ledgerFault === null ? `${failed} failed` : `${failed} failed, and ${ledgerFault}` };
+  }
+
+  /*
+    Before the status, because the status is what this file exists not to
+    need: a ledger failure is named as one, whatever the run exited with.
+  */
+  if (ledgerFault !== null) {
+    return { ...base, ok: false, reason: ledgerFault };
   }
 
   /*
@@ -114,6 +150,9 @@ export function summarise(result: RunResult): string {
   if (result.failed > 0) parts.push(`${result.failed} failed`);
   if (result.flaky > 0) parts.push(`${result.flaky} flaky`);
   if (result.skipped > 0) parts.push(`${result.skipped} skipped`);
+  if (result.ledger === 'clean') parts.push('ledger clean');
+  if (result.ledger === 'failed') parts.push('ledger FAILED');
+  if (result.ledger === 'absent') parts.push('ledger ABSENT');
 
   const verdict = result.ok ? 'OK' : `NOT OK — ${result.reason}`;
 

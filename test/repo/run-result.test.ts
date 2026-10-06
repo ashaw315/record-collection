@@ -125,3 +125,61 @@ describe('a run is judged by its summary, never by its exit code', () => {
     expect(line).toMatch(/1 failed/);
   });
 });
+
+/**
+ * **The ledger's verdict is part of the result, and the line carries it.**
+ *
+ * An end-to-end run's global teardown compares the test database with what
+ * the run started with (`e2e/ledger.ts`) and fails on a genre left behind.
+ * It does so AFTER Playwright has printed its summary, so the summary reads
+ * "691 passed" over a run that left the database dirty: the one line every
+ * reader uses, green over a red run. The first time the ledger failed, with
+ * 179 names, the line above it said 279 passed and 1 failed for another
+ * reason; had that test passed it would have said nothing was wrong.
+ *
+ * Three states, not two (CLAUDE.md §2): the ledger reported clean, it
+ * reported a failure, or an end-to-end run ended without it reporting at
+ * all, which is a teardown that did not run and is not a pass.
+ */
+describe('an end-to-end run is judged by its ledger as well as its counts', () => {
+  const SETUP = '[global-setup] seeded the seventeen in 2100ms\n';
+  const COUNTS = '  12 skipped\n  691 passed (28.9m)\n';
+  const CLEAN = '[ledger] labels: 1 at the start, 65 at the end\n[ledger] genres: none left behind by a spec\n';
+  const DIRTY = '[ledger] FAILED: 2 genres left behind: UK82-abc, Crust-abc\n';
+
+  /* Fails against a judgement that reads only the counts and the status: the counts are clean, and the status is what the old checker was built not to need. */
+  it('fails a run whose ledger failed, even with clean counts and a zero exit, and says the ledger is why', () => {
+    const result = readRunResult({ output: SETUP + COUNTS + DIRTY, exitCode: 0 });
+    expect(result.ok).toBe(false);
+    expect(result.reason).toMatch(/ledger/);
+    expect(result.reason, 'and carries what the ledger said').toMatch(/2 genres left behind/);
+    expect(summarise(result), 'the line a reader uses says so').toMatch(/691 passed.*NOT OK.*ledger/);
+  });
+
+  it('passes a run whose ledger reported clean, and the line says the ledger was read', () => {
+    const result = readRunResult({ output: SETUP + COUNTS + CLEAN, exitCode: 0 });
+    expect(result.ok).toBe(true);
+    expect(summarise(result)).toMatch(/691 passed.*ledger clean.*OK/);
+  });
+
+  /* Fails against a judgement with two states: no ledger line reads as nothing wrong. */
+  it('fails an end-to-end run that ended without the ledger reporting at all', () => {
+    const result = readRunResult({ output: SETUP + COUNTS, exitCode: 0 });
+    expect(result.ok).toBe(false);
+    expect(result.reason).toMatch(/ledger did not report/);
+  });
+
+  it('asks nothing about a ledger of a run that is not end-to-end', () => {
+    const result = readRunResult({ output: '      Tests  4056 passed (4056)\n', exitCode: 0 });
+    expect(result.ok).toBe(true);
+    expect(summarise(result)).not.toMatch(/ledger/);
+  });
+
+  /* A failing test outranks nothing: both are said. */
+  it('reports a failed test and a failed ledger together', () => {
+    const result = readRunResult({ output: `${SETUP}  1 failed\n${COUNTS}${DIRTY}`, exitCode: 1 });
+    expect(result.ok).toBe(false);
+    expect(result.reason).toMatch(/1 failed/);
+    expect(result.reason).toMatch(/ledger/);
+  });
+});
