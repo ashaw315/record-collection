@@ -34889,3 +34889,48 @@ wall's paper colour, on the pulled record's field. At rest the field is:
 During the pull and the return it is a mix from paper to that value. The
 front of a no-cover record is not "the same colour" either (A19's next
 paragraph): it is title and artist on a paper square with §6's diagonal.
+
+## Three answers before unit 2 (6 Oct)
+
+**1. The ruled ring paints in full on the modal's own control.** The only
+boxed control the modal has yet is CLOSE; the second unit's controls do not
+exist. With §M.6's ring put on CLOSE (2px ink, offset 2) and read as
+pixels, keyboard-focused against unfocused, at 1440 and 390: 112 changed
+pixels on each side and 176 on top and on the bottom, the ring's own counts
+with its corners. So the trigger alone is the problem. Two things seen on
+the way: CLOSE sits 4 from the viewport's top, so its ring starts at y = 0;
+and the ring's bottom edge ends at y = 52, where the row's hairline begins.
+Opened by pointer, CLOSE holds focus and draws no ring, as ruled.
+
+**2. What rules the pull's field.**
+
+- The clamp: settled §5.2. "Sample the cover's dominant chromatic value and
+  clamp it: lightness into 0.62–0.74, chroma to at most 0.09, hue kept as
+  sampled. The clamp was withdrawn for one round and is reinstated (§W.4)."
+- That the field is the clamped base: §W.2. "Colour joins that curve as a
+  fade from paper to the record's clamped base, over the same 1000ms,
+  starting at 0."
+- Ink where there is no stored colour: §W.3 and §W.8. "§5.3 owns the
+  fallback and §5.3 says ink".
+- The no-cover front: §W.3. "With no cover the record's material is its
+  text, so the pulled state sets title and artist large on ink — not on a
+  colour field... The absence takes §6's diagonal across the empty sleeve
+  area". **The build differs from this in one respect:** the title and
+  artist are drawn in ink on a PAPER square with an ink edge, inset in the
+  ink field (since cbbb948). No sentence found in the wall's target rules a
+  paper square; "on ink" is the ruling's word.
+- **The plain back itself: nothing in the wall's target rules it.** §W.7
+  says only that "turning it over shows the back on the same face". Its
+  label and catalogue number, and its colour, are ruled by A19 alone, and
+  restated by §M.3.
+
+So the field's colour is ruled, by §5.2, §W.2 and §W.3/§W.8, all later
+than A19's "stored spine colour"; and the plain back's ground on the wall
+is that field because nothing gives the back a ground of its own.
+
+**3. Production, read at 11:4x on 6 Oct.** Bitches Brew has both inside
+leaves: one `gatefold_left` and one `gatefold_right`, both uploaded 6 Oct
+11:19. It also gained three covers the same morning and now has seven; its
+one back is from 1 Oct. Collection totals: 22 covers on 16 records, 1 back,
+1 left leaf, 1 right leaf. The morning's "zero" predates the upload. So the
+gatefold opens on one record, and step 88's hold has lost its reason.
