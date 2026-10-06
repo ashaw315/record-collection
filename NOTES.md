@@ -35062,3 +35062,66 @@ frames of it. Re-running the sheet rewrote the four stills byte for byte.
 frame-planes, identity-band-23, layout-sweep and nav-menu-84 on both
 projects, 79 passed; record, wall and repo unit tests, 1145 passed;
 typecheck, lint (0 errors), build. Step 81 has had no gate.
+
+## The gate on step 81 is RED by the same one test, and its cause is now measured (6 Oct)
+
+Gate: full suites, both projects, on 56485a7 (step 81's three units, steps
+86 and 85 already pushed, and the drops to step 90).
+
+- Unit: 4051 passed, 2 skipped, 0 failed.
+- Playwright: 690 passed, 12 skipped, **1 failed**, in 30.7m. Chromium 494,
+  mobile 196.
+
+**The failure is `[mobile] e2e/manage.spec.ts:179` again**, first attempt
+and retry, 33.3s and 34.3s against a 30s budget. Chromium, earlier in the
+run, passed it in 14.5s. Nothing of step 81 failed, and nothing else did.
+
+**This time the database was read when the run ended: 210 genres.** That is
+past the screen's page of 200 and at 40,000 options, the two things found
+this morning. Last gate's failure was left as "which of the two is not
+known" because the count was not taken; it is taken now, and both
+conditions held when the mobile project reached the test.
+
+**The genres left behind, partly enumerated.** 173 of the 210 carry no
+long number, 37 do. By name the largest groups are UK (29), Punk (23),
+Crust (22), Jazz (20), Disco (12), Soul (12), suffixed with a short run
+token (`Jazz-e2emux01u5k2124`, `UK82-smux0pcix1057`). The specs that write
+those stems include `collection-filters`, `record-detail`, `stats`,
+`record-form` and `title-ladder-33`. Not complete, and not fixed.
+
+**So the full gate cannot go green until one of two things is done:** the
+specs stop leaving genres, or the genres screen stops costing the square of
+them. Neither is in step 81. Not pushed; the decision is Adam's.
+
+## A rule that names its mechanism stops applying when the mechanism is not there (6 Oct)
+
+Four times in one day a rule or a claim was stated as how it works, and
+failed in a case where that working was unavailable while what it was for
+still mattered.
+
+- "One edit, one author" for a withdrawal and its entry. What it guards is
+  that the two are never apart. Where the host is SPEC.md, one author can
+  reach both files and the rule still cannot be met, for a reason below.
+- "Don't restate another section's fact", which did not cover pointing at
+  a rule that does not reach the case.
+- §M.5 took its rotation from §W.16, and with it a projection, orthographic,
+  under which a face-on turn is only a face narrowing.
+- And one of mine in the other direction: I was told, and did not at first
+  check, that an entry without its sentence fails assertion 6 and a
+  sentence without its entry is reported by 9. Staged, neither happens for
+  §10b: the withdrawals grammar rejects the bullet and the run stops before
+  6, and 9 does not read SPEC.md at all. The description of the mechanism
+  was itself wrong, which only running it showed.
+
+**The rule.** State what must hold, and give the mechanism as one way of
+holding it. And when a plan rests on what a check will do, stage the case
+and watch the check do it.
+
+**Queued for the machinery round after the modal, now six items:** the four
+already listed (assertion 10; a stricter assertion 2; the scope fix for
+settled sections; record-screen guard patterns for helper-driven specs);
+SPEC.md as an index input with its section ids in the grammar, at which
+point the two §10b entries are filed, after first verifying the sentences
+in SPEC.md still match the handoff's held text exactly; and a decision on
+whether one bullet outside the grammar should stop all eleven assertions,
+as it does today, or fail one.
