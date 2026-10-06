@@ -34824,3 +34824,68 @@ built from 6f562a3, created 5 Oct 22:21 EDT. Aliases on it:
 record-collection-rust.vercel.app, record-collection-ashaw315s-projects
 .vercel.app, record-collection-git-main-ashaw315s-projects.vercel.app. No
 migration in the five commits. No page was loaded and nothing was judged.
+
+## Step 81, first unit built: §M.1 -- the view, opened from the cover (6 Oct)
+
+Step 81 is built as three units by agreement: the view; the faces and
+controls; the turn. This is the first. **Not to be pushed alone:** the view
+opens on empty paper until the second unit puts the sleeve in it.
+
+**Built.** `SleeveCover` wraps the cover in a button named "Open the
+sleeve", which takes the cover's own box from the page's one stylesheet
+rule, so the image has not moved. `SleeveModal` is the view: a portal on
+the body, fixed to the viewport on paper, a 53 row with its hairline and
+CLOSE on the 18 inset in the header control's own classes. Opening pushes
+one history entry at the same URL; the entry going is what closes the view,
+so Back, CLOSE and Escape are one path. Focus goes to CLOSE and returns to
+the cover. Tab cycles inside. The page beneath is held by step 86's
+`holdScroll`. A record with no cover has no trigger.
+
+**Tested** (`e2e/record-modal-81.spec.ts`, 11): ten red against the page as
+built. The eleventh, no trigger on a no-cover record, passed first because
+nothing had a trigger, and was shown red against a staged trigger on the
+frame. Two more breaks staged and confirmed taken: a close that leaves its
+history entry (CLOSE and Escape red on "the next Back leaves the record";
+Back rightly green), and no Tab cycle (red). The tap test uses a touch
+context and a touchscreen tap at 390, on the chromium project.
+
+**FINDING: §M.6's focus ring on the trigger is not painted at all.** "A 2px
+ink outline, offset 2 outside the box... The same ring marks the cover as a
+trigger on the record page." Built as ruled; `:focus-visible` matches and
+the outline computes to 2px ink at offset 2. Read as pixels, focused
+against unfocused, at 1440 and 390: 0 pixels changed on any side or inside.
+The cover is flush to its cell and the cell clips its overflow, so a ring
+outside the box is outside the cell. Positive control, so the zero is not
+the instrument: with the ring moved 4 inside the square, 3,792 pixels
+changed, which is a 2px ring's own count. So today a keyboard reader gets
+no sign on the trigger. Needs a ruling; an inside ring is one option, and
+ink on a dark photograph is its own problem. Not changed.
+
+**Step level:** record-modal-81 with cover-wait-85, cover-fit-83,
+frame-planes, floor-ceiling-measure, nav-menu-84, identity-band-23,
+layout-sweep, wall-cover and real-records-paint on both projects, 72
+passed; record and repo unit tests, 833 passed; typecheck, lint (0
+errors), build.
+
+## The plain back's ground: A19's sentence and what the build computes (6 Oct)
+
+For Design, side by side.
+
+**A19, SPEC.md §10b, line 1763:** "Where one does not — which is most
+records, since Discogs supplies a front cover and nothing more — the back
+is **a plain sleeve in the record's stored spine colour**, carrying label
+and catalogue number as a small imprint and nothing further."
+
+**The build** (`WallLabelled.tsx`, `pull-colour.ts`, `record-ladder.ts`).
+The plain back has no ground of its own: it is two lines of text, in the
+wall's paper colour, on the pulled record's field. At rest the field is:
+
+- with a stored spine colour: the ladder's BASE, which is the stored colour
+  with its lightness clamped into a fixed range and its chroma capped, hue
+  kept. So it equals the stored colour only where that colour is already
+  inside both limits.
+- with no stored colour: `WALL_INK`, #161412.
+
+During the pull and the return it is a mix from paper to that value. The
+front of a no-cover record is not "the same colour" either (A19's next
+paragraph): it is title and artist on a paper square with §6's diagonal.

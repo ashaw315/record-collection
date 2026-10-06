@@ -321,7 +321,7 @@ export function RecordPage8a({ record, writingConfigured = false }: { record: Pa
         */
         [data-cell="sleeve"] { container-type: size; }
         [data-cell="sleeve"] > [data-scale] { position: absolute; inset: 0; }
-        [data-cell="sleeve"] [data-cover], [data-cell="sleeve"] [data-mark="coverFrame"] { position: absolute; left: 0; top: 0; width: min(100cqw, 100cqh); height: min(100cqw, 100cqh); }
+        [data-cell="sleeve"] [data-cover-trigger], [data-cell="sleeve"] [data-cover], [data-cell="sleeve"] [data-mark="coverFrame"] { position: absolute; left: 0; top: 0; width: min(100cqw, 100cqh); height: min(100cqw, 100cqh); }
         [data-cell="sleeve"] [data-mark="sleeveBar"], [data-cell="sleeve"] [data-mark="sleeveBlock"] { position: absolute; }
         @container (min-aspect-ratio: 1 / 1) {
           [data-mark="sleeveBar"] { left: 100cqh; top: 0; width: calc(100cqw - 100cqh); height: calc(100cqh * ${STRIP_SPLIT.bar}); }

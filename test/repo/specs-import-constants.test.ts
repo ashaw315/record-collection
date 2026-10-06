@@ -78,6 +78,8 @@ const GOVERNED = [
   /* §33 (step 83): the cover's bounded crop, read as pixels on fixtures. */
   'e2e/cover-fit-83.spec.ts',
   'e2e/cover-wait-85.spec.ts',
+  /* §M.1 (step 81): the record modal's view, opened from the cover. */
+  'e2e/record-modal-81.spec.ts',
   'e2e/sheet/cover-boxes.sheet.ts',
   'e2e/identity-band-23.spec.ts',
   'e2e/identity-extremes.spec.ts',
