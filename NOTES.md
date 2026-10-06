@@ -34999,3 +34999,66 @@ and 1440 x 900, with a manifest. No capture of a plain back: held.
 **Step level:** record-modal-81 (20), the eight wall specs and eight cover
 specs on both projects, 125 passed; record, wall and repo unit tests;
 typecheck, lint (0 errors), build.
+
+## Step 81, third unit built: §M.5 -- the turn (6 Oct)
+
+**Built.** TURN OVER runs one half-turn about the sleeve's vertical centre
+line. `turnPose(progress)` (`sleeve-turn.ts`) gives each frame's face and
+angle; the component hands the browser `perspective(d) rotateY(angle)` on
+the sleeve, so the rotation is projected and no corner is interpolated. The
+face, and the label with it, change edge-on. At rest there is no transform.
+Under reduced motion the face changes at once. A press while it turns is
+ignored, which nothing rules.
+
+**The proposal, for Adam to judge from the recording:** 600ms; the wall's
+own ease, in and out (`easeInOutCubic`); seen from four sleeve-widths away.
+Reasons are in `sleeve-turn.ts`. All three are constants a ruling replaces.
+
+**A correction made from my own recording.** The first build put the
+perspective on the stage. Its vanishing point is the stage's centre, which
+is below the sleeve's because the label and controls share the column, so
+the sleeve's top and bottom edges sloped unequally. Seen in a strip of
+frames, then asserted (the drawn box's centre drifted 1.03px by 174ms, red)
+and fixed by putting the perspective in the sleeve's own transform.
+
+**FINDING: turning, the sleeve's near edge passes over its label, and at
+1440 into the control.** Perspective draws the near edge taller than the
+square: at four widths away, by a seventh at edge-on. Computed from the
+proposal, not measured from frames: at 1440 x 900 the 732 square reaches
+about 52 past its top and bottom, where the label is 12 below and the
+control 35; at 390 x 844 the 354 square reaches about 25, over the label
+and short of the control. It is a sliver, for the frames around edge-on,
+and it stays clear of the top row. A longer viewing distance shrinks it
+(at eight widths, about 24 and 12); so would more room beneath. The
+recording shows it. Not changed: it follows from the proposal Adam is
+judging.
+
+**Tested.** Unit: six on `turnPose`, three red against a linear stub that
+swapped at the end. End to end, two added to `record-modal-81.spec.ts`,
+sampling every animation frame of a turn in the page: the transform is a
+rotation about the vertical axis and nothing else, under one perspective at
+the proposed distance; the angle only rises; the face changes once, between
+60 and 120 degrees; the label names the face in every frame; the drawn box
+goes narrower than half the square, taller than it, and stays centred on
+its line; it lasts 0.8 to 1.4 of 600ms; at rest transform none, on the
+back, the square's own size; focus on the control. Red against the second
+unit. Breaks staged and confirmed taken: reduced motion ignored (red), no
+perspective (red on the drawn height, 732 for more than 736), a horizontal
+scale standing in for the rotation (red on the matrix). The transform is
+the browser's own projection, so it is the motion and not a proxy for it;
+the drawn box is the check that it reached the screen.
+
+**A test of the second unit's was changed:** its "does not change size or
+place across a turn" now waits for rest before measuring, since the sleeve
+moves between its faces.
+
+**The recording, from the build on the real collection, read-only:**
+`docs/captures/record-modal-81/turn-bitches-brew-1440x900-600ms-ease-in-out-cubic-p4.webm`
+and the same at `0390x844`: the page, the sleeve opened, four turns with a
+pause at each rest, closed. 25 frames a second, so a 600ms turn is 15
+frames of it. Re-running the sheet rewrote the four stills byte for byte.
+
+**Step level:** record-modal-81 (22) with cover-wait-85, cover-fit-83,
+frame-planes, identity-band-23, layout-sweep and nav-menu-84 on both
+projects, 79 passed; record, wall and repo unit tests, 1145 passed;
+typecheck, lint (0 errors), build. Step 81 has had no gate.

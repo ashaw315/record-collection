@@ -6,6 +6,7 @@ import { registerCleanup, trackArtist } from './cleanup';
 import { seedImage } from './seed';
 import { GRID_FORK, NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
 import { MODAL_CONTROL, MODAL_INSET, MODAL_LABEL_GAP, MODAL_LABEL_LINE, MODAL_ROW, sleeveSquare } from '../src/app/records/[id]/sleeve-modal';
+import { TURN_MS, TURN_PERSPECTIVE } from '../src/app/records/[id]/sleeve-turn';
 
 registerCleanup();
 
@@ -403,6 +404,8 @@ test.describe('§M.5 and §M.6: the face label, and TURN OVER', () => {
     await page.locator('[data-sleeve] img[data-sleeve-face="back"]').evaluate((img) => (img as HTMLImageElement).decode());
     await expect(turn, 'it keeps its label on both faces').toHaveText(/^turn over$/i);
     expect(await page.evaluate(() => document.activeElement?.getAttribute('data-sleeve-control')), 'focus stays on the control that changed the face').toBe('turn');
+    /* At rest: the third unit's turn moves the sleeve between its faces, and the claim is about where each face stands. */
+    await page.locator('[data-sleeve]:not([data-turning])').waitFor();
     expect(await box(page, '[data-sleeve]'), 'the face does not change size or place across a turn').toEqual(front);
     await page.mouse.move(1, NO_SCROLL_HEIGHT - 1);
     await expectFitted(page, PORTRAIT, 'the back');
@@ -479,4 +482,132 @@ test.describe('§M.6: every control is §9.3’s, with its hover and its focus',
       expect(sides.bottom, 'and the bottom').toBeGreaterThan(1.5 * b.width * k);
     });
   }
+});
+
+/*
+  Step 81, third unit: §M.5, the turn. "The turn is 180 degrees about the
+  sleeve's vertical centre line." "Both are rigid rotations, re-projected
+  every frame... corners are never interpolated." "Drawn in perspective
+  while they move, and every face is flat and face-on at rest." "Under the
+  reduced-motion setting, the turn... become[s] an immediate change of
+  face, with no rotation and no fade."
+
+  Every frame of a turn is sampled in the page: the sleeve's computed
+  transform, the perspective it is seen in, its drawn box, the face and the
+  label. The transform is the browser's own projection of one rotation, so
+  reading it reads the motion; the drawn box is the check that the
+  projection reached the screen, since a sleeve turning in perspective is
+  drawn taller than itself at its near edge and one without is not.
+*/
+
+type TurnFrame = { t: number; transform: string; perspective: string; face: string | null; label: string; turning: boolean; width: number; height: number; top: number; opacity: string };
+
+/** Presses TURN OVER and samples every animation frame until the sleeve has been at rest for three, or for `quietMs` where no turn is expected. */
+const sampleTurn = (page: Page, quietMs: number) => page.evaluate(async (quiet) => {
+  const sleeve = document.querySelector('[data-sleeve]') as HTMLElement;
+  const stage = sleeve.parentElement as HTMLElement;
+  const label = document.querySelector('[data-face-label]') as HTMLElement;
+  const frames: Array<{ t: number; transform: string; perspective: string; face: string | null; label: string; turning: boolean; width: number; height: number; top: number; opacity: string }> = [];
+  const started = performance.now();
+  /* Focused first, as a press by keyboard or pointer leaves it: a scripted click alone does not move focus. */
+  const control = document.querySelector('[data-sleeve-control="turn"]') as HTMLElement;
+  control.focus();
+  control.click();
+  await new Promise<void>((resolve) => {
+    let seen = false; let rest = 0;
+    const tick = () => {
+      const cs = getComputedStyle(sleeve); const r = sleeve.getBoundingClientRect();
+      const turning = sleeve.hasAttribute('data-turning');
+      frames.push({ t: performance.now() - started, transform: cs.transform, perspective: getComputedStyle(stage).perspective, face: sleeve.getAttribute('data-face'), label: (label.textContent ?? '').trim().toLowerCase(), turning, width: r.width, height: r.height, top: r.top, opacity: cs.opacity });
+      seen = seen || turning; rest = seen && !turning ? rest + 1 : 0;
+      const t = performance.now() - started;
+      if ((seen && rest >= 3) || (!seen && t > quiet) || t > 6000) resolve(); else requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
+  return frames;
+}, quietMs) as Promise<TurnFrame[]>;
+
+/** The rotation a computed transform holds: its sixteen numbers, or the identity. */
+function matrix(transform: string): number[] {
+  if (transform === 'none') return [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+  const n = transform.slice(transform.indexOf('(') + 1, -1).split(',').map(Number);
+  return n.length === 16 ? n : [n[0], n[1], 0, 0, n[2], n[3], 0, 0, 0, 0, 1, 0, n[4], n[5], 0, 1];
+}
+
+test.describe('§M.5: the turn', () => {
+  /* Fails against the second unit, where the face changes at once and no frame turns; against a turn drawn without perspective (the box is never taller than the square); and against a scale standing in for a rotation (the matrix is not a rotation's). */
+  test('TURN OVER is one rigid half-turn about the vertical centre line, in perspective while it moves, the face and label changing edge-on, flat at rest', async ({ page }) => {
+    const id = await seedSleeve(page, INSIDE.file, PORTRAIT.file);
+    await openSleeve(page, id, GRID_FORK, NO_SCROLL_HEIGHT);
+    const S = sleeveSquare(GRID_FORK, NO_SCROLL_HEIGHT);
+    const still = await box(page, '[data-sleeve]');
+    const centreY = still.top + still.height / 2;
+    const frames = await sampleTurn(page, 1000);
+    const moving = frames.filter((f) => f.turning);
+    expect(moving.length, 'frames sampled while it turns').toBeGreaterThanOrEqual(10);
+
+    /* First, what was drawn. The projection reached the screen: turned, the square is drawn narrower than itself, and its near edge taller. */
+    expect(Math.min(...moving.map((f) => f.width)), 'drawn narrow near edge-on').toBeLessThan(S / 2);
+    expect(Math.max(...moving.map((f) => f.height)), 'and taller than the square at its near edge, which only perspective does').toBeGreaterThan(S + 4);
+    /* And alike above and below: the drawn box grows by the same amount past the square's top as past its bottom. */
+    for (const f of moving) expect(Math.abs((f.top + f.height / 2) - centreY), `the turning sleeve stays centred on its own line at ${Math.round(f.t)}ms`).toBeLessThan(0.75);
+
+    const angles: number[] = [];
+    for (const f of moving) {
+      const m = matrix(f.transform);
+      /* A rotation about the vertical axis and nothing else: cos, 0, −sin / 0, 1, 0 / sin, 0, cos, with no translation. */
+      expect(m[0] * m[0] + m[2] * m[2], `rigid at ${Math.round(f.t)}ms: ${f.transform}`).toBeCloseTo(1, 4);
+      expect([m[1], m[4], m[5], m[6], m[9]].map((v) => Math.round(v * 1e4) / 1e4), 'no tilt, no vertical scale').toEqual([0, 0, 1, 0, 0]);
+      expect(m[10]).toBeCloseTo(m[0], 4);
+      expect(m[8]).toBeCloseTo(-m[2], 4);
+      expect([m[12], m[13], m[14]], 'about its own centre line: it does not travel').toEqual([0, 0, 0]);
+      expect([m[7], m[15]], 'and nothing else is in the projection').toEqual([0, 1]);
+      /*
+        Seen in perspective, from the sleeve's own centre: the transform is the rotation under one perspective at
+        TURN_PERSPECTIVE sleeve-widths, whose two terms are sin / d and −cos / d. Held on the sleeve and not on the
+        stage, so the vanishing point is the sleeve's centre and its top and bottom edges slope alike.
+      */
+      const d = S * TURN_PERSPECTIVE;
+      expect(m[3], `perspective at ${Math.round(f.t)}ms`).toBeCloseTo(-m[2] / d, 6);
+      expect(m[11]).toBeCloseTo(-m[0] / d, 6);
+      expect(f.perspective, 'and none on the stage, whose centre is not the sleeve’s').toBe('none');
+      expect(f.opacity, 'no fade').toBe('1');
+      const angle = (Math.atan2(-m[2], m[0]) * 180) / Math.PI;
+      angles.push(angle);
+      if (f.face === 'front') expect(angle, 'the leaving face stands within 0 to 90').toBeGreaterThanOrEqual(-0.01);
+      else expect(angle, 'the arriving face stands within −90 to 0, never seen from behind').toBeLessThanOrEqual(0.01);
+      expect(f.label, 'the label names the face shown, in every frame').toBe(f.face);
+    }
+    /* One way only: the leaving face's angle rises to edge-on, the arriving face's rises from edge-on to flat. */
+    const total = moving.map((f, i) => (f.face === 'front' ? angles[i] : 180 + angles[i]));
+    for (let i = 1; i < total.length; i += 1) expect(total[i], `frame ${i} has not turned back`).toBeGreaterThanOrEqual(total[i - 1] - 0.01);
+    const changes = moving.filter((f, i) => i > 0 && f.face !== moving[i - 1].face);
+    expect(changes.length, 'the face changes once').toBe(1);
+    const at = moving.indexOf(changes[0]);
+    expect(total[at - 1], 'and does so edge-on: the frame before is past 60').toBeGreaterThan(60);
+    expect(total[at], 'and the frame after short of 120').toBeLessThan(120);
+
+    const lasted = moving[moving.length - 1].t - moving[0].t;
+    expect(lasted, `it lasts about ${TURN_MS}ms`).toBeGreaterThan(TURN_MS * 0.8);
+    expect(lasted).toBeLessThan(TURN_MS * 1.4);
+
+    const rest = frames[frames.length - 1];
+    expect({ transform: rest.transform, perspective: rest.perspective, face: rest.face, label: rest.label, width: rest.width, height: rest.height }, 'flat and face-on at rest, on the back').toEqual({ transform: 'none', perspective: 'none', face: 'back', label: 'back', width: S, height: S });
+    expect(frames[0].face, 'it began on the front').toBe('front');
+    expect(await page.evaluate(() => document.activeElement?.getAttribute('data-sleeve-control')), 'focus stays on the control').toBe('turn');
+  });
+
+  /* Fails against a turn that ignores the setting: frames turn. Passes against the second unit, whose change was always immediate; shown red against a build with the setting's check removed. */
+  test('under reduced motion the face changes at once: no frame turns, none is in perspective, none fades', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    const id = await seedSleeve(page, INSIDE.file, PORTRAIT.file);
+    await openSleeve(page, id, GRID_FORK, NO_SCROLL_HEIGHT);
+    expect(await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches), 'the precondition: the setting is on').toBe(true);
+    const frames = await sampleTurn(page, TURN_MS * 1.5);
+    expect(frames.length, 'frames sampled').toBeGreaterThanOrEqual(10);
+    expect(frames.filter((f) => f.turning).length, 'frames turning').toBe(0);
+    expect([...new Set(frames.map((f) => `${f.transform} ${f.perspective} ${f.opacity}`))], 'every frame is flat, without perspective, at full strength').toEqual(['none none 1']);
+    expect(frames.slice(2).every((f) => f.face === 'back' && f.label === 'back'), 'the back and its label by the third frame').toBe(true);
+  });
 });

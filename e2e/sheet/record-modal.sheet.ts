@@ -1,8 +1,9 @@
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, renameSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from '@playwright/test';
 import { GRID_FORK, NO_SCROLL_HEIGHT } from '../../src/app/records/[id]/band-geometry';
 import { sleeveSquare } from '../../src/app/records/[id]/sleeve-modal';
+import { TURN_MS, TURN_PERSPECTIVE } from '../../src/app/records/[id]/sleeve-turn';
 import { readSeventeen } from '../seventeen';
 import { login } from './login';
 
@@ -33,7 +34,10 @@ test('the record modal: front and back at two windows, with a manifest', async (
     await page.getByRole('button', { name: 'Open the sleeve' }).click();
     await page.locator('[data-sleeve-modal]').waitFor();
     for (const face of ['front', 'back'] as const) {
-      if (face === 'back') await page.locator('[data-sleeve-control="turn"]').click();
+      if (face === 'back') {
+        await page.locator('[data-sleeve-control="turn"]').click();
+        await page.locator('[data-sleeve][data-face="back"]:not([data-turning])').waitFor();
+      }
       const img = page.locator(`[data-sleeve] img[data-sleeve-face="${face}"]`);
       const photographed = (await img.count()) > 0;
       if (photographed) await img.evaluate((el) => (el as HTMLImageElement).decode());
@@ -51,4 +55,43 @@ test('the record modal: front and back at two windows, with a manifest', async (
     }
   }
   writeFileSync(join(OUT, `manifest-${slug}.json`), `${JSON.stringify(manifest, null, 1)}\n`);
+});
+
+/**
+ * **The turn, recorded (§M.5): "Code proposes them from the build, and Adam
+ * judges them from a recording, since a still cannot show motion."** One
+ * file per window, of the real build: the record page, the sleeve opened,
+ * turned to its back, and turned to its front again, with a pause at each
+ * rest. Named by the proposal it shows: the duration, the curve, and the
+ * distance the sleeve is seen from in its own widths.
+ */
+test('the turn, recorded at two windows', async ({ browser }) => {
+  const record = readSeventeen().find((r) => r.title === TITLE);
+  if (record === undefined) throw new Error(`No record titled ${TITLE} in docs/captures/real-records.json.`);
+  mkdirSync(OUT, { recursive: true });
+  const slug = TITLE.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  for (const [width, height] of WINDOWS) {
+    const context = await browser.newContext({ viewport: { width, height }, recordVideo: { dir: OUT, size: { width, height } } });
+    const page = await context.newPage();
+    await login(page);
+    await page.goto(`/records/${record.id}`);
+    await page.locator('[data-cell="sleeve"] img[data-cover][data-cover-treatment]').waitFor({ timeout: 30_000 });
+    await page.addStyleTag({ content: 'nextjs-portal{display:none!important}' });
+    await page.locator('[data-cover-trigger]').scrollIntoViewIfNeeded();
+    await page.waitForTimeout(800);
+    await page.getByRole('button', { name: 'Open the sleeve' }).click();
+    await page.locator('[data-sleeve] img[data-sleeve-face="front"]').evaluate((el) => (el as HTMLImageElement).decode());
+    await page.waitForTimeout(1200);
+    for (const face of ['back', 'front', 'back', 'front']) {
+      await page.locator('[data-sleeve-control="turn"]').click();
+      await page.locator(`[data-sleeve][data-face="${face}"]:not([data-turning])`).waitFor();
+      await page.waitForTimeout(1400);
+    }
+    await page.locator('[data-sleeve-close]').click();
+    await page.waitForTimeout(600);
+    const video = page.video();
+    await context.close();
+    if (video === null) throw new Error('no recording was made');
+    renameSync(await video.path(), join(OUT, `turn-${slug}-${String(width).padStart(4, '0')}x${height}-${TURN_MS}ms-ease-in-out-cubic-p${TURN_PERSPECTIVE}.webm`));
+  }
 });

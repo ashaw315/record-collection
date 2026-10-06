@@ -1,10 +1,11 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { holdScroll } from '@/components/scroll-hold';
 import { NAV_TYPE } from '@/components/nav-type';
 import { LABEL } from './grid-type';
+import { TURN_MS, TURN_PERSPECTIVE, turnPose, type TurnPose } from './sleeve-turn';
 import { MODAL_CONTROL_GAP, MODAL_LABEL_GAP, MODAL_LABEL_LINE, sleeveSquare, type SleeveFace } from './sleeve-modal';
 
 /**
@@ -38,7 +39,45 @@ export function SleeveModal({ onClose, front, back }: { onClose: () => void; fro
   /* §M.4: "The sizes are taken once when the modal opens and do not change while it is open." */
   const [side] = useState(() => sleeveSquare(window.innerWidth, window.innerHeight));
   const [face, setFace] = useState<SleeveFace>('front');
-  const shown = face === 'front' ? front : back;
+  /*
+    §M.5: the turn. While it runs, `turn` holds the pose of this frame; the
+    browser projects the one rotation it names, so the face turns and no
+    corner is interpolated. At rest there is no turn, no transform and no
+    perspective: "every face is flat and face-on at rest."
+  */
+  const [turn, setTurn] = useState<{ from: SleeveFace; to: SleeveFace; pose: TurnPose } | null>(null);
+  const frame = useRef(0);
+  const turning = useRef(false);
+  useEffect(() => () => cancelAnimationFrame(frame.current), []);
+  const turnOver = useCallback(() => {
+    /* A press while it turns is not a second turn. */
+    if (turning.current) return;
+    const from = face;
+    const to: SleeveFace = from === 'front' ? 'back' : 'front';
+    /* "Under the reduced-motion setting, the turn... become[s] an immediate change of face, with no rotation and no fade." */
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setFace(to);
+      return;
+    }
+    turning.current = true;
+    const started = performance.now();
+    const step = (now: number) => {
+      const progress = (now - started) / TURN_MS;
+      if (progress >= 1) {
+        turning.current = false;
+        setFace(to);
+        setTurn(null);
+        return;
+      }
+      setTurn({ from, to, pose: turnPose(progress) });
+      frame.current = requestAnimationFrame(step);
+    };
+    setTurn({ from, to, pose: turnPose(0) });
+    frame.current = requestAnimationFrame(step);
+  }, [face]);
+  /* The face toward the reader: it changes edge-on, and the label with it. */
+  const toward = turn === null ? face : turn.pose.face === 'from' ? turn.from : turn.to;
+  const shown = toward === 'front' ? front : back;
   const close = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -87,19 +126,36 @@ export function SleeveModal({ onClose, front, back }: { onClose: () => void; fro
         face keeps its size and framing across a turn.
       */}
       <div data-sleeve-stage="" className="flex min-h-0 flex-1 flex-col items-center justify-center">
-        <div data-sleeve="" data-face={face} className="relative box-border shrink-0 border border-border bg-background" style={{ width: side, height: side }}>
+        <div
+          data-sleeve=""
+          data-face={toward}
+          data-turning={turn === null ? undefined : ''}
+          className="relative box-border shrink-0 border border-border bg-background"
+          style={{
+            width: side,
+            height: side,
+            /*
+              Perspective during the motion only, and in the sleeve's own
+              transform: the distance it is seen from, in its own widths,
+              with the vanishing point at the sleeve's centre. On the stage
+              it would be the stage's centre, which is below the sleeve's,
+              and the top and bottom edges would slope unequally.
+            */
+            transform: turn === null ? undefined : `perspective(${side * TURN_PERSPECTIVE}px) rotateY(${turn.pose.angle}deg)`,
+          }}
+        >
           {shown !== null && (
             // eslint-disable-next-line @next/next/no-img-element -- blob and data URLs the optimizer is not configured for, as in ImageGallery
-            <img key={face} data-sleeve-face={face} src={shown} alt="" className="block h-full w-full object-contain" />
+            <img key={toward} data-sleeve-face={toward} src={shown} alt="" className="block h-full w-full object-contain" />
           )}
         </div>
         {/* §M.5: "a label beneath the sleeve names the face shown... It shows in every mode... the label is announced politely." */}
         <div data-face-label="" aria-live="polite" className={`${LABEL} shrink-0 leading-none`} style={{ marginTop: MODAL_LABEL_GAP, height: MODAL_LABEL_LINE }}>
-          {FACE_NAME[face]}
+          {FACE_NAME[toward]}
         </div>
         <div data-sleeve-controls="" className="flex shrink-0" style={{ marginTop: MODAL_LABEL_GAP, gap: MODAL_CONTROL_GAP }}>
           {/* §M.6: "TURN OVER shows on the front and on the back, and keeps its label on both". */}
-          <button type="button" data-sleeve-control="turn" onClick={() => setFace((now) => (now === 'front' ? 'back' : 'front'))} className={`${CONTROL} px-[18px]`}>
+          <button type="button" data-sleeve-control="turn" onClick={turnOver} className={`${CONTROL} px-[18px]`}>
             Turn over
           </button>
         </div>
