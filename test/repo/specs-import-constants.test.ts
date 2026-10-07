@@ -96,6 +96,7 @@ const GOVERNED = [
   'e2e/back-newest-82.spec.ts',
   'e2e/sheet/cover-boxes.sheet.ts',
   'e2e/sheet/record-modal.sheet.ts',
+  'e2e/sheet/record-modal-92.sheet.ts',
   'e2e/identity-band-23.spec.ts',
   'e2e/identity-extremes.spec.ts',
   'e2e/images.spec.ts',

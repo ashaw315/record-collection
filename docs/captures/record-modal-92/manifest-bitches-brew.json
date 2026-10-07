@@ -1,0 +1,86 @@
+[
+ {
+  "record": "Bitches Brew",
+  "width": 390,
+  "height": 844,
+  "state": "cover focused by keyboard",
+  "focusVisible": true,
+  "file": "ring-bitches-brew-0390x844-focused-paper2-ink2.png"
+ },
+ {
+  "record": "Bitches Brew",
+  "width": 390,
+  "height": 844,
+  "state": "front",
+  "file": "modal-bitches-brew-0390x844-front-s354.png",
+  "label": "Front",
+  "controls": [
+   "Turn over",
+   "Open"
+  ]
+ },
+ {
+  "record": "Bitches Brew",
+  "width": 390,
+  "height": 844,
+  "state": "back",
+  "file": "modal-bitches-brew-0390x844-back-s354.png",
+  "label": "Back",
+  "controls": [
+   "Turn over"
+  ]
+ },
+ {
+  "record": "Bitches Brew",
+  "width": 390,
+  "height": 844,
+  "state": "gatefold open",
+  "file": "modal-bitches-brew-0390x844-spread-leaf177.png",
+  "label": "Inside",
+  "controls": [
+   "Fold"
+  ]
+ },
+ {
+  "record": "Bitches Brew",
+  "width": 1440,
+  "height": 900,
+  "state": "cover focused by keyboard",
+  "focusVisible": true,
+  "file": "ring-bitches-brew-1440x900-focused-paper2-ink2.png"
+ },
+ {
+  "record": "Bitches Brew",
+  "width": 1440,
+  "height": 900,
+  "state": "front",
+  "file": "modal-bitches-brew-1440x900-front-s732.png",
+  "label": "Front",
+  "controls": [
+   "Turn over",
+   "Open"
+  ]
+ },
+ {
+  "record": "Bitches Brew",
+  "width": 1440,
+  "height": 900,
+  "state": "back",
+  "file": "modal-bitches-brew-1440x900-back-s732.png",
+  "label": "Back",
+  "controls": [
+   "Turn over"
+  ]
+ },
+ {
+  "record": "Bitches Brew",
+  "width": 1440,
+  "height": 900,
+  "state": "gatefold open",
+  "file": "modal-bitches-brew-1440x900-spread-leaf702.png",
+  "label": "Inside",
+  "controls": [
+   "Fold"
+  ]
+ }
+]
