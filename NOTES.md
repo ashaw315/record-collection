@@ -36002,9 +36002,11 @@ OVER, and about 25 at 390"):
 
 | window | square | swell, above and below | turning edge | what it crosses |
 |---|---|---|---|---|
-| 390 x 844 | 354 | 25.3 | 206.7, the row's foot at 53 | the face label (12 below, 11 tall); it stops 2 short of the controls |
-| 1440 x 900 | 732 | 17.0 | 54.0, the row's foot at 53 | the face label and 5 into the gap beneath it; it does not reach TURN OVER, which starts 35 below the square |
+| 390 x 844 | 354 | 25.3 | 206.7, the row's foot at 53 | the whole face label, which runs from 12 to 23 below the square, and 2 into the gap beneath it; it stops 10 short of the controls, which start 35 below |
+| 1440 x 900 | 732 | 17.0 | 54.0, the row's foot at 53 | the top 5 of the face label's 11; it does not reach the label's foot, nor TURN OVER, which starts 35 below the square |
 
 At 390 x 844 the sleeve is seen from four widths; at 1440 x 900 from 8,246px,
-11.3 widths. The 52 was real as first built (measured 52.1, the edge at
+11.3 widths. (The crossings are arithmetic from the swell and the column's
+ruled 12, 11 and 12, not read from frames; the first version of this table
+had both wrong and was corrected before it left this machine.) The 52 was real as first built (measured 52.1, the edge at
 18.9, inside the row); step 91 replaced it.
