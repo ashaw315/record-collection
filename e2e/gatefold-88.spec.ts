@@ -5,8 +5,7 @@ import { registerCleanup, trackArtist } from './cleanup';
 import { seedImage } from './seed';
 import { GRID_FORK, NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
 import { MODAL_CONTROL, MODAL_CONTROL_GAP, MODAL_LABEL_GAP, MODAL_LABEL_LINE, MODAL_ROW, sleeveSquare } from '../src/app/records/[id]/sleeve-modal';
-import { OPEN_MS, spreadSquare } from '../src/app/records/[id]/sleeve-open';
-import { TURN_PERSPECTIVE } from '../src/app/records/[id]/sleeve-turn';
+import { OPEN_MS, openDistance, spreadSquare } from '../src/app/records/[id]/sleeve-open';
 
 registerCleanup();
 
@@ -156,7 +155,7 @@ for (const [width, height] of [[390, 844], [GRID_FORK, NO_SCROLL_HEIGHT]] as con
         const m = matrix(f.transform);
         expect(m[0] * m[0] + m[2] * m[2], `a rigid rotation at ${Math.round(f.t)}ms: ${f.transform}`).toBeCloseTo(1, 4);
         expect([m[1], m[4], m[5], m[6], m[9]].map((v) => Math.round(v * 1e4) / 1e4), 'about the vertical, nothing else').toEqual([0, 0, 1, 0, 0]);
-        const d = (f.size as number) * TURN_PERSPECTIVE;
+        const d = openDistance(f.size as number, closed.top - MODAL_ROW);
         expect(m[3], 'in perspective while it moves').toBeCloseTo(-m[2] / d, 5);
         const angle = (Math.atan2(-m[2], m[0]) * 180) / Math.PI;
         /* The front panel is hinged at its left edge and swings toward the reader; the left leaf is hinged at its right edge and lies down. */
@@ -249,5 +248,35 @@ test.describe('§M.1 with the gatefold open', () => {
     await page.getByRole('button', { name: 'Open the sleeve' }).click();
     await page.locator('[data-sleeve][data-face="front"]').waitFor();
     await expect(page.locator('[data-spread]')).toHaveCount(0);
+  });
+});
+
+/*
+  Step 91, §M.5: "The same holds for OPEN and FOLD during the gatefold's
+  opening." Fails against an opening that a second press restarts, reverses
+  or queues: it would end closed, or take two openings' time.
+*/
+test.describe('§M.5 (step 91): a press while the gatefold is opening is ignored', () => {
+  test('a press on the row’s control during the opening does nothing: one opening runs and the spread ends open', async ({ page }) => {
+    const id = await seedSleeve(page, ['gatefold_left', 'gatefold_right']);
+    await openSleeve(page, id, GRID_FORK, NO_SCROLL_HEIGHT);
+    const result = await page.evaluate(async () => {
+      const started = performance.now();
+      (document.querySelector('[data-sleeve-control="open"]') as HTMLElement).click();
+      await new Promise((r) => setTimeout(r, 150));
+      const spread = () => document.querySelector<HTMLElement>('[data-spread]');
+      const midway = spread()?.hasAttribute('data-opening') === true;
+      /* The row now shows FOLD; pressed mid-motion, it would start the folding. */
+      const pressed = document.querySelector<HTMLElement>('[data-sleeve-controls] button');
+      const name = pressed?.getAttribute('data-sleeve-control') ?? null;
+      pressed?.click();
+      let motions = 0; let was = true; let ended = 0;
+      await new Promise<void>((resolve) => { const tick = () => { const now = spread()?.hasAttribute('data-opening') === true; if (was && !now) { motions += 1; ended = performance.now() - started; } was = now; if (performance.now() - started > 2500) resolve(); else requestAnimationFrame(tick); }; requestAnimationFrame(tick); });
+      return { midway, name, motions, ended, open: spread() !== null, label: (document.querySelector('[data-face-label]')?.textContent ?? '').toLowerCase() };
+    });
+    expect({ midway: result.midway, pressed: result.name }, 'the precondition: FOLD was pressed while it was opening').toEqual({ midway: true, pressed: 'fold' });
+    expect(result.motions, 'one motion ran').toBe(1);
+    expect({ open: result.open, label: result.label }, 'and the spread is open').toEqual({ open: true, label: 'inside' });
+    expect(result.ended).toBeLessThan(OPEN_MS * 1.5);
   });
 });

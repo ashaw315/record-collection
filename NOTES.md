@@ -35688,3 +35688,40 @@ no stored colour it reads the wall's ink; and the wall's pulled record,
 turned over, has the same ground, the same text and the same imprint
 markup. Shown red against A19's stored colour as the ground (three of
 four).
+
+## Step 91 built, and a correction to the turn's entry: the swell reached the top row (6 Oct)
+
+**I reported on 6 Oct that the turn's swell "stays clear of the top row".
+At 1440 x 900 that was false.** The 732 square stands 18 under the row, at
+y = 71, and swells about 52: its edge stood at 19, inside the 53 row. The
+arithmetic in that entry was right (71 − 52 = 19) and its reading was
+wrong; 19 is not below 53. Design's §M.5 carries the sentence "does not
+reach the top row" on the strength of it.
+
+**Measured from frames**, the drawn box of the turning sleeve in every
+animation frame, before the change: swell 52.1 at 1440 x 900 with the edge
+at 18.9; 25.2 at 390 x 844 with the edge at 206.8, far from the row. The
+computed 52 and 25 were right.
+
+**Built, as the step rules: the viewing distance lengthens until it does
+not.** `turnDistance(side, roomAbove)` is four widths, or the distance at
+which the swell is one pixel short of the paper above the sleeve. After:
+25.3 at 390 x 844, unchanged; 17.0 at 1440 x 900, the edge at 54.0. **The
+distance at 1440 x 900 is 8,246px, 11.3 widths**, where a phone keeps four.
+So the perspective is visibly weaker on a height-bound desktop than on a
+phone: same rule, different room. `openDistance` does the same for the
+gatefold's panel, which is hinged at its edge and swells by a sixth of its
+side from four widths (117 on a 702 leaf); at 1440 x 900 it is seen from
+about 16,500px and is close to flat.
+
+**The turn is on the ease-out cubic now**, which §M.5 rules and step 81
+did not have. Its unit tests state the curve.
+
+**A press during a motion is ignored**, for TURN OVER and for the row's
+control during the gatefold's opening: one test each, sampling the motion's
+ends in the page. Both pass against the build, which already ignored them,
+so both were shown red with the guards removed: two presses then start two
+motions.
+
+Decided, as the evening's item 2 allows: four widths where there is room,
+600ms for both rotations.

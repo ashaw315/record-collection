@@ -64,3 +64,14 @@ export function openPose(e: number, closed: number, spread: number): OpenPose {
   const fold = k === 1 ? 0 : (-closed / 2) * (1 - k);
   return swung < 90 ? { size, fold, panel: 'front', angle: swung === 0 ? 0 : -swung } : { size, fold, panel: 'left', angle: 180 - swung };
 }
+
+/** As `turnSwell`, for a panel hinged at its edge: at edge-on its far edge stands a whole side toward the reader. */
+export function openSwell(side: number, distance: number): number {
+  return ((side / 2) * side) / (distance - side);
+}
+
+/** As `turnDistance` (step 91), for the gatefold's panel: four widths, or further where its swell would reach the top row. */
+export function openDistance(side: number, roomAbove: number): number {
+  const allowed = Math.max(1, roomAbove - 1);
+  return Math.max(side * 4, side + ((side / 2) * side) / allowed);
+}

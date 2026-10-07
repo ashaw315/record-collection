@@ -6,9 +6,9 @@ import { holdScroll } from '@/components/scroll-hold';
 import { NAV_TYPE } from '@/components/nav-type';
 import { LABEL } from './grid-type';
 import { PlainBackImprint } from '@/app/wall/PlainBackImprint';
-import { TURN_MS, TURN_PERSPECTIVE, turnPose, type TurnPose } from './sleeve-turn';
-import { OPEN_MS, easeOutCubic, openPose, spreadSquare } from './sleeve-open';
-import { MODAL_CONTROL_GAP, MODAL_LABEL_GAP, MODAL_LABEL_LINE, sleeveSquare, type SleeveFace } from './sleeve-modal';
+import { TURN_MS, turnDistance, turnPose, type TurnPose } from './sleeve-turn';
+import { OPEN_MS, easeOutCubic, openDistance, openPose, spreadSquare } from './sleeve-open';
+import { MODAL_CONTROL, MODAL_CONTROL_GAP, MODAL_LABEL_GAP, MODAL_LABEL_LINE, MODAL_ROW, sleeveSquare, type SleeveFace } from './sleeve-modal';
 
 /**
  * The record modal's view (§M.1): "a view of the object, not a dialog over
@@ -54,6 +54,12 @@ export function SleeveModal({
   const view = useRef<HTMLDivElement>(null);
   /* §M.4: "The sizes are taken once when the modal opens and do not change while it is open." */
   const [side] = useState(() => sleeveSquare(window.innerWidth, window.innerHeight));
+  /*
+    Step 91: the paper between the top row and the closed sleeve, taken with
+    the sizes. The turn and the opening are seen from far enough that their
+    near edge, which perspective draws past the square, stays out of the row.
+  */
+  const [room] = useState(() => (window.innerHeight - MODAL_ROW - (side + MODAL_LABEL_GAP + MODAL_LABEL_LINE + MODAL_LABEL_GAP + MODAL_CONTROL)) / 2);
   const [face, setFace] = useState<SleeveFace>('front');
   /*
     §M.5: the turn. While it runs, `turn` holds the pose of this frame; the
@@ -216,7 +222,7 @@ export function SleeveModal({
                 height: pose.size,
                 transformOrigin: pose.panel === 'front' ? 'left center' : 'right center',
                 /* In perspective during the motion only, seen from the fold; flat at rest. */
-                transform: spread?.moving === true ? `perspective(${pose.size * TURN_PERSPECTIVE}px) rotateY(${pose.angle}deg)` : undefined,
+                transform: spread?.moving === true ? `perspective(${openDistance(pose.size, room)}px) rotateY(${pose.angle}deg)` : undefined,
               }}
             >
               {/* eslint-disable-next-line @next/next/no-img-element -- as above */}
@@ -239,7 +245,7 @@ export function SleeveModal({
                 it would be the stage's centre, which is below the sleeve's,
                 and the top and bottom edges would slope unequally.
               */
-              transform: turn === null ? undefined : `perspective(${side * TURN_PERSPECTIVE}px) rotateY(${turn.pose.angle}deg)`,
+              transform: turn === null ? undefined : `perspective(${turnDistance(side, room)}px) rotateY(${turn.pose.angle}deg)`,
             }}
           >
             {shown !== null ? (

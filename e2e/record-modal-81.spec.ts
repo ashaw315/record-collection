@@ -6,7 +6,7 @@ import { registerCleanup, trackArtist } from './cleanup';
 import { seedImage } from './seed';
 import { GRID_FORK, NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
 import { MODAL_CONTROL, MODAL_INSET, MODAL_LABEL_GAP, MODAL_LABEL_LINE, MODAL_ROW, sleeveSquare } from '../src/app/records/[id]/sleeve-modal';
-import { TURN_MS, TURN_PERSPECTIVE } from '../src/app/records/[id]/sleeve-turn';
+import { TURN_MS, turnDistance } from '../src/app/records/[id]/sleeve-turn';
 
 registerCleanup();
 
@@ -565,10 +565,11 @@ test.describe('§M.5: the turn', () => {
       expect([m[7], m[15]], 'and nothing else is in the projection').toEqual([0, 1]);
       /*
         Seen in perspective, from the sleeve's own centre: the transform is the rotation under one perspective at
-        TURN_PERSPECTIVE sleeve-widths, whose two terms are sin / d and −cos / d. Held on the sleeve and not on the
+        the turn's distance, whose two terms are sin / d and −cos / d. Held on the sleeve and not on the
         stage, so the vanishing point is the sleeve's centre and its top and bottom edges slope alike.
       */
-      const d = S * TURN_PERSPECTIVE;
+      /* Step 91: four widths, or further where the room above the sleeve is short; at this window the room is the 18 inset. */
+      const d = turnDistance(S, still.top - MODAL_ROW);
       expect(m[3], `perspective at ${Math.round(f.t)}ms`).toBeCloseTo(-m[2] / d, 6);
       expect(m[11]).toBeCloseTo(-m[0] / d, 6);
       expect(f.perspective, 'and none on the stage, whose centre is not the sleeve’s').toBe('none');
@@ -609,5 +610,55 @@ test.describe('§M.5: the turn', () => {
     expect(frames.filter((f) => f.turning).length, 'frames turning').toBe(0);
     expect([...new Set(frames.map((f) => `${f.transform} ${f.perspective} ${f.opacity}`))], 'every frame is flat, without perspective, at full strength').toEqual(['none none 1']);
     expect(frames.slice(2).every((f) => f.face === 'back' && f.label === 'back'), 'the back and its label by the third frame').toBe(true);
+  });
+});
+
+/*
+  Step 91, §M.5: "While it turns, the sleeve's near edge may pass its
+  square, over the face label and the controls, and does not reach the top
+  row... If [the perspective] would cross it, the viewing distance lengthens
+  until it does not, and the step reports the swell from frames."
+
+  Measured from frames: the drawn box of the turning sleeve in every
+  animation frame, its top against the top row's foot.
+*/
+test.describe('§M.5 (step 91): the turn’s swell, measured from frames', () => {
+  for (const [width, height] of [[390, 844], [GRID_FORK, NO_SCROLL_HEIGHT]] as const) {
+    /* Fails at 1440 × 900 against the turn as built at step 81, seen from four widths at every size: the 732 square, 18 under the row, swells by about 52 and its edge stands at 19, inside the row. */
+    test(`at ${width} × ${height} the turning sleeve swells past its square and never reaches the top row`, async ({ page }) => {
+      const id = await seedSleeve(page, INSIDE.file, PORTRAIT.file);
+      await openSleeve(page, id, width, height);
+      const S = sleeveSquare(width, height);
+      const still = await box(page, '[data-sleeve]');
+      const frames = (await sampleTurn(page, 1000)).filter((f) => f.turning);
+      expect(frames.length).toBeGreaterThanOrEqual(10);
+      const highest = Math.min(...frames.map((f) => f.top));
+      const swell = Math.max(...frames.map((f) => (f.height - S) / 2));
+      console.log(`SWELL ${width}x${height}: square ${S}, top at rest ${still.top}, swell ${swell.toFixed(1)} from ${frames.length} frames, highest edge at ${highest.toFixed(1)}`);
+      expect(swell, 'it does swell: perspective is drawn').toBeGreaterThan(2);
+      expect(highest, `the highest the turning edge stands, against the top row's foot at ${MODAL_ROW}`).toBeGreaterThanOrEqual(MODAL_ROW);
+    });
+  }
+
+  /* Fails against a turn that queues or restarts on a second press: two presses would end on the front again, or take twice as long. */
+  test('two presses on TURN OVER within one turn yield one turn', async ({ page }) => {
+    const id = await seedSleeve(page, INSIDE.file, PORTRAIT.file);
+    await openSleeve(page, id, GRID_FORK, NO_SCROLL_HEIGHT);
+    const result = await page.evaluate(async () => {
+      const sleeve = document.querySelector('[data-sleeve]') as HTMLElement;
+      const control = document.querySelector('[data-sleeve-control="turn"]') as HTMLElement;
+      const started = performance.now();
+      control.click();
+      await new Promise((r) => setTimeout(r, 150));
+      const midTurn = sleeve.hasAttribute('data-turning');
+      control.click();
+      let turns = 0; let was = true; let ended = 0;
+      await new Promise<void>((resolve) => { const tick = () => { const now = sleeve.hasAttribute('data-turning'); if (was && !now) { turns += 1; ended = performance.now() - started; } was = now; if (performance.now() - started > 2500) resolve(); else requestAnimationFrame(tick); }; requestAnimationFrame(tick); });
+      return { midTurn, turns, ended, face: sleeve.getAttribute('data-face') };
+    });
+    expect(result.midTurn, 'the precondition: the second press came while it was turning').toBe(true);
+    expect(result.turns, 'one turn ran').toBe(1);
+    expect(result.face, 'and it landed on the back, where one turn leaves it').toBe('back');
+    expect(result.ended, 'in one turn’s time').toBeLessThan(TURN_MS * 1.5);
   });
 });

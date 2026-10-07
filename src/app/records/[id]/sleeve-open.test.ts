@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { OPEN_MS, easeOutCubic, openPose, spreadSquare } from './sleeve-open';
+import { OPEN_MS, easeOutCubic, openDistance, openPose, openSwell, spreadSquare } from './sleeve-open';
 import { sleeveSquare } from './sleeve-modal';
 
 /**
@@ -78,5 +78,22 @@ describe('the curve and the proposal', () => {
 
   it('is proposed at 600ms, the turn’s own', () => {
     expect(OPEN_MS).toBe(600);
+  });
+});
+
+/**
+ * Step 91's rule, for the gatefold's panel. It is hinged at its edge, not
+ * its centre, so at edge-on its far edge stands a whole side toward the
+ * reader and it swells by S / 2 × S / (d − S): from four widths, a sixth of
+ * the side, 59 on a 354 leaf and 117 on a 702.
+ */
+describe('openDistance: four widths, or further where the room above is short', () => {
+  it('swells by a sixth of the side from four widths', () => {
+    expect(openSwell(354, 354 * 4)).toBeCloseTo(354 / 6, 6);
+  });
+
+  it('keeps four widths where that fits, and lengthens until the swell is one short of the room where it does not', () => {
+    expect(openDistance(354, 179)).toBe(354 * 4);
+    expect(openSwell(732, openDistance(732, 18))).toBeCloseTo(17, 6);
   });
 });
