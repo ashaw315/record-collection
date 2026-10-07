@@ -36010,3 +36010,32 @@ At 390 x 844 the sleeve is seen from four widths; at 1440 x 900 from 8,246px,
 ruled 12, 11 and 12, not read from frames; the first version of this table
 had both wrong and was corrected before it left this machine.) The 52 was real as first built (measured 52.1, the edge at
 18.9, inside the row); step 91 replaced it.
+
+## At 1440 x 900 the modal's column fits to the pixel (7 Oct)
+
+Added to the swell's entry, from the coordinator's check of both rows.
+
+**The slack at 1440 x 900 is zero.** 900 less the 53 row and the 18 inset
+top and bottom is 811, and the column is exactly 811: the 732 square, 12,
+the 11 label, 12, the 44 controls. That is why the square's top is 71 and
+the paper above it is the inset and nothing more. At 390 x 844 the same
+sum leaves 755 for a column of 433, so the top is 232.
+
+**What that means for whoever changes one of those numbers.** The square
+is sized FROM the others (`sleeveSquare` is the window's height less 53 and
+`SLEEVE_STACK_BELOW`), so a taller label line, a taller control row or a
+wider gap, changed in `sleeve-modal.ts`, makes the square smaller and
+leaves the paper above it at 18. Changed anywhere else, in a class or a
+style and not in those constants, the column grows past its allowance, the
+flex centring moves the square up into the inset, and the paper above it
+falls below 18.
+
+**The swell follows the paper, by construction, down to a limit.**
+`turnDistance` is given the paper above the sleeve as measured and keeps
+the swell one pixel short of it, so the 1.0 clearance is produced, not
+coincidental, and survives the paper shrinking. It does not survive the
+paper reaching 2 or less: the allowance bottoms out at 1px of swell, and
+with less than that above the sleeve the turning edge is in the row. The
+coordinator read today's clearance as a coincidence of three exact
+figures; the figures are exact, and the clearance is computed from them,
+which is a stronger thing with a harder edge. The limit is untested.
