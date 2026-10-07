@@ -35977,3 +35977,34 @@ commit of the modal target carries it (2cda49e, 64ff1f7, f6fb36d, 47a28c7,
 c1ff8a6, 56485a7 all read 0). It and `M.4/remeasure-every-change` are only
 in the export now sitting untaken in the working tree. So it was a draft,
 and the entry can come out.
+
+## The swell's one pixel, and the measured figures for §M.5 (7 Oct)
+
+**At 1440 x 900 the swell clears the top row by 1.0, and the clearance is
+the inset less the swell.** The column starts at 71, the 53 row plus the 18
+inset; the swell is 17.0; the turning edge stands at 54.0. `turnDistance`
+makes it so by construction: it lengthens the viewing distance until the
+swell is one pixel short of the paper above the sleeve. So a stronger
+perspective or a smaller inset would cross the row, and §M.5's own remedy,
+a longer viewing distance, is the fix if that ever happens; the function
+already applies it.
+
+**The assertion tests the ruled condition, not the measurement.**
+`record-modal-81.spec.ts`, step 91: the highest the turning edge stands in
+any frame is `>= MODAL_ROW`, 53. It does not pin 54.0, so a rounding or
+metric shift that keeps the edge out of the row stays green. Nothing
+changed. (The unit test does pin 17 for a 732 square with 18 above it; that
+is `turnDistance`'s own arithmetic, with no rendering in it.)
+
+**Measured figures, for Design to carry into §M.5's prose in place of the
+computed estimates** ("about 52 past top and bottom at 1440, reaching TURN
+OVER, and about 25 at 390"):
+
+| window | square | swell, above and below | turning edge | what it crosses |
+|---|---|---|---|---|
+| 390 x 844 | 354 | 25.3 | 206.7, the row's foot at 53 | the face label (12 below, 11 tall); it stops 2 short of the controls |
+| 1440 x 900 | 732 | 17.0 | 54.0, the row's foot at 53 | the face label and 5 into the gap beneath it; it does not reach TURN OVER, which starts 35 below the square |
+
+At 390 x 844 the sleeve is seen from four widths; at 1440 x 900 from 8,246px,
+11.3 widths. The 52 was real as first built (measured 52.1, the edge at
+18.9, inside the row); step 91 replaced it.
