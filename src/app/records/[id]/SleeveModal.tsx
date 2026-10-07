@@ -8,6 +8,8 @@ import { LABEL } from './grid-type';
 import { PlainBackImprint } from '@/app/wall/PlainBackImprint';
 import { TURN_MS, turnDistance, turnPose, type TurnPose } from './sleeve-turn';
 import { OPEN_MS, easeOutCubic, openDistance, openPose, spreadSquare } from './sleeve-open';
+import { FADE_MS, TRAVEL_MS, travelBox, travelPhoto, type Square } from './sleeve-travel';
+import type { CoverTreatment } from './cover-fit';
 import { MODAL_CONTROL, MODAL_CONTROL_GAP, MODAL_LABEL_GAP, MODAL_LABEL_LINE, MODAL_ROW, sleeveSquare, type SleeveFace } from './sleeve-modal';
 
 /**
@@ -42,6 +44,11 @@ export function SleeveModal({
   back,
   inside,
   plain,
+  origin,
+  natural,
+  pageTreatment,
+  closing,
+  onClosed,
 }: {
   onClose: () => void;
   front: string;
@@ -50,6 +57,14 @@ export function SleeveModal({
   inside: { left: string; right: string } | null;
   /** §M.3: the back where there is no back photograph: the record's field, and the imprint the wall draws on it. */
   plain: { ground: string; labelName: string | null; catalogNumber: string | null };
+  /** §M.7: the page's cover, for the travel: where its square is now, the photograph's own size, and how the page draws it. */
+  origin: () => Square | null;
+  natural: { width: number; height: number };
+  pageTreatment: CoverTreatment;
+  /** True once the modal's history entry has gone: the modal is closing, whatever state it is in. */
+  closing: boolean;
+  /** Called when the return has landed and the modal can be removed. */
+  onClosed: () => void;
 }) {
   const view = useRef<HTMLDivElement>(null);
   /* §M.4: "The sizes are taken once when the modal opens and do not change while it is open." */
@@ -145,9 +160,96 @@ export function SleeveModal({
     if (showsFold !== wasFold.current) (showsFold ? foldControl : openControl).current?.focus();
     wasFold.current = showsFold;
   }, [showsFold]);
-  const pose = spread === null ? null : openPose(spread.e, side, leaf);
+  /*
+    §M.7: the cover's travel. "The modal does not appear: the cover the
+    reader pressed travels from its square on the record page to the modal's
+    square." `travel` holds this frame's progress through the travel and
+    which way it is going; null is the modal at rest. The eased value drives
+    the travelling square, the photograph's crop, the paper and the top row
+    together. Closing runs the same progress back, from wherever it is, so
+    "closing plays the travel in reverse" and a close mid-travel "reverses
+    from wherever the cover is" without a separate case.
+  */
+  const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const [travel, setTravel] = useState<{ p: number; dir: 'in' | 'out'; page: Square } | null>(() => {
+    const page = reducedMotion() ? null : origin();
+    return page === null ? null : { p: 0, dir: 'in', page };
+  });
+  /* "The face label and the controls arrive after the cover lands, with a short fade that starts at landing." */
+  const [chrome, setChrome] = useState(() => travel === null);
+  const progress = useRef(travel === null ? 1 : 0);
+  const landed = useRef(travel === null);
+  const travelFrame = useRef(0);
+  useEffect(() => {
+    if (landed.current) return;
+    const started = performance.now();
+    const step = (now: number) => {
+      const p = Math.min(1, (now - started) / TRAVEL_MS);
+      progress.current = p;
+      if (p >= 1) {
+        landed.current = true;
+        setTravel(null);
+        setChrome(true);
+        return;
+      }
+      setTravel((was) => (was === null ? was : { ...was, p }));
+      travelFrame.current = requestAnimationFrame(step);
+    };
+    travelFrame.current = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(travelFrame.current);
+  }, []);
+  /*
+    "A close is honoured from any state, at any moment... The sleeve cuts at
+    once to its folded front, from wherever a turn or the gatefold's opening
+    has reached, and then travels home." The label and controls go first;
+    the square the cover returns to "is still measured at close".
+  */
+  useEffect(() => {
+    if (!closing) return;
+    cancelAnimationFrame(frame.current);
+    cancelAnimationFrame(travelFrame.current);
+    /* No motion starts once it is closing, and the ones under way are stopped; what is drawn is cut to the folded front below, from `closing` itself. */
+    turning.current = true;
+    let timer = 0;
+    const leave = () => {
+      const page = reducedMotion() ? null : origin();
+      if (page === null) {
+        onClosed();
+        return;
+      }
+      const from = landed.current ? 1 : progress.current;
+      const started = performance.now();
+      const step = (now: number) => {
+        const p = Math.max(0, from - (now - started) / TRAVEL_MS);
+        progress.current = p;
+        if (p <= 0) {
+          onClosed();
+          return;
+        }
+        setTravel({ p, dir: 'out', page });
+        travelFrame.current = requestAnimationFrame(step);
+      };
+      landed.current = false;
+      setTravel({ p: from, dir: 'out', page });
+      travelFrame.current = requestAnimationFrame(step);
+    };
+    /* Landed, the label and controls fade first (they read `closing`); still travelling in, there is nothing to fade and it turns back on the next frame. */
+    timer = window.setTimeout(leave, landed.current && !reducedMotion() ? FADE_MS : 0);
+    return () => {
+      window.clearTimeout(timer);
+      cancelAnimationFrame(travelFrame.current);
+    };
+  }, [closing, onClosed, origin]);
+  const risen = travel === null ? 1 : easeOutCubic(travel.p);
+  /* Where the cover lands: inside the modal square's hairline, which is where the modal draws the photograph. */
+  const modalSquare: Square = { left: (window.innerWidth - side) / 2 + 1, top: MODAL_ROW + room + 1, size: side - 2 };
+  const flying = travel === null ? null : travelBox(risen, travel.page, modalSquare);
+  const flyingPhoto = flying === null ? null : travelPhoto(risen, flying.size, natural, pageTreatment);
+  /* Closing, the sleeve "shows its front folded": the spread, the turn and the face are overridden, not unwound. */
+  const pose = spread === null || closing ? null : openPose(spread.e, side, leaf);
   /* The face toward the reader: it changes edge-on, and the label with it. */
-  const toward: SleeveFace | 'inside' = pose !== null ? (pose.panel === 'front' ? 'front' : 'inside') : turn === null ? face : turn.pose.face === 'from' ? turn.from : turn.to;
+  const turnNow = closing ? null : turn;
+  const toward: SleeveFace | 'inside' = closing ? 'front' : pose !== null ? (pose.panel === 'front' ? 'front' : 'inside') : turnNow === null ? face : turnNow.pose.face === 'from' ? turnNow.from : turnNow.to;
   const shown = toward === 'front' ? front : back;
   /* Every face is a square with a hairline edge, its photograph fitted on paper (§M.4). */
   const LEAF = 'absolute top-0 box-border border border-border bg-background';
@@ -180,8 +282,11 @@ export function SleeveModal({
   }, [onClose]);
 
   return createPortal(
-    <div ref={view} data-sleeve-modal="" role="dialog" aria-modal="true" aria-label="The sleeve" className="fixed inset-0 z-50 flex flex-col bg-background">
-      <div data-sleeve-row="" className="box-border flex h-[53px] shrink-0 items-center border-b border-border px-[18px]">
+    <div ref={view} data-sleeve-modal="" data-travelling={travel?.dir} role="dialog" aria-modal="true" aria-label="The sleeve" className="fixed inset-0 z-50 flex flex-col">
+      {/* §M.7: "The paper comes up with the cover, rising from clear to opaque over the same duration on the same curve." At rest it is opaque: this is a transition, not the dimming §M.1 rules out. */}
+      <div data-sleeve-paper="" className="absolute inset-0 bg-background" style={{ opacity: risen }} />
+      {/* "...and the top row, with CLOSE and its hairline, comes with it." */}
+      <div data-sleeve-row="" className="relative box-border flex h-[53px] shrink-0 items-center border-b border-border px-[18px]" style={{ opacity: risen }}>
         <button
           ref={close}
           type="button"
@@ -198,7 +303,7 @@ export function SleeveModal({
         every photograph is fitted inside it on paper, never cropped, so a
         face keeps its size and framing across a turn.
       */}
-      <div data-sleeve-stage="" className="flex min-h-0 flex-1 flex-col items-center justify-center">
+      <div data-sleeve-stage="" className="relative flex min-h-0 flex-1 flex-col items-center justify-center" style={{ visibility: travel === null ? undefined : 'hidden' }}>
         {pose !== null && inside !== null ? (
           /*
             The spread, and the motion to and from it. The right leaf stays
@@ -233,7 +338,7 @@ export function SleeveModal({
           <div
             data-sleeve=""
             data-face={toward}
-            data-turning={turn === null ? undefined : ''}
+            data-turning={turnNow === null ? undefined : ''}
             className="relative box-border shrink-0 border border-border bg-background"
             style={{
               width: side,
@@ -245,7 +350,7 @@ export function SleeveModal({
                 it would be the stage's centre, which is below the sleeve's,
                 and the top and bottom edges would slope unequally.
               */
-              transform: turn === null ? undefined : `perspective(${turnDistance(side, room)}px) rotateY(${turn.pose.angle}deg)`,
+              transform: turnNow === null ? undefined : `perspective(${turnDistance(side, room)}px) rotateY(${turnNow.pose.angle}deg)`,
             }}
           >
             {shown !== null ? (
@@ -266,10 +371,10 @@ export function SleeveModal({
           </div>
         )}
         {/* §M.5: "a label beneath the sleeve names the face shown... It shows in every mode... the label is announced politely." */}
-        <div data-face-label="" aria-live="polite" className={`${LABEL} shrink-0 leading-none`} style={{ marginTop: MODAL_LABEL_GAP, height: MODAL_LABEL_LINE }}>
+        <div data-face-label="" aria-live="polite" className={`${LABEL} shrink-0 leading-none`} style={{ marginTop: MODAL_LABEL_GAP, height: MODAL_LABEL_LINE, opacity: chrome && !closing ? 1 : 0, transition: `opacity ${FADE_MS}ms linear` }}>
           {FACE_NAME[toward]}
         </div>
-        <div data-sleeve-controls="" className="flex shrink-0" style={{ marginTop: MODAL_LABEL_GAP, gap: MODAL_CONTROL_GAP }}>
+        <div data-sleeve-controls="" className="flex shrink-0" style={{ marginTop: MODAL_LABEL_GAP, gap: MODAL_CONTROL_GAP, opacity: chrome && !closing ? 1 : 0, transition: `opacity ${FADE_MS}ms linear` }}>
           {showsFold ? (
             /* §M.6: "Open, the control row shows FOLD alone", so the sleeve is folded shut before it can be turned. */
             <button ref={foldControl} type="button" data-sleeve-control="fold" onClick={() => openOrFold('closed')} className={`${CONTROL} px-[18px]`}>
@@ -291,6 +396,17 @@ export function SleeveModal({
           )}
         </div>
       </div>
+      {flying !== null && flyingPhoto !== null && (
+        /*
+          The travelling cover: a copy of the page's cover, without its focus
+          ring, which "stays behind" on the page's trigger. Flat: "a move
+          and a growth in the picture plane, with no rotation".
+        */
+        <div data-travel-cover="" className="absolute overflow-hidden" style={{ left: flying.left, top: flying.top, width: flying.size, height: flying.size }}>
+          {/* eslint-disable-next-line @next/next/no-img-element -- as above */}
+          <img src={front} alt="" className="absolute max-w-none" style={{ width: flyingPhoto.width, height: flyingPhoto.height, left: (flying.size - flyingPhoto.width) / 2, top: (flying.size - flyingPhoto.height) / 2 }} />
+        </div>
+      )}
     </div>,
     document.body,
   );

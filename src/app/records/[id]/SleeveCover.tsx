@@ -48,9 +48,14 @@ export function SleeveCover({
     photograph that does arrive never shows the frame.
   */
   const [failed, setFailed] = useState(false);
+  /* The photograph's own size, read with its shape: the travel eases its crop from the page's to the modal's fit (§M.7). */
+  const [natural, setNatural] = useState<{ width: number; height: number } | null>(null);
   const read = useCallback((img: HTMLImageElement | null) => {
     /* A cached image is complete before React attaches its handler, so the ref reads it too. */
-    if (img !== null && img.complete && img.naturalWidth > 0) setTreatment(coverTreatment(img.naturalWidth, img.naturalHeight));
+    if (img !== null && img.complete && img.naturalWidth > 0) {
+      setTreatment(coverTreatment(img.naturalWidth, img.naturalHeight));
+      setNatural({ width: img.naturalWidth, height: img.naturalHeight });
+    }
     /* Complete with nothing in it is a photograph that failed, and may have before any handler was attached: there is then no error event left to hear. */
     else if (img !== null && img.complete && img.naturalWidth === 0 && img.currentSrc !== '') setFailed(true);
   }, []);
@@ -65,29 +70,43 @@ export function SleeveCover({
     through it, "so it never lingers". A reload keeps the entry and not this
     component's state, so it comes back closed.
   */
-  const [open, setOpen] = useState(false);
+  /*
+    §M.7: the modal stays mounted while it closes, because the return
+    travels after the history entry has gone. `mounted` is the modal being
+    drawn; `closing` is its entry having gone. "CLOSE, Escape and Back all
+    close through the same history entry... and all run the same return."
+  */
+  const [mounted, setMounted] = useState(false);
+  const [closing, setClosing] = useState(false);
   const trigger = useRef<HTMLButtonElement>(null);
   const openSleeve = useCallback(() => {
     window.history.pushState({ ...(window.history.state as object | null), sleeve: true }, '');
-    setOpen(true);
+    setClosing(false);
+    setMounted(true);
   }, []);
   const closeSleeve = useCallback(() => {
     if ((window.history.state as { sleeve?: boolean } | null)?.sleeve === true) window.history.back();
-    else setOpen(false);
+    else setClosing(true);
   }, []);
   useEffect(() => {
-    if (!open) return;
+    if (!mounted) return;
     const onPop = () => {
-      if ((window.history.state as { sleeve?: boolean } | null)?.sleeve !== true) setOpen(false);
+      if ((window.history.state as { sleeve?: boolean } | null)?.sleeve !== true) setClosing(true);
     };
     window.addEventListener('popstate', onPop);
-    const cover = trigger.current;
-    return () => {
-      window.removeEventListener('popstate', onPop);
-      /* "Focus returns to the cover." */
-      cover?.focus();
-    };
-  }, [open]);
+    return () => window.removeEventListener('popstate', onPop);
+  }, [mounted]);
+  /* "On close [focus] returns to the trigger once the cover has landed." */
+  const onClosed = useCallback(() => {
+    setMounted(false);
+    setClosing(false);
+    trigger.current?.focus();
+  }, []);
+  /* The page's square, measured when asked: at the press, and again at close. */
+  const origin = useCallback(() => {
+    const box = trigger.current?.getBoundingClientRect();
+    return box === undefined ? null : { left: box.left, top: box.top, size: box.width };
+  }, []);
   if (failed) {
     /*
       §6's and §5.3's frame, in the cover's own square, "filled with paper":
@@ -136,10 +155,13 @@ export function SleeveCover({
           alt=""
           onLoad={(event) => read(event.currentTarget)}
           onError={() => setFailed(true)}
-          className={treatment === null ? 'invisible block object-cover' : treatment === 'fit' ? 'block bg-background object-contain' : 'block object-cover'}
+          /* While the modal is drawn the travelling cover, or the modal's own, is the cover: the page's is not drawn as well. */
+          className={treatment === null || mounted ? 'invisible block object-cover' : treatment === 'fit' ? 'block bg-background object-contain' : 'block object-cover'}
         />
       </button>
-      {open && <SleeveModal onClose={closeSleeve} front={url} back={backUrl} inside={inside} plain={plain} />}
+      {mounted && treatment !== null && natural !== null && (
+        <SleeveModal onClose={closeSleeve} front={url} back={backUrl} inside={inside} plain={plain} origin={origin} natural={natural} pageTreatment={treatment} closing={closing} onClosed={onClosed} />
+      )}
     </>
   );
 }

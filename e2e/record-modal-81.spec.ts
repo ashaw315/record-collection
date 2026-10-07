@@ -81,6 +81,16 @@ async function openRecord(page: Page, id: string, width: number, height: number 
 }
 
 const modal = (page: Page) => page.locator('[data-sleeve-modal]');
+/**
+ * The modal at rest: the cover has landed and the label and controls have
+ * faded in (step 92, §M.7). Before the travel was built the modal appeared
+ * at once and these tests read it as soon as it existed; what they measure
+ * is the resting modal, so they now wait for it.
+ */
+const arrived = async (page: Page) => {
+  await page.locator('[data-sleeve-modal]:not([data-travelling])').waitFor();
+  await page.waitForFunction(() => getComputedStyle(document.querySelector('[data-sleeve-controls]') as HTMLElement).opacity === '1');
+};
 const focusIsOnTrigger = (page: Page) => page.evaluate(() => document.activeElement?.getAttribute('aria-label') === 'Open the sleeve');
 
 test.beforeEach(async ({ page }) => login(page));
@@ -126,13 +136,14 @@ test.describe('§M.1: the modal is a view of the object on opaque paper', () => 
       await openRecord(page, id, width, height);
       const before = await page.evaluate(() => ({ url: location.href, entries: history.length }));
       await page.getByRole(TRIGGER.role, { name: TRIGGER.name }).click();
-      await modal(page).waitFor();
+      await arrived(page);
       const m = await page.evaluate(() => {
         const rgb = (colour: string) => { const k = document.createElement('canvas'); k.width = 1; k.height = 1; const x = k.getContext('2d') as CanvasRenderingContext2D; x.fillStyle = colour; x.fillRect(0, 0, 1, 1); return Array.from(x.getImageData(0, 0, 1, 1).data); };
         const el = document.querySelector('[data-sleeve-modal]') as HTMLElement;
         const row = el.querySelector('[data-sleeve-row]') as HTMLElement;
         const close = el.querySelector('[data-sleeve-close]') as HTMLElement;
-        const cs = getComputedStyle(el);
+        /* The paper is its own layer since step 92, so it can rise with the travelling cover; at rest it is what the ground is. */
+        const cs = getComputedStyle(el.querySelector('[data-sleeve-paper]') as HTMLElement);
         const b = el.getBoundingClientRect(); const rb = row.getBoundingClientRect(); const cb = close.getBoundingClientRect();
         return {
           box: [b.left, b.top, b.width, b.height], window: [0, 0, window.innerWidth, window.innerHeight],
@@ -208,7 +219,7 @@ test.describe('§M.1: CLOSE, Escape and Back close it, and its history entry nev
       await openRecord(page, id, GRID_FORK);
       const entries = await page.evaluate(() => history.length);
       await page.getByRole(TRIGGER.role, { name: TRIGGER.name }).click();
-      await modal(page).waitFor();
+      await arrived(page);
       await close(page);
       await expect(modal(page)).toHaveCount(0);
       await expect(page).toHaveURL(new RegExp(`/records/${id}$`));
@@ -225,7 +236,7 @@ test.describe('§M.1: CLOSE, Escape and Back close it, and its history entry nev
     const id = await seedRecord(page, true);
     await openRecord(page, id, GRID_FORK);
     await page.getByRole(TRIGGER.role, { name: TRIGGER.name }).click();
-    await modal(page).waitFor();
+    await arrived(page);
     await page.reload();
     await page.locator('[data-cell="sleeve"] img[data-cover][data-cover-treatment]').waitFor({ timeout: 30_000 });
     await expect(modal(page)).toHaveCount(0);
@@ -241,7 +252,7 @@ test.describe('§M.1: the keyboard stays in the view, and the page beneath is he
     const trigger = page.getByRole(TRIGGER.role, { name: TRIGGER.name });
     await trigger.focus();
     await page.keyboard.press('Enter');
-    await modal(page).waitFor();
+    await arrived(page);
     const scrolled = await page.evaluate(() => window.scrollY);
     for (const key of ['Tab', 'Tab', 'Tab', 'Shift+Tab', 'Shift+Tab', 'Tab']) {
       await page.keyboard.press(key);
@@ -292,7 +303,7 @@ const PORTRAIT = photo('cover-outside-portrait-949x1000.png');
 async function openSleeve(page: Page, id: string, width: number, height: number) {
   await openRecord(page, id, width, height);
   await page.getByRole(TRIGGER.role, { name: TRIGGER.name }).click();
-  await modal(page).waitFor();
+  await arrived(page);
   await page.locator('[data-sleeve] img[data-sleeve-face]').evaluate((img) => (img as HTMLImageElement).decode());
   await page.mouse.move(1, height - 1);
 }

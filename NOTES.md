@@ -35733,3 +35733,61 @@ sentence above was corrected before it was pushed.
 
 Decided, as the evening's item 2 allows: four widths where there is room,
 600ms for both rotations.
+
+## Step 92 built: the cover travels (6 Oct)
+
+**Built.** On the press a copy of the page's cover travels from the page's
+square to the modal's on the ease-out cubic: its left, top and size on the
+one value, and its crop easing from the page's (covering the square) to
+the modal's fit. The paper is its own layer and rises in opacity on the
+same value, the top row with it. The page's own cover is not drawn while
+the modal is. The label and controls fade in from the landing. The modal
+stays mounted while it closes, since the return runs after the history
+entry has gone: the label and controls fade, the sleeve is cut to its
+folded front (the spread, the turn and the face are overridden from
+`closing`, not unwound), and the travel's progress runs back from wherever
+it is to the page's square as measured then; focus returns on landing.
+CLOSE, Escape and Back are one path, as before. Reduced motion: at once,
+both ways.
+
+**Decided:** 400ms for the travel at every width; 150ms for the label and
+controls. Reasons in `sleeve-travel.ts`.
+
+**A consequence, not chosen:** the return is the travel played backwards,
+so it is slowest leaving the modal and fastest as it lands on the page.
+
+**Tested.** Unit, `sleeve-travel.test.ts`, 7. End to end,
+`cover-travel-92.spec.ts`, 6, every frame sampled in the page, all red
+against the modal that appeared at once:
+
+- at 390 x 844 and 1440 x 900: the square starts at the page's and lands
+  inside the modal's hairline; x, y and size give the same fraction in
+  every frame; the paper's and the row's opacity are that fraction; the
+  photograph is centred, overhangs the square at the start (cropped) and
+  sits inside it at the end (fitted); it is an ease-out; it lasts about
+  400ms at both; then the label is seen part-way in.
+- CLOSE, Escape and Back: the label fades before the cover leaves, the
+  cover goes from the modal's square to the page's while the paper only
+  clears, focus is not on the cover until it has landed, and the three
+  take the same time within 80ms. **Back is tested by frames**, as the
+  step asks.
+- a close from the open gatefold and from the middle of a turn travels as
+  the folded front.
+- a close 120ms into the opening travel turns back before reaching the
+  modal's square, with no frame jumping, and leaves no history entry.
+- reduced motion: no frame travels either way.
+
+Breaks staged and confirmed taken: Back cutting straight to the page
+(three red; CLOSE and Escape share its path, so they fail with it), paper
+that does not rise (five), reduced motion ignored (one), a close that
+keeps the spread (one).
+
+**Earlier tests changed, and why.** The modal specs read the modal the
+moment it existed; they measure the resting modal, so `record-modal-81`
+and `gatefold-88` now wait for the cover to have landed and the controls
+to have faded in. The "opaque paper" test reads the paper layer, which is
+where the ground now is.
+
+**Step level:** the eight modal and cover specs on chromium,
+`65 passed, ledger clean, tree unchanged — OK`; record and repo unit
+tests; typecheck, lint (0 errors).

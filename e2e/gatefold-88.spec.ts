@@ -60,7 +60,9 @@ async function openSleeve(page: Page, id: string, width: number, height: number)
   await page.locator('[data-cell="sleeve"] img[data-cover][data-cover-treatment]').waitFor({ timeout: 30_000 });
   await page.addStyleTag({ content: 'nextjs-portal{display:none!important}' });
   await page.getByRole('button', { name: 'Open the sleeve' }).click();
-  await page.locator('[data-sleeve-modal]').waitFor();
+  /* At rest: the cover has landed and the controls have faded in (step 92). */
+  await page.locator('[data-sleeve-modal]:not([data-travelling])').waitFor();
+  await page.waitForFunction(() => getComputedStyle(document.querySelector('[data-sleeve-controls]') as HTMLElement).opacity === '1');
   await page.locator('[data-sleeve] img[data-sleeve-face]').evaluate((img) => (img as HTMLImageElement).decode());
   await page.mouse.move(1, height - 1);
 }
