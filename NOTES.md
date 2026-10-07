@@ -35824,3 +35824,61 @@ record-modal-81's "the size is taken once on opening".
 **Captures of the known transient and the settled state:**
 `docs/captures/modal-rotation-93/rotation-0844x390-before-settle-s354.png`
 and `rotation-0844x390-settled-s222.png`.
+
+## The machinery round: two done before the screens, six deferred (6 Oct)
+
+Adam's instruction: rank the eight by whether each has ever actually
+caught something, not by how bad the thing it guards would be; do the top
+two before the screens; defer the rest and say so, so it reads as a
+decision and not a lapse.
+
+**The ranking, by what each has caught.**
+
+| | item | what it, or the guard it extends, has actually caught |
+|---|---|---|
+| 1 | record-screen guard patterns for helper-driven specs | The guard fired five times on 6 Oct alone, each a real bare 900 or an ungoverned file in work of that day. Its known blind spot was recorded on 5 Oct. |
+| 2 | what Soft Rock and Ballad are | Found by the ledger on its first green run: two genres attached to nothing. A possible defect on a real screen. |
+| 3 | the stopped index run | Happened for real on 2 Oct (five PASS lines and a stack trace read as clean) and again in staging on 6 Oct. The ABSENT lines already report it; what is open is a decision. |
+| 4 | SPEC.md as an index input | One real gap: the two §10b sentences sit unread. |
+| 5 | stricter assertion 2 | One finding, §G.7 not caught, when it was asked about. |
+| 6 | scope fix for settled sections | A known blind spot, 14 quotes; nothing has slipped through it yet. |
+| 7 | assertion 10, the step-quote check | Not built; nothing caught, nothing known missed. |
+| 8 | the genres test's budget measured | A measurement, not a guard. |
+
+**1, done: the guard's fourth pattern.** The enumeration found a spec by
+the record page's testid, the identity band's attribute, or a template
+inside a `goto`. It now also finds any template that builds
+`/records/<id>` and hands it to a helper, but not `/api/records/<id>`,
+which its first version caught in `cleanup.ts` and `seventeen.ts`. It found
+ten files nobody had listed: every-page-has-nav, nav-menu-76, nav-menu-84,
+nav-type-74, record-panel, shelf, shelf-narrow and three sheets. **Five of
+them typed a bare 900** for a viewport height (nav-menu-76, nav-type-74,
+record-panel four times, shelf, the header sheet); each now imports
+`NO_SCROLL_HEIGHT`. Shown red with one of the ten taken off the list.
+While restoring that staged break I ran `git checkout` on the file and
+discarded the uncommitted guard with it; re-applied and re-run.
+
+**2, done: Soft Rock and Ballad are the app's, and it is by design with a
+cost nobody stated.** Measured: with the release cached and the new-record
+form opened on it, nothing pressed, and no write made by the page, the
+genres table gains Ballad and Soft Rock. `src/app/records/discogs-prefill.ts`
+calls `findOrCreateGenresByName` while the form is rendered, deliberately
+("applied at PREFILL, not only on save"), because the form's checkboxes are
+one per existing genre and an unmatched genre could not otherwise be shown.
+**So opening a prefilled form and abandoning it leaves genres behind in
+production**, attached to nothing. Two sentences in the repo say the
+opposite: `discogs-prefill.spec.ts`, "reading a release does not create
+rows; only saving does", and beside it "abandoning the form still leaves no
+debris", which is true of artists and labels and false of genres. Not
+fixed: whether an abandoned prefill may leave a genre is the record form's
+ruling. It also explains the ledger's seven standing genres.
+
+**3 to 8, DEFERRED behind the screens, by decision.** The stopped-run
+decision, SPEC.md as an index input (with stage 2's check of the two §10b
+sentences against the handoff's held text), the stricter assertion 2, the
+scope fix for settled sections, assertion 10, and the genres budget
+measurement. Each is recorded above with what it has and has not caught.
+Until 4 is done the two §10b sentences have no instrument.
+
+**Also deferred behind the screens, by the same instruction:** §60's
+corner mark, §55's eight figures and §9's specimen on the record page.

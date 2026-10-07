@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist } from './cleanup';
+import { NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
 
 registerCleanup();
 
@@ -50,7 +51,7 @@ async function seedWant(page: Page): Promise<string> {
   return ((await item.json()) as { id: string }).id;
 }
 
-async function open(page: Page, path: string, width: number, height = 900) {
+async function open(page: Page, path: string, width: number, height = NO_SCROLL_HEIGHT) {
   await page.setViewportSize({ width, height });
   await page.goto(path);
   await page.locator('[data-app-nav]').waitFor({ timeout: 20_000 });

@@ -97,6 +97,20 @@ const GOVERNED = [
   'e2e/sheet/cover-boxes.sheet.ts',
   'e2e/sheet/record-modal.sheet.ts',
   'e2e/sheet/record-modal-92.sheet.ts',
+  /*
+    Found by the enumeration's fourth pattern (6 Oct): specs that reach the
+    record screen through a path handed to a helper. Five of them typed 900.
+  */
+  'e2e/every-page-has-nav.spec.ts',
+  'e2e/nav-menu-76.spec.ts',
+  'e2e/nav-menu-84.spec.ts',
+  'e2e/nav-type-74.spec.ts',
+  'e2e/record-panel.spec.ts',
+  'e2e/sheet/header.sheet.ts',
+  'e2e/sheet/nav-menu-cover.sheet.ts',
+  'e2e/sheet/nav-menu.sheet.ts',
+  'e2e/shelf-narrow.spec.ts',
+  'e2e/shelf.spec.ts',
   'e2e/identity-band-23.spec.ts',
   'e2e/identity-extremes.spec.ts',
   'e2e/images.spec.ts',
@@ -197,7 +211,19 @@ describe('record-screen specs check the declaration rather than restating it', (
           if (
             source.includes('record-page-8a') ||
             source.includes('data-band="identity"') ||
-            /goto\(`\/records\/\$\{/.test(source)
+            /goto\(`\/records\/\$\{/.test(source) ||
+            /*
+              A fourth, added 6 Oct: a record path built anywhere and handed
+              to a helper that navigates. `nav-type-74` and `nav-menu-76` keep
+              their screens in a table of paths and call one `goto(path)`, so
+              the third pattern, which wants the template inside the `goto`,
+              never saw them; that gap was recorded on 5 Oct and left open.
+              Any template that builds `/records/<an id>` is a spec that can
+              reach the screen. Not `/api/records/<id>`, which is a request
+              and not a visit: the first version of this pattern caught
+              `cleanup.ts` and `seventeen.ts` by it.
+            */
+            /`[^`]*(?<!\/api)\/records\/\$\{/.test(source)
           ) {
             found.push(path);
           }

@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from '@playwright/test';
 import { login } from './login';
+import { NO_SCROLL_HEIGHT } from '../../src/app/records/[id]/band-geometry';
 
 /**
  * **The header sheet: AppHeader on every screen that mounts it, at 390,
@@ -20,7 +21,7 @@ import { login } from './login';
  * operator (`HEADER_RECORD_ID`, `HEADER_WANT_ID`), so no id lives here.
  */
 const WIDTHS = [390, 1000, 1440, 1920] as const;
-const HEIGHT = 900;
+const HEIGHT = NO_SCROLL_HEIGHT;
 const OUT = process.env.SHEET_OUT ?? join('docs', 'captures', 'header');
 const RECORD = process.env.HEADER_RECORD_ID ?? '';
 const WANT = process.env.HEADER_WANT_ID ?? '';

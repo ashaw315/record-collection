@@ -2,6 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist, trackGenre } from './cleanup';
 import { getTestDb } from '../test/helpers/db';
 import { sql } from 'drizzle-orm';
+import { NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
 
 /* Records and artists removed after each test — see e2e/cleanup.ts. */
 registerCleanup();
@@ -149,7 +150,7 @@ test('without JavaScript the first and last spines can both be scrolled to and f
   trackArtist(artistId);
   await db.execute(sql`INSERT INTO records (artist_id, title, release_year) SELECT ${artistId}::uuid, ${'NoJs ' + run + ' '} || i, 1980 FROM generate_series(1, 24) i`);
   const storage = await page.context().storageState();
-  const noJs = await browser.newContext({ storageState: storage, javaScriptEnabled: false, viewport: { width: 1280, height: 900 } });
+  const noJs = await browser.newContext({ storageState: storage, javaScriptEnabled: false, viewport: { width: 1280, height: NO_SCROLL_HEIGHT } });
   try {
     const plain = await noJs.newPage();
     /*

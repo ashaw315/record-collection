@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { getTestDb } from '../test/helpers/db';
 import { sql } from 'drizzle-orm';
+import { NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
 
 /**
  * **The pulled record's panel expands in place and keeps generated/entered facts
@@ -88,7 +89,7 @@ test('the panel is expanded at rest in its own column, and nothing navigates', a
   const ids = await seedRecord({});
   try {
     await login(page);
-    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.setViewportSize({ width: 1280, height: NO_SCROLL_HEIGHT });
     await page.goto(`/?artistId=${ids.artistId}`);
     await pullTheRecord(page);
 
@@ -111,7 +112,7 @@ test('a generated snippet and entered facts are separated by a boundary', async 
   const ids = await seedRecord({ snippet: 'A landmark Deptford debut.', withFacts: true });
   try {
     await login(page);
-    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.setViewportSize({ width: 1280, height: NO_SCROLL_HEIGHT });
     await page.goto(`/?artistId=${ids.artistId}`);
     await pullTheRecord(page);
 
@@ -142,7 +143,7 @@ test('an edited snippet is labelled as the user\'s, not generated', async ({ pag
   const ids = await seedRecord({ snippet: 'My own note.', edited: true });
   try {
     await login(page);
-    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.setViewportSize({ width: 1280, height: NO_SCROLL_HEIGHT });
     await page.goto(`/?artistId=${ids.artistId}`);
     await pullTheRecord(page);
 
@@ -158,7 +159,7 @@ test('the desktop flanking panel shows the expanded content at rest', async ({ p
   const ids = await seedRecord({ snippet: 'A landmark Deptford debut.', withFacts: true });
   try {
     await login(page);
-    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.setViewportSize({ width: 1280, height: NO_SCROLL_HEIGHT });
     await page.goto(`/?artistId=${ids.artistId}`);
     await pullTheRecord(page);
 
