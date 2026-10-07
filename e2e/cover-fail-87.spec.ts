@@ -187,25 +187,43 @@ test('a record with no photograph at all is unchanged: its frame is not the fail
 });
 
 /*
-  The trigger is live while the photograph waits, so a reader can open the
-  sleeve on a cover that then fails. §M.1: the modal's history entry "never
-  lingers". Fails against a cover that drops the modal with the trigger and
-  leaves its entry: the Back that follows would stay on the record.
+  Ruled on 6 Oct, replacing a test that stood here for a few hours: "The
+  trigger binds to the loaded photograph, not the square. A waiting square
+  is not a trigger, for the same reason the no-cover frame isn't: there is
+  no displayed cover to press." The trigger had been the square's button,
+  live from the server's markup, so the sleeve could be opened on a
+  photograph that had not arrived, and a failure then had to close it. That
+  case no longer exists, and its behaviour and test went with it.
+
+  Fails against the cover as built at step 81, whose button is named and
+  pressable while the photograph waits.
 */
-test('a cover that fails with the sleeve open closes the sleeve and takes its history entry with it', async ({ page }) => {
+test('a waiting square is not a trigger: nothing is named Open the sleeve and a press opens nothing, until the photograph has loaded', async ({ page }) => {
   const { id, url } = await seedRecord(page, true);
-  const fail = gate();
-  await page.route(`**${url}`, async (route) => { await fail.opened; await route.abort('failed'); });
+  const arrive = gate();
+  await page.route(`**${url}`, async (route) => { await arrive.opened; await route.fulfill({ contentType: 'image/png', body: readFileSync(COVER) }); });
   await page.setViewportSize({ width: GRID_FORK, height: NO_SCROLL_HEIGHT });
-  await page.goto('/?view=table');
   await page.goto(`/records/${id}`, { waitUntil: 'commit' });
   await page.locator('[data-title-step][data-ladder]').waitFor({ timeout: 30_000 });
+  await page.waitForTimeout(300);
+  const square = page.locator('[data-cell="sleeve"] img[data-cover]');
+  expect(await square.evaluate((img) => (img as HTMLImageElement).naturalWidth), 'the precondition: the photograph has not arrived').toBe(0);
+  await expect(page.getByRole('button', { name: 'Open the sleeve' })).toHaveCount(0);
+  const box = await square.boundingBox();
+  if (box === null) throw new Error('the square has no box');
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+  await page.waitForTimeout(300);
+  await expect(page.locator('[data-sleeve-modal]'), 'a press on the waiting square opens nothing').toHaveCount(0);
+  expect(await page.evaluate(() => (history.state as { sleeve?: boolean } | null)?.sleeve === true), 'and adds no history entry').toBe(false);
+  /* Nor by the keyboard: Tab from the top of the page never lands in the sleeve's cell. */
+  for (let i = 0; i < 40; i += 1) {
+    await page.keyboard.press('Tab');
+    expect(await page.evaluate(() => document.activeElement?.closest('[data-cell="sleeve"]') !== null && document.activeElement?.closest('[data-cell="sleeve"]') !== undefined), `Tab ${i + 1} is not in the sleeve's cell`).toBe(false);
+  }
+
+  arrive.open();
+  await page.locator('[data-cell="sleeve"] img[data-cover][data-cover-treatment]').waitFor({ timeout: 15_000 });
+  await expect(page.getByRole('button', { name: 'Open the sleeve' }), 'loaded, the cover is the trigger').toHaveCount(1);
   await page.getByRole('button', { name: 'Open the sleeve' }).click();
   await page.locator('[data-sleeve-modal]').waitFor();
-  fail.open();
-  await page.locator(FAILED).waitFor({ timeout: 15_000 });
-  await expect(page.locator('[data-sleeve-modal]')).toHaveCount(0);
-  await expect.poll(() => page.evaluate(() => (history.state as { sleeve?: boolean } | null)?.sleeve === true), { message: 'the modal’s entry is gone' }).toBe(false);
-  await page.goBack();
-  await expect(page).toHaveURL(/\/\?view=table$/);
 });

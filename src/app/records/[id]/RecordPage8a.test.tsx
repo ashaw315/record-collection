@@ -46,6 +46,8 @@ const record = (spineColour: string | null): PageRecord => ({
   earlierCovers: 0,
   coverUrl: null,
   backUrl: null,
+  gatefoldLeftUrl: null,
+  gatefoldRightUrl: null,
   spineColour,
 });
 

@@ -80,6 +80,8 @@ const GOVERNED = [
   'e2e/cover-wait-85.spec.ts',
   /* §33 (step 87): a photograph that fails is the no-cover frame. */
   'e2e/cover-fail-87.spec.ts',
+  /* §M.4 to §M.6 (step 88): the gatefold's opening. */
+  'e2e/gatefold-88.spec.ts',
   /* §M.1 (step 81): the record modal's view, opened from the cover. */
   'e2e/record-modal-81.spec.ts',
   /* §M.2 (step 82): the newest back, on the wall and in the modal. */

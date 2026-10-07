@@ -35576,3 +35576,73 @@ guards, each then shown red against its own staged break, confirmed taken.
 cover-fail-87 with the cover, modal and record-page specs on both
 projects; record and repo unit tests `868 passed, tree unchanged — OK`;
 typecheck, lint (0 errors), build.
+
+## Decisions handed down on 6 Oct, evening, and what they change here
+
+Adam's, relayed by the coordinator; built against without waiting for
+Design's sentences.
+
+1. **The trigger binds to the loaded photograph, not the square.** A
+   waiting square is not a trigger. Built: the cover's button is disabled,
+   unnamed, out of the tab order and hidden from assistive technology until
+   its photograph has loaded. The close-on-failure behaviour of step 87 and
+   its test are removed: the case no longer exists. For the record, what
+   was built before: the button was live from the server's markup, so the
+   waiting square was pressable, and §M.7's "there is no loading case to
+   rule" was false of the build.
+2. **Code decides and accepts the durations, the perspective and the fade.**
+   They are still recorded and written into the step; no step waits on a
+   reply.
+3. No arrows in the modal. Nothing built.
+4. Accepted as they are: the sleeve at its old size during a rotation until
+   the viewport settles, and the shelf's last record behind the upright.
+5. Steps 88 to 93, then one gate, then push, each step's own test count
+   named against 693.
+6. The machinery round goes behind the screens, except its top two by
+   whether each has ever caught something.
+7. Behind the screens too: §60's corner mark, §55's eight figures, §9's
+   specimen.
+
+## Step 88 built: the gatefold's opening (6 Oct)
+
+**Built.** OPEN on the front where both inside photos exist. The front
+panel swings toward the reader about its left edge to edge-on, and is then
+the left leaf, hinged at its right edge and laid down, so no face is drawn
+mirrored. The inside right is in place beneath throughout. The sleeve moves
+right by half a closed square and scales to the spread's square, on the one
+eased value the rotation reads (`openPose`), on the ease-out cubic §M.5
+rules. In perspective while moving, seen from the fold; flat at rest. Open,
+the row shows FOLD alone and the label reads INSIDE. Folding runs it back.
+Reduced motion shows the spread at once. A press during a motion is
+ignored.
+
+**The spread's square** (`spreadSquare`): 177 at 390 x 844, and 702 at
+1440 x 900, where two 732s are wider than the 1404 inside the insets. So
+the sleeve scales on the desktop too, by 30.
+
+**Decided, as item 2 allows:** 600ms, the turn's own; perspective from four
+leaf-widths, the turn's own.
+
+**One thing found and not changed: the turn is still on the wall's ease in
+and out.** §M.5 now says the turn "takes the travel's curve, the ease-out
+cubic". No step says to change it; step 92's recording shows them back to
+back, so it is changed there, with its test.
+
+**Tested.** Unit, `sleeve-open.test.ts`, 10: seven red against a stub that
+moved left and carried the panel to 180. End to end, `gatefold-88.spec.ts`,
+6 on a fixture record with both leaves: five red against the modal as
+built. Then five breaks staged: the sleeve moving left (three red), the
+wall's ease (two, on "how far a third of the way through"), no perspective
+(two), reduced motion ignored (one), OPEN on the back (one). The frames of
+an opening are sampled in the page: the panel's transform is a rotation
+about the vertical under one perspective; the fold's position and the
+leaf's size give the same eased value as the rotation within two
+hundredths in every frame.
+
+**Captures and the recording** are taken once, after step 92, so one file
+shows the travel, the turn and the opening as a reader meets them.
+
+**Step level:** gatefold-88, cover-fail-87, record-modal-81 and
+cover-wait-85 on chromium, `43 passed, ledger clean, tree unchanged — OK`;
+record and repo unit tests through the runner; typecheck, lint. The gate
+is one, after step 93.

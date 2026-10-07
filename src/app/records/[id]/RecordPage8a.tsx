@@ -67,6 +67,9 @@ export type PageRecord = {
   coverUrl: string | null;
   /** §M.2: the newest back photograph, for the record modal's back; null where the record has none. */
   backUrl: string | null;
+  /** §M.2 and §M.6: the newest of each inside leaf; the gatefold opens only where both exist. */
+  gatefoldLeftUrl: string | null;
+  gatefoldRightUrl: string | null;
   spineColour: string | null;
 };
 
@@ -764,7 +767,12 @@ export function RecordPage8a({ record, writingConfigured = false }: { record: Pa
             {record.coverUrl === null ? (
               <div data-mark="coverFrame" style={{ border: `1px solid ${RULE}` }} />
             ) : (
-              <SleeveCover url={record.coverUrl} backUrl={record.backUrl} frameRule={RULE} />
+              <SleeveCover
+                url={record.coverUrl}
+                backUrl={record.backUrl}
+                inside={record.gatefoldLeftUrl !== null && record.gatefoldRightUrl !== null ? { left: record.gatefoldLeftUrl, right: record.gatefoldRightUrl } : null}
+                frameRule={RULE}
+              />
             )}
             <div data-mark="sleeveBar" style={{ background: base }} />
             <div data-mark="sleeveBlock" style={{ background: INK }} />

@@ -220,6 +220,8 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
                 /* §61: the newest cover, not the first; the shelf (`shelf.ts`) reads the same. */
                 coverUrl: displayedCover(record.images)?.url ?? null,
                 backUrl: newestOfType(record.images, 'back')?.url ?? null,
+                gatefoldLeftUrl: newestOfType(record.images, 'gatefold_left')?.url ?? null,
+                gatefoldRightUrl: newestOfType(record.images, 'gatefold_right')?.url ?? null,
                 spineColour: record.spineColour,
               }}
               writingConfigured={isAnthropicConfigured()}

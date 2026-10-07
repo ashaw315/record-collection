@@ -24,7 +24,19 @@ import { SleeveModal } from './SleeveModal';
  * square keeps its place and its size, and the paper is stated, because the
  * sleeve cell behind it is the record's tint above the fork.
  */
-export function SleeveCover({ url, backUrl, frameRule }: { url: string; backUrl: string | null; /** The no-cover frame's hairline, the page's own. */ frameRule: string }) {
+export function SleeveCover({
+  url,
+  backUrl,
+  inside,
+  frameRule,
+}: {
+  url: string;
+  backUrl: string | null;
+  /** Both inside leaves, newest of each, or null where either is missing (§M.6). */
+  inside: { left: string; right: string } | null;
+  /** The no-cover frame's hairline, the page's own. */
+  frameRule: string;
+}) {
   const [treatment, setTreatment] = useState<CoverTreatment | null>(null);
   /*
     §33 (step 87): "A photograph that fails to load is treated as no
@@ -73,15 +85,6 @@ export function SleeveCover({ url, backUrl, frameRule }: { url: string; backUrl:
       cover?.focus();
     };
   }, [open]);
-  /*
-    The trigger is live while the photograph waits, so the sleeve can be
-    open when it fails. The modal goes with the trigger, and its history
-    entry must go too (§M.1: it "never lingers"), or the next Back would
-    spend itself on an entry for a view that is no longer there.
-  */
-  useEffect(() => {
-    if (failed && (window.history.state as { sleeve?: boolean } | null)?.sleeve === true) window.history.back();
-  }, [failed]);
   if (failed) {
     /*
       §6's and §5.3's frame, in the cover's own square, "filled with paper":
@@ -98,9 +101,20 @@ export function SleeveCover({ url, backUrl, frameRule }: { url: string; backUrl:
         ref={trigger}
         type="button"
         data-cover-trigger=""
-        aria-label="Open the sleeve"
+        /*
+          Ruled 6 Oct: "The trigger binds to the loaded photograph, not the
+          square. A waiting square is not a trigger... there is no displayed
+          cover to press." The element stays, so the image inside it is not
+          remounted when its photograph arrives; until then it is disabled,
+          unnamed, out of the tab order and hidden from assistive
+          technology, which is everything that makes a button a way in.
+        */
+        disabled={treatment === null}
+        aria-hidden={treatment === null ? true : undefined}
+        aria-label={treatment === null ? undefined : 'Open the sleeve'}
+        tabIndex={treatment === null ? -1 : undefined}
         onClick={openSleeve}
-        className="block cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
+        className="block enabled:cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
       >
         {/* eslint-disable-next-line @next/next/no-img-element -- blob and data URLs the optimizer is not configured for, as in ImageGallery */}
         <img
@@ -114,7 +128,7 @@ export function SleeveCover({ url, backUrl, frameRule }: { url: string; backUrl:
           className={treatment === null ? 'invisible block object-cover' : treatment === 'fit' ? 'block bg-background object-contain' : 'block object-cover'}
         />
       </button>
-      {open && <SleeveModal onClose={closeSleeve} front={url} back={backUrl} />}
+      {open && <SleeveModal onClose={closeSleeve} front={url} back={backUrl} inside={inside} />}
     </>
   );
 }

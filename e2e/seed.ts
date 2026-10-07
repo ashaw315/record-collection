@@ -104,7 +104,7 @@ export async function removeDiscogsCache(discogsReleaseId: number): Promise<void
  */
 export async function seedImage(input: {
   recordId: string;
-  imageType?: 'cover' | 'back' | 'label' | 'matrix' | 'other' | null;
+  imageType?: 'cover' | 'back' | 'gatefold_left' | 'gatefold_right' | 'label' | 'matrix' | 'other' | null;
   caption?: string | null;
   /**
    * A specific image, when the test is about the PIXELS rather than about a row
