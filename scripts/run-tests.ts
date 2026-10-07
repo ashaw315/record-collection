@@ -19,6 +19,7 @@
  */
 
 import { execFileSync, spawn } from 'node:child_process';
+import { existsSync, statSync } from 'node:fs';
 import { readRunResult, summarise, type TreeState } from './run-result';
 
 const USAGE = `usage: run-tests.ts [--expect-at-least N] <command> [args...]
@@ -37,13 +38,19 @@ function treeState(): TreeState | null {
     const git = (...args: string[]) => execFileSync('git', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 64 * 1024 * 1024 });
     const state: TreeState = { HEAD: git('rev-parse', 'HEAD').trim() };
     const paths = git('status', '--porcelain=v1', '-z', '--untracked-files=all').split('\0').filter((entry) => entry.length > 3).map((entry) => entry.slice(3));
-    for (const path of paths) {
-      try {
-        state[path] = git('hash-object', '--', path).trim();
-      } catch {
-        /* Deleted, or the old name of a rename: its going is the state. */
-        state[path] = 'absent';
-      }
+    /*
+      One git call for every file, not one each. The first build hashed
+      them one process at a time, before the child was started, and with
+      fifty changed files on a busy machine that delayed the run's first
+      line past what `run-tests-cli.test.ts` allows: an instrument that
+      shows nothing for its first seconds, added by a guard on the
+      instrument. A path that is gone cannot be hashed and is its own state.
+    */
+    const present = paths.filter((path) => existsSync(path) && statSync(path).isFile());
+    for (const path of paths) if (!present.includes(path)) state[path] = 'absent';
+    if (present.length > 0) {
+      const hashes = execFileSync('git', ['hash-object', '--stdin-paths'], { input: `${present.join('\n')}\n`, encoding: 'utf8', stdio: ['pipe', 'pipe', 'ignore'], maxBuffer: 64 * 1024 * 1024 }).trim().split('\n');
+      present.forEach((path, index) => { state[path] = hashes[index] ?? 'unreadable'; });
     }
     return state;
   } catch {
