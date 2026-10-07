@@ -35718,10 +35718,18 @@ about 16,500px and is close to flat.
 did not have. Its unit tests state the curve.
 
 **A press during a motion is ignored**, for TURN OVER and for the row's
-control during the gatefold's opening: one test each, sampling the motion's
-ends in the page. Both pass against the build, which already ignored them,
-so both were shown red with the guards removed: two presses then start two
-motions.
+control during the gatefold's opening: one test each. Both pass against
+the build, which already ignored them, so each was staged with the guards
+removed.
+
+**The first staging caught the turn's test, not the build.** With the
+guards removed the opening's test went red and the turn's did not, and I
+had already written here that both had. Its first version counted how many
+times the turn ended and where it landed; a restarted turn also ends once
+and lands on the back. It now reads the sleeve's angle in every frame and
+the time from the first press. Re-staged: the angle falls back by 99
+degrees at the second press, red; the opening's test red as before. The
+sentence above was corrected before it was pushed.
 
 Decided, as the evening's item 2 allows: four widths where there is room,
 600ms for both rotations.

@@ -640,25 +640,48 @@ test.describe('§M.5 (step 91): the turn’s swell, measured from frames', () =>
     });
   }
 
-  /* Fails against a turn that queues or restarts on a second press: two presses would end on the front again, or take twice as long. */
-  test('two presses on TURN OVER within one turn yield one turn', async ({ page }) => {
+  /*
+    Fails against a turn that restarts on a second press: the sleeve's angle
+    would fall back to flat at the press and the turn would end late. The
+    first version of this test counted how many times the turn ended and
+    where it landed; a restarted turn also ends once and lands on the back,
+    so it passed with the guard removed (found by staging, 6 Oct). It now
+    reads the angle in every frame, which a restart cannot hide.
+  */
+  test('two presses on TURN OVER within one turn yield one turn: the angle never falls back, and it ends in one turn’s time', async ({ page }) => {
     const id = await seedSleeve(page, INSIDE.file, PORTRAIT.file);
     await openSleeve(page, id, GRID_FORK, NO_SCROLL_HEIGHT);
     const result = await page.evaluate(async () => {
       const sleeve = document.querySelector('[data-sleeve]') as HTMLElement;
       const control = document.querySelector('[data-sleeve-control="turn"]') as HTMLElement;
+      const turned: number[] = [];
       const started = performance.now();
+      let pressedAgain = false; let midTurn = false; let ended = 0; let seen = false;
       control.click();
-      await new Promise((r) => setTimeout(r, 150));
-      const midTurn = sleeve.hasAttribute('data-turning');
-      control.click();
-      let turns = 0; let was = true; let ended = 0;
-      await new Promise<void>((resolve) => { const tick = () => { const now = sleeve.hasAttribute('data-turning'); if (was && !now) { turns += 1; ended = performance.now() - started; } was = now; if (performance.now() - started > 2500) resolve(); else requestAnimationFrame(tick); }; requestAnimationFrame(tick); });
-      return { midTurn, turns, ended, face: sleeve.getAttribute('data-face') };
+      await new Promise<void>((resolve) => {
+        const tick = () => {
+          const t = performance.now() - started;
+          const turning = sleeve.hasAttribute('data-turning');
+          if (turning) {
+            seen = true;
+            const tf = getComputedStyle(sleeve).transform;
+            const n = tf === 'none' ? [1, 0, 0] : tf.slice(tf.indexOf('(') + 1, -1).split(',').map(Number);
+            const angle = n.length >= 16 ? (Math.atan2(-n[2], n[0]) * 180) / Math.PI : 0;
+            turned.push(sleeve.getAttribute('data-face') === 'front' ? angle : 180 + angle);
+          } else if (seen && ended === 0) ended = t;
+          if (!pressedAgain && t >= 150) { pressedAgain = true; midTurn = turning; control.click(); }
+          if (t > 2500) resolve(); else requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      });
+      let fellBack = 0;
+      for (let i = 1; i < turned.length; i += 1) fellBack = Math.max(fellBack, turned[i - 1] - turned[i]);
+      return { midTurn, ended, fellBack, frames: turned.length, face: sleeve.getAttribute('data-face'), turningAtEnd: sleeve.hasAttribute('data-turning') };
     });
     expect(result.midTurn, 'the precondition: the second press came while it was turning').toBe(true);
-    expect(result.turns, 'one turn ran').toBe(1);
-    expect(result.face, 'and it landed on the back, where one turn leaves it').toBe('back');
-    expect(result.ended, 'in one turn’s time').toBeLessThan(TURN_MS * 1.5);
+    expect(result.frames).toBeGreaterThanOrEqual(10);
+    expect(result.fellBack, 'the angle never falls back: the turn was not restarted').toBeLessThan(1);
+    expect(result.ended, 'it ends in one turn’s time from the first press, not from the second').toBeLessThan(TURN_MS + 100);
+    expect({ face: result.face, turning: result.turningAtEnd }, 'and rests on the back').toEqual({ face: 'back', turning: false });
   });
 });
