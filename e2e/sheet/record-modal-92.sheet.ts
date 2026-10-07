@@ -116,7 +116,7 @@ test('one recording per window: travel in, turn over and back, open and fold, tr
     }
     await page.locator('[data-sleeve-close]').click();
     await page.locator('[data-sleeve-modal]').waitFor({ state: 'detached' });
-    await page.waitForTimeout(900);
+    await page.waitForTimeout(800);
     const video = page.video();
     await context.close();
     if (video === null) throw new Error('no recording was made');
