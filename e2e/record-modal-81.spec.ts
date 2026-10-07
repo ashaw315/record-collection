@@ -378,16 +378,13 @@ test.describe('§M.4: the sleeve is a square, centred, the same size on every re
     await expectFitted(page, FAR, 'the 4:3 front');
   });
 
-  /* Fails against a square that follows the window. */
-  test('the size is taken once on opening: resizing the window with it open does not change the square', async ({ page }) => {
-    const id = await seedSleeve(page, INSIDE.file, null);
-    await openSleeve(page, id, GRID_FORK, NO_SCROLL_HEIGHT);
-    const S = sleeveSquare(GRID_FORK, NO_SCROLL_HEIGHT);
-    await page.setViewportSize({ width: 1000, height: 700 });
-    await page.waitForTimeout(300);
-    expect(sleeveSquare(1000, 700), 'the precondition: a window whose own square differs').not.toBe(S);
-    expect((await box(page, '[data-sleeve]')).width).toBe(S);
-  });
+  /*
+    A test stood here: "the size is taken once on opening: resizing the
+    window with it open does not change the square". That was §M.4's first
+    wording, built at step 81, and `M.4/sizes-never-change` withdraws it: it
+    left a 354 square on a window 390 high. Step 93 re-measures once the
+    viewport settles, and `modal-resize-93.spec.ts` states that.
+  */
 });
 
 test.describe('§M.5 and §M.6: the face label, and TURN OVER', () => {

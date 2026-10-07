@@ -10,7 +10,7 @@ import { TURN_MS, turnDistance, turnPose, type TurnPose } from './sleeve-turn';
 import { OPEN_MS, easeOutCubic, openDistance, openPose, spreadSquare } from './sleeve-open';
 import { FADE_MS, TRAVEL_MS, travelBox, travelPhoto, type Square } from './sleeve-travel';
 import type { CoverTreatment } from './cover-fit';
-import { MODAL_CONTROL, MODAL_CONTROL_GAP, MODAL_LABEL_GAP, MODAL_LABEL_LINE, MODAL_ROW, sleeveSquare, type SleeveFace } from './sleeve-modal';
+import { MODAL_CONTROL, MODAL_CONTROL_GAP, MODAL_LABEL_GAP, MODAL_LABEL_LINE, MODAL_ROW, SETTLE_MS, sleeveSquare, type SleeveFace } from './sleeve-modal';
 
 /**
  * The record modal's view (§M.1): "a view of the object, not a dialog over
@@ -35,6 +35,16 @@ import { MODAL_CONTROL, MODAL_CONTROL_GAP, MODAL_LABEL_GAP, MODAL_LABEL_LINE, MO
  * only." The label is the header's own type, as the top row's CLOSE is.
  */
 const CONTROL = `${NAV_TYPE} box-border flex h-[44px] shrink-0 cursor-pointer items-center justify-center border border-foreground font-normal text-foreground decoration-1 underline-offset-[3px] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground`;
+
+/** The closed square, a leaf of the open spread, and the paper between the top row and the closed sleeve, for the window as it is now. */
+function measureSleeve(): { side: number; leaf: number; room: number } {
+  const side = sleeveSquare(window.innerWidth, window.innerHeight);
+  return {
+    side,
+    leaf: spreadSquare(window.innerWidth, window.innerHeight),
+    room: (window.innerHeight - MODAL_ROW - (side + MODAL_LABEL_GAP + MODAL_LABEL_LINE + MODAL_LABEL_GAP + MODAL_CONTROL)) / 2,
+  };
+}
 
 const FACE_NAME: Record<SleeveFace | 'inside', string> = { front: 'Front', back: 'Back', inside: 'Inside' };
 
@@ -67,14 +77,14 @@ export function SleeveModal({
   onClosed: () => void;
 }) {
   const view = useRef<HTMLDivElement>(null);
-  /* §M.4: "The sizes are taken once when the modal opens and do not change while it is open." */
-  const [side] = useState(() => sleeveSquare(window.innerWidth, window.innerHeight));
   /*
-    Step 91: the paper between the top row and the closed sleeve, taken with
-    the sizes. The turn and the opening are seen from far enough that their
-    near edge, which perspective draws past the square, stays out of the row.
+    §M.4 (step 93): the sizes are measured when the modal opens, "at the
+    press, before the cover travels", and again "once the viewport settles"
+    after a rotation or a resize. One measurement of the three that go
+    together: the closed square, a leaf of the spread, and the paper above
+    the sleeve (step 91).
   */
-  const [room] = useState(() => (window.innerHeight - MODAL_ROW - (side + MODAL_LABEL_GAP + MODAL_LABEL_LINE + MODAL_LABEL_GAP + MODAL_CONTROL)) / 2);
+  const [{ side, leaf, room }, setSizes] = useState(measureSleeve);
   const [face, setFace] = useState<SleeveFace>('front');
   /*
     §M.5: the turn. While it runs, `turn` holds the pose of this frame; the
@@ -85,6 +95,8 @@ export function SleeveModal({
   const [turn, setTurn] = useState<{ from: SleeveFace; to: SleeveFace; pose: TurnPose } | null>(null);
   const frame = useRef(0);
   const turning = useRef(false);
+  /* What the motion under way ends as, so a settled viewport can cut it there (step 93); null at rest. */
+  const endMotion = useRef<(() => void) | null>(null);
   useEffect(() => () => cancelAnimationFrame(frame.current), []);
   const turnOver = useCallback(() => {
     /* A press while it turns is not a second turn. */
@@ -97,13 +109,18 @@ export function SleeveModal({
       return;
     }
     turning.current = true;
+    const land = () => {
+      turning.current = false;
+      endMotion.current = null;
+      setFace(to);
+      setTurn(null);
+    };
+    endMotion.current = land;
     const started = performance.now();
     const step = (now: number) => {
       const progress = (now - started) / TURN_MS;
       if (progress >= 1) {
-        turning.current = false;
-        setFace(to);
-        setTurn(null);
+        land();
         return;
       }
       setTurn({ from, to, pose: turnPose(progress) });
@@ -120,7 +137,6 @@ export function SleeveModal({
     Folding runs the same curve back. The spread's square is taken with the
     closed one, when the modal opens.
   */
-  const [leaf] = useState(() => spreadSquare(window.innerWidth, window.innerHeight));
   const [spread, setSpread] = useState<{ e: number; moving: boolean; target: 'open' | 'closed' } | null>(null);
   const openOrFold = useCallback((target: 'open' | 'closed') => {
     /* §M.5: a press that would start another motion is ignored while one is under way. */
@@ -131,12 +147,17 @@ export function SleeveModal({
       return;
     }
     turning.current = true;
+    const land = () => {
+      turning.current = false;
+      endMotion.current = null;
+      setSpread(target === 'open' ? { e: 1, moving: false, target } : null);
+    };
+    endMotion.current = land;
     const started = performance.now();
     const step = (now: number) => {
       const progress = (now - started) / OPEN_MS;
       if (progress >= 1) {
-        turning.current = false;
-        setSpread(target === 'open' ? { e: 1, moving: false, target } : null);
+        land();
         return;
       }
       const eased = easeOutCubic(progress);
@@ -180,16 +201,23 @@ export function SleeveModal({
   const progress = useRef(travel === null ? 1 : 0);
   const landed = useRef(travel === null);
   const travelFrame = useRef(0);
+  const endTravel = useRef<(() => void) | null>(null);
   useEffect(() => {
     if (landed.current) return;
+    const arrive = () => {
+      landed.current = true;
+      progress.current = 1;
+      endTravel.current = null;
+      setTravel(null);
+      setChrome(true);
+    };
+    endTravel.current = arrive;
     const started = performance.now();
     const step = (now: number) => {
       const p = Math.min(1, (now - started) / TRAVEL_MS);
       progress.current = p;
       if (p >= 1) {
-        landed.current = true;
-        setTravel(null);
-        setChrome(true);
+        arrive();
         return;
       }
       setTravel((was) => (was === null ? was : { ...was, p }));
@@ -240,6 +268,56 @@ export function SleeveModal({
       cancelAnimationFrame(travelFrame.current);
     };
   }, [closing, onClosed, origin]);
+  /*
+    §M.4 (step 93): "A rotation or a resize while the modal is open
+    re-measures the square once the viewport settles, and the sleeve takes
+    its new size and place at once... If a turn, the gatefold's opening or
+    the cover's travel is under way, it is cut to its end state first and
+    then re-measured... A resize that does not change the square's size
+    moves nothing." Settled is SETTLE_MS with no resize event. A modal that
+    is closing is left to close.
+  */
+  const sizes = useRef({ side, leaf, room });
+  useEffect(() => {
+    sizes.current = { side, leaf, room };
+  }, [side, leaf, room]);
+  const spreadDrawn = useRef(false);
+  useEffect(() => {
+    spreadDrawn.current = spread !== null;
+  }, [spread]);
+  const isClosing = useRef(closing);
+  useEffect(() => {
+    isClosing.current = closing;
+  }, [closing]);
+  useEffect(() => {
+    let timer = 0;
+    const settle = () => {
+      if (isClosing.current) return;
+      const next = measureSleeve();
+      const now = sizes.current;
+      const closedSame = next.side === now.side && next.room === now.room;
+      if (closedSame && next.leaf === now.leaf) return;
+      /* Only the spread's leaf differs and no spread is drawn: nothing on screen changes, so nothing is cut. The new leaf is kept for when it opens. */
+      if (closedSame && !spreadDrawn.current) {
+        setSizes(next);
+        return;
+      }
+      cancelAnimationFrame(frame.current);
+      cancelAnimationFrame(travelFrame.current);
+      endMotion.current?.();
+      endTravel.current?.();
+      setSizes(next);
+    };
+    const onResize = () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(settle, SETTLE_MS);
+    };
+    window.addEventListener('resize', onResize);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener('resize', onResize);
+    };
+  }, []);
   const risen = travel === null ? 1 : easeOutCubic(travel.p);
   /* Where the cover lands: inside the modal square's hairline, which is where the modal draws the photograph. */
   const modalSquare: Square = { left: (window.innerWidth - side) / 2 + 1, top: MODAL_ROW + room + 1, size: side - 2 };

@@ -35,3 +35,13 @@ export function sleeveSquare(viewportWidth: number, viewportHeight: number): num
 }
 
 export type SleeveFace = 'front' | 'back';
+
+/**
+ * §M.4 (step 93): "re-measures the square once the viewport settles." What
+ * settled is built as: this long with no resize event. A phone fires resize
+ * throughout a rotation, and each one restarts the wait, so the sleeve is
+ * re-measured once, this long after the rotation's last event. Decided by
+ * the build and accepted on 6 Oct, with the state it leaves: until then
+ * the sleeve is at its old size.
+ */
+export const SETTLE_MS = 150;

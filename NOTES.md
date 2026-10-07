@@ -35791,3 +35791,36 @@ where the ground now is.
 **Step level:** the eight modal and cover specs on chromium,
 `65 passed, ledger clean, tree unchanged — OK`; record and repo unit
 tests; typecheck, lint (0 errors).
+
+## Step 93 built: the sleeve re-measured when the viewport settles (6 Oct)
+
+**Built.** The closed square, the spread's leaf and the paper above the
+sleeve are one measurement, taken at the press and again once the viewport
+has gone `SETTLE_MS`, 150ms, without a resize event. If the new measurement
+differs, any turn, opening or travel under way is cut to its end state and
+the new sizes are set in one render: no animation. If nothing drawn would
+change, nothing is cut. A modal that is closing is left to close.
+
+**Tested**, `e2e/modal-resize-93.spec.ts`, 4:
+
+- 390 x 844 turned to 844 x 390: immediately after, the sleeve is still
+  354 and its controls run off the window (the accepted transient,
+  asserted); then, sampled in the page, the width goes 354 then 222 with
+  no size between; the sleeve, label and controls fit and the top row is
+  untouched. Red against the sizes taken once.
+- the same rotation with the gatefold open: each leaf goes from 177 to
+  222, the spread centred on the turned window, and folding gives the 222
+  closed square. Red.
+- a resize that keeps the square (1440 to 1500 wide): a turn under way is
+  still turning after the settle and lands in its own time. Passed against
+  step 81, which never re-measured; shown red against a settle that always
+  cuts.
+- a turn under way when the square does change is on the face it was
+  turning to, flat, at the new size. Red.
+
+**A test of the withdrawn rule was removed**, with a note where it stood:
+record-modal-81's "the size is taken once on opening".
+
+**Captures of the known transient and the settled state:**
+`docs/captures/modal-rotation-93/rotation-0844x390-before-settle-s354.png`
+and `rotation-0844x390-settled-s222.png`.

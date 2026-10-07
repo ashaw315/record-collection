@@ -88,6 +88,8 @@ const GOVERNED = [
   'e2e/plain-back-90.spec.ts',
   /* §M.7 (step 92): the cover's travel. */
   'e2e/cover-travel-92.spec.ts',
+  /* §M.4 (step 93): the sleeve re-measured when the viewport settles. */
+  'e2e/modal-resize-93.spec.ts',
   /* §M.1 (step 81): the record modal's view, opened from the cover. */
   'e2e/record-modal-81.spec.ts',
   /* §M.2 (step 82): the newest back, on the wall and in the modal. */
