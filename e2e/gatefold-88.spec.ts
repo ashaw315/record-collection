@@ -138,8 +138,8 @@ test.describe('§M.6: OPEN shows on the front only, and only where both inside p
 
 for (const [width, height] of [[390, 844], [GRID_FORK, NO_SCROLL_HEIGHT]] as const) {
   test.describe(`§M.4 and §M.5 at ${width} × ${height}: the opening`, () => {
-    /* Fails against a modal with no opening; against a sleeve that moves left, or does not scale, or whose parts run on different curves; against a turn without perspective; and against the wall's ease in and out. */
-    test('OPEN swings the front panel about the fold to become the left leaf while the sleeve moves right by half a square and scales, as one motion on an ease-out; the spread ends centred, INSIDE, with FOLD alone; FOLD returns it', async ({ page }) => {
+    /* Fails against a modal with no opening; against a sleeve that moves left, or does not scale, or whose parts run on different curves; and against a turn without perspective. */
+    test('OPEN swings the front panel about the fold to become the left leaf while the sleeve moves right by half a square and scales, as one motion; the spread ends centred, INSIDE, with FOLD alone; FOLD returns it', async ({ page }) => {
       const id = await seedSleeve(page, ['gatefold_left', 'gatefold_right']);
       await openSleeve(page, id, width, height);
       const S = sleeveSquare(width, height);
@@ -175,10 +175,14 @@ for (const [width, height] of [[390, 844], [GRID_FORK, NO_SCROLL_HEIGHT]] as con
       }
       for (let i = 1; i < eased.length; i += 1) expect(eased[i], `frame ${i} has not gone back`).toBeGreaterThanOrEqual(eased[i - 1] - 0.005);
       expect(moving.filter((f, i) => i > 0 && f.panel !== moving[i - 1].panel).length, 'the panel changes once, edge-on').toBe(1);
-      /* An ease-out: most of the motion is done early. A third of the way through the time it is about 0.70 done; the wall's ease would be 0.15. */
+      /*
+        The curve's shape is not asserted here, for the reason given in
+        `cover-travel-92.spec.ts`: the same reading, a third of the way
+        through the time, stood here and depended on the machine. Removed
+        with its twin on 7 Oct. `sleeve-open.test.ts` states the curve; the
+        recording shows it.
+      */
       const t0 = moving[0].t;
-      const third = moving.findIndex((f) => f.t - t0 >= OPEN_MS / 3);
-      expect(eased[third], `how far it has gone a third of the way through its ${OPEN_MS}ms`).toBeGreaterThan(0.55);
       const lasted = moving[moving.length - 1].t - t0;
       expect(lasted).toBeGreaterThan(OPEN_MS * 0.8);
       expect(lasted).toBeLessThan(OPEN_MS * 1.4);

@@ -118,7 +118,7 @@ test.beforeEach(async ({ page }) => login(page));
 
 for (const [width, height] of [[390, 844], [GRID_FORK, NO_SCROLL_HEIGHT]] as const) {
   /* Fails against the modal as built at step 81, which appears at once: no frame travels. */
-  test(`at ${width} × ${height} the pressed cover travels from the page’s square to the modal’s on an ease-out, its crop easing to the fit, the paper and the top row rising with it, and the label and controls fading in after it lands`, async ({ page }) => {
+  test(`at ${width} × ${height} the pressed cover travels from the page’s square to the modal’s its crop easing to the fit, the paper and the top row rising with it, and the label and controls fading in after it lands`, async ({ page }) => {
     const id = await seed(page);
     await recordPage(page, id, width, height);
     const S = sleeveSquare(width, height);
@@ -163,17 +163,15 @@ for (const [width, height] of [[390, 844], [GRID_FORK, NO_SCROLL_HEIGHT]] as con
     expect(photoOf(last)[3] / boxOf(last)[3], 'and its height inside it').toBeLessThan(0.99);
 
     /*
-      An ease-out, and one duration at every width. A third of the way
-      through its time an ease-out is about 0.70 done and the wall's ease in
-      and out 0.15. **This reading depends on the machine.** The sampler
-      reads the page one render behind, and under load that is tens of
-      milliseconds: in loaded runs on 6 Oct it read 0.52 against this 0.55,
-      and a tighter version read as a shape failed outright. It passes on a
-      machine that is not loaded; it is not evidence on one that is.
+      One duration at every width. **The curve's shape is not asserted
+      here.** A reading of how far the travel had gone a third of the way
+      through its time stood here; it depended on the machine (the sampler
+      reads the page a render behind, more under load) and was removed on
+      7 Oct by decision, not kept with a caveat. That the travel is an
+      ease-out is held by `sleeve-open.test.ts`, which states the curve, and
+      judged by eye from the recording in `docs/captures/record-modal-92/`.
     */
     const t0 = travel[0].t;
-    const third = travel.findIndex((f) => f.t - t0 >= TRAVEL_MS / 3);
-    expect(eased[third], `how far it has gone a third of the way through its ${TRAVEL_MS}ms`).toBeGreaterThan(0.55);
     const lasted = last.t - t0;
     expect(lasted, `it lasts about ${TRAVEL_MS}ms`).toBeGreaterThan(TRAVEL_MS * 0.75);
     expect(lasted).toBeLessThan(TRAVEL_MS * 1.4);

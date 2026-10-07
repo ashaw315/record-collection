@@ -35932,3 +35932,48 @@ about which way the sampler's clock errs, and put the original back.
 record-modal-81 and gatefold-88 on chromium, `37 passed, ledger clean,
 tree unchanged — OK`. The full gate has NOT been re-run. Nothing is pushed.
 Sixteen commits are local.
+
+## Two instances of the family, and one test deleted by decision (7 Oct)
+
+**Named as instances**, from the red gate of 6 Oct:
+
+- **A ruled order built as two clocks that had to agree.** §M.7 orders the
+  close: the label and controls go, then the cover travels. The build ran
+  the fade as a CSS transition and started the travel on a timer of the
+  same length. Nothing tied the second to the first; under load the cover
+  left with the label a ninth visible. The fix makes the order a
+  dependency: the cover leaves on the fade's own end.
+- **A guard that waited for the first thing of its kind, not the thing it
+  guards.** `collection-filters`' `controlsReady` waited for the first
+  hydrated element on the page; the filters were one of several. It is the
+  5 Oct flake, diagnosed then and fixed only when it failed a gate twice.
+  Same shape as `manage.spec`'s cleanup looking its genres up in the first
+  200 rows: each checked a neighbour of its subject, and each passed until
+  the page held enough other things.
+
+**Deleted, not kept with a caveat:** the reading of how far a motion has
+gone a third of the way through its time, in `cover-travel-92` and its
+twin in `gatefold-88`. It depended on the machine. A test known to depend
+on the machine reddens a gate for no reason, and a caveat in a comment is a
+known-bad test someone trusts later. **The curve's shape is verified by the
+recording, by eye, and stated by the unit tests of `easeOutCubic`,
+`turnPose` and `openPose`; it is not verified by any sampled assertion end
+to end.** The twin was not named in the decision; it is the same reading
+with the same dependence, so it went with it.
+
+Not run after this edit beyond typecheck: the machine is still loaded.
+
+**Step 91's tests are in two existing specs, which is why it had no row:**
+`record-modal-81.spec.ts`, the describe "§M.5 (step 91)", three tests (the
+swell from frames at 390 x 844 and 1440 x 900, and two presses on TURN
+OVER), and `gatefold-88.spec.ts`, one (a press during the opening); with
+four unit tests of `turnDistance` and two of `openDistance`. The
+measurement happened: swell 25.3 at 390 x 844 and 17.0 at 1440 x 900, the
+turning edge at 54.0 against the row's foot at 53. §M.5's condition holds
+as measured.
+
+**"Re-measured on every change of the viewport" was never taken.** No
+commit of the modal target carries it (2cda49e, 64ff1f7, f6fb36d, 47a28c7,
+c1ff8a6, 56485a7 all read 0). It and `M.4/remeasure-every-change` are only
+in the export now sitting untaken in the working tree. So it was a draft,
+and the entry can come out.
