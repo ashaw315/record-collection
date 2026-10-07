@@ -222,6 +222,8 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
                 backUrl: newestOfType(record.images, 'back')?.url ?? null,
                 gatefoldLeftUrl: newestOfType(record.images, 'gatefold_left')?.url ?? null,
                 gatefoldRightUrl: newestOfType(record.images, 'gatefold_right')?.url ?? null,
+                labelName: record.label?.name ?? null,
+                catalogNumber: record.pressing?.catalogNumber ?? null,
                 spineColour: record.spineColour,
               }}
               writingConfigured={isAnthropicConfigured()}

@@ -35669,3 +35669,22 @@ The modal's own controls keep their outside ring, which
 Captures of the mixed cover, focused, from the build:
 `docs/captures/trigger-ring-89/ring-mixed-0390-focused-paper2-ink2.png`
 and `-1440-`. Bitches Brew itself is in the sheet taken after step 92.
+
+## Step 90 built: the modal's plain back on the record's field (6 Oct)
+
+Where there is no back photograph the modal's back is a square filled with
+`pullFill(1, recordLadder(spineColour))`, the wall's own computation for
+the field a pulled record lands on, with `PlainBackImprint`, the wall's own
+component, on it. Ink where nothing is stored. The column and the single
+CLOSE are as built. The square is 354 at 390 x 844 and 732 at 1440 x 900,
+asserted.
+
+`e2e/plain-back-90.spec.ts`, 4, all red against step 81's empty square: at
+both windows the back reads, as pixels at five points, the field for a
+stored colour chosen outside the clamp (#7a0c0c gives #b67168), fills the
+square inside its hairline, and carries label and catalogue number in the
+wall's paper, 16 in from the foot and the left, and nothing further; with
+no stored colour it reads the wall's ink; and the wall's pulled record,
+turned over, has the same ground, the same text and the same imprint
+markup. Shown red against A19's stored colour as the ground (three of
+four).

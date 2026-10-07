@@ -29,6 +29,7 @@ export function SleeveCover({
   backUrl,
   inside,
   frameRule,
+  plain,
 }: {
   url: string;
   backUrl: string | null;
@@ -36,6 +37,8 @@ export function SleeveCover({
   inside: { left: string; right: string } | null;
   /** The no-cover frame's hairline, the page's own. */
   frameRule: string;
+  /** §M.3: the plain back's ground and imprint, for a record with no back photograph. */
+  plain: { ground: string; labelName: string | null; catalogNumber: string | null };
 }) {
   const [treatment, setTreatment] = useState<CoverTreatment | null>(null);
   /*
@@ -136,7 +139,7 @@ export function SleeveCover({
           className={treatment === null ? 'invisible block object-cover' : treatment === 'fit' ? 'block bg-background object-contain' : 'block object-cover'}
         />
       </button>
-      {open && <SleeveModal onClose={closeSleeve} front={url} back={backUrl} inside={inside} />}
+      {open && <SleeveModal onClose={closeSleeve} front={url} back={backUrl} inside={inside} plain={plain} />}
     </>
   );
 }

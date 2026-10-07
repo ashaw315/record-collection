@@ -69,6 +69,8 @@ const CASES: Record<string, PageRecord> = {
     backUrl: null,
   gatefoldLeftUrl: null,
   gatefoldRightUrl: null,
+  labelName: null,
+  catalogNumber: null,
     spineColour: '#a25829',
   },
   /* 16 of 17 render this: no journal, no price, no source. */
@@ -103,6 +105,8 @@ const CASES: Record<string, PageRecord> = {
     backUrl: null,
   gatefoldLeftUrl: null,
   gatefoldRightUrl: null,
+  labelName: null,
+  catalogNumber: null,
     spineColour: '#44946b',
   },
   /* The emptiest: no Discogs release, so the market mark is CROSSED. */
@@ -134,6 +138,8 @@ const CASES: Record<string, PageRecord> = {
     backUrl: null,
   gatefoldLeftUrl: null,
   gatefoldRightUrl: null,
+  labelName: null,
+  catalogNumber: null,
     spineColour: '#363129',
   },
 };
@@ -173,6 +179,8 @@ CASES.nocover = {
   backUrl: null,
   gatefoldLeftUrl: null,
   gatefoldRightUrl: null,
+  labelName: null,
+  catalogNumber: null,
   spineColour: null,
 };
 

@@ -84,6 +84,8 @@ const GOVERNED = [
   'e2e/gatefold-88.spec.ts',
   /* §M.6 (step 89): the cover's focus ring inside the square. */
   'e2e/trigger-ring-89.spec.ts',
+  /* §M.3 (step 90): the modal's plain back on the record's field. */
+  'e2e/plain-back-90.spec.ts',
   /* §M.1 (step 81): the record modal's view, opened from the cover. */
   'e2e/record-modal-81.spec.ts',
   /* §M.2 (step 82): the newest back, on the wall and in the modal. */

@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { holdScroll } from '@/components/scroll-hold';
 import { NAV_TYPE } from '@/components/nav-type';
 import { LABEL } from './grid-type';
+import { PlainBackImprint } from '@/app/wall/PlainBackImprint';
 import { TURN_MS, TURN_PERSPECTIVE, turnPose, type TurnPose } from './sleeve-turn';
 import { OPEN_MS, easeOutCubic, openPose, spreadSquare } from './sleeve-open';
 import { MODAL_CONTROL_GAP, MODAL_LABEL_GAP, MODAL_LABEL_LINE, sleeveSquare, type SleeveFace } from './sleeve-modal';
@@ -40,12 +41,15 @@ export function SleeveModal({
   front,
   back,
   inside,
+  plain,
 }: {
   onClose: () => void;
   front: string;
   back: string | null;
   /** §M.6: "The gatefold opens only when both inside photos exist." Null where either leaf is missing. */
   inside: { left: string; right: string } | null;
+  /** §M.3: the back where there is no back photograph: the record's field, and the imprint the wall draws on it. */
+  plain: { ground: string; labelName: string | null; catalogNumber: string | null };
 }) {
   const view = useRef<HTMLDivElement>(null);
   /* §M.4: "The sizes are taken once when the modal opens and do not change while it is open." */
@@ -238,9 +242,20 @@ export function SleeveModal({
               transform: turn === null ? undefined : `perspective(${side * TURN_PERSPECTIVE}px) rotateY(${turn.pose.angle}deg)`,
             }}
           >
-            {shown !== null && (
+            {shown !== null ? (
               // eslint-disable-next-line @next/next/no-img-element -- blob and data URLs the optimizer is not configured for, as in ImageGallery
               <img key={toward} data-sleeve-face={toward} src={shown} alt="" className="block h-full w-full object-contain" />
+            ) : (
+              /*
+                §M.3: "The modal's plain back is the record's field, filling
+                the square, with the label and catalogue number in paper on
+                it; where the record has no stored colour, it is ink." The
+                imprint is the wall's own component, so one sleeve has one
+                back; the ground is the wall's own computation, handed in.
+              */
+              <div data-plain-back="" className="h-full w-full" style={{ background: plain.ground }}>
+                <PlainBackImprint labelName={plain.labelName} catalogNumber={plain.catalogNumber} />
+              </div>
             )}
           </div>
         )}

@@ -20,6 +20,7 @@ import { LABEL, LABEL_INK } from './grid-type';
 import { INK_CSS } from '@/lib/colour/ink';
 import { PAPER_CSS } from '@/lib/colour/paper';
 import { recordLadder } from '@/lib/colour/record-ladder';
+import { pullFill } from '@/app/wall/pull-colour';
 import { TITLE_MEASURE } from './title-steps';
 
 /**
@@ -70,6 +71,9 @@ export type PageRecord = {
   /** §M.2 and §M.6: the newest of each inside leaf; the gatefold opens only where both exist. */
   gatefoldLeftUrl: string | null;
   gatefoldRightUrl: string | null;
+  /** §M.3: the imprint on the modal's plain back, the two the wall's plain back carries. */
+  labelName: string | null;
+  catalogNumber: string | null;
   spineColour: string | null;
 };
 
@@ -772,6 +776,8 @@ export function RecordPage8a({ record, writingConfigured = false }: { record: Pa
                 backUrl={record.backUrl}
                 inside={record.gatefoldLeftUrl !== null && record.gatefoldRightUrl !== null ? { left: record.gatefoldLeftUrl, right: record.gatefoldRightUrl } : null}
                 frameRule={RULE}
+                /* §M.3: "from the wall's own computation": the field a pulled record lands on, ink where it has no colour. */
+                plain={{ ground: pullFill(1, ladder), labelName: record.labelName, catalogNumber: record.catalogNumber }}
               />
             )}
             <div data-mark="sleeveBar" style={{ background: base }} />
