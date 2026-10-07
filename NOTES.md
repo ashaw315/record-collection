@@ -35646,3 +35646,26 @@ shows the travel, the turn and the opening as a reader meets them.
 cover-wait-85 on chromium, `43 passed, ledger clean, tree unchanged — OK`;
 record and repo unit tests through the runner; typecheck, lint. The gate
 is one, after step 93.
+
+## Step 89 built: the cover's focus ring inside the square (6 Oct)
+
+A pseudo-element over the photograph: its 2px border is the paper band at
+the edge and its inset shadow, which lies inside the border, is the 2px ink
+band. On `:focus-visible` only. The outside ring of step 81 is gone.
+
+`e2e/trigger-ring-89.spec.ts`, 6: a light, a dark and a mixed cover (made
+in the spec, so their edges are known exactly; the mixed one is 100px
+blocks, so every side runs through both), at 390 and 1440. Read as pixels,
+focused against unfocused, at three places along each of the four sides:
+1px in is paper, 3px in is ink, 7px in is the photograph as it was; and
+wherever it is read, one band stands against the photograph. All six red
+against step 81's ring. Focus by a press draws no ring; that check asserts
+first that the cover holds focus and the browser does not count it as the
+keyboard's, and it was shown red against a ring on any focus.
+
+The modal's own controls keep their outside ring, which
+`record-modal-81.spec.ts` reads as pixels on all four sides.
+
+Captures of the mixed cover, focused, from the build:
+`docs/captures/trigger-ring-89/ring-mixed-0390-focused-paper2-ink2.png`
+and `-1440-`. Bitches Brew itself is in the sheet taken after step 92.

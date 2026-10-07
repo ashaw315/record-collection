@@ -114,7 +114,15 @@ export function SleeveCover({
         aria-label={treatment === null ? undefined : 'Open the sleeve'}
         tabIndex={treatment === null ? -1 : undefined}
         onClick={openSleeve}
-        className="block enabled:cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground"
+        /*
+          §M.6 (step 89): "On the cover, the focus ring is drawn inside the
+          square: 2px of paper at its edge, and 2px of ink inside that."
+          The ring outside the box, built at step 81, was outside the cell
+          and clipped away. Drawn by a pseudo-element over the photograph:
+          its border is the paper band and its inset shadow, which lies
+          inside the border, is the ink band. On keyboard focus only.
+        */
+        className="block outline-none enabled:cursor-pointer focus-visible:after:pointer-events-none focus-visible:after:absolute focus-visible:after:inset-0 focus-visible:after:box-border focus-visible:after:border-2 focus-visible:after:border-background focus-visible:after:shadow-[inset_0_0_0_2px_var(--foreground)] focus-visible:after:content-['']"
       >
         {/* eslint-disable-next-line @next/next/no-img-element -- blob and data URLs the optimizer is not configured for, as in ImageGallery */}
         <img
