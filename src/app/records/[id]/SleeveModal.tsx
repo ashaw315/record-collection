@@ -201,6 +201,7 @@ export function SleeveModal({
   const progress = useRef(travel === null ? 1 : 0);
   const landed = useRef(travel === null);
   const travelFrame = useRef(0);
+  const labelRef = useRef<HTMLDivElement>(null);
   const endTravel = useRef<(() => void) | null>(null);
   useEffect(() => {
     if (landed.current) return;
@@ -261,8 +262,27 @@ export function SleeveModal({
       setTravel({ p: from, dir: 'out', page });
       travelFrame.current = requestAnimationFrame(step);
     };
-    /* Landed, the label and controls fade first (they read `closing`); still travelling in, there is nothing to fade and it turns back on the next frame. */
-    timer = window.setTimeout(leave, landed.current && !reducedMotion() ? FADE_MS : 0);
+    /*
+      "The label and controls go first, then the cover travels." Landed, they
+      fade (they read `closing`), and the cover leaves when the fade has
+      FINISHED, heard from the label's own transition. It first left on a
+      timer of the fade's length, and in a loaded run the timer fired with
+      the label still a ninth visible: two clocks for one sequence. The
+      timer stays only as a fallback, for a fade that never reports.
+      Still travelling in, there is nothing to fade and it turns back at once.
+    */
+    const fading = landed.current && !reducedMotion() ? labelRef.current : null;
+    let left = false;
+    const go = () => {
+      if (left) return;
+      left = true;
+      leave();
+    };
+    if (fading === null) timer = window.setTimeout(go, 0);
+    else {
+      fading.addEventListener('transitionend', go, { once: true });
+      timer = window.setTimeout(go, FADE_MS + 400);
+    }
     return () => {
       window.clearTimeout(timer);
       cancelAnimationFrame(travelFrame.current);
@@ -449,7 +469,7 @@ export function SleeveModal({
           </div>
         )}
         {/* §M.5: "a label beneath the sleeve names the face shown... It shows in every mode... the label is announced politely." */}
-        <div data-face-label="" aria-live="polite" className={`${LABEL} shrink-0 leading-none`} style={{ marginTop: MODAL_LABEL_GAP, height: MODAL_LABEL_LINE, opacity: chrome && !closing ? 1 : 0, transition: `opacity ${FADE_MS}ms linear` }}>
+        <div ref={labelRef} data-face-label="" aria-live="polite" className={`${LABEL} shrink-0 leading-none`} style={{ marginTop: MODAL_LABEL_GAP, height: MODAL_LABEL_LINE, opacity: chrome && !closing ? 1 : 0, transition: `opacity ${FADE_MS}ms linear` }}>
           {FACE_NAME[toward]}
         </div>
         <div data-sleeve-controls="" className="flex shrink-0" style={{ marginTop: MODAL_LABEL_GAP, gap: MODAL_CONTROL_GAP, opacity: chrome && !closing ? 1 : 0, transition: `opacity ${FADE_MS}ms linear` }}>

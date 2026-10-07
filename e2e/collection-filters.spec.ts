@@ -207,8 +207,20 @@ async function bulkArtist(page: Page, name: string, suffix: string): Promise<str
  * server-rendered, so its presence proves the markup arrived rather than that
  * its onChange exists.
  */
+/**
+ * **The filters' OWN hydration marker, not the first one on the page.**
+ *
+ * This waited for the first `[data-hydrated="true"]` anywhere. The page has
+ * several (the header's controls, the rail's selects), so it could return
+ * while `CollectionFilters`, whose controlled Sort select still carried the
+ * server's `value=""`, had not hydrated. Diagnosed on 5 Oct as a flake that
+ * passed on retry; in the gate of 6 Oct, on a machine under load, it lost on
+ * both attempts. The marker asked for now is the one on the element that
+ * holds the Sort select, which `CollectionFilters.tsx` sets from its own
+ * effect.
+ */
 async function controlsReady(page: Page): Promise<void> {
-  await page.locator('[data-hydrated="true"]').first().waitFor({ timeout: 15_000 });
+  await page.locator('[data-hydrated="true"]', { has: page.getByLabel('Sort by') }).first().waitFor({ timeout: 15_000 });
 }
 
 test.beforeEach(async ({ page }) => {

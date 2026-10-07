@@ -35882,3 +35882,53 @@ Until 4 is done the two §10b sentences have no instrument.
 
 **Also deferred behind the screens, by the same instruction:** §60's
 corner mark, §55's eight figures and §9's specimen on the record page.
+
+## The gate on 9494d29 is RED, and not pushed (6 Oct, late)
+
+Gate: full suites, both projects, steps 88 to 93 and the two machinery
+items, through the runner.
+
+- Unit: `4114 passed, 2 skipped, tree unchanged — OK`.
+- Playwright: `723 passed, 2 failed, 3 flaky, 12 skipped, ledger clean,
+  tree unchanged — NOT OK — 2 failed`, in **45.0m** against 29 to 31 for
+  the last three gates.
+
+Against 693: record-modal-81 24, back-newest-82 2, cover-fail-87 6,
+gatefold-88 7, trigger-ring-89 6, plain-back-90 4, cover-travel-92 5 of 6,
+modal-resize-93 4, on chromium.
+
+**The two failures.**
+
+1. `[chromium] cover-travel-92`, the three ways of closing: "the label has
+   gone when the cover leaves", expected 0, received 0.0001. In a later
+   loaded run the same line read 0.11. **That was a defect in the build.**
+   The return started on a timer of the fade's length, so the fade and the
+   leaving were two clocks for one sequence the ruling orders ("the label
+   and controls go first"). Fixed: the cover leaves on the label's own
+   `transitionend`, with the timer as a fallback only.
+2. `[mobile] collection-filters:429`, the hydration race diagnosed on 5 Oct
+   and left as low priority; it lost on both attempts. Its guard waited for
+   the first hydrated element on the page, not the filters. Fixed in the
+   test: it waits for the marker on the element that holds the Sort select.
+
+**The three flaky:** two `ECONNRESET` on a setup POST (gatefold-88,
+lookup-flows) and one more travel test. All passed on retry.
+
+**The machine was loaded, and my new tests were sensitive to it.** Load
+average sat between 15 and 22 during the runs and falls to about 4 within
+two minutes of stopping, so most of it is the run itself; `mediaanalysisd`
+holds half a core throughout. Swap is in use. The travel's tests asserted
+things about the LAST sampled frame (within 30px of home, paper under
+0.2, no step larger than a quarter of the range), which is the frame rate
+and not the motion. Those are replaced by what does not depend on it:
+leaves from the modal's square, every frame nearer home, the sizes rising
+to one peak and falling, the paper only clearing, and then the final
+state. One reading still depends on the machine and says so where it
+stands: how far the travel has gone a third of the way through its time.
+I tried to replace it with a reading of the curve's shape, reasoned wrongly
+about which way the sampler's clock errs, and put the original back.
+
+**State.** After those changes, from a settled machine: cover-travel-92,
+record-modal-81 and gatefold-88 on chromium, `37 passed, ledger clean,
+tree unchanged — OK`. The full gate has NOT been re-run. Nothing is pushed.
+Sixteen commits are local.
