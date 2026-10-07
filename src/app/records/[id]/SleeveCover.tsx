@@ -24,11 +24,20 @@ import { SleeveModal } from './SleeveModal';
  * square keeps its place and its size, and the paper is stated, because the
  * sleeve cell behind it is the record's tint above the fork.
  */
-export function SleeveCover({ url, backUrl }: { url: string; backUrl: string | null }) {
+export function SleeveCover({ url, backUrl, frameRule }: { url: string; backUrl: string | null; /** The no-cover frame's hairline, the page's own. */ frameRule: string }) {
   const [treatment, setTreatment] = useState<CoverTreatment | null>(null);
+  /*
+    §33 (step 87): "A photograph that fails to load is treated as no
+    photograph, and the cell shows what it shows for a record with none."
+    On the image's error, and only then: no timeout and no retry, so a slow
+    photograph that does arrive never shows the frame.
+  */
+  const [failed, setFailed] = useState(false);
   const read = useCallback((img: HTMLImageElement | null) => {
     /* A cached image is complete before React attaches its handler, so the ref reads it too. */
     if (img !== null && img.complete && img.naturalWidth > 0) setTreatment(coverTreatment(img.naturalWidth, img.naturalHeight));
+    /* Complete with nothing in it is a photograph that failed, and may have before any handler was attached: there is then no error event left to hear. */
+    else if (img !== null && img.complete && img.naturalWidth === 0 && img.currentSrc !== '') setFailed(true);
   }, []);
   /*
     §M.1: "The trigger is the displayed cover itself. It becomes a button
@@ -64,6 +73,25 @@ export function SleeveCover({ url, backUrl }: { url: string; backUrl: string | n
       cover?.focus();
     };
   }, [open]);
+  /*
+    The trigger is live while the photograph waits, so the sleeve can be
+    open when it fails. The modal goes with the trigger, and its history
+    entry must go too (§M.1: it "never lingers"), or the next Back would
+    spend itself on an entry for a view that is no longer there.
+  */
+  useEffect(() => {
+    if (failed && (window.history.state as { sleeve?: boolean } | null)?.sleeve === true) window.history.back();
+  }, [failed]);
+  if (failed) {
+    /*
+      §6's and §5.3's frame, in the cover's own square, "filled with paper":
+      this record has a colour, which a record with no photograph never
+      has, so above the fork its cell is the tint and an unfilled frame
+      would show it. Every other colour on the page stays the record's. It
+      is not a trigger: there is no photograph to open the sleeve on.
+    */
+    return <div data-mark="coverFrame" data-cover-failed="" className="bg-background" style={{ border: `1px solid ${frameRule}` }} />;
+  }
   return (
     <>
       <button
@@ -82,6 +110,7 @@ export function SleeveCover({ url, backUrl }: { url: string; backUrl: string | n
           src={url}
           alt=""
           onLoad={(event) => read(event.currentTarget)}
+          onError={() => setFailed(true)}
           className={treatment === null ? 'invisible block object-cover' : treatment === 'fit' ? 'block bg-background object-contain' : 'block object-cover'}
         />
       </button>

@@ -764,7 +764,7 @@ export function RecordPage8a({ record, writingConfigured = false }: { record: Pa
             {record.coverUrl === null ? (
               <div data-mark="coverFrame" style={{ border: `1px solid ${RULE}` }} />
             ) : (
-              <SleeveCover url={record.coverUrl} backUrl={record.backUrl} />
+              <SleeveCover url={record.coverUrl} backUrl={record.backUrl} frameRule={RULE} />
             )}
             <div data-mark="sleeveBar" style={{ background: base }} />
             <div data-mark="sleeveBlock" style={{ background: INK }} />

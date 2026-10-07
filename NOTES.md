@@ -35524,3 +35524,55 @@ throughout a rotation, so the last one restarts the wait and the sleeve is
 re-measured once, 150ms after the rotation's last event. Long enough to
 outlast the gaps between a rotation's events, short enough to read as at
 once. To be stated in the step's test and replaced by a ruling.
+
+## The tree guard slowed the runner's first line, and a test said so (6 Oct)
+
+d8b46c1 fingerprinted the tree by running `git hash-object` once per
+changed file, about fifty processes, before the child was started. On a
+busy machine that pushed the run's first output past the 1.5s that
+`run-tests-cli.test.ts` ("shows a line the child wrote long before the
+child exits") allows, and it failed twice in step 87's unit run. It had
+passed when d8b46c1 was committed, alone and unloaded, which is how it got
+in: a guard on the instrument adding the instrument's oldest fault, a run
+that shows nothing at first. Now one `git hash-object --stdin-paths` call.
+The step-level unit run passes twice, the full unit suite passes, and the
+guard was staged again: a file appearing, a dirty file changing, and a
+file removed mid-run each read `tree CHANGED — NOT OK`.
+
+## Step 87 built: §33 -- a photograph that fails is the no-cover frame (6 Oct)
+
+**Built.** `SleeveCover` hears the cover image's error and draws §6's and
+§5.3's frame in the cover's own square, filled with paper, with the page's
+hairline. No timeout and no retry. A photograph that had already failed
+before the page's scripts ran has no error event left to hear, so the same
+read that takes a loaded image's shape takes "complete with nothing in it"
+as the failure. The frame is not a trigger. Nothing else on the page
+changes: the bar keeps the record's colour.
+
+**One case beyond the step's list, built and tested.** The trigger is live
+while a photograph waits, so the sleeve can be open when it fails. The
+modal goes with the trigger; its history entry is stepped back through, as
+§M.1 requires of every close. Red first: the entry lingered.
+
+**Tested** (`e2e/cover-fail-87.spec.ts`, 6), on a record with a colour:
+
+- at 390 and at 1440, the request held, then failed. The square leaves the
+  waiting state; the frame is the cover's own box; it reads as paper at
+  five points (at 1440 the cell around it is the tint, 212,149,114, so this
+  can fail there and did, against a frame with no fill); the bar and block
+  are drawn, the bar not ink. **And every pixel outside the square is the
+  same before and after the failure:** the whole page compared, more than
+  100,000 pixels, 0 different.
+- a slow cover, held three seconds and then served, never shows the frame
+  in any sampled frame. Red against a frame on a two-second timer.
+- a cover that failed before the scripts ran is the frame once they have.
+- a record with no photograph at all is unchanged: its frame has no fill.
+  Red against a build that fills every frame.
+
+Three red against step 85's cover; the two that passed against it are the
+guards, each then shown red against its own staged break, confirmed taken.
+
+**Step level:** `91 passed, ledger clean, tree unchanged — OK` for
+cover-fail-87 with the cover, modal and record-page specs on both
+projects; record and repo unit tests `868 passed, tree unchanged — OK`;
+typecheck, lint (0 errors), build.

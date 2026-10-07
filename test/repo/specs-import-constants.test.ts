@@ -78,6 +78,8 @@ const GOVERNED = [
   /* §33 (step 83): the cover's bounded crop, read as pixels on fixtures. */
   'e2e/cover-fit-83.spec.ts',
   'e2e/cover-wait-85.spec.ts',
+  /* §33 (step 87): a photograph that fails is the no-cover frame. */
+  'e2e/cover-fail-87.spec.ts',
   /* §M.1 (step 81): the record modal's view, opened from the cover. */
   'e2e/record-modal-81.spec.ts',
   /* §M.2 (step 82): the newest back, on the wall and in the modal. */
