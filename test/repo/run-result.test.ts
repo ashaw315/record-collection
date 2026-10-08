@@ -260,3 +260,76 @@ describe('a run is judged against the tree it began on', () => {
     expect(summarise(result)).not.toMatch(/tree/);
   });
 });
+
+/**
+ * **Each suite is judged against what it reads, not against the whole
+ * tree (8 Oct).** The tree guard fingerprinted everything, and Design's
+ * exports land in this working tree whenever they are saved: three gates in
+ * a row had one arrive mid-run. The third time every test passed and the
+ * line read NOT OK over three design documents no Playwright spec opens.
+ * The guard was answering a question nobody had asked it.
+ *
+ * Not a loosening: the scope now matches each suite's real dependencies.
+ * The unit suite reads the design targets, the withdrawals list and the
+ * handoff (its index check does), so for it they count. The end-to-end
+ * suite reads none of them, so for it they do not, and the line says what
+ * changed that it does not read. A test below holds the premise: if any
+ * end-to-end file ever names `docs/design`, the exemption is false and
+ * this file fails.
+ */
+describe('a run is judged against the part of the tree its suite reads', () => {
+  const E2E = '[global-setup] seeded the seventeen in 2100ms\n  12 skipped\n  731 passed (32.7m)\n[ledger] genres: none left behind by a spec\n';
+  const UNIT = '      Tests  4114 passed (4114)\n';
+  const start = { HEAD: '6b215b9' };
+  const design = { ...start, 'docs/design/HANDOFF-wall-and-pull.md': 'b', 'docs/design/WITHDRAWALS.md': 'c' };
+
+  /* Fails against the guard as built on 6 Oct, which fingerprints the whole tree for every suite. */
+  it('passes an end-to-end run during which only design documents changed, and says they changed', () => {
+    const result = readRunResult({ output: E2E, exitCode: 0, tree: { start, end: design } });
+    expect(result.ok).toBe(true);
+    expect(result.tree).toBe('unchanged');
+    const line = summarise(result);
+    expect(line).toMatch(/731 passed.*— OK$/);
+    expect(line, 'the line does not stay silent about what moved').toMatch(/2 design files changed, unread by this suite/);
+  });
+
+  /* Fails against an exemption for the run rather than for the files: a source file changing is still not a result. */
+  it('still fails an end-to-end run during which a file it reads changed, and names that file and not the design ones', () => {
+    const result = readRunResult({ output: E2E, exitCode: 0, tree: { start, end: { ...design, 'src/app/wall/WallComposition.tsx': 'z' } } });
+    expect(result.ok).toBe(false);
+    expect(result.reason).toMatch(/tree changed during the run \(src\/app\/wall\/WallComposition\.tsx\)/);
+    expect(result.reason).not.toMatch(/HANDOFF/);
+  });
+
+  /* Fails against an exemption for every suite: the unit suite's index check reads these files. */
+  it('fails a unit run during which a design document changed', () => {
+    const result = readRunResult({ output: UNIT, exitCode: 0, tree: { start, end: design } });
+    expect(result.ok).toBe(false);
+    expect(result.reason).toMatch(/docs\/design\/HANDOFF-wall-and-pull\.md/);
+  });
+
+  it('exempts only the design folder for an end-to-end run: NOTES.md and a capture still count', () => {
+    for (const path of ['NOTES.md', 'docs/captures/real-records.json', 'docs/designs/x.md', 'e2e/seed.ts']) {
+      expect(readRunResult({ output: E2E, exitCode: 0, tree: { start, end: { ...start, [path]: 'q' } } }).ok, path).toBe(false);
+    }
+  });
+});
+
+describe('the premise of that exemption: nothing end-to-end reads a design document', () => {
+  /* Fails the moment a spec, a sheet, a helper under e2e/ or a Playwright config names the design folder. */
+  it('no file under e2e/, and neither Playwright config, mentions docs/design', async () => {
+    const { readdirSync, readFileSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    const found: string[] = [];
+    const walk = (dir: string) => {
+      for (const entry of readdirSync(dir, { withFileTypes: true })) {
+        const path = join(dir, entry.name);
+        if (entry.isDirectory()) walk(path);
+        else if (/docs[/\\'", ]+design/.test(readFileSync(path, 'utf8'))) found.push(path);
+      }
+    };
+    walk('e2e');
+    for (const config of ['playwright.config.ts', 'playwright.sheet.config.ts']) if (/docs[/\\'", ]+design/.test(readFileSync(config, 'utf8'))) found.push(config);
+    expect(found).toEqual([]);
+  });
+});

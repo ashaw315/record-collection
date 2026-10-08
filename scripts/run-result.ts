@@ -40,6 +40,8 @@ export type RunResult = {
    * `unchecked` where the caller gave no fingerprints.
    */
   tree: 'unchanged' | 'changed' | 'unchecked';
+  /** Paths that changed during the run and that this suite does not read: reported, not judged. */
+  treeUnread: string[];
 };
 
 /**
@@ -66,6 +68,8 @@ export function changedPaths(start: TreeState, end: TreeState): string[] {
 const LEDGER_FAILED = /^\[ledger\] FAILED: (.*)$/m;
 const LEDGER_CLEAN = /^\[ledger\] genres: none left behind by a spec$/m;
 const END_TO_END = /^\[global-setup\] /m;
+/** What no end-to-end file reads: the design folder. One folder, named exactly; nothing else is exempt. */
+const UNREAD_BY_END_TO_END = /^docs\/design\//;
 
 const ledgerOf = (output: string): { state: RunResult['ledger']; said: string | null } => {
   const failed = LEDGER_FAILED.exec(output);
@@ -117,11 +121,24 @@ export function readRunResult({
   const skipped = countOf(output, 'skipped') ?? 0;
 
   const ledger = ledgerOf(output);
-  const moved = tree === undefined ? [] : changedPaths(tree.start, tree.end);
+  /*
+    **Judged against what this suite reads.** The fingerprint is of the
+    whole tree; the judgement is of the part the suite depends on. The unit
+    suite's index check reads the design targets, the withdrawals list and
+    the handoff, so for a unit run every path counts. An end-to-end run
+    reads nothing under `docs/design/` (held by a test that fails if any
+    end-to-end file names that folder), so for it a change there is
+    reported and is not a changed tree. Design's exports land in the working
+    tree whenever they are saved; three gates in a row met one mid-run.
+  */
+  const everyMove = tree === undefined ? [] : changedPaths(tree.start, tree.end);
+  const unreadHere = (path: string) => END_TO_END.test(output) && UNREAD_BY_END_TO_END.test(path);
+  const moved = everyMove.filter((path) => !unreadHere(path));
+  const treeUnread = everyMove.filter(unreadHere);
   const treeState: RunResult['tree'] = tree === undefined ? 'unchecked' : moved.length === 0 ? 'unchanged' : 'changed';
   const treeFault =
     moved.length === 0 ? null : `the tree changed during the run (${moved.slice(0, 4).join(', ')}${moved.length > 4 ? `, and ${moved.length - 4} more` : ''}) — not a result`;
-  const base = { passed: passed ?? 0, failed, flaky, skipped, ledger: ledger.state, tree: treeState };
+  const base = { passed: passed ?? 0, failed, flaky, skipped, ledger: ledger.state, tree: treeState, treeUnread };
   const ledgerFault =
     ledger.state === 'failed' ? `the ledger failed: ${ledger.said}` : ledger.state === 'absent' ? 'the ledger did not report — the run ended without its teardown' : null;
 
@@ -182,7 +199,7 @@ export function summarise(result: RunResult): string {
   if (result.ledger === 'clean') parts.push('ledger clean');
   if (result.ledger === 'failed') parts.push('ledger FAILED');
   if (result.ledger === 'absent') parts.push('ledger ABSENT');
-  if (result.tree === 'unchanged') parts.push('tree unchanged');
+  if (result.tree === 'unchanged') parts.push(result.treeUnread.length === 0 ? 'tree unchanged' : `tree unchanged where this suite reads it (${result.treeUnread.length} design ${result.treeUnread.length === 1 ? 'file' : 'files'} changed, unread by this suite)`);
   if (result.tree === 'changed') parts.push('tree CHANGED');
 
   const verdict = result.ok ? 'OK' : `NOT OK — ${result.reason}`;

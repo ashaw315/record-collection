@@ -36607,3 +36607,62 @@ captures. The headline figures:
 - **The view switch** is in the markup and not drawn below 640. Nothing is
   unreachable: from table or grid the shelf is MENU then Collection, and
   table and grid are both in the shelf's band.
+
+## Pushed 6b215b9 past the tree guard, once, on the coordinator's call (8 Oct)
+
+The gate's 731 were about the code as committed: the three files that
+changed mid-run are design documents, only the unit suite's index check
+reads them, and the unit suite had finished on an unchanged tree. The
+refusal was the guard answering a question nobody asked it. Pushed by the
+coordinator's decision, "once, not as a habit"; I had not pushed past my
+own instrument. Only 6b215b9 went: the four commits after it, with the T
+grammar among them, wait for the gate below.
+
+## The tree guard judges each suite against what it reads (8 Oct)
+
+**The fix, and it is not a loosening.** The runner still fingerprints the
+whole tree at both ends. `run-result.ts` now judges the part the suite
+depends on: for a unit run, every path, because its index check reads the
+design targets, the withdrawals list and the handoff; for an end-to-end
+run, every path except those under `docs/design/`, which no end-to-end
+file reads. A change there during a Playwright run is reported in the
+line and is not a changed tree.
+
+**The premise is held by a test**, not by this sentence: no file under
+`e2e/` and neither Playwright config may mention `docs/design`. Staged: a
+comment naming the folder added to an end-to-end helper turns it red.
+
+**Tested.** Four cases in `run-result.test.ts`, two red first. Staged for
+real both ways, one tracked design file touched mid-run, each staging
+confirmed by git before the line was read:
+
+    Playwright:  4 passed, ledger clean, tree unchanged where this suite reads it (1 design file changed, unread by this suite) — OK
+    unit:        46 passed, tree CHANGED — NOT OK — the tree changed during the run (docs/design/HANDOFF-wall-and-pull.md) — not a result
+
+**What the guard still cannot see, unchanged by this:** a file git ignores
+and does not track. The table and grid target is one today. That is why
+its `.gitignore` line must land with the commit that makes it an input.
+
+**The better eventual fix, and why not today.** Running a gate from a
+detached worktree at the commit under test would make it immune to any
+change in the working tree, and this guard would become belt and braces
+rather than a blocker. Not done now because the one attempt at a worktree
+here, on 7 Oct, died before a test ran: the dev server panicked on linked
+dependencies. The gate is not bet on the thing that has already failed
+once.
+
+## STANDING RULE: a count that reaches a target is measured on the real collection, and says so (8 Oct)
+
+I reported 28 controls under 44 tall in the table view. That was the
+seeded test data. The collection has 69: it has 32 genres and 13 labels
+where the seed has 6 and 1, and each is a chip. It is the third figure
+measured on a fixture and wrong on the collection, after
+`52/counts-on-fixture` and `50/twelve-outweighed`.
+
+**The rule.** Any count that goes into a target, a handoff or a report for
+one is measured on the real collection, through a sheet, and says so. A
+count taken on the seeded data is labelled as a fixture count wherever it
+appears, or it is not reported. The seed has the collection's seventeen
+records and almost none of its reference data, so counts of records
+transfer and counts of anything made from genres, labels, stores or
+images do not.
