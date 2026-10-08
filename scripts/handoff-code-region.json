@@ -1,0 +1,8 @@
+[
+  {
+    "id": "step-71",
+    "before": "72. ",
+    "why": "Code's own step (the tile's Delete control), written into the handoff at 0093361 and never in Design's source.",
+    "text": "71. **Done: built and deployed at 8b98e11.** **The tile's Delete control — report, then fix.** Code found it in the step 65 and 66 captures: on every record with a non-cover image the control renders below the tile at its left, while its classes say top-right over the image (`ImageGallery.tsx`, `absolute top-1 right-1` on a `relative` tile). Live on sixteen of seventeen records. First report where the control actually lands at 390, 1000, 1440 and 1920 and which rule in the button's own styles beats the tile's, with the same capture names as step 66; then fix it so the control sits where §9.2's control vocabulary puts it, over the tile's top-right corner, and keep §34's rule that no type sits over a photograph in view when deciding whether the control may. Numbered rather than noted: the §28 and §33 entries and the spy-boundary list each went missing for a round as notes. Built: the cause was the cascade layer, not a selector -- the page's unlayered hit-area rule beat the utility in Tailwind's utilities layer; the rule now sits in the components layer."
+  }
+]
