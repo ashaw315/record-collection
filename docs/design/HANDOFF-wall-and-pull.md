@@ -124,6 +124,11 @@ The wall at rest is line, ink and paper; colour arrives with the pull. Everythin
 | §M.5 | The turn and the gatefold’s opening | How the turn and the gatefold’s opening move, the curve they share with the cover’s travel, and what reduced motion makes of them. |
 | §M.6 | Controls, hover and focus | The modal’s controls, when the gatefold opens, and their hover and focus. |
 | §M.7 | The cover’s travel | How the modal opens and closes from the page’s cover, what comes with it and after it, presses during the travel, and reduced motion. |
+| §T.1 | Why these views are designed, and why here | Why the views are designed and have their own target, what they share with the shelf, the filter row, and the page length. |
+| §T.2 | The vocabulary they take | The type, colour, corners and hit-area floor they take. |
+| §T.3 | The heading, the count, search and filters | The count and heading, search, and the filters as a disclosure. |
+| §T.4 | The table | The table’s rows, alignment, sort, sticky header row and hover. |
+| §T.5 | The grid | The grid’s covers, captions, spacing, column counts and Sort control. |
 
 ## Structural sections — pointers
 
@@ -358,9 +363,9 @@ These are the sections the rulings above build on, all in `Record Detail 8a - se
 
 `Record Modal - build target.dc.html` rules the record modal: the sleeve turning over and the gatefold opening. Its sections are §M.1 to §M.7, and its rows are in the governs table above. M is free in the index, from dbeebfd. **The target becomes an input with this drop:** Code adds it, its `.gitignore` line and assertion 4's §M rules together, because its headings with no rows would fail assertion 1. Steps 81 and 82 build it; both are confirmed free.
 
-## The table and grid target
+## The table and grid target, §T
 
-`Table and Grid - build target.dc.html` designs the Collection screen's table and grid views in the record page's vocabulary, by Adam's ruling, superseding §W.27's chrome position. Its prefix is T. **This section names none of its sections yet, because the index does not know the prefix.** Code confirms T is free of every file key, section prefix and id. Its governs rows and build steps follow in the next drop, and the input and both grammars land with them, as M did. **Things the target leaves for Code's survey:** whether search filters as typed or is submitted; the table's columns and their measured widths at 390 and 320; how much height wrapped chip rows cost at narrow widths; a capture of a 200-record table for Adam to judge the 44 row; whether the app's header scrolls away in the build, as §G.6 rules; and the widths at which the grid's column count changes, from 568 up to 1920.
+`Table and Grid - build target.dc.html` designs the Collection screen's table and grid views in the record page's vocabulary, by Adam's ruling, superseding §W.27's chrome position. Its sections are §T.1 to §T.5, and its rows are in the governs table above. T is free, Code confirms. **The target becomes an index input with this drop:** Code adds it, its `.gitignore` line, and T in both grammars together, as it did for M at 7030141. Steps 97, 98 and 99 build it; Code, confirm the numbers are free.
 
 ## The nav target, §G
 
@@ -436,6 +441,15 @@ Its rows are in the governs table above, one per section; this section does not 
 
 96. **§W.24 — the band's hit areas and baseline.** A defect fix to step 95: §9.3's hit-target floor already reached the band's links, and the build gave them only their drawn boxes. Give each link in the band a hit area 44 tall by the overlay §G.3 uses, meeting its neighbours halfway across each gap. Measure the room between the search row and the links' row first. If a 44 overlay would cross the search field, grow the links' row until the 44 fits, without stopping, and report the new band height; Adam has authorised this. Step 84's quoted 929 is corrected once from that figure. Follow the rule for hit areas in a set, with 9 as the figure past a link. Set the view names and Add record on one baseline. Test with Code's tap scan at 390 and 320: each link's tap area is 44 tall, taps 1px inside each overlay land on its own link, and none lands on the search field. Report the baselines.
    > Every link in the band has a hit area 44 tall, and each meets its neighbours halfway across the gap between them.
+
+97. **§T.1, §T.2 and §T.3 — the table and grid's band, type and filters.** A supersession of the built table and grid views, in its own step. Take §W.24's search field and view names, removing the views' own search field; add the filter row beneath, GENRE then LABEL, 24 apart, LABEL on a second row where they do not fit, and report that width. Set the three type sizes, ink, paper and the label colour; Add record in ink; no radius in these views only, leaving the shared 3px radius for other screens. Build each filter as a disclosure: one line closed, its chosen options in ink and a +n count where they overflow; open, a list of 44 rows in flow below, pushing the page, chosen ones underlined, one open at a time, Escape closes. Report whether search filters as typed; if it is submitted, its button is a §9.3 control labelled SEARCH. Measure on the real collection, and say so: the band's height and the page's length at 390 and 320, and every control's hit area against the 44 floor.
+   > Filters are a disclosure, not a set of chips always shown.
+
+98. **§T.4 — the table.** After step 97. Rows 44 tall with hairlines, no fill; text left, figures right in tabular figures; 11 headers, the sorted one in ink with the underline and an arrow; §T.5's Sort control at every width; the header row sticky at the top of the viewport, or 53 below it if the app's header is sticky in the build, which Code confirms first. Hover sinks a row to §W.27's surface; keyboard focus is §M.6's inside ring. Report which columns survive at 390 and 320. Capture a 200-record fixture for Adam to judge the 44 row.
+   > The table keeps §T.5’s Sort control at every width,
+
+99. **§T.5 — the grid.** After step 97. Covers by §33's rule, the no-cover frame by §6 and §5.3; title 13 ink, artist 11 label; 24 apart, 20 insets, at least two a row, as many as fit at 160 or wider; the Sort control. Report every width at which the column count changes, from 568 up to 1920, and the cover sizes at 390 and 320 against 163 and 128.
+   > Under each cover, the title is set in 13 ink, and the artist beneath it as an 11 label,
 
 No step: §G.7. It rules nothing. Hover and focus wait on Code's second pass, the breakpoint is settled and recorded in §G.8, and the eyebrow repetition is an observation, not a ruling.
 

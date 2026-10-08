@@ -36,6 +36,7 @@ const FILES = {
   W: 'Wall and Pull - build target.dc.html',
   G: 'Nav - build target.dc.html',
   M: 'Record Modal - build target.dc.html',
+  T: 'Table and Grid - build target.dc.html',
   D: 'WITHDRAWALS.md',
 };
 
@@ -72,7 +73,7 @@ const read = (key) => {
   return decode(readFileSync(path, 'utf8'));
 };
 
-const src = { H: read('H'), L: read('L'), S: read('S'), W: read('W'), G: read('G'), M: read('M'), D: read('D') };
+const src = { H: read('H'), L: read('L'), S: read('S'), W: read('W'), G: read('G'), M: read('M'), T: read('T'), D: read('D') };
 
 /**
  * Headings of one target file — delegated to `design-target-parser.mjs`, the
@@ -82,7 +83,7 @@ const src = { H: read('H'), L: read('L'), S: read('S'), W: read('W'), G: read('G
  */
 const headings = (key) => sections(src[key], { prefixW: key === 'W' });
 
-const ALL = [...headings('L'), ...headings('S'), ...headings('W'), ...headings('G'), ...headings('M')];
+const ALL = [...headings('L'), ...headings('S'), ...headings('W'), ...headings('G'), ...headings('M'), ...headings('T')];
 const byId = new Map(ALL.map((h) => [h.id, h]));
 
 /*
@@ -236,26 +237,30 @@ const report = (n, ok) => {
     bare-number references follow the same rules as W's.
   */
   /* §M (5 Oct): the modal target is input M, read the same two ways as G. */
-  for (const key of ['L', 'S', 'G', 'M']) {
+  /* §T (8 Oct): the table and grid target is input T, read the same two ways as G and M. */
+  for (const key of ['L', 'S', 'G', 'M', 'T']) {
     for (const m of bodyOf(key).matchAll(/§(W\.\d+(?:\.\d+)?)/g)) {
       if (!has(m[1])) fail(`4 ${key}→§${m[1]}`);
     }
   }
-  for (const key of ['L', 'S', 'W', 'G', 'M']) {
+  for (const key of ['L', 'S', 'W', 'G', 'M', 'T']) {
     for (const m of bodyOf(key).matchAll(/§(G\.\d+(?:\.\d+)?)/g)) {
       if (!has(m[1])) fail(`4 ${key}→§${m[1]}`);
     }
     for (const m of bodyOf(key).matchAll(/§(M\.\d+(?:\.\d+)?)/g)) {
       if (!has(m[1])) fail(`4 ${key}→§${m[1]}`);
     }
+    for (const m of bodyOf(key).matchAll(/§(T\.\d+(?:\.\d+)?)/g)) {
+      if (!has(m[1])) fail(`4 ${key}→§${m[1]}`);
+    }
   }
-  for (const key of ['L', 'W', 'G', 'M']) {
+  for (const key of ['L', 'W', 'G', 'M', 'T']) {
     for (const m of bodyOf(key).matchAll(/§(\d{1,2}(?:\.\d+)?)/g)) {
       const n = Number(m[1].split('.')[0]);
       if (n >= 1 && n <= 10 && !has(m[1])) fail(`4 ${key}→§${m[1]}`);
     }
   }
-  for (const key of ['S', 'W', 'G', 'M']) {
+  for (const key of ['S', 'W', 'G', 'M', 'T']) {
     for (const m of bodyOf(key).matchAll(/§(\d{1,2}(?:\.\d+)?)/g)) {
       const n = Number(m[1].split('.')[0]);
       if (n >= 12 && !has(m[1])) fail(`4 ${key}→§${m[1]}`);
@@ -471,6 +476,7 @@ const WITHDRAWAL_PREFIX =
       /* §G too (3 Oct): left unstripped, "§G.8" read as a figure 8 in §G.7's pointer. */
       .replace(/§G\.\d+(\.\d+)?/g, ' ')
       .replace(/§M\.\d+(\.\d+)?/g, ' ')
+      .replace(/§T\.\d+(\.\d+)?/g, ' ')
       .replace(/§\d+(\.\d+)?/g, ' ')
       .replace(/steps? \d+/gi, ' ')
       .replace(/\b[A-Z]\d+[a-z]?\b/g, ' ')

@@ -1,4 +1,4 @@
-import { spawnSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -29,7 +29,7 @@ afterEach(() => {
 /** A copy of the design inputs the script reads, for a run over a deliberately broken tree. */
 function stage(edit: (dir: string) => void): string {
   staged = mkdtempSync(join(tmpdir(), 'index-inputs-'));
-  for (const f of ['HANDOFF-wall-and-pull.md', 'Record Detail 8a - build target.dc.html', 'Record Detail 8a - settled 1-10.dc.html', 'Wall and Pull - build target.dc.html', 'Nav - build target.dc.html', 'Record Modal - build target.dc.html', 'WITHDRAWALS.md']) {
+  for (const f of ['HANDOFF-wall-and-pull.md', 'Record Detail 8a - build target.dc.html', 'Record Detail 8a - settled 1-10.dc.html', 'Wall and Pull - build target.dc.html', 'Nav - build target.dc.html', 'Record Modal - build target.dc.html', 'Table and Grid - build target.dc.html', 'WITHDRAWALS.md']) {
     cpSync(join(DESIGN, f), join(staged, f));
   }
   edit(staged);
@@ -302,5 +302,65 @@ describe('a run that stops partway names the ids it never reached', () => {
     const { out } = run();
     for (const id of IDS) expect(out).toMatch(new RegExp(`^(PASS|FAIL) ${id}$`, 'm'));
     expect(out).toMatch(/^RESULT: \d+ PASS, \d+ FAIL, 0 ABSENT of 11$/m);
+  });
+});
+
+/**
+ * **T, the table and grid target, as input T (8 Oct)**, in the shape M was
+ * given: assertion 4 reads §T references both ways, assertion 8 strips
+ * them, and the target is tracked by its own `.gitignore` exception line in
+ * the commit that makes it an input. The last matters as much as the rest:
+ * the index reads the file from disk, an ignored and untracked file reports
+ * no change to git, and the tree guard cannot see one. An input nobody is
+ * tracking is read on this machine and absent on every other.
+ */
+describe('the table and grid target is read: §T references resolve, and §T is not a figure', () => {
+  /* Fails before input T: "§T.99" in the wall target was no reference assertion 4 could see. */
+  it('fails a §T reference in the wall target that names no table-and-grid heading', () => {
+    const dir = stage((d) => {
+      const p = join(d, 'Wall and Pull - build target.dc.html');
+      writeFileSync(p, readFileSync(p, 'utf8').replace('</body>', '<p>See §T.99 for the table.</p></body>'));
+    });
+    const { out } = run(dir);
+    expect(out).toMatch(/^FAIL 4$/m);
+    expect(out).toContain('4 W→§T.99');
+  });
+
+  /* Fails before input T: the target's own references were read by nothing. */
+  it('fails a reference from the table and grid target to a record-detail section that does not exist', () => {
+    const dir = stage((d) => {
+      const p = join(d, 'Table and Grid - build target.dc.html');
+      const text = readFileSync(p, 'utf8');
+      const edited = text.replace(/(T\.2 · [^<]*<\/[a-z0-9]+>)/, '$1<p>As §97 rules.</p>');
+      if (edited === text) throw new Error('staging anchor missing');
+      writeFileSync(p, edited);
+    });
+    const { out } = run(dir);
+    expect(out).toMatch(/^FAIL 4$/m);
+    expect(out).toContain('4 T→§97');
+  });
+
+  /* Fails before §T joins assertion 8's stripping: the 9 of "§T.9" would read as a figure in §G.6's pointer. */
+  it('reads a §T reference in a governs row as a reference, not a figure', () => {
+    const dir = stage((d) => {
+      const p = join(d, 'HANDOFF-wall-and-pull.md');
+      const text = readFileSync(p, 'utf8');
+      const from = '| §G.6 | The header is not sticky | Why the header scrolls away with the page. |';
+      if (!text.includes(from)) throw new Error('staging anchor missing');
+      writeFileSync(p, text.replace(from, '| §G.6 | The header is not sticky | Why the header scrolls away with the page, unlike §T.9’s header row. |'));
+    });
+    const { out } = run(dir);
+    expect(out).not.toMatch(/^8a §G\.6 /m);
+    expect(out).not.toMatch(/^8b §G\.6 /m);
+  });
+
+  /* The pairing, pinned: an index input the repository does not track is read here and nowhere else. Fails if any input is ignored by git. */
+  it('every index input is tracked by git, the table and grid target among them', () => {
+    const inputs = ['HANDOFF-wall-and-pull.md', 'Record Detail 8a - build target.dc.html', 'Record Detail 8a - settled 1-10.dc.html', 'Wall and Pull - build target.dc.html', 'Nav - build target.dc.html', 'Record Modal - build target.dc.html', 'Table and Grid - build target.dc.html', 'WITHDRAWALS.md'];
+    const script = readFileSync(join(REPO_ROOT, 'scripts', 'check-index.mjs'), 'utf8');
+    const named = [...script.matchAll(/^  [A-Z]: '([^']+)',$/gm)].map((m) => m[1]).sort();
+    expect(named, 'this list is the script\'s own').toEqual([...inputs].sort());
+    const tracked = execFileSync('git', ['ls-files', '--', ...inputs.map((f) => join('docs', 'design', f))], { cwd: REPO_ROOT, encoding: 'utf8' }).trim().split('\n').filter(Boolean).length;
+    expect(tracked).toBe(inputs.length);
   });
 });

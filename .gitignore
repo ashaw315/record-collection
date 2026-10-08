@@ -132,6 +132,10 @@ docs/design/*
 !docs/design/Nav - build target.dc.html
 # The modal target (§M), the index's input M since 5 Oct. Same reachability rule.
 !docs/design/Record Modal - build target.dc.html
+# The table and grid target (§T), the index's input T since 8 Oct. Same
+# reachability rule, and this line lands in the commit that makes it an input:
+# ignored and untracked, the file is invisible to git and to the tree guard.
+!docs/design/Table and Grid - build target.dc.html
 
 # The same artefacts' STALE root copies, from before they moved into
 # docs/design/. Each root file is smaller than its docs/design counterpart, so
