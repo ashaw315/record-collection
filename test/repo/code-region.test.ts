@@ -58,7 +58,8 @@ describe('applyRegion', () => {
 });
 
 describe('Code’s region of the handoff', () => {
-  const region = readRegion();
+  type Block = { id: string; before: string; text: string };
+  const region = readRegion() as Block[];
 
   it('holds step 71, anchored in front of step 72', () => {
     const step = region.find((entry) => entry.id === 'step-71');
