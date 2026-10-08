@@ -36076,3 +36076,38 @@ where `releaseYear:desc` was expected. I wrote on 6 Oct that this was
 fixed by waiting for the filters' own hydration marker. It is not: that
 guard was in place for this run and the select was still empty. So the
 cause is not, or not only, the hydration marker. Not diagnosed.
+
+## Pushed on the gate of 31214aa; the load condition was the coordinator's error (7 Oct)
+
+**Pushed**, on the coordinator's decision, with this recorded as their
+error and at their request: the readability condition put a threshold on
+load average, above 10, **without a baseline**: a bound stated without
+being derived, the mistake caught in figures all week. A median of 13 on
+twelve cores during a full parallel run is a machine at work, and the run
+was measured taking it from 3.9 past 10 within a minute. The bad gate's
+signal was never load alone: it was 45 minutes elapsed and active paging.
+This gate was 31m 9s against a 29 to 31 baseline.
+
+**The condition for the next gate:** suspect past about 35 minutes elapsed,
+or if swap-outs are non-zero while it runs. Load average is out of it. It
+is to be recorded at every gate from here and nothing said about it until
+several gates give it a baseline.
+
+*Not measured in this gate:* swap-outs during the run. They were zero in
+six one-second samples sixteen minutes before it started, and were not
+sampled while it ran. The next gate samples them.
+
+**An independent check that the green is real, by arithmetic.** The red
+gate executed 723 passed, 2 failed and 3 flaky: 728 tests. This one
+executed 727 passed and 1 flaky: 728. The same 728. So deleting the
+machine-dependent readings took assertions out of existing tests and
+dropped no test, and the whole difference between the two runs is which
+tests passed. "We deleted assertions and then it went green" is the shape
+a reader should distrust; this is the count that answers it.
+
+**The collection-filters race goes with the Collection screen**, in the
+same spec file, and not with a third wait. Two guesses at what to wait for
+have both been wrong. First capture what the Sort select holds at the
+moment it reads empty and what the page's state is then (options not yet
+rendered, rendered but empty, the request not returned, the component
+remounted); then choose the guard.
