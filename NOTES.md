@@ -34212,6 +34212,11 @@ nothing to see. **A null result needs a positive control before it is
 reported** -- show the probe can register the thing (the computed value
 moved, the selector matches something) and then report its absence.
 
+*(8 Oct: this, and the rule that a staged condition is confirmed taken
+before its result is read, are special cases of one rule. See "STANDING
+RULE: an instrument's output is confirmed against the thing itself before
+it is reported as a finding".)*
+
 ## Step 80 built: the label system at .10em, the slot in the nav's own type (5 Oct)
 
 **The headroom first, as the step orders.** At .10em the Images line takes
@@ -36767,8 +36772,11 @@ it unless a write on that connection is rejected.
 - Premises pinned: the config's command sets the variable and runs the
   preflight (`test/repo/sheets-read-only.test.ts`); the option rejects a
   write on real Postgres (`test/integration/read-only-connection.test.ts`).
-- **Left open:** `SHEET_REUSE_SERVER=1` reuses whatever server is already
-  on the port, and the preflight does not cover that server.
+- **NOT CLOSED by this commit.** `SHEET_REUSE_SERVER=1` reuses whatever
+  server is already on the port, and the preflight does not cover that
+  server. I listed that as a gap and called the item done; the coordinator
+  called it open, rightly, since reuse is the convenient path. Closed at
+  `a54705c`, in the entry below.
 
 **2. The suite is what the runner launched (`048c3ef`).** Premise 2.
 `suiteOf(command)` reads the command: `playwright test` without `--config`
@@ -36826,3 +36834,143 @@ and a test now holds that every index input is tracked by git, which is
 the hole the tree guard's entry above kept paired. Four tests red first
 (`§T.99` from the wall target, `§97` from T, `§T` not read as a figure,
 inputs tracked). Index: 11 PASS.
+
+## The sheets' reuse path, closed: every sheet asks the server it is driving (8 Oct)
+
+Commit `a54705c`. The preflight proves the connection of a server the
+sheet config starts. With `SHEET_REUSE_SERVER=1` or `SHEET_BASE_URL` a
+sheet drives a server the config did not start, and nothing was proved
+about it. Now `login` in `e2e/sheet/login.ts`, which every sheet comes
+through, signs in and then calls `assertServerCannotWrite`
+(`e2e/sheet/write-probe.ts`): a read that must answer 200 and a write
+statement that must answer 500 in the app's error shape. A 404 means the
+statement ran, so the server can write and the sheet stops. Anything else
+proves nothing and the sheet stops.
+
+**The write cannot change data whether or not the guard works**, which was
+the coordinator's condition, since a test that proves a guard by a real
+write is the thing that damages the collection when the guard is absent.
+It is `DELETE /api/influences/X/X`, one id on both sides.
+
+- The route issues its `DELETE` with no read in front of it. That is what
+  the tag route lacked and why my first probe on 8 Oct proved nothing.
+- A self-edge cannot exist: `artist_influences_no_self_edge`. Read from
+  production over a read-only connection: the constraint is there,
+  validated, and the table holds 0 self-edges.
+- Checked and not taken on trust: Postgres refuses a `DELETE` that matches
+  no row in a read-only transaction (`cannot execute DELETE in a read-only
+  transaction`), locally and then on production's pooler through the app.
+- All three are pinned in `test/integration/read-only-connection.test.ts`.
+  Those three passed the first time they ran: they pin what the database
+  already does, and the plain-pool test beside them is their control.
+
+**Staged through the reuse path, on production data, both ways.**
+
+- Red: `npm run dev` started by hand with no flag, then one sheet with
+  `SHEET_REUSE_SERVER=1`. Stopped at sign-in: "this server CAN write: its
+  database ran a DELETE (which matched nothing and changed nothing)". The
+  404 is itself the confirmation that the staged condition took.
+- Green: the same, with the server started `DATABASE_READ_ONLY=1`. The
+  sheet ran, and the server's log holds one line, `cannot execute DELETE
+  in a read-only transaction`.
+- Before, between and after: 0 edges, 1 tag, 17 records.
+
+**What the probe cannot tell, said in its own file:** the app's 500 carries
+no reason, so "refused" is read as "reads succeed and this write statement
+errors". The log line above is the reason for this staging; a sheet run
+does not read the log.
+
+The config's comment had claimed `login.ts` "proves it once more through
+the running app". Nothing did, from the moment I removed the wrong probe.
+It is true now.
+
+## STANDING RULE: an instrument's output is confirmed against the thing itself before it is reported as a finding (8 Oct)
+
+The sixth rule this week earned, and the coordinator's generalisation of
+two I had already written as separate.
+
+**The instance.** `export-diff.mjs` printed "REMOVED  No step: §G.7." for
+the §T drop. I reported it as something Design's export had taken away.
+The sentence stood unchanged at line 454 of the handoff; one `grep` would
+have said so. The tool's splitter was wrong (`53ad97c`). I carried the
+tool's output as a finding before reading the line.
+
+**The same error with other instruments, all in this file:**
+
+- the delayed-navigation probe of 7 Oct, reported as "cause killed" when
+  the delay had never been confirmed to take hold;
+- the `data-seat` selector that reported no seats at 390, which Design
+  wrote into §G.2;
+- the `DELETE` of a missing tag that "proved" the sheets could not write.
+
+**The rule.** A tool, probe, script or query stands between me and the
+thing. Before its output is reported, read the thing it is about: the line
+in the file, the row, the pixel, the log. Where it says something is
+absent or removed, look for the thing directly. Where it says nothing
+happened, show it can register something happening.
+
+**Special cases, which now point here:** a staged condition is confirmed
+taken before its result is read; a null result needs a positive control
+(5 Oct).
+
+**Direction matters.** An instrument is checked hardest in the direction
+its output will be acted on. A false "removed" becomes a finding against
+Design; a false "nothing changed" becomes a closed question.
+
+This rule is in NOTES and not in the handoff's maintaining section,
+because that section is Design's export and the entry below is what
+happens to rules of mine written there.
+
+## Step 71 was not the only one: Code's lines in the handoff now live outside it (8 Oct)
+
+**The question** (the coordinator's): is step 71 the only Code-authored
+content in the handoff? **No.**
+
+**Measured**, by taking each commit to the handoff not named as Design's
+and asking which sentences it added stand in HEAD neither verbatim nor as
+a near match. The sweep says 92 of 296, and that figure is inflated: the
+early commits it counts (`a2870cf`, `0904fad`) carried Design's text under
+my messages. What I can attribute cleanly:
+
+| commit | what I wrote | gone at | where it stood afterwards |
+|---|---|---|---|
+| `87d0e87` 25 Sep | two maintaining rules, 7 sentences | `966a192`, a Design reissue | nowhere |
+| `bae5797` 29 Sep | one maintaining rule, 5 sentences | `4152be5`, the next drop, same day | nowhere |
+| `38c938b` 30 Sep | held step 62, 8 sentences | `058737a` | replaced by Design's own step 62: superseded, not lost |
+| `0093361` 1 Oct | step 71 | every drop since | restored by hand, 28 times |
+| `2ffdcd2` 2 Oct | three items left open at close | | carried: Design took them into its source, reworded |
+
+Twelve sentences of rules were lost for nine and thirteen days and nobody
+noticed, me included. Step 71 was noticed only because the index counts
+steps.
+
+**The fix is structural, as the coordinator put the alternative.**
+`scripts/handoff-code-region.json` holds Code's blocks, each a paragraph
+and the start of the line it stands in front of. No export touches it.
+`node scripts/apply-code-region.mjs` applies every block the handoff does
+not carry and exits one if a block's anchor is gone.
+`test/repo/code-region.test.ts` reads the tree and fails the unit suite
+when any block is absent.
+
+Staged: the step 71 line deleted from the tree as an export leaves it
+(confirmed, 0 lines), the guard red, the script run, the handoff identical
+to HEAD byte for byte, a second run a no-op.
+
+**Taking a drop is now:** `apply-code-region.mjs`, `derive-withdrawals.mjs`,
+`check-index.mjs`, `export-diff.mjs`. The hand restore from HEAD is
+retired. This does not ask Design to carry step 71, so the 2 Oct rule that
+Design leaves Code's step numbers absent stands as it is.
+
+**Not put back into the handoff:** the twelve sentences. They are rules
+about tests and the index, they are mine, and they are below, verbatim
+from git. If Design wants any in the maintaining section, that is a block
+in the region file.
+
+**Recovered from `bae5797`:**
+
+> **A test that asserts only what a cell HAS cannot see what it must not have.** §44 says the air carries no ornament below 960, and the tint triangle rendered in it at 768, 900, 950 and 959 through every green run, because the below-the-fork sweep asserted the air's width, position and hairline and never its emptiness. Distinct from a test that cannot fail: this one could, it was not looking in that direction. The class is the negative clause -- "carries no", "never", "nowhere else", "no air", "no figure" -- each of which needs an assertion on the rendered absence, not on the presence of everything else. §44's is not the only one in the targets; step 52's fix added the assertion for it (`layout-sweep.spec.ts`, on the rendered flat rather than the markup, since the cell carries the flat at every width and the stylesheet decides). The others are unchecked until someone reads each negative clause as a test to write.
+
+**Recovered from `87d0e87`:**
+
+> **A count guard is satisfied by a subset.** Assertion 6 failed on an empty list and passed on any non-empty one, so a list with one input file's entries scoped out -- the settled file holds nine of thirty-six -- would have passed on the twenty-seven it could see. The spec's founding principle, that an empty set satisfies every universal claim, has this corollary: so does a subset, as far as the count guard can tell. 6 now fails an entry whose section is in no input as `section-absent`, distinct from a quote that is missing from a section it found -- absent, broken and working are three states, not two. (Checked: the settled file is in the repo and read as `S`; the "27" that raised this was 8a's in-scope denominator, which excludes the settled file's entries because it has no governs rows.)
+> **The assertion and its own spec can be the two things that disagree.** For a round the script's comment quoted 7's older, stricter reading -- a declared sentence "as the first text of a `<strong>` run" -- while its code and the spec both implemented the current one: a prefix that begins a sentence inside a run, at the run's start or after a sentence end within it. Nothing failed, because Design's prose satisfies the stricter reading too; a reader found the gap by comparing the two texts, which is the fifth time an assertion's passing was checked by someone reading rather than by the assertion. The comment now quotes the spec. The spec itself lives at `scripts/ASSERTIONS-spec.md`, beside the script, and assertion 0 fails the run if the file differs from its committed version.
