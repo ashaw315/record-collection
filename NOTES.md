@@ -37304,3 +37304,36 @@ column counts became the measured widths. Read against the target before
 believing the tool, which is this morning's rule. The tool's
 more-than-half-the-words test calls a sentence removed when it has been
 lengthened past that; a known limit, not chased today.
+
+## The rerun on c8dffb9 is RED by two shelf tests, and one cause is shown (8 Oct)
+
+Gate: full Playwright, both projects, on `c8dffb9`. `773 passed, 2 failed,
+13 skipped, ledger clean, tree unchanged — NOT OK`. 39m 14s for 788
+tests, 2.99 seconds a test, under the 3.2 mark and the slowest good-rate
+run yet. Swap-outs rose by about 42.6 million, against 7.0 and 18.4 in the
+two runs before. Load 6.47 at the start, 13.10 at the end. Unit half
+before it: `4190 passed, 2 skipped, tree unchanged — OK`. **Not pushed.**
+
+Both failed on retry, both pass alone, and both pass with their whole
+files and `scroll-lock` beside them (`22 passed`). Neither is in a file
+steps 97 to 99 changed the behaviour of, and both passed in the gate on
+`9588f36` two hours earlier.
+
+1. **`shelf.spec.ts:409`**, "the fixture is the same fixture": 12 pieces
+   for 6. **Cause shown.** Before the client has measured the viewport the
+   page carries both the near and the far region and the stylesheet hides
+   one (§W.26, §W.29), so the markup holds two fixtures. Probed with the
+   page's scripts held: 12 pieces with `data-unmeasured` present, 6 and
+   absent once settled. The test waits for the wall to be attached and
+   for the count's text, both of which the server's markup already
+   satisfies, then counts pieces. On a machine slow enough it counts
+   before the measurement. It is a race in the test, not in the page.
+   My first guess, the 80-seat threshold crossed by another spec's
+   records, was wrong: the piece count does not depend on the seat count.
+2. **`wall-first-paint.spec.ts:296`**, "scrollTop unchanged": 16 for at
+   most 2. **Cause not shown.** Same family is likely and I have not
+   staged it.
+
+The probe was a scratch spec and is not kept: the fix for 1 is a wait in
+the test for the measured state, and that test would be its record. Not
+made: changing a test outside the step needs agreement first.
