@@ -37667,3 +37667,52 @@ files each handle the `lab(`/`oklch(` double spelling. That is one
 workaround for how a browser writes a colour, repeated 51 times, so a
 browser changing what it writes breaks 51 files at once. The most fragile
 item on the list with nothing failing.
+
+## Sign-in is one function: `e2e/sign-in.ts`, held by `test/repo/sign-in.test.ts` (8 Oct)
+
+96 files pressed Sign in. 94 now import `login` from `e2e/sign-in.ts`
+(86 that declared their own `login()`, 8 capture files that typed it
+inline). Two are exempt by name, each with its reason in the check:
+`auth.spec.ts`, whose subject is the form, and `e2e/sheet/login.ts`, the
+sheets' own way into the real collection. `auth.spec.ts` takes the
+helper's named budget, `SIGN_IN_ARRIVAL`, for its four arrivals. My
+"correction" of the count to 86 was itself wrong: it counted only the
+declared functions.
+
+**The 30 second budget is justified by the measured chain and not by a
+staged reproduction.** The traces put 4.74s of password check and 2.0s of
+rendering `/` against a 5 second wait. I tried twice to make the old
+copies fail on the sign-in under load and they did not: 39 passed at 16
+burners, and at 36 burners 37 passed with two failures that were
+something else (below). So the new helper passing under load would have
+been evidence of nothing, and I stopped the staging without running it.
+
+Step level, no staged load, load average 11 to 12: `stats`,
+`scroll-lock`, `auth`, `collection-filters` and `manage` on both
+projects, `88 passed, 2 skipped, ledger clean, tree unchanged — OK`; the
+repo checks 404 passed; typecheck, lint (28 warnings, as before) and
+build. The check was red on all five of its tests before the helper
+existed. The full suites have not run on this; it goes under step 100's
+gate.
+
+## RULE: a staged condition must sit in the band where the real failure lives (8 Oct, the coordinator's)
+
+Beside "confirm the staged condition took". At 36 burners the load
+average read 139 to 400 and the old sign-in copies failed twice in 39,
+both times with `ECONNRESET` on a setup POST and never on the sign-in.
+**A condition stronger than the real one can mask the failure it was
+built to produce, by causing a different one first.** The gate that
+failed ran at a load of 41; staging at ten times that measures something
+else. And the burner count did not predict the load: 16 burners read 17
+at the start and 165 by the end of the run, so the load is read from the
+machine during the run and not inferred from what was started.
+
+## Design's drop of 8 Oct (the covering filter panel) is held outside the tree
+
+It arrived in the working tree during the sign-in work and made two repo
+checks fail before intake (`code-region`, and `index-assertions` at 9 of
+11), so no unit run could be green with it there. Copied, compared byte
+for byte, and the three files restored to their committed state:
+`../record-collection-held/design-drop-2026-10-08/` holds
+`HANDOFF-wall-and-pull.md`, `Table and Grid - build target.dc.html` and
+`WITHDRAWALS.md`. To be brought back for intake before steps 100 and 101.
