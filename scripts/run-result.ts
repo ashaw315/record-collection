@@ -61,21 +61,45 @@ export function changedPaths(start: TreeState, end: TreeState): string[] {
   The ledger prints AFTER Playwright's summary, from the global teardown, so
   the summary's counts cannot carry it. Its own lines are read here: a
   `FAILED` line, or the line that says no spec left a genre behind. An
-  end-to-end run is known by the global setup's line, which every such run
-  prints first; one that ends with neither ledger line did not run its
-  teardown, and that is not a pass.
+  end-to-end run, as the runner says it launched one, that ends with
+  neither ledger line did not run its teardown, and that is not a pass.
 */
 const LEDGER_FAILED = /^\[ledger\] FAILED: (.*)$/m;
 const LEDGER_CLEAN = /^\[ledger\] genres: none left behind by a spec$/m;
-const END_TO_END = /^\[global-setup\] /m;
+/**
+ * Which suite a run is. `end-to-end` is this project's Playwright suite on
+ * its default config: it has the global setup that records the ledger's
+ * start and the teardown that judges it. `unit` is vitest. `other` is
+ * anything else, the sheets included, and is judged on its counts and the
+ * whole tree with no ledger expected.
+ */
+export type Suite = 'end-to-end' | 'unit' | 'other';
+
+/**
+ * The suite a command runs, from the command itself. The runner calls this
+ * on what it is about to launch, so the judgement is told the suite and
+ * does not look for it in the output. It used to: a line the global setup
+ * prints marked an end-to-end run, and rewording that line would have
+ * turned every Playwright run into one from which no ledger was expected.
+ *
+ * Its premises (that `npm test` is vitest; that the default Playwright
+ * config is the one with the setup and teardown) are tested against
+ * `package.json` and the configs in `test/repo/run-result.test.ts`.
+ */
+export function suiteOf(command: readonly string[]): Suite {
+  const words = command.join(' ');
+  if (/\bplaywright\s+test\b/.test(words)) return /--config[= ]/.test(words) ? 'other' : 'end-to-end';
+  if (/\bvitest\b/.test(words) || /^npm\s+(?:run\s+)?test\b/.test(words)) return 'unit';
+  return 'other';
+}
 /** What no end-to-end file reads: the design folder. One folder, named exactly; nothing else is exempt. */
 const UNREAD_BY_END_TO_END = /^docs\/design\//;
 
-const ledgerOf = (output: string): { state: RunResult['ledger']; said: string | null } => {
+const ledgerOf = (output: string, suite: Suite): { state: RunResult['ledger']; said: string | null } => {
   const failed = LEDGER_FAILED.exec(output);
   if (failed !== null) return { state: 'failed', said: failed[1].length > 160 ? `${failed[1].slice(0, 160)}…` : failed[1] };
   if (LEDGER_CLEAN.test(output)) return { state: 'clean', said: null };
-  return { state: END_TO_END.test(output) ? 'absent' : 'none', said: null };
+  return { state: suite === 'end-to-end' ? 'absent' : 'none', said: null };
 };
 
 /*
@@ -99,6 +123,7 @@ export function readRunResult({
   exitCode,
   expectAtLeast,
   tree,
+  suite = 'other',
 }: {
   output: string;
   exitCode: number;
@@ -114,13 +139,15 @@ export function readRunResult({
    * export landed mid-gate, twice, and the second time nothing said so.
    */
   tree?: { start: TreeState; end: TreeState };
+  /** Which suite this was, as the runner launched it (`suiteOf`). Not read from the output. */
+  suite?: Suite;
 }): RunResult {
   const passed = countOf(output, 'passed');
   const failed = countOf(output, 'failed') ?? 0;
   const flaky = countOf(output, 'flaky') ?? 0;
   const skipped = countOf(output, 'skipped') ?? 0;
 
-  const ledger = ledgerOf(output);
+  const ledger = ledgerOf(output, suite);
   /*
     **Judged against what this suite reads.** The fingerprint is of the
     whole tree; the judgement is of the part the suite depends on. The unit
@@ -132,7 +159,7 @@ export function readRunResult({
     tree whenever they are saved; three gates in a row met one mid-run.
   */
   const everyMove = tree === undefined ? [] : changedPaths(tree.start, tree.end);
-  const unreadHere = (path: string) => END_TO_END.test(output) && UNREAD_BY_END_TO_END.test(path);
+  const unreadHere = (path: string) => suite === 'end-to-end' && UNREAD_BY_END_TO_END.test(path);
   const moved = everyMove.filter((path) => !unreadHere(path));
   const treeUnread = everyMove.filter(unreadHere);
   const treeState: RunResult['tree'] = tree === undefined ? 'unchecked' : moved.length === 0 ? 'unchanged' : 'changed';

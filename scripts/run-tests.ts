@@ -20,7 +20,7 @@
 
 import { execFileSync, spawn } from 'node:child_process';
 import { existsSync, statSync } from 'node:fs';
-import { readRunResult, summarise, type TreeState } from './run-result';
+import { readRunResult, suiteOf, summarise, type TreeState } from './run-result';
 
 const USAGE = `usage: run-tests.ts [--expect-at-least N] <command> [args...]
 
@@ -128,7 +128,8 @@ async function main(argv: string[]): Promise<number> {
 
   const treeAtEnd = treeState();
   const tree = treeAtStart === null || treeAtEnd === null ? undefined : { start: treeAtStart, end: treeAtEnd };
-  const result = readRunResult({ output, exitCode, expectAtLeast, tree });
+  /* The suite is what was launched, known here before the run says anything. */
+  const result = readRunResult({ output, exitCode, expectAtLeast, tree, suite: suiteOf([command, ...rest]) });
 
   process.stdout.write(`\n${summarise(result)}\n`);
 

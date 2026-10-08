@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { readRunResult, summarise } from '../../scripts/run-result';
+import { readRunResult, suiteOf, summarise } from '../../scripts/run-result';
 
 /**
  * **Three exit-code concealments in ONE session, after the rule was already
@@ -142,14 +142,15 @@ describe('a run is judged by its summary, never by its exit code', () => {
  * all, which is a teardown that did not run and is not a pass.
  */
 describe('an end-to-end run is judged by its ledger as well as its counts', () => {
-  const SETUP = '[global-setup] seeded the seventeen in 2100ms\n';
+  /* No setup line in these outputs: the suite is told to the judgement, not read from what the run printed. */
+  const SETUP = '';
   const COUNTS = '  12 skipped\n  691 passed (28.9m)\n';
   const CLEAN = '[ledger] labels: 1 at the start, 65 at the end\n[ledger] genres: none left behind by a spec\n';
   const DIRTY = '[ledger] FAILED: 2 genres left behind: UK82-abc, Crust-abc\n';
 
   /* Fails against a judgement that reads only the counts and the status: the counts are clean, and the status is what the old checker was built not to need. */
   it('fails a run whose ledger failed, even with clean counts and a zero exit, and says the ledger is why', () => {
-    const result = readRunResult({ output: SETUP + COUNTS + DIRTY, exitCode: 0 });
+    const result = readRunResult({ output: SETUP + COUNTS + DIRTY, exitCode: 0, suite: 'end-to-end' });
     expect(result.ok).toBe(false);
     expect(result.reason).toMatch(/ledger/);
     expect(result.reason, 'and carries what the ledger said').toMatch(/2 genres left behind/);
@@ -157,14 +158,14 @@ describe('an end-to-end run is judged by its ledger as well as its counts', () =
   });
 
   it('passes a run whose ledger reported clean, and the line says the ledger was read', () => {
-    const result = readRunResult({ output: SETUP + COUNTS + CLEAN, exitCode: 0 });
+    const result = readRunResult({ output: SETUP + COUNTS + CLEAN, exitCode: 0, suite: 'end-to-end' });
     expect(result.ok).toBe(true);
     expect(summarise(result)).toMatch(/691 passed.*ledger clean.*OK/);
   });
 
   /* Fails against a judgement with two states: no ledger line reads as nothing wrong. */
   it('fails an end-to-end run that ended without the ledger reporting at all', () => {
-    const result = readRunResult({ output: SETUP + COUNTS, exitCode: 0 });
+    const result = readRunResult({ output: SETUP + COUNTS, exitCode: 0, suite: 'end-to-end' });
     expect(result.ok).toBe(false);
     expect(result.reason).toMatch(/ledger did not report/);
   });
@@ -177,7 +178,7 @@ describe('an end-to-end run is judged by its ledger as well as its counts', () =
 
   /* A failing test outranks nothing: both are said. */
   it('reports a failed test and a failed ledger together', () => {
-    const result = readRunResult({ output: `${SETUP}  1 failed\n${COUNTS}${DIRTY}`, exitCode: 1 });
+    const result = readRunResult({ output: `${SETUP}  1 failed\n${COUNTS}${DIRTY}`, exitCode: 1, suite: 'end-to-end' });
     expect(result.ok).toBe(false);
     expect(result.reason).toMatch(/1 failed/);
     expect(result.reason).toMatch(/ledger/);
@@ -278,14 +279,14 @@ describe('a run is judged against the tree it began on', () => {
  * this file fails.
  */
 describe('a run is judged against the part of the tree its suite reads', () => {
-  const E2E = '[global-setup] seeded the seventeen in 2100ms\n  12 skipped\n  731 passed (32.7m)\n[ledger] genres: none left behind by a spec\n';
+  const E2E = '  12 skipped\n  731 passed (32.7m)\n[ledger] genres: none left behind by a spec\n';
   const UNIT = '      Tests  4114 passed (4114)\n';
   const start = { HEAD: '6b215b9' };
   const design = { ...start, 'docs/design/HANDOFF-wall-and-pull.md': 'b', 'docs/design/WITHDRAWALS.md': 'c' };
 
   /* Fails against the guard as built on 6 Oct, which fingerprints the whole tree for every suite. */
   it('passes an end-to-end run during which only design documents changed, and says they changed', () => {
-    const result = readRunResult({ output: E2E, exitCode: 0, tree: { start, end: design } });
+    const result = readRunResult({ output: E2E, exitCode: 0, suite: 'end-to-end', tree: { start, end: design } });
     expect(result.ok).toBe(true);
     expect(result.tree).toBe('unchanged');
     const line = summarise(result);
@@ -295,7 +296,7 @@ describe('a run is judged against the part of the tree its suite reads', () => {
 
   /* Fails against an exemption for the run rather than for the files: a source file changing is still not a result. */
   it('still fails an end-to-end run during which a file it reads changed, and names that file and not the design ones', () => {
-    const result = readRunResult({ output: E2E, exitCode: 0, tree: { start, end: { ...design, 'src/app/wall/WallComposition.tsx': 'z' } } });
+    const result = readRunResult({ output: E2E, exitCode: 0, suite: 'end-to-end', tree: { start, end: { ...design, 'src/app/wall/WallComposition.tsx': 'z' } } });
     expect(result.ok).toBe(false);
     expect(result.reason).toMatch(/tree changed during the run \(src\/app\/wall\/WallComposition\.tsx\)/);
     expect(result.reason).not.toMatch(/HANDOFF/);
@@ -303,14 +304,14 @@ describe('a run is judged against the part of the tree its suite reads', () => {
 
   /* Fails against an exemption for every suite: the unit suite's index check reads these files. */
   it('fails a unit run during which a design document changed', () => {
-    const result = readRunResult({ output: UNIT, exitCode: 0, tree: { start, end: design } });
+    const result = readRunResult({ output: UNIT, exitCode: 0, suite: 'unit', tree: { start, end: design } });
     expect(result.ok).toBe(false);
     expect(result.reason).toMatch(/docs\/design\/HANDOFF-wall-and-pull\.md/);
   });
 
   it('exempts only the design folder for an end-to-end run: NOTES.md and a capture still count', () => {
     for (const path of ['NOTES.md', 'docs/captures/real-records.json', 'docs/designs/x.md', 'e2e/seed.ts']) {
-      expect(readRunResult({ output: E2E, exitCode: 0, tree: { start, end: { ...start, [path]: 'q' } } }).ok, path).toBe(false);
+      expect(readRunResult({ output: E2E, exitCode: 0, suite: 'end-to-end', tree: { start, end: { ...start, [path]: 'q' } } }).ok, path).toBe(false);
     }
   });
 });
@@ -331,5 +332,76 @@ describe('the premise of that exemption: nothing end-to-end reads a design docum
     walk('e2e');
     for (const config of ['playwright.config.ts', 'playwright.sheet.config.ts']) if (/docs[/\\'", ]+design/.test(readFileSync(config, 'utf8'))) found.push(config);
     expect(found).toEqual([]);
+  });
+});
+
+/**
+ * **The suite is what the runner launched, not what the run printed
+ * (8 Oct).** An end-to-end run was recognised by a line its global setup
+ * writes, `[global-setup] …`. Reword that message and a Playwright run is
+ * judged as a unit run: no ledger is expected of it, so a run whose
+ * teardown never fired, the one a ledger "absent" exists to catch, passes.
+ * The classification rested on a string in another file that nothing tied
+ * to it.
+ *
+ * Now the runner derives the suite from the command it is about to run and
+ * tells the judgement. The premises of that derivation are tested below,
+ * against the files they are about.
+ */
+describe('suiteOf: which suite a command runs', () => {
+  it('knows the commands this project gates with', () => {
+    expect(suiteOf(['npx', 'playwright', 'test'])).toBe('end-to-end');
+    expect(suiteOf(['npx', 'playwright', 'test', 'e2e/shelf.spec.ts', '--project', 'mobile'])).toBe('end-to-end');
+    expect(suiteOf(['npm', 'test'])).toBe('unit');
+    expect(suiteOf(['npm', 'run', 'test'])).toBe('unit');
+    expect(suiteOf(['npx', 'vitest', 'run', 'test/repo'])).toBe('unit');
+  });
+
+  /* Fails against a derivation that takes the sheets for the suite: they have no global setup, no teardown and no ledger. */
+  it('does not take a Playwright run on another config, such as the sheets’, for the end-to-end suite', () => {
+    expect(suiteOf(['npx', 'playwright', 'test', '--config', 'playwright.sheet.config.ts', 'record-modal'])).toBe('other');
+    expect(suiteOf(['npx', 'playwright', 'test', '--config=playwright.sheet.config.ts'])).toBe('other');
+  });
+
+  it('calls anything else other, which is judged on its counts and the whole tree', () => {
+    expect(suiteOf(['sh', '-c', 'echo hi'])).toBe('other');
+    expect(suiteOf([])).toBe('other');
+  });
+});
+
+describe('an end-to-end run is one whatever it prints', () => {
+  /* Fails against the judgement of 6 Oct, which found the suite in the output: with the setup's line gone this read as a clean unit run. */
+  it('fails a Playwright run that printed no setup line and no ledger: the teardown did not run', () => {
+    const result = readRunResult({ output: '  12 skipped\n  731 passed (32.7m)\n', exitCode: 0, suite: 'end-to-end' });
+    expect(result.ok).toBe(false);
+    expect(result.ledger).toBe('absent');
+  });
+
+  /* Fails against a judgement that still believes the output: a unit run that happens to print the old marker is not asked for a ledger. */
+  it('does not turn a unit run into an end-to-end one because of a line it printed', () => {
+    const result = readRunResult({ output: '[global-setup] warmed\n      Tests  4122 passed (4122)\n', exitCode: 0, suite: 'unit' });
+    expect(result.ok).toBe(true);
+    expect(result.ledger).toBe('none');
+  });
+});
+
+describe('the premises of suiteOf, read from the files they are about', () => {
+  it('`npm test` runs vitest, which is why it is the unit suite', async () => {
+    const { readFileSync } = await import('node:fs');
+    const scripts = (JSON.parse(readFileSync('package.json', 'utf8')) as { scripts: Record<string, string> }).scripts;
+    expect(scripts.test).toMatch(/\bvitest run\b/);
+    expect(scripts.test).not.toMatch(/playwright/);
+  });
+
+  /* The end-to-end suite is the default Playwright config's: it is the one with the setup that records the ledger's start and the teardown that judges it. */
+  it('the default Playwright config is the one with the global setup and teardown, and the sheets’ config has neither', async () => {
+    const { readFileSync } = await import('node:fs');
+    const main = readFileSync('playwright.config.ts', 'utf8');
+    expect(main).toMatch(/globalSetup:\s*'\.\/e2e\/global-setup\.ts'/);
+    expect(main).toMatch(/globalTeardown:\s*'\.\/e2e\/global-teardown\.ts'/);
+    const sheet = readFileSync('playwright.sheet.config.ts', 'utf8');
+    expect(sheet).not.toMatch(/^\s*globalSetup:/m);
+    expect(sheet).not.toMatch(/^\s*globalTeardown:/m);
+    expect(readFileSync('e2e/global-teardown.ts', 'utf8'), 'and the teardown is where the ledger is judged').toMatch(/\[ledger\]/);
   });
 });
