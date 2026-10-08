@@ -36264,3 +36264,96 @@ docs/design/WITHDRAWALS.md, docs/design/Wall and Pull - build
 target.dc.html) — not a result`. Before the guard that run would have
 read as one unexplained failure. The drop was taken and the run repeated
 on a still tree.
+
+## The gate on 59006d8: RED by one, a cross-file contract of step 95; and suspect by paging (8 Oct)
+
+Gate: full suites, both projects, through the runner, on 59006d8 (step 95
+and the tightened sideways-scroll check), a clean tree, index 11 PASS.
+
+- Unit: `4114 passed, 2 skipped, tree unchanged — OK`.
+- Playwright: `727 passed, 1 failed, 2 flaky, 12 skipped, ledger clean,
+  tree unchanged — NOT OK — 1 failed`, 31m 23s.
+
+**The readability condition (elapsed, swap-outs), as set for this gate.**
+
+| | condition | recorded |
+|---|---|---|
+| elapsed | suspect past about 35 minutes | 31m 23s |
+| swap-outs while it ran | suspect if non-zero | 9,242,739 pages; the count moved in 38 of 63 samples taken every 30s |
+
+**By the swap half this gate is suspect whatever its colour.** The machine
+was paging through most of the run. Swap was 6.8 of 8 GB afterwards. Load,
+recorded and not judged: 3.5 at the start, median 13.5, peak 23.8.
+
+**The failure is real and is step 95's, found in a file it never opened.**
+`[chromium] nav-menu-84.spec.ts:105`, "closed: the page is 929 long",
+received 971. Step 84's test pins the Collection page's length at 390 by
+844 as a precondition; step 95 made the band 42 taller (84.5 to 126.5),
+and 929 + 42 is 971. This is what the gate was run for: the coordinator's
+reason for gating now was that anything leaning on the old band would
+shift and a gate would say it was this change. It did. The pin is updated
+to 971 with its history; the far region's 791 and the claim the test is
+for, the same open as closed, are untouched. Scoped re-run of the three
+menu specs on both projects: `24 passed, ledger clean, tree unchanged —
+OK`. **Step 84's text in the handoff still quotes 929** ("against 929 and
+791"); that is Design's to carry.
+
+**The two flaky** (collection-filters:624, genres-collapse:115) were both
+`ECONNRESET` on a setup POST and passed on retry.
+
+**Not pushed.** One real failure, fixed after the run and not gated; and
+the run was paging.
+
+## The Collection screen: what is ruled and what is not (8 Oct)
+
+The screen is `/`, in three views chosen by the address: shelf (the
+default), table and grid.
+
+**Shelf view: ruled throughout**, by the wall target's §W.1 to §W.37, with
+the header by the nav target. Open inside it, each recorded where found:
+
+- the `rail-facts` vertical below the fork, ruled for a column that is not
+  there (entry above);
+- the band's links' tap areas, 14 to 18 tall against §9.3's 44, if they
+  are its controls;
+- Add record's box 3 lower at its foot than the view names';
+- the last record on a shelf behind the upright (Design's open questions);
+- the no-cover front drawn as ink type on a paper square where §W.3 says
+  "on ink";
+- step 84's quoted 929, now 971.
+
+**Table and grid views: NOT ruled, by the wall target's own statement.**
+§W.27: "the table, the grid and the search box stay the app's chrome,
+ruled only where they contradict a value the drawings depend on." Three
+things about them are ruled and no more: the hairline's value (§W.27), the
+chips' hover stepping toward ink (§W.27), and the accent left as it is
+(§W.32, which calls the result "real and acceptable": Add record is ink in
+the rail and oxblood in the table's header). No design target rules their
+layout, type, controls or narrow form. SPEC.md §10 says what they do.
+
+**What they are today, measured at 390, 320 and 1440 on the seeded
+seventeen** (one probe run, not kept):
+
+- *A different page from the shelf.* No rail. A heading "Collection" at
+  40px sans, a count, an oxblood "Add record" button, a search field with
+  its own oxblood button, a Sort select, rows of genre and label chips,
+  then the list and pagination.
+- *Type:* seven sizes in two faces: 40, 16, 15, 13, 12.8, 11 and 10px.
+  The record page and the wall use a ruled scale; 13px carries most of
+  these views (69 sans and 34 mono elements in the table) and is on no
+  ruled scale I know of.
+- *Corners:* radii of 2, 2.4 and 3px. The record page, the wall and the
+  modal are square by rule.
+- *Controls:* 28 at 390, every one under 44 tall; the heights are 16, 27,
+  29 and 36 (20, 27, 29, 36 in the grid).
+- *Width:* the page is exactly the window's at all three. At 390 and 320
+  one region scrolls sideways inside itself (the chip rows), with 4 and 6
+  elements past the window's right edge inside it.
+- *At 390 the first screen shows no way to change view.* The shelf's band
+  has SHELF, TABLE, GRID; the table's first 844px did not show a view
+  switch in the capture. Where it is at that width was not established.
+
+**So, for whoever rules it:** the shelf needs a handful of small rulings.
+The table and the grid need a target: nothing visual about them has been
+ruled, they do not share the shelf's rail, type scale, corners or control
+heights, and nothing in the tree says whether they should.
