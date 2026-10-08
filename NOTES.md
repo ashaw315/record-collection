@@ -37526,3 +37526,98 @@ The hardest conditions of the day and the cleanest result.
 3. `wall-first-paint.spec.ts:242` and the two `cover-travel-92` returns,
    together, by the travel assertions' treatment.
 4. The five screen surveys, in one pass.
+
+## The sign-in's wait: the traces say it is not only the render of `/` (8 Oct)
+
+The coordinator gated the consolidation on staging the cause, expecting
+the slow render of `/`. The two failed attempts in the gate on `74b3a8a`
+kept their traces (`stats.spec.ts:206` and `:262`), and the traces are
+the failures themselves, so I read those before staging anything. **The
+cause is the whole chain from the press to the address, and its largest
+part in one of the two is the password check.** Stopped there and
+reported; nothing built.
+
+| | `:206` | `:262` |
+|---|---|---|
+| `POST /api/auth/login` | **4.74s** | 1.29s |
+| first `GET /?_rsc` (the replace) | 1.99s, still in flight when the 5s ran out | 2.59s, arrived |
+| after it arrived | | the address was still `/login` 1.17s later, with the refresh's second `GET /?_rsc` (2.60s) in flight |
+| the 5s wait began | 0.52s after the POST was sent | 0.05s after |
+
+Three things, then, and the render of `/` is one of them:
+
+- **The password check.** `verifyPassword` is `bcryptjs`, a hash computed
+  in JavaScript on the server's one thread. It is meant to be slow, and on
+  a starved machine it took 4.74 seconds of a 5 second wait.
+- **The render of `/`**, 2.0 to 2.6 seconds each time it was asked.
+- **`/` is asked twice.** The login page calls `router.replace('/')` and
+  then `router.refresh()`, and the trace shows two `GET /?_rsc`. In `:262`
+  the first had arrived and the address had not changed 1.17 seconds
+  later. Whether the address waits on the second response or on a starved
+  browser, I have not established.
+
+Not confirmed: `scroll-lock.spec.ts:53` at load 121. Its trace was not
+kept, so that it is the same chain is an inference from the same error.
+
+## APP FINDING: sign-in lands on the heaviest page, after the slowest request (8 Oct)
+
+For whoever surveys stats and manage; not acted on. `/` awaits the shelf,
+the records and the facets before it responds, and it is the page sign-in
+lands on; the note in `e2e/cleanup.ts` records step 15's flake as this,
+and it was settled then by shrinking the data. The traces above add two
+facts: the request before it is a `bcryptjs` comparison that blocks the
+server while it runs, and the login page asks for `/` twice. The 5 second
+wait broke only at a load of 41 with another project holding most of the
+machine, which is not a reader's condition. A landing page that awaits
+three queries is a design fact and not a test artefact.
+
+## FAMILY: the suite has no shared helpers layer, so its conventions are held by copy (8 Oct)
+
+The coordinator's reading, after three in one day: the capture file
+missing its `CAPTURE=1` skip, the wall tests not using the measured wait,
+and the sign-in. A check in `test/repo/` was the answer each time.
+
+**Ruling (the coordinator, 8 Oct): replacing identical copies of one call
+with an import of one function, with a check that fails anything not
+using it, does not need the 8-file question asked again.** The rule is
+for a change whose reach is not understood; this is one decision applied
+without judgement in each file.
+
+**Correction to my count.** I reported 96 spec files with their own
+`login()`. It is 86: 83 in `e2e/*.spec.ts` and 3 in `e2e/capture/`. The 96
+was every file containing the Sign in button's locator, which counts the
+sheets and their helper. The 83 bodies are identical once comments are
+removed. The first tally of this was made with an `awk` range that
+matched nothing and reported every helper as "1 distinct body"; I caught
+it because `seed` could not plausibly be one body in 16 files.
+
+What else is copied, read only, 85 spec files, nothing changed:
+
+| what | files | uses | state |
+|---|---|---|---|
+| `login()` and its `PASSWORD` constant | 83 | 83 | one identical body; queued |
+| a typed timeout | 84 | 436 | 235 at 15s, 90 at 20s, 76 at 30s, 15 at 10s, 15 at 5s: no named budget, each chosen where it stands |
+| a hydration wait (`data-hydrated`) | 84 | 106 | 83 are inside `login()`; the other 23 are the form's and the filters', typed per spec |
+| `setViewportSize` | 63 | 155 | widths typed per spec; no shared list of the widths a sweep covers |
+| a direct API write (`page.request.post` and the like) | 61 | 154 | `post()` is a local function in 18 files with 9 different bodies, the largest group 4 |
+| uniqueness by clock or random | 64 | 166 | `makeSuffix` in 11 files with 10 bodies, `suffix` in 7 |
+| geometry reads (`getBoundingClientRect`) | 61 | 329 | inline `evaluate` each time |
+| computed-style reads | 51 | 202 | inline; the `lab(`/`oklch(` double spelling is handled per spec |
+| a fixed sleep (`waitForTimeout`) | 40 | 96 | 200 to 750ms mostly; each is a candidate for the early-read shape |
+| a hand-rolled wait on animation frames | 11 | 28 | the frame-counting shape lives here |
+| `seed()` | 16 | 16 | 16 different bodies: a shared name, not a shared thing |
+| `seedRecord()` | 10 | 10 | 10 different bodies |
+| a direct database handle | 24 | 39 | 12 of them write raw `INSERT`s |
+| arrival on the record page by its testid | 9 | 38 | typed each time, timeout included |
+| `page.route` | 10 | 36 | per spec |
+
+Already shared and checked, so not on the list: teardown
+(`registerCleanup` in 62 files, held by `e2e-cleanup.test.ts`; the one
+spec that writes without it is `auth.spec.ts`, whose write is the
+sign-in), `seedImage`, the record page's declared constants, the wall's
+measured wait, the capture skip.
+
+My reading of the order, as a guess to be argued with: the typed
+timeouts and the fixed sleeps are where the next flakes are, because
+they are the two that encode a guess about the machine. The rest are
+duplication without a failure attached.
