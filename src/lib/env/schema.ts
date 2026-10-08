@@ -75,6 +75,14 @@ export const envSchema = z.object({
   TEST_DATABASE_URL: postgresUrl.optional(),
 
   /**
+   * `1` opens every database connection read-only (`poolOptions` in
+   * `@/lib/db/connection-string`). Set by the sheets' server, which reads
+   * the production database and must not be able to write to it. Never set
+   * in a deployment: the deployed app has to write.
+   */
+  DATABASE_READ_ONLY: z.literal('1').optional(),
+
+  /**
    * A bcrypt hash, checked for SHAPE rather than mere presence.
    *
    * `.min(1)` was the third instance in this project of an is-configured check

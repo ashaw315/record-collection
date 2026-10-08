@@ -4,7 +4,7 @@ import { drizzle as drizzlePg } from 'drizzle-orm/node-postgres';
 import { Pool as NeonPool } from '@neondatabase/serverless';
 import { Pool as PgPool } from 'pg';
 import { getEnv } from '@/env';
-import { resolveDriver } from '@/lib/db/connection-string';
+import { poolOptions, resolveDriver } from '@/lib/db/connection-string';
 
 /**
  * The single driver-selection point required by CLAUDE.md §2 and SPEC.md §2.
@@ -44,14 +44,15 @@ function createClient() {
   const selected = resolveDriver(env);
 
   if (selected.driver === 'pg') {
-    const pool = new PgPool({ connectionString: selected.connectionString });
+    const pool = new PgPool(poolOptions(env));
     activePool = pool;
     return drizzlePg(pool);
   }
 
   // Node 18+ exposes a global WebSocket, which @neondatabase/serverless v1 uses
   // automatically, so no `ws` polyfill is required.
-  const pool = new NeonPool({ connectionString: selected.connectionString });
+  /* `poolOptions` adds the read-only startup parameter when DATABASE_READ_ONLY=1: the sheets' server cannot write to production. */
+  const pool = new NeonPool(poolOptions(env));
   activePool = pool;
   return drizzleNeon(pool);
 }

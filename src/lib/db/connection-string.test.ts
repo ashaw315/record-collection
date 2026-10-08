@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parse } from 'pg-connection-string';
-import { assertLocalHost, resolveConnectionHost } from './connection-string';
+import { assertLocalHost, resolveConnectionHost, READ_ONLY_OPTIONS, poolOptions } from './connection-string';
 
 /**
  * These tests attack the guard rather than confirm it.
@@ -230,5 +230,42 @@ describe('assertLocalHost', () => {
       // guard cannot reason about where it points.
       expect(() => assertLocalHost('postgresql:///db?host=/var/run/postgresql')).toThrow();
     });
+  });
+});
+
+/**
+ * A connection that cannot write (8 Oct). The sheets run a local server
+ * against the PRODUCTION database to capture and measure the real
+ * collection. They were trusted not to write; a comment in their config
+ * said every request was a GET. Trust is not a mechanism, and a test that
+ * looked for write verbs in the sheets would guard against the verbs
+ * someone thought of. So the connection itself is made incapable: with
+ * `DATABASE_READ_ONLY=1` every connection in the pool starts with
+ * `default_transaction_read_only=on`, and any write raises.
+ *
+ * Verified against production's pooled endpoint with a write that changes
+ * nothing if allowed (`UPDATE … WHERE false`): refused on every statement
+ * with this parameter, allowed without it, and no trace of the setting on
+ * fresh plain connections afterwards.
+ */
+describe('poolOptions', () => {
+  const env = { DATABASE_URL: 'postgresql://u:p@db.example.com/app' };
+
+  /* Fails against a pool built from the connection string alone. */
+  it('adds the read-only startup parameter when DATABASE_READ_ONLY is 1, on either driver', () => {
+    expect(poolOptions({ ...env, DATABASE_READ_ONLY: '1' })).toEqual({ connectionString: env.DATABASE_URL, options: READ_ONLY_OPTIONS });
+    expect(READ_ONLY_OPTIONS).toBe('-c default_transaction_read_only=on');
+    expect(poolOptions({ ...env, TEST_DATABASE_URL: 'postgresql://u:p@localhost:5433/t', DATABASE_READ_ONLY: '1' })).toEqual({ connectionString: 'postgresql://u:p@localhost:5433/t', options: READ_ONLY_OPTIONS });
+  });
+
+  /* Fails against a flag that is on by accident: the deployed app must be able to write. */
+  it('adds nothing when the variable is absent or empty', () => {
+    expect(poolOptions(env)).toEqual({ connectionString: env.DATABASE_URL });
+    expect(poolOptions({ ...env, DATABASE_READ_ONLY: '' })).toEqual({ connectionString: env.DATABASE_URL });
+  });
+
+  /* Fails against a loose reading: a value that is not exactly 1 must not be taken for "off" silently by one reader and "on" by another. */
+  it('refuses any other value rather than guessing which way it was meant', () => {
+    for (const value of ['true', '0', 'on', 'yes']) expect(() => poolOptions({ ...env, DATABASE_READ_ONLY: value }), value).toThrow(/DATABASE_READ_ONLY/);
   });
 });

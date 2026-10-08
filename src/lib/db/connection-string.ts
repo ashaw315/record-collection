@@ -105,6 +105,7 @@ export interface DriverEnv {
   // parsed Env is assignable here without restating its shape.
   TEST_DATABASE_URL?: string | undefined;
   NODE_ENV?: string | undefined;
+  DATABASE_READ_ONLY?: string | undefined;
 }
 
 /**
@@ -177,4 +178,34 @@ export function assertLocalHost(connectionString: string | undefined): string {
   }
 
   return connectionString;
+}
+
+/**
+ * The startup parameter that makes every transaction on a connection read
+ * only. Sent when the connection is opened, so it belongs to the connection
+ * by the protocol; it is not a `SET` issued afterwards, which through a
+ * pooler is a statement like any other and could in principle outlive the
+ * client that sent it.
+ */
+export const READ_ONLY_OPTIONS = '-c default_transaction_read_only=on';
+
+/**
+ * What a pool is opened with: the selected connection string, and, when
+ * `DATABASE_READ_ONLY` is exactly `1`, the read-only startup parameter.
+ *
+ * For the sheets (`playwright.sheet.config.ts`), which run a local server
+ * against the production database to capture and measure it. With this a
+ * sheet cannot write: any INSERT, UPDATE or DELETE raises "cannot execute …
+ * in a read-only transaction", whatever the sheet's code does and whatever
+ * the page it drives does. Before, they were trusted not to.
+ *
+ * Any value other than `1` or nothing is an error, not "off": a flag whose
+ * job is to stop writes must not be turned off by a typo.
+ */
+export function poolOptions(env: DriverEnv): { connectionString: string; options?: string } {
+  const { connectionString } = resolveDriver(env);
+  const flag = env.DATABASE_READ_ONLY;
+  if (flag === undefined || flag === '') return { connectionString };
+  if (flag !== '1') throw new Error(`DATABASE_READ_ONLY must be "1" or unset; it is ${JSON.stringify(flag)}.`);
+  return { connectionString, options: READ_ONLY_OPTIONS };
 }

@@ -10,8 +10,9 @@ import { defineConfig, devices } from '@playwright/test';
  * starts the server in the ordinary development environment so Next reads
  * `.env.local` and the driver reaches production Neon over HTTP, and runs
  * only specs under `e2e/sheet`, which load pages and register no cleanup.
- * Nothing in the run writes to the database: the session is a signed
- * cookie, and every request the sheet makes is a GET.
+ * Nothing in the run CAN write to the database: the server's connections
+ * are read-only (see `webServer` below), which is a property of the
+ * connection and not a promise about the sheets.
  *
  * The login password is read from `E2E_PASSWORD` at run time and nowhere
  * else; the spec refuses to start without it rather than falling back to
@@ -34,7 +35,15 @@ export default defineConfig({
   projects: [{ name: 'sheet', use: { ...devices['Desktop Chrome'] } }],
   webServer: {
     /* No NODE_ENV=test: the ordinary development environment, so `.env.local` is read and the production driver is chosen. */
-    command: `npm run dev -- --port ${PORT}`,
+    /*
+      **The server cannot write.** `DATABASE_READ_ONLY=1` opens every one of
+      its database connections read-only (`poolOptions`), and before it
+      starts, `assert-read-only.ts` attempts a write on that same connection
+      and stops the run unless the database refuses it. A sheet was trusted
+      not to write to production; now it is unable to. `login.ts` proves it
+      once more through the running app before any sheet does anything.
+    */
+    command: `DATABASE_READ_ONLY=1 npx tsx --env-file=.env.local scripts/assert-read-only.ts && DATABASE_READ_ONLY=1 npm run dev -- --port ${PORT}`,
     url: baseURL,
     /* A dry run against a server already started by hand (for instance the test harness's) sets SHEET_REUSE_SERVER=1. */
     reuseExistingServer: process.env.SHEET_REUSE_SERVER === '1',
