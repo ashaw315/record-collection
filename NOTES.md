@@ -37475,13 +37475,14 @@ permanently shared they will go on their own schedule and not ours.
 | `wall-first-paint.spec.ts:242`, "a client navigation to the shelf arrives in position too" | "the region was sampled after the navigation": it counts animation frames in 2.5 seconds | twice of three at load 121 |
 | `scroll-lock.spec.ts:53` | the sign-in's address did not arrive in time | once of three at load 121 |
 | `cover-travel-92.spec.ts:232` and `:250`, the modal's return | failed once, passed on retry | the gate on `74b3a8a` |
-| `stats.spec.ts:206` and `:262`, an empty collection | failed once, passed on retry | the gate on `74b3a8a` |
+| `stats.spec.ts:206` and `:262`, an empty collection | the sign-in's address did not arrive in time, as `scroll-lock`'s; passed on retry | the gate on `74b3a8a` |
 | `record-modal-81.spec.ts:659`, two presses on TURN OVER | read elapsed time; failed once, passed on retry | step 98's covering run |
 | `lookup-flows.spec.ts:1656` on mobile | failed once, passed on retry | the gate on `9588f36` |
 
 **`wall-first-paint.spec.ts:242` is condemned by precedent**: the travel
 assertions were deleted for reading a frame rate and not the motion, and
 this is the same claim. Queued for the same treatment after today's
-push. The two `stats` tests empty the collection, which is a different
-question (what else is reading the database when they do) and not one I
-have looked at.
+push. The two `stats` failures were the sign-in and not the empty
+collection: `expect(page).toHaveURL('/')` received `/login`. I wrote a
+guess about them here before reading the error and have replaced it. So
+three of these six are one cause, the sign-in helper's wait under load.
