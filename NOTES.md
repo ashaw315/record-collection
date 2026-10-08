@@ -36039,3 +36039,40 @@ with less than that above the sleeve the turning edge is in the row. The
 coordinator read today's clearance as a coincidence of three exact
 figures; the figures are exact, and the clearance is computed from them,
 which is a stronger thing with a harder edge. The limit is untested.
+
+## The gate on 31214aa: green by its line, suspect by the condition set before it (7 Oct)
+
+Gate: full suites, both projects, through the runner, on 31214aa, a clean
+tree with the index at 11 PASS.
+
+- Unit: `4114 passed, 2 skipped, tree unchanged — OK`.
+- Playwright: `727 passed, 1 flaky, 12 skipped, ledger clean, tree
+  unchanged — OK`. Chromium 531, mobile 197. Playwright's own lines agree.
+
+Against 693: record-modal-81 24, back-newest-82 2, cover-fail-87 6,
+gatefold-88 7, trigger-ring-89 6, plain-back-90 4, cover-travel-92 6,
+modal-resize-93 4.
+
+**The readability condition, set before the run, and what was recorded.**
+
+| | condition | recorded |
+|---|---|---|
+| elapsed | suspect past about 35 minutes | 31m 9s, against 29 to 31 for the good gates and 45 for the bad one |
+| load | suspect if it climbs above 10 while it runs | 3.9 at the start; above 10 in 53 of 63 samples, taken every 30s; median 13.0, peak 18.6 |
+
+**So by the load half of the condition this result is suspect, and it was
+not pushed.** What the record also shows: the load was 3.9 with nothing
+running and passed 10 within a minute of the run starting, so the run
+itself is what raises it. No earlier gate had its load sampled, so there is
+no good run to compare with: a load of 13 on this twelve-core machine may
+be what every gate has always produced. The elapsed time, which did have a
+baseline, is normal. Whether "above 10" was the right line is for whoever
+set it; I am reporting against it as set.
+
+**The flaky test, and a claim of mine that was wrong.**
+`[mobile] collection-filters:441` failed its first attempt and passed its
+retry, with the error it has always had: the Sort select's value read `""`
+where `releaseYear:desc` was expected. I wrote on 6 Oct that this was
+fixed by waiting for the filters' own hydration marker. It is not: that
+guard was in place for this run and the select was still empty. So the
+cause is not, or not only, the hydration marker. Not diagnosed.
