@@ -23,6 +23,9 @@ test('the table and grid’s band, length and hit areas on the real collection',
       await page.locator('[data-collection-filters][data-hydrated="true"]').waitFor({ timeout: 60_000 });
       await page.addStyleTag({ content: 'nextjs-portal{display:none!important}' });
       await page.evaluate(() => document.fonts.ready);
+      /* The grid's covers decide their treatment as they load; read after they have. */
+      await page.waitForLoadState('load');
+      await page.waitForTimeout(500);
       const closed = await page.evaluate(() => {
         const height = (sel: string) => Math.round(((document.querySelector(sel) as HTMLElement | null)?.getBoundingClientRect().height ?? 0) * 10) / 10;
         const controls = Array.from(document.querySelectorAll<HTMLElement>('main a, main button, main input:not([type=hidden]), main select, main label[data-filter-undated]')).filter((el) => { const r = el.getBoundingClientRect(); return r.width > 1 && r.height > 1; }).map((el) => {
@@ -41,7 +44,10 @@ test('the table and grid’s band, length and hit areas on the real collection',
         const tally: Record<string, number> = {};
         for (const h of heights) tally[String(h)] = (tally[String(h)] ?? 0) + 1;
         const columns = Array.from(document.querySelectorAll<HTMLElement>('main table thead th')).map((th) => ({ name: (th.textContent ?? '').trim(), width: Math.round(th.getBoundingClientRect().width * 10) / 10 }));
-        return { rowHeights: tally, columns, band: height('[data-collection-band]'), filters: height('[data-collection-filters]'), page: document.documentElement.scrollHeight, client: document.documentElement.clientWidth, scroll: document.documentElement.scrollWidth, controls, options: Object.fromEntries(Array.from(document.querySelectorAll<HTMLElement>('[data-filter]')).map((f) => [f.dataset.filter, 0])) };
+        const squares = Array.from(document.querySelectorAll<HTMLElement>('[data-collection-grid] [data-grid-cover]'));
+        const firstTop = squares[0]?.getBoundingClientRect().top;
+        const grid = squares.length === 0 ? null : { cells: squares.length, perRow: squares.filter((sq) => sq.getBoundingClientRect().top === firstTop).length, cover: Math.round(squares[0].getBoundingClientRect().width * 10) / 10, photos: squares.filter((sq) => sq.dataset.gridCover === 'photo').length, frames: squares.filter((sq) => sq.dataset.gridCover === 'none').length, crop: document.querySelectorAll('[data-collection-grid] img[data-cover-treatment="crop"]').length, fit: document.querySelectorAll('[data-collection-grid] img[data-cover-treatment="fit"]').length };
+        return { grid, rowHeights: tally, columns, band: height('[data-collection-band]'), filters: height('[data-collection-filters]'), page: document.documentElement.scrollHeight, client: document.documentElement.clientWidth, scroll: document.documentElement.scrollWidth, controls, options: Object.fromEntries(Array.from(document.querySelectorAll<HTMLElement>('[data-filter]')).map((f) => [f.dataset.filter, 0])) };
       });
       const lists: Record<string, { options: number; height: number; page: number }> = {};
       for (const key of Object.keys(closed.options)) {
@@ -50,7 +56,7 @@ test('the table and grid’s band, length and hit areas on the real collection',
         await page.keyboard.press('Escape');
       }
       const chrome = closed.controls.filter((c) => !c.inTable);
-      rows.push({ view, width, rowHeights: closed.rowHeights, columns: closed.columns, band: closed.band, filtersClosed: closed.filters, pageLength: closed.page, pageWidth: `${closed.scroll} in ${closed.client}`, controls: chrome.length, under44: chrome.filter((c) => c.hit < 44).map((c) => `${c.what}: drawn ${c.drawn}, hit ${c.hit}`), inRows: closed.controls.filter((c) => c.inTable).length, lists });
+      rows.push({ view, width, grid: closed.grid, rowHeights: closed.rowHeights, columns: closed.columns, band: closed.band, filtersClosed: closed.filters, pageLength: closed.page, pageWidth: `${closed.scroll} in ${closed.client}`, controls: chrome.length, under44: chrome.filter((c) => c.hit < 44).map((c) => `${c.what}: drawn ${c.drawn}, hit ${c.hit}`), inRows: closed.controls.filter((c) => c.inTable).length, lists });
     }
   }
   writeFileSync(join(OUT, 'measures.json'), `${JSON.stringify(rows, null, 1)}\n`);

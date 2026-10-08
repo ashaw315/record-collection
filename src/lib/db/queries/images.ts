@@ -1,5 +1,5 @@
 import 'server-only';
-import { and, desc, eq } from 'drizzle-orm';
+import { and, desc, eq, inArray } from 'drizzle-orm';
 import { getDb } from '@/db/client';
 import { images } from '@/db/schema';
 
@@ -58,4 +58,26 @@ export async function newestCoverFor(recordId: string): Promise<ImageRow | undef
     .orderBy(desc(images.createdAt), desc(images.id))
     .limit(1);
   return row;
+}
+
+/**
+ * Each record's newest cover (§61), for the records named and no others.
+ * The grid's read (§T.5): the list query carries no image and the records
+ * endpoint keeps §5.2's shape, so the page asks here for the records it is
+ * about to draw. A record with no cover has no entry.
+ */
+export async function newestCoverUrls(recordIds: readonly string[]): Promise<Map<string, string>> {
+  if (recordIds.length === 0) return new Map();
+  const db = getDb();
+
+  const rows = await db
+    .selectDistinctOn([images.recordId], { recordId: images.recordId, url: images.url })
+    .from(images)
+    .where(and(inArray(images.recordId, [...recordIds]), eq(images.imageType, 'cover')))
+    .orderBy(images.recordId, desc(images.createdAt), images.id);
+
+  const covers = new Map<string, string>();
+  // `record_id` is nullable in the schema; the filter above admits none, and the type does not know that.
+  for (const row of rows) if (row.recordId !== null) covers.set(row.recordId, row.url);
+  return covers;
 }

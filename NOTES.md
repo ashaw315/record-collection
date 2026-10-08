@@ -37124,3 +37124,64 @@ four-word artist, and half the records matching through a child genre.
 "two presses on TURN OVER ... it ends in one turn's time from the first
 press", failed once and passed on retry. It reads elapsed time; the
 modal's source is untouched by steps 97 and 98.
+
+## Step 99 built: the grid (8 Oct)
+
+§T.5. Step level: `grid-99` on chromium, then with `table-98`,
+`collection-band-97`, `collection-filters-97`, `collection-filters`,
+`collection-widths`, `shelf` and `label-tracking-80` on both projects
+(`84 passed, 2 skipped`), `newest-covers` against the test database,
+typecheck, lint, build, and the unit guards.
+
+**Built.** Each record is `GridCover`: a square holding the photograph
+under the record page's own rule (`coverTreatment`, §33), invisible until
+it has loaded and its shape is known, and the hairline frame on paper
+where there is no cover or the photograph fails. Beneath it the title in
+13 ink and the artist as an 11 label, and nothing else. The cell is one
+link by the title's link laid over it, as a table row is. Columns are
+`repeat(auto-fill, minmax(min(160px, half the row less the gap), 1fr))`,
+24 apart at the 20 inset, so the count follows the window and not a
+breakpoint. The Sort control is the one step 98 built, shared.
+
+**The covers are asked for separately** (`newestCoverUrls`, the newest
+cover per record by §61, for the page's records only, and only in the
+grid view). The list query carries no image and the records endpoint
+keeps §5.2's shape. Three integration tests, red first.
+
+**Red first:** 6 of 6, coarsely, on a grid that did not exist. Then two
+breaks staged and confirmed in the files: a cover visible before it has
+loaded, and no two-column minimum. Two tests red.
+
+**The widths at which the column count changes**, asserted either side of
+each, a cover exactly 160 at the change: 568 (3), 752 (4), 936 (5),
+1,120 (6), 1,304 (7), 1,488 (8), 1,672 (9), 1,856 (10). 1,920 has 10.
+Each is 184n + 16: n covers of 160, n − 1 gaps of 24, and the two insets.
+
+**Measured on the real collection** (17 records, read-only sheet):
+
+| width | covers a row | cover | photographs | frames | page |
+|---|---|---|---|---|---|
+| 390 | 2 | 163 | 16, all cropped | 1 | 2,692 |
+| 320 | 2 | 128 | 16, all cropped | 1 | 2,429 |
+| 1440 | 7 | 179.4 | 16, all cropped | 1 | 1,335 |
+
+163 and 128 are the target's figures. One control is under 44 in the
+grid: the band's search field, drawn 34.
+
+**Found, for routing:**
+
+1. **My first hold of the photograph did not hold.** The test replaced
+   the image element's `src` setter; the server's markup sets the
+   attribute and never calls it. The assertion on the waiting state
+   caught it: both covers were already visible. It now serves and holds
+   the photograph's URL, as `cover-wait-85` does. The standing rule of
+   this morning, met the same afternoon.
+2. **The grid drops what the cards carried**: year, format, label,
+   condition, price, and the line saying why a record matched a genre
+   filter. §T.5 rules "with nothing else". Under a genre filter the grid
+   no longer says why a record is there; the table does.
+3. **The page is longer in the grid than in the table at 390** (2,692
+   against 1,776), since a cover and its caption are about 215 a row of
+   two.
+4. **No record in the collection has a fitted cover**, so the fitted
+   treatment is shown only by fixtures, as on the record page.

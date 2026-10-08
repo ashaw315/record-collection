@@ -96,6 +96,8 @@ const GOVERNED = [
   'e2e/back-newest-82.spec.ts',
   /* §T.4 (step 98): a table row is one link to its record, and the test follows it there. */
   'e2e/table-98.spec.ts',
+  /* §T.5 (step 99): a grid cell is one link to its record, and the test follows it there. */
+  'e2e/grid-99.spec.ts',
   'e2e/sheet/cover-boxes.sheet.ts',
   'e2e/sheet/record-modal.sheet.ts',
   'e2e/sheet/record-modal-92.sheet.ts',

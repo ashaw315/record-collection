@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { GridCover } from './GridCover';
 import { LABEL } from './records/[id]/grid-type';
 import { toQueryString, withFacet, type CollectionParams } from './collection-params';
 import type { RecordSortField } from '@/lib/records/fields';
@@ -49,51 +50,40 @@ function Absent() {
 }
 
 /**
- * The grid view (SPEC.md §10's "Toggle grid ↔ table").
+ * The grid view (§T.5): each record is its cover in a square, with its
+ * title in 13 ink and its artist as an 11 label beneath, and nothing else.
+ * The whole cell is one link, by the title's link laid over it, as a table
+ * row is.
  *
- * Deliberately NOT a cover-art grid: images are step 8, and a grid of grey
- * placeholders is worse than no grid. This is a card per record — the same
- * facts as a table row, laid out so the title leads and scanning is vertical
- * rather than across columns.
+ * "Covers are 24 apart, inset 20 a side from the window, at least two to a
+ * row, and as many as fit at 160 or wider." The column's least width is
+ * 160, or half the row less the gap where the window cannot hold two of
+ * 160, which is how the two-column minimum wins at 320. A cover's width is
+ * then decided by the window and never by a breakpoint: another joins the
+ * row at each width where one more 160 and its 24 fit.
  */
-function Grid({ rows }: { rows: CollectionRow[] }) {
+function Grid({ rows, covers }: { rows: CollectionRow[]; covers: Readonly<Record<string, string>> }) {
   return (
-    <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
-      {rows.map((row) => {
-        const explanation = matchExplanation(row.matchedVia);
-
-        return (
-          <li key={row.id} className="border border-border p-3 transition-colors hover:bg-accent">
-            <Link
-              href={`/records/${row.id}`}
-              className="text-detail font-medium underline-offset-2 hover:underline"
-            >
-              {row.title}
-            </Link>
-            <div className="text-detail text-[oklch(0.44_0.008_70)]">{row.artist.name}</div>
-
-            {explanation !== undefined && (
-              <div className="mt-0.5 text-detail text-[oklch(0.44_0.008_70)] italic">{explanation}</div>
-            )}
-
-            <div className="mt-2 flex flex-wrap items-baseline gap-x-2 text-detail text-[oklch(0.44_0.008_70)]">
-              <span className="font-mono tabular-nums">
-                {row.releaseYear === null ? <Absent /> : formatYear(row.releaseYear)}
-              </span>
-              {row.format !== null && <span>{row.format.name}</span>}
-              {row.label !== null && <span>{row.label.name}</span>}
-              {row.conditionMedia !== null && <span className="font-mono">{row.conditionMedia}</span>}
-              {/* Price last and pushed right: it is the field most often
-                  absent, so a fixed position would leave a gap on most cards. */}
-              {row.purchasePrice !== null && (
-                <span className="ml-auto font-mono tabular-nums">
-                  {formatPrice(row.purchasePrice)}
-                </span>
-              )}
-            </div>
-          </li>
-        );
-      })}
+    <ul
+      data-collection-grid=""
+      className="grid gap-x-[24px] gap-y-[24px]"
+      style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(min(160px, calc((100% - 24px) / 2)), 1fr))' }}
+    >
+      {rows.map((row) => (
+        <li key={row.id} className="relative min-w-0">
+          <GridCover url={covers[row.id] ?? null} />
+          <Link
+            data-grid-title=""
+            href={`/records/${row.id}`}
+            className="mt-2 block text-detail outline-none after:absolute after:inset-0 after:box-border after:content-[''] focus-visible:after:border-2 focus-visible:after:border-background focus-visible:after:shadow-[inset_0_0_0_2px_var(--foreground)]"
+          >
+            {row.title}
+          </Link>
+          <div data-grid-artist="" className={LABEL}>
+            {row.artist.name}
+          </div>
+        </li>
+      ))}
     </ul>
   );
 }
@@ -157,13 +147,16 @@ export function CollectionList({
   rows,
   params,
   view = 'table',
+  covers = {},
 }: {
   rows: CollectionRow[];
   params: CollectionParams;
   view?: 'table' | 'grid';
+  /** The grid's covers, by record id: each record's newest (§61). Absent for a record with none. */
+  covers?: Readonly<Record<string, string>>;
 }) {
   if (rows.length === 0) return <Empty />;
-  if (view === 'grid') return <Grid rows={rows} />;
+  if (view === 'grid') return <Grid rows={rows} covers={covers} />;
 
   return (
     <div data-collection-table="">

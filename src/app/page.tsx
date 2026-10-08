@@ -12,6 +12,7 @@ import { CollectionPagination } from './CollectionPagination';
 import { parseCollectionParams } from './collection-params';
 import { listRecords, recordFacets, countAllRecords } from '@/lib/db/queries/records';
 import { shelfRecords } from '@/lib/db/queries/shelf';
+import { newestCoverUrls } from '@/lib/db/queries/images';
 import { DEFAULT_PAGE_SIZE, type Offset } from '@/lib/api/query-params';
 
 /**
@@ -96,6 +97,13 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
     countAllRecords(),
   ]);
 
+  /*
+    §T.5: the grid shows each record's cover, the newest by §61. Asked for
+    the records on this page only, and only by the grid, so the table and
+    the shelf do not pay for it and the records endpoint keeps its shape.
+  */
+  const covers = params.view === 'grid' ? Object.fromEntries(await newestCoverUrls(records.rows.map((row) => row.id))) : {};
+
   return (
     <>
       <AppHeader />
@@ -151,7 +159,7 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
             shelf is its SIBLING rather than a third case inside it — so the
             branch above is what proves `view` is not 'shelf' here.
           */}
-          <CollectionList rows={records.rows as CollectionRow[]} params={params} view={params.view === 'grid' ? 'grid' : 'table'} />
+          <CollectionList rows={records.rows as CollectionRow[]} params={params} covers={covers} view={params.view === 'grid' ? 'grid' : 'table'} />
 
           <CollectionPagination params={params} total={records.total} rows={records.rows.length} pageSize={PAGE_SIZE} />
           </div>
