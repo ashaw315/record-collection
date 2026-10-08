@@ -1,4 +1,5 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+import { login } from './sign-in';
 
 /**
  * Step 75, §G.5: "The header is on every screen a signed-in reader can
@@ -12,16 +13,7 @@ import { expect, test, type Page } from '@playwright/test';
  * record, which the record page answers with notFound().
  */
 
-const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
 const DEAD_RECORD = '/records/00000000-0000-4000-8000-000000000000';
-
-async function login(page: Page) {
-  await page.goto('/login');
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
-}
 
 test.beforeEach(async ({ page }) => login(page));
 

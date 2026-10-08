@@ -1,8 +1,9 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { sql } from 'drizzle-orm';
 import { registerCleanup, trackArtist, trackRecord } from './cleanup';
 import { readSeventeen } from './seventeen';
 import { getTestDb } from '../test/helpers/db';
+import { login } from './sign-in';
 
 registerCleanup();
 
@@ -27,15 +28,6 @@ registerCleanup();
  * `cleanup.ts` deleting by artist alone, and against `global-setup.ts` not
  * seeding.
  */
-const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
-async function login(page: Page) {
-  await page.goto('/login');
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
-}
-
 const seventeen = readSeventeen();
 const ids = seventeen.map((r) => r.id);
 /* A Postgres array literal: Drizzle expands a JS array into a row constructor, which `= ANY` rejects. */

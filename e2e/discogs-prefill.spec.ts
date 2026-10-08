@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist } from './cleanup';
 import { seedDiscogsCache } from './seed';
+import { login } from './sign-in';
 
 /* Records and artists removed after each test — see e2e/cleanup.ts. */
 registerCleanup();
@@ -24,8 +25,6 @@ registerCleanup();
  *     where a hand-written stub would have carried one. Code assuming one
  *     would have passed a stubbed test and shipped.
  */
-
-const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
 
 /** Every Matrix / Runout value on release 381756, joined as the form shows them. */
 const ALL_EIGHT_MATRIX_VARIANTS = [
@@ -51,18 +50,6 @@ const ALL_EIGHT_MATRIX_VARIANTS = [
  * The upsert makes re-seeding harmless, and nothing deletes it mid-run.
  */
 let releaseId: number;
-
-async function login(page: Page) {
-  await page.goto('/login');
-
-  // Waits for hydration before typing: this form is CONTROLLED, so a value
-  // typed into the DOM before React attaches never reaches state and the submit
-  // sees an empty password. See the note on the login page.
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
-}
 
 async function formReady(page: Page): Promise<void> {
   await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });

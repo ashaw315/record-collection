@@ -2,6 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { WRITE_CAPTURES } from './write-captures';
 import { GRID_FORK, NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
 import { registerCleanup, trackArtist } from './cleanup';
+import { login } from './sign-in';
 
 registerCleanup();
 
@@ -21,16 +22,6 @@ registerCleanup();
  */
 const INK = 'oklch(0.19 0.008 60)';
 const GREY = 'oklch(0.74 0.004 80)';
-const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
-
-async function login(page: Page) {
-  await page.goto('/login');
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
-}
-
 test('§54: on the extremes fixture’s no-cover record every frame mark is ink at full strength and nothing is at an opacity -- at 1440 × 900 and 390, captured', async ({ page }) => {
   test.setTimeout(120_000);
   await login(page);

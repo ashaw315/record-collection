@@ -10,6 +10,7 @@ import { GRID_FORK, NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geomet
 import { sleeveSquare } from '../src/app/records/[id]/sleeve-modal';
 import { WALL_INK, WALL_PAPER_HEX, pullFill } from '../src/app/wall/pull-colour';
 import { recordLadder } from '../src/lib/colour/record-ladder';
+import { login } from './sign-in';
 
 registerCleanup();
 
@@ -25,21 +26,12 @@ registerCleanup();
  * read beside it, because "one sleeve has one back".
  */
 
-const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
 const COVER = `data:image/png;base64,${readFileSync(join('test', 'fixtures', 'covers', 'cover-inside-1000x951.png')).toString('base64')}`;
 /* A stored colour OUTSIDE the clamp on both counts (very dark, very saturated), so the field and the stored colour differ and the test can tell which was drawn. */
 const STORED = '#7a0c0c';
 type Rgb = number[];
 const near = (a: Rgb, b: Rgb, tol = 6) => a.every((v, i) => Math.abs(v - b[i]) <= tol);
 const rgbOf = (hex: string): Rgb => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
-
-async function login(page: Page) {
-  await page.goto('/login');
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
-}
 
 async function seed(page: Page, colour: string | null): Promise<{ id: string; label: string; catalogue: string }> {
   const s = `${Date.now()}-${Math.floor(Math.random() * 1e6)}`;

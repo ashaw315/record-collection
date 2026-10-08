@@ -3,6 +3,7 @@ import { GROWTH, OUT_MS } from '../src/app/wall/gesture';
 import { registerCleanup, trackArtist } from './cleanup';
 import { seedRecords } from './seed';
 import { contrastRatio } from '../src/lib/colour/record-colour';
+import { login } from './sign-in';
 
 /**
  * What the gesture arrives at (8a §W.7): the panel, flat on paper, right of
@@ -13,16 +14,7 @@ import { contrastRatio } from '../src/lib/colour/record-colour';
  */
 
 registerCleanup();
-const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
 const suffix = () => `${Date.now().toString(36)}${Math.floor(Math.random() * 1e4)}`;
-
-async function login(page: Page) {
-  await page.goto('/login');
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
-}
 
 async function seed(page: Page, count: number) {
   const artist = await page.request.post('/api/artists', { data: { name: `Wall-${suffix()}` } });

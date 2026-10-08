@@ -1,9 +1,10 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { BANDS, GRID_COLUMNS, GRID_FORK, IDENTITY_SPANS, NO_SCROLL_HEIGHT, STILL_MARGIN } from '../src/app/records/[id]/band-geometry';
 import { construction } from '../src/app/records/[id]/construction';
 import { ownFitViewBox } from '../src/app/records/[id]/own-fit';
 import { readSeventeen } from './seventeen';
 import { renderedArea } from './svg-area';
+import { login } from './sign-in';
 
 /**
  * **§5.5's floor and §30's ceiling, measured per record on the rendered page,
@@ -29,15 +30,6 @@ import { renderedArea } from './svg-area';
  * under), 1920 × 1200 (§30: "also clears"), and 1680 × 900 and 1920 × 900,
  * where Believer's empty width was recorded before §39 took the air away.
  */
-const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
-async function login(page: Page) {
-  await page.goto('/login');
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
-}
-
 const FLOOR_PCT = 0.5;
 const CEILING_PX = 480;
 const RENDERED_VS_COMPUTED_PTS = 0.02;

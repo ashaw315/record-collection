@@ -7,6 +7,7 @@ import { seedImage } from './seed';
 import { getTestDb } from '../test/helpers/db';
 import { sql } from 'drizzle-orm';
 import { NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
+import { login } from './sign-in';
 
 registerCleanup();
 
@@ -31,7 +32,6 @@ registerCleanup();
  * with a record whose facts run one line longer.
  */
 
-const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
 /*
   The title, the pressing and the two label variants come from the shared
   extremes module (§27), so this spec and the probe cannot disagree about the
@@ -41,14 +41,6 @@ const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
 const FIVE_LINE_TITLE = WORST.title;
 /** The genres run's own height: one 13px line at leading-none, no margin. */
 const RUN_HEIGHT = 13;
-
-async function login(page: Page) {
-  await page.goto('/login');
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
-}
 
 /**
  * Short, because it lands in the pressing line: a long suffix wrapped

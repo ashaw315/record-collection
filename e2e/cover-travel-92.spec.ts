@@ -6,6 +6,7 @@ import { seedImage } from './seed';
 import { GRID_FORK, NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
 import { MODAL_ROW, sleeveSquare } from '../src/app/records/[id]/sleeve-modal';
 import { FADE_MS, TRAVEL_MS } from '../src/app/records/[id]/sleeve-travel';
+import { login } from './sign-in';
 
 registerCleanup();
 
@@ -26,19 +27,10 @@ registerCleanup();
  * row's opacity, the label's and the controls', and where focus is.
  */
 
-const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
 const fixture = (file: string) => `data:image/png;base64,${readFileSync(join('test', 'fixtures', 'covers', file)).toString('base64')}`;
 type Photo = { file: string; width: number; height: number };
 const photos = JSON.parse(readFileSync(join('test', 'fixtures', 'covers', 'manifest.json'), 'utf8')) as Photo[];
 const INSIDE = photos.find((p) => p.file === 'cover-inside-1000x951.png') as Photo;
-
-async function login(page: Page) {
-  await page.goto('/login');
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
-}
 
 async function seed(page: Page, gatefold = false): Promise<string> {
   const s = `${Date.now()}-${Math.floor(Math.random() * 1e6)}`;

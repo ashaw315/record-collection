@@ -6,6 +6,7 @@ import { seedImage } from './seed';
 import { GRID_FORK, NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
 import { MODAL_CONTROL, MODAL_CONTROL_GAP, MODAL_LABEL_GAP, MODAL_LABEL_LINE, MODAL_ROW, sleeveSquare } from '../src/app/records/[id]/sleeve-modal';
 import { OPEN_MS, openDistance, spreadSquare } from '../src/app/records/[id]/sleeve-open';
+import { login } from './sign-in';
 
 registerCleanup();
 
@@ -26,19 +27,10 @@ registerCleanup();
  * says: tests do not run against production, where Bitches Brew has both.
  */
 
-const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
 const fixture = (file: string) => `data:image/png;base64,${readFileSync(join('test', 'fixtures', 'covers', file)).toString('base64')}`;
 const FRONT = fixture('cover-inside-1000x951.png');
 const LEFT = fixture('cover-far-1200x900.png');
 const RIGHT = fixture('cover-at-bound-1000x950.png');
-
-async function login(page: Page) {
-  await page.goto('/login');
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
-}
 
 async function seedSleeve(page: Page, leaves: Array<'gatefold_left' | 'gatefold_right'>, back = false): Promise<string> {
   const s = `${Date.now()}-${Math.floor(Math.random() * 1e6)}`;

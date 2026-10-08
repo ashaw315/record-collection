@@ -8,17 +8,10 @@ import { GRID_FORK, NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geomet
 import { VISIBLE_OF_HOST_HEIGHT, VISIBLE_OF_SECTION_WIDTH } from '../src/app/records/[id]/OrnamentMarks';
 import { CELL_PADDING } from '../src/app/records/[id]/extended-grid';
 import { DISC_REFERENCE_JS } from './disc-reading';
+import { login } from './sign-in';
 
 registerCleanup();
 
-const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
-async function login(page: Page) {
-  await page.goto('/login');
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
-}
 async function post(page: Page, path: string, data: unknown) {
   const response = await page.request.post(path, { data, failOnStatusCode: false });
   expect(response.status(), `${path}`).toBe(201);

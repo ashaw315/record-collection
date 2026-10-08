@@ -2,6 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { GRID_FORK, NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
 import { STEP_GAP, TITLE_MEASURE, TITLE_STEPS, artistStep } from '../src/app/records/[id]/title-steps';
 import { readSeventeen } from './seventeen';
+import { login } from './sign-in';
 
 /**
  * **§45 (step 53): the title fits the identity cell on both axes, per record,
@@ -20,15 +21,6 @@ import { readSeventeen } from './seventeen';
  * one-word title took 144 whatever the cell was; the ladder read a constant
  * 510 for supply at every window height.
  */
-const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
-async function login(page: Page) {
-  await page.goto('/login');
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
-}
-
 const WINDOWS: Array<[number, number]> = [[393, 844], [768, NO_SCROLL_HEIGHT], [1000, NO_SCROLL_HEIGHT], [1435, NO_SCROLL_HEIGHT], [GRID_FORK, NO_SCROLL_HEIGHT], [GRID_FORK, 1200], [1480, NO_SCROLL_HEIGHT]];
 /* Derived here from the steps, so the spec reads against the ladder that existed before §45 too. */
 const TITLE_PAIRS = TITLE_STEPS.map((title) => ({ title, artist: artistStep(title) }));

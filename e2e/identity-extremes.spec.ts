@@ -1,8 +1,9 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { registerCleanup } from './cleanup';
 import { GRID_FORK, NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
 import { SHORT_TITLE, WORST } from '../src/app/records/[id]/identity-extremes';
 import { seedExtreme } from './identity-extremes';
+import { login } from './sign-in';
 
 registerCleanup();
 
@@ -21,16 +22,6 @@ registerCleanup();
  * the collapse has fired. Whether a further height term exists is Design's to
  * rule; this test says what the cell does today.
  */
-const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
-
-async function login(page: Page) {
-  await page.goto('/login');
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
-}
-
 
 test('§27: every pressing fact ends inside the cell on the collection’s worst title', async ({ page }) => {
   await login(page);

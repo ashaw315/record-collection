@@ -4,6 +4,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { WRITE_CAPTURES } from './write-captures';
 import { registerCleanup, trackArtist } from './cleanup';
 import { isFarView, nearViewMinWidth } from '../src/app/wall/view-fork';
+import { login } from './sign-in';
 
 registerCleanup();
 
@@ -19,16 +20,7 @@ registerCleanup();
  * that no mobile project ran the shelf specs, so the view had no narrow form
  * and nothing asserted that it did.
  */
-const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
 const suffix = () => `${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
-
-async function login(page: Page) {
-  await page.goto('/login');
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
-}
 
 const box = (page: Page, selector: string) =>
   page.evaluate((q) => {

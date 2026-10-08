@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
 import { registerCleanup, trackArtist, trackCreated } from './cleanup';
+import { login } from './sign-in';
 
 /* Records and artists removed after each test — see e2e/cleanup.ts. */
 registerCleanup();
@@ -14,20 +15,6 @@ registerCleanup();
  * other spec is obliged to preserve. That cost three separate defects in unit
  * 7d.
  */
-
-const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
-
-async function login(page: Page) {
-  await page.goto('/login');
-
-  // Waits for hydration before typing: this form is CONTROLLED, so a value
-  // typed into the DOM before React attaches never reaches state and the submit
-  // sees an empty password. See the note on the login page.
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
-}
 
 function makeSuffix(): string {
   return `d${Date.now().toString(36)}${Math.floor(Math.random() * 1e4)}`;

@@ -1,6 +1,7 @@
-import { test, expect } from '@playwright/test';
+import { test } from '@playwright/test';
 import { sql } from 'drizzle-orm';
 import { getTestDb } from '../../test/helpers/db';
+import { login } from '../sign-in';
 
 /**
  * **The construction sheet: all seventeen real ids, side by side and still.**
@@ -15,8 +16,6 @@ import { getTestDb } from '../../test/helpers/db';
  *
  *   CAPTURE=1 npx playwright test --project=capture
  */
-
-const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
 
 /** The real ids and stored colours, measured 2026-09-12. */
 const REAL = [
@@ -56,11 +55,7 @@ test('capture the construction sheet', async ({ page }) => {
       ON CONFLICT (id) DO UPDATE SET spine_colour = EXCLUDED.spine_colour`);
   }
 
-  await page.goto('/login');
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
+  await login(page);
 
   await page.goto('/wall/probe/sheet');
   await page.locator('[data-sheet-tile]').first().waitFor({ timeout: 20_000 });

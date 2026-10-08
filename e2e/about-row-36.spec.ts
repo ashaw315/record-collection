@@ -1,17 +1,9 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
 import { readSeventeen } from './seventeen';
+import { login } from './sign-in';
 
 /* Reads the run-level seventeen (`seventeen.ts`); it seeded them itself until 29 Sep, a path global setup had made dead. */
-const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
-async function login(page: Page) {
-  await page.goto('/login');
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
-}
-
 /**
  * §36 -- the About's lower row survives as its editor and its full reading;
  * the frame cell gains one link, never a control.

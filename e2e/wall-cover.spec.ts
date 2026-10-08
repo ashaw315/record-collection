@@ -1,6 +1,7 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { OUT_MS } from '../src/app/wall/gesture';
 import { COLLECTION_SPINES } from '../test/fixtures/collection-spines';
+import { login } from './sign-in';
 
 /**
  * §W.3 on the rendering: the pulled record shows its cover at its own aspect
@@ -8,16 +9,6 @@ import { COLLECTION_SPINES } from '../test/fixtures/collection-spines';
  * field where its colour arrives — and nothing paints over the pulled record,
  * which is what the global painter's order is for.
  */
-
-const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
-
-async function login(page: Page) {
-  await page.goto('/login');
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
-}
 
 /* A 3×1 red PNG: a wide sleeve, so "own aspect" is observable rather than square-on-square. */
 const WIDE_COVER =

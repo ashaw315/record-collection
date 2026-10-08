@@ -1,5 +1,6 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist } from './cleanup';
+import { login } from './sign-in';
 
 /* Records and artists removed after each test — see e2e/cleanup.ts. */
 registerCleanup();
@@ -35,8 +36,6 @@ registerCleanup();
  * between the usual two. 390 and 1280 both passed throughout.
  */
 
-const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
-
 /** Straddling both Tailwind breakpoints the table uses: sm=640, md=768. */
 const WIDTHS = [
   { width: 375, note: 'phone — summary line' },
@@ -47,18 +46,6 @@ const WIDTHS = [
   { width: 768, note: 'md exactly — label column arrives here' },
   { width: 1280, note: 'desktop — full table' },
 ];
-
-async function login(page: Page) {
-  await page.goto('/login');
-
-  // Waits for hydration before typing: this form is CONTROLLED, so a value
-  // typed into the DOM before React attaches never reaches state and the submit
-  // sees an empty password. See the note on the login page.
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
-}
 
 function makeSuffix(): string {
   return `e2ew${Date.now().toString(36)}${Math.floor(Math.random() * 1e4)}`;

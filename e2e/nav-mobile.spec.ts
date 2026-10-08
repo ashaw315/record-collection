@@ -1,4 +1,5 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+import { login } from './sign-in';
 
 /**
  * **The nav must be usable at 390px** (SPEC.md §10: desktop and mobile are
@@ -45,8 +46,6 @@ import { expect, test, type Page } from '@playwright/test';
  *      itself.
  */
 
-const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
-
 /** SPEC.md §11 flow 10 names this viewport. The mobile project uses iPhone 13. */
 const MOBILE_WIDTH = 390;
 
@@ -62,15 +61,6 @@ const MOBILE_WIDTH = 390;
  * from `/want-list`, not from the nav.
  */
 const NAV_LINKS = ['Collection', 'Want list', 'Look up', 'Stats', 'Manage'] as const;
-
-async function login(page: Page) {
-  await page.goto('/login');
-  // Controlled form: typing before hydration never reaches React state.
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
-}
 
 test.beforeEach(async ({ page }) => {
   await login(page);

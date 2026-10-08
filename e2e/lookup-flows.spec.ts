@@ -3,6 +3,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist } from './cleanup';
 import { seedDiscogsCache } from './seed';
 import { normalizeRelease } from '@/lib/discogs/normalize-release';
+import { login } from './sign-in';
 
 /* Records and artists removed after each test — see e2e/cleanup.ts. */
 registerCleanup();
@@ -23,8 +24,6 @@ registerCleanup();
  * whether it does.
  */
 
-const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
-
 const VERSIONS_FIXTURE = JSON.parse(
   readFileSync('test/fixtures/discogs/master-versions-discharge.json', 'utf8'),
 ) as { versions: Array<Record<string, unknown>> };
@@ -36,18 +35,6 @@ const MASTER = 50683;
 const TITLE = 'Hear Nothing See Nothing Say Nothing';
 
 let releaseId: number;
-
-async function login(page: Page) {
-  await page.goto('/login');
-
-  // Waits for hydration before typing: this form is CONTROLLED, so a value
-  // typed into the DOM before React attaches never reaches state and the submit
-  // sees an empty password. See the note on the login page.
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
-}
 
 async function formReady(page: Page): Promise<void> {
   await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });

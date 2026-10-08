@@ -2,6 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { getTestDb } from '../test/helpers/db';
 import { sql } from 'drizzle-orm';
 import { NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
+import { login } from './sign-in';
 
 /**
  * **The pulled record's panel expands in place and keeps generated/entered facts
@@ -17,16 +18,6 @@ import { NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
  * real route, the isometric wall (8a §W.7): the panel is flat on paper, right
  * of the pulled record, appearing at the slide's perceived end.
  */
-
-const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
-
-async function login(page: Page) {
-  await page.goto('/login');
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
-}
 
 async function pullTheRecord(page: Page) {
   await page.locator('[data-seat] [data-spine]').first().click();

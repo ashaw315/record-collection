@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist } from './cleanup';
 import { LANDING_PAD } from '../src/app/wall/landing';
+import { login } from './sign-in';
 
 registerCleanup();
 
@@ -14,16 +15,7 @@ registerCleanup();
  * which already dismisses the pulled state. Neither direction is a wheel or a
  * pinch: a continuous input snapping to a target is an intermediate.
  */
-const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
 const suffix = () => `${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
-
-async function login(page: Page) {
-  await page.goto('/login');
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
-}
 
 /*
   Seats overlap in projection, so neither the anchor's bounding-box centre nor

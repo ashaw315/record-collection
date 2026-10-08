@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist, trackCreated } from './cleanup';
 import { removeRecordsFor, seedRecords } from './seed';
+import { login } from './sign-in';
 
 registerCleanup();
 
@@ -18,20 +19,11 @@ registerCleanup();
  * Read on fixtures made here. Which columns survive at 390 and 320 on the
  * real collection is the sheet's to report.
  */
-const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
 /* Ink is set inline on a sorted header, so it reads as written. */
 const INK = 'oklch(0.19 0.008 60)';
 const LABEL_INK = 'lab(35.0433 0.937879 2.8959)';
 /* §W.27's surface one step below paper, oklch(0.731 0.004 80), as written inline. */
 const SURFACE = 'oklch(0.731 0.004 80)';
-
-async function login(page: Page) {
-  await page.goto('/login');
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
-}
 
 type Fixture = { suffix: string; artistId: string; genreId: string; childId: string; ids: string[] };
 

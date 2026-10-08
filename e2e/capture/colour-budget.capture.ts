@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { writeFileSync } from 'node:fs';
 import { NO_SCROLL_HEIGHT } from '../../src/app/records/[id]/band-geometry';
+import { login } from '../sign-in';
 
 /**
  * **The colour DISTRIBUTION, measured. The area budget is withdrawn.**
@@ -22,18 +23,12 @@ import { NO_SCROLL_HEIGHT } from '../../src/app/records/[id]/band-geometry';
  *   CAPTURE=1 npx playwright test --project=capture
  */
 
-const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
-
 test.use({ viewport: { width: 1440, height: NO_SCROLL_HEIGHT }, deviceScaleFactor: 1 });
 
 test('measure the colour budget', async ({ page }) => {
   test.skip(process.env.CAPTURE !== '1', 'A measurement tool: run with CAPTURE=1');
 
-  await page.goto('/login');
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
+  await login(page);
 
   const lines: string[] = [
     '§5.5 colour budget: 12–18% of the page, sleeve excluded',

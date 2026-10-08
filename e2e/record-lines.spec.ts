@@ -2,6 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist } from './cleanup';
 import { PAPER } from '../src/lib/colour/paper';
 import { NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
+import { login } from './sign-in';
 
 registerCleanup();
 
@@ -30,20 +31,10 @@ registerCleanup();
  * to the cell edge, "which silently promotes a paragraph break into a
  * division" — so the insets are asserted to STAY short, not merely to exist.
  */
-const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
-
 /** §W.27's hairline, as the page must paint it. */
 const HAIRLINE = 'oklch(0.72 0.004 80)';
 /** §3's journal edge: the one 2px mark, in the record's derived colour or ink (§5.3). */
 const JOURNAL_EDGE_W = 2;
-
-async function login(page: Page) {
-  await page.goto('/login');
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
-}
 
 type Edge = {
   name: string;

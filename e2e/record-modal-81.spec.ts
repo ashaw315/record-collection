@@ -7,6 +7,7 @@ import { seedImage } from './seed';
 import { GRID_FORK, NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
 import { MODAL_CONTROL, MODAL_INSET, MODAL_LABEL_GAP, MODAL_LABEL_LINE, MODAL_ROW, sleeveSquare } from '../src/app/records/[id]/sleeve-modal';
 import { TURN_MS, turnDistance } from '../src/app/records/[id]/sleeve-turn';
+import { login } from './sign-in';
 
 registerCleanup();
 
@@ -27,7 +28,6 @@ registerCleanup();
  * faces and controls are the second unit's, the turn the third's.
  */
 
-const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
 const COVER = join('test', 'fixtures', 'covers', 'cover-inside-1000x951.png');
 const TRIGGER = { role: 'button', name: 'Open the sleeve' } as const;
 const INSET = 18;
@@ -35,14 +35,6 @@ const ROW = 53;
 
 type Rgb = number[];
 const near = (a: Rgb, b: Rgb, tol = 6) => a.every((v, i) => Math.abs(v - b[i]) <= tol);
-
-async function login(page: Page) {
-  await page.goto('/login');
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
-}
 
 const fixture = (file: string) => `data:image/png;base64,${readFileSync(join('test', 'fixtures', 'covers', file)).toString('base64')}`;
 

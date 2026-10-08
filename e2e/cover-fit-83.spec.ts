@@ -6,6 +6,7 @@ import { registerCleanup, trackArtist } from './cleanup';
 import { seedImage } from './seed';
 import { COVER_CROP_BOUND } from '../src/app/records/[id]/cover-fit';
 import { NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
+import { login } from './sign-in';
 
 registerCleanup();
 
@@ -29,7 +30,6 @@ registerCleanup();
  * the wrong photograph.
  */
 
-const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
 const FIXTURES = join('test', 'fixtures', 'covers');
 type Fixture = { file: string; width: number; height: number; ratio: number; bound: number; expected: 'crop' | 'fit' };
 const manifest = JSON.parse(readFileSync(join(FIXTURES, 'manifest.json'), 'utf8')) as Fixture[];
@@ -37,14 +37,6 @@ const manifest = JSON.parse(readFileSync(join(FIXTURES, 'manifest.json'), 'utf8'
 const FRAME = [43, 33, 24];
 type Rgb = number[];
 const near = (a: Rgb, b: Rgb, tol = 28) => a.every((v, i) => Math.abs(v - b[i]) <= tol);
-
-async function login(page: Page) {
-  await page.goto('/login');
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
-}
 
 /** The precondition: the file on disk is the photograph the manifest describes. */
 function checkedFixture(f: Fixture): Buffer {

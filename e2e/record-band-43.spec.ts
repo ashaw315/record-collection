@@ -1,17 +1,10 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { GRID_FORK, NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
 import { fillRows, packRecordBand } from '../src/app/records/[id]/record-band-41';
 import { isSettled } from './paint-settle';
 import { readSeventeen } from './seventeen';
+import { login } from './sign-in';
 
-const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
-async function login(page: Page) {
-  await page.goto('/login');
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
-}
 /** Recorded from before the page's first script: every animation frame's band height and cell boxes, until the test reads them. */
 const RECORDER = `window.__paint = { frames: [] };
 (function () { var rec = window.__paint; function tick() { var band = document.querySelector('[data-band="record"]'); if (band) { var b = band.getBoundingClientRect(); rec.frames.push({ t: performance.now(), band: Math.round(b.height * 10) / 10, cells: Array.from(band.querySelectorAll(':scope > [data-cell]')).map(function (c) { var r = c.getBoundingClientRect(); return [c.getAttribute('data-cell'), Math.round(r.left), Math.round(r.top), Math.round(r.width), Math.round(r.height)]; }) }); } if (rec.frames.length < 400) requestAnimationFrame(tick); } requestAnimationFrame(tick); })();`;

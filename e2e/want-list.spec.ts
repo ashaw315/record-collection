@@ -3,6 +3,7 @@ import { registerCleanup, trackArtist } from './cleanup';
 import { seedDiscogsCacheAs } from './seed';
 import { sql } from 'drizzle-orm';
 import { getTestDb } from '../test/helpers/db';
+import { login } from './sign-in';
 
 /* Records and artists removed after each test — see e2e/cleanup.ts. */
 registerCleanup();
@@ -15,20 +16,6 @@ registerCleanup();
  * shop having just bought the thing. §7.3 is what makes the second half
  * non-obvious: the want-list row is NOT deleted, it becomes history.
  */
-
-const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
-
-async function login(page: Page) {
-  await page.goto('/login');
-
-  // Waits for hydration before typing: this form is CONTROLLED, so a value
-  // typed into the DOM before React attaches never reaches state and the submit
-  // sees an empty password. See the note on the login page.
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
-}
 
 function makeSuffix(): string {
   return `w${Date.now().toString(36)}${Math.floor(Math.random() * 1e4)}`;

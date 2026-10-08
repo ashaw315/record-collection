@@ -2,6 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist } from './cleanup';
 import { wallMeasured } from './wall-measured';
 import { nearViewMinWidth } from '../src/app/wall/view-fork';
+import { login } from './sign-in';
 
 registerCleanup();
 
@@ -40,7 +41,6 @@ test.describe.configure({ timeout: 60_000 });
  * visible: by the time a test can query the page, the swap has happened and
  * the settled state is correct.
  */
-const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
 const suffix = () => `${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
 
 const PROBE = `
@@ -55,14 +55,6 @@ window.__views = []; const t0 = performance.now();
   if (t < 2500) requestAnimationFrame(sample);
 })();
 `;
-
-async function login(page: Page) {
-  await page.goto('/login');
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
-}
 
 async function seed(page: Page, count: number) {
   const artist = await page.request.post('/api/artists', { data: { name: `FP-${suffix()}` } });

@@ -4,16 +4,9 @@ import { getTestDb } from '../../test/helpers/db';
 import { seedImage } from '../seed';
 import { sql } from 'drizzle-orm';
 import { NO_SCROLL_HEIGHT } from '../../src/app/records/[id]/band-geometry';
+import { login } from '../sign-in';
 
 registerCleanup();
-const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
-async function login(page: Page) {
-  await page.goto('/login');
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
-}
 async function post(page: Page, path: string, data: unknown) { const j = await (await page.request.post(path, { data })).json(); return { id: (j.id ?? j.error?.existingId) as string }; }
 
 /**

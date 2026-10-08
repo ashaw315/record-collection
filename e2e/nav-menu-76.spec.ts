@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist } from './cleanup';
 import { NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
+import { login } from './sign-in';
 
 registerCleanup();
 
@@ -17,19 +18,10 @@ registerCleanup();
  * 454 beside the control. Each boundary is asserted on both sides.
  */
 
-const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
 const MENU_BELOW = 584;
 const SLOT_WITH_LINKS = 768;
 const SLOT_WITH_CONTROL = 454;
 const INK = 'oklch(0.19 0.008 60)';
-
-async function login(page: Page) {
-  await page.goto('/login');
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
-}
 
 async function seedRecord(page: Page): Promise<string> {
   const s = `${Date.now()}-${Math.floor(Math.random() * 1e6)}`;

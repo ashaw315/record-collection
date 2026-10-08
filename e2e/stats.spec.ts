@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist, trackCreated } from './cleanup';
+import { login } from './sign-in';
 
 /* Records and artists removed after each test — see e2e/cleanup.ts. */
 registerCleanup();
@@ -15,16 +16,6 @@ registerCleanup();
  * people quote back having not read the explanation, so the figure and its
  * meaning are one sentence.
  */
-
-const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
-
-async function login(page: Page) {
-  await page.goto('/login');
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
-}
 
 function makeSuffix(): string {
   return `s${Date.now().toString(36)}${Math.floor(Math.random() * 1e4)}`;

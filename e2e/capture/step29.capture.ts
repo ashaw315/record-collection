@@ -4,6 +4,7 @@ import { sql } from 'drizzle-orm';
 import { seedImage, seedRecordWithId } from '../seed';
 import { trackArtist } from '../cleanup';
 import { NO_SCROLL_HEIGHT } from '../../src/app/records/[id]/band-geometry';
+import { login } from '../sign-in';
 
 /**
  * **§33 rendered, which it has not been.**
@@ -56,8 +57,6 @@ import { NO_SCROLL_HEIGHT } from '../../src/app/records/[id]/band-geometry';
  * row with that id; four foreign keys refuse a late id rewrite. Seeding it at
  * INSERT time is the fix and is not built.
  */
-const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
-
 /**
  * The extremes fixture's largest gain under §33's per-record fit, captured on
  * the construction sheet — it is an id, and a construction is a function of
@@ -82,11 +81,7 @@ test('capture §33: three records at 1440', async ({ page }) => {
   test.skip(process.env.CAPTURE !== '1', 'A capture tool: run with CAPTURE=1');
   test.setTimeout(240_000);
 
-  await page.goto('/login');
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
+  await login(page);
 
   /*
     **The status is checked.** Without it a 400 returns a body with no `id`,

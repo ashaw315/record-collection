@@ -4,6 +4,7 @@ import { sql } from 'drizzle-orm';
 import { seedImage } from '../seed';
 import { trackArtist } from '../cleanup';
 import { NO_SCROLL_HEIGHT } from '../../src/app/records/[id]/band-geometry';
+import { login } from '../sign-in';
 
 /**
  * **The built page at §28's two named viewports, on a real route.**
@@ -21,17 +22,11 @@ import { NO_SCROLL_HEIGHT } from '../../src/app/records/[id]/band-geometry';
  * not arrive and neither end could see why; a file in the repo can be
  * opened from the repo.
  */
-const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
-
 test('capture the built record page at 1440 and 390', async ({ page }) => {
   test.skip(process.env.CAPTURE !== '1', 'A capture tool: run with CAPTURE=1');
   test.setTimeout(180_000);
 
-  await page.goto('/login');
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
+  await login(page);
 
   /* A record with something in every section, so the rows show what they hold. */
   const post = async (path: string, data: unknown) => (await page.request.post(path, { data })).json();

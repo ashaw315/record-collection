@@ -4,6 +4,7 @@ import { CELL_PADDING } from '../src/app/records/[id]/extended-grid';
 import { GRID_FORK } from '../src/app/records/[id]/band-geometry';
 import { IDENTITY_PADDING } from '../src/app/records/[id]/title-steps';
 import { pageWidthAt } from '../src/app/records/[id]/region-rows';
+import { login } from './sign-in';
 
 registerCleanup();
 
@@ -38,20 +39,10 @@ registerCleanup();
  * type still does not move, because a narrower measure is a worse setting of
  * the same sizes rather than a new size.
  */
-const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
-
 /** §18: the identity cell never narrower than four columns above §28's fork. */
 const FULL_MEASURE_FLOOR = GRID_FORK / 3;
 /** §45: 412 is the measure's FLOOR -- a 480 cell less its padding -- not a constant of its own; above 480 the measure grows with the cell. */
 const MEASURE_FLOOR = FULL_MEASURE_FLOOR - CELL_PADDING * 2;
-
-async function login(page: Page) {
-  await page.goto('/login');
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
-}
 
 async function measure(page: Page, width: number, href: string) {
   await page.setViewportSize({ width, height: 1100 });

@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist } from './cleanup';
 import { NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
+import { login } from './sign-in';
 
 registerCleanup();
 
@@ -19,17 +20,8 @@ registerCleanup();
  * (so no serialisation is guessed), and measured boxes for the geometry.
  */
 
-const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
 const INK = 'oklch(0.19 0.008 60)';
 const LABEL = 'oklch(0.44 0.008 70)';
-
-async function login(page: Page) {
-  await page.goto('/login');
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
-}
 
 async function seedRecord(page: Page): Promise<string> {
   const suffix = `${Date.now()}-${Math.floor(Math.random() * 1e6)}`;

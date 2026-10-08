@@ -7,6 +7,7 @@ import { getTestDb } from '../test/helpers/db';
 import { registerCleanup, trackArtist } from './cleanup';
 import { seedImage } from './seed';
 import { GRID_FORK, NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
+import { login } from './sign-in';
 
 registerCleanup();
 
@@ -24,19 +25,10 @@ registerCleanup();
  * at its centre" can fail there and is not true by default.
  */
 
-const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
 const COVER = join('test', 'fixtures', 'covers', 'cover-inside-1000x951.png');
 const WIDTHS = [390, GRID_FORK];
 type Rgb = number[];
 const near = (a: Rgb, b: Rgb, tol = 8) => a.every((v, i) => Math.abs(v - b[i]) <= tol);
-
-async function login(page: Page) {
-  await page.goto('/login');
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
-}
 
 /** A record with a colour, and a cover at a URL the test serves, fails or holds. `cover: false` is a record with no photograph and no colour. */
 async function seedRecord(page: Page, cover: boolean): Promise<{ id: string; url: string }> {

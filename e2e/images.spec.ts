@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist } from './cleanup';
 import { removeImagesFor, seedDiscogsCache, seedImage } from './seed';
+import { login } from './sign-in';
 
 /* Records and artists removed after each test — see e2e/cleanup.ts. */
 registerCleanup();
@@ -32,8 +33,6 @@ registerCleanup();
  *   - the storage seam itself is covered by unit tests driving the SDK fake.
  */
 
-const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
-
 /**
  * The smallest valid PNG: signature, IHDR for a 1×1 image, one IDAT, IEND.
  * Built from bytes so no tooling can normalise it into something that is no
@@ -44,18 +43,6 @@ const ONE_PIXEL_PNG = Buffer.from(
     '789c63000100000500010d0a2db40000000049454e44ae426082',
   'hex',
 );
-
-async function login(page: Page) {
-  await page.goto('/login');
-
-  // Waits for hydration before typing: this form is CONTROLLED, so a value
-  // typed into the DOM before React attaches never reaches state and the submit
-  // sees an empty password. See the note on the login page.
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
-}
 
 function suffix(): string {
   return `e2ei${Date.now().toString(36)}${Math.floor(Math.random() * 1e4)}`;

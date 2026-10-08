@@ -1,7 +1,8 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { registerCleanup, trackArtist } from './cleanup';
 import { MAX_GRID_WIDTH } from '../src/app/records/[id]/band-geometry';
 import { bandHeightAt } from '../src/app/records/[id]/region-rows';
+import { login } from './sign-in';
 
 registerCleanup();
 
@@ -32,16 +33,6 @@ registerCleanup();
  * defect for the one §5.1 forbids by name: "an object with a slice taken out
  * of it reports that something went wrong."
  */
-const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
-
-async function login(page: Page) {
-  await page.goto('/login');
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
-}
-
 test('every identity cell fits the band’s height, and the still is not clipped', async ({ page }) => {
   await login(page);
   const s = `${Date.now()}-${Math.floor(Math.random() * 1e6)}`;

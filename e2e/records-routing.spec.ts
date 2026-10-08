@@ -1,4 +1,5 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+import { login } from './sign-in';
 
 /**
  * SPEC.md §5.2's routing note: `app/api/records/stats/route.ts` is a STATIC
@@ -16,20 +17,6 @@ import { expect, test, type Page } from '@playwright/test';
  * Only a request over the wire can distinguish "static resolved first" from
  * "dynamic swallowed it".
  */
-
-const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
-
-async function login(page: Page) {
-  await page.goto('/login');
-
-  // Waits for hydration before typing: this form is CONTROLLED, so a value
-  // typed into the DOM before React attaches never reaches state and the submit
-  // sees an empty password. See the note on the login page.
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
-}
 
 test.beforeEach(async ({ page }) => {
   await login(page);

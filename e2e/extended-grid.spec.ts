@@ -21,6 +21,7 @@ import {
   TYPED_SIZE,
 } from '../src/app/records/[id]/extended-grid';
 import { NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
+import { login } from './sign-in';
 
 /**
  * **The bar needs a derived colour, and a seeded image does not produce one.**
@@ -45,16 +46,6 @@ registerCleanup();
  * bleeds past both, and that the bar appears beside a section holding nothing
  * but a control. Those are the claims the structure exists to make.
  */
-
-const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
-
-async function login(page: Page) {
-  await page.goto('/login');
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
-}
 
 function makeSuffix(): string {
   return `x${Date.now().toString(36)}${Math.floor(Math.random() * 1e4)}`;

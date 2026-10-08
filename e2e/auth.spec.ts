@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { expect, test } from '@playwright/test';
+import { SIGN_IN_ARRIVAL } from './sign-in';
 
 /**
  * SPEC.md §11 E2E flow 1: log in with a wrong password, then the correct one.
@@ -27,7 +28,7 @@ test('rejects a wrong password, then accepts the correct one', async ({ page }) 
   await page.getByLabel('Password').pressSequentially(CORRECT_PASSWORD);
   await page.getByRole('button', { name: 'Sign in' }).click();
 
-  await expect(page).toHaveURL('/');
+  await expect(page).toHaveURL('/', { timeout: SIGN_IN_ARRIVAL });
 });
 
 test('redirects an unauthenticated visitor to /login', async ({ page }) => {
@@ -45,10 +46,10 @@ test('keeps the session across a reload, then clears it on logout', async ({ pag
   await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
   await page.getByLabel('Password').pressSequentially(CORRECT_PASSWORD);
   await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
+  await expect(page).toHaveURL('/', { timeout: SIGN_IN_ARRIVAL });
 
   await page.reload();
-  await expect(page).toHaveURL('/');
+  await expect(page).toHaveURL('/', { timeout: SIGN_IN_ARRIVAL });
 
   const response = await page.request.post('/api/auth/logout');
   expect(response.ok()).toBe(true);
@@ -100,7 +101,7 @@ test('the login form is usable the instant the DOM exists', async ({ page }) => 
   await page.getByLabel('Password').pressSequentially(CORRECT_PASSWORD, { delay: 0 });
   await page.getByRole('button', { name: 'Sign in' }).click();
 
-  await expect(page, 'the password reached React state, so the login succeeded').toHaveURL('/');
+  await expect(page, 'the password reached React state, so the login succeeded').toHaveURL('/', { timeout: SIGN_IN_ARRIVAL });
 });
 
 /**

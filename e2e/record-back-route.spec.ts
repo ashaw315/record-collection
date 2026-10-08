@@ -1,6 +1,7 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { registerCleanup, trackArtist } from './cleanup';
 import { NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
+import { login } from './sign-in';
 
 registerCleanup();
 
@@ -20,16 +21,6 @@ registerCleanup();
  * `record-navigation.spec.ts` covers the arrows between records; this covers
  * the way out of the screen entirely.
  */
-const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
-
-async function login(page: Page) {
-  await page.goto('/login');
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
-}
-
 test('the collection is reached through the chrome, and nowhere else (§8.1)', async ({ page }) => {
   await login(page);
   const s = `${Date.now()}-${Math.floor(Math.random() * 1e6)}`;

@@ -4,6 +4,7 @@ import { getTestDb } from '../test/helpers/db';
 import { sql } from 'drizzle-orm';
 import { wallMeasured } from './wall-measured';
 import { NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
+import { login } from './sign-in';
 
 /* Records and artists removed after each test — see e2e/cleanup.ts. */
 registerCleanup();
@@ -43,16 +44,6 @@ test.describe.configure({ timeout: 60_000 });
  * affordance appears only where an inner image exists — which is §10b's
  * strictest rule, because there is no generated stand-in for artwork.
  */
-
-const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
-
-async function login(page: Page) {
-  await page.goto('/login');
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
-}
 
 const suffix = () => `${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
 

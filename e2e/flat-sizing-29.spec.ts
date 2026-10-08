@@ -7,6 +7,7 @@ import { EMPTIEST, WORST } from '../src/app/records/[id]/identity-extremes';
 import { NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
 import { VISIBLE_OF_HOST_HEIGHT, VISIBLE_OF_SECTION_WIDTH } from '../src/app/records/[id]/OrnamentMarks';
 import { DISC_REFERENCE_JS } from './disc-reading';
+import { login } from './sign-in';
 
 registerCleanup();
 
@@ -25,16 +26,6 @@ registerCleanup();
  * 1440 and 97 at 390". The report is what decides whether a floor is ruled:
  * "rule a floor only if the smallest reads as a speck when viewed".
  */
-const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
-
-async function login(page: Page) {
-  await page.goto('/login');
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
-}
-
 /** Both extremes need a sampled colour, or the flats are ladder-null and draw nothing (§5.3). */
 async function seedWithColour(page: Page, extreme: typeof WORST | typeof EMPTIEST): Promise<string> {
   const id = await seedExtreme(page, extreme);

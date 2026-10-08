@@ -6,6 +6,7 @@ import { registerCleanup, trackArtist } from './cleanup';
 import { seedImage } from './seed';
 import { WRITE_CAPTURES } from './write-captures';
 import { GRID_FORK, NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
+import { login } from './sign-in';
 
 registerCleanup();
 
@@ -25,7 +26,6 @@ registerCleanup();
  * each band vanishes along part of its run and the other must carry it.
  */
 
-const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
 const LIGHT = [240, 236, 226];
 const DARK = [18, 16, 14];
 type Rgb = number[];
@@ -41,14 +41,6 @@ async function cover(kind: 'light' | 'dark' | 'mixed'): Promise<string> {
     px.set(c, (y * size + x) * 3);
   }
   return `data:image/png;base64,${(await sharp(px, { raw: { width: size, height: size, channels: 3 } }).png().toBuffer()).toString('base64')}`;
-}
-
-async function login(page: Page) {
-  await page.goto('/login');
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
 }
 
 async function seed(page: Page, url: string): Promise<string> {

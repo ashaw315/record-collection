@@ -1,5 +1,6 @@
-import { expect, test } from '@playwright/test';
+import { test } from '@playwright/test';
 import { writeFileSync } from 'node:fs';
+import { login } from '../sign-in';
 
 /**
  * **§43's font metrics, generated.** The server estimates each record-band
@@ -12,11 +13,7 @@ import { writeFileSync } from 'node:fs';
  */
 test('write the record band’s font metrics', async ({ page }) => {
   test.skip(process.env.CAPTURE !== '1', 'A generator: run with CAPTURE=1');
-  await page.goto('/login');
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(process.env.E2E_PASSWORD ?? 'test-password-for-e2e');
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
+  await login(page);
   await page.evaluate(() => document.fonts.ready);
   const metrics = await page.evaluate(() => {
     const probe = document.createElement('div');

@@ -2,6 +2,7 @@ import { OUT_MS, RETURN_MS } from '../src/app/wall/gesture';
 import { expect, test, type Page } from '@playwright/test';
 import { getTestDb } from '../test/helpers/db';
 import { sql } from 'drizzle-orm';
+import { login } from './sign-in';
 
 
 /*
@@ -39,16 +40,6 @@ test.describe.configure({ timeout: 60_000 });
  * derives from the seat order the anchors carry, which is the same order the
  * keyboard walks and the links carry.
  */
-
-const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
-
-async function login(page: Page) {
-  await page.goto('/login');
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
-}
 
 async function seed(count: number): Promise<string> {
   const db = getTestDb();

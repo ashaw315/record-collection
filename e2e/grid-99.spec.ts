@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist } from './cleanup';
 import { seedImage } from './seed';
+import { login } from './sign-in';
 
 registerCleanup();
 
@@ -20,7 +21,6 @@ registerCleanup();
  * The cover fixtures are §33's own (`test/fixtures/covers`), whose ratios
  * `cover-fit-83` checks against the manifest before relying on them.
  */
-const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
 const FIXTURES = join('test', 'fixtures', 'covers');
 type Fixture = { file: string; expected: 'crop' | 'fit' };
 const manifest = JSON.parse(readFileSync(join(FIXTURES, 'manifest.json'), 'utf8')) as Fixture[];
@@ -31,14 +31,6 @@ const dataUrl = (expected: 'crop' | 'fit') => {
 };
 const INK = 'lab(6.18075 1.20374 2.12039)';
 const LABEL_INK = 'lab(35.0433 0.937879 2.8959)';
-
-async function login(page: Page) {
-  await page.goto('/login');
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
-}
 
 type Seeded = { suffix: string; artistId: string; crop: string; fit: string; bare: string };
 

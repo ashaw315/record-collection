@@ -1,10 +1,11 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { WALL_INK } from '../src/app/wall/pull-colour';
 import { SPINE_WIDTH_MIN, frontFace, layoutRow } from '../src/app/wall/geometry';
 import { OUT_MS } from '../src/app/wall/gesture';
 import { unitRows } from '../src/app/wall/unit';
 import { SPINE_TEXT_BUDGET, spineLabel } from '../src/app/wall/spine-text';
 import { COLLECTION_SPINES } from '../test/fixtures/collection-spines';
+import { login } from './sign-in';
 
 /**
  * The 1:1 component (The Wall 5b §1, §4, §5; §W), on the real collection.
@@ -21,16 +22,6 @@ import { COLLECTION_SPINES } from '../test/fixtures/collection-spines';
  * withdrawn with the fills, and replaced by the one that supersedes them: that
  * nothing in the resting drawing carries a fill but `none`.
  */
-
-const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
-
-async function login(page: Page) {
-  await page.goto('/login');
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
-}
 
 test.beforeEach(async ({ page }) => {
   await login(page);

@@ -3,6 +3,7 @@ import { sql } from 'drizzle-orm';
 import { registerCleanup, trackArtist } from './cleanup';
 import { getTestDb } from '../test/helpers/db';
 import { NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
+import { login } from './sign-in';
 
 registerCleanup();
 
@@ -23,17 +24,8 @@ registerCleanup();
  * equal a nav link's, not only the tracking.
  */
 
-const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
 const TEN = '1.1px'; /* .10em of 11px */
 const TWELVE = '1.32px'; /* .12em of 11px */
-
-async function login(page: Page) {
-  await page.goto('/login');
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
-}
 
 /** A record whose pressing names a Discogs release, so the market panel renders; set in the test database, since the API verifies a release against Discogs. */
 async function seedRecordWithRelease(page: Page): Promise<string> {

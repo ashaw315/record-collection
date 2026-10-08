@@ -1,6 +1,7 @@
-import { test, expect } from '@playwright/test';
+import { test } from '@playwright/test';
 import { writeFileSync } from 'node:fs';
 import { MAX_GRID_WIDTH, NO_SCROLL_HEIGHT } from '../../src/app/records/[id]/band-geometry';
+import { login } from '../sign-in';
 
 /**
  * **What the layout does at widths 8a did not specify.**
@@ -13,8 +14,6 @@ import { MAX_GRID_WIDTH, NO_SCROLL_HEIGHT } from '../../src/app/records/[id]/ban
  *
  *   CAPTURE=1 npx playwright test --project=capture
  */
-
-const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
 
 /** 1440 is the specified frame; the rest are real displays. */
 const WIDTHS = [1440, 1512, 1680, MAX_GRID_WIDTH, 1920, 2560] as const;
@@ -36,11 +35,7 @@ test('capture the page at the specified width and wider', async ({ browser }) =>
     });
     const page = await context.newPage();
 
-    await page.goto('/login');
-    await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-    await page.getByLabel('Password').pressSequentially(PASSWORD);
-    await page.getByRole('button', { name: 'Sign in' }).click();
-    await expect(page).toHaveURL('/');
+    await login(page);
 
     await page.goto('/wall/probe/page8a?case=modal');
     await page.getByTestId('record-page-8a').waitFor({ timeout: 20_000 });

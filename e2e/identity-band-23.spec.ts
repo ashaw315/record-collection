@@ -9,6 +9,7 @@ import { construction } from '../src/app/records/[id]/construction';
 import { ownFitViewBox } from '../src/app/records/[id]/own-fit';
 import { WORST } from '../src/app/records/[id]/identity-extremes';
 import { seedExtreme } from './identity-extremes';
+import { login } from './sign-in';
 
 registerCleanup();
 
@@ -34,16 +35,6 @@ registerCleanup();
  * Every figure here is imported from `cover-geometry.ts` rather than typed, so
  * the test and the drawing cannot disagree about a number.
  */
-const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
-
-async function login(page: Page) {
-  await page.goto('/login');
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
-}
-
 async function seed(page: Page) {
   const s = `${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
   const a = await page.request.post('/api/artists', { data: { name: `band23-${s}` } });

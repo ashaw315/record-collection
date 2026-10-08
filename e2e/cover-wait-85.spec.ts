@@ -8,6 +8,7 @@ import { registerCleanup, trackArtist } from './cleanup';
 import { seedImage } from './seed';
 import { WRITE_CAPTURES } from './write-captures';
 import { GRID_FORK, NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
+import { login } from './sign-in';
 
 registerCleanup();
 
@@ -34,7 +35,6 @@ registerCleanup();
  * for a frame that cannot be stopped on.
  */
 
-const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
 const FIXTURES = join('test', 'fixtures', 'covers');
 type Fixture = { file: string; width: number; height: number; expected: 'crop' | 'fit' };
 const manifest = JSON.parse(readFileSync(join(FIXTURES, 'manifest.json'), 'utf8')) as Fixture[];
@@ -52,14 +52,6 @@ const CAPTURES = join('docs', 'captures', 'cover-wait-85');
 type Rgb = number[];
 const near = (a: Rgb, b: Rgb, tol = 10) => a.every((v, i) => Math.abs(v - b[i]) <= tol);
 type Frame = { loaded: boolean; treatment: string | null; visible: boolean };
-
-async function login(page: Page) {
-  await page.goto('/login');
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
-}
 
 /** A record whose cover is a URL the test serves, so the photograph can be held; the server never sees the request. */
 async function seedRecord(page: Page, f: Fixture, tag: string): Promise<{ id: string; url: string }> {

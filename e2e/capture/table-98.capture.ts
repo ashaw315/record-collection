@@ -1,9 +1,10 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { sql } from 'drizzle-orm';
 import { registerCleanup, trackArtist, trackCreated } from '../cleanup';
 import { getTestDb } from '../../test/helpers/db';
+import { login } from '../sign-in';
 
 registerCleanup();
 
@@ -21,18 +22,9 @@ registerCleanup();
  *
  * Run with CAPTURE=1 --project=capture.
  */
-const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
 const OUT = join('docs', 'captures', 'table-98');
 const TITLES = ['Blue', 'Kind Of Blue', 'A Love Supreme', 'The Black Saint And The Sinner Lady', 'Out To Lunch!', 'Mingus Ah Um', 'Somethin’ Else', 'The Shape Of Jazz To Come', 'Moanin’', 'Time Out', 'Maiden Voyage', 'Speak No Evil', 'Getz/Gilberto', 'Karma', 'In A Silent Way', 'Free Jazz: A Collective Improvisation By The Ornette Coleman Double Quartet'];
 const GRADES = ['NM', 'VG+', 'VG', 'G+'];
-
-async function login(page: Page) {
-  await page.goto('/login');
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
-}
 
 test('a full page of 50 from a 200-record fixture, under a genre filter, at 390 and 1440', async ({ page }) => {
   /*

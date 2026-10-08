@@ -3,6 +3,7 @@ import { parseMatrix } from '../src/app/wall/landing';
 import { OUT_MS, RETURN_MS, ROTATION_START, SWING_MS, TRAVEL, easeInOutCubic } from '../src/app/wall/gesture';
 import { COS30, SIN30 } from '../src/app/wall/geometry';
 import { COLLECTION_SPINES } from '../test/fixtures/collection-spines';
+import { login } from './sign-in';
 
 /**
  * §W.19 / §W.21: the assembled gesture, watched under a paused clock. The
@@ -10,18 +11,9 @@ import { COLLECTION_SPINES } from '../test/fixtures/collection-spines';
  * near edge is the one point growth and rotation hold; put back is the whole
  * gesture reversed on one clock, from wherever it stood.
  */
-const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
 const FRAME_MS = 1000 / 60;
 const TWO_FRAMES = Math.ceil(2 * FRAME_MS);
 const WIRED_ID = `collection-${COLLECTION_SPINES.findIndex((row) => row.title === 'Wired')}`;
-
-async function login(page: Page) {
-  await page.goto('/login');
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
-}
 
 test.beforeEach(async ({ page }) => {
   await login(page);

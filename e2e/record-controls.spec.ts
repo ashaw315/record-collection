@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist } from './cleanup';
 import { GRID_FORK, NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
+import { login } from './sign-in';
 
 registerCleanup();
 
@@ -28,16 +29,6 @@ registerCleanup();
  * What moves with it: the eyebrow returns to Collection alone, and the foot
  * row that held Delete is gone. §13's deletion of the ← Collection band stands.
  */
-const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
-
-async function login(page: Page) {
-  await page.goto('/login');
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
-}
-
 async function seed(page: Page) {
   const s = `${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
   const a = await page.request.post('/api/artists', { data: { name: `ctl-${s}` } });

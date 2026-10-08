@@ -1,17 +1,18 @@
-import { expect, test, type Page } from '@playwright/test';
+import { test, type Page } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import { registerCleanup, trackArtist } from '../cleanup';
 import { getTestDb } from '../../test/helpers/db';
 import { seedImage, seedRecordWithId } from '../seed';
 import { sql } from 'drizzle-orm';
 import { NO_SCROLL_HEIGHT } from '../../src/app/records/[id]/band-geometry';
+import { login } from '../sign-in';
 registerCleanup();
 const post = async (page: Page, path: string, data: unknown) => { const j = await (await page.request.post(path, { data })).json(); return { id: (j.id ?? j.error?.existingId) as string }; };
 /** Captures for review on the collection's real rows (real id, title, About and entries; one stand-in shape otherwise). Run with CAPTURE=1 --project=capture. */
 test('captures at 390 / 1000 / 1440 / 1920 on real records', async ({ page }) => {
   test.skip(process.env.CAPTURE !== '1', 'A capture tool: run with CAPTURE=1');
   test.setTimeout(300_000);
-  await page.goto('/login'); await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 }); await page.getByLabel('Password').pressSequentially(process.env.E2E_PASSWORD ?? 'test-password-for-e2e'); await page.getByRole('button', { name: 'Sign in' }).click(); await expect(page).toHaveURL('/');
+  await login(page);
   const rows: Array<{ id: string; title: string; about: string | null; entries: Array<{ entryDate: string; note: string }> }> = JSON.parse(readFileSync('docs/captures/real-records.json', 'utf8'));
   const artist = await post(page, '/api/artists', { name: 'MGMT' }); trackArtist(artist.id);
   const label = await post(page, '/api/labels', { name: 'Mom + Pop' });

@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { login } from './sign-in';
 
 /**
  * Step 97a, §T.1 to §T.3: the table and grid take the shelf's band and the
@@ -14,7 +15,6 @@ import { expect, test, type Page } from '@playwright/test';
  * Read on the seeded seventeen. Counts that reach the target are measured
  * on the real collection by the survey sheet, not here.
  */
-const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
 /*
   Ink, oklch(0.19 0.008 60), and the label colour, oklch(0.44 0.008 70). The
   browser reports a colour set by a class as lab() and one set inline as the
@@ -23,14 +23,6 @@ const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
 const INK = ['lab(6.18075 1.20374 2.12039)', 'oklch(0.19 0.008 60)'];
 const LABEL_INK = ['lab(35.0433 0.937879 2.8959)', 'oklch(0.44 0.008 70)'];
 const VIEWS = ['table', 'grid'] as const;
-
-async function login(page: Page) {
-  await page.goto('/login');
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
-}
 
 async function open(page: Page, view: (typeof VIEWS)[number], width: number, height = 900) {
   await page.setViewportSize({ width, height });

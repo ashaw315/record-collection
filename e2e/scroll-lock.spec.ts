@@ -2,6 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { seedRecords, removeRecordsFor } from './seed';
 import { getTestDb } from '../test/helpers/db';
 import { sql } from 'drizzle-orm';
+import { login } from './sign-in';
 
 /**
  * **The page does not move when a record comes out, and nothing is locked.**
@@ -17,16 +18,6 @@ import { sql } from 'drizzle-orm';
  * landing and back again on put back — so the region's position is asserted
  * to return, not to hold, and the window's to stay where it was.
  */
-
-const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
-
-async function login(page: Page) {
-  await page.goto('/login');
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
-}
 
 async function pullASpine(page: Page) {
   await page.locator('[data-seat] [data-spine]').first().click();

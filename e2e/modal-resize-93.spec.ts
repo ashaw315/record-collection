@@ -7,6 +7,7 @@ import { WRITE_CAPTURES } from './write-captures';
 import { GRID_FORK, NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
 import { MODAL_CONTROL, MODAL_INSET, MODAL_LABEL_GAP, MODAL_LABEL_LINE, MODAL_ROW, SETTLE_MS, sleeveSquare } from '../src/app/records/[id]/sleeve-modal';
 import { spreadSquare } from '../src/app/records/[id]/sleeve-open';
+import { login } from './sign-in';
 
 registerCleanup();
 
@@ -27,19 +28,10 @@ registerCleanup();
  * its old size. That state is asserted and captured here so it is known.
  */
 
-const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
 const fixture = (file: string) => `data:image/png;base64,${readFileSync(join('test', 'fixtures', 'covers', file)).toString('base64')}`;
 const PHONE = { width: 390, height: 844 };
 const TURNED = { width: 844, height: 390 };
 const CAPTURES = join('docs', 'captures', 'modal-rotation-93');
-
-async function login(page: Page) {
-  await page.goto('/login');
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
-}
 
 async function openSleeve(page: Page, viewport: { width: number; height: number }, gatefold = false) {
   const s = `${Date.now()}-${Math.floor(Math.random() * 1e6)}`;

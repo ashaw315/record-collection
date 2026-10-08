@@ -7,17 +7,9 @@ import { CELL_PADDING } from '../src/app/records/[id]/extended-grid';
 import { FIGURES, SIZE_RATIO, figureBox, smallestFaceRatio } from '../src/app/records/[id]/ornament';
 import { freeHeightSolid } from '../src/app/records/[id]/rules-33';
 import { WIDTHS, readFigures, type FigureReading } from './figure-reading';
+import { login } from './sign-in';
 
 registerCleanup();
-
-const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
-async function login(page: Page) {
-  await page.goto('/login');
-  await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
-  await page.getByLabel('Password').pressSequentially(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page).toHaveURL('/');
-}
 
 async function post(page: Page, path: string, data: unknown) {
   const response = await page.request.post(path, { data, failOnStatusCode: false });
