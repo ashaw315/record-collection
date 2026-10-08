@@ -1,0 +1,3770 @@
+[
+ {
+  "view": "table",
+  "width": 390,
+  "file": "survey-table-0390x844.png",
+  "window": 390,
+  "pageWidth": 390,
+  "pageHeight": 1884,
+  "type": {
+   "40px sans 600": {
+    "count": 1,
+    "carries": {
+     "h1": 1
+    },
+    "sample": "Collection"
+   },
+   "15px sans 400": {
+    "count": 1,
+    "carries": {
+     "p": 1
+    },
+    "sample": "17 records"
+   },
+   "11px sans 400": {
+    "count": 97,
+    "carries": {
+     "link": 1,
+     "button": 96
+    },
+    "sample": "Add record"
+   },
+   "16px sans 400": {
+    "count": 2,
+    "carries": {
+     "label": 2
+    },
+    "sample": "Search the collection"
+   },
+   "12.8px sans 500": {
+    "count": 1,
+    "carries": {
+     "button": 1
+    },
+    "sample": "Search"
+   },
+   "11px mono 400 uppercase": {
+    "count": 4,
+    "carries": {
+     "span": 4
+    },
+    "sample": "Genre"
+   },
+   "13px sans 400": {
+    "count": 66,
+    "carries": {
+     "caption": 1,
+     "table cell": 65
+    },
+    "sample": "Records in the collection"
+   },
+   "11px sans 500 uppercase": {
+    "count": 4,
+    "carries": {
+     "table heading": 4
+    },
+    "sample": "Record"
+   },
+   "13px sans 500": {
+    "count": 17,
+    "carries": {
+     "table cell": 17
+    },
+    "sample": "Believer"
+   },
+   "13px mono 400": {
+    "count": 20,
+    "carries": {
+     "table cell": 20
+    },
+    "sample": "2021"
+   },
+   "10px sans 400": {
+    "count": 1,
+    "carries": {
+     "p": 1
+    },
+    "sample": "1–17 of 17"
+   }
+  },
+  "radii": {
+   "2px": {
+    "link": 1,
+    "select": 1,
+    "button": 48
+   },
+   "3px": {
+    "input (input)": 1
+   },
+   "2.4px": {
+    "button": 1
+   }
+  },
+  "controls": [
+   {
+    "kind": "a",
+    "name": "Add record",
+    "width": 76.4,
+    "height": 28.5
+   },
+   {
+    "kind": "input",
+    "name": "Search title or artist",
+    "width": 160.5,
+    "height": 36
+   },
+   {
+    "kind": "button",
+    "name": "Search",
+    "width": 61.5,
+    "height": 36
+   },
+   {
+    "kind": "select",
+    "name": "Sort: defaultTitle ↑Title ",
+    "width": 120,
+    "height": 36
+   },
+   {
+    "kind": "button",
+    "name": "Rock 10",
+    "width": 57.4,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Electronic 5",
+    "width": 73.5,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Jazz 4",
+    "width": 49.2,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Fusion 3",
+    "width": 57.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Pop 3",
+    "width": 45.8,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Pop Rock 3",
+    "width": 72,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Psychedelic Rock 3",
+    "width": 109.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Downtempo 2",
+    "width": 85.4,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Experimental 2",
+    "width": 88.5,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Rock & Roll 2",
+    "width": 79.2,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "AOR 1",
+    "width": 48.1,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Ambient 1",
+    "width": 66.7,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Blues Rock 1",
+    "width": 79.1,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Classic Rock 1",
+    "width": 86.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Disco 1",
+    "width": 53.6,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Dub 1",
+    "width": 46.6,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Folk Rock 1",
+    "width": 72.5,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Folk, World, & Country 1",
+    "width": 131.6,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Funk / Soul 1",
+    "width": 79.1,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Gospel 1",
+    "width": 60.3,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Hardcore Hip-Hop 1",
+    "width": 113.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Heavy Metal 1",
+    "width": 86.4,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Hip Hop 1",
+    "width": 65.5,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Indie Pop 1",
+    "width": 70.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Indie Rock 1",
+    "width": 75.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Industrial 1",
+    "width": 69.7,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Jazz-Rock 1",
+    "width": 77.4,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Punk 1",
+    "width": 50.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Swing 1",
+    "width": 56.3,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Synth-pop 1",
+    "width": 77.8,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Trip Hop 1",
+    "width": 67.4,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "UK82 1",
+    "width": 53.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Epic 4",
+    "width": 47.2,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Columbia 2",
+    "width": 71.7,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Capitol Records 1",
+    "width": 101.6,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Casablanca 1",
+    "width": 82.5,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Elektra 1",
+    "width": 59.4,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "MCA Records 1",
+    "width": 92.3,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Matador 1",
+    "width": 67.2,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Mom + Pop 1",
+    "width": 82.1,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Profile Records 1",
+    "width": 98,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Verve Forecast 1",
+    "width": 97.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Verve Records 1",
+    "width": 95.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Warner Bros. Records 1",
+    "width": 129.2,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "XL Recordings 1",
+    "width": 95,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Very Friendly Records 3",
+    "width": 130,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Rough Trade 1",
+    "width": 87.6,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Mom 1",
+    "width": 51.6,
+    "height": 26.5
+   },
+   {
+    "kind": "a",
+    "name": "Believer",
+    "width": 45.3,
+    "height": 16
+   },
+   {
+    "kind": "a",
+    "name": "Bitches Brew",
+    "width": 74.6,
+    "height": 16
+   },
+   {
+    "kind": "a",
+    "name": "Bridge Over Troubled Water",
+    "width": 120.9,
+    "height": 35.5
+   },
+   {
+    "kind": "a",
+    "name": "Dire Straits",
+    "width": 62.3,
+    "height": 16
+   },
+   {
+    "kind": "a",
+    "name": "Gaucho",
+    "width": 44.7,
+    "height": 16
+   },
+   {
+    "kind": "a",
+    "name": "Grave New World",
+    "width": 99.3,
+    "height": 16
+   },
+   {
+    "kind": "a",
+    "name": "Loss Of Life",
+    "width": 66.9,
+    "height": 16
+   },
+   {
+    "kind": "a",
+    "name": "Mind Games",
+    "width": 71.9,
+    "height": 16
+   },
+   {
+    "kind": "a",
+    "name": "Never Too Much",
+    "width": 93.8,
+    "height": 16
+   },
+   {
+    "kind": "a",
+    "name": "On The Radio: Greatest Hit",
+    "width": 132.4,
+    "height": 35.5
+   },
+   {
+    "kind": "a",
+    "name": "Psychic",
+    "width": 44.5,
+    "height": 16
+   },
+   {
+    "kind": "a",
+    "name": "Super Rich",
+    "width": 61.5,
+    "height": 16
+   },
+   {
+    "kind": "a",
+    "name": "The Best Of The Blues Proj",
+    "width": 126.8,
+    "height": 35.5
+   },
+   {
+    "kind": "a",
+    "name": "The Hurdy Gurdy Man",
+    "width": 125.8,
+    "height": 16
+   },
+   {
+    "kind": "a",
+    "name": "The Money Store",
+    "width": 97.9,
+    "height": 16
+   },
+   {
+    "kind": "a",
+    "name": "The Soft Parade",
+    "width": 92,
+    "height": 16
+   },
+   {
+    "kind": "a",
+    "name": "Wired",
+    "width": 33.6,
+    "height": 16
+   }
+  ],
+  "chipRows": [
+   {
+    "label": "Genre",
+    "chips": 32,
+    "room": 310,
+    "contents": 2442,
+    "scrollsBy": 2132,
+    "heightNow": 30.5,
+    "gap": 4,
+    "linesIfWrapped": 9,
+    "heightIfWrappedAt44ALine": 428
+   },
+   {
+    "label": "Label",
+    "chips": 13,
+    "room": 310,
+    "contents": 1176,
+    "scrollsBy": 866,
+    "heightNow": 30.5,
+    "gap": 4,
+    "linesIfWrapped": 5,
+    "heightIfWrappedAt44ALine": 236
+   },
+   {
+    "label": "Store",
+    "chips": 2,
+    "room": 230,
+    "contents": 230,
+    "scrollsBy": 0,
+    "heightNow": 30.5,
+    "gap": 4,
+    "linesIfWrapped": 1,
+    "heightIfWrappedAt44ALine": 44
+   }
+  ],
+  "columns": [
+   {
+    "name": "Record",
+    "drawn": true,
+    "width": 163.3
+   },
+   {
+    "name": "Label",
+    "drawn": false,
+    "width": 0
+   },
+   {
+    "name": "Format",
+    "drawn": true,
+    "width": 68.7
+   },
+   {
+    "name": "Year",
+    "drawn": true,
+    "width": 55.2
+   },
+   {
+    "name": "Cond.",
+    "drawn": false,
+    "width": 0
+   },
+   {
+    "name": "Paid",
+    "drawn": true,
+    "width": 70.8
+   }
+  ],
+  "sort": [
+   {
+    "value": "",
+    "text": "Sort: default"
+   },
+   {
+    "value": "title:asc",
+    "text": "Title ↑"
+   },
+   {
+    "value": "title:desc",
+    "text": "Title ↓"
+   },
+   {
+    "value": "artist:asc",
+    "text": "Artist ↑"
+   },
+   {
+    "value": "artist:desc",
+    "text": "Artist ↓"
+   },
+   {
+    "value": "purchaseDate:asc",
+    "text": "Date bought ↑"
+   },
+   {
+    "value": "purchaseDate:desc",
+    "text": "Date bought ↓"
+   },
+   {
+    "value": "purchasePrice:asc",
+    "text": "Price paid ↑"
+   },
+   {
+    "value": "purchasePrice:desc",
+    "text": "Price paid ↓"
+   },
+   {
+    "value": "releaseYear:asc",
+    "text": "Year ↑"
+   },
+   {
+    "value": "releaseYear:desc",
+    "text": "Year ↓"
+   }
+  ],
+  "viewSwitch": [
+   {
+    "drawn": false,
+    "buttons": [
+     "shelf",
+     "table",
+     "grid"
+    ]
+   }
+  ]
+ },
+ {
+  "view": "table",
+  "width": 320,
+  "file": "survey-table-0320x844.png",
+  "window": 320,
+  "pageWidth": 320,
+  "pageHeight": 2508,
+  "type": {
+   "40px sans 600": {
+    "count": 1,
+    "carries": {
+     "h1": 1
+    },
+    "sample": "Collection"
+   },
+   "15px sans 400": {
+    "count": 1,
+    "carries": {
+     "p": 1
+    },
+    "sample": "17 records"
+   },
+   "11px sans 400": {
+    "count": 97,
+    "carries": {
+     "link": 1,
+     "button": 96
+    },
+    "sample": "Add record"
+   },
+   "16px sans 400": {
+    "count": 2,
+    "carries": {
+     "label": 2
+    },
+    "sample": "Search the collection"
+   },
+   "12.8px sans 500": {
+    "count": 1,
+    "carries": {
+     "button": 1
+    },
+    "sample": "Search"
+   },
+   "11px mono 400 uppercase": {
+    "count": 4,
+    "carries": {
+     "span": 4
+    },
+    "sample": "Genre"
+   },
+   "13px sans 400": {
+    "count": 66,
+    "carries": {
+     "caption": 1,
+     "table cell": 65
+    },
+    "sample": "Records in the collection"
+   },
+   "11px sans 500 uppercase": {
+    "count": 4,
+    "carries": {
+     "table heading": 4
+    },
+    "sample": "Record"
+   },
+   "13px sans 500": {
+    "count": 17,
+    "carries": {
+     "table cell": 17
+    },
+    "sample": "Believer"
+   },
+   "13px mono 400": {
+    "count": 20,
+    "carries": {
+     "table cell": 20
+    },
+    "sample": "2021"
+   },
+   "10px sans 400": {
+    "count": 1,
+    "carries": {
+     "p": 1
+    },
+    "sample": "1–17 of 17"
+   }
+  },
+  "radii": {
+   "2px": {
+    "link": 1,
+    "select": 1,
+    "button": 48
+   },
+   "3px": {
+    "input (input)": 1
+   },
+   "2.4px": {
+    "button": 1
+   }
+  },
+  "controls": [
+   {
+    "kind": "a",
+    "name": "Add record",
+    "width": 76.4,
+    "height": 28.5
+   },
+   {
+    "kind": "input",
+    "name": "Search title or artist",
+    "width": 90.5,
+    "height": 36
+   },
+   {
+    "kind": "button",
+    "name": "Search",
+    "width": 61.5,
+    "height": 36
+   },
+   {
+    "kind": "select",
+    "name": "Sort: defaultTitle ↑Title ",
+    "width": 120,
+    "height": 36
+   },
+   {
+    "kind": "button",
+    "name": "Rock 10",
+    "width": 57.4,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Electronic 5",
+    "width": 73.5,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Jazz 4",
+    "width": 49.2,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Fusion 3",
+    "width": 57.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Pop 3",
+    "width": 45.8,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Pop Rock 3",
+    "width": 72,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Psychedelic Rock 3",
+    "width": 109.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Downtempo 2",
+    "width": 85.4,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Experimental 2",
+    "width": 88.5,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Rock & Roll 2",
+    "width": 79.2,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "AOR 1",
+    "width": 48.1,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Ambient 1",
+    "width": 66.7,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Blues Rock 1",
+    "width": 79.1,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Classic Rock 1",
+    "width": 86.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Disco 1",
+    "width": 53.6,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Dub 1",
+    "width": 46.6,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Folk Rock 1",
+    "width": 72.5,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Folk, World, & Country 1",
+    "width": 131.6,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Funk / Soul 1",
+    "width": 79.1,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Gospel 1",
+    "width": 60.3,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Hardcore Hip-Hop 1",
+    "width": 113.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Heavy Metal 1",
+    "width": 86.4,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Hip Hop 1",
+    "width": 65.5,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Indie Pop 1",
+    "width": 70.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Indie Rock 1",
+    "width": 75.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Industrial 1",
+    "width": 69.7,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Jazz-Rock 1",
+    "width": 77.4,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Punk 1",
+    "width": 50.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Swing 1",
+    "width": 56.3,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Synth-pop 1",
+    "width": 77.8,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Trip Hop 1",
+    "width": 67.4,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "UK82 1",
+    "width": 53.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Epic 4",
+    "width": 47.2,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Columbia 2",
+    "width": 71.7,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Capitol Records 1",
+    "width": 101.6,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Casablanca 1",
+    "width": 82.5,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Elektra 1",
+    "width": 59.4,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "MCA Records 1",
+    "width": 92.3,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Matador 1",
+    "width": 67.2,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Mom + Pop 1",
+    "width": 82.1,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Profile Records 1",
+    "width": 98,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Verve Forecast 1",
+    "width": 97.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Verve Records 1",
+    "width": 95.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Warner Bros. Records 1",
+    "width": 129.2,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "XL Recordings 1",
+    "width": 95,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Very Friendly Records 3",
+    "width": 130,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Rough Trade 1",
+    "width": 87.6,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Mom 1",
+    "width": 51.6,
+    "height": 26.5
+   },
+   {
+    "kind": "a",
+    "name": "Believer",
+    "width": 45.3,
+    "height": 16
+   },
+   {
+    "kind": "a",
+    "name": "Bitches Brew",
+    "width": 42.5,
+    "height": 35.5
+   },
+   {
+    "kind": "a",
+    "name": "Bridge Over Troubled Water",
+    "width": 67.5,
+    "height": 55
+   },
+   {
+    "kind": "a",
+    "name": "Dire Straits",
+    "width": 62.3,
+    "height": 16
+   },
+   {
+    "kind": "a",
+    "name": "Gaucho",
+    "width": 44.7,
+    "height": 16
+   },
+   {
+    "kind": "a",
+    "name": "Grave New World",
+    "width": 62.9,
+    "height": 35.5
+   },
+   {
+    "kind": "a",
+    "name": "Loss Of Life",
+    "width": 66.9,
+    "height": 16
+   },
+   {
+    "kind": "a",
+    "name": "Mind Games",
+    "width": 40.5,
+    "height": 35.5
+   },
+   {
+    "kind": "a",
+    "name": "Never Too Much",
+    "width": 58.4,
+    "height": 35.5
+   },
+   {
+    "kind": "a",
+    "name": "On The Radio: Greatest Hit",
+    "width": 64.8,
+    "height": 94
+   },
+   {
+    "kind": "a",
+    "name": "Psychic",
+    "width": 44.5,
+    "height": 16
+   },
+   {
+    "kind": "a",
+    "name": "Super Rich",
+    "width": 61.5,
+    "height": 16
+   },
+   {
+    "kind": "a",
+    "name": "The Best Of The Blues Proj",
+    "width": 67.5,
+    "height": 55
+   },
+   {
+    "kind": "a",
+    "name": "The Hurdy Gurdy Man",
+    "width": 63,
+    "height": 35.5
+   },
+   {
+    "kind": "a",
+    "name": "The Money Store",
+    "width": 64.5,
+    "height": 35.5
+   },
+   {
+    "kind": "a",
+    "name": "The Soft Parade",
+    "width": 48.8,
+    "height": 35.5
+   },
+   {
+    "kind": "a",
+    "name": "Wired",
+    "width": 33.6,
+    "height": 16
+   }
+  ],
+  "chipRows": [
+   {
+    "label": "Genre",
+    "chips": 32,
+    "room": 240,
+    "contents": 2442,
+    "scrollsBy": 2202,
+    "heightNow": 30.5,
+    "gap": 4,
+    "linesIfWrapped": 13,
+    "heightIfWrappedAt44ALine": 620
+   },
+   {
+    "label": "Label",
+    "chips": 13,
+    "room": 240,
+    "contents": 1176,
+    "scrollsBy": 936,
+    "heightNow": 30.5,
+    "gap": 4,
+    "linesIfWrapped": 6,
+    "heightIfWrappedAt44ALine": 284
+   },
+   {
+    "label": "Store",
+    "chips": 2,
+    "room": 230,
+    "contents": 230,
+    "scrollsBy": 0,
+    "heightNow": 30.5,
+    "gap": 4,
+    "linesIfWrapped": 1,
+    "heightIfWrappedAt44ALine": 44
+   }
+  ],
+  "columns": [
+   {
+    "name": "Record",
+    "drawn": true,
+    "width": 93.3
+   },
+   {
+    "name": "Label",
+    "drawn": false,
+    "width": 0
+   },
+   {
+    "name": "Format",
+    "drawn": true,
+    "width": 68.7
+   },
+   {
+    "name": "Year",
+    "drawn": true,
+    "width": 55.2
+   },
+   {
+    "name": "Cond.",
+    "drawn": false,
+    "width": 0
+   },
+   {
+    "name": "Paid",
+    "drawn": true,
+    "width": 70.8
+   }
+  ],
+  "sort": [
+   {
+    "value": "",
+    "text": "Sort: default"
+   },
+   {
+    "value": "title:asc",
+    "text": "Title ↑"
+   },
+   {
+    "value": "title:desc",
+    "text": "Title ↓"
+   },
+   {
+    "value": "artist:asc",
+    "text": "Artist ↑"
+   },
+   {
+    "value": "artist:desc",
+    "text": "Artist ↓"
+   },
+   {
+    "value": "purchaseDate:asc",
+    "text": "Date bought ↑"
+   },
+   {
+    "value": "purchaseDate:desc",
+    "text": "Date bought ↓"
+   },
+   {
+    "value": "purchasePrice:asc",
+    "text": "Price paid ↑"
+   },
+   {
+    "value": "purchasePrice:desc",
+    "text": "Price paid ↓"
+   },
+   {
+    "value": "releaseYear:asc",
+    "text": "Year ↑"
+   },
+   {
+    "value": "releaseYear:desc",
+    "text": "Year ↓"
+   }
+  ],
+  "viewSwitch": [
+   {
+    "drawn": false,
+    "buttons": [
+     "shelf",
+     "table",
+     "grid"
+    ]
+   }
+  ]
+ },
+ {
+  "view": "table",
+  "width": 1440,
+  "file": "survey-table-1440x844.png",
+  "window": 1440,
+  "pageWidth": 1440,
+  "pageHeight": 1460,
+  "type": {
+   "40px sans 600": {
+    "count": 1,
+    "carries": {
+     "h1": 1
+    },
+    "sample": "Collection"
+   },
+   "15px sans 400": {
+    "count": 1,
+    "carries": {
+     "p": 1
+    },
+    "sample": "17 records"
+   },
+   "11px sans 400": {
+    "count": 100,
+    "carries": {
+     "link": 1,
+     "button": 99
+    },
+    "sample": "Add record"
+   },
+   "16px sans 400": {
+    "count": 2,
+    "carries": {
+     "label": 2
+    },
+    "sample": "Search the collection"
+   },
+   "12.8px sans 500": {
+    "count": 1,
+    "carries": {
+     "button": 1
+    },
+    "sample": "Search"
+   },
+   "11px mono 400 uppercase": {
+    "count": 4,
+    "carries": {
+     "span": 4
+    },
+    "sample": "Genre"
+   },
+   "13px sans 400": {
+    "count": 76,
+    "carries": {
+     "caption": 1,
+     "table cell": 75
+    },
+    "sample": "Records in the collection"
+   },
+   "11px sans 500 uppercase": {
+    "count": 6,
+    "carries": {
+     "table heading": 6
+    },
+    "sample": "Record"
+   },
+   "13px sans 500": {
+    "count": 17,
+    "carries": {
+     "table cell": 17
+    },
+    "sample": "Believer"
+   },
+   "13px mono 400": {
+    "count": 27,
+    "carries": {
+     "table cell": 27
+    },
+    "sample": "2021"
+   },
+   "10px sans 400": {
+    "count": 1,
+    "carries": {
+     "p": 1
+    },
+    "sample": "1–17 of 17"
+   }
+  },
+  "radii": {
+   "2px": {
+    "link": 1,
+    "button": 51,
+    "select": 1
+   },
+   "3px": {
+    "input (input)": 1
+   },
+   "2.4px": {
+    "button": 1
+   }
+  },
+  "controls": [
+   {
+    "kind": "a",
+    "name": "Add record",
+    "width": 76.4,
+    "height": 28.5
+   },
+   {
+    "kind": "input",
+    "name": "Search title or artist",
+    "width": 783.5,
+    "height": 36
+   },
+   {
+    "kind": "button",
+    "name": "Search",
+    "width": 61.5,
+    "height": 36
+   },
+   {
+    "kind": "button",
+    "name": "shelf",
+    "width": 41.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "table",
+    "width": 43.6,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "grid",
+    "width": 37.5,
+    "height": 26.5
+   },
+   {
+    "kind": "select",
+    "name": "Sort: defaultTitle ↑Title ",
+    "width": 120,
+    "height": 36
+   },
+   {
+    "kind": "button",
+    "name": "Rock 10",
+    "width": 57.4,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Electronic 5",
+    "width": 73.5,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Jazz 4",
+    "width": 49.2,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Fusion 3",
+    "width": 57.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Pop 3",
+    "width": 45.8,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Pop Rock 3",
+    "width": 72,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Psychedelic Rock 3",
+    "width": 109.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Downtempo 2",
+    "width": 85.4,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Experimental 2",
+    "width": 88.5,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Rock & Roll 2",
+    "width": 79.2,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "AOR 1",
+    "width": 48.1,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Ambient 1",
+    "width": 66.7,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Blues Rock 1",
+    "width": 79.1,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Classic Rock 1",
+    "width": 86.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Disco 1",
+    "width": 53.6,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Dub 1",
+    "width": 46.6,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Folk Rock 1",
+    "width": 72.5,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Folk, World, & Country 1",
+    "width": 131.6,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Funk / Soul 1",
+    "width": 79.1,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Gospel 1",
+    "width": 60.3,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Hardcore Hip-Hop 1",
+    "width": 113.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Heavy Metal 1",
+    "width": 86.4,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Hip Hop 1",
+    "width": 65.5,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Indie Pop 1",
+    "width": 70.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Indie Rock 1",
+    "width": 75.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Industrial 1",
+    "width": 69.7,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Jazz-Rock 1",
+    "width": 77.4,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Punk 1",
+    "width": 50.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Swing 1",
+    "width": 56.3,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Synth-pop 1",
+    "width": 77.8,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Trip Hop 1",
+    "width": 67.4,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "UK82 1",
+    "width": 53.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Epic 4",
+    "width": 47.2,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Columbia 2",
+    "width": 71.7,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Capitol Records 1",
+    "width": 101.6,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Casablanca 1",
+    "width": 82.5,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Elektra 1",
+    "width": 59.4,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "MCA Records 1",
+    "width": 92.3,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Matador 1",
+    "width": 67.2,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Mom + Pop 1",
+    "width": 82.1,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Profile Records 1",
+    "width": 98,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Verve Forecast 1",
+    "width": 97.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Verve Records 1",
+    "width": 95.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Warner Bros. Records 1",
+    "width": 129.2,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "XL Recordings 1",
+    "width": 95,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Very Friendly Records 3",
+    "width": 130,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Rough Trade 1",
+    "width": 87.6,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Mom 1",
+    "width": 51.6,
+    "height": 26.5
+   },
+   {
+    "kind": "a",
+    "name": "Believer",
+    "width": 45.3,
+    "height": 16
+   },
+   {
+    "kind": "a",
+    "name": "Bitches Brew",
+    "width": 74.6,
+    "height": 16
+   },
+   {
+    "kind": "a",
+    "name": "Bridge Over Troubled Water",
+    "width": 157.9,
+    "height": 16
+   },
+   {
+    "kind": "a",
+    "name": "Dire Straits",
+    "width": 62.3,
+    "height": 16
+   },
+   {
+    "kind": "a",
+    "name": "Gaucho",
+    "width": 44.7,
+    "height": 16
+   },
+   {
+    "kind": "a",
+    "name": "Grave New World",
+    "width": 99.3,
+    "height": 16
+   },
+   {
+    "kind": "a",
+    "name": "Loss Of Life",
+    "width": 66.9,
+    "height": 16
+   },
+   {
+    "kind": "a",
+    "name": "Mind Games",
+    "width": 71.9,
+    "height": 16
+   },
+   {
+    "kind": "a",
+    "name": "Never Too Much",
+    "width": 93.8,
+    "height": 16
+   },
+   {
+    "kind": "a",
+    "name": "On The Radio: Greatest Hit",
+    "width": 210.5,
+    "height": 16
+   },
+   {
+    "kind": "a",
+    "name": "Psychic",
+    "width": 44.5,
+    "height": 16
+   },
+   {
+    "kind": "a",
+    "name": "Super Rich",
+    "width": 61.5,
+    "height": 16
+   },
+   {
+    "kind": "a",
+    "name": "The Best Of The Blues Proj",
+    "width": 169.8,
+    "height": 16
+   },
+   {
+    "kind": "a",
+    "name": "The Hurdy Gurdy Man",
+    "width": 125.8,
+    "height": 16
+   },
+   {
+    "kind": "a",
+    "name": "The Money Store",
+    "width": 97.9,
+    "height": 16
+   },
+   {
+    "kind": "a",
+    "name": "The Soft Parade",
+    "width": 92,
+    "height": 16
+   },
+   {
+    "kind": "a",
+    "name": "Wired",
+    "width": 33.6,
+    "height": 16
+   }
+  ],
+  "chipRows": [
+   {
+    "label": "Genre",
+    "chips": 32,
+    "room": 1072,
+    "contents": 2442,
+    "scrollsBy": 1370,
+    "heightNow": 30.5,
+    "gap": 4,
+    "linesIfWrapped": 3,
+    "heightIfWrappedAt44ALine": 140
+   },
+   {
+    "label": "Label",
+    "chips": 13,
+    "room": 1072,
+    "contents": 1176,
+    "scrollsBy": 104,
+    "heightNow": 30.5,
+    "gap": 4,
+    "linesIfWrapped": 2,
+    "heightIfWrappedAt44ALine": 92
+   },
+   {
+    "label": "Store",
+    "chips": 2,
+    "room": 230,
+    "contents": 230,
+    "scrollsBy": 0,
+    "heightNow": 30.5,
+    "gap": 4,
+    "linesIfWrapped": 1,
+    "heightIfWrappedAt44ALine": 44
+   }
+  ],
+  "columns": [
+   {
+    "name": "Record",
+    "drawn": true,
+    "width": 415.3
+   },
+   {
+    "name": "Label",
+    "drawn": true,
+    "width": 256
+   },
+   {
+    "name": "Format",
+    "drawn": true,
+    "width": 121.7
+   },
+   {
+    "name": "Year",
+    "drawn": true,
+    "width": 97.8
+   },
+   {
+    "name": "Cond.",
+    "drawn": true,
+    "width": 103.8
+   },
+   {
+    "name": "Paid",
+    "drawn": true,
+    "width": 125.5
+   }
+  ],
+  "sort": [
+   {
+    "value": "",
+    "text": "Sort: default"
+   },
+   {
+    "value": "title:asc",
+    "text": "Title ↑"
+   },
+   {
+    "value": "title:desc",
+    "text": "Title ↓"
+   },
+   {
+    "value": "artist:asc",
+    "text": "Artist ↑"
+   },
+   {
+    "value": "artist:desc",
+    "text": "Artist ↓"
+   },
+   {
+    "value": "purchaseDate:asc",
+    "text": "Date bought ↑"
+   },
+   {
+    "value": "purchaseDate:desc",
+    "text": "Date bought ↓"
+   },
+   {
+    "value": "purchasePrice:asc",
+    "text": "Price paid ↑"
+   },
+   {
+    "value": "purchasePrice:desc",
+    "text": "Price paid ↓"
+   },
+   {
+    "value": "releaseYear:asc",
+    "text": "Year ↑"
+   },
+   {
+    "value": "releaseYear:desc",
+    "text": "Year ↓"
+   }
+  ],
+  "viewSwitch": [
+   {
+    "drawn": true,
+    "buttons": [
+     "shelf",
+     "table",
+     "grid"
+    ]
+   }
+  ]
+ },
+ {
+  "view": "grid",
+  "width": 390,
+  "file": "survey-grid-0390x844.png",
+  "window": 390,
+  "pageWidth": 390,
+  "pageHeight": 2253,
+  "type": {
+   "40px sans 600": {
+    "count": 1,
+    "carries": {
+     "h1": 1
+    },
+    "sample": "Collection"
+   },
+   "15px sans 400": {
+    "count": 1,
+    "carries": {
+     "p": 1
+    },
+    "sample": "17 records"
+   },
+   "11px sans 400": {
+    "count": 97,
+    "carries": {
+     "link": 1,
+     "button": 96
+    },
+    "sample": "Add record"
+   },
+   "16px sans 400": {
+    "count": 2,
+    "carries": {
+     "label": 2
+    },
+    "sample": "Search the collection"
+   },
+   "12.8px sans 500": {
+    "count": 1,
+    "carries": {
+     "button": 1
+    },
+    "sample": "Search"
+   },
+   "11px mono 400 uppercase": {
+    "count": 4,
+    "carries": {
+     "span": 4
+    },
+    "sample": "Genre"
+   },
+   "16px sans 500": {
+    "count": 17,
+    "carries": {
+     "link": 17
+    },
+    "sample": "Believer"
+   },
+   "13px sans 400": {
+    "count": 51,
+    "carries": {
+     "div": 17,
+     "span": 34
+    },
+    "sample": "Smerz (2)"
+   },
+   "13px mono 400": {
+    "count": 27,
+    "carries": {
+     "span": 27
+    },
+    "sample": "2021"
+   },
+   "10px sans 400": {
+    "count": 1,
+    "carries": {
+     "p": 1
+    },
+    "sample": "1–17 of 17"
+   }
+  },
+  "radii": {
+   "2px": {
+    "link": 1,
+    "select": 1,
+    "button": 48
+   },
+   "3px": {
+    "input (input)": 1
+   },
+   "2.4px": {
+    "button": 1
+   }
+  },
+  "controls": [
+   {
+    "kind": "a",
+    "name": "Add record",
+    "width": 76.4,
+    "height": 28.5
+   },
+   {
+    "kind": "input",
+    "name": "Search title or artist",
+    "width": 160.5,
+    "height": 36
+   },
+   {
+    "kind": "button",
+    "name": "Search",
+    "width": 61.5,
+    "height": 36
+   },
+   {
+    "kind": "select",
+    "name": "Sort: defaultTitle ↑Title ",
+    "width": 120,
+    "height": 36
+   },
+   {
+    "kind": "button",
+    "name": "Rock 10",
+    "width": 57.4,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Electronic 5",
+    "width": 73.5,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Jazz 4",
+    "width": 49.2,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Fusion 3",
+    "width": 57.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Pop 3",
+    "width": 45.8,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Pop Rock 3",
+    "width": 72,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Psychedelic Rock 3",
+    "width": 109.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Downtempo 2",
+    "width": 85.4,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Experimental 2",
+    "width": 88.5,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Rock & Roll 2",
+    "width": 79.2,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "AOR 1",
+    "width": 48.1,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Ambient 1",
+    "width": 66.7,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Blues Rock 1",
+    "width": 79.1,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Classic Rock 1",
+    "width": 86.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Disco 1",
+    "width": 53.6,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Dub 1",
+    "width": 46.6,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Folk Rock 1",
+    "width": 72.5,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Folk, World, & Country 1",
+    "width": 131.6,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Funk / Soul 1",
+    "width": 79.1,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Gospel 1",
+    "width": 60.3,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Hardcore Hip-Hop 1",
+    "width": 113.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Heavy Metal 1",
+    "width": 86.4,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Hip Hop 1",
+    "width": 65.5,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Indie Pop 1",
+    "width": 70.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Indie Rock 1",
+    "width": 75.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Industrial 1",
+    "width": 69.7,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Jazz-Rock 1",
+    "width": 77.4,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Punk 1",
+    "width": 50.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Swing 1",
+    "width": 56.3,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Synth-pop 1",
+    "width": 77.8,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Trip Hop 1",
+    "width": 67.4,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "UK82 1",
+    "width": 53.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Epic 4",
+    "width": 47.2,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Columbia 2",
+    "width": 71.7,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Capitol Records 1",
+    "width": 101.6,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Casablanca 1",
+    "width": 82.5,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Elektra 1",
+    "width": 59.4,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "MCA Records 1",
+    "width": 92.3,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Matador 1",
+    "width": 67.2,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Mom + Pop 1",
+    "width": 82.1,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Profile Records 1",
+    "width": 98,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Verve Forecast 1",
+    "width": 97.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Verve Records 1",
+    "width": 95.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Warner Bros. Records 1",
+    "width": 129.2,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "XL Recordings 1",
+    "width": 95,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Very Friendly Records 3",
+    "width": 130,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Rough Trade 1",
+    "width": 87.6,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Mom 1",
+    "width": 51.6,
+    "height": 26.5
+   },
+   {
+    "kind": "a",
+    "name": "Believer",
+    "width": 55.8,
+    "height": 20
+   },
+   {
+    "kind": "a",
+    "name": "Bitches Brew",
+    "width": 91.8,
+    "height": 20
+   },
+   {
+    "kind": "a",
+    "name": "Bridge Over Troubled Water",
+    "width": 194.4,
+    "height": 20
+   },
+   {
+    "kind": "a",
+    "name": "Dire Straits",
+    "width": 76.7,
+    "height": 20
+   },
+   {
+    "kind": "a",
+    "name": "Gaucho",
+    "width": 55,
+    "height": 20
+   },
+   {
+    "kind": "a",
+    "name": "Grave New World",
+    "width": 122.2,
+    "height": 20
+   },
+   {
+    "kind": "a",
+    "name": "Loss Of Life",
+    "width": 82.3,
+    "height": 20
+   },
+   {
+    "kind": "a",
+    "name": "Mind Games",
+    "width": 88.5,
+    "height": 20
+   },
+   {
+    "kind": "a",
+    "name": "Never Too Much",
+    "width": 115.5,
+    "height": 20
+   },
+   {
+    "kind": "a",
+    "name": "On The Radio: Greatest Hit",
+    "width": 259,
+    "height": 20
+   },
+   {
+    "kind": "a",
+    "name": "Psychic",
+    "width": 54.7,
+    "height": 20
+   },
+   {
+    "kind": "a",
+    "name": "Super Rich",
+    "width": 75.8,
+    "height": 20
+   },
+   {
+    "kind": "a",
+    "name": "The Best Of The Blues Proj",
+    "width": 209,
+    "height": 20
+   },
+   {
+    "kind": "a",
+    "name": "The Hurdy Gurdy Man",
+    "width": 154.8,
+    "height": 20
+   },
+   {
+    "kind": "a",
+    "name": "The Money Store",
+    "width": 120.5,
+    "height": 20
+   },
+   {
+    "kind": "a",
+    "name": "The Soft Parade",
+    "width": 113.3,
+    "height": 20
+   },
+   {
+    "kind": "a",
+    "name": "Wired",
+    "width": 41.4,
+    "height": 20
+   }
+  ],
+  "chipRows": [
+   {
+    "label": "Genre",
+    "chips": 32,
+    "room": 310,
+    "contents": 2442,
+    "scrollsBy": 2132,
+    "heightNow": 30.5,
+    "gap": 4,
+    "linesIfWrapped": 9,
+    "heightIfWrappedAt44ALine": 428
+   },
+   {
+    "label": "Label",
+    "chips": 13,
+    "room": 310,
+    "contents": 1176,
+    "scrollsBy": 866,
+    "heightNow": 30.5,
+    "gap": 4,
+    "linesIfWrapped": 5,
+    "heightIfWrappedAt44ALine": 236
+   },
+   {
+    "label": "Store",
+    "chips": 2,
+    "room": 230,
+    "contents": 230,
+    "scrollsBy": 0,
+    "heightNow": 30.5,
+    "gap": 4,
+    "linesIfWrapped": 1,
+    "heightIfWrappedAt44ALine": 44
+   }
+  ],
+  "columns": [],
+  "sort": [
+   {
+    "value": "",
+    "text": "Sort: default"
+   },
+   {
+    "value": "title:asc",
+    "text": "Title ↑"
+   },
+   {
+    "value": "title:desc",
+    "text": "Title ↓"
+   },
+   {
+    "value": "artist:asc",
+    "text": "Artist ↑"
+   },
+   {
+    "value": "artist:desc",
+    "text": "Artist ↓"
+   },
+   {
+    "value": "purchaseDate:asc",
+    "text": "Date bought ↑"
+   },
+   {
+    "value": "purchaseDate:desc",
+    "text": "Date bought ↓"
+   },
+   {
+    "value": "purchasePrice:asc",
+    "text": "Price paid ↑"
+   },
+   {
+    "value": "purchasePrice:desc",
+    "text": "Price paid ↓"
+   },
+   {
+    "value": "releaseYear:asc",
+    "text": "Year ↑"
+   },
+   {
+    "value": "releaseYear:desc",
+    "text": "Year ↓"
+   }
+  ],
+  "viewSwitch": [
+   {
+    "drawn": false,
+    "buttons": [
+     "shelf",
+     "table",
+     "grid"
+    ]
+   }
+  ]
+ },
+ {
+  "view": "grid",
+  "width": 320,
+  "file": "survey-grid-0320x844.png",
+  "window": 320,
+  "pageWidth": 320,
+  "pageHeight": 2253,
+  "type": {
+   "40px sans 600": {
+    "count": 1,
+    "carries": {
+     "h1": 1
+    },
+    "sample": "Collection"
+   },
+   "15px sans 400": {
+    "count": 1,
+    "carries": {
+     "p": 1
+    },
+    "sample": "17 records"
+   },
+   "11px sans 400": {
+    "count": 97,
+    "carries": {
+     "link": 1,
+     "button": 96
+    },
+    "sample": "Add record"
+   },
+   "16px sans 400": {
+    "count": 2,
+    "carries": {
+     "label": 2
+    },
+    "sample": "Search the collection"
+   },
+   "12.8px sans 500": {
+    "count": 1,
+    "carries": {
+     "button": 1
+    },
+    "sample": "Search"
+   },
+   "11px mono 400 uppercase": {
+    "count": 4,
+    "carries": {
+     "span": 4
+    },
+    "sample": "Genre"
+   },
+   "16px sans 500": {
+    "count": 17,
+    "carries": {
+     "link": 17
+    },
+    "sample": "Believer"
+   },
+   "13px sans 400": {
+    "count": 51,
+    "carries": {
+     "div": 17,
+     "span": 34
+    },
+    "sample": "Smerz (2)"
+   },
+   "13px mono 400": {
+    "count": 27,
+    "carries": {
+     "span": 27
+    },
+    "sample": "2021"
+   },
+   "10px sans 400": {
+    "count": 1,
+    "carries": {
+     "p": 1
+    },
+    "sample": "1–17 of 17"
+   }
+  },
+  "radii": {
+   "2px": {
+    "link": 1,
+    "select": 1,
+    "button": 48
+   },
+   "3px": {
+    "input (input)": 1
+   },
+   "2.4px": {
+    "button": 1
+   }
+  },
+  "controls": [
+   {
+    "kind": "a",
+    "name": "Add record",
+    "width": 76.4,
+    "height": 28.5
+   },
+   {
+    "kind": "input",
+    "name": "Search title or artist",
+    "width": 90.5,
+    "height": 36
+   },
+   {
+    "kind": "button",
+    "name": "Search",
+    "width": 61.5,
+    "height": 36
+   },
+   {
+    "kind": "select",
+    "name": "Sort: defaultTitle ↑Title ",
+    "width": 120,
+    "height": 36
+   },
+   {
+    "kind": "button",
+    "name": "Rock 10",
+    "width": 57.4,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Electronic 5",
+    "width": 73.5,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Jazz 4",
+    "width": 49.2,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Fusion 3",
+    "width": 57.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Pop 3",
+    "width": 45.8,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Pop Rock 3",
+    "width": 72,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Psychedelic Rock 3",
+    "width": 109.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Downtempo 2",
+    "width": 85.4,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Experimental 2",
+    "width": 88.5,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Rock & Roll 2",
+    "width": 79.2,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "AOR 1",
+    "width": 48.1,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Ambient 1",
+    "width": 66.7,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Blues Rock 1",
+    "width": 79.1,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Classic Rock 1",
+    "width": 86.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Disco 1",
+    "width": 53.6,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Dub 1",
+    "width": 46.6,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Folk Rock 1",
+    "width": 72.5,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Folk, World, & Country 1",
+    "width": 131.6,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Funk / Soul 1",
+    "width": 79.1,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Gospel 1",
+    "width": 60.3,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Hardcore Hip-Hop 1",
+    "width": 113.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Heavy Metal 1",
+    "width": 86.4,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Hip Hop 1",
+    "width": 65.5,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Indie Pop 1",
+    "width": 70.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Indie Rock 1",
+    "width": 75.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Industrial 1",
+    "width": 69.7,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Jazz-Rock 1",
+    "width": 77.4,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Punk 1",
+    "width": 50.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Swing 1",
+    "width": 56.3,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Synth-pop 1",
+    "width": 77.8,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Trip Hop 1",
+    "width": 67.4,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "UK82 1",
+    "width": 53.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Epic 4",
+    "width": 47.2,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Columbia 2",
+    "width": 71.7,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Capitol Records 1",
+    "width": 101.6,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Casablanca 1",
+    "width": 82.5,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Elektra 1",
+    "width": 59.4,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "MCA Records 1",
+    "width": 92.3,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Matador 1",
+    "width": 67.2,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Mom + Pop 1",
+    "width": 82.1,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Profile Records 1",
+    "width": 98,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Verve Forecast 1",
+    "width": 97.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Verve Records 1",
+    "width": 95.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Warner Bros. Records 1",
+    "width": 129.2,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "XL Recordings 1",
+    "width": 95,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Very Friendly Records 3",
+    "width": 130,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Rough Trade 1",
+    "width": 87.6,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Mom 1",
+    "width": 51.6,
+    "height": 26.5
+   },
+   {
+    "kind": "a",
+    "name": "Believer",
+    "width": 55.8,
+    "height": 20
+   },
+   {
+    "kind": "a",
+    "name": "Bitches Brew",
+    "width": 91.8,
+    "height": 20
+   },
+   {
+    "kind": "a",
+    "name": "Bridge Over Troubled Water",
+    "width": 194.4,
+    "height": 20
+   },
+   {
+    "kind": "a",
+    "name": "Dire Straits",
+    "width": 76.7,
+    "height": 20
+   },
+   {
+    "kind": "a",
+    "name": "Gaucho",
+    "width": 55,
+    "height": 20
+   },
+   {
+    "kind": "a",
+    "name": "Grave New World",
+    "width": 122.2,
+    "height": 20
+   },
+   {
+    "kind": "a",
+    "name": "Loss Of Life",
+    "width": 82.3,
+    "height": 20
+   },
+   {
+    "kind": "a",
+    "name": "Mind Games",
+    "width": 88.5,
+    "height": 20
+   },
+   {
+    "kind": "a",
+    "name": "Never Too Much",
+    "width": 115.5,
+    "height": 20
+   },
+   {
+    "kind": "a",
+    "name": "On The Radio: Greatest Hit",
+    "width": 259,
+    "height": 20
+   },
+   {
+    "kind": "a",
+    "name": "Psychic",
+    "width": 54.7,
+    "height": 20
+   },
+   {
+    "kind": "a",
+    "name": "Super Rich",
+    "width": 75.8,
+    "height": 20
+   },
+   {
+    "kind": "a",
+    "name": "The Best Of The Blues Proj",
+    "width": 209,
+    "height": 20
+   },
+   {
+    "kind": "a",
+    "name": "The Hurdy Gurdy Man",
+    "width": 154.8,
+    "height": 20
+   },
+   {
+    "kind": "a",
+    "name": "The Money Store",
+    "width": 120.5,
+    "height": 20
+   },
+   {
+    "kind": "a",
+    "name": "The Soft Parade",
+    "width": 113.3,
+    "height": 20
+   },
+   {
+    "kind": "a",
+    "name": "Wired",
+    "width": 41.4,
+    "height": 20
+   }
+  ],
+  "chipRows": [
+   {
+    "label": "Genre",
+    "chips": 32,
+    "room": 240,
+    "contents": 2442,
+    "scrollsBy": 2202,
+    "heightNow": 30.5,
+    "gap": 4,
+    "linesIfWrapped": 13,
+    "heightIfWrappedAt44ALine": 620
+   },
+   {
+    "label": "Label",
+    "chips": 13,
+    "room": 240,
+    "contents": 1176,
+    "scrollsBy": 936,
+    "heightNow": 30.5,
+    "gap": 4,
+    "linesIfWrapped": 6,
+    "heightIfWrappedAt44ALine": 284
+   },
+   {
+    "label": "Store",
+    "chips": 2,
+    "room": 230,
+    "contents": 230,
+    "scrollsBy": 0,
+    "heightNow": 30.5,
+    "gap": 4,
+    "linesIfWrapped": 1,
+    "heightIfWrappedAt44ALine": 44
+   }
+  ],
+  "columns": [],
+  "sort": [
+   {
+    "value": "",
+    "text": "Sort: default"
+   },
+   {
+    "value": "title:asc",
+    "text": "Title ↑"
+   },
+   {
+    "value": "title:desc",
+    "text": "Title ↓"
+   },
+   {
+    "value": "artist:asc",
+    "text": "Artist ↑"
+   },
+   {
+    "value": "artist:desc",
+    "text": "Artist ↓"
+   },
+   {
+    "value": "purchaseDate:asc",
+    "text": "Date bought ↑"
+   },
+   {
+    "value": "purchaseDate:desc",
+    "text": "Date bought ↓"
+   },
+   {
+    "value": "purchasePrice:asc",
+    "text": "Price paid ↑"
+   },
+   {
+    "value": "purchasePrice:desc",
+    "text": "Price paid ↓"
+   },
+   {
+    "value": "releaseYear:asc",
+    "text": "Year ↑"
+   },
+   {
+    "value": "releaseYear:desc",
+    "text": "Year ↓"
+   }
+  ],
+  "viewSwitch": [
+   {
+    "drawn": false,
+    "buttons": [
+     "shelf",
+     "table",
+     "grid"
+    ]
+   }
+  ]
+ },
+ {
+  "view": "grid",
+  "width": 1440,
+  "file": "survey-grid-1440x844.png",
+  "window": 1440,
+  "pageWidth": 1440,
+  "pageHeight": 1098,
+  "type": {
+   "40px sans 600": {
+    "count": 1,
+    "carries": {
+     "h1": 1
+    },
+    "sample": "Collection"
+   },
+   "15px sans 400": {
+    "count": 1,
+    "carries": {
+     "p": 1
+    },
+    "sample": "17 records"
+   },
+   "11px sans 400": {
+    "count": 100,
+    "carries": {
+     "link": 1,
+     "button": 99
+    },
+    "sample": "Add record"
+   },
+   "16px sans 400": {
+    "count": 2,
+    "carries": {
+     "label": 2
+    },
+    "sample": "Search the collection"
+   },
+   "12.8px sans 500": {
+    "count": 1,
+    "carries": {
+     "button": 1
+    },
+    "sample": "Search"
+   },
+   "11px mono 400 uppercase": {
+    "count": 4,
+    "carries": {
+     "span": 4
+    },
+    "sample": "Genre"
+   },
+   "16px sans 500": {
+    "count": 17,
+    "carries": {
+     "link": 17
+    },
+    "sample": "Believer"
+   },
+   "13px sans 400": {
+    "count": 51,
+    "carries": {
+     "div": 17,
+     "span": 34
+    },
+    "sample": "Smerz (2)"
+   },
+   "13px mono 400": {
+    "count": 27,
+    "carries": {
+     "span": 27
+    },
+    "sample": "2021"
+   },
+   "10px sans 400": {
+    "count": 1,
+    "carries": {
+     "p": 1
+    },
+    "sample": "1–17 of 17"
+   }
+  },
+  "radii": {
+   "2px": {
+    "link": 1,
+    "button": 51,
+    "select": 1
+   },
+   "3px": {
+    "input (input)": 1
+   },
+   "2.4px": {
+    "button": 1
+   }
+  },
+  "controls": [
+   {
+    "kind": "a",
+    "name": "Add record",
+    "width": 76.4,
+    "height": 28.5
+   },
+   {
+    "kind": "input",
+    "name": "Search title or artist",
+    "width": 783.5,
+    "height": 36
+   },
+   {
+    "kind": "button",
+    "name": "Search",
+    "width": 61.5,
+    "height": 36
+   },
+   {
+    "kind": "button",
+    "name": "shelf",
+    "width": 41.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "table",
+    "width": 43.6,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "grid",
+    "width": 37.5,
+    "height": 26.5
+   },
+   {
+    "kind": "select",
+    "name": "Sort: defaultTitle ↑Title ",
+    "width": 120,
+    "height": 36
+   },
+   {
+    "kind": "button",
+    "name": "Rock 10",
+    "width": 57.4,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Electronic 5",
+    "width": 73.5,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Jazz 4",
+    "width": 49.2,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Fusion 3",
+    "width": 57.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Pop 3",
+    "width": 45.8,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Pop Rock 3",
+    "width": 72,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Psychedelic Rock 3",
+    "width": 109.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Downtempo 2",
+    "width": 85.4,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Experimental 2",
+    "width": 88.5,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Rock & Roll 2",
+    "width": 79.2,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "AOR 1",
+    "width": 48.1,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Ambient 1",
+    "width": 66.7,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Blues Rock 1",
+    "width": 79.1,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Classic Rock 1",
+    "width": 86.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Disco 1",
+    "width": 53.6,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Dub 1",
+    "width": 46.6,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Folk Rock 1",
+    "width": 72.5,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Folk, World, & Country 1",
+    "width": 131.6,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Funk / Soul 1",
+    "width": 79.1,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Gospel 1",
+    "width": 60.3,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Hardcore Hip-Hop 1",
+    "width": 113.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Heavy Metal 1",
+    "width": 86.4,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Hip Hop 1",
+    "width": 65.5,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Indie Pop 1",
+    "width": 70.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Indie Rock 1",
+    "width": 75.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Industrial 1",
+    "width": 69.7,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Jazz-Rock 1",
+    "width": 77.4,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Punk 1",
+    "width": 50.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Swing 1",
+    "width": 56.3,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Synth-pop 1",
+    "width": 77.8,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Trip Hop 1",
+    "width": 67.4,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "UK82 1",
+    "width": 53.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Epic 4",
+    "width": 47.2,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Columbia 2",
+    "width": 71.7,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Capitol Records 1",
+    "width": 101.6,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Casablanca 1",
+    "width": 82.5,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Elektra 1",
+    "width": 59.4,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "MCA Records 1",
+    "width": 92.3,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Matador 1",
+    "width": 67.2,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Mom + Pop 1",
+    "width": 82.1,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Profile Records 1",
+    "width": 98,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Verve Forecast 1",
+    "width": 97.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Verve Records 1",
+    "width": 95.9,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Warner Bros. Records 1",
+    "width": 129.2,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "XL Recordings 1",
+    "width": 95,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Very Friendly Records 3",
+    "width": 130,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Rough Trade 1",
+    "width": 87.6,
+    "height": 26.5
+   },
+   {
+    "kind": "button",
+    "name": "Mom 1",
+    "width": 51.6,
+    "height": 26.5
+   },
+   {
+    "kind": "a",
+    "name": "Believer",
+    "width": 55.8,
+    "height": 20
+   },
+   {
+    "kind": "a",
+    "name": "Bitches Brew",
+    "width": 91.8,
+    "height": 20
+   },
+   {
+    "kind": "a",
+    "name": "Bridge Over Troubled Water",
+    "width": 194.4,
+    "height": 20
+   },
+   {
+    "kind": "a",
+    "name": "Dire Straits",
+    "width": 76.7,
+    "height": 20
+   },
+   {
+    "kind": "a",
+    "name": "Gaucho",
+    "width": 55,
+    "height": 20
+   },
+   {
+    "kind": "a",
+    "name": "Grave New World",
+    "width": 122.2,
+    "height": 20
+   },
+   {
+    "kind": "a",
+    "name": "Loss Of Life",
+    "width": 82.3,
+    "height": 20
+   },
+   {
+    "kind": "a",
+    "name": "Mind Games",
+    "width": 88.5,
+    "height": 20
+   },
+   {
+    "kind": "a",
+    "name": "Never Too Much",
+    "width": 115.5,
+    "height": 20
+   },
+   {
+    "kind": "a",
+    "name": "On The Radio: Greatest Hit",
+    "width": 259,
+    "height": 20
+   },
+   {
+    "kind": "a",
+    "name": "Psychic",
+    "width": 54.7,
+    "height": 20
+   },
+   {
+    "kind": "a",
+    "name": "Super Rich",
+    "width": 75.8,
+    "height": 20
+   },
+   {
+    "kind": "a",
+    "name": "The Best Of The Blues Proj",
+    "width": 209,
+    "height": 20
+   },
+   {
+    "kind": "a",
+    "name": "The Hurdy Gurdy Man",
+    "width": 154.8,
+    "height": 20
+   },
+   {
+    "kind": "a",
+    "name": "The Money Store",
+    "width": 120.5,
+    "height": 20
+   },
+   {
+    "kind": "a",
+    "name": "The Soft Parade",
+    "width": 113.3,
+    "height": 20
+   },
+   {
+    "kind": "a",
+    "name": "Wired",
+    "width": 41.4,
+    "height": 20
+   }
+  ],
+  "chipRows": [
+   {
+    "label": "Genre",
+    "chips": 32,
+    "room": 1072,
+    "contents": 2442,
+    "scrollsBy": 1370,
+    "heightNow": 30.5,
+    "gap": 4,
+    "linesIfWrapped": 3,
+    "heightIfWrappedAt44ALine": 140
+   },
+   {
+    "label": "Label",
+    "chips": 13,
+    "room": 1072,
+    "contents": 1176,
+    "scrollsBy": 104,
+    "heightNow": 30.5,
+    "gap": 4,
+    "linesIfWrapped": 2,
+    "heightIfWrappedAt44ALine": 92
+   },
+   {
+    "label": "Store",
+    "chips": 2,
+    "room": 230,
+    "contents": 230,
+    "scrollsBy": 0,
+    "heightNow": 30.5,
+    "gap": 4,
+    "linesIfWrapped": 1,
+    "heightIfWrappedAt44ALine": 44
+   }
+  ],
+  "columns": [],
+  "sort": [
+   {
+    "value": "",
+    "text": "Sort: default"
+   },
+   {
+    "value": "title:asc",
+    "text": "Title ↑"
+   },
+   {
+    "value": "title:desc",
+    "text": "Title ↓"
+   },
+   {
+    "value": "artist:asc",
+    "text": "Artist ↑"
+   },
+   {
+    "value": "artist:desc",
+    "text": "Artist ↓"
+   },
+   {
+    "value": "purchaseDate:asc",
+    "text": "Date bought ↑"
+   },
+   {
+    "value": "purchaseDate:desc",
+    "text": "Date bought ↓"
+   },
+   {
+    "value": "purchasePrice:asc",
+    "text": "Price paid ↑"
+   },
+   {
+    "value": "purchasePrice:desc",
+    "text": "Price paid ↓"
+   },
+   {
+    "value": "releaseYear:asc",
+    "text": "Year ↑"
+   },
+   {
+    "value": "releaseYear:desc",
+    "text": "Year ↓"
+   }
+  ],
+  "viewSwitch": [
+   {
+    "drawn": true,
+    "buttons": [
+     "shelf",
+     "table",
+     "grid"
+    ]
+   }
+  ]
+ }
+]

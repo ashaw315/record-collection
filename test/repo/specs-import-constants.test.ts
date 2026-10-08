@@ -97,6 +97,7 @@ const GOVERNED = [
   'e2e/sheet/cover-boxes.sheet.ts',
   'e2e/sheet/record-modal.sheet.ts',
   'e2e/sheet/record-modal-92.sheet.ts',
+  'e2e/sheet/collection-survey.sheet.ts',
   /*
     Found by the enumeration's fourth pattern (6 Oct): specs that reach the
     record screen through a path handed to a helper. Five of them typed 900.

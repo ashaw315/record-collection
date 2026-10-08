@@ -36468,3 +36468,142 @@ them; I do not touch them.
   table and the grid properly, in the record page's language. So the
   radii and the 28 controls are not a defect list; the design absorbs
   them.
+
+## The gate on 6b215b9: every test green, the judged line not, and not pushed (8 Oct)
+
+Gate: full suites, both projects, through the runner, on 6b215b9 (steps 95
+and 96, the tightened scroll check, the race fix, step 84's pin at 971).
+
+- Unit: `4114 passed, 2 skipped, tree unchanged — OK`.
+- Playwright: `731 passed, 1 flaky, 12 skipped, ledger clean, tree CHANGED
+  — NOT OK — the tree changed during the run
+  (docs/design/HANDOFF-wall-and-pull.md, docs/design/WITHDRAWALS.md,
+  docs/design/Wall and Pull - build target.dc.html) — not a result`.
+- Elapsed 32m 45s. Swap-outs during the run: 15,074,802 pages, the count
+  moving in 60 of 66 samples. Load, recorded only: 3.2 at the start,
+  median 12.7, peak 46.9.
+
+**Why it was not pushed.** The instruction was to push if green, and the
+line the runner prints is NOT OK. A Design export landed in the working
+tree while Playwright ran.
+
+**What the changed files could and could not have affected.** All three
+are design documents. The only thing in either suite that reads them is
+the unit suite's index check, and the unit suite had finished, on an
+unchanged tree, before Playwright began. No Playwright spec reads them. So
+on the facts this run's 731 are about the code at 6b215b9. The guard does
+not know that: it fingerprints the whole tree, and it was built to refuse
+exactly this without asking what changed. Whether a change confined to
+files a suite does not read should fail that suite's result is a decision
+about the guard, and not mine to make by pushing past it.
+
+**This will keep happening.** Design's exports land in this working tree
+whenever they are saved, a gate takes half an hour, and three exports
+landed during the last three runs.
+
+**The one flaky test was not a pin.** `frame-planes.spec.ts:400`, §62 at
+960, failed its first attempt on `apiRequestContext.post: read ECONNRESET`,
+a setup request, and passed on retry. It read no geometry on the failed
+attempt. So step 84's 929 is still the only pin a layout change of this
+session has moved, and the count of tests pinning absolute page geometry
+was not taken: it was asked for if this were a second.
+
+## This band's decorative elements have broken function twice (8 Oct)
+
+In the narrow rail, two elements that draw a mark and do nothing else have
+each interfered with something:
+
+1. the `rail-views` rule, which below the fork drew nothing and pulled the
+   view names 4px over the search field (step 95);
+2. the current view's bar, which sat inside SHELF's tap area and took the
+   taps on it (step 96).
+
+Neither was found by looking. **The next mark added to this band is
+hit-tested and measured for layout before it is believed**: what is under
+each point of the controls near it, and whether it is a flex item. The
+`rail-facts` vertical is the third such element in the band, out of flow
+and so far harmless.
+
+## T is in both grammars; and the stylesheet's radius is deliberately left (8 Oct)
+
+**T, the table and grid target's prefix**, is accepted by the shared
+parser's `SECTION_ID` and by the withdrawals' bullet grammar, in the shape
+of M's commit (ee39ebd; two tests, red first). Checked free first: no
+index input has T as its key, no entry and no line of the handoff carries
+a T id, and the only file with §T ids is the target itself. **The target
+is ignored by git and untracked. Its `.gitignore` exception line lands in
+the commit that makes it an input, not before and not after**: a tracked
+file reports its changes whatever the ignore rules say, but an untracked,
+ignored one reports nothing, so an input without the line would be read as
+absent and pass.
+
+**The app's stylesheet still defines a radius of 0.1875rem, 3px
+(`globals.css`, `--radius`), and it is to stay as it is.** "No radius" is
+ruled as part of the control vocabulary (the record page's §9.3, repeated
+by §G and §M.6), not app-wide. The table and grid views take squareness
+from their own target when it is built, scoped to those views. Squaring
+the stylesheet's token would restyle manage, stats and the record form,
+which nobody has looked at and for which there are no captures to compare.
+Those screens take it when they are ruled. Do not tidy it.
+
+## The Collection survey's figures, for the table and grid target (8 Oct)
+
+Generated from the build on the real collection, read-only, by
+`e2e/sheet/collection-survey.sheet.ts`: `docs/captures/collection-survey/`
+holds `survey.md` (per view and width: every text size with what carries
+it, every radius with what has it, every control with its size, each chip
+row, the columns and the sort orders), `survey.json`, and six full-page
+captures. The headline figures:
+
+- **Page width** equals the window's at 390, 320 and 1440, in both views.
+- **Type**, table at 390: 40 sans 600 (the heading), 16 sans (2, form
+  labels), 15 sans (the count), 13 sans 400 (66, table cells) and 500 (17,
+  the titles), 13 mono (20, the figures), 12.8 sans 500 (the Search
+  button), 11 sans (97: the chips and Add record), 11 mono uppercase (4,
+  the filter rows' labels), 11 sans 500 uppercase (4, column headings), 10
+  sans (the pagination line).
+- **Radii:** 2px on 48 buttons, the select and the Add record link; 3px on
+  the search input; 2.4px on one button (Search).
+- **Controls:** 69 at 390 on the real collection (the seeded seventeen
+  gave 28: the real one has 32 genres and 13 labels as chips). All 69 are
+  under 44 tall, at 16, 26.5, 28.5, 35.5 and 36.
+- **Chip rows scroll sideways inside themselves** at every width:
+
+| row | chips | scrolls by, at 390 | at 320 | at 1440 |
+|---|---|---|---|---|
+| Genre | 32 | 2,132 | 2,202 | 1,370 |
+| Label | 13 | 866 | 936 | 104 |
+| Store | 2 | 0 | 0 | 0 |
+
+- **What wrapping them would cost, at 44 a line** (the hit area's floor,
+  not the 11px type's line), with the chips at their present widths and
+  the present 4 gap:
+
+| row | lines at 390 | height | lines at 320 | height | lines at 1440 | height |
+|---|---|---|---|---|---|---|
+| Genre | 9 | 428 | 13 | 620 | 3 | 140 |
+| Label | 5 | 236 | 6 | 284 | 2 | 92 |
+
+  Each row is 30.5 tall today. Wider chips, which a 44 hit area with its
+  own padding would give, mean more lines than these.
+
+- **Columns and sort orders.** Drawn at 390 and 320: Record, Format, Year,
+  Paid. In the markup and not drawn there: Label, Cond. At 1440 all six.
+  The Sort select offers five orders, each both ways:
+
+| order | its column at 1440 | at 390 and 320 |
+|---|---|---|
+| Title | Record | Record |
+| Artist | none of its own; the artist is the Record cell's second line | the same |
+| Year | Year | Year |
+| Price paid | Paid | Paid |
+| Date bought | none, at any width | none |
+
+  So no sort order loses its column between wide and narrow: the two
+  columns dropped at narrow, Label and Cond., are not sort orders. Two
+  orders have no column to carry them at any width: Date bought, and
+  Artist, which sorts by a line inside another column.
+
+- **The view switch** is in the markup and not drawn below 640. Nothing is
+  unreachable: from table or grid the shelf is MENU then Collection, and
+  table and grid are both in the shelf's band.
