@@ -82,8 +82,13 @@ test('at 390px the shelf is the far view in one column, the rail one band, and a
     expect(addLink.y, 'one row').toBeLessThan(shelfLink.y + shelfLink.height);
     expect(addLink.y + addLink.height, 'one row').toBeGreaterThan(shelfLink.y);
   }
-  /* Nothing overflows the width: the page does not scroll sideways. */
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
+  /*
+    Nothing overflows the width: the page does not scroll sideways. Exactly.
+    This allowed one pixel (`scrollWidth <= innerWidth + 1`), and one pixel
+    was the size of the defect it then missed: at 320 the page was 321. A
+    tolerance sized to admit the bug. No tolerance now.
+  */
+  expect(await page.evaluate(() => [document.documentElement.scrollWidth, window.innerWidth]), 'the page is as wide as the window').toEqual([390, 390]);
 
   /* A tap goes to the record screen; nothing is pulled. */
   /*

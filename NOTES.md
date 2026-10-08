@@ -36202,3 +36202,65 @@ such selects, root hydrated, the address's sort, ready state) instead of
 collection-widths on both projects, `51 passed, 2 skipped, ledger clean,
 tree unchanged — OK`; app and repo unit tests; typecheck, lint (0
 errors), build. Not pushed: no gate.
+
+## After step 95: the tolerance, the two causes, the second rule, the tree guard (7 Oct)
+
+**A new shape in the family: a guard in the right place with a tolerance
+sized to admit the bug.** Every other instance logged is a guard running
+where the thing is not. `shelf-narrow.spec.ts` checked the right page at
+the right width for the right thing, sideways overflow, and allowed one
+pixel; the defect it then missed was one pixel. It is tightened to
+equality, not left with a comment: a known-bad guard is worse than none.
+To recognise it separately: when a tolerance exists, ask what size of
+defect it admits, and whether that size is a real defect here.
+
+**The overlap and the overflow: one leftover, and two causes. The
+arithmetic closes, and it closes the other way from how it was put to me.**
+The leftover rule's −40 of margin against 36 of gaps is the −4 overlap.
+And 274.8 + 4 is 278.8, the row's minimum without it. But the overflow is
+not its doing: 274.8 + 46.2 is 321.0 WITH the leftover in the row; without
+it the one row would have needed 278.8 + 46.2, which is 325, five over a
+320 window and not one. So the leftover caused the overlap and was HIDING
+four fifths of the overflow. The overflow's cause is the one row itself,
+which cannot hold a label that will not shrink beside 278.8 of fixed
+items. Removing the leftover alone would have made the page wider. "We
+removed one thing that was doing two things" is nearly right and wrong in
+the direction that matters: one thing was doing one harm and masking most
+of another.
+
+**The leftover was a ruled line.** It is `rail-views`, one of §W.31's six
+structural lines ("the two verticals and the rail's two"), ruled for the
+column. Below the fork it had no width and drew nothing, so hiding it
+there changes no drawing; `page-lines.test.tsx` still counts it in the
+markup.
+
+**The vertical rule down the band's right edge is ruled too, for a place
+that is not there below the fork.** It is `rail-facts`, §W.31: "the
+vertical between the rail and the facts column, full-bleed from the nav to
+the page foot". Its element is absolutely placed at the right edge of the
+rail's wrapper. Above the fork the wrapper is the 148 column and the rule
+runs the page's height between two columns. Below it the wrapper is the
+band, so the rule is 1px wide and 127 tall at x = 389, at the window's
+right edge, between nothing and nothing: it is not full-bleed and there is
+no rail column or facts column for it to stand between. §W.24 withdraws
+"the filter lines and the rule" below the fork and names neither this one
+nor `rail-views`. **Same species as the one removed**: a column's line
+that survived the collapse to a band. It differs in one respect that
+matters to a gate: it is out of flow, so it affects no layout and removing
+it could shift nothing. Not changed: whether the band keeps it is a
+ruling.
+
+**Add record sits off the view names' line, measured.** Shelf's link is
+inline, a 14 tall box from 146.5 to 160.5; Add record's is a block, 16.5
+tall from 147 to 163.5, both on a 16.5 line and 11px type. Their tops
+differ by 0.5 and their feet by 3. The texts' baselines were not measured.
+For Design.
+
+**The tree guard fired for real a day after it was built.** During step
+95's unit run Design's export landed, and the judged line read `1575
+passed, 1 failed, tree CHANGED — NOT OK — 1 failed, and the tree changed
+during the run (docs/design/HANDOFF-wall-and-pull.md,
+docs/design/WITHDRAWALS.md, docs/design/Wall and Pull - build
+target.dc.html) — not a result`. Before the guard that run would have
+read as one unexplained failure. The drop was taken and the run repeated
+on a still tree.
