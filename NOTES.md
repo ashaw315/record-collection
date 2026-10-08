@@ -37486,3 +37486,43 @@ push. The two `stats` failures were the sign-in and not the empty
 collection: `expect(page).toHaveURL('/')` received `/login`. I wrote a
 guess about them here before reading the error and have replaced it. So
 three of these six are one cause, the sign-in helper's wait under load.
+
+## GATE CONDITION, corrected: the mark judges a red line only (8 Oct, the coordinator's error)
+
+Recorded as the coordinator's correction to its own condition. It wrote
+"suspect past about 3.2 seconds a test" as though it applied to any
+result. **It applies to a red result only.** The mark is for deciding
+whether a red line can be trusted: load makes tests fail and not pass, so
+a red line on a slow machine may be the machine, and a green line on a
+slow machine is stronger evidence and not weaker. The one exception is an
+assertion that something does NOT appear in a window, which a slow
+machine can satisfy by being late; that shape is already named in this
+file.
+
+So the gate on `74b3a8a` was pushed at 3.23 seconds a test (2,546 seconds
+over 789 tests). The rate was the coordinator's arithmetic; I reported
+the elapsed time and the count and held, which was the condition as then
+written.
+
+What that run was, against the gate that went red on `c8dffb9`:
+
+| | `c8dffb9`, red | `74b3a8a`, OK |
+|---|---|---|
+| seconds a test | 2.99 | 3.23 |
+| load | 13 to 21 | 6.96 at the start, a peak of 41, 15.09 at the end |
+| swap-outs | 42.6 million | 54.5 million |
+| the two shelf tests | failed | passed first time |
+
+The hardest conditions of the day and the cleanest result.
+
+## The queue after the push, reordered (8 Oct, the coordinator's)
+
+1. **The sign-in helper's wait**, first, because one cause sits behind
+   three tests on the list above (`stats.spec.ts:206` and `:262`,
+   `scroll-lock.spec.ts:53`).
+2. **Step 100**, with its own gate: the search field at 44 on all three
+   views, Add record in ink, the Label-and-Cond. line only when it has
+   text. It touches the shelf and re-pins three page lengths.
+3. `wall-first-paint.spec.ts:242` and the two `cover-travel-92` returns,
+   together, by the travel assertions' treatment.
+4. The five screen surveys, in one pass.
