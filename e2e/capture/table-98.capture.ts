@@ -19,7 +19,7 @@ registerCleanup();
  * Each file is named by the figures that differ: the width, the rows shown
  * of the fixture's count, and the shortest and tallest row.
  *
- * Run with --project=capture.
+ * Run with CAPTURE=1 --project=capture.
  */
 const PASSWORD = process.env.E2E_PASSWORD ?? 'test-password-for-e2e';
 const OUT = join('docs', 'captures', 'table-98');
@@ -35,6 +35,13 @@ async function login(page: Page) {
 }
 
 test('a full page of 50 from a 200-record fixture, under a genre filter, at 390 and 1440', async ({ page }) => {
+  /*
+    The capture project is part of a bare `npx playwright test`, so a
+    capture with no guard runs in every gate. This one did, on 8 Oct: it
+    rewrote the committed captures mid-run and the gate read `tree CHANGED`.
+    Every other file here has this line; this one was written without it.
+  */
+  test.skip(process.env.CAPTURE !== '1', 'A capture tool: run with CAPTURE=1');
   test.setTimeout(180_000);
   mkdirSync(OUT, { recursive: true });
   await login(page);

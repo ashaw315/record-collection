@@ -37185,3 +37185,73 @@ grid: the band's search field, drawn 34.
    two.
 4. **No record in the collection has a fitted cover**, so the fitted
    treatment is shown only by fixtures, as on the record page.
+
+## The gate on 9588f36: every test passed, and the judged line is NOT OK, by my capture tool (8 Oct)
+
+Gate: full suites, both projects, on `9588f36` (steps 97a, 97b, 98, 99,
+the drop at `1077ce6`, and the three machinery items from `a54705c`).
+
+- `npm test`: `4178 passed, 2 skipped, tree unchanged — OK`, 5m 18s.
+- `npx playwright test`: `775 passed, 1 flaky, 12 skipped, ledger clean,
+  tree CHANGED — NOT OK`. 34m 32s. Swap-outs rose by about 18.4 million
+  over the run. Load 4.32 at the start, 21.97 at the end.
+
+**Why the tree changed.** `e2e/capture/table-98.capture.ts` ran inside the
+gate and rewrote the three committed files in `docs/captures/table-98/`.
+The capture project is part of a bare `npx playwright test`; every other
+capture file skips itself unless `CAPTURE=1`, and I wrote this one without
+that line. The rewritten captures had the same row heights and a
+different count line, "200 of 224 records" for 217, because other specs'
+records were in the database when it ran. It also put 200 records into
+the shared database for a few seconds mid-gate and took them out.
+
+The guard did its job: no test failed, and the line still says NOT OK.
+Restored the committed captures, added the skip, confirmed the file now
+reports `1 skipped`. **Not pushed.** The run that would be OK has not
+been made; whether this one is pushed on is the coordinator's call.
+
+**Flaky, outside this diff:** `lookup-flows.spec.ts:1656` on mobile, "a
+release with runout variants says what a match identifies", failed once
+and passed on retry.
+
+## The 46 at 390 is an empty line's margin, not a second formula (8 Oct)
+
+The coordinator read the table's three heights as one formula, 7 plus
+19.5 a line: 26.5 lifted to 44, then 46, then 65.5. It fits the 390
+figures and not the 1440 ones, where a title and an artist are two lines
+and the row is 44, which step 98's own test holds exactly.
+
+What the source says, read and not yet measured on the page:
+
+- A row is its lines at 19.5, plus 2 above, 2 below and the 1 hairline.
+  Two lines: 39 + 5 = 44. Three: 58.5 + 5 = 63.5.
+- Below 768 the Record cell also renders the line that stands in for the
+  Label and Cond. columns, with 2 of margin above it. With text it is a
+  third line: 58.5 + 2 + 5 = 65.5.
+- **With no label and no condition that line is still rendered, empty**,
+  and its 2 of margin remains: 39 + 2 + 5 = 46.
+
+So 46 is a two-line row carrying an empty element's margin. It meets "at
+least 44 and as tall as their content" and it is 2 taller than the same
+row at 1440 for no content. Rendering the line only when it has text
+would make it 44. Not changed: reported for routing.
+
+## FAMILY, its purest instance: a test that passes because its subject is gone (8 Oct)
+
+`collection-filters.spec.ts` held "the grid toggle is hidden on a phone,
+but a grid URL still renders" with `expect(the view switch).toBeHidden()`.
+Step 97a removed the switch. `toBeHidden` passes on an element that does
+not exist, so the test went on passing, under a name §T.1 had made false:
+the grid is now reachable on a phone, from the band.
+
+Beside the others in this file: the env var that was non-empty, the two
+token strings that differed, the source text that contained
+`castShadow`. Those asserted a proxy one layer below the claim. This one
+asserted an absence, and absence is satisfied by deletion. **An assertion
+that something is hidden, absent or zero needs its subject shown to exist
+first**, which is the positive control again, in a test.
+
+Rewritten to what replaced it: on a phone the grid is reached by the
+band's view name, the filter survives the change of view, and a grid URL
+renders. It was found only because I read every test in the files the
+step broke, not because anything failed.
