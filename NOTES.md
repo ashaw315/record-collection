@@ -36111,3 +36111,94 @@ have both been wrong. First capture what the Sort select holds at the
 moment it reads empty and what the page's state is then (options not yet
 rendered, rendered but empty, the request not returned, the component
 remounted); then choose the guard.
+
+## Step 95 built: the narrow rail in two rows (7 Oct)
+
+Adam's ruling, superseding §W.24's one row: "search and the rest of the
+record page items should be on separate lines, it reads awkward." Built
+before Design's sentence landed, as instructed; the drop with step 95 and
+`W.24/rail-one-row` was taken during the unit run.
+
+**Built**, in the narrow stylesheet in `WallComposition.tsx`: the band
+wraps; the search form takes the whole first row; the three view names
+start the second row on the left inset and Add record ends it on the right
+inset. No width is clamped.
+
+| | 390 before | 390 after | 320 before | 320 after |
+|---|---|---|---|---|
+| search field width | 115.2 | 350 | 46.2 | 280 |
+| band height | 84.5 | 126.5 | 84.5 | 126.5 |
+| band and page width | 390 | 390 | 321 | 320 |
+| field against SHELF | 4.0 overlap | SHELF is beneath it | 4.0 overlap | beneath it |
+
+The search field's underline no longer meets SHELF's: every view name's
+box starts at or below the field's foot, asserted.
+
+**Two causes found, not clamped over.**
+
+- *The 4px overlap.* The rule between the search form and the view names
+  (`hr[data-line="rail-views"]`) stayed a flex item below the fork, with no
+  width and the column's negative side margins of 20, between two 18 gaps:
+  18 − 40 + 18 is −4. It is not displayed below the fork now. Shown by
+  staging it back: the page is wider than the window again and the test
+  goes red.
+- *The 321 in a 320 window.* The one row's contents could not fit: the
+  fixed items need 274.8 and the SEARCH label will not go under 46.2. The
+  band's grid track took its minimum from that, so the band and the page
+  were 321. On two rows the widest row needs 278.8.
+- *Why nothing caught it.* `shelf-narrow.spec.ts` asserted "nothing
+  overflows the width" as `scrollWidth <= innerWidth + 1`. The one pixel
+  of tolerance was exactly the overflow. The new test asserts equality.
+  The old line is left as it was: it still passes, and its tolerance is
+  now named here.
+
+**Tested.** `e2e/shelf-narrow.spec.ts`, two tests added, at 390 and 320 on
+the mobile project, red against the one row (115.2 for 350; 321 for 320):
+the page and the band exactly the window's width, the field on the insets
+at the band's width, all four links beneath the field, SHELF on the left
+inset and Add record ending on the right, no two of the six boxes
+overlapping, the names 18 apart, the band under 160. The existing test,
+band under 160 and Add record on the views' line, passes unchanged.
+
+**A component test of the old contract was rewritten.**
+`WallComposition.test.tsx` pinned `flex-wrap: nowrap`, "the search
+yielding". It now states the two-row rules and is named as what it is, a
+read of the stylesheet's text.
+
+**Measured for the Collection screen's own ruling, not asserted: tap
+areas.** What a tap lands on, found by asking the page what is under each
+point around the link:
+
+| link | drawn | a tap lands on it over |
+|---|---|---|
+| Shelf, Table | 38.5 x 14.3 | about 40 x 16 |
+| Grid | 30.8 x 14.3 | about 32 x 16 |
+| Add record | 77 x 16.5 | about 78 x 18 |
+
+The same at 390 and 320. The scan steps in whole pixels and so reads up to
+2 over; the tap area is the drawn box. §9.3 rules every control 44 tall.
+Whether these are §9.3's controls is Design's to say.
+
+**Seen in the captures, not changed:** the band draws a vertical rule down
+its right edge, the column's own border; and Add record's box is 16.5 tall
+against the view names' 14.3, so their texts do not sit on one line.
+
+**Captures from the build:** `docs/captures/collection-band/`,
+`band-0390-two-rows-search350-h126.5.png` and
+`band-0320-two-rows-search280-h126.5.png`.
+
+**The collection-filters race: measured, a third guess killed, no wait
+added.** The guess was that the test read the URL before the sort's
+navigation had landed. With every navigation delayed 400ms the URL it
+reads still carries genre, label, sort and view, and a cold page of it has
+the select at `releaseYear:desc`, 11 options, its root hydrated. So that
+is not it, and the empty value was not reproduced. The assertion is
+unchanged in what it requires; a failure now prints what the select and
+the page held (options, selected index, selected-by-attribute, how many
+such selects, root hydrated, the address's sort, ready state) instead of
+`""`. The next time it fails, it says what was missing.
+
+**Step level:** collection-filters, shelf-narrow, shelf, nav-mobile and
+collection-widths on both projects, `51 passed, 2 skipped, ledger clean,
+tree unchanged — OK`; app and repo unit tests; typecheck, lint (0
+errors), build. Not pushed: no gate.

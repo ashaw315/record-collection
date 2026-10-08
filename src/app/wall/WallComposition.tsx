@@ -63,21 +63,34 @@ export function WallComposition({
         /*
           §W.24: below the fork the far view is bounded by width, not height,
           so §W.13's argument for the column does not hold and the band is
-          correct there — one row of search, the three views and Add record;
-          the filter lines and the rule withdrawn. Add record is a row item
-          (§W.26): the wrap was a column's width rule arriving in a layout
-          with horizontal room and no vertical room, so the search yields
-          instead. The number is the fork's own (view-fork.ts), so the band
+          correct there; the filter lines and the rule withdrawn.
+
+          **Two rows, by Adam's ruling, superseding §W.24's one**: "search
+          and the rest of the record page items should be on separate lines,
+          it reads awkward." Search has the band's width; the three views and
+          Add record are the row beneath, the views from the left inset and
+          Add record to the right one, still a row item beside them (§W.26).
+
+          Two things the one row did, measured before it went. The rule
+          between the form and the views stayed a flex item with no width
+          and its column's negative side margins, which drew the views 4px
+          over the search field: it is not drawn here at all now. And the
+          row could not fit a 320 window: its fixed items need 274.8 and the
+          SEARCH label will not go under 46.2, which is 321, so the band and
+          the page were one pixel wider than the window. Nothing here clamps
+          a width; on two rows nothing needs more than the window has. The number is the fork's own (view-fork.ts), so the band
           and the far view cannot disagree. The same query decides the
           unmeasured first paint, so the server's paint, the client's first
           paint and the settled view are all the same view.
         */
         <style data-narrow-shelf="">{`@media (max-width: ${nearViewMinWidth() - 1}px) {
   [data-composition] { grid-template-columns: 1fr; }
-  [data-testid="wall-rail"] { flex-direction: row; align-items: flex-end; flex-wrap: nowrap; gap: 18px; width: auto !important; padding: 12px 20px 16px !important; }
-  [data-testid="wall-rail"] form { margin-bottom: 0; flex: 1 1 0; min-width: 0; }
+  [data-testid="wall-rail"] { flex-direction: row; align-items: flex-end; flex-wrap: wrap; gap: 18px; width: auto !important; padding: 12px 20px 16px !important; }
+  [data-testid="wall-rail"] form { margin-bottom: 0; flex: 1 1 100%; min-width: 0; }
   [data-testid="wall-rail"] ul { flex-direction: row; flex: none; }
   [data-testid="wall-rail"] a { margin-top: 0; white-space: nowrap; }
+  [data-testid="wall-rail"] > a { margin-left: auto; }
+  [data-testid="wall-rail"] > hr { display: none; }
   [data-rail-filter] { display: none; }
   [data-rail-rule] { display: none; }
 }

@@ -1,4 +1,7 @@
+import { mkdirSync } from 'node:fs';
+import { join } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
+import { WRITE_CAPTURES } from './write-captures';
 import { registerCleanup, trackArtist } from './cleanup';
 import { isFarView, nearViewMinWidth } from '../src/app/wall/view-fork';
 
@@ -149,3 +152,77 @@ test('the first paint is the far view: with no script at all, 390px shows the ov
     await context.close();
   }
 });
+
+/*
+  Adam's ruling, superseding §W.24's "the rail collapses to one row: search,
+  the three view names, add record": "search and the rest of the record page
+  items should be on separate lines, it reads awkward." Built as two rows:
+  search across the band, then the view names and Add record.
+
+  Measured before, as §W.24 was built: at 390 the search field was 115.2
+  wide and ran 4.0 under SHELF; at 320 it was 46.2 wide, and the band was
+  321 in a 320 window.
+*/
+for (const width of [390, 320]) {
+  /* Fails against the one row: the field is 115.2 or 46.2 wide and not the band's width, and the views are beside it, not beneath; and at 320 the page is 321 wide. */
+  test(`at ${width}px search has its own row across the band, the view names and Add record are on the row beneath, nothing overlaps, and the page is exactly the window’s width`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto('/');
+    await expect(page.locator('[data-wall="overview"]')).toBeVisible({ timeout: 30_000 });
+    const m = await page.evaluate(() => {
+      const rail = document.querySelector('[data-testid="wall-rail"]') as HTMLElement;
+      const r = (el: Element) => { const b = el.getBoundingClientRect(); return { left: b.left, top: b.top, right: b.right, bottom: b.bottom, width: b.width, height: b.height }; };
+      const link = (name: string) => Array.from(rail.querySelectorAll('a')).find((a) => (a.textContent ?? '').trim().toLowerCase() === name) as HTMLElement;
+      return {
+        window: window.innerWidth, page: document.documentElement.scrollWidth, rail: r(rail),
+        label: r(rail.querySelector('label[for="rail-search"]') as HTMLElement), field: r(rail.querySelector('#rail-search') as HTMLElement),
+        shelf: r(link('shelf')), table: r(link('table')), grid: r(link('grid')), add: r(link('add record')),
+      };
+    });
+    const INSET = 20;
+    /* Exactly, with no pixel of tolerance: the tolerance in the test above is what let 321 in 320 through. */
+    expect(m.page, 'the page is exactly as wide as the window: no sideways scroll').toBe(m.window);
+    expect(m.rail.width, 'and so is the band').toBe(m.window);
+    expect(m.field.left, 'the search field starts on the inset').toBeCloseTo(INSET, 1);
+    expect(m.field.width, 'and runs the band’s width inside the insets').toBeCloseTo(width - 2 * INSET, 1);
+    for (const name of ['shelf', 'table', 'grid', 'add'] as const) expect(m[name].top, `${name} is beneath the search field, not beside it`).toBeGreaterThanOrEqual(m.field.bottom);
+    expect(m.shelf.left, 'the view names start on the inset').toBeCloseTo(INSET, 1);
+    expect(m.add.right, 'and Add record ends on it').toBeCloseTo(width - INSET, 1);
+    const boxes = [['the search field', m.field], ['the search label', m.label], ['Shelf', m.shelf], ['Table', m.table], ['Grid', m.grid], ['Add record', m.add]] as const;
+    for (let i = 0; i < boxes.length; i += 1) for (let j = i + 1; j < boxes.length; j += 1) {
+      const [an, a] = boxes[i]; const [bn, b] = boxes[j];
+      const apart = a.right <= b.left || b.right <= a.left || a.bottom <= b.top || b.bottom <= a.top;
+      expect(apart, `${an} and ${bn} do not overlap`).toBe(true);
+    }
+    expect(m.table.left - m.shelf.right, 'the view names keep their 18').toBeCloseTo(18, 1);
+    expect(m.add.left - m.grid.right, 'and Add record is at least that clear of them').toBeGreaterThanOrEqual(18);
+    expect(m.rail.height, 'still one band').toBeLessThan(160);
+
+    /*
+      **Measured, not asserted: what a tap on each of these lands on.** They
+      draw 14 to 16.5 tall; §9.3 rules every control 44 tall, and whether
+      these are §9.3's controls is the Collection screen's own ruling. So the
+      tap area is read, by asking the page what is under each point around
+      the link, and printed for that ruling. No threshold is asserted here.
+    */
+    const taps = await page.evaluate(() => {
+      const rail = document.querySelector('[data-testid="wall-rail"]') as HTMLElement;
+      return Array.from(rail.querySelectorAll('a')).map((a) => {
+        const b = a.getBoundingClientRect(); const cx = b.left + b.width / 2; const cy = b.top + b.height / 2;
+        const mine = (x: number, y: number) => { const hit = document.elementFromPoint(x, y); return hit !== null && (a.contains(hit) || hit === a); };
+        let up = 0; while (up < 60 && mine(cx, cy - up - 1)) up += 1;
+        let down = 0; while (down < 60 && mine(cx, cy + down + 1)) down += 1;
+        let left = 0; while (left < 200 && mine(cx - left - 1, cy)) left += 1;
+        let right = 0; while (right < 200 && mine(cx + right + 1, cy)) right += 1;
+        return { name: (a.textContent ?? '').trim(), drawn: [Math.round(b.width * 10) / 10, Math.round(b.height * 10) / 10], tap: [left + right + 1, up + down + 1] };
+      });
+    });
+    for (const t of taps) console.log(`TAP ${width}: ${t.name.padEnd(10)} drawn ${t.drawn[0]} × ${t.drawn[1]}, lands on it over ${t.tap[0]} × ${t.tap[1]}`);
+    if (WRITE_CAPTURES) {
+      const out = join('docs', 'captures', 'collection-band');
+      mkdirSync(out, { recursive: true });
+      await page.addStyleTag({ content: 'nextjs-portal{display:none!important}' });
+      await page.screenshot({ path: join(out, `band-${String(width).padStart(4, '0')}-two-rows-search${Math.round(m.field.width)}-h${Math.round(m.rail.height * 10) / 10}.png`), clip: { x: 0, y: 0, width, height: 320 } });
+    }
+  });
+}

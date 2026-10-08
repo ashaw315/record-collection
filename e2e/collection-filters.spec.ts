@@ -488,7 +488,45 @@ test('clicking through to a filtered view equals loading that URL directly', asy
       'aria-pressed',
       'true',
     );
-    await expect(cold.getByLabel('Sort by')).toHaveValue('releaseYear:desc');
+    /*
+      **Measured when it fails, because two guesses at a wait were both
+      wrong.** This read `""` in gates on 5, 6 and 7 Oct, on mobile, on the
+      first attempt only. Waiting for any hydrated element did not stop it;
+      waiting for the filters' own marker did not either (7 Oct, guard in
+      place, still empty). A third guess, that the URL was read before the
+      sort's navigation landed, was tested and is false: with navigations
+      delayed 400ms the URL read here still carries the sort, and a cold
+      page of it holds the value.
+
+      So the assertion is the same and nothing more is waited for. What is
+      new is that a failure now says what the select and the page held at
+      that moment, instead of only `""`: its options, which is selected in
+      the DOM and by attribute, how many such selects there are, whether
+      its own root is hydrated, and the address.
+    */
+    const sortState = () =>
+      cold.evaluate(() => {
+        const all = Array.from(document.querySelectorAll<HTMLSelectElement>('#collection-sort'));
+        const el = all[0];
+        return {
+          value: el?.value ?? null,
+          selects: all.length,
+          options: el?.options.length ?? 0,
+          selectedIndex: el?.selectedIndex ?? null,
+          selectedByAttribute: el === undefined ? null : Array.from(el.options).filter((o) => o.hasAttribute('selected')).map((o) => o.value),
+          hasSortOption: el === undefined ? null : Array.from(el.options).some((o) => o.value === 'releaseYear:desc'),
+          rootHydrated: el?.closest('[data-hydrated="true"]') !== null,
+          sortInAddress: new URLSearchParams(location.search).get('sort'),
+          readyState: document.readyState,
+        };
+      });
+    const deadline = Date.now() + 5000;
+    let state = await sortState();
+    while (state.value !== 'releaseYear:desc' && Date.now() < deadline) {
+      await cold.waitForTimeout(100);
+      state = await sortState();
+    }
+    expect(state, 'the Sort select reflects the URL; on failure this is everything it and the page held').toMatchObject({ value: 'releaseYear:desc' });
   } finally {
     await context.close();
   }

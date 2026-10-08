@@ -81,10 +81,20 @@ describe('the rail collapses to one band below the fork (§W.24)', () => {
     expect(render(3)).not.toContain('data-narrow-shelf');
   });
 
-  it('keeps Add record a row item in the band — nowrap, the search yielding — and gates the unmeasured first paint by the same query (§W.26)', () => {
+  /*
+    Step 95, superseding the rule this test pinned ("nowrap, the search
+    yielding"): `W.24/rail-one-row` withdraws the one row; search has a row
+    of its own and the views and Add record the row beneath. These read the
+    stylesheet's TEXT, which is all a server render can show; that the band
+    is laid out so in a browser is `e2e/shelf-narrow.spec.ts`'s to prove.
+  */
+  it('the narrow stylesheet wraps the band, gives the search form the whole row, keeps the links unbroken, sends Add record to the right, and gates the unmeasured first paint by the same query (§W.26)', () => {
     const html = renderToStaticMarkup(<WallComposition seats={seats(3)} rail={<nav data-testid="wall-rail">rail</nav>} />);
     const style = /<style[^>]*data-narrow-shelf=""[^>]*>([\s\S]*?)<\/style>/.exec(html)?.[1] ?? '';
-    expect(style).toMatch(/\[data-testid="wall-rail"\]\s*\{[^}]*flex-wrap:\s*nowrap/);
+    expect(style).toMatch(/\[data-testid="wall-rail"\]\s*\{[^}]*flex-wrap:\s*wrap/);
+    expect(style).toMatch(/\[data-testid="wall-rail"\] form\s*\{[^}]*flex:\s*1 1 100%/);
+    expect(style).toMatch(/\[data-testid="wall-rail"\] > a\s*\{[^}]*margin-left:\s*auto/);
+    expect(style).toMatch(/\[data-testid="wall-rail"\] > hr\s*\{[^}]*display:\s*none/);
     expect(style).toMatch(/\[data-testid="wall-rail"\] a\s*\{[^}]*white-space:\s*nowrap/);
     expect(style).toMatch(/\[data-testid="wall-rail"\] form\s*\{[^}]*min-width:\s*0/);
     /*
