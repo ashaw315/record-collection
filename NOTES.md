@@ -37255,3 +37255,52 @@ Rewritten to what replaced it: on a phone the grid is reached by the
 band's view name, the filter survives the change of view, and a grid URL
 renders. It was found only because I read every test in the files the
 step broke, not because anything failed.
+
+## GATE CONDITION: a run is suspect past about 3.2 seconds a test (8 Oct, the coordinator's)
+
+Replaces "suspect past about 35 minutes elapsed". A fixed mark goes stale
+as the suite grows, and it has grown from 732 tests to 788 this week. The
+rate is what has been stable:
+
+| run | tests | elapsed | seconds a test |
+|---|---|---|---|
+| gate on `44cecad` | 732 | 32m 18s | 2.65 |
+| gate on `9588f36` | 775 | 34m 32s | 2.67 |
+| an earlier good run | about 728 | 31m 23s | 2.59 |
+| the paging run | about 728 | 45m | 3.71 |
+
+Good runs sit between 2.59 and 2.67; the one run known to be bad is 3.71,
+a 40% gap, and 3.2 lies between. **Swap-outs and load are recorded at
+every gate and not judged.** The figures are the coordinator's, from the
+gates recorded in this file; the first two I can confirm from this
+session's logs.
+
+## The 46: the correction was the coordinator's to its own formula (8 Oct)
+
+Recorded at the coordinator's request, in its words: "My formula was
+wrong and yours is right. 5 plus 19.5 a line gives 44 for two lines,
+which matches the 38 rows at 1440 that I had in front of me and didn't
+check against my own arithmetic. 7 plus 19.5 fitted the 390 figures by
+accident." And "nothing to chase" was withdrawn: the 2 pixels are an
+empty element's margin. The fix, rendering the Label-and-Cond. line only
+when it has text, is folded into step 100.
+
+## Every capture skips before it acts, and now a test says so (8 Oct)
+
+`test/repo/capture-guard.test.ts` reads each file in `e2e/capture/` and
+holds that every test in it reaches `test.skip(process.env.CAPTURE !==
+'1'` before its first `await`. Staged against the original defect: with
+the line removed from `table-98.capture.ts` (confirmed, 0 occurrences)
+the test is red for that file and green for the other ten.
+
+The convention was carried by ten files and by nothing else, so the
+eleventh broke it. A convention held by repetition is the same shape as
+a premise held by prose, which is the pattern recorded this morning.
+
+**Taking the drop at this commit, the export diff reported four sentences
+removed from §T. All four stand, extended**: "One filter is open at a
+time" gained "and choosing an option closes its list", and the three on
+column counts became the measured widths. Read against the target before
+believing the tool, which is this morning's rule. The tool's
+more-than-half-the-words test calls a sentence removed when it has been
+lengthened past that; a known limit, not chased today.
