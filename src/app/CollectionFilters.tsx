@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { HAIRLINE, LABEL } from '@/app/records/[id]/grid-type';
 import { RECORD_SORT_FIELDS, type RecordSortField } from '@/lib/records/fields';
@@ -37,7 +37,10 @@ export type FilterOptions = {
 /** The label colour as a text class: every figure and aside in these views that is not ink (§T.2). */
 const LABEL_TEXT = 'text-[oklch(0.44_0.008_70)]';
 
-const CHIP_GROUPS = [
+/** The measure the band gives search, and the record page its title: a list row wider than this parts a name from its count. */
+const FILTER_MEASURE = 443;
+
+const FILTER_GROUPS = [
   { key: 'genreId', label: 'Genre', options: 'genres' },
   { key: 'labelId', label: 'Label', options: 'labels' },
   { key: 'storeId', label: 'Store', options: 'stores' },
@@ -94,6 +97,20 @@ export function CollectionFilters({
   useEffect(() => {
     rootRef.current?.setAttribute('data-hydrated', 'true');
   }, []);
+
+  /** Which filter's list is open: one at a time (§T.3). */
+  const [openKey, setOpenKey] = useState<string | null>(null);
+  useEffect(() => {
+    if (openKey === null) return undefined;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== 'Escape') return;
+      setOpenKey(null);
+      // Focus goes back to the line, which is where the list was opened from and has not moved.
+      rootRef.current?.querySelector<HTMLElement>(`[data-filter="${openKey}"] [data-filter-trigger]`)?.focus();
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [openKey]);
 
   function change(mutate: (current: CollectionParams) => CollectionParams) {
     /**
@@ -157,64 +174,80 @@ export function CollectionFilters({
         </select>
       </div>
 
-      {/* Chips. Each group scrolls horizontally rather than wrapping to four
-          lines on a phone — §10 makes the in-store case a priority, and a
-          filter bar taller than the results is unusable one-handed. */}
-      {CHIP_GROUPS.map((group) => {
-        const list = options[group.options];
-        if (list.length === 0) return null;
+      {/*
+        §T.3: "Filters are a disclosure, not a set of chips always shown."
+        The options grow with the collection (genres were 6 in the seed and
+        are 32), so anything that shows them all always fails at some
+        count. Closed, a filter is one line whatever the count: its label
+        and the one option chosen. Open, its options are a list in the
+        page's own flow, which pushes the page and leaves the line under
+        the finger that pressed it.
+      */}
+      <div className="flex flex-col" style={{ maxWidth: FILTER_MEASURE }}>
+        {FILTER_GROUPS.map((group) => {
+          const list = options[group.options];
+          if (list.length === 0) return null;
 
-        const selected = params.filters[group.key];
+          const selected = params.filters[group.key];
+          const chosen = list.find((option) => option.id === selected);
+          const open = openKey === group.key;
 
-        return (
-          <div key={group.key} className="flex items-baseline gap-2">
-            {/*
-              §4's label, from the one definition. This was uppercase INTER —
-              the page around the wall takes the record screen's system, and a
-              second label treatment is A61's fifteen-places defect arriving on
-              the collection screen.
-            */}
-            <span className={`w-12 shrink-0 ${LABEL}`}>
-              {group.label}
-            </span>
-            <div className="-mx-1 flex gap-1 overflow-x-auto px-1 pb-1">
-              {list.map((option) => {
-                const active = selected === option.id;
-                return (
-                  <button
-                    key={option.id}
-                    type="button"
-                    aria-pressed={active}
-                    onClick={() =>
-                      change((current) =>
-                        withFacet(current, {
-                          // Clicking the active chip clears it — the same
-                          // control both applies and removes, so there is no
-                          // separate "×" to hunt for on a phone.
-                          filters: { [group.key]: active ? undefined : option.id },
-                        }),
-                      )
-                    }
-                    className={cn(
-                      'shrink-0 border px-2 py-1 text-label whitespace-nowrap transition-colors',
-                      active ? HAIRLINE : 'border-border hover:bg-accent',
-                    )}
-                  >
-                    {option.name}{' '}
-                    {/* The count is what makes a chip worth clicking — and for
-                        genres it follows §7.1, so "Punk (12)" is exactly what
-                        clicking returns rather than only the directly-tagged
-                        records. */}
-                    <span className={cn('tabular-nums', LABEL_TEXT)}>
-                      {option.count}
-                    </span>
-                  </button>
-                );
-              })}
+          return (
+            <div key={group.key} data-filter={group.key}>
+              <button
+                type="button"
+                data-filter-trigger=""
+                aria-expanded={open}
+                aria-controls={`filter-${group.key}`}
+                onClick={() => setOpenKey(open ? null : group.key)}
+                className="flex h-[44px] w-full items-baseline gap-3 text-left leading-[44px]"
+              >
+                <span data-filter-label="" className={`w-12 shrink-0 ${LABEL}`}>
+                  {group.label}
+                </span>
+                <span data-filter-chosen="" className="min-w-0 truncate text-detail">
+                  {chosen?.name ?? ''}
+                </span>
+              </button>
+              {open && (
+                <ul id={`filter-${group.key}`} data-filter-list="">
+                  {list.map((option) => {
+                    const active = selected === option.id;
+                    return (
+                      <li key={option.id}>
+                        <button
+                          type="button"
+                          data-filter-option=""
+                          aria-pressed={active}
+                          onClick={() => {
+                            // Single-valued: choosing the chosen one clears it, so the list both applies and removes.
+                            setOpenKey(null);
+                            change((current) =>
+                              withFacet(current, { filters: { [group.key]: active ? undefined : option.id } }),
+                            );
+                          }}
+                          className="flex h-[44px] w-full items-baseline justify-between gap-3 border-t border-border text-left leading-[43px]"
+                        >
+                          <span
+                            data-filter-name=""
+                            className={cn('min-w-0 truncate text-detail', active && 'underline decoration-2 underline-offset-[7px]')}
+                          >
+                            {option.name}
+                          </span>
+                          {/* The count follows §7.1 for genres, so it is what choosing the option returns. Right-aligned so the counts read down the list. */}
+                          <span data-filter-count="" className={`shrink-0 tabular-nums ${LABEL}`}>
+                            {option.count}
+                          </span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
 
       {/*
         The undated control, and the count that makes it honest.
@@ -226,7 +259,7 @@ export function CollectionFilters({
       {(hasYearFilter || undatedCount > 0) && (
         <div className={`flex flex-wrap items-center gap-x-3 gap-y-1 text-label ${LABEL_TEXT}`}>
           {hasYearFilter && (
-            <label className="flex items-center gap-1.5">
+            <label data-filter-undated="" className="flex min-h-[44px] items-center gap-1.5">
               <input
                 type="checkbox"
                 checked={params.filters.includeUndated !== false}
@@ -264,7 +297,8 @@ export function CollectionFilters({
                 page: 1,
               }))
             }
-            className={`text-label underline underline-offset-2 ${LABEL_TEXT}`}
+            data-filter-clear=""
+            className={`min-h-[44px] text-label underline underline-offset-2 ${LABEL_TEXT}`}
           >
             Clear {activeCount === 1 ? 'filter' : `all ${activeCount} filters`}
           </button>
@@ -274,7 +308,7 @@ export function CollectionFilters({
   );
 
   return (
-    <div ref={rootRef} className="mb-5">
+    <div ref={rootRef} data-collection-filters="" className="mb-5">
       {body}
     </div>
   );

@@ -36974,3 +36974,76 @@ in the region file.
 
 > **A count guard is satisfied by a subset.** Assertion 6 failed on an empty list and passed on any non-empty one, so a list with one input file's entries scoped out -- the settled file holds nine of thirty-six -- would have passed on the twenty-seven it could see. The spec's founding principle, that an empty set satisfies every universal claim, has this corollary: so does a subset, as far as the count guard can tell. 6 now fails an entry whose section is in no input as `section-absent`, distinct from a quote that is missing from a section it found -- absent, broken and working are three states, not two. (Checked: the settled file is in the repo and read as `S`; the "27" that raised this was 8a's in-scope denominator, which excludes the settled file's entries because it has no governs rows.)
 > **The assertion and its own spec can be the two things that disagree.** For a round the script's comment quoted 7's older, stricter reading -- a declared sentence "as the first text of a `<strong>` run" -- while its code and the spec both implemented the current one: a prefix that begins a sentence inside a run, at the run's start or after a sentence end within it. Nothing failed, because Design's prose satisfies the stricter reading too; a reader found the gap by comparing the two texts, which is the fifth time an assertion's passing was checked by someone reading rather than by the assertion. The comment now quotes the spec. The spec itself lives at `scripts/ASSERTIONS-spec.md`, beside the script, and assertion 0 fails the run if the file differs from its committed version.
+
+## Step 97 built, in two units: the table and grid take the shelf's band, and filters are disclosures (8 Oct)
+
+§T.1 to §T.3, as ruled on 8 Oct after six questions (single-valued; all
+four filters; search at 443; counts kept; the pager stays; 44 is a floor).
+Step level throughout: `collection-band-97`, `collection-filters-97`,
+`collection-filters`, `collection-widths`, `label-tracking-80`, `shelf`,
+`shelf-narrow`, `wall-first-paint`, `nav-menu-84`, typecheck, lint, build.
+
+**97a (`1670967`).** The views render the shelf's own rail under the
+band's rules with no media query (`CollectionBand.tsx`). The rules moved
+to `wall/band-rules.ts`; with an empty scope the function's text is
+byte-identical to what the shelf had inline, checked before the shelf was
+pointed at it. The views' search box, Search button and view switch are
+gone. Count an 11 label directly above the 40 heading; three sizes; ink
+and the label colour; no radius; no oxblood. Red first: 22 of 22.
+
+**97b.** Genre, Label, Store, Tag as four lines of 44, each its label and
+the one chosen option in 13 ink. Pressed, a list in flow: 44 rows, a
+hairline above each, name left, count right as an 11 label, the chosen
+one underlined 2px at 7. One open at a time, a second press or Escape
+closes, Escape returns focus to the line. Choosing closes the list. Red
+first (the five tests, coarsely: the marker they wait on did not exist),
+then four breaks staged together and confirmed in the file: no underline,
+no Escape, no hairline, counts not right-aligned. Three tests red.
+
+**Measured on the real collection** (`e2e/sheet/collection-97.sheet.ts`,
+read-only; the run's server log shows the write probe refused):
+
+| view | width | band | filters closed | page length | page width |
+|---|---|---|---|---|---|
+| table | 390 | 126.5 | 224 | 1,998 | 390 in 390 |
+| table | 320 | 126.5 | 224 | 2,700 | 320 in 320 |
+| table | 1440 | 126.5 | 224 | 1,574 | 1440 in 1440 |
+| grid | 390 | 126.5 | 224 | 2,367 | 390 in 390 |
+| grid | 320 | 126.5 | 224 | 2,367 | 320 in 320 |
+| grid | 1440 | 126.5 | 224 | 1,212 | 1440 in 1440 |
+
+"Filters closed" is the four lines (176) and the Sort select's row. Open,
+a list is 44 an option: Genre 32 options, 1,408; Label 13, 572; Store 2,
+88; Tag 1, 44. Ten controls outside the rows at every width, against 69
+before. **Two are under 44**: the band's search field, drawn 34 (§9.3's
+34 control, the shelf's own field), and the Sort select at 36, which
+steps 98 and 99 replace with §T.5's control.
+
+**Found, with measurements, for routing:**
+
+1. **Add record is not ink on the shelf.** The rail's link carries the
+   label style and the ink class together and the label style's colour
+   wins: it computes to the label colour, oklch(0.44 0.008 70). §T.2 rules
+   it ink for these views, and it is set there. The shelf's is unchanged
+   and is whatever §W.13 meant; the source says ink and the page does not.
+2. **The grid's title was 16**, an eighth size the survey did not list.
+   It is 13 now.
+3. **The content is no longer in a centred 1,152 column.** The band is
+   full-bleed at the 20 inset and §T.5 rules 20 insets from the window, so
+   the heading, filters, table and pager are at 20 too, at every width.
+   Not ruled in so many words.
+4. **The filter lines and lists are held to 443**, the measure search
+   takes. A row the window's width at 1440 puts a name 1,300 from its
+   count. My choice, not ruled.
+5. **Choosing an option closes its list.** §T.3 says pressed again or
+   Escape closes it and does not say what choosing does.
+6. **The page is longer than the survey's chips made it by the filters'
+   176 against their 91.5**, and shorter than any wrapped form.
+
+**Tests changed because the contract was superseded, said plainly.** In
+`collection-filters`, `shelf` and `wall-first-paint`: four tests drove the
+Search button and the view buttons and now drive the band; four pressed
+chips and now go through a `choose` helper. One was rewritten: "the grid
+toggle is hidden on a phone" passed against a switch that no longer
+existed, under a name §T.1 had made false. It now holds that the grid is
+reached from the band on a phone.

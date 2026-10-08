@@ -132,6 +132,19 @@ async function seed(page: Page): Promise<Fixture> {
  * or `q=<suffix>`), or it silently depends on the whole suite's record count
  * staying under one page. See the comment on 'clicking the active chip'.
  */
+/**
+ * §T.3 (step 97b): a filter is a disclosure, so choosing an option is two
+ * presses, the line and then the option. These tests pressed chips; the
+ * behaviour they hold (filters compose, the chosen one clears, the address
+ * is the state) is unchanged, and only the way to the option is new.
+ */
+async function choose(page: Page, key: 'genreId' | 'labelId', name: string): Promise<void> {
+  await page.locator(`[data-filter="${key}"] [data-filter-trigger]`).click();
+  await page.locator(`[data-filter="${key}"] [data-filter-option]`).filter({ hasText: name }).click();
+}
+
+const chosen = (page: Page, key: 'genreId' | 'labelId') => page.locator(`[data-filter="${key}"] [data-filter-chosen]`);
+
 async function visibleTitles(page: Page, suffix: string): Promise<string[]> {
   const rows = page.getByRole('row').filter({ hasText: suffix });
   const titles: string[] = [];
@@ -319,7 +332,7 @@ test('a parent-genre chip finds a record tagged with its grandchild, and says wh
   await expect(row).toContainText(`in Punk-${f.suffix} via UK82-${f.suffix}`);
 });
 
-test('clicking the active chip clears it', async ({ page }) => {
+test('choosing the chosen option clears it', async ({ page }) => {
   /**
    * Scoped to this spec's OWN artist, exactly as the pagination specs are.
    *
@@ -337,12 +350,11 @@ test('clicking the active chip clears it', async ({ page }) => {
   await page.goto(`/?view=table&artistId=${f.artistId}`);
   await controlsReady(page);
 
-  const chip = page.getByRole('button', { name: `Punk-${f.suffix}` });
-  await chip.click();
-  await expect(chip).toHaveAttribute('aria-pressed', 'true');
+  await choose(page, 'genreId', `Punk-${f.suffix}`);
+  await expect(chosen(page, 'genreId')).toHaveText(`Punk-${f.suffix}`);
 
-  await chip.click();
-  await expect(chip).toHaveAttribute('aria-pressed', 'false');
+  await choose(page, 'genreId', `Punk-${f.suffix}`);
+  await expect(chosen(page, 'genreId')).toHaveText('');
   await expect
     .poll(() => visibleTitles(page, f.suffix), { timeout: 15_000 })
     .toContain(`Kind Of Blue ${f.suffix}`);
@@ -417,8 +429,8 @@ test('filters compose rather than replacing each other', async ({ page }) => {
   await page.goto('/?view=table');
   await controlsReady(page);
 
-  await page.getByRole('button', { name: `Punk-${f.suffix}` }).click();
-  await page.getByRole('button', { name: `Clay-${f.suffix}` }).click();
+  await choose(page, 'genreId', `Punk-${f.suffix}`);
+  await choose(page, 'labelId', `Clay-${f.suffix}`);
 
   await expect(page).toHaveURL(/genreId=/);
   await expect(page).toHaveURL(/labelId=/);
@@ -447,8 +459,8 @@ test('clicking through to a filtered view equals loading that URL directly', asy
   await page.goto('/?view=table');
   await controlsReady(page);
 
-  await page.getByRole('button', { name: `Punk-${f.suffix}` }).click();
-  await page.getByRole('button', { name: `Clay-${f.suffix}` }).click();
+  await choose(page, 'genreId', `Punk-${f.suffix}`);
+  await choose(page, 'labelId', `Clay-${f.suffix}`);
   await page.getByLabel('Sort by').selectOption('releaseYear:desc');
 
   /*
@@ -505,10 +517,7 @@ test('clicking through to a filtered view equals loading that URL directly', asy
     await controlsReady(cold);
 
     // The controls must reflect the URL too, or the rows and the chips disagree.
-    await expect(cold.getByRole('button', { name: `Punk-${f.suffix}` })).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    );
+    await expect(chosen(cold, 'genreId')).toHaveText(`Punk-${f.suffix}`);
     /*
       **Measured when it fails, because two guesses at a wait were both
       wrong.** This read `""` in gates on 5, 6 and 7 Oct, on mobile, on the
