@@ -515,7 +515,8 @@ test('the rail’s view list reaches the table and comes back to the shelf', asy
   await page.getByTestId('wall-rail').getByRole('link', { name: 'Table' }).click();
   await expect(page).toHaveURL(/view=table/);
   await expect(page.getByTestId('wall')).toHaveCount(0);
-  await page.getByRole('group', { name: 'View' }).getByRole('button', { name: 'shelf', exact: true }).click();
+  /* §T.1 (step 97a): the table's band is the shelf's, so the way back is the same list. */
+  await page.locator('[data-collection-band]').getByRole('link', { name: 'Shelf', exact: true }).click();
   await expect(page.getByTestId('wall'), 'and the shelf is reachable again').toBeAttached({ timeout: 30_000 });
 });
 

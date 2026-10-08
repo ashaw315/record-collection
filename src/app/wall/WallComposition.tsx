@@ -1,3 +1,4 @@
+import { bandRules } from "./band-rules";
 import { WallLive } from "./WallLive";
 import { PAPER_CSS } from '@/lib/colour/paper';
 import type { WallSeat } from "./shelf-runs";
@@ -98,18 +99,7 @@ export function WallComposition({
         */
         <style data-narrow-shelf="">{`@media (max-width: ${nearViewMinWidth() - 1}px) {
   [data-composition] { grid-template-columns: 1fr; }
-  [data-testid="wall-rail"] { flex-direction: row; align-items: flex-end; flex-wrap: wrap; gap: 18px; width: auto !important; padding: 12px 20px 16px !important; }
-  [data-testid="wall-rail"] form { margin-bottom: 0; flex: 1 1 100%; min-width: 0; }
-  [data-testid="wall-rail"] ul { flex-direction: row; flex: none; }
-  [data-testid="wall-rail"] a { margin-top: 0; white-space: nowrap; }
-  [data-testid="wall-rail"] > a { margin-left: auto; }
-  [data-testid="wall-rail"] > hr { display: none; }
-  [data-testid="wall-rail"] { align-items: baseline; }
-  [data-testid="wall-rail"] a { position: relative; }
-  [data-testid="wall-rail"] a::before { content: ''; position: absolute; left: -9px; right: -9px; top: 50%; height: 44px; transform: translateY(-50%); }
-  [data-testid="wall-rail"] li > span { pointer-events: none; }
-  [data-rail-filter] { display: none; }
-  [data-rail-rule] { display: none; }
+${bandRules('')}
 }
 /*
   **The fork is decided in CSS, so the first paint is already correct**

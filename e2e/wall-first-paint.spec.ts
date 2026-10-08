@@ -252,7 +252,7 @@ test('a client navigation to the shelf arrives in position too (§W.29)', async 
   const artistId = await seed(page, 240);
 
   await page.goto(`/?artistId=${artistId}&view=table`);
-  await expect(page.getByText('shelf', { exact: true }).first()).toBeVisible({ timeout: 30_000 });
+  await expect(page.locator('[data-collection-band]').getByRole('link', { name: 'Shelf', exact: true })).toBeVisible({ timeout: 30_000 });
   await page.evaluate(() => {
     (window as unknown as { __nav: Array<{ l: number; s: number }> }).__nav = [];
     const t0 = performance.now();
@@ -262,7 +262,7 @@ test('a client navigation to the shelf arrives in position too (§W.29)', async 
       if (performance.now() - t0 < 2500) requestAnimationFrame(sample);
     })();
   });
-  await page.getByText('shelf', { exact: true }).first().click();
+  await page.locator('[data-collection-band]').getByRole('link', { name: 'Shelf', exact: true }).click();
   await expect(page.locator('[data-wall="labelled"]')).toBeVisible({ timeout: 20_000 });
   await page.waitForTimeout(2000);
 

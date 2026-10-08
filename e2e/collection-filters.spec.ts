@@ -261,13 +261,14 @@ test('searching narrows the collection and survives a reload', async ({ page }) 
   // Wait for the filtered page to settle before typing: the search box is
   // keyed on the URL's `q`, so it remounts when navigation completes and a
   // value typed into the outgoing instance is discarded.
-  await expect(page.getByRole('searchbox', { name: 'Search the collection' })).toBeVisible();
+  await expect(page.locator('#rail-search')).toBeVisible();
   await expect(page.getByRole('link', { name: `Hear Nothing ${f.suffix}` })).toBeVisible({
     timeout: 15_000,
   });
 
-  await page.getByRole('searchbox', { name: 'Search the collection' }).fill(term);
-  await page.getByRole('button', { name: 'Search' }).click();
+  await page.locator('#rail-search').fill(term);
+  /* §T.3 (step 97a): search is the band's field and has no button; Enter submits. */
+  await page.locator('#rail-search').press('Enter');
 
   /**
    * 15s, not the 5s default. The submit navigates, and under full-suite load
@@ -283,7 +284,7 @@ test('searching narrows the collection and survives a reload', async ({ page }) 
   // it — the reason filters do not live in React state.
   await page.reload();
   await expectTitles(page, f.suffix, [`Hear Nothing ${f.suffix}`]);
-  await expect(page.getByRole('searchbox', { name: 'Search the collection' })).toHaveValue(term);
+  await expect(page.locator('#rail-search')).toHaveValue(term);
 });
 
 test('a parent-genre chip finds a record tagged with its grandchild, and says why', async ({
@@ -597,7 +598,8 @@ test('the view toggle switches layout and survives a reload', async ({ page }, t
   await page.goto(`/?view=table&artistId=${artistId}`);
   await controlsReady(page);
 
-  await page.getByRole('button', { name: 'grid', exact: true }).click();
+  /* §T.1 (step 97a): the views are chosen by the band's view names, as on the shelf. */
+  await page.locator('[data-collection-band]').getByRole('link', { name: 'Grid', exact: true }).click();
   await expect(page).toHaveURL(/view=grid/, { timeout: 15_000 });
 
   // The table's column headers are gone in grid mode; the records are not.
@@ -605,10 +607,7 @@ test('the view toggle switches layout and survives a reload', async ({ page }, t
   await expect(page.getByRole('link', { name: `Hear Nothing ${f.suffix}` })).toBeVisible();
 
   await page.reload();
-  await expect(page.getByRole('button', { name: 'grid', exact: true })).toHaveAttribute(
-    'aria-pressed',
-    'true',
-  );
+  await expect(page.locator('[data-collection-band]').getByRole('link', { name: 'Grid', exact: true })).toHaveAttribute('aria-current', 'page');
   await expect(page.getByRole('columnheader', { name: 'Record' })).toHaveCount(0);
 });
 
@@ -661,13 +660,15 @@ test('changing a filter returns to page 1', async ({ page }) => {
   }
 });
 
-test('the grid toggle is hidden on a phone, but a grid URL still renders', async ({
+test('on a phone the grid is reached by the band’s view name, and a grid URL renders', async ({
   page,
 }, testInfo) => {
   /**
-   * The control is hidden, not the capability. A grid link shared from a
-   * desktop must still open — hiding the toggle must not make a URL
-   * unreachable, which is the failure mode of "just remove it on mobile".
+   * §T.1 (step 97a) reverses what this test held. The views' own switch was
+   * not drawn below 640, so on a phone the grid could be opened only from a
+   * link; the band's view names are drawn at every width. Left as it was,
+   * the old assertion (the switch is hidden) passed on a switch that no
+   * longer exists, under a name that had become false.
    */
   test.skip(testInfo.project.name !== 'mobile', 'about the mobile viewport specifically');
 
@@ -676,7 +677,9 @@ test('the grid toggle is hidden on a phone, but a grid URL still renders', async
 
   await page.goto(`/?view=table&artistId=${artistId}`);
   await controlsReady(page);
-  await expect(page.getByRole('group', { name: 'View' })).toBeHidden();
+  await page.locator('[data-collection-band]').getByRole('link', { name: 'Grid', exact: true }).click();
+  await expect(page).toHaveURL(/view=grid/, { timeout: 15_000 });
+  await expect(page).toHaveURL(new RegExp(`artistId=${artistId}`));
 
   await page.goto(`/?artistId=${artistId}&view=grid`);
   await controlsReady(page);

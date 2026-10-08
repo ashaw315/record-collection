@@ -1,6 +1,7 @@
-import Link from 'next/link';
 import { AppHeader } from '@/components/AppHeader';
+import { CollectionBand } from './CollectionBand';
 import { CollectionFilters } from './CollectionFilters';
+import { LABEL } from './records/[id]/grid-type';
 import { WallRail } from './WallRail';
 import { activeFilterCount } from './active-filters';
 import { collectionCountLabel } from './collection-count';
@@ -122,31 +123,24 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
           />
         </main>
       ) : (
-        <main className="mx-auto w-full max-w-6xl px-4 py-6">
-          <header className="mb-5 flex items-start justify-between gap-4">
-            <div>
-              <h1 className="font-heading text-headline font-semibold tracking-tight">Collection</h1>
-              <p className="mt-0.5 text-lede text-muted-foreground">
-                {/*
-                  Filter-aware: "34 of 312 records" when a filter is active. On
-                  the table and grid the heading carries it; on the shelf the
-                  facts column's count does (§W.9).
-                */}
-                {collectionCountLabel({
-                  matched: records.total,
-                  total: collectionTotal,
-                  filtered: activeFilterCount(params) > 0,
-                })}
-              </p>
-            </div>
-            {/* The primary action, in the accent — the only place oxblood appears
-                on this screen besides an active filter. */}
-            <Link
-              href="/records/new"
-              className="shrink-0 rounded-xs bg-primary px-3 py-1.5 text-label text-primary-foreground transition-opacity hover:opacity-90"
-            >
-              Add record
-            </Link>
+        <main data-collection-views="">
+          {/* §T.1: the shelf's band, in its two-row form at every width. Search, the three views and Add record are its. */}
+          <CollectionBand params={params} genres={facets.genres} />
+          <div className="px-5 pb-6">
+          <header className="mb-5">
+            {/*
+              §T.3: the count directly above the heading, an 11 label over
+              a 40, small first and nothing between. Filter-aware: "34 of
+              312 records" when a filter is active.
+            */}
+            <p data-collection-count="" className={LABEL}>
+              {collectionCountLabel({
+                matched: records.total,
+                total: collectionTotal,
+                filtered: activeFilterCount(params) > 0,
+              })}
+            </p>
+            <h1 className="font-heading text-headline font-semibold tracking-tight">Collection</h1>
           </header>
 
           {/* Grid and table carry their controls ON THE PAGE, above the rows, because a list wants its controls visible (§10). */}
@@ -160,6 +154,7 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
           <CollectionList rows={records.rows as CollectionRow[]} view={params.view === 'grid' ? 'grid' : 'table'} />
 
           <CollectionPagination params={params} total={records.total} rows={records.rows.length} pageSize={PAGE_SIZE} />
+          </div>
         </main>
       )}
     </>

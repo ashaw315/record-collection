@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { LABEL } from './records/[id]/grid-type';
 import { formatPrice, formatYear, matchExplanation, type MatchedVia } from './collection-format';
 
 /**
@@ -27,7 +28,7 @@ export type CollectionRow = {
 function Empty() {
   return (
     <div className="border border-border px-4 py-12 text-center">
-      <p className="text-prose text-muted-foreground">No records yet.</p>
+      <p className="text-prose text-[oklch(0.44_0.008_70)]">No records yet.</p>
     </div>
   );
 }
@@ -42,7 +43,7 @@ function Empty() {
  * face.
  */
 function Absent() {
-  return <span className="font-sans text-muted-foreground">—</span>;
+  return <span className="font-sans text-[oklch(0.44_0.008_70)]">—</span>;
 }
 
 /**
@@ -63,17 +64,17 @@ function Grid({ rows }: { rows: CollectionRow[] }) {
           <li key={row.id} className="border border-border p-3 transition-colors hover:bg-accent">
             <Link
               href={`/records/${row.id}`}
-              className="font-medium underline-offset-2 hover:underline"
+              className="text-detail font-medium underline-offset-2 hover:underline"
             >
               {row.title}
             </Link>
-            <div className="text-detail text-muted-foreground">{row.artist.name}</div>
+            <div className="text-detail text-[oklch(0.44_0.008_70)]">{row.artist.name}</div>
 
             {explanation !== undefined && (
-              <div className="mt-0.5 text-meta text-muted-foreground italic">{explanation}</div>
+              <div className="mt-0.5 text-detail text-[oklch(0.44_0.008_70)] italic">{explanation}</div>
             )}
 
-            <div className="mt-2 flex flex-wrap items-baseline gap-x-2 text-detail text-muted-foreground">
+            <div className="mt-2 flex flex-wrap items-baseline gap-x-2 text-detail text-[oklch(0.44_0.008_70)]">
               <span className="font-mono tabular-nums">
                 {row.releaseYear === null ? <Absent /> : formatYear(row.releaseYear)}
               </span>
@@ -149,13 +150,13 @@ export function CollectionList({
                   >
                     {row.title}
                   </Link>
-                  <div className="text-muted-foreground">{row.artist.name}</div>
+                  <div className="text-[oklch(0.44_0.008_70)]">{row.artist.name}</div>
 
                   {/* Why this record is here under a genre filter (§5.2). It
                       sits with the record rather than in its own column
                       because it is only ever present on some rows. */}
                   {explanation !== undefined && (
-                    <div className="mt-0.5 text-meta text-muted-foreground italic">
+                    <div className="mt-0.5 text-detail text-[oklch(0.44_0.008_70)] italic">
                       {explanation}
                     </div>
                   )}
@@ -176,17 +177,17 @@ export function CollectionList({
                     Format is no longer listed here: it is now a real column at
                     every width, and printing it twice below md was redundant.
                   */}
-                  <div className="mt-0.5 text-detail text-muted-foreground md:hidden">
+                  <div className="mt-0.5 text-detail text-[oklch(0.44_0.008_70)] md:hidden">
                     {[row.label?.name, row.conditionMedia]
                       .filter((value) => value !== null && value !== undefined)
                       .join(' · ')}
                   </div>
                 </td>
 
-                <td className="hidden px-3 py-2 align-top text-muted-foreground md:table-cell">
+                <td className="hidden px-3 py-2 align-top text-[oklch(0.44_0.008_70)] md:table-cell">
                   {row.label === null ? <Absent /> : row.label.name}
                 </td>
-                <td className="px-3 py-2 align-top text-muted-foreground">
+                <td className="px-3 py-2 align-top text-[oklch(0.44_0.008_70)]">
                   {row.format === null ? <Absent /> : row.format.name}
                 </td>
                 <td className="px-3 py-2 text-right align-top font-mono tabular-nums">
@@ -208,4 +209,4 @@ export function CollectionList({
 }
 
 const headCell =
-  'px-3 py-2 text-left text-label font-medium tracking-wide text-muted-foreground uppercase';
+  `px-3 py-2 text-left font-normal ${LABEL}`;

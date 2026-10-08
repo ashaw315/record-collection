@@ -1,15 +1,12 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
-import { LABEL } from '@/app/records/[id]/grid-type';
+import { HAIRLINE, LABEL } from '@/app/records/[id]/grid-type';
 import { RECORD_SORT_FIELDS, type RecordSortField } from '@/lib/records/fields';
 import {
   SORT_LABELS,
-  VIEW_MODES,
   parseCollectionParams,
   toQueryString,
   withFacet,
@@ -37,6 +34,9 @@ export type FilterOptions = {
   tags: FilterOption[];
 };
 
+/** The label colour as a text class: every figure and aside in these views that is not ink (§T.2). */
+const LABEL_TEXT = 'text-[oklch(0.44_0.008_70)]';
+
 const CHIP_GROUPS = [
   { key: 'genreId', label: 'Genre', options: 'genres' },
   { key: 'labelId', label: 'Label', options: 'labels' },
@@ -44,113 +44,14 @@ const CHIP_GROUPS = [
   { key: 'tagId', label: 'Tag', options: 'tags' },
 ] as const;
 
-/**
- * Local text that commits on submit.
- *
- * The search box is the one control that must not navigate per keystroke —
- * that is a request per character and it moves focus mid-typing. It owns its
- * text and the parent is told once, on submit.
- */
-function SearchBox({ initial, onSubmit }: { initial: string; onSubmit: (value: string) => void }) {
-  const [term, setTerm] = useState(initial);
-
-  return (
-    <form
-      role="search"
-      className="flex min-w-0 flex-1 gap-2"
-      onSubmit={(event) => {
-        event.preventDefault();
-        onSubmit(term);
-      }}
-    >
-      <label htmlFor="collection-search" className="sr-only">
-        Search the collection
-      </label>
-      <Input
-        id="collection-search"
-        type="search"
-        value={term}
-        onChange={(event) => setTerm(event.target.value)}
-        placeholder="Search title or artist"
-        className="h-9 min-w-0 flex-1"
-      />
-      <Button type="submit" size="sm" className="h-9 shrink-0">
-        Search
-      </Button>
-    </form>
-  );
-}
-
-/**
- * The view toggle (§10), shared by every view rather than duplicated.
- *
- * **Exported because the shelf hosts it somewhere else.** The shelf's filters
- * live in an overlay (§10b A24a) and the view toggle must NOT be inside it —
- * changing view would otherwise mean opening a filter panel first. Extracting
- * it means both hosts render the same control, so the two cannot drift.
- *
- * **All three views, not two.** This offered `table` and `grid` only, which was
- * harmless while `table` was the default and became a one-way trip when §10b
- * made `shelf` the default: leaving the shelf was possible, returning to it was
- * not, except by editing the URL. Found by looking at the built overlay — the
- * geometry numbers were all correct and could not see it.
- *
- * HIDDEN below `sm`. At 390px the grid collapses to one column, which makes it
- * a taller table rather than a distinct view — measured: 3/2/1 columns at
- * 1280/768/390. §10 wants mobile usable ONE-HANDED rather than
- * feature-complete, and a control that swaps one list for a longer list is cost
- * without benefit. The table remains the mobile view.
- */
-export function ViewToggle({
-  params,
-  change,
-}: {
-  params: CollectionParams;
-  change: (next: (current: CollectionParams) => CollectionParams) => void;
-}) {
-  return (
-    <div className="hidden shrink-0 gap-1 sm:flex" role="group" aria-label="View">
-      {VIEW_MODES.map((mode) => (
-        <button
-          key={mode}
-          type="button"
-          aria-pressed={params.view === mode}
-          onClick={() => change((current) => withFacet(current, { view: mode }))}
-          className={cn(
-            'rounded-xs border px-2 py-1 text-label capitalize transition-colors',
-            params.view === mode
-              ? 'border-primary bg-primary text-primary-foreground'
-              : 'border-border hover:bg-accent',
-          )}
-        >
-          {mode}
-        </button>
-      ))}
-    </div>
-  );
-}
-
 export function CollectionFilters({
   params,
   options,
   undatedCount,
-  renderToolbar,
 }: {
   params: CollectionParams;
   options: FilterOptions;
   undatedCount: number;
-  /**
-   * Lets a caller place the view toggle OUTSIDE this component's own layout.
-   *
-   * The shelf needs the toggle beside its disclosure button rather than inside
-   * the overlay (§10b A24a), but the toggle navigates through `change`, which
-   * owns the pending-navigation reconciliation just below. Handing the CALLER
-   * a ready-made element keeps one `change` and one instance — the alternative,
-   * a second toggle wired to its own `router.push`, is two implementations of
-   * the same navigation that must agree, and the one outside the panel would
-   * quietly drop a filter change still in flight.
-   */
-  renderToolbar?: (toggle: React.ReactNode, body: React.ReactNode) => React.ReactNode;
 }) {
   const router = useRouter();
 
@@ -216,13 +117,6 @@ export function CollectionFilters({
     router.push(query === '' ? '/' : `/?${query}`);
   }
 
-  function search(raw: string) {
-    const trimmed = raw.trim();
-    change((current) =>
-      withFacet(current, { filters: { q: trimmed === '' ? undefined : trimmed } }),
-    );
-  }
-
   const hasYearFilter =
     params.filters.yearFrom !== undefined || params.filters.yearTo !== undefined;
 
@@ -231,26 +125,9 @@ export function CollectionFilters({
       (key) => key !== 'includeUndated' && params.filters[key as keyof typeof params.filters] !== undefined,
     ).length;
 
-  const toggle = <ViewToggle params={params} change={change} />;
-
   const body = (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center gap-2">
-        {/* Keyed on the URL's term so navigating — including Back — gives a
-            FRESH input carrying the new value. The obvious alternative, an
-            effect calling setState, is what react-hooks/set-state-in-effect
-            refuses, and the rule is right: it causes a cascading render to fix
-            up state React can simply be given at mount. Same technique
-            /manage uses to reset a panel when the resource changes. */}
-        <SearchBox key={params.filters.q ?? ''} initial={params.filters.q ?? ''} onSubmit={search} />
-
-        {/*
-          The shelf lifts the toggle OUT of this row via `renderToolbar`, so it
-          stays reachable without opening the filter overlay (§10b A24a). The
-          list views keep it here, inline, where their other controls are.
-        */}
-        {renderToolbar === undefined && <ViewToggle params={params} change={change} />}
-
         <label htmlFor="collection-sort" className="sr-only">
           Sort by
         </label>
@@ -268,7 +145,7 @@ export function CollectionFilters({
               }),
             );
           }}
-          className="h-9 shrink-0 rounded-xs border border-input bg-transparent px-2 text-label"
+          className={`h-9 shrink-0 border bg-transparent px-2 text-label ${HAIRLINE}`}
         >
           <option value="">Sort: default</option>
           {RECORD_SORT_FIELDS.map((field) => (
@@ -319,10 +196,8 @@ export function CollectionFilters({
                       )
                     }
                     className={cn(
-                      'shrink-0 rounded-xs border px-2 py-1 text-label whitespace-nowrap transition-colors',
-                      active
-                        ? 'border-primary bg-primary text-primary-foreground'
-                        : 'border-border hover:bg-accent',
+                      'shrink-0 border px-2 py-1 text-label whitespace-nowrap transition-colors',
+                      active ? HAIRLINE : 'border-border hover:bg-accent',
                     )}
                   >
                     {option.name}{' '}
@@ -330,7 +205,7 @@ export function CollectionFilters({
                         genres it follows §7.1, so "Punk (12)" is exactly what
                         clicking returns rather than only the directly-tagged
                         records. */}
-                    <span className={cn('tabular-nums', active ? 'opacity-70' : 'text-muted-foreground')}>
+                    <span className={cn('tabular-nums', LABEL_TEXT)}>
                       {option.count}
                     </span>
                   </button>
@@ -349,7 +224,7 @@ export function CollectionFilters({
         never invisible (NOTES.md, and SPEC.md §5.2's meta.undatedCount).
       */}
       {(hasYearFilter || undatedCount > 0) && (
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-meta text-muted-foreground">
+        <div className={`flex flex-wrap items-center gap-x-3 gap-y-1 text-label ${LABEL_TEXT}`}>
           {hasYearFilter && (
             <label className="flex items-center gap-1.5">
               <input
@@ -362,7 +237,7 @@ export function CollectionFilters({
                     }),
                   )
                 }
-                className="size-3.5 accent-primary"
+                className="size-3.5 accent-[oklch(0.19_0.008_60)]"
               />
               Include records with no release year
             </label>
@@ -389,7 +264,7 @@ export function CollectionFilters({
                 page: 1,
               }))
             }
-            className="text-label text-muted-foreground underline underline-offset-2 hover:text-foreground"
+            className={`text-label underline underline-offset-2 ${LABEL_TEXT}`}
           >
             Clear {activeCount === 1 ? 'filter' : `all ${activeCount} filters`}
           </button>
@@ -397,18 +272,6 @@ export function CollectionFilters({
       )}
     </div>
   );
-
-  /**
-   * The shelf supplies its own arrangement: the toggle stays on the page while
-   * the body goes into an overlay (§10b A24a). One `change`, one instance —
-   * the toggle outside the panel is the SAME element as the one the list views
-   * render inline, so the two cannot drift.
-   */
-  if (renderToolbar !== undefined) {
-    return (
-      <div ref={rootRef}>{renderToolbar(toggle, body)}</div>
-    );
-  }
 
   return (
     <div ref={rootRef} className="mb-5">

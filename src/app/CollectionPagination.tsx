@@ -44,7 +44,7 @@ export function CollectionPagination({
     >
       {/* Announced on change, so a screen reader hears the new range after
           following a page link rather than only the page contents. */}
-      <p className="text-meta text-muted-foreground" aria-live="polite">
+      <p className="text-label text-[oklch(0.44_0.008_70)]" aria-live="polite">
         {label}
       </p>
 
@@ -72,10 +72,8 @@ export function CollectionPagination({
                 aria-current={current ? 'page' : undefined}
                 aria-label={`Page ${page}`}
                 className={cn(
-                  'min-w-8 rounded-xs border px-2 py-1 text-center text-label tabular-nums transition-colors',
-                  current
-                    ? 'border-primary bg-primary text-primary-foreground'
-                    : 'border-border hover:bg-accent',
+                  'min-w-8 border px-2 py-1 text-center text-label tabular-nums transition-colors',
+                  current ? 'border-[oklch(0.19_0.008_60)]' : 'border-border hover:bg-accent',
                 )}
               >
                 {page}
@@ -99,6 +97,6 @@ export function CollectionPagination({
 }
 
 const stepClass =
-  'rounded-xs border border-border px-2 py-1 text-label whitespace-nowrap transition-colors hover:bg-accent';
+  'border border-border px-2 py-1 text-label whitespace-nowrap transition-colors hover:bg-accent';
 
 const disabledClass = 'pointer-events-none opacity-40 hover:bg-transparent';
