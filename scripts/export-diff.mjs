@@ -32,14 +32,22 @@ export function sentencesOf(source) {
     .replace(/<[^>]*>/g, '')
     .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n)))
     .replace(/&([a-z]+);/gi, (whole, name) => ENTITIES[name.toLowerCase()] ?? whole)
+    /* A blank line is Markdown's block end. The handoff's quoted rulings end without a full stop, so without this a quote swallows the paragraph after it. */
+    .replace(/\n[ \t]*\n/g, ' ␞ ')
     .replace(/\s+/g, ' ');
   const out = [];
   for (const block of text.split('␞')) {
     /* A sentence ends at . ! or ? followed by a space and a capital or a quote; "126.5", "§W.24" and "e.g. two" do not end one. */
+    let number = '';
     for (const part of block.split(/(?<=[.!?][”"’)]?)\s+(?=[A-Z“"‘(§*`\[])/)) {
       const sentence = part.trim();
-      if (sentence !== '') out.push(sentence);
+      if (sentence === '') continue;
+      /* "97." is a step's number and not a sentence: it stays with the sentence it numbers. */
+      if (/^\d+\.$/.test(sentence)) { number = `${sentence} `; continue; }
+      out.push(number + sentence);
+      number = '';
     }
+    if (number !== '') out.push(number.trim());
   }
   return out;
 }

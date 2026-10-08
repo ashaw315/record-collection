@@ -72,4 +72,25 @@ describe('against this repository’s own history', () => {
     const all = [...d.removed, ...d.reworded.map((r: { was: string }) => r.was)].join(' ');
     expect(all).toMatch(/never recomputed while the modal is open/);
   });
+  /**
+   * **A paragraph break ends a sentence in Markdown as a closing tag does in
+   * HTML.** The handoff is Markdown, and its quoted rulings end without a full
+   * stop. With blank lines collapsed, the drop that added steps 97 to 99 put a
+   * quote in front of `No step: §G.7.`, the two were read as one sentence, and
+   * the tool reported a sentence removed that stood unchanged at line 454
+   * (8 Oct). A false removal is the costly direction: it is read as Design's
+   * loss and carried into a report.
+   */
+  it('does not report a paragraph as removed because the one before it changed', () => {
+    const before = '96. Build the band.\n\n> Every link has a hit area 44 tall\n\nNo step: §G.7. It rules nothing.\n';
+    const after = '96. Build the band.\n\n> Every link has a hit area 44 tall\n\n99. Build the grid.\n\n> Under each cover, the title is set in 13 ink\n\nNo step: §G.7. It rules nothing.\n';
+    expect(sentencesOf(after)).toContain('No step: §G.7.');
+    expect(diffProse(before, after)).toEqual({ removed: [], reworded: [] });
+  });
+
+  it('keeps a step number with its own step, not on the end of the paragraph before', () => {
+    const sentences = sentencesOf('Report the baselines.\n\n> Each meets its neighbours halfway.\n\n97. Build the table.\n');
+    expect(sentences).toContain('> Each meets its neighbours halfway.');
+    expect(sentences).toContain('97. Build the table.');
+  });
 });
