@@ -37716,3 +37716,30 @@ for byte, and the three files restored to their committed state:
 `../record-collection-held/design-drop-2026-10-08/` holds
 `HANDOFF-wall-and-pull.md`, `Table and Grid - build target.dc.html` and
 `WITHDRAWALS.md`. To be brought back for intake before steps 100 and 101.
+
+## RETIRED: staging load with CPU burners on this machine (8 Oct, the coordinator's)
+
+Not a rule to refine; a technique not to reach for again. Two attempts on
+8 Oct went to it. Sixteen burners read a load of 17 at the start and 165
+by the end of one run; thirty-six read 139 to 400. The load climbs through
+the run and cannot be held in a band, so no reproduction made this way
+says anything about a failure seen at 41.
+
+**What worked both times was arithmetic: measure the chain, then size the
+budget against it.** The sign-in's wait was settled by two traces (4.74s
+and 2.0s against 5s), not by any staged run. A failure seen under load is
+taken from its trace; nobody, the coordinator included, sends Code after a
+reproduction by load again.
+
+**The general form, for any staging that is still worth doing: a staged
+condition is specified by the measurement wanted, not by the setting.**
+The burner count was a knob and the load was the result, and I chose the
+knob while meaning the result, which is reading the instrument for the
+thing once more. The knob is turned until the measurement sits in the
+band, read from the machine while the run happens. This replaces the
+weaker line above about the burner count not predicting the load.
+
+**Recorded at the coordinator's request: the new helper was not run under
+load**, because the old copies had not failed there and so a pass would
+have been evidence of nothing. A green that cannot fail is refused, not
+collected.
