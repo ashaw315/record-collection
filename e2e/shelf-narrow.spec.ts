@@ -231,3 +231,93 @@ for (const width of [390, 320]) {
     }
   });
 }
+
+/*
+  Step 96, §W.24: "Give each link in the band a hit area 44 tall by the
+  overlay §G.3 uses, meeting its neighbours halfway across each gap... if a
+  44 overlay would cross the search field, stop and report the room. Set
+  the view names and Add record on one baseline."
+
+  Measured before, as step 95 left them: a tap landed on each link over its
+  drawn box only, 14 to 18 tall; Add record's box stood 3 lower at its foot
+  than the view names'.
+
+  The room is read first and asserted as the precondition. A baseline is
+  read by standing a zero-height inline box on it inside each link.
+*/
+for (const width of [390, 320]) {
+  /* Fails against step 95's links, whose tap area is their drawn box, about 16 tall; and against Add record's block box, whose text sits lower. */
+  test(`at ${width}px each of the band’s links is tappable over 44, to halfway across the gap to its neighbour, clear of the search field, and the four sit on one baseline`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto('/');
+    await expect(page.locator('[data-wall="overview"]')).toBeVisible({ timeout: 30_000 });
+    const m = await page.evaluate(() => {
+      const rail = document.querySelector('[data-testid="wall-rail"]') as HTMLElement;
+      const field = (rail.querySelector('#rail-search') as HTMLElement).getBoundingClientRect();
+      const band = rail.getBoundingClientRect();
+      const links = Array.from(rail.querySelectorAll('a')).map((a) => {
+        const b = a.getBoundingClientRect(); const cx = b.left + b.width / 2; const cy = b.top + b.height / 2;
+        const hit = (x: number, y: number) => document.elementFromPoint(x, y);
+        const mine = (x: number, y: number) => { const el = hit(x, y); return el !== null && a.contains(el); };
+        /* The tap area's edges, to a tenth of a pixel, walking out from the centre. */
+        const reach = (dx: number, dy: number) => { let d = 0; while (d < 120 && mine(cx + dx * (d + 0.1), cy + dy * (d + 0.1))) d += 0.1; return Math.round(d * 10) / 10; };
+        const up = reach(0, -1), down = reach(0, 1), left = reach(-1, 0), right = reach(1, 0);
+        const probe = document.createElement('span');
+        probe.style.cssText = 'display:inline-block;width:0;height:0;vertical-align:baseline';
+        a.appendChild(probe);
+        const baseline = probe.getBoundingClientRect().top;
+        probe.remove();
+        const at = (x: number, y: number) => { const el = hit(x, y); return el === null ? 'nothing' : a.contains(el) ? 'self' : el.id === 'rail-search' || el.closest('form') !== null ? 'search' : (el.closest('a')?.textContent ?? el.tagName).trim().toLowerCase(); };
+        return {
+          name: (a.textContent ?? '').trim(), drawn: { left: b.left, right: b.right, top: b.top, bottom: b.bottom },
+          tap: { top: cy - up, bottom: cy + down, left: cx - left, right: cx + right, height: up + down, width: left + right },
+          inside: { top: at(cx, cy - up + 1), bottom: at(cx, cy + down - 1), left: at(cx - left + 1, cy), right: at(cx + right - 1, cy) },
+          baseline,
+          overlay: getComputedStyle(a, '::before').height,
+          /* Taps a tenth of a pixel inside where a 44 area ends, and a pixel and a half outside it, above and below the link's centre. */
+          justInside: [mine(cx, cy - 21.9), mine(cx, cy + 21.9)],
+          justOutside: [mine(cx, cy - 23.5), mine(cx, cy + 23.5)],
+          /* Every pixel down the centre line and along the first 44 of the foot's width: the area has no hole in it. The current view's marker lies inside it. */
+          holes: Array.from({ length: 43 }, (_, i) => i - 21).filter((d) => !mine(cx, cy + d)).concat(Array.from({ length: 43 }, (_, i) => i - 21).filter((d) => !mine(Math.min(b.right - 1, b.left + 4), cy + d))),
+        };
+      });
+      return { fieldBottom: field.bottom, bandBottom: band.bottom, bandHeight: band.height, links };
+    });
+    /* The room, read first: a 44 overlay centred on a link, against the search field's foot above it and the band's foot below. */
+    for (const link of m.links) {
+      const centre = (link.drawn.top + link.drawn.bottom) / 2;
+      expect(centre - 22, `${link.name}: a 44 overlay starts at or below the search field's foot, ${m.fieldBottom}`).toBeGreaterThanOrEqual(m.fieldBottom);
+    }
+    const views = m.links.filter((l) => l.name.toLowerCase() !== 'add record');
+    for (const link of m.links) {
+      /*
+        44 tall, held so that no tolerance admits a shorter one. The
+        overlay's own height is 44px exactly. A tap 21.9 above and below the
+        link's centre lands on it, so the area is at least 43.8. A tap 23.5
+        above and below does not, so it is under 47: the upper bound is
+        loose because hit-testing resolves to the device pixel and this
+        project's are not whole CSS pixels (a tap 22.6 out still landed).
+        The walk out from the centre reads 44.9 for the same reason;
+        asserting that within a pixel would have admitted an area of 43.
+      */
+      expect(link.overlay, `${link.name}: its overlay is 44 tall`).toBe('44px');
+      expect(link.justInside, `${link.name}: taps 21.9 above and below its centre land on it`).toEqual([true, true]);
+      expect(link.holes, `${link.name}: no point of it is taken by something else (offsets from its centre)`).toEqual([]);
+      expect(link.justOutside, `${link.name}: taps 23.5 above and below do not`).toEqual([false, false]);
+      expect(link.tap.top, `${link.name}: and does not reach the search field`).toBeGreaterThanOrEqual(m.fieldBottom);
+      expect(link.inside, `${link.name}: a tap 1px inside each edge of its area lands on it`).toEqual({ top: 'self', bottom: 'self', left: 'self', right: 'self' });
+    }
+    /* Halfway across each 18 gap: neighbours' areas meet and neither takes the other's. */
+    for (let i = 1; i < views.length; i += 1) {
+      const gap = views[i].drawn.left - views[i - 1].drawn.right;
+      const midway = views[i - 1].drawn.right + gap / 2;
+      const y = (views[i].drawn.top + views[i].drawn.bottom) / 2;
+      /* Asked of the page directly, a pixel and a half either side of the midpoint (hit-testing resolves to the device pixel): the left of it is the left link's, the right of it the right link's. */
+      const sides = await page.evaluate(([x, yy]) => [x - 1.5, x + 1.5].map((px) => (document.elementFromPoint(px, yy)?.closest('a')?.textContent ?? 'not a link').trim()), [midway, y]);
+      expect(sides, `the gap between ${views[i - 1].name} and ${views[i].name} is shared at its middle, ${midway}`).toEqual([views[i - 1].name, views[i].name]);
+    }
+    const baselines = m.links.map((l) => Math.round(l.baseline * 10) / 10);
+    expect(Math.max(...baselines) - Math.min(...baselines), `the four sit on one baseline: ${m.links.map((l, i) => `${l.name} ${baselines[i]}`).join(', ')}`).toBeLessThanOrEqual(0.5);
+    console.log(`BAND ${width}: height ${m.bandHeight}, search foot ${m.fieldBottom}, baselines ${m.links.map((l, i) => `${l.name} ${baselines[i]}`).join(', ')}; tap areas ${m.links.map((l) => `${l.name} ${Math.round(l.tap.width * 10) / 10}×${Math.round(l.tap.height * 10) / 10} from y ${Math.round(l.tap.top * 10) / 10}`).join(', ')}`);
+  });
+}

@@ -36357,3 +36357,114 @@ seventeen** (one probe run, not kept):
 The table and the grid need a target: nothing visual about them has been
 ruled, they do not share the shelf's rail, type scale, corners or control
 heights, and nothing in the tree says whether they should.
+
+## Step 96 built: the band's links are tappable over 44, on one baseline (8 Oct)
+
+**The room, measured first as the step requires: it fits, and nothing
+grew.** A 44 overlay centred on a link runs from 131.5 to 175.5. The search
+field's foot is at 121.5, 10 above it; the band's foot is at 179.5, 4 below
+it. The coordinator expected it not to fit (a links row of about 42); the
+row is 24 with 18 of gap above and 16 of padding below, and the overlay
+borrows from both. **The band is 126.5 at 390 and at 320, as step 95 left
+it, so the page is still 971 and step 84's pin stands. No re-pin.**
+
+**Built**, in the narrow stylesheet: each link is `position: relative` with
+an empty `::before` 44 tall centred on it, reaching 9 either side, which is
+half the 18 between view names. The row is aligned on its baseline.
+
+**A hole the first build had, found by the test and not by me.** The bar
+that marks the current view lies inside SHELF's overlay and is not part of
+the link, so a tap on it was not a tap on SHELF: its area read 37.2. The
+marker now lets taps through.
+
+**Baselines, measured by standing a zero-height inline box on each:**
+before, Shelf, Table and Grid 157.3 and Add record 159.1, 1.8 apart; now
+all four 157.3.
+
+**One reading of the step, stated.** "Meeting its neighbours halfway across
+each gap" is built for the 18 gaps between view names. Add record stands
+129 from Grid at 390; its area reaches 9, not 64, so the blank paper
+between them is not a tap target for either.
+
+**Tested**, `e2e/shelf-narrow.spec.ts`, two tests at 390 and 320 on the
+mobile project, red against step 95 (15.2 for 44):
+
+- the room: every overlay starts at or below the search field's foot;
+- 44 tall, held without a tolerance that admits a shorter one: the
+  overlay's own height is 44px, taps 21.9 above and below the centre land
+  on the link, taps 23.5 above and below do not. The walk out from the
+  centre reads 44.9, because hit-testing resolves to the device pixel and
+  this project's are not whole CSS pixels; asserting that within a pixel
+  would have admitted 43;
+- no hole: every pixel down the centre line and down a line near its left
+  edge lands on the link;
+- each gap between view names is shared at its middle, asked of the page a
+  pixel and a half either side;
+- a tap 1px inside each edge lands on its own link, and none on the search
+  field; the four baselines within 0.5.
+
+Staged: the row aligned by its feet again, red on the baselines (159.1
+against 157.3). The marker taking taps again did NOT go red the first
+time: the test sampled the area's top and bottom and the marker lies
+between. The no-hole check was added for it, and then it went red.
+
+## The collection-filters race: the cause, from the failure's own evidence (8 Oct)
+
+**It was the cause I reported killed on 7 Oct.** The test chose a genre, a
+label and a sort, waited for the address to contain `genreId=`, and read
+the address. Each choice is its own navigation; the wait was satisfied by
+the first of three. The cold page of that address rightly showed Sort at
+its default.
+
+**How it was found.** The instrumented assertion failed in step 96's
+covering run. Its message was useless, my fault: `toMatchObject` prints
+only the differing key, so it said `""` again. The run's screenshots were
+not: the cold page read "2 of 23 records" and "Sort: default", the genre's
+two records and nothing else applied; the first page had gone on to "1 of
+20 records" with Year ↓ selected.
+
+**Why the probe of 7 Oct missed it, and what I got wrong.** It delayed
+requests carrying `_rsc` by 400ms and saw the address arrive whole. I
+reported the cause dead. I had not confirmed the delay took hold: a staged
+condition that is not checked proves nothing, which is this file's own
+rule from 5 Oct. The retraction of the hydration fix was right; the
+"third guess killed" that followed it was wrong.
+
+**Fixed where the address is read:** the test waits until the address
+carries the genre, the label and the sort it chose. That is not a guess at
+a wait: it is the thing the screenshots show was missing. Six runs, three
+on each project, with no retries: `6 passed`. **Not shown red**: the old
+read fails only when the navigations are slow, and I have no staging of
+that which I trust. The assertion on the cold page now puts the select's
+whole state in its message.
+
+Both earlier "fixes" (any hydrated element; the filters' own marker)
+guarded the cold page. The fault was on the first page, before the cold
+page existed.
+
+## The paging does not invalidate the gate on 59006d8 (8 Oct, the coordinator's reasoning)
+
+Recorded beside that result at their request. Load makes tests fail, not
+pass, so 727 passing while the machine swapped 9.2 million pages is
+stronger evidence than 727 passing idle. And the one failure could not
+have been the machine: the band grew exactly 42 and the page read exactly
+929 + 42. Thrashing does not produce exact arithmetic.
+
+**The caveat, named:** "load only causes failures" has an exception for
+assertions that something does NOT happen within a window. Step 87's
+slow-photo test is one: it asserts the failed frame never shows while a
+photograph is held for three seconds. A machine slow enough could pass
+that for the wrong reason. Not enough to doubt this run.
+
+**For the next gate, the lever that needs no restart** is the three
+`popcom-game-on` containers. They are another project's. Adam can stop
+them; I do not touch them.
+
+## Corrections to the Collection survey (8 Oct)
+
+- **Five open items on the shelf, not six.** The shelf's last record
+  behind the upright was accepted on 6 Oct.
+- **The decision has changed twice and stands at:** Design designs the
+  table and the grid properly, in the record page's language. So the
+  radii and the 28 controls are not a defect list; the design absorbs
+  them.

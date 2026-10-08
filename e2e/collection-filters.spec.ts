@@ -450,7 +450,27 @@ test('clicking through to a filtered view equals loading that URL directly', asy
   await page.getByRole('button', { name: `Clay-${f.suffix}` }).click();
   await page.getByLabel('Sort by').selectOption('releaseYear:desc');
 
-  await expect(page).toHaveURL(/genreId=/);
+  /*
+    **The address is read when it carries all three choices, not the first.**
+    This waited for `genreId=` and then read the URL. Each choice is its own
+    navigation, and the address changes as each lands, so that wait was
+    satisfied by the first of three. Read then, the URL had the genre and
+    neither the label nor the sort, and the cold page of it rightly showed
+    Sort at its default: the failure seen in gates on 5, 6 and 7 Oct.
+
+    Measured, on 8 Oct, from the failing run's own screenshots: the cold
+    page read "2 of 23 records" with "Sort: default", the genre alone; the
+    first page had gone on to "1 of 20" with Year ↓ selected. A probe a day
+    earlier delayed navigations by 400ms and did not reproduce it, and was
+    reported as killing this cause; it never confirmed that its delay had
+    taken hold, so it showed nothing.
+  */
+  await expect
+    .poll(() => {
+      const query = new URL(page.url()).searchParams;
+      return { genre: query.has('genreId'), label: query.has('labelId'), sort: query.get('sort') };
+    }, { message: 'the address carries the genre, the label and the sort that were chosen', timeout: 15_000 })
+    .toEqual({ genre: true, label: true, sort: 'releaseYear:desc' });
   const clickedUrl = page.url();
   const clickedTitles = await visibleTitles(page, f.suffix);
 
@@ -493,10 +513,9 @@ test('clicking through to a filtered view equals loading that URL directly', asy
       wrong.** This read `""` in gates on 5, 6 and 7 Oct, on mobile, on the
       first attempt only. Waiting for any hydrated element did not stop it;
       waiting for the filters' own marker did not either (7 Oct, guard in
-      place, still empty). A third guess, that the URL was read before the
-      sort's navigation landed, was tested and is false: with navigations
-      delayed 400ms the URL read here still carries the sort, and a cold
-      page of it holds the value.
+      place, still empty). The cause was the third candidate, found from
+      this assertion's own failure and fixed above, where the address is
+      read: it was read before the sort's navigation had landed.
 
       So the assertion is the same and nothing more is waited for. What is
       new is that a failure now says what the select and the page held at
@@ -526,7 +545,8 @@ test('clicking through to a filtered view equals loading that URL directly', asy
       await cold.waitForTimeout(100);
       state = await sortState();
     }
-    expect(state, 'the Sort select reflects the URL; on failure this is everything it and the page held').toMatchObject({ value: 'releaseYear:desc' });
+    /* The whole state goes in the message: `toMatchObject` prints only the key that differs, which is how the first failure of this version said `""` and nothing else. */
+    expect(state.value, `the Sort select reflects the URL; it and the page held ${JSON.stringify(state)}`).toBe('releaseYear:desc');
   } finally {
     await context.close();
   }

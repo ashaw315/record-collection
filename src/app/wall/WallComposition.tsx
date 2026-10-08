@@ -78,7 +78,20 @@ export function WallComposition({
           row could not fit a 320 window: its fixed items need 274.8 and the
           SEARCH label will not go under 46.2, which is 321, so the band and
           the page were one pixel wider than the window. Nothing here clamps
-          a width; on two rows nothing needs more than the window has. The number is the fork's own (view-fork.ts), so the band
+          a width; on two rows nothing needs more than the window has.
+
+          **Step 96: each link is tappable over 44**, by the overlay the
+          header's links use (§G.3): an empty box centred on the link, 44
+          tall, reaching 9 either side, which is halfway across the 18
+          between view names, so neighbours' areas meet and none takes
+          another's. Measured first, as the step requires: the overlay
+          starts 10 below the search field's foot and ends inside the
+          band, so nothing grew. And the row is aligned on its baseline:
+          Add record is a block and the view names are inline in their
+          list items, and aligned by their feet their texts stood apart.
+          The bar that marks the current view lies inside its link's
+          overlay and is not part of the link, so it took the taps on the
+          lower 7 of SHELF's 44; it is a mark, and taps pass through it. The number is the fork's own (view-fork.ts), so the band
           and the far view cannot disagree. The same query decides the
           unmeasured first paint, so the server's paint, the client's first
           paint and the settled view are all the same view.
@@ -91,6 +104,10 @@ export function WallComposition({
   [data-testid="wall-rail"] a { margin-top: 0; white-space: nowrap; }
   [data-testid="wall-rail"] > a { margin-left: auto; }
   [data-testid="wall-rail"] > hr { display: none; }
+  [data-testid="wall-rail"] { align-items: baseline; }
+  [data-testid="wall-rail"] a { position: relative; }
+  [data-testid="wall-rail"] a::before { content: ''; position: absolute; left: -9px; right: -9px; top: 50%; height: 44px; transform: translateY(-50%); }
+  [data-testid="wall-rail"] li > span { pointer-events: none; }
   [data-rail-filter] { display: none; }
   [data-rail-rule] { display: none; }
 }
