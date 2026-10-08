@@ -451,6 +451,9 @@ Its rows are in the governs table above, one per section; this section does not 
 99. **§T.5 — the grid.** After step 97. Covers by §33's rule, the no-cover frame by §6 and §5.3; title 13 ink, artist 11 label; 24 apart, 20 insets, at least two a row, as many as fit at 160 or wider; the Sort control. Report every width at which the column count changes, from 568 up to 1920, and the cover sizes at 390 and 320 against 163 and 128.
    > Under each cover, the title is set in 13 ink, and the artist beneath it as an 11 label,
 
+100. **§W.24 — the search field's floor and Add record's colour.** A defect fix to step 95, on the shelf and in the table and grid: the floor and §3's reason already reached both. Make the band's search field 44 tall, and re-pin the shelf's page length at 390 and the table's and grid's from the build. Give the band's Add record one colour class, ink, on every view. Test the field's height and Add record's colour on all three views at 390 and 1440.
+   > The search field is 44 tall.
+
 No step: §G.7. It rules nothing. Hover and focus wait on Code's second pass, the breakpoint is settled and recorded in §G.8, and the eyebrow repetition is an observation, not a ruling.
 
 **The record-detail screen is closed at 7983d4d, on 1 October 2026,** by Adam’s pass over the 119 captures, which found nothing that changes what a reader understands about a record. Steps run 0 to 71; steps 72 and 73 follow the close and change values, not structure. This is the baseline the record modal builds against: its marks, its type ladder and its colour system.
