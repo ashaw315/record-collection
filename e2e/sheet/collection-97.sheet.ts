@@ -37,7 +37,11 @@ test('the table and grid’s band, length and hit areas on the real collection',
           window.scrollTo(0, before);
           return { what: `${el.tagName.toLowerCase()} ${(el.textContent ?? '').trim().slice(0, 28) || el.id}`, drawn: Math.round(r.height * 10) / 10, hit, inTable: el.closest('table, ul.grid') !== null };
         });
-        return { band: height('[data-collection-band]'), filters: height('[data-collection-filters]'), page: document.documentElement.scrollHeight, client: document.documentElement.clientWidth, scroll: document.documentElement.scrollWidth, controls, options: Object.fromEntries(Array.from(document.querySelectorAll<HTMLElement>('[data-filter]')).map((f) => [f.dataset.filter, 0])) };
+        const heights = Array.from(document.querySelectorAll<HTMLElement>('main table tbody tr')).map((r) => Math.round(r.getBoundingClientRect().height * 10) / 10);
+        const tally: Record<string, number> = {};
+        for (const h of heights) tally[String(h)] = (tally[String(h)] ?? 0) + 1;
+        const columns = Array.from(document.querySelectorAll<HTMLElement>('main table thead th')).map((th) => ({ name: (th.textContent ?? '').trim(), width: Math.round(th.getBoundingClientRect().width * 10) / 10 }));
+        return { rowHeights: tally, columns, band: height('[data-collection-band]'), filters: height('[data-collection-filters]'), page: document.documentElement.scrollHeight, client: document.documentElement.clientWidth, scroll: document.documentElement.scrollWidth, controls, options: Object.fromEntries(Array.from(document.querySelectorAll<HTMLElement>('[data-filter]')).map((f) => [f.dataset.filter, 0])) };
       });
       const lists: Record<string, { options: number; height: number; page: number }> = {};
       for (const key of Object.keys(closed.options)) {
@@ -46,7 +50,7 @@ test('the table and grid’s band, length and hit areas on the real collection',
         await page.keyboard.press('Escape');
       }
       const chrome = closed.controls.filter((c) => !c.inTable);
-      rows.push({ view, width, band: closed.band, filtersClosed: closed.filters, pageLength: closed.page, pageWidth: `${closed.scroll} in ${closed.client}`, controls: chrome.length, under44: chrome.filter((c) => c.hit < 44).map((c) => `${c.what}: drawn ${c.drawn}, hit ${c.hit}`), inRows: closed.controls.filter((c) => c.inTable).length, lists });
+      rows.push({ view, width, rowHeights: closed.rowHeights, columns: closed.columns, band: closed.band, filtersClosed: closed.filters, pageLength: closed.page, pageWidth: `${closed.scroll} in ${closed.client}`, controls: chrome.length, under44: chrome.filter((c) => c.hit < 44).map((c) => `${c.what}: drawn ${c.drawn}, hit ${c.hit}`), inRows: closed.controls.filter((c) => c.inTable).length, lists });
     }
   }
   writeFileSync(join(OUT, 'measures.json'), `${JSON.stringify(rows, null, 1)}\n`);

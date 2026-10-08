@@ -151,7 +151,7 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
             shelf is its SIBLING rather than a third case inside it — so the
             branch above is what proves `view` is not 'shelf' here.
           */}
-          <CollectionList rows={records.rows as CollectionRow[]} view={params.view === 'grid' ? 'grid' : 'table'} />
+          <CollectionList rows={records.rows as CollectionRow[]} params={params} view={params.view === 'grid' ? 'grid' : 'table'} />
 
           <CollectionPagination params={params} total={records.total} rows={records.rows.length} pageSize={PAGE_SIZE} />
           </div>

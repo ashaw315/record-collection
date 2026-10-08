@@ -94,6 +94,8 @@ const GOVERNED = [
   'e2e/record-modal-81.spec.ts',
   /* §M.2 (step 82): the newest back, on the wall and in the modal. */
   'e2e/back-newest-82.spec.ts',
+  /* §T.4 (step 98): a table row is one link to its record, and the test follows it there. */
+  'e2e/table-98.spec.ts',
   'e2e/sheet/cover-boxes.sheet.ts',
   'e2e/sheet/record-modal.sheet.ts',
   'e2e/sheet/record-modal-92.sheet.ts',

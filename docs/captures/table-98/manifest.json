@@ -1,0 +1,47 @@
+[
+ {
+  "width": 390,
+  "file": "table-98-w390-rows50of200-h46to165-page5060.png",
+  "rows": 50,
+  "min": 46,
+  "max": 165,
+  "tally": {
+   "46": 2,
+   "65": 1,
+   "165": 11,
+   "65.5": 35,
+   "145.5": 1
+  },
+  "count": "200 of 217 records",
+  "page": 5060,
+  "table": 4456,
+  "columns": [
+   "Record ↑",
+   "Format",
+   "Year",
+   "Paid"
+  ]
+ },
+ {
+  "width": 1440,
+  "file": "table-98-w1440-rows50of200-h44to65.5-page3108.png",
+  "rows": 50,
+  "min": 44,
+  "max": 65.5,
+  "tally": {
+   "44": 38,
+   "65.5": 12
+  },
+  "count": "200 of 217 records",
+  "page": 3108,
+  "table": 2504,
+  "columns": [
+   "Record ↑",
+   "Label",
+   "Format",
+   "Year",
+   "Cond.",
+   "Paid"
+  ]
+ }
+]

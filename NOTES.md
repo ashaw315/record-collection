@@ -37047,3 +37047,80 @@ chips and now go through a `choose` helper. One was rewritten: "the grid
 toggle is hidden on a phone" passed against a switch that no longer
 existed, under a name §T.1 had made false. It now holds that the grid is
 reached from the band on a phone.
+
+## Step 98 built: the table (8 Oct)
+
+§T.4 as ruled 8 Oct. Step level: `table-98` on chromium, then with
+`collection-filters`, `collection-filters-97`, `collection-band-97`,
+`collection-widths`, `label-tracking-80`, `shelf`, `record-detail` and
+`record-modal-81` on both projects (`137 passed, 1 flaky, 2 skipped`),
+typecheck, lint, build, and the unit guards under `src/app` and
+`test/repo`.
+
+**Built.** A row is one link: the title's link has an empty box laid over
+the row, so a press anywhere on the row is a press on it, and keyboard
+focus is §M.6's two-band ring on that box, inside the row. Rows are 44
+exactly for a title and an artist (two lines of 13 at 1.5, 2 above, 2
+below, and the hairline) and taller for more. Text left, year and price
+right in tabular figures, the grade left as text. Headers are 11 labels;
+Record, Year and Paid are links that sort and then reverse, the sorted one
+in ink with the 2px underline and its arrow. The header row sticks at the
+top of the viewport on paper. Hover sinks a row to oklch(0.731 0.004 80).
+The Sort control reads "SORT · YEAR ↓" and is 44; the platform's select
+lies over it, unseen.
+
+**Confirmed first, as the step asked:** the app's header scrolls away
+(`nav-type-74`'s guard, green in every gate), so the row sticks at 0 and
+not 53 below. The sticky test also asserts the app header's foot is above
+the viewport, so the coupling is checked where it is used.
+
+**Red first:** 9 of 10. The tenth, that a row is as tall as its content,
+passed against the old table, which already was: it is a guard on that
+and not a fail-first test.
+
+**For Adam's judgement:** `docs/captures/table-98/`, a full page of 50
+from a 200-record fixture under a genre filter.
+
+| file | rows | heights |
+|---|---|---|
+| `table-98-w390-rows50of200-h46to165-page5060.png` | 50 of 200 | 35 at 65.5, 11 at 165, 2 at 46, 1 at 145.5, 1 at 65 |
+| `table-98-w1440-rows50of200-h44to65.5-page3108.png` | 50 of 200 | 38 at 44, 12 at 65.5 |
+
+The fixture is built to show the tall cases: a 76-character title, a
+four-word artist, and half the records matching through a child genre.
+
+**Measured on the real collection** (17 records, read-only sheet):
+
+| width | columns drawn, with widths | row heights | page |
+|---|---|---|---|
+| 390 | Record 182.7, Format 62.2, Year 47.2, Paid 57.9 | 15 at 65.5, 1 at 65, 1 at 85 | 1,776 |
+| 320 | Record 112.7, Format 62.2, Year 47.2, Paid 57.9 | 10 at 65.5, 5 at 85, 1 at 65, 1 at 104.5 | 1,893 |
+| 1440 | Record 518, Label 336.1, Format 153.1, Year 116.2, Cond. 134.1, Paid 142.5 | 17 at 44 | 1,391 |
+
+**Found, with measurements, for routing:**
+
+1. **Below 768 no row of the real collection is 44.** Every record has a
+   label or a condition, so every row carries the third line: 65.5, and
+   85 where the title wraps at 320. The floor is met everywhere and the
+   "about seventeen rows on an 800-high screen" holds only from 768 up.
+   At 390 it is about twelve.
+2. **Label and Cond. are dropped as columns at 390 and 320**, as built,
+   and their text is the Record cell's third line. Record is 112.7 wide
+   at 320, which is where titles wrap.
+3. **A two-line row at 390 measures 46 in the fixture, not 44.** Not
+   chased; the capture's file name carries it.
+4. **The Sort control's last pixel opened nothing.** The select covered
+   the control inside its underline, 43 of 44, found by the sheet's hit
+   reading on the real collection and not by the seeded test, which
+   probed one point. The test now reads all 44.
+5. **At 1440 the Record column takes the slack**, 518 of 1,400. "Columns
+   set to their content" would leave the table narrower than the window;
+   the built table spans it. Not ruled either way.
+6. **Hover puts the label colour on the sunk surface.** Not measured for
+   contrast here; §W.28 recomputed the wall's hairline against that
+   surface for the same reason.
+
+**Flaky in the covering run, outside this diff:** `record-modal-81.spec.ts:659`,
+"two presses on TURN OVER ... it ends in one turn's time from the first
+press", failed once and passed on retry. It reads elapsed time; the
+modal's source is untouched by steps 97 and 98.

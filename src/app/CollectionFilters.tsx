@@ -145,33 +145,43 @@ export function CollectionFilters({
   const body = (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center gap-2">
-        <label htmlFor="collection-sort" className="sr-only">
-          Sort by
+        {/*
+          §T.5's Sort control, kept by the table at every width (§T.4): a
+          control whose label names the order in force, since Date bought
+          and Artist have no header to say it. The select lies over the
+          whole control, unseen, so a press anywhere on its 44 opens the
+          platform's own list.
+        */}
+        <label data-sort-control="" className={`relative flex h-[44px] shrink-0 items-center border-b ${HAIRLINE}`}>
+          <span data-sort-current="" className={LABEL} style={{ color: 'oklch(0.19 0.008 60)' }}>
+            Sort · {params.sort === undefined ? 'Default' : `${SORT_LABELS[params.sort.field]} ${params.sort.direction === 'asc' ? '↑' : '↓'}`}
+          </span>
+          <select
+            id="collection-sort"
+            aria-label="Sort by"
+            value={params.sort === undefined ? '' : `${params.sort.field}:${params.sort.direction}`}
+            onChange={(event) => {
+              const [field, direction] = event.target.value.split(':');
+              change((current) =>
+                withFacet(current, {
+                  sort:
+                    event.target.value === ''
+                      ? undefined
+                      : { field: field as RecordSortField, direction: direction as 'asc' | 'desc' },
+                }),
+              );
+            }}
+            className="absolute inset-x-0 top-0 h-[44px] w-full cursor-pointer text-label opacity-0"
+          >
+            <option value="">Default</option>
+            {RECORD_SORT_FIELDS.map((field) => (
+              <optgroup key={field} label={SORT_LABELS[field]}>
+                <option value={`${field}:asc`}>{SORT_LABELS[field]} ↑</option>
+                <option value={`${field}:desc`}>{SORT_LABELS[field]} ↓</option>
+              </optgroup>
+            ))}
+          </select>
         </label>
-        <select
-          id="collection-sort"
-          value={params.sort === undefined ? '' : `${params.sort.field}:${params.sort.direction}`}
-          onChange={(event) => {
-            const [field, direction] = event.target.value.split(':');
-            change((current) =>
-              withFacet(current, {
-                sort:
-                  event.target.value === ''
-                    ? undefined
-                    : { field: field as RecordSortField, direction: direction as 'asc' | 'desc' },
-              }),
-            );
-          }}
-          className={`h-9 shrink-0 border bg-transparent px-2 text-label ${HAIRLINE}`}
-        >
-          <option value="">Sort: default</option>
-          {RECORD_SORT_FIELDS.map((field) => (
-            <optgroup key={field} label={SORT_LABELS[field]}>
-              <option value={`${field}:asc`}>{SORT_LABELS[field]} ↑</option>
-              <option value={`${field}:desc`}>{SORT_LABELS[field]} ↓</option>
-            </optgroup>
-          ))}
-        </select>
       </div>
 
       {/*
