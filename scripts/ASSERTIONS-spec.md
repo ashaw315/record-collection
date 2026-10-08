@@ -23,7 +23,7 @@ Read every input as UTF-8. Decode `&rsquo;` → `’` and `&amp;` → `&` before
 ## Shared definitions
 
 **Heading.** In `L`, `S` and `W`: any `<p …>` whose `style` contains `text-transform:uppercase` and whose text starts with an optional `§`, then a section id, then ` · `.
-Section id pattern: `W` | `W\.\d+(\.\d+)?` | `G\.\d+(\.\d+)?` | `M\.\d+(\.\d+)?` | `\d{1,2}(\.\d+)?`. `M` is the record modal's target; its ids are accepted before it is an input, so the first §M citation is read rather than refused.
+Section id pattern: `W` | `W\.\d+(\.\d+)?` | `G\.\d+(\.\d+)?` | `M\.\d+(\.\d+)?` | `T\.\d+(\.\d+)?` | `\d{1,2}(\.\d+)?`. `M` is the record modal's target; its ids are accepted before it is an input, so the first §M citation is read rather than refused. `T` is the table and grid target's, accepted on the same terms from 8 Oct.
 In `W`, a bare numeric id is prefixed `W.`.
 **Never match headings inside `<svg>`**: SVG text holds cell labels like `1 · Cover`.
 
@@ -46,7 +46,7 @@ In `W`, a bare numeric id is prefixed `W.`.
 ```
 
 - `ID` is `S/slug`, in backticks inside the bold, unique across the list.
-- `S` and `BY` are section ids: `\d{1,2}(\.\d+)?`, `W(\.\d+)*`, `G(\.\d+)+` or `M(\.\d+)+`.
+- `S` and `BY` are section ids: `\d{1,2}(\.\d+)?`, `W(\.\d+)*`, `G(\.\d+)+`, `M(\.\d+)+` or `T(\.\d+)+`.
 - `WHAT` runs from the character after the by-clause's own `. ` to the end of the line and is carried **verbatim** into the entry: its capital, its trailing period, any colon or inner period, and apostrophes straight or curly as written. No assertion reads `WHAT`; it is for people.
 - `QUOTE` is the whole of the next line after `> `, verbatim; it is what 6 and 7 compare, so it is never normalised.
 - A line beginning `- ` that does not match, or a bullet with no `> ` line after it, **fails the parse loudly** with its line number. An entry is never dropped silently.

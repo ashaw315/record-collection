@@ -85,6 +85,31 @@ describe('the shared parser and the bullet grammar read §M ids', () => {
   });
 });
 
+/**
+ * **T, the table and grid target, ahead of anything citing it (8 Oct).** The
+ * same move as M: both grammars accept `T.N` before a tracked heading or
+ * entry uses one. Checked free first: no index input has T as its file key,
+ * no withdrawal entry and no line of the handoff carries a T id, and the
+ * only file with §T ids is the target itself, which is not yet an input.
+ * Written on inline text for that reason.
+ */
+describe('the shared parser and the bullet grammar read §T ids', () => {
+  /* Fails against SECTION_ID, which accepts W, G, M and bare numbers only. */
+  it('finds headings written T.1 onward', () => {
+    const html = '<p style="font-size:11px;text-transform:uppercase">T.1 · Why these views are designed</p><p>Body.</p><p style="text-transform:uppercase">T.12 · A later one</p>';
+    expect(sections(html).map((h: { id: string }) => h.id)).toEqual(['T.1', 'T.12']);
+  });
+
+  /* Fails against BULLET, whose section slots accept numbers, W, G and M only. */
+  it('parses an entry withdrawn in and by a §T section, and one in §T withdrawn by §W', () => {
+    const md = '- **`T.4/columns`**: §T.4, withdrawn by §T.4. A first wording.\n  > Withdrawn within §T.4: a sentence.\n\n- **`T.2/chrome`**: §T.2, withdrawn by §W.27. Another.\n  > Superseded by §W.27: a sentence.\n';
+    expect(parseBullets(md)).toEqual([
+      { id: 'T.4/columns', s: 'T.4', by: 'T.4', what: 'A first wording.', quote: 'Withdrawn within §T.4: a sentence.' },
+      { id: 'T.2/chrome', s: 'T.2', by: 'W.27', what: 'Another.', quote: 'Superseded by §W.27: a sentence.' },
+    ]);
+  });
+});
+
 describe('assertion 4 resolves §G references in both directions', () => {
   /* Fails against assertion 4's reference rules: before G, "§G.99" was not a reference it could see, so it passed. */
   it('fails a §G reference in the record-detail target that names no nav heading', () => {

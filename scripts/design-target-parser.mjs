@@ -18,8 +18,8 @@
  * source for a rule, or the copies drift.
  */
 
-/** Section ids: the wall's `W`/`W.N`, the nav target's `G.N`, the modal target's `M.N`, the record targets' `N`/`N.M`. */
-export const SECTION_ID = String.raw`(?:W|W\.\d+(?:\.\d+)?|G\.\d+(?:\.\d+)?|M\.\d+(?:\.\d+)?|\d{1,2}(?:\.\d+)?)`;
+/** Section ids: the wall's `W`/`W.N`, the nav target's `G.N`, the modal target's `M.N`, the table and grid target's `T.N`, the record targets' `N`/`N.M`. */
+export const SECTION_ID = String.raw`(?:W|W\.\d+(?:\.\d+)?|G\.\d+(?:\.\d+)?|M\.\d+(?:\.\d+)?|T\.\d+(?:\.\d+)?|\d{1,2}(?:\.\d+)?)`;
 
 /**
  * A heading is the eyebrow paragraph AND an id followed by " · ".
