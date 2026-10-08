@@ -454,6 +454,9 @@ Its rows are in the governs table above, one per section; this section does not 
 100. **§W.24 — the search field's floor and Add record's colour.** A defect fix to step 95, on the shelf and in the table and grid: the floor and §3's reason already reached both. Make the band's search field 44 tall, and re-pin the shelf's page length at 390 and the table's and grid's from the build. Give the band's Add record one colour class, ink, on every view. Test the field's height and Add record's colour on all three views at 390 and 1440.
    > The search field is 44 tall.
 
+101. **§T.3 — the filter covers.** A supersession of step 97b's push-down, in its own step, built alongside step 100. Open each filter as a panel of opaque paper from beneath its own line to the viewport's bottom, full width, raised above the table and the grid; its line stays where it is. Close on a tap on the panel below the list, Back (one history entry at the same URL), Escape, or choosing an option. Hold the page in both directions with step 86's compensation. Scroll the list vertically within the panel where it exceeds it. Test with the pixel read and the tap that the panel covers a positioned cover in the grid, and that the page's length and scroll position do not change on open.
+   > An open filter covers what lies beneath its own line on opaque paper, as §G.8’s menu covers what lies beneath the header’s row, and the page beneath does not move.
+
 No step: §G.7. It rules nothing. Hover and focus wait on Code's second pass, the breakpoint is settled and recorded in §G.8, and the eyebrow repetition is an observation, not a ruling.
 
 **The record-detail screen is closed at 7983d4d, on 1 October 2026,** by Adam’s pass over the 119 captures, which found nothing that changes what a reader understands about a record. Steps run 0 to 71; steps 72 and 73 follow the close and change values, not structure. This is the baseline the record modal builds against: its marks, its type ladder and its colour system.
@@ -476,6 +479,10 @@ SPEC.md is Code's, so a withdrawal sentence in §10b crosses as text for Code to
 Found by measurement on a screen that has rulings, and left for that screen's target to decide. Nothing here is ruled, and nothing is blocked on it.
 
 - **Closed, accepted. §W, the last record on each shelf sits mostly behind the upright.** Adam accepts it as how a shelf end looks, so nothing changes. Code measured the overview: for the record it measured, 65% of the spine is under the upright's painted faces and 35% visible. Across the seventeen, the smallest visible share of any spine is about 18%, hidden mainly by neighbours. The neighbour case is what a shelf looks like. The upright case is systematic: it is the last record on every shelf, hidden by furniture rather than by records. The choices are to inset the record from the upright, to draw the upright behind the last record, or to accept it as how a shelf end looks. It is not a hit-testing fault.
+
+## Held for the survey pass
+
+- **Ornament for the table and grid, and likely manage, stats and the record form.** Adam asked for it. Held until Code's five surveys land, to be ruled once across the screens that want it. Its likely shape, not ruled: two places only, the air beside the heading and count at wide widths and the empty states, drawn from §26, §30, §50 and §57, never inside rows or cells. Any tint withdraws §T.2's colour sentence, which is in force from 5d123ee, and owes that entry when it is ruled.
 
 ## Findings for screens without a pass
 
