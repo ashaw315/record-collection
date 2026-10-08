@@ -36666,3 +36666,78 @@ appears, or it is not reported. The seed has the collection's seventeen
 records and almost none of its reference data, so counts of records
 transfer and counts of anything made from genres, labels, stores or
 images do not.
+
+## The gate on 44cecad: green, and pushed (8 Oct)
+
+Gate: full suites, both projects, through the runner, on 44cecad (the T
+grammar, the per-suite tree guard, two drops, the Collection survey).
+
+- Unit: `4122 passed, 2 skipped, tree unchanged — OK`.
+- Playwright: `732 passed, 12 skipped, ledger clean, tree unchanged — OK`.
+  No failure and no flaky test.
+- Elapsed 32m 18s. Swap-outs during the run: 7,827,215 pages. Load,
+  recorded only: 3.7 at the start, median 13.4, peak 21.1.
+
+The test count is 732 against the last gate's 732 executed (731 passed and
+1 flaky): the same tests, and this time all of them passed first time.
+Pushed: main is at 44cecad.
+
+## PATTERN: where a guard rests on a premise about the codebase, the premise gets its own test (8 Oct)
+
+The per-suite tree guard is right only if no end-to-end file reads the
+design folder. That sentence is not what holds it: a test is, which fails
+if any file under `e2e/` or either Playwright config names the folder. So
+the premise cannot rot silently. Every other premise relied on in this
+project was stated and later found wrong by accident: that the wall did
+not read the header's height, that a waiting square could not be pressed,
+that "square" was app-wide.
+
+**The pattern, to reuse:** when writing a guard, write down what it
+assumes about the code it does not itself check. Each such assumption is
+either checked by the guard, or gets a test of its own, or is recorded
+here as unpinned. A premise in a comment is the third kind whatever the
+comment says.
+
+**Places in the machinery that rest on an unpinned premise today**, found
+by reading; none is fixed here, and they are listed most consequential
+first:
+
+1. **The sheets write nothing to production.** `playwright.sheet.config.ts`
+   says so in prose: "every request the sheet makes is a GET". The sheets
+   run a local server against the production database with a session the
+   server accepts. Nothing tests that no sheet posts, puts, patches or
+   deletes, or presses a control that does. Read today, none does. This is
+   the only one of these whose failure would alter real data, and it is
+   the cheapest to pin: a test over `e2e/sheet/` like the design-folder
+   one.
+2. **Every end-to-end run prints `[global-setup] `.** `run-result.ts` knows
+   an end-to-end run by that line. If the setup's message is reworded, a
+   Playwright run is judged as a unit run: its ledger goes from "absent is
+   a failure" to "none expected", so a run whose teardown never ran would
+   pass. Nothing ties the string in `e2e/global-setup.ts` to the pattern in
+   the judgement.
+3. **A genre left behind with a fixture's name was made by the app.** The
+   ledger lets any genre named in a Discogs fixture stand. A spec that
+   created a genre called plainly "Punk" and left it would pass. Nothing
+   checks that specs suffix the genres they make.
+4. **Design's exports omit step 71 and nothing else.** Every drop is taken
+   by restoring that one line from HEAD by script, twenty-seven times so
+   far. If an export dropped a second thing, the index would catch a step
+   or an entry, and would not catch prose. Nothing compares an export
+   against HEAD for unexpected removals.
+5. **`docs/captures/real-records.json` is the collection.** The sheets take
+   their record ids from it. A record added in production is silently not
+   in any sheet. Nothing compares the file with the database.
+6. **A run's own output is ignored by git.** The tree fingerprint relies on
+   `test-results`, `playwright-report` and `.next` being ignored. This one
+   fails loudly if it breaks (every run would read `tree CHANGED`), which
+   is the safe direction.
+
+The first four fail silently in the unsafe direction. That list is worth
+more than most of the six deferred machinery items, as the coordinator
+put it, and 1 and 2 are each a few lines.
+
+**The hole kept paired, as before:** a file git ignores and does not track
+is invisible to the fingerprint. The table and grid target is one. Nothing
+reads it yet, so the exposure is zero until it is an input, and its
+`.gitignore` line lands in that same commit.
