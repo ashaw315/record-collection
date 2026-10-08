@@ -427,6 +427,9 @@ Its rows are in the governs table above, one per section; this section does not 
 94. **§M.7 — the waiting square is not a trigger.** A defect fix to steps 81 and 87: the ruling was always that the travelling cover is a loaded photograph, and the build let a waiting square open the modal. Until the photograph has loaded, the square is not a button, takes no focus and shows no pointer; on load it becomes the trigger. Remove the close-on-failure path, which is no longer reachable. Test on a throttled fixture that a press and a Tab before load do nothing, and that both work after.
    > A square still waiting for its photograph is not a trigger, and the cover becomes one when its photograph has loaded.
 
+95. **§W.24 — the narrow rail in two rows.** A supersession of the one-row rail built to §W.24, in its own step. Below the collapse, put search on its own row at the full width less the 20 inset a side, and the three view names and Add record on one row beneath it. Report the search field's width at 390 and 320 against 350 and 280, confirm its underline no longer meets SHELF's, and report the band's height before and after at both widths.
+   > Below the collapse the rail takes two rows: search spans the full width on the first, and the three view names and Add record keep their single row beneath it.
+
 No step: §G.7. It rules nothing. Hover and focus wait on Code's second pass, the breakpoint is settled and recorded in §G.8, and the eyebrow repetition is an observation, not a ruling.
 
 **The record-detail screen is closed at 7983d4d, on 1 October 2026,** by Adam’s pass over the 119 captures, which found nothing that changes what a reader understands about a record. Steps run 0 to 71; steps 72 and 73 follow the close and change values, not structure. This is the baseline the record modal builds against: its marks, its type ladder and its colour system.
