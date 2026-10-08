@@ -37417,3 +37417,71 @@ it does say which tests break next as a machine gets slower.
 confirm an instrument's output against the thing. This is its other
 half: a click is an instrument too, and it scrolled what the test was
 measuring.
+
+## The gate on 74b3a8a reads OK, at 3.23 seconds a test (8 Oct)
+
+Gate: full suites, both projects, on `74b3a8a`: steps 97a, 97b, 98, 99,
+two Design drops, the three machinery items, the capture guard and the
+two shelf-test fixes.
+
+- `npm test`: `4195 passed, 2 skipped, tree unchanged — OK`, 6m 03s.
+- `npx playwright test`: `772 passed, 4 flaky, 13 skipped, ledger clean,
+  tree unchanged — OK`. 42m 26s for 789 tests: **3.23 seconds a test**,
+  just past the 3.2 mark. Swap-outs rose by about 54.5 million. Load 6.96
+  at the start, 15.09 at the end, and 41 five minutes in.
+- Four passed only on retry: `cover-travel-92.spec.ts:232` and `:250`
+  (the modal's return), `stats.spec.ts:206` and `:262` (an empty
+  collection).
+
+The machine is shared for good (the coordinator, 8 Oct: the other
+project's containers are live work and stay). The two tests that made the
+last gate red passed here first time, under a heavier load than the one
+they failed in.
+
+## FAMILY, a shape of its own: the instrument moves what it measures (8 Oct)
+
+Not a guard running where the thing is not, and not a read taken before
+the thing settles. `wall-first-paint.spec.ts` read the wall's scroll
+position, clicked a spine, put the record back and compared. Playwright's
+click scrolled the spine into view first, on a slow machine and not on a
+quick one. The comparison was against a position the test's own action
+had changed, and the page was right throughout.
+
+**An action that can move the page is part of the measurement, so
+anything read before it is not a baseline.** It will recur wherever a
+test clicks something not wholly in the window and then reads geometry.
+The general form of the fix is the order: bring the target into view,
+read, then act.
+
+## RULE: after fixing a race, re-stage the load (8 Oct)
+
+That test held two races stacked. Fixing the first uncovered the second:
+with the click no longer moving the wall, the read of the starting
+position turned out to be early as well, the 900ms wait being too short
+for the landing on a slow machine. A test with one known race can hide
+another behind it. **The check after fixing a race is to stage the
+condition again and watch the test pass under it**, not to take the one
+cause found for the cause. A race that passes alone and fails under load
+is proved fixed by passing under load.
+
+## The next failures, in order, as the machine slows (8 Oct)
+
+From the staged run at a load average of 121 and from the gate on
+`74b3a8a` at 15 to 41. These are what go next, and with the machine
+permanently shared they will go on their own schedule and not ours.
+
+| test | how it failed | seen |
+|---|---|---|
+| `wall-first-paint.spec.ts:242`, "a client navigation to the shelf arrives in position too" | "the region was sampled after the navigation": it counts animation frames in 2.5 seconds | twice of three at load 121 |
+| `scroll-lock.spec.ts:53` | the sign-in's address did not arrive in time | once of three at load 121 |
+| `cover-travel-92.spec.ts:232` and `:250`, the modal's return | failed once, passed on retry | the gate on `74b3a8a` |
+| `stats.spec.ts:206` and `:262`, an empty collection | failed once, passed on retry | the gate on `74b3a8a` |
+| `record-modal-81.spec.ts:659`, two presses on TURN OVER | read elapsed time; failed once, passed on retry | step 98's covering run |
+| `lookup-flows.spec.ts:1656` on mobile | failed once, passed on retry | the gate on `9588f36` |
+
+**`wall-first-paint.spec.ts:242` is condemned by precedent**: the travel
+assertions were deleted for reading a frame rate and not the motion, and
+this is the same claim. Queued for the same treatment after today's
+push. The two `stats` tests empty the collection, which is a different
+question (what else is reading the database when they do) and not one I
+have looked at.
