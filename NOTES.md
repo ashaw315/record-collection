@@ -37337,3 +37337,83 @@ steps 97 to 99 changed the behaviour of, and both passed in the gate on
 The probe was a scratch spec and is not kept: the fix for 1 is a wait in
 the test for the measured state, and that test would be its record. Not
 made: changing a test outside the step needs agreement first.
+
+## RULE SEVEN: a test that reads a value the CLIENT computes waits for the client's own settled signal (8 Oct)
+
+In the coordinator's words: "A test that reads a value the CLIENT computes
+waits for the client's own settled signal, never for something the
+server's markup already satisfies."
+
+The wall publishes that signal: its container carries `data-unmeasured`
+until the client has measured the viewport. Two tests read past it,
+waiting on things the server's markup already satisfies (the wall being
+attached, the count's text, the wall being visible), and the gate on
+`c8dffb9` went red on both on a slow machine.
+
+**Held by a check and not by convention**, since a convention held by
+repetition is what let the capture file ship without its skip the same
+morning. `e2e/wall-measured.ts` is the wait. `test/repo/wall-measured.test.ts`
+fails any spec that reads the fixture's pieces or furniture on the live
+wall in a test that never calls it. Staged: with the wait removed from the
+shelf test's read, red. **Named for what it can see**: whether a read is
+of a client-computed value is not decidable from source text, so this
+covers the one case that is, the fixture being in the markup twice.
+Scroll positions are not covered by it.
+
+### `shelf.spec.ts`, "the fixture is the same fixture": 12 pieces for 6
+
+Fixed as diagnosed: the wait is inside the read, so no load can be
+measured without it. The probe is kept as a test in the same file: with
+the page's scripts held the wall is attached, `data-unmeasured` is
+present (the staged condition, asserted), the pieces number twice the
+settled count, and the measured wait refuses to pass.
+
+### `wall-first-paint.spec.ts`, "scrollTop unchanged": 16 for at most 2
+
+**Not the same cause, and I had it wrong twice on the way.** The
+coordinator's instruction was not to fix it by analogy, and the staging
+is why it was not.
+
+1. *First reading, wrong:* the same family. Staged with the page's scripts
+   held and then with the CPU throttled: the wall measures and lands at
+   75 either way.
+2. *Second reading, wrong:* a defect in the page. Throttled six and
+   twelve times, put back settled at 89 and stayed there for 5.6
+   seconds, where unthrottled it returned to 75. I took that for put back
+   failing to retrace on a slow machine.
+3. *What the frame-by-frame record shows:* at 394ms, at rest, before the
+   swing, the wall scrolls from 75 to 90. Nothing in the page did that.
+   The first spine's foot is below the window (754 to 915 in 900), and
+   Playwright's click scrolls its target into view when it judges it
+   needs to, which it did throttled and did not unthrottled. That is a
+   reader's scroll. The pull began from 90 and put back returned to 90,
+   which is §W.22 exactly. With the click dispatched and nothing
+   scrolled: 75 and 75, under the same throttle.
+
+So the page was right and the test compared a position read before its
+own click moved the wall. Fixed: the spine is brought into view, then
+the starting position is read, then the pull. **Staging the fix found a
+second early read in the same test**, which is the first family after
+all: under the throttle the wall being visible is true at 0,0 and the
+fixed 900ms was not long enough for the landing. It waits for the
+measured state now.
+
+Shown: the old test red with the CPU throttled six times; the fixed one
+green throttled six times, twelve times, and unthrottled.
+
+### Under load
+
+The two fixed specs with `scroll-lock` and `wall-access` beside them,
+three times each, while CPU burners ran: load average reached 121, where
+the red gate ran at 13 to 21. Both fixed tests passed all three times.
+`72 passed, 3 failed`: the three were other tests, `scroll-lock.spec.ts:53`
+(the sign-in's address did not arrive in time) and
+`wall-first-paint.spec.ts:242` twice ("the region was sampled after the
+navigation", a test that counts animation frames). That is far past any
+load a gate has run at and I do not read it as a finding about the gate;
+it does say which tests break next as a machine gets slower.
+
+**The instrument moved the subject.** The rule of this morning says to
+confirm an instrument's output against the thing. This is its other
+half: a click is an instrument too, and it scrolled what the test was
+measuring.

@@ -2,6 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist, trackGenre } from './cleanup';
 import { getTestDb } from '../test/helpers/db';
 import { sql } from 'drizzle-orm';
+import { wallMeasured } from './wall-measured';
 import { NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
 
 /* Records and artists removed after each test — see e2e/cleanup.ts. */
@@ -406,6 +407,31 @@ test('genre and sort from the rail narrow and order the wall without leaving it 
   await expect(rail.getByLabel('Sort')).toHaveValue('title:desc');
 });
 
+test('the wall’s measured signal is not satisfied by the server’s markup, which holds the fixture twice', async ({ page }) => {
+  /**
+   * The positive control for `wallMeasured`, and the probe that found the
+   * race, kept. With the page's scripts held the server's markup is all
+   * there is: the wall is attached and the count reads, which is what the
+   * test below used to wait for, and the fixture is there twice. The
+   * measured wait does not pass. Released, it passes and the fixture is
+   * there once. Fails against a wait that the unmeasured page satisfies.
+   */
+  const pieces = () => page.evaluate(() => document.querySelectorAll('[data-piece]').length);
+  await page.route((u) => u.pathname.startsWith('/_next/') && u.pathname.endsWith('.js'), () => { /* held: never answered */ });
+  await page.goto('/', { waitUntil: 'commit' });
+  await expect(page.getByTestId('wall').first()).toBeAttached({ timeout: 30_000 });
+  await expect(page.locator('[data-unmeasured]'), 'the staged condition took: nothing has measured').toHaveCount(1);
+  const held = await pieces();
+  await expect(wallMeasured(page, 1500), 'the wait refuses the unmeasured page').rejects.toThrow();
+
+  await page.unrouteAll({ behavior: 'ignoreErrors' });
+  await page.goto('/');
+  await wallMeasured(page);
+  const settled = await pieces();
+  expect(settled, 'one fixture once measured').toBeGreaterThan(0);
+  expect(held, 'and two before').toBe(settled * 2);
+});
+
 test('a filter empties seats rather than re-seating them, and the emptied seats are drawn (§W.12, §W.34)', async ({ page }) => {
   /*
     **The fixture's matches must NOT be contiguous in wall order, and that is
@@ -444,8 +470,16 @@ test('a filter empties seats rather than re-seating them, and the emptied seats 
   }
 
   /** Every seat's x against the left upright, so scroll and frame origin drop out. */
-  const measure = (seatIds: string[]) =>
-    page.evaluate((all) => {
+  /*
+    The wait is inside the read, so no load can be measured without it. The
+    fixture is in the server's markup twice until the wall has measured its
+    viewport; waiting for the wall to be attached and for the count's text,
+    which that markup already satisfies, let this read 12 pieces for 6 on a
+    slow machine (the gate of 8 Oct).
+  */
+  const measure = async (seatIds: string[]) => {
+    await wallMeasured(page);
+    return page.evaluate((all) => {
       const uprights = Array.from(document.querySelectorAll('[data-furniture="upright-front"]')).map((el) => el.getBoundingClientRect().left);
       const origin = Math.min(...uprights);
       const at = (id: string) => {
@@ -462,6 +496,7 @@ test('a filter empties seats rather than re-seating them, and the emptied seats 
         seats: Object.fromEntries(all.map((id) => [id, at(id)])),
       };
     }, seatIds);
+  };
 
   await page.goto(`/?artistId=${artistId}`);
   await expect(page.getByTestId('wall')).toBeAttached({ timeout: 30_000 });

@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist } from './cleanup';
+import { wallMeasured } from './wall-measured';
 import { nearViewMinWidth } from '../src/app/wall/view-fork';
 
 registerCleanup();
@@ -311,10 +312,34 @@ test('a client navigation lands without moving, and a put-back does not re-land 
   const afterLoad = warnings.length;
   expect(afterLoad, 'at most one warning at hydration').toBeLessThanOrEqual(1);
 
+  /*
+    **The spine is brought into view before the starting position is read.**
+    The first spine's foot is below the window (754 to 915 in a 900 window),
+    and Playwright's click scrolls its target into view when it judges that
+    necessary, which it did on a slow machine and not on a quick one. That
+    scroll is a reader's scroll: the wall moved 15 at rest, the pull began
+    from there, and put back returned there, correctly. This test had read
+    its starting position before the click and so reported the page 16 out
+    (the gate of 8 Oct). Staged with the CPU throttled six times: 75, then
+    90 at rest before the swing, and 90 after put back; with the click
+    dispatched and nothing scrolled, 75 and 75. The page retraces to where
+    the pull began, which is the claim, so the test now reads where that is.
+  */
+  /*
+    And the wall has measured and landed before anything is read. Staging
+    the fix above with the CPU throttled showed a second read made too
+    early: the wall being visible is true of the server's markup, at 0,0,
+    and the fixed 900 was not long enough for the landing on a slow machine.
+  */
+  await wallMeasured(page);
+  const spine = page.locator('a[data-seat] [data-spine]').first();
+  await spine.scrollIntoViewIfNeeded();
+  await page.waitForTimeout(300);
   const before = await page.evaluate(() => { const el = document.querySelector('[data-region="wall"]') as HTMLElement; return { l: Math.round(el.scrollLeft), t: Math.round(el.scrollTop) }; });
 
   /* Pull and put back: the wall returns to rest, which is where the warning was repeating. */
-  await page.locator('a[data-seat] [data-spine]').first().click();
+  await spine.click();
+  /* And nothing moved it between the reading and the pull: the click found its target where the reading left it. */
   await expect(page.getByTestId('record-chrome')).toBeVisible({ timeout: 10_000 });
   await page.getByRole('button', { name: 'Put back' }).click();
   await expect(page.getByTestId('record-chrome')).toHaveCount(0, { timeout: 10_000 });
