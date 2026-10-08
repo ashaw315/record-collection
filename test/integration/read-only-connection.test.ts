@@ -47,3 +47,41 @@ describe('a pool opened with DATABASE_READ_ONLY=1', () => {
     await expect(open(false).query('UPDATE records SET title = title WHERE false')).resolves.toBeDefined();
   });
 });
+
+/**
+ * The sheets' probe through the running server is `DELETE
+ * /api/influences/X/X` (`e2e/sheet/write-probe.ts`). Two things about the
+ * database make that both a proof and harmless, and each is asked here.
+ */
+describe('the statement the sheets’ write probe makes', () => {
+  const X = '5ee70000-0000-4000-8000-000000000000';
+  const statement = 'DELETE FROM artist_influences WHERE source_artist_id = $1 AND target_artist_id = $2 RETURNING source_artist_id';
+
+  /* Fails if Postgres only refused writes that touch a row: the probe would read a protected server as writable. */
+  it('is refused on a read-only connection though it matches no row', async () => {
+    await expect(open(true).query(statement, [X, X])).rejects.toThrow(/read-only transaction/);
+  });
+
+  it('on a plain connection runs and deletes nothing', async () => {
+    const pool = open(false);
+    const before = (await pool.query('SELECT count(*)::int AS n FROM artist_influences')).rows[0] as { n: number };
+    const result = await pool.query(statement, [X, X]);
+    expect(result.rowCount).toBe(0);
+    const after = (await pool.query('SELECT count(*)::int AS n FROM artist_influences')).rows[0] as { n: number };
+    expect(after.n).toBe(before.n);
+  });
+
+  /* Fails if the constraint is dropped: a self-edge could then exist, and the probe could delete one. */
+  it('cannot match a row, because the database refuses a self-edge', async () => {
+    const client = await open(false).connect();
+    try {
+      await client.query('BEGIN');
+      const artist = (await client.query("INSERT INTO artists (name) VALUES ('self-edge-probe') RETURNING id")).rows[0] as { id: string };
+      await expect(client.query('INSERT INTO artist_influences (source_artist_id, target_artist_id) VALUES ($1, $1)', [artist.id])).rejects.toThrow(/artist_influences_no_self_edge/);
+    } finally {
+      await client.query('ROLLBACK');
+      client.release();
+    }
+  });
+});
+

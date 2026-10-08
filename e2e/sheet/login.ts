@@ -1,4 +1,5 @@
 import { expect, type Page } from '@playwright/test';
+import { assertServerCannotWrite } from './write-probe';
 
 /*
   Two ways in, neither of which is the test hash. `E2E_PASSWORD` is the
@@ -15,7 +16,7 @@ if ((password === undefined || password === '') && (sessionFile === undefined ||
 }
 const PASSWORD: string = password ?? '';
 
-export async function login(page: Page) {
+async function signIn(page: Page) {
   if (sessionFile !== undefined && sessionFile !== '') {
     const { readFileSync } = await import('node:fs');
     const token = readFileSync(sessionFile, 'utf8').trim();
@@ -30,4 +31,15 @@ export async function login(page: Page) {
   await page.getByLabel('Password').pressSequentially(PASSWORD);
   await page.getByRole('button', { name: 'Sign in' }).click();
   await expect(page, 'the password in E2E_PASSWORD signs in').toHaveURL('/', { timeout: 15_000 });
+}
+
+/**
+ * Signs in, then asks the server it signed in to whether it can write, and
+ * throws if it can or if that cannot be told. Every sheet comes through
+ * here, so a server the config did not start is asked the same as one it
+ * did (`test/repo/sheets-read-only.test.ts`).
+ */
+export async function login(page: Page) {
+  await signIn(page);
+  await assertServerCannotWrite(page.request);
 }

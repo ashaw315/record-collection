@@ -1,6 +1,8 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { PROBE_ID, judgeWriteProbe } from '../../e2e/sheet/write-probe';
+import { isUuid } from '@/lib/api/errors';
 
 /**
  * **The sheets cannot write to production, and these are the premises that
@@ -51,3 +53,77 @@ describe('the premises of a read-only sheet server', () => {
     expect(server).toMatch(/^DATABASE_READ_ONLY=1 npm run dev\b/);
   });
 });
+
+/**
+ * **The server a sheet is talking to, whichever one it is (8 Oct).**
+ *
+ * The preflight above proves the connection of a server the config starts.
+ * It proves nothing about a server the config did not start: with
+ * `SHEET_REUSE_SERVER=1` or `SHEET_BASE_URL` a sheet drives whatever is
+ * already listening, and that was the convenient path and the unguarded
+ * one. So every sheet asks the running server itself, after signing in:
+ * a read that must succeed and a write statement that must error.
+ *
+ * The write is `DELETE /api/influences/X/X`. That route issues its DELETE
+ * with no read in front of it, and a self-edge cannot exist
+ * (`artist_influences_no_self_edge`), so on a server that CAN write the
+ * statement runs, matches nothing and returns 404, having changed nothing.
+ * `test/integration/read-only-connection.test.ts` holds both halves of
+ * that against a real Postgres.
+ */
+describe('the write probe a sheet makes through the running server', () => {
+  const ok = { read: 200, write: { status: 500, code: 'INTERNAL_ERROR' } };
+
+  it('passes only when reads succeed and the write statement errors', () => {
+    expect(judgeWriteProbe(ok)).toEqual({ ok: true });
+  });
+
+  /* Fails against a judgement that treats "nothing was deleted" as safe: 404 means the statement RAN. */
+  it('refuses a server whose write statement ran, which answers 404', () => {
+    const verdict = judgeWriteProbe({ ...ok, write: { status: 404, code: 'NOT_FOUND' } });
+    expect(verdict.ok).toBe(false);
+    expect(verdict).toMatchObject({ reason: expect.stringMatching(/CAN write/) });
+  });
+
+  /* Absent, broken, working: a server that cannot read, or a probe that never reached the statement, proves nothing and is refused. */
+  it.each([
+    ['the read failed, so a failing write says nothing', { read: 500, write: ok.write }],
+    ['not signed in', { read: 401, write: { status: 401, code: 'UNAUTHENTICATED' } }],
+    ['the id was rejected before any statement', { read: 200, write: { status: 400, code: 'INVALID_ID' } }],
+    ['a 500 that is not the app’s own error shape', { read: 200, write: { status: 500 } }],
+    ['the edge was deleted, which cannot happen', { read: 200, write: { status: 200 } }],
+  ])('refuses when %s, as nothing proved', (_name, observed) => {
+    const verdict = judgeWriteProbe(observed);
+    expect(verdict.ok).toBe(false);
+    expect(verdict).toMatchObject({ reason: expect.stringMatching(/nothing is proved/) });
+  });
+
+  /* Fails if the id stops passing the route's own check: the probe would get 400 and never reach the database. */
+  it('uses an id the route accepts, so the probe reaches the statement', () => {
+    expect(isUuid(PROBE_ID)).toBe(true);
+  });
+
+  /* Fails if a sheet signs in some other way, or if login can return without probing. */
+  it('every sheet signs in through login, and login cannot return without the probe', () => {
+    const sheets = readdirSync(join('e2e', 'sheet')).filter((name) => name.endsWith('.sheet.ts'));
+    expect(sheets.length).toBeGreaterThan(0);
+    for (const name of sheets) {
+      const source = code(join('e2e', 'sheet', name));
+      expect(source, `${name} imports login`).toMatch(/import \{[^}]*\blogin\b[^}]*\} from '\.\/login'/);
+      expect(source, `${name} calls it`).toMatch(/\blogin\(page\)/);
+      expect(source, `${name} does not set a session cookie of its own`).not.toMatch(/addCookies|rc_session/);
+    }
+    const body = /export async function login\(page: Page\)(?:: Promise<void>)? \{([\s\S]*?)\n\}/.exec(code(join('e2e', 'sheet', 'login.ts')))?.[1] ?? '';
+    expect(body.split('\n').map((line) => line.trim()).filter((line) => line !== ''), 'login is: sign in, then the probe').toEqual([
+      'await signIn(page);',
+      'await assertServerCannotWrite(page.request);',
+    ]);
+  });
+
+  /* Fails if the config's comment or switch promises reuse without naming what guards it. */
+  it('the probe drives the influence route’s DELETE on a self-edge', () => {
+    const source = code(join('e2e', 'sheet', 'write-probe.ts'));
+    expect(source).toContain('`/api/influences/${PROBE_ID}/${PROBE_ID}`');
+  });
+});
+

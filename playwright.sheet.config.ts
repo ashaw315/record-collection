@@ -40,12 +40,17 @@ export default defineConfig({
       its database connections read-only (`poolOptions`), and before it
       starts, `assert-read-only.ts` attempts a write on that same connection
       and stops the run unless the database refuses it. A sheet was trusted
-      not to write to production; now it is unable to. `login.ts` proves it
-      once more through the running app before any sheet does anything.
+      not to write to production; now it is unable to.
     */
     command: `DATABASE_READ_ONLY=1 npx tsx --env-file=.env.local scripts/assert-read-only.ts && DATABASE_READ_ONLY=1 npm run dev -- --port ${PORT}`,
     url: baseURL,
-    /* A dry run against a server already started by hand (for instance the test harness's) sets SHEET_REUSE_SERVER=1. */
+    /*
+      A server already started by hand is reused with SHEET_REUSE_SERVER=1.
+      The command above never runs for it, so its preflight proves nothing
+      about it: `login` asks the running server itself (`write-probe.ts`)
+      and stops the sheet unless that server cannot write. A reused server
+      must have been started with DATABASE_READ_ONLY=1.
+    */
     reuseExistingServer: process.env.SHEET_REUSE_SERVER === '1',
     timeout: 120_000,
   },
