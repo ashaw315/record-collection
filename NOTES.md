@@ -37621,3 +37621,49 @@ My reading of the order, as a guess to be argued with: the typed
 timeouts and the fixed sleeps are where the next flakes are, because
 they are the two that encode a guess about the machine. The rest are
 duplication without a failure attached.
+
+## APP UNIT, to be scheduled: sign-in does its heaviest work twice, after a slow hash (8 Oct, the coordinator's)
+
+Not started and not a test matter. All three land on a reader as well as
+on a test: a serverless function's CPU is not faster than this machine.
+Measurements are the two traces recorded above under "The sign-in's
+wait".
+
+1. **`/` is rendered twice for one sign-in.** `src/app/login/page.tsx`
+   calls `router.replace('/')` and then `router.refresh()`; both traces
+   show two `GET /?_rsc`, of 1.99s and (unfinished) in one and 2.59s and
+   2.60s in the other, under load. One is redundant. No design ruling is
+   needed. Which one is redundant, and whether the session cookie needs
+   the refresh to be seen, is to be established by a test and not assumed.
+2. **`bcryptjs` took 4.74 of the 5 seconds** in one trace and 1.29 in the
+   other. It is the JavaScript implementation; a native bcrypt computes
+   the same hash at the same cost factor. The proposal is a dependency
+   swap and NOT a lower cost factor, which would weaken the hash. A
+   dependency needs CLAUDE.md §5's asking, and it must run where the app
+   is deployed. **Measure both before and after**; the ratio is not known
+   here.
+3. `/` awaits the shelf, the records and the facets. Already recorded for
+   whoever surveys stats and manage, and left there.
+
+## The copied conventions, ranked (8 Oct, the coordinator's ranking, replacing my guess)
+
+Only the sign-in is being done. The rest are taken as failures arrive or
+after the surveys.
+
+1. **The ones that have already cost a run**: typed timeouts (84 files,
+   436 uses, at 15, 20 and 30 seconds with no named budget) and fixed
+   sleeps (40 files, 96 uses). Each encodes a guess about the machine.
+2. **A shared name over different bodies**: `seed()` and `seedRecord()`
+   in 26 files with every body different, `post()` in 18 files with 9
+   bodies, `makeSuffix` in 11 with 10. Worse than duplication, because
+   reading one and reasoning about another gives a wrong test and not a
+   slow one. It is the family at its plainest: a thing that looks like
+   one thing and is not. Second only because nothing has failed from it.
+3. **Plain duplication, no failure attached**: geometry reads,
+   `setViewportSize`, arrival on the record page. Left.
+
+**One in the third group stands apart: the computed-style reads.** 51
+files each handle the `lab(`/`oklch(` double spelling. That is one
+workaround for how a browser writes a colour, repeated 51 times, so a
+browser changing what it writes breaks 51 files at once. The most fragile
+item on the list with nothing failing.
