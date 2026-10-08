@@ -36741,3 +36741,88 @@ put it, and 1 and 2 are each a few lines.
 is invisible to the fingerprint. The table and grid target is one. Nothing
 reads it yet, so the exposure is zero until it is an input, and its
 `.gitignore` line lands in that same commit.
+
+## Three machinery items before the screens, and the drop that makes T an input (8 Oct)
+
+Commits `396037c`, `048c3ef`, `c04fdc7`, `53ad97c`, `5d123ee`, on `44cecad`.
+
+**1. The sheets cannot write to production (`396037c`).** Premise 1 of the
+list above, closed by making the connection incapable and not by reading
+the specs for verbs. The sheet config starts its server with
+`DATABASE_READ_ONLY=1`; `poolOptions(env)` in `connection-string.ts` then
+gives both pools the startup option `default_transaction_read_only=on`,
+and throws on any value of the variable other than `1` or unset.
+`scripts/assert-read-only.ts` runs before the server and refuses to start
+it unless a write on that connection is rejected.
+
+- Verified on the production pooler endpoint, which is where it had to
+  hold: the startup option is honoured there, and it does not leak into
+  other clients' sessions (30 of 30 plain connections taken afterwards
+  could still write).
+- Staged for real: with the sheet server up, `POST /api/tags` returned 500
+  and the tag was absent afterwards.
+- **My first probe was wrong.** A `DELETE` of a tag that does not exist
+  proves nothing: the route reads before it writes and returns 404 from
+  the read. Removed, and replaced by the staged `POST`.
+- Premises pinned: the config's command sets the variable and runs the
+  preflight (`test/repo/sheets-read-only.test.ts`); the option rejects a
+  write on real Postgres (`test/integration/read-only-connection.test.ts`).
+- **Left open:** `SHEET_REUSE_SERVER=1` reuses whatever server is already
+  on the port, and the preflight does not cover that server.
+
+**2. The suite is what the runner launched (`048c3ef`).** Premise 2.
+`suiteOf(command)` reads the command: `playwright test` without `--config`
+is end-to-end, vitest or `npm test` is unit, anything else is other. The
+judgement no longer depends on a line the run prints, so rewording the
+setup's message cannot turn "ledger absent is a failure" into "none
+expected".
+
+**3. Every export is compared with the last commit (`c04fdc7`, `53ad97c`).**
+Premise 4. `node scripts/export-diff.mjs` prints each sentence gone, each
+reworded as a pair, and each step whose number left the handoff. It is now
+part of taking a drop. Control: it finds the clause that left §M.4 between
+`f6fb36d` and `64ff1f7`.
+
+- **What it found in history.** Drop `b24de5f` removed outright, from the
+  wall target: "That is what the sentence supports as written, read
+  alongside §6, which it cites."; "Halfway applies across the band's own
+  gaps between the view names."; "Across a wider separation a link's hit
+  area reaches 9 past its drawn box, the figure Code built, and no
+  further."; and the handoff's one-sentence form of the last two. None had
+  a withdrawal entry. For Design to say whether each was meant.
+- **What it found in this drop:** four sentences, all the placeholder text
+  of the §T section from the drop before (the prefix, "names none of its
+  sections yet", "follow in the next drop", and the list of things left
+  for Code's survey). The survey list is gone and not restated; the survey
+  itself is in NOTES above.
+- **A false removal, mine, corrected.** The first build reported
+  "No step: §G.7." removed by this drop. It stands unchanged at line 454.
+  The splitter collapsed Markdown's blank lines, the handoff's quoted
+  rulings end without a full stop, and step 99's quote swallowed the
+  paragraph after it. I carried that as a finding before reading the line.
+  `53ad97c`: a blank line ends a sentence and a step's number stays with
+  its step, both shown red first. A tool that reports removals is checked
+  in the direction it is trusted in: a false removal is read as Design's
+  loss.
+
+**Why step 71 is dropped by every export.** It is Code's own step, written
+into the repo's handoff and never into Design's source, and a 2 Oct rule
+has Design leave Code's step numbers absent and not write a placeholder.
+So each export is correct by Design's source and wrong by the repo's.
+Restored twenty-eight times. The fix is Design's: carry step 71 in the
+source.
+
+**Deferred from the premise list, with reasons.** 3 (a leaked genre with a
+fixture's name passes): the fix is the ledger judged by origin, using the
+leak work's tracking, and it goes with that item after the screens. 5
+(`real-records.json` is the collection): the fourth instance of a fixture
+standing in for the collection, after the screens. 6 fails loudly and is
+left.
+
+**Input T (`5d123ee`).** `Table and Grid - build target.dc.html` is the
+index's input T: governs rows §T.1 to §T.5, steps 97 (§T.1 to §T.3), 98
+(§T.4), 99 (§T.5). The `.gitignore` exception landed in the same commit,
+and a test now holds that every index input is tracked by git, which is
+the hole the tree guard's entry above kept paired. Four tests red first
+(`§T.99` from the wall target, `§97` from T, `§T` not read as a figure,
+inputs tracked). Index: 11 PASS.
