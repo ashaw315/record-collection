@@ -98,6 +98,8 @@ const GOVERNED = [
   'e2e/table-98.spec.ts',
   /* §T.5 (step 99): a grid cell is one link to its record, and the test follows it there. */
   'e2e/grid-99.spec.ts',
+  /* §T.6 (step 103a): the record page, its confirmation and its modal read for a rounded corner. */
+  'e2e/radius-103.spec.ts',
   'e2e/sheet/cover-boxes.sheet.ts',
   'e2e/sheet/record-modal.sheet.ts',
   'e2e/sheet/record-modal-92.sheet.ts',
