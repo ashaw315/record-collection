@@ -38678,3 +38678,26 @@ finger moves a page: the keyboard, the collapsing toolbar, a scroll to
 the focused control, find-in-page, scroll restoration. **The fix is the
 same whichever of them it turns out to be: re-place the panel on scroll
 and not only on resize.** Not built; it waits on step 106's order.
+
+## The gate on beebd8b reads OK, with one retry, diagnosed (9 Oct, evening)
+
+Gate: build, then the full suites, one after the other, on `beebd8b`:
+the NOTES rule, Design's drop for the §T.3 box (step 106), the narrow
+panel sheet, the air after the margin, and the latent-defect entry.
+
+- Build: compiled.
+- Unit, `npm test`: `4207 passed, 2 skipped, tree unchanged — OK`.
+  `run-tests-cli.test.ts` passed; its budget is still owed as machinery.
+- Playwright, both projects, no file argument:
+  `829 passed, 1 flaky, 13 skipped, ledger clean, tree unchanged — OK`,
+  39m 45s for 843 tests, 2.83 seconds a test.
+- The one retry: `radius-103.spec.ts:96` at 1440 on chromium. **Read,
+  not assumed:** `apiRequestContext.post: read ECONNRESET` on the
+  fixture's first POST (`screens-103.ts:19`, `/api/artists`), before any
+  page was opened. That is the dev server dropping a setup request, the
+  mechanism `playwright.config.ts` records as the reason for the one
+  retry. No assertion ran in the failed attempt.
+- `collection-filters.spec.ts:610` on mobile did not need its retry, nor
+  did `cover-fail-87.spec.ts:193`.
+- Recorded, not judged: swap-outs rose by 19.5M pages; load 3.45 at the
+  start of the Playwright run and 14.32 at its end.
