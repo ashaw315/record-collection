@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { holdScroll } from '@/components/scroll-hold';
 import { cn } from '@/lib/utils';
-import { HAIRLINE, LABEL } from '@/app/records/[id]/grid-type';
+import { HAIRLINE, INK, LABEL, LABEL_TYPE } from '@/app/records/[id]/grid-type';
 import { RECORD_SORT_FIELDS, type RecordSortField } from '@/lib/records/fields';
 import {
   SORT_LABELS,
@@ -106,8 +106,10 @@ export function CollectionFilters({
    * Which filter is open: one at a time (§T.3).
    *
    * Step 101: an open filter covers. Its options are on a fixed panel of
-   * opaque paper from beneath its own line to the viewport's bottom, and
-   * the page beneath does not move. The mechanics are §G.8's, the menu's
+   * opaque paper to the viewport's bottom, and the page beneath does not
+   * move. Step 102: the panel starts beneath the LAST filter line, whichever
+   * is open, so all four lines stay in view and a press on another closes
+   * this one and opens that (`T.3/covers-own-line` was beneath its own). The mechanics are §G.8's, the menu's
    * (`AppHeader`): opening adds one history entry at the same URL, so Back
    * closes the filter rather than leaving the screen; closing by any other
    * means goes back over that entry, so entries do not pile up; and a
@@ -120,21 +122,25 @@ export function CollectionFilters({
     setOpenKey(null);
     if (hasEntry()) window.history.back();
   }, []);
-  const openFilter = useCallback((key: string, lineBottom: number) => {
-    /* Placed in the press itself, so the panel's first paint is already beneath its line. */
-    setPanelTop(lineBottom);
+  /* Where the last filter line ends in the window: every filter's panel starts there. */
+  const lastLineBottom = useCallback(() => {
+    const lines = rootRef.current?.querySelectorAll<HTMLElement>('[data-filter-trigger]');
+    return lines === undefined || lines.length === 0 ? undefined : lines[lines.length - 1].getBoundingClientRect().bottom;
+  }, []);
+  const openFilter = useCallback((key: string) => {
+    /* Placed in the press itself, so the panel's first paint is already beneath the last line. */
+    setPanelTop(lastLineBottom() ?? 0);
     /* A second filter opened over the first takes the first's entry: one entry however many are tried. */
     if (!hasEntry()) window.history.pushState({ ...(window.history.state as object | null), collectionFilter: true }, '');
     setOpenKey(key);
-  }, []);
+  }, [lastLineBottom]);
 
   useEffect(() => {
     if (openKey === null) return undefined;
     const trigger = () => rootRef.current?.querySelector<HTMLElement>(`[data-filter="${openKey}"] [data-filter-trigger]`);
-    /* Where the filter's own line ends in the window: the panel starts there, and the line stays where it is. */
     const place = () => {
-      const line = trigger()?.getBoundingClientRect();
-      if (line !== undefined) setPanelTop(line.bottom);
+      const bottom = lastLineBottom();
+      if (bottom !== undefined) setPanelTop(bottom);
     };
     place();
     const onKey = (event: KeyboardEvent) => {
@@ -158,7 +164,7 @@ export function CollectionFilters({
       window.removeEventListener('popstate', onPop);
       window.removeEventListener('resize', place);
     };
-  }, [openKey, closeFilter]);
+  }, [openKey, closeFilter, lastLineBottom]);
 
   function change(mutate: (current: CollectionParams) => CollectionParams, how: 'push' | 'replace' = 'push') {
     /**
@@ -238,8 +244,9 @@ export function CollectionFilters({
         are 32), so anything that shows them all always fails at some
         count. Closed, a filter is one line whatever the count: its label
         and the one option chosen. Open, its options are on a panel that
-        covers what lies beneath its line (step 101), and the line stays
-        under the finger that pressed it.
+        covers what lies beneath the last line (steps 101 and 102), every
+        line stays where it is, and the open one's label is in ink so the
+        panel says whose it is.
       */}
       <div className="flex flex-col" style={{ maxWidth: FILTER_MEASURE }}>
         {FILTER_GROUPS.map((group) => {
@@ -257,10 +264,10 @@ export function CollectionFilters({
                 data-filter-trigger=""
                 aria-expanded={open}
                 aria-controls={`filter-${group.key}`}
-                onClick={(event) => (open ? closeFilter() : openFilter(group.key, event.currentTarget.getBoundingClientRect().bottom))}
+                onClick={() => (open ? closeFilter() : openFilter(group.key))}
                 className="flex h-[44px] w-full items-baseline gap-3 text-left leading-[44px]"
               >
-                <span data-filter-label="" className={`w-12 shrink-0 ${LABEL}`}>
+                <span data-filter-label="" className={`w-12 shrink-0 ${open ? `${LABEL_TYPE} ${INK}` : LABEL}`}>
                   {group.label}
                 </span>
                 <span data-filter-chosen="" className="min-w-0 truncate text-detail">
@@ -270,7 +277,7 @@ export function CollectionFilters({
               {open && (
                 /*
                   §T.3 by §G.8: fixed, opaque paper, full width, from the
-                  line's end to the viewport's bottom. `z-50` raises it above
+                  last line's end to the viewport's bottom. `z-50` raises it above
                   the table's rows and the grid's cells, which are positioned
                   and later in the page, so they would paint over it and take
                   its taps; asserted on the grid in `filter-panel-101.spec.ts`.

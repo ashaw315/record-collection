@@ -25,6 +25,13 @@ registerCleanup();
  * A positioned cell later in the page outranks an un-raised panel all the
  * same, cover and all, so the case can fail; the precondition asserted is
  * the cell's position, and that closed the tap lands in the cell.
+ *
+ * Step 102 superseded where the panel starts (`T.3/covers-own-line`): "An
+ * open filter's panel covers what lies beneath the last filter line, so all
+ * four lines stay in view, and a press on another filter's line closes this
+ * panel and opens that one." Two tests here read the panel as starting
+ * beneath its own line and now read the last line, for the ruling and not
+ * to pass a build; step 102's own claims are the last describe.
  */
 type Fixture = { suffix: string; artistId: string; ids: string[] };
 
@@ -43,6 +50,25 @@ async function seed(page: Page, records: number): Promise<Fixture> {
   const ids: string[] = [];
   for (let i = 0; i < records; i += 1) ids.push((await post('/api/records', { title: `Cover ${i} ${suffix}`, artistId: artist.id, storeId: store.id })).id);
   return { suffix, artistId: artist.id, ids };
+}
+
+/** One record carrying a genre, a label, a store and a tag, so all four lines are drawn whatever else the shared database holds. */
+async function seedFourLines(page: Page): Promise<void> {
+  const suffix = `p102${Date.now().toString(36)}${Math.floor(Math.random() * 1e4)}`;
+  const post = async (path: string, data: unknown) => {
+    const response = await page.request.post(path, { data, failOnStatusCode: false });
+    expect(response.status(), `${path} ${JSON.stringify(data)}`).toBe(201);
+    const body = (await response.json()) as { id: string };
+    trackCreated(path, body);
+    return body;
+  };
+  const genre = await post('/api/genres', { name: `Skiffle-${suffix}` });
+  const label = await post('/api/labels', { name: `Pye-${suffix}` });
+  const store = await post('/api/stores', { name: `Stall-${suffix}` });
+  const tag = await post('/api/tags', { name: `tag-${suffix}` });
+  const artist = await post('/api/artists', { name: `Lonnie-${suffix}` });
+  trackArtist(artist.id);
+  await post('/api/records', { title: `Four lines ${suffix}`, artistId: artist.id, labelId: label.id, storeId: store.id, genreIds: [genre.id], tagIds: [tag.id] });
 }
 
 async function open(page: Page, view: 'table' | 'grid', query: string, width: number, height = 844) {
@@ -72,7 +98,7 @@ test.beforeEach(async ({ page }) => login(page));
 
 for (const view of ['table', 'grid'] as const) {
   /* Fails against the push-down: the page grew by the list's height and everything beneath the line moved down by it. */
-  test(`${view} at 390: an open filter is a panel of opaque paper from beneath its line to the viewport’s bottom, full width, and nothing on the page moves`, async ({ page }) => {
+  test(`${view} at 390: an open filter is a panel of opaque paper from beneath the last filter line to the viewport’s bottom, full width, and nothing on the page moves`, async ({ page }) => {
     await open(page, view, '', 390);
     /* Scrolled a little first, so "the scroll position does not change" has a position to keep. */
     await page.evaluate(() => window.scrollTo(0, 40));
@@ -89,13 +115,17 @@ for (const view of ['table', 'grid'] as const) {
       const cs = getComputedStyle(p);
       const t = (document.querySelector('[data-filter="genreId"] [data-filter-trigger]') as HTMLElement).getBoundingClientRect();
       const first = (p.querySelector('[data-filter-option]') as HTMLElement).getBoundingClientRect();
+      const lines = Array.from(document.querySelectorAll<HTMLElement>('[data-filter-trigger]'));
+      const lastBottom = lines[lines.length - 1].getBoundingClientRect().bottom;
       const body = getComputedStyle(document.body).backgroundColor;
-      return { position: cs.position, left: r.left, width: r.width, top: r.top, bottom: r.bottom, viewport: { width: window.innerWidth, height: window.innerHeight }, triggerBottom: t.bottom, firstTop: first.top, firstLeft: first.left, triggerLeft: t.left, background: cs.backgroundColor, body, opacity: cs.opacity, inFilter: p.closest('[data-filter]')?.getAttribute('data-filter') };
+      return { position: cs.position, left: r.left, width: r.width, top: r.top, bottom: r.bottom, viewport: { width: window.innerWidth, height: window.innerHeight }, triggerBottom: t.bottom, lastBottom, lines: lines.length, firstTop: first.top, firstLeft: first.left, triggerLeft: t.left, background: cs.backgroundColor, body, opacity: cs.opacity, inFilter: p.closest('[data-filter]')?.getAttribute('data-filter') };
     });
     expect(m.position).toBe('fixed');
     expect(m.left, 'full width').toBe(0);
     expect(m.width).toBe(m.viewport.width);
-    expect(m.top, 'from beneath its own line').toBeCloseTo(m.triggerBottom, 0);
+    expect(m.lines, 'the precondition: Genre is not the last line').toBeGreaterThan(1);
+    expect(m.lastBottom).toBeGreaterThan(m.triggerBottom + 40);
+    expect(m.top, 'from beneath the last filter line').toBeCloseTo(m.lastBottom, 0);
     expect(m.bottom, 'to the viewport’s bottom').toBe(m.viewport.height);
     expect(m.background, 'opaque paper').toBe(m.body);
     expect(m.opacity).toBe('1');
@@ -123,13 +153,14 @@ test.describe('§T.3: the panel is above positioned content, asserted on the gri
       const cells = Array.from(document.querySelectorAll<HTMLElement>('[data-collection-grid] > li'));
       const cell = cells.reduce((a, b) => (b.getBoundingClientRect().left > a.getBoundingClientRect().left ? b : a));
       const img = (cell.querySelector('img') as HTMLElement).getBoundingClientRect();
-      const trigger = (document.querySelector('[data-filter="storeId"] [data-filter-trigger]') as HTMLElement).getBoundingClientRect();
+      const lines = Array.from(document.querySelectorAll<HTMLElement>('[data-filter-trigger]'));
+      const trigger = lines[lines.length - 1].getBoundingClientRect();
       return { x: img.left + img.width / 2, y: img.top + img.height / 2, cellPosition: getComputedStyle(cell).position, imgPosition: getComputedStyle(cell.querySelector('img') as HTMLElement).position, belowLine: img.top > trigger.bottom, besideList: img.left > 20 + 443, inWindow: img.top + img.height / 2 < window.innerHeight };
     });
     /* The preconditions: the cell is positioned though the cover is not, the point is under where the panel will be and beside its list, closed it is the cell's, and it is not paper. */
     expect(point.cellPosition, 'the cell is positioned').toBe('relative');
     expect(point.imgPosition, 'and the cover itself is not').toBe('static');
-    expect(point.belowLine && point.besideList && point.inWindow, 'the point is beneath the line, beside the list, in the window').toBe(true);
+    expect(point.belowLine && point.besideList && point.inWindow, 'the point is beneath the last line, beside the list, in the window').toBe(true);
     expect(await page.evaluate((p) => document.elementFromPoint(p.x, p.y)?.closest('[data-collection-grid] > li') !== null, point), 'closed, a tap there lands in the cell').toBe(true);
     const paper = await paperRgb(page);
     expect(near(await pixelAt(page, point.x, point.y), paper, 20), 'closed, that pixel is the photograph, not paper').toBe(false);
@@ -233,5 +264,64 @@ test.describe('§T.3: the page is held, and a long list scrolls within the panel
     await page.keyboard.press('Escape');
     await isClosed(page);
     expect(await page.evaluate(() => ({ overflow: document.documentElement.style.overflow, padding: document.documentElement.style.paddingRight, length: document.documentElement.scrollHeight })), 'released exactly as it was').toEqual(before);
+  });
+});
+
+test.describe('§T.3, step 102: the panel is beneath the last line, and every line stays pressable', () => {
+  const INK = ['lab(6.18075 1.20374 2.12039)', 'oklch(0.19 0.008 60)'];
+  const LABEL_INK = ['lab(35.0433 0.937879 2.8959)', 'oklch(0.44 0.008 70)'];
+  const keys = (page: Page) => page.locator('[data-filter]').evaluateAll((all) => all.map((el) => el.getAttribute('data-filter') as string));
+  /** For each line: what a tap at its middle reaches, and its label's colour. */
+  const lines = (page: Page) =>
+    page.locator('[data-filter]').evaluateAll((all) => all.map((el) => {
+      const t = el.querySelector('[data-filter-trigger]') as HTMLElement;
+      const r = t.getBoundingClientRect();
+      const at = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2);
+      return { key: el.getAttribute('data-filter') as string, own: at !== null && t.contains(at), bottom: r.bottom, colour: getComputedStyle(el.querySelector('[data-filter-label]') as HTMLElement).color };
+    }));
+
+  /* Fails against step 101's panel, which starts beneath the open filter's own line: with Genre open the lines below it are under paper, and a tap where they sit closes the panel and opens nothing. */
+  test('from each open filter, every line is in view above the panel, and a press on each other line opens that line’s list in one tap', async ({ page }) => {
+    await seedFourLines(page);
+    await open(page, 'table', '', 390);
+    const all = await keys(page);
+    expect(all, 'the precondition: all four lines').toEqual(['genreId', 'labelId', 'storeId', 'tagId']);
+    const start = await page.evaluate(() => window.history.length);
+    for (const from of all) {
+      for (const to of all.filter((k) => k !== from)) {
+        await trigger(page, from).click();
+        await isOpen(page, from);
+        const read = await lines(page);
+        const top = await panel(page).evaluate((p) => p.getBoundingClientRect().top);
+        expect(top, `${from} open: the panel starts beneath the last line`).toBeCloseTo(read[read.length - 1].bottom, 0);
+        expect(read.filter((l) => !l.own).map((l) => l.key), `${from} open: lines a tap does not reach`).toEqual([]);
+
+        await trigger(page, to).click();
+        await isOpen(page, to);
+        await expect(page.locator('[data-filter-trigger][aria-expanded="true"]'), `${from} then ${to}: one open`).toHaveCount(1);
+        await expect(panel(page), 'and one panel').toHaveCount(1);
+        await expect(page.locator(`[data-filter="${to}"] [data-filter-option]`).first(), `${to}’s list, in one tap`).toBeVisible();
+        expect(await page.evaluate(() => window.history.length), 'the switch added no entry').toBe(start + 1);
+        await page.keyboard.press('Escape');
+        await isClosed(page);
+      }
+    }
+  });
+
+  /* Fails against lines whose labels are the label colour whichever is open: the panel would not say whose it is. */
+  test('the open filter’s label is in ink and the others in the label colour; closed, all are the label colour', async ({ page }) => {
+    await seedFourLines(page);
+    await open(page, 'table', '', 390);
+    const all = await keys(page);
+    expect(all, 'the precondition: all four lines').toEqual(['genreId', 'labelId', 'storeId', 'tagId']);
+    for (const l of await lines(page)) expect(LABEL_INK, `closed, ${l.key}: ${l.colour}`).toContain(l.colour);
+    for (const key of all) {
+      await trigger(page, key).click();
+      await isOpen(page, key);
+      for (const l of await lines(page)) expect(l.key === key ? INK : LABEL_INK, `${key} open, ${l.key}: ${l.colour}`).toContain(l.colour);
+      await page.keyboard.press('Escape');
+      await isClosed(page);
+    }
+    for (const l of await lines(page)) expect(LABEL_INK, `closed again, ${l.key}: ${l.colour}`).toContain(l.colour);
   });
 });

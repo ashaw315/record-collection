@@ -21,7 +21,11 @@ registerCleanup();
  * build: the one that read the list as in flow and the table as pushed
  * down, and the one that pressed a second filter's line while the first
  * was open, which the first's panel now covers when the second is below
- * it. The panel's own claims are in `filter-panel-101.spec.ts`.
+ * it. Step 102 then put the panel beneath the last line
+ * (`T.3/covers-own-line`), so that second test presses a line below the
+ * open one again and reads that line as its own, and the first reads the
+ * list beneath the last line and not Genre's, both for the ruling. The
+ * panel's own claims are in `filter-panel-101.spec.ts`.
  *
  * Read on fixtures made here, among the seeded seventeen. What the lists
  * cost on the real collection is the survey sheet's to say.
@@ -86,7 +90,7 @@ test('closed, each filter is one line of its label and nothing else, in §10’s
 });
 
 /* Fails against rows under 44, against counts set beside their names, and against a list that pushes the page down (step 97b's, superseded). */
-test('pressed, a filter opens its options beneath its line, 44 a row, counts right-aligned, and the table stays where it was', async ({ page }) => {
+test('pressed, a filter opens its options beneath the last filter line, 44 a row, counts right-aligned, and the table stays where it was', async ({ page }) => {
   const f = await seed(page);
   await open(page, '', 390);
   const tableTop = () => page.locator('main table').evaluate((t) => t.getBoundingClientRect().top + window.scrollY);
@@ -103,10 +107,14 @@ test('pressed, a filter opens its options beneath its line, 44 a row, counts rig
       const cs = getComputedStyle(count);
       return { top: r.top, height: r.height, left: r.left, right: r.right, name: (name.textContent ?? '').trim(), nameLeft: name.getBoundingClientRect().left, count: (count.textContent ?? '').trim(), countRight: count.getBoundingClientRect().right, countSize: cs.fontSize, borderTop: getComputedStyle(o).borderTopWidth };
     });
-    return { triggerBottom: t.bottom, triggerLeft: t.left, rows };
+    const lines = Array.from(document.querySelectorAll<HTMLElement>('[data-filter-trigger]'));
+    return { lastBottom: lines[lines.length - 1].getBoundingClientRect().bottom, lines: lines.length, triggerBottom: t.bottom, triggerLeft: t.left, rows };
   });
   expect(m.rows.length, 'every genre the collection has').toBeGreaterThan(1);
-  expect(m.rows[0].top, 'directly beneath the line').toBeCloseTo(m.triggerBottom, 0);
+  /* Step 102: beneath the last line and not Genre's own, three lines above it, which is the 132 Design's ruling names as its cost. */
+  expect(m.lines, 'the precondition: all four lines, this test’s fixture has each').toBe(4);
+  expect(m.lastBottom - m.triggerBottom, 'three lines of 44 lie between').toBeCloseTo(132, 0);
+  expect(m.rows[0].top, 'directly beneath the last line').toBeCloseTo(m.lastBottom, 0);
   for (const [i, row] of m.rows.entries()) {
     expect(row.height, `${row.name}: a 44 row`).toBe(44);
     expect(row.borderTop, `${row.name}: a hairline above`).toBe('1px');
@@ -125,24 +133,19 @@ test('pressed, a filter opens its options beneath its line, 44 a row, counts rig
 test('one filter is open at a time; a second press closes it, and so does Escape, which returns focus to the line', async ({ page }) => {
   await seed(page);
   await open(page, '');
-  /*
-    Label first and then Genre, the line ABOVE it: an open filter covers
-    what lies beneath its line, so the lines below it are under its panel
-    and only those above can be pressed while it is open.
-  */
-  await trigger(page, 'labelId').click();
-  await expect(options(page, 'labelId').first()).toBeVisible();
+  /* Genre first and then Label, the line BELOW it: the panel is beneath the last line, so every line can be pressed while one is open (step 102). */
   await trigger(page, 'genreId').click();
   await expect(options(page, 'genreId').first()).toBeVisible();
-  await expect(options(page, 'labelId')).toHaveCount(0);
-  await expect(trigger(page, 'labelId')).toHaveAttribute('aria-expanded', 'false');
-  await trigger(page, 'genreId').click();
+  const under = await trigger(page, 'labelId').evaluate((t) => { const r = t.getBoundingClientRect(); const el = document.elementFromPoint(r.left + 10, r.top + r.height / 2); return { onPanel: el?.closest('[data-filter-panel]') !== null, onLine: el?.closest('[data-filter-trigger]') === t }; });
+  expect(under, 'Label’s line is not under Genre’s panel').toEqual({ onPanel: false, onLine: true });
+  await trigger(page, 'labelId').click();
+  await expect(options(page, 'labelId').first()).toBeVisible();
   await expect(options(page, 'genreId')).toHaveCount(0);
+  await expect(trigger(page, 'genreId')).toHaveAttribute('aria-expanded', 'false');
+  await trigger(page, 'labelId').click();
+  await expect(options(page, 'labelId')).toHaveCount(0);
 
-  /* A line beneath the open one is covered: a press where it sits lands on the panel. */
   await trigger(page, 'genreId').click();
-  const under = await trigger(page, 'labelId').evaluate((t) => { const r = t.getBoundingClientRect(); const el = document.elementFromPoint(r.left + 10, r.top + r.height / 2); return { onPanel: el?.closest('[data-filter-panel]') !== null, onLine: el?.closest('[data-filter-trigger]') !== null }; });
-  expect(under, 'Label’s line is under Genre’s panel').toEqual({ onPanel: true, onLine: false });
   await page.keyboard.press('Escape');
   await expect(options(page, 'genreId')).toHaveCount(0);
 
