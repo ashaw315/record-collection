@@ -102,6 +102,8 @@ const GOVERNED = [
   'e2e/sheet/record-modal.sheet.ts',
   'e2e/sheet/record-modal-92.sheet.ts',
   'e2e/sheet/collection-survey.sheet.ts',
+  /* The five screens' survey reaches a record's edit form by its id. */
+  'e2e/sheet/screens-survey.sheet.ts',
   /*
     Found by the enumeration's fourth pattern (6 Oct): specs that reach the
     record screen through a path handed to a helper. Five of them typed 900.

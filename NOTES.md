@@ -37950,3 +37950,66 @@ panel, so reaching a covered filter is two presses and reaching one above
 is one. The Sort control is above all four and always reachable; the
 no-release-year toggle and Clear filters are below all four and always
 covered.
+
+## The five screens' survey, for their design pass (8 Oct, evening; the sheet, read-only)
+
+`e2e/sheet/screens-survey.sheet.ts`: `docs/captures/screens-survey/`
+holds `survey.md` (a table of every screen at a glance, then per screen
+and width: type, text colours, fills, radii, borders, every control with
+its drawn size and its hit area, tables, and what scrolls sideways),
+`survey.json`, and 33 full-page captures. The want list, look up, stats,
+manage (each of its six sections) and the record form (new, and editing
+a real record), at 390, 320 and 1440. On the real collection, by a
+session minted for 20 minutes and deleted, on a read-only server.
+
+**Each screen was loaded and read and nothing pressed**, but Manage's
+section names, which send nothing. **Not surveyed:** Look up's results (a
+search there calls Discogs, and no test makes a live call), the
+suggestions page, the want list's own forms, a want-list item's page.
+
+What the figures say, for Design; none of it acted on:
+
+| | want list | look up | stats | manage | record form |
+|---|---|---|---|---|---|
+| text sizes | 40, 16, 15, 13, 11, 10 | 40, 15, 14, 11, 10 | 72, 40, 15, 13, 10 | 40, 15, 13, 12.8, 11, 10 | 20, 16, 14, 12 |
+| radii | 2 | 3 | none | 2, 2.4, 3 | 2, 3 |
+| oxblood fill on | a link | a button | a bar | buttons, a table cell | a button, a label |
+| controls at 390 | 31 | 7 | 38 | 10 to 129 by section | 9 new, 68 editing |
+| at or over 44 by hit | none | none | none | none | one, a textarea |
+| content column at 1440 | — | 736 | 736 | 1120 | 736 |
+
+- **No control on any of the five meets 44 by its hit area**, but the
+  edit form's textarea. The commonest heights at 390: links of 14 to 26
+  on the want list, inputs of 36 on look up and the form, links of 16 on
+  stats, buttons of 28 in Manage's rows.
+- **Manage is wider than the window on a phone.** In five of six
+  sections the page is 408 or 460 wide in 390 and in 320, and the table
+  scrolls sideways inside itself as well (544 in 390). 67 of the Artists
+  section's 77 controls are past the window's edge at 390. At 320 the
+  section names scroll sideways too (383 in 320). Genres alone fits.
+- **Manage has no `main` element.** Every other screen has one. The
+  sheet read everything outside the app's header there.
+- **The record form is a different scale from the rest:** its heading is
+  20 where the other four set 40, and it uses 14 and 12 where they use 15,
+  13 and 11. The new form loads as four fields and a closed "Everything
+  else"; the edit form loads with it open, 2,708 long at 390.
+- **Three text colours on four screens and two on stats**: ink, a grey of
+  `lab(39.66 2.06 4.02)` that is neither the record page's label colour
+  nor its ink, and near-white on the oxblood fills.
+- Oxblood (`lab(24.71 31.56 12.98)`) is on all five: §T.2 removed it
+  from the Collection screen for §3's reason, and these have had no pass.
+
+**Two defects in the sheet itself, found by reading its output against
+its own captures, before anything was reported from it** (the instrument
+rule of 8 Oct):
+
+1. It counted what lies inside a closed disclosure as drawn: the new
+   form read as 68 controls where the capture shows 9. Client rects exist
+   for folded-away content in this browser. It uses `checkVisibility` now.
+2. It gave a hit area of 0 to controls past the window's edge, which
+   reads as "untappable" where the truth is "reached by scrolling
+   sideways". They are counted apart now, as off the window.
+
+The Collection survey's sheet has the first of these too, by the same
+`shown`; its figures were taken on a screen with no closed disclosure, so
+I believe they stand, and have not rerun it to see.
