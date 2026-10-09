@@ -36554,7 +36554,7 @@ Those screens take it when they are ruled. Do not tidy it.
 ## The Collection survey's figures, for the table and grid target (8 Oct)
 
 Generated from the build on the real collection, read-only, by
-`e2e/sheet/collection-survey.sheet.ts`: `docs/captures/collection-survey/`
+`e2e/sheet/collection-survey.sheet.ts`: `docs/captures/collection-survey/` (since 9 Oct that reading is in `docs/captures/collection-survey-974cfe6/`)
 holds `survey.md` (per view and width: every text size with what carries
 it, every radius with what has it, every control with its size, each chip
 row, the columns and the sort orders), `survey.json`, and six full-page
@@ -38061,3 +38061,64 @@ Today's reading puts 21 or 22 controls under 44, and that is drawn height
 and not hit area: the three view names, Add record and the record links,
 each tested at 44 by hit in their own specs, and the no-JavaScript Apply.
 This sheet does not read hit areas; the five screens' sheet does.
+
+## 9 Oct, second round: the opening's test, wall-route by §W.12, §T.1's figures, the survey relabelled
+
+**An inventory reported before the file was read through (the
+coordinator's note).** I reported "three claims depend on the frame rate"
+in `cover-travel-92` and there were more: the list came from a search for
+the word, not from reading each assertion and asking what it needs of the
+sampler. Same family as the tail's exit status and the export diff: an
+instrument's output passed on as a reading. For the opening's test the
+inventory was made by reading every assertion; it is below.
+
+**The opening's test**, by the coordinator's decision. Deleted: the three
+counts (five travelling, more than three landed, two part-way through the
+fade) and the duration against `TRAVEL_MS`. Restated: the cover is seen
+travelling; the label is on an opacity transition of `FADE_MS` and only
+arrives. **A fifth, found by the reading and not in the order:** "by the
+end it is fitted" was read on the last travelling frame, and the travel
+is driven by elapsed time, so that frame is wherever the machine drew it.
+It now reads that the crop only eases toward the fit on the way, and that
+the LANDED sleeve's photograph is contained in the square. What still
+leans on the sampler and was left: the first travelling frame is taken
+to be at the page's square (within 30); it is the frame React commits at
+p = 0, before any step, so it does not depend on the rate, but it is an
+assumption about the component and is said here.
+
+**`wall-route.spec.ts:106` and `:205`**, ordered once §W.12 read "This
+holds for the near view as for the far". Both rewritten for the ruling:
+`:106` goes to a bare / and reads the collection's first seat; `:205`
+seeds 240 besides, measures the wall, and widens the window by the
+measured excess. The old tests beside 240 other records, alone on one
+worker, fail with the gate's figures, so the cause is shown and not only
+argued.
+
+**For Design, found while doing it: where a FILTERED near view arrives.**
+`arrivalSeat` is the first placed seat, emptied or not
+(`src/app/wall/route-view.ts`). So `/?artistId=…` arrives on the
+collection's first shelf, and the matching records can be off the region:
+that is exactly what `:106` measured, its record 386 past the region's
+edge among 277. §W.29 says the arrival "lands on the occupied shelf";
+under a filter the first shelf may hold only footprints. Whether a
+filtered arrival should go to the first MATCHING seat is not ruled that I
+can find. Not changed.
+
+**§T.1's 126.5 and 224, for `T.1/band-filters-figures`.** Design's
+assumption holds. The sentence "the band is 126.5 at every width, the
+filters closed with the Sort row 224" was not in §T at 5d123ee (which
+carried the governs rows and steps, and no table and grid target file
+with those figures). It first arrived in the drop taken as **0aa3484**
+(8 Oct), and was still carried by 90ddaaa and 68243b0. So a drop Code
+took did carry both figures, and the entry stands. The entry is Design's
+and was not touched.
+
+**The Collection survey.** `docs/captures/collection-survey/` now holds
+today's reading (tree at a388060, the screen as step 102 left it), and
+says so at its head. The 8 Oct reading moved to
+`docs/captures/collection-survey-974cfe6/`, headed as superseded, with
+the commit it describes and the steps that replaced the screen. Not
+rerun in a worktree, by the coordinator's decision.
+
+**Drops taken this round:** 4e97675 and the one after it. They carry step
+103 and §T.6, which are not built and not started.
