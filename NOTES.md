@@ -38701,3 +38701,48 @@ panel sheet, the air after the margin, and the latent-defect entry.
   did `cover-fail-87.spec.ts:193`.
 - Recorded, not judged: swap-outs rose by 19.5M pages; load 3.45 at the
   start of the Playwright run and 14.32 at its end.
+
+## Step 107: the page behind an open filter moved under a finger on Adam's phone (9 Oct, evening)
+
+**Adam's two answers.** "Mostly working" meant only that the panel was
+in view when he pressed: no second issue under step 105. And on the
+drag: "yes the background scrolled when i moved on it". So §T.3's "the
+page beneath does not move" was not kept on Mobile Safari, and the
+scripted case the sheet staged is reached there by an ordinary drag.
+
+**Two fixes, independent.**
+- *The hold.* The root's `overflow: hidden` is what failed, so the hold
+  against a finger no longer rests on it: while a filter is open, a
+  finger's move is cancelled unless it began on the panel and the
+  panel's list can still follow it (`holdTouch`, `allowsTouchMove` in
+  `scroll-hold.ts`). The page is not repositioned to hold it, so its
+  scroll offset is never given up and nothing moves on open or close.
+  The root's `overflow` stays for the wheel, the keyboard and step 86's
+  scrollbar compensation.
+- *The placement.* The panel is placed again on every scroll, not only
+  on a resize.
+
+**Decided in the build, for Design to rule:** with the last filter line
+gone above the window, the panel's top is held at the window's top, so
+its list still starts in view. §T.3 says only "beneath the last filter
+line".
+
+**What is tested, and what is not.** `panel-hold-107.spec.ts`:
+- for real, on both projects: a scripted scroll moves the page and the
+  panel's top follows the last line's foot; with the lines above the
+  window the panel starts at 0. Both failed before the fix.
+- for real, on both projects: nothing moves on open or close, from the
+  top and from 150 down. These passed before the fix and are the ruling
+  the fix must not break.
+- as a STAGED PROXY, Chromium's touch stream only: with the root's
+  `overflow` taken off, drags on the list past its top, on the inset and
+  above the lines leave the page still, and a drag on the list moves the
+  list. Failed before the fix (the page went 142).
+- **Not tested: a finger on Mobile Safari, the engine that showed the
+  defect.** No test here runs it. Adam confirms on the phone.
+The rule and its wiring are unit-tested on stubs in `scroll-hold.test.ts`.
+
+**Seen, not acted on.** The header's menu (`AppHeader`) and the record
+modal hold the page by the same root `overflow` and nothing else. If
+the phone moves the page behind an open filter it very likely moves it
+behind those too. Not verified, not changed.

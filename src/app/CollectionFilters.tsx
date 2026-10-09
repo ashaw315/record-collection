@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { holdScroll } from '@/components/scroll-hold';
+import { holdScroll, holdTouch } from '@/components/scroll-hold';
 import { cn } from '@/lib/utils';
 import { HAIRLINE, INK, LABEL, LABEL_TYPE } from '@/app/records/[id]/grid-type';
 import { RECORD_SORT_FIELDS, type RecordSortField } from '@/lib/records/fields';
@@ -138,9 +138,10 @@ export function CollectionFilters({
   useEffect(() => {
     if (openKey === null) return undefined;
     const trigger = () => rootRef.current?.querySelector<HTMLElement>(`[data-filter="${openKey}"] [data-filter-trigger]`);
+    /* Never above the window: with the lines gone over its top, the list still starts in view. */
     const place = () => {
       const bottom = lastLineBottom();
-      if (bottom !== undefined) setPanelTop(bottom);
+      if (bottom !== undefined) setPanelTop(Math.max(0, bottom));
     };
     place();
     const onKey = (event: KeyboardEvent) => {
@@ -155,11 +156,22 @@ export function CollectionFilters({
     };
     /* "The page beneath does not move": held in both directions, with step 86's compensation. */
     const release = holdScroll(document.documentElement, window);
+    /*
+      Step 107. The root's `overflow` does not hold the page against a finger
+      on Mobile Safari, so a finger's move is cancelled unless it is the
+      list's own. And whatever else moves the page (a script, the keyboard,
+      a scroll to the focused control, find-in-page), the panel is placed
+      again, so it stays beneath its lines.
+    */
+    const releaseTouch = holdTouch(document, () => rootRef.current?.querySelector<HTMLElement>('[data-filter-panel]') ?? null);
+    window.addEventListener('scroll', place, { passive: true });
     document.addEventListener('keydown', onKey);
     window.addEventListener('popstate', onPop);
     window.addEventListener('resize', place);
     return () => {
       release();
+      releaseTouch();
+      window.removeEventListener('scroll', place);
       document.removeEventListener('keydown', onKey);
       window.removeEventListener('popstate', onPop);
       window.removeEventListener('resize', place);

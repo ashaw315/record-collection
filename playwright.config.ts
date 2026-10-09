@@ -235,6 +235,8 @@ export default defineConfig({
        */
       testMatch: [
         /collection-filters\.spec\.ts$/,
+        /* Step 107: the panel under its lines and nothing moving on open or close, on the phone's engine. */
+        /panel-hold-107\.spec\.ts$/,
         /* Step 105: the table row's link box and presses inside an open panel, on the phone's engine. */
         /table-row-box-105\.spec\.ts$/,
         /collection-widths\.spec\.ts$/,
