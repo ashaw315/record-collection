@@ -38474,3 +38474,20 @@ every record, so it cannot be red here". Measured before the change: red
 type on the red tint over the dialog's ground, 5.03 : 1 at 14px, which
 clears §59's 4.5, so there was one defect in it and not two. The dialog
 takes §T.6's mapping and its Delete is the ink box its Cancel is.
+
+## The gate on d4d9ea0 reads OK, at 2.65 seconds a test (9 Oct, afternoon)
+
+Gate: build, then the full suites, one after the other, on `d4d9ea0`.
+The third run today; the first two are not results (above). It covers
+step 103 a to c with sign-in, step 104 with the shelf ruling and the
+empty shelf, the rail's set bar, the record page's Delete, the survey
+and air sheets, and the Design drops between.
+
+- Build: compiled.
+- Unit, `npm test`: `4207 passed, 2 skipped, tree unchanged — OK`, 4m 57s.
+- Playwright, both projects, no file argument:
+  `814 passed, 13 skipped, ledger clean, tree unchanged — OK`, 36m 28s
+  for 827 tests, 2.65 seconds a test. Nothing failed and nothing was
+  retried.
+- Recorded, not judged: swap-outs rose by 31.2M pages over the run; load
+  8.30 at the start of the Playwright run and 18.18 at its end.
