@@ -38537,3 +38537,28 @@ coverage that was missing.
 option on that row and did not close the panel; a mouse press at the
 same point closes it. Whether a finger on a phone does the same is not
 known.
+
+## The gate on 1a20490: Playwright OK with two retries; the unit suite failed one test, then passed whole (9 Oct, evening)
+
+Gate: build, then the full suites, one after the other, on `1a20490`
+(step 105 alone).
+
+- Build: compiled.
+- Unit, `npm test`, first run: `4206 passed, 1 failed, 2 skipped, tree
+  unchanged — NOT OK`. The one is `test/repo/run-tests-cli.test.ts`,
+  "shows a line the child wrote long before the child exits": the sample
+  taken before the child exits was empty. A timing test of the runner;
+  the step touches nothing it reads, and the file had passed in the repo
+  checks minutes before. **Taken for a timing miss and not shown to be
+  one.**
+- Unit, second run, on its own after Playwright, same commit:
+  `4207 passed, 2 skipped, tree unchanged — OK`.
+- Playwright, both projects, no file argument:
+  `828 passed, 2 flaky, 13 skipped, ledger clean, tree unchanged — OK`,
+  36m 07s for 843 tests, 2.57 seconds a test. The two that needed their
+  retry: `cover-fail-87.spec.ts:193` on chromium ("a waiting square is
+  not a trigger") and `collection-filters.spec.ts:610` on mobile
+  ("paging keeps the active filter rather than dropping it"). Neither
+  is a file the step touched; neither was diagnosed.
+- Recorded, not judged: swap-outs rose by 25.3M pages; load 4.15 at the
+  start of the Playwright run and 21.46 at its end.
