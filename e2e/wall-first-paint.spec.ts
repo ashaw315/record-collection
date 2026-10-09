@@ -246,24 +246,44 @@ test('a client navigation to the shelf arrives in position too (§W.29)', async 
 
   await page.goto(`/?artistId=${artistId}&view=table`);
   await expect(page.locator('[data-collection-band]').getByRole('link', { name: 'Shelf', exact: true })).toBeVisible({ timeout: 30_000 });
+  /*
+    **Every painted frame from the region's first to the settled wall, however
+    many that is.** This sampled for a fixed 2.5 seconds from before the
+    click and required more than three frames with the region in them, which
+    is a claim about the frame rate and the navigation's speed and not about
+    the landing: on a loaded machine the navigation outlasted the window and
+    the test failed with the page right (twice of three at load 121, 8 Oct).
+    Rewritten by the travel assertions' treatment (7 Oct): the sampler runs
+    until the test stops it, and what is asserted holds at any frame rate.
+    One frame with the region in it is enough to state the claim on, and the
+    settled position is read from the page itself and compared with it.
+  */
+  type Nav = { frames: Array<{ l: number; s: number }>; stop: boolean };
   await page.evaluate(() => {
-    (window as unknown as { __nav: Array<{ l: number; s: number }> }).__nav = [];
-    const t0 = performance.now();
+    const nav = { frames: [] as Array<{ l: number; s: number }>, stop: false };
+    (window as unknown as { __nav: typeof nav }).__nav = nav;
     (function sample() {
       const el = document.querySelector('[data-region="wall"]') as HTMLElement | null;
-      if (el) (window as unknown as { __nav: Array<{ l: number; s: number }> }).__nav.push({ l: Math.round(el.scrollLeft), s: Math.round(el.scrollTop) });
-      if (performance.now() - t0 < 2500) requestAnimationFrame(sample);
+      if (el) nav.frames.push({ l: Math.round(el.scrollLeft), s: Math.round(el.scrollTop) });
+      if (!nav.stop) requestAnimationFrame(sample);
     })();
   });
   await page.locator('[data-collection-band]').getByRole('link', { name: 'Shelf', exact: true }).click();
-  await expect(page.locator('[data-wall="labelled"]')).toBeVisible({ timeout: 20_000 });
+  await expect(page.locator('[data-wall="labelled"]')).toBeVisible({ timeout: 30_000 });
+  await wallMeasured(page);
+  /* A landing that came late would be a movement, so the wait after the wall has settled is what gives one the time to show. */
   await page.waitForTimeout(2000);
 
-  const frames = (await page.evaluate(() => (window as unknown as { __nav: Array<{ l: number; s: number }> }).__nav)) as Array<{ l: number; s: number }>;
-  expect(frames.length, 'the region was sampled after the navigation').toBeGreaterThan(3);
-  const positions = [...new Set(frames.map((f) => `${f.l}/${f.s}`))];
-  expect(positions.length, `no movement after the shelf renders: ${positions.join(' -> ')}`).toBe(1);
-  expect(Number(positions[0].split('/')[1]), 'and it is a real landing').toBeGreaterThan(0);
+  const { frames, settled } = await page.evaluate(() => {
+    const nav = (window as unknown as { __nav: Nav }).__nav;
+    nav.stop = true;
+    const el = document.querySelector('[data-region="wall"]') as HTMLElement;
+    return { frames: nav.frames, settled: { l: Math.round(el.scrollLeft), s: Math.round(el.scrollTop) } };
+  });
+  expect(frames.length, 'the precondition: the sampler survived the navigation and saw the region').toBeGreaterThanOrEqual(1);
+  const positions = [...new Set([...frames, settled].map((f) => `${f.l}/${f.s}`))];
+  expect(positions.length, `no movement from the region's first frame to the settled wall: ${positions.join(' -> ')}`).toBe(1);
+  expect(settled.s, 'and it is a real landing').toBeGreaterThan(0);
 
   /*
     **The console warning this does NOT assert away.** React logs "Scripts
