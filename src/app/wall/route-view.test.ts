@@ -72,6 +72,24 @@ describe('the route’s two views (§W.12, §W.29)', () => {
     expect(arrivalSeat([])).toBeNull();
   });
 
+  /* Step 104. Fails against an arrival that is the first placed seat whatever it holds: under a filter that seat can be hundreds from any match. */
+  it('under a filter, names the first MATCHING record’s shelf, by the collection’s order (§W.29)', () => {
+    const seats = Array.from({ length: 60 }, (_, i) => ({ id: `r${i}`, section: 'S' }));
+    const { placed } = wallLayout(seats, [], 872, 799);
+    const emptied = new Set(seats.filter((_, i) => i !== 47 && i !== 52).map((s) => s.id));
+    const arrival = arrivalSeat(placed, emptied);
+    expect(arrival?.id, 'the first match in wall order, not the first seat and not the later match').toBe('r47');
+    expect(arrival?.z, 'which is on a lower shelf than the first seat’s').toBeLessThan(placed[0].z);
+  });
+
+  /* Fails against an arrival that returns nothing, or the last seat, when every seat is emptied. */
+  it('where nothing matches, arrives as it would unfiltered, on the occupied shelf (§W.29)', () => {
+    const seats = Array.from({ length: 60 }, (_, i) => ({ id: `r${i}`, section: 'S' }));
+    const { placed } = wallLayout(seats, [], 872, 799);
+    expect(arrivalSeat(placed, new Set(seats.map((s) => s.id)))?.id).toBe('r0');
+    expect(arrivalSeat(placed, new Set())?.id, 'and with no seat emptied').toBe('r0');
+  });
+
   it('keeps the addressed seat inside the region at every collection size, the vertical target being reachable (§W.28)', () => {
     /*
       A row spans ~99px of screen height per seat (198 pitch × sin30), so a

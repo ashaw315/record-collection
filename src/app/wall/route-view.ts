@@ -41,9 +41,18 @@ export const DEFAULT_ROUTE_VIEW: RouteView = 'near';
  *
  * Seats are laid out in wall order, so the first placed seat is the first
  * seat of the topmost occupied shelf.
+ *
+ * **Under a filter the occupied shelf is the matching records'** (step 104):
+ * "the near view arrives on the first matching record's shelf, by the
+ * collection's order, and where nothing matches it arrives as it would
+ * unfiltered." §W.12 empties the seats a filter does not match and leaves
+ * them placed, so the first placed seat can be hundreds from any match;
+ * `emptied` names those seats. The first match and not the densest run,
+ * because it is the one place the reader can predict from the order.
  */
-export function arrivalSeat(placed: readonly PlacedSeat[]): PlacedSeat | null {
-  return placed.length === 0 ? null : placed[0];
+export function arrivalSeat(placed: readonly PlacedSeat[], emptied: ReadonlySet<string> = new Set()): PlacedSeat | null {
+  if (placed.length === 0) return null;
+  return placed.find((seat) => !emptied.has(seat.id)) ?? placed[0];
 }
 
 /**

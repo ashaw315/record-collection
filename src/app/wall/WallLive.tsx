@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { PullState } from './WallLabelled';
 import { WallStage } from './WallStage';
 import type { RecordSummary } from './summary';
@@ -190,6 +190,17 @@ export function WallLive({
   const originRef = useRef<[number, number]>([0, 0]);
   const gestureOnRef = useRef(false);
   const pullKey = pulls.map((p) => `${p.id}:${p.direction}`).join('|');
+  /*
+    Step 104, §W.29: which seats the filter has emptied, and a key that
+    changes when the filter's answer does. "A filter applied while the near
+    view is open moves it the same way": the arrival is once per mount, so a
+    filter that changes under a mounted wall sets the landing again, to the
+    new first match, or to the unfiltered arrival when it is cleared or
+    matches nothing.
+  */
+  const emptied = useMemo(() => new Set(seats.filter((seat) => seat.empty).map((seat) => seat.id)), [seats]);
+  const matchKey = `${emptied.size}/${seats.length}:${seats.find((seat) => !seat.empty)?.id ?? ''}`;
+  const landedMatch = useRef<string | null>(null);
   useLayoutEffect(() => {
     const el = region.current;
     if (el === null) return;
@@ -229,11 +240,15 @@ export function WallLive({
             : ([...new Set(layout.placed.map((p) => p.z))].sort((a, b) => b - a)[opensShelf] ?? null);
         const first =
           addressed === null
-            ? arrivalSeat(layout.placed)
-            : (layout.placed.find((p) => p.z === addressed) ?? arrivalSeat(layout.placed));
+            ? arrivalSeat(layout.placed, emptied)
+            : (layout.placed.find((p) => p.z === addressed) ?? arrivalSeat(layout.placed, emptied));
         if (first !== null) landOn.current = first.id;
       }
+    } else if (arrived.current && routeView === 'near' && landedMatch.current !== null && landedMatch.current !== matchKey && pulls.length === 0) {
+      const first = arrivalSeat(layout.placed, emptied);
+      if (first !== null) landOn.current = first.id;
     }
+    if (arrived.current) landedMatch.current = matchKey;
     const landing = landOn.current;
     /*
       Consumed only on a commit whose frame is the region's OWN: after a zoom
@@ -300,7 +315,7 @@ if (offset !== null) offset.style.transform = '';
     }
     viewNowRef.current = current;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [seats, framed, width, height, view, pullKey, routeView]);
+  }, [seats, framed, width, height, view, pullKey, routeView, emptied, matchKey]);
   /* At rest the reader pans (§W.6): the view follows, so a gesture begins from where the reader left it. */
   useEffect(() => {
     const el = region.current;

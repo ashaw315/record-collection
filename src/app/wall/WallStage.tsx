@@ -13,6 +13,7 @@ import { nearViewMinWidth } from './view-fork';
 import { HAIRLINE, LABEL, LABEL_INK } from '../records/[id]/grid-type';
 import { DRAWN_PAPER } from './WallComposition';
 import { WallOverview } from './WallOverview';
+import { ShelfEmpty } from './ShelfEmpty';
 
 /**
  * The stage: two columns — facts left at 420px, drawing right with the rest
@@ -120,13 +121,15 @@ export function WallStage({
   const arrival: [number, number] | null = (() => {
     if (far === true || moving.length > 0) return null;
     const { placed, frame } = wallLayout(seats, [], width, view?.height ?? 0);
-    const seat = arrivalSeat(placed);
+    const seat = arrivalSeat(placed, new Set(seats.filter((s) => s.empty).map((s) => s.id)));
     if (seat === null) return null;
     const [fx, fy] = frame.viewBox.split(' ').map(Number);
     const [x, y] = arrivalView(seat, { width, height: view?.height ?? 0 }, placed.filter((p) => p.z === seat.z));
     return [Math.round(x - fx), Math.round(y - fy + LANDING_PAD)];
   })();
   const order = seated.map((seat) => seat.id);
+  /* Step 104: a collection whose every seat a filter or search has emptied. Not an empty collection, which has no seats to empty. */
+  const nothingMatches = seats.length > 0 && seated.length === 0;
 
   /*
     §W.9: the panel's region is FIXED in the facts column below the count,
@@ -285,15 +288,16 @@ export function WallStage({
           style={{ background: "oklch(0.72 0.004 80)" }}
         />
       </div>
-      <div className="min-h-0 min-w-0 flex-1">
+      <div className="relative min-h-0 min-w-0 flex-1">
         <WallOverview seats={seats} pulledId={null} linked onSeatClick={onZoomIn} />
+        {nothingMatches ? <ShelfEmpty /> : null}
       </div>
     </div>
   );
   if (far === true) return farView;
 
   const nearView = (
-    <div data-region="near" className="grid grid-cols-[420px_1fr] gap-0">
+    <div data-region="near" className="relative grid grid-cols-[420px_1fr] gap-0">
       {/*
         §W.31's facts column. Its two horizontals exist only when the PANEL
         does — a rule under the count with nothing below it separates nothing
@@ -373,6 +377,12 @@ export function WallStage({
           {arrows}
         </div>
       </div>
+      {/* Over the drawing region's box, beside the facts column, and outside what the region scrolls (step 104). */}
+      {nothingMatches ? (
+        <div className="pointer-events-none absolute inset-y-0 right-0 left-[420px]">
+          <ShelfEmpty />
+        </div>
+      ) : null}
     </div>
   );
   if (far === false) return nearView;
