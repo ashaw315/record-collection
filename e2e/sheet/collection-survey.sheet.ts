@@ -33,7 +33,8 @@ test('the table and grid views, measured at three widths', async ({ page }) => {
     await page.waitForTimeout(600);
     const m = await page.evaluate(() => {
       const main = document.querySelector('main') as HTMLElement;
-      const shown = (el: Element) => el.getClientRects().length > 0 && getComputedStyle(el).visibility !== 'hidden';
+      /* `checkVisibility`, not client rects alone: what lies inside a closed disclosure has rects and is not drawn (found on the five screens' survey, 9 Oct). */
+      const shown = (el: Element) => el.getClientRects().length > 0 && el.checkVisibility({ contentVisibilityAuto: true, visibilityProperty: true });
       const round = (v: number) => Math.round(v * 10) / 10;
       const what = (el: Element) => {
         const tag = el.tagName.toLowerCase();

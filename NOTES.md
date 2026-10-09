@@ -38013,3 +38013,51 @@ rule of 8 Oct):
 The Collection survey's sheet has the first of these too, by the same
 `shown`; its figures were taken on a screen with no closed disclosure, so
 I believe they stand, and have not rerun it to see.
+
+## 9 Oct: cover-travel's returns, step 102, and the Collection survey reread
+
+**`cover-travel-92`'s returns, by the coordinator's decision of 9 Oct.**
+Three claims depended on the machine's frame rate. Deleted outright: the
+count of frames sampled while the cover travels back, and that the three
+ways of closing last within 80ms of each other. Restated: the return now
+reads that the cover is seen travelling back at all; and the label's fade,
+which was read as a frame caught part-way, reads as the label being on an
+opacity transition of `FADE_MS`, never rising before the cover leaves, and
+gone when it does. Staged against a label with no transition: red,
+`Expected: 150, Received: 0`. The return's duration and the curve's shape
+are judged by eye from the recording, and the file's header says so.
+
+**Not touched, and the same kind:** the OPENING's test in that file still
+counts frames (`>= 5` travelling, `> 3` landed, `>= 2` part-way through
+the label's fade) and reads the travel's duration against `TRAVEL_MS`. It
+was not among the tests that failed and was not in the order; it will
+redden a gate on a slow enough machine for the same reason.
+
+**Step 102** (§T.3, `T.3/covers-own-line`): the panel starts beneath the
+last filter line. Three tests encoded step 101's position and were
+rewritten for the ruling; the commit names them. Genre's list begins 132
+below its own line with all four lines drawn, as the ruling says. The
+number of lines drawn depends on the shared database (two, then three, in
+one run), so step 102's tests seed a record carrying all four.
+
+**The Collection survey's sheet, reread with the closed-disclosure fix.**
+Run twice on the real collection, read-only, on the screen as it is today:
+once with the old `shown` and once with `checkVisibility`. The two
+readings are identical, byte for byte: nothing moved on this screen,
+because a closed filter renders no list at all (the options are not in
+the page until it is open), so there is nothing folded away to miscount.
+
+What that does NOT show: the committed survey in
+`docs/captures/collection-survey/` was taken on 8 Oct at 974cfe6, of the
+screen before steps 97 to 102 rebuilt it, and that screen is no longer in
+the tree to reread. Its figures differ from today's because the screen
+does (69 to 72 controls then, 28 to 31 now), not because of the fix. The
+belief that the old figures stand is still a belief; reading it would
+mean running the sheet in a worktree at 974cfe6. The committed captures
+are left as the record of the screen Design's target was drawn from, and
+today's readings were not written over them.
+
+Today's reading puts 21 or 22 controls under 44, and that is drawn height
+and not hit area: the three view names, Add record and the record links,
+each tested at 44 by hit in their own specs, and the no-JavaScript Apply.
+This sheet does not read hit areas; the five screens' sheet does.
