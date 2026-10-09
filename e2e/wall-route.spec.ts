@@ -111,25 +111,38 @@ test('a bare / opens NEAR with the occupied shelf framed, and the far view is a 
     anything was readable. The arrival lands on the OCCUPIED shelf — the
     empty shelves are the room the collection grows into.
   */
-  const { artistId, ids } = await seed(page, 24);
-  await page.goto(`/?artistId=${artistId}`);
+  /*
+    A bare /, and it is one: no filter. This test went to `?artistId=` and
+    read ITS first record as the arrival seat, taking the filter to make
+    the wall its own. It does not (§W.12, "This holds for the near view as
+    for the far": a filtered wall is the whole collection's, with seats
+    emptied), so beside a test seeding 240 its record sat 386 past the
+    region. The arrival is on the COLLECTION's first seat, so that is the
+    seat read, whatever the collection is when the page is made: the first
+    on the keyboard's path, which with no filter is the first placed.
+  */
+  await seed(page, 24);
+  await page.goto('/');
   await expect(page.getByTestId('wall')).toBeAttached({ timeout: 30_000 });
 
   /* Near, with labels, on the first load — no click. */
   await expect(page.locator('[data-wall="labelled"]')).toBeVisible({ timeout: 15_000 });
   await expect(page.locator('[data-wall="overview"]')).toHaveCount(0);
   await expect(page.locator('a[data-seat]').first()).toBeVisible();
+  await expect(page.locator('[data-footprint]'), 'the precondition: no filter, so no seat is emptied').toHaveCount(0);
 
   /* Framed on the occupied shelf: the first seat is in the region, and so are its top faces. */
   await page.waitForTimeout(900);
-  const framed = await page.evaluate((id) => {
+  const framed = await page.evaluate(() => {
     const rect = (q: string) => { const r = document.querySelector(q)?.getBoundingClientRect(); return r ? { left: r.left, top: r.top, right: r.right, bottom: r.bottom } : null; };
-    return { region: rect('[data-region="wall"]'), seat: rect(`a[data-seat="${id}"] [data-spine]`), top: rect(`a[data-seat="${id}"] [data-face="top"]`) };
-  }, ids[0]);
+    return { region: rect('[data-region="wall"]'), seat: rect('a[data-seat][tabindex="1"] [data-spine]'), top: rect('a[data-seat][tabindex="1"] [data-face="top"]') };
+  });
   expect(framed.region && framed.seat && framed.top).toBeTruthy();
   if (framed.region && framed.seat && framed.top) {
     expect(framed.seat.top, 'the arrival seat is inside the region').toBeGreaterThanOrEqual(framed.region.top - 1);
     expect(framed.seat.bottom).toBeLessThanOrEqual(framed.region.bottom + 1);
+    expect(framed.seat.left, 'across as well as down').toBeGreaterThanOrEqual(framed.region.left - 1);
+    expect(framed.seat.right).toBeLessThanOrEqual(framed.region.right + 1);
     expect(framed.top.top, 'and its top face is not cut off (§W.28)').toBeGreaterThanOrEqual(framed.region.top - 1);
   }
 
@@ -203,22 +216,40 @@ test('clicking a run lands the near view on that run’s first seat, by the rule
 });
 
 test('a wall that fits the region has no horizontal landing to make, and still puts the addressed shelf at the top (§W.12)', async ({ page }) => {
+  /*
+    A filtered wall is the whole collection's size (§W.12), and the
+    collection is every record in a database other tests seed, so whether
+    this wall fits a 1440 window is not this test's to assume: it read 872
+    wide with 37 records and 929 to 988 with 277. So the test seeds its own
+    240 besides, which makes the wall wider than the region whatever runs
+    beside it, MEASURES it, and widens the window until the wall fits. The
+    fitting case is made from the measurement and not pinned.
+  */
+  await seed(page, 240);
   const { artistId, ids } = await seed(page, 20);
   await page.goto(`/?artistId=${artistId}`);
   await expect(page.locator('[data-wall="labelled"]')).toBeVisible({ timeout: 30_000 });
+  const wall = () => page.evaluate(() => { const el = document.querySelector('[data-region="wall"]') as HTMLElement; return { scroll: el.scrollWidth, client: el.clientWidth, count: (document.querySelector('[data-testid="wall-zoom-out"]')?.textContent ?? '').trim() }; });
+  await expect.poll(async () => (await wall()).scroll, 'the wall has its measured width').toBeGreaterThan(0);
+  await page.waitForTimeout(900);
+  const narrow = await wall();
+  expect(narrow.scroll, `the precondition: at 1440 this wall is wider than its region (${narrow.count})`).toBeGreaterThan(narrow.client);
+  await page.setViewportSize({ width: 1440 + (narrow.scroll - narrow.client) + 2 * LANDING_PAD, height: 900 });
+  await expect.poll(async () => { const w = await wall(); return w.scroll - w.client; }, `widened by the measured excess, the wall fits (${narrow.count})`).toBe(0);
   await page.getByTestId('wall-zoom-out').click();
   await expect(page.locator('[data-wall="overview"]')).toBeVisible();
   await clickFarRun(page);
-  void ids[10];
   await expect(page.locator('[data-wall="labelled"]')).toBeVisible();
   await page.waitForTimeout(250);
   const got = await page.evaluate((id) => {
     const el = document.querySelector('[data-region="wall"]') as HTMLElement | null;
     const rect = (q: string) => { const r = document.querySelector(q)?.getBoundingClientRect(); return r ? { top: r.top } : null; };
     return { scrollLeft: el === null ? null : Math.round(el.scrollLeft), fits: el !== null && el.scrollWidth <= el.clientWidth, region: rect('[data-region="wall"]'), shelf: rect(`[data-seat="${id}"] [data-face="top"]`) };
-  }, ids[10]);
+  }, ids[0]);
   expect(got.fits, 'the whole wall is visible').toBe(true);
   expect(got.scrollLeft, 'nothing to pan: the landing resolves to zero').toBe(0);
+  /* The run pressed is the first occupied one, and its first seat is this test's first record, as the test above establishes. */
+  expect(got.region !== null && got.shelf !== null, 'the addressed seat is drawn').toBe(true);
   if (got.region && got.shelf) expect(got.shelf.top - got.region.top, 'the addressed shelf’s top face is not cut off').toBeGreaterThanOrEqual(-1);
 });
 
