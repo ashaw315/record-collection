@@ -1,6 +1,7 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test, type Page } from '@playwright/test';
+import { NO_SCROLL_HEIGHT } from '../../src/app/records/[id]/band-geometry';
 import { login } from './login';
 
 /**
@@ -31,7 +32,8 @@ import { login } from './login';
  */
 const OUT = process.env.SHEET_OUT ?? join('docs', 'captures', 'air-103');
 const WIDTHS = [1440, 1024, 768];
-const HEIGHT = 900;
+/* The first view's height: the one the record page is ruled against, so the screens are read in the same window. */
+const HEIGHT = NO_SCROLL_HEIGHT;
 
 const measure = (page: Page) =>
   page.evaluate(() => {
