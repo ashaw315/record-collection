@@ -38562,3 +38562,38 @@ Gate: build, then the full suites, one after the other, on `1a20490`
   is a file the step touched; neither was diagnosed.
 - Recorded, not judged: swap-outs rose by 25.3M pages; load 4.15 at the
   start of the Playwright run and 21.46 at its end.
+
+## A red line is a red gate unless the failure is diagnosed; the push of step 105 is an exception, not a precedent (9 Oct, the coordinator's ruling)
+
+**The rule.** A red line is a red gate unless the failure is diagnosed.
+A rerun going green is not a diagnosis: it is as consistent with an
+intermittent real defect as with a timing miss, which is the family "a
+green that is a fact about what ran beside it".
+
+**The exception, named so nobody generalises "rerun and ship" from it.**
+Step 105 (`1a20490`) was pushed after
+`test/repo/run-tests-cli.test.ts`, "shows a line the child wrote long
+before the child exits", failed in the gate's unit run and the whole
+suite passed on a second run. What makes that acceptable is not the
+second run. It is that the test measures when the runner's child output
+appears relative to the child's exit, which is sensitive to load by
+construction, and load was recorded going 4.15 to 21.46 in the run after
+it, the highest today. That is a reason to expect a timing miss and
+not a demonstration of one. Code pushed on the rerun alone and gave no
+better reason at the time; the reason is the coordinator's.
+
+**Owed with the next step, as machinery and not as a judgement made by
+hand each time:** either that test's budget holds under the load the
+gates record, or the test comes out of the gate's verdict and runs
+separately with its own report.
+
+**The two retries in that gate are a change:** both earlier gates today
+read "nothing failed and nothing was retried". Neither is diagnosed.
+`cover-fail-87.spec.ts:193` on chromium is outside what steps 101, 102
+and 105 touched. `collection-filters.spec.ts:610` on mobile, "paging
+keeps the active filter rather than dropping it", is inside it, and
+inside the phone filter defect Adam reported. **If :610 needs its retry
+in the next gate, it is diagnosed before anything else lands.**
+
+**Still outstanding:** Adam's check of the table view on the phone. The
+fix for step 105 rests on it and is not proved without it.
