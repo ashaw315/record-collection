@@ -50,6 +50,8 @@ export function WallUrlState({
       countLine={countLine}
       opens={params.wall}
       opensShelf={params.shelf}
+      /* Step 104: the filter in force, so the wall can tell a filter changing from the collection changing. */
+      filter={JSON.stringify(params.filters)}
       onView={onView}
       rail={rail}
     />

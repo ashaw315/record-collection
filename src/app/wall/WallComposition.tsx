@@ -34,6 +34,7 @@ export function WallComposition({
   rail = null,
   opens,
   opensShelf,
+  filter,
   onView,
 }: {
   seats: readonly WallSeat[];
@@ -42,6 +43,8 @@ export function WallComposition({
   opens?: 'far' | 'near';
   /** §W.29: the run the near view opens on, from the URL. */
   opensShelf?: number;
+  /** Step 104: the filter in force, as the route states it. */
+  filter?: string;
   /** §W.29: told when the reader zooms, so the page can put it in the URL. */
   onView?: (wall: 'near' | 'far', shelf?: number) => void;
   /** The filter-aware line under the count — "34 of 312 records" — when a filter is on. */
@@ -137,7 +140,7 @@ ${bandRules('')}
           />
         </div>
       )}
-      <WallLive seats={seats} summaries={summaries} countLine={countLine} opens={opens} opensShelf={opensShelf} onView={onView} />
+      <WallLive seats={seats} summaries={summaries} countLine={countLine} opens={opens} opensShelf={opensShelf} filter={filter} onView={onView} />
     </section>
   );
 }

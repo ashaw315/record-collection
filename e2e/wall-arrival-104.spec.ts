@@ -12,8 +12,14 @@ registerCleanup();
  * the empty shelf: "Where a filter or search matches nothing, the shelf
  * says so: one sentence in the label colour, centred over the arrival's
  * region, saying nothing matches, with CLEAR FILTERS beneath it as a §9.3
- * control... There is no figure... The sentence sits on paper over the
- * region and does not move with the pan."
+ * control... There is no figure." "The arrival's region is the on-screen
+ * region... not a place on the wall, so the [block] is fixed to the
+ * viewport, centred in that region, and stays as the reader pans... Its
+ * ground is paper, not shelving: the sentence and its control sit [on] a
+ * block, the width of the sentence plus 20 a side, opaque... So §59 is met
+ * against paper... The build step measures contrast against the block as
+ * built." The first build drew the sentence bare over the shelving, where
+ * a glyph crossing a drawn edge read 1.31 : 1.
  *
  * A filtered wall is the whole collection's (§W.12), so this seeds its own
  * and measures against it: sixty records besides, and three under a genre
@@ -120,6 +126,28 @@ test('a search applied while the near view is open moves it to the first match, 
   expect((await read(page, f.ids)).scroll, 'cleared, it is back where the unfiltered wall arrives').toEqual(start.scroll);
 });
 
+/*
+  Fails against a re-landing keyed on the filter's ANSWER and not on the filter: the collection growing under an open
+  wall changed the answer's size, and a zoom-in then landed twice. Found as `wall-route.spec.ts:167` failing beside
+  another worker's seeding, in this step's own first build; staged here so it does not depend on a neighbour.
+*/
+test('the collection changing under an open wall is not a filter changing: a zoom-in still lands exactly once', async ({ page }) => {
+  const f = await seed(page);
+  await near(page, `/?genreId=${f.genreId}`);
+  await page.getByTestId('wall-zoom-out').click();
+  await expect(page.locator('[data-wall="overview"]')).toBeVisible();
+  /* A record arrives in the collection while the reader is looking at the far view. */
+  const artist = await page.request.post('/api/artists', { data: { name: `Late104-${Date.now()}` } });
+  const artistId = ((await artist.json()) as { id: string }).id;
+  trackArtist(artistId);
+  expect((await page.request.post('/api/records', { data: { title: 'Late arrival', artistId } })).status()).toBe(201);
+  await page.evaluate(() => { (window as unknown as { __landings?: number }).__landings = 0; });
+  await page.locator('[data-run]').first().click();
+  await expect(page.locator('[data-wall="labelled"]')).toBeVisible();
+  await page.waitForTimeout(900);
+  expect(await page.evaluate(() => (window as unknown as { __landings?: number }).__landings), 'the landing is applied exactly once').toBe(1);
+});
+
 /* Fails against a shelf that draws its emptied seats and says nothing: it reads as a fault. */
 test('where nothing matches, the wall arrives as unfiltered and the shelf says so, with CLEAR FILTERS that restores it', async ({ page }) => {
   const f = await seed(page);
@@ -160,7 +188,44 @@ test('where nothing matches, the wall arrives as unfiltered and the shelf says s
   expect(['lab(6.18075 1.20374 2.12039)', 'oklch(0.19 0.008 60)'], 'ink label').toContain(at.control.colour);
   expect(at.figures, 'no figure').toBe(0);
 
-  /* "Does not move with the pan": the wall is panned and the sentence is where it was. */
+  /*
+    The block, and §59 against it AS BUILT: the sentence's own box is captured
+    with the sentence hidden, so what is read is the ground a glyph sits on
+    and not the glyph. Fails against the sentence bare over the shelving:
+    seven pixels in ten under it were not paper, and the darkest gave 1.31.
+  */
+  const block = await empty.evaluate((el) => {
+    const sentence = (el.querySelector('[data-shelf-empty-sentence]') as HTMLElement).getBoundingClientRect();
+    const control = (el.querySelector('[data-shelf-empty-clear]') as HTMLElement).getBoundingClientRect();
+    const b = el.getBoundingClientRect(); const cs = getComputedStyle(el);
+    const k = document.createElement('canvas'); k.width = 1; k.height = 1; const x = k.getContext('2d') as CanvasRenderingContext2D;
+    const rgba = (c: string) => { x.clearRect(0, 0, 1, 1); x.fillStyle = c; x.fillRect(0, 0, 1, 1); return Array.from(x.getImageData(0, 0, 1, 1).data); };
+    return { fill: rgba(cs.backgroundColor), paper: rgba(getComputedStyle(document.body).backgroundColor), text: rgba(getComputedStyle(el.querySelector('[data-shelf-empty-sentence]') as HTMLElement).color), opacity: cs.opacity, widthPastSentence: Math.round(b.width - sentence.width), holdsControl: control.left >= b.left && control.right <= b.right && control.bottom <= b.bottom, clip: { x: Math.floor(sentence.left), y: Math.floor(sentence.top), width: Math.ceil(sentence.width), height: Math.ceil(sentence.height) } };
+  });
+  expect(block.fill, 'the block is paper, opaque').toEqual(block.paper);
+  expect(block.fill[3]).toBe(255);
+  expect(block.opacity).toBe('1');
+  expect(block.widthPastSentence, 'the width of the sentence plus 20 a side').toBe(40);
+  expect(block.holdsControl, 'and the control sits on it too').toBe(true);
+  await page.addStyleTag({ content: '[data-shelf-empty-sentence]{visibility:hidden!important}' });
+  const shot = (await page.screenshot({ clip: block.clip })).toString('base64');
+  await page.addStyleTag({ content: '[data-shelf-empty-sentence]{visibility:visible!important}' });
+  const ground = await page.evaluate(async ({ shot, text, paper }) => {
+    const img = new Image(); img.src = `data:image/png;base64,${shot}`; await img.decode();
+    const k = document.createElement('canvas'); k.width = img.width; k.height = img.height; const x = k.getContext('2d') as CanvasRenderingContext2D; x.drawImage(img, 0, 0);
+    const d = x.getImageData(0, 0, img.width, img.height).data;
+    const lum = (r: number, g: number, b: number) => { const f = (v: number) => { const c = v / 255; return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; }; return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b); };
+    const ratio = (a: number, b: number) => (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+    const t = lum(text[0], text[1], text[2]);
+    let worst = Infinity; let notPaper = 0;
+    for (let i = 0; i < img.width * img.height; i += 1) { const r = d[i * 4]; const g = d[i * 4 + 1]; const b = d[i * 4 + 2]; worst = Math.min(worst, ratio(t, lum(r, g, b))); if (Math.abs(r - paper[0]) + Math.abs(g - paper[1]) + Math.abs(b - paper[2]) > 6) notPaper += 1; }
+    return { worst: Math.round(worst * 100) / 100, notPaper, pixels: img.width * img.height };
+  }, { shot, text: block.text, paper: block.paper });
+  expect(ground.pixels, 'the precondition: the ground was read').toBeGreaterThan(1000);
+  expect(ground.notPaper, 'under the sentence every pixel is paper').toBe(0);
+  expect(ground.worst, `§59: type under 40px clears 4.5 : 1 against its real ground; the worst pixel gives ${ground.worst}`).toBeGreaterThanOrEqual(4.5);
+
+  /* "Stays as the reader pans": the wall is panned and the sentence is where it was. */
   await page.locator('[data-region="wall"]').evaluate((el) => el.scrollBy(60, 120));
   await expect.poll(async () => (await read(page, f.ids)).scroll.top).toBeGreaterThan(m.scroll.top);
   expect((await look()).sentence, 'panned, the sentence has not moved').toEqual(at.sentence);
