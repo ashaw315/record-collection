@@ -38176,9 +38176,10 @@ sheet's config (the ordinary development environment, so the real Discogs
 token) the page asked Discogs for the market's prices, once a width; it
 showed as three refused writes to `market_cache`. The record page is out
 of the set and the reading was retaken. **By the same path, any sheet that
-opens a record's page would do the same.** Seven sheets build a record's
-address (contact-sheet, cover-boxes, disc-59, figures-57, record-modal,
-record-modal-92 and this one's edit form); I have not run them to see,
+opens a record's page would do the same.** Ten sheets build a record's
+address (contact-sheet, cover-boxes, disc-59, figures-57, header,
+nav-menu, nav-menu-cover, record-modal, record-modal-92, and this one for
+the edit form); I have not run them to see,
 and the edit form in this run caused none. Since the sheets went
 read-only the cache cannot be refreshed by them, so a page that asks
 would ask on every load.
