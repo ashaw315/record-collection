@@ -37866,3 +37866,87 @@ the first of the last four with nothing retried. One run, so it says the
 sign-in failures did not happen, and not that they cannot. Both
 `wall-route` tests that fail beside heavy seeding passed here, as they
 did yesterday, by what ran beside them.
+
+## The real collection after steps 100 and 101, measured (8 Oct, evening; the sheet, read-only)
+
+`e2e/sheet/collection-97.sheet.ts` against the real collection, by a
+session minted for 20 minutes and deleted after, on a server whose
+connections are read-only. For Design, to correct §T.1, which carries
+the figures from before step 100 as measured.
+
+| | §T.1 now | predicted | measured |
+|---|---|---|---|
+| table page at 390 / 320 | 1,776 / 1,893 | 1,786 / 1,903 | 1,786 / 1,903 |
+| table page at 1440 | (1,391, step 98) | 1,401 | 1,401 |
+| grid page at 390 / 320 | 2,692 / 2,429 | 2,702 / 2,439 | 2,702 / 2,439 |
+| grid page at 1440 | (1,335, step 99) | 1,345 | 1,345 |
+| the band | 126.5 | 136.5 | 136.5 |
+| the filters closed, with the Sort row | 224 | | **232** |
+
+- **Every page is the prediction exactly.** I said the table's would
+  come in less 2 for each row with no label and no condition. There is no
+  such row on the real collection's first page: its row heights are what
+  they were at step 98 (fifteen of 65.5, one of 65 and one of 85 at 390).
+  The 46 was the 200-record fixture's.
+- **§T.1's 224 for the closed filters is stale, and not from step 100.**
+  It has read 232 since step 98 made the Sort control 44; the sheet's
+  runs at steps 98 and 99 both say 232. Nothing compared the target's
+  figure with them.
+- No control is under 44 at any of the three widths, the search field
+  having been the last.
+- Open, the lists are still 1,408, 572, 88 and 44 (32, 13, 2 and 1
+  options), and the page's length with each open is its length closed.
+
+## What a filter does to the wall: ruled, by §W.12, and the build does it (8 Oct, evening)
+
+For the coordinator's question on `wall-route.spec.ts:205` and `:106`:
+does the shelf shrink to what is shown, or stay the collection's length
+with fewer records on it? **It stays, and that is ruled.** Not by §W.15's
+withdrawal of the tiling, which says only that the wall is one fixture
+whose row grows, but by §W.12 and the sentences in §W.15 that follow it:
+
+- §W.12: "A filter narrows the far view, and it narrows by emptying seats
+  rather than by removing them. A filter that re-seats the collection
+  changes every record's position, and §W.1 leaves position carrying the
+  collection's order — so a filtered far view is the same unit with the
+  non-matching seats empty."
+- §W.15: "Emptying seats means the query returns the whole collection
+  with matches marked, not the matching subset… The cost is that the
+  wall's payload does not shrink with the filter."
+- §W.34 rules how an emptied seat is drawn.
+
+The build: `shelfRecords` projects the filter as `matches` and applies no
+WHERE (`src/lib/db/queries/shelf.ts`), so the wall under any filter,
+`artistId` in the address included, is the whole collection's.
+
+**One thing the ruling does not say in so many words:** §W.12's sentence
+is about "the far view". That the NEAR view under a filter is also the
+whole collection's length follows from the producer returning everything,
+and is what the build does, but no sentence names the near view. `:205`
+and `:106` are both read in the near view. That is the question for
+Design, and it is narrower than the one asked.
+
+**So the two tests assert the geometry of a wall whose length is every
+record in the database**, by ruling, and the database is shared with
+tests seeding 200 and 240. `:205` is named "a wall that fits the region"
+and seeds 20: it fits when the collection is 37 and not when it is 277.
+Not touched.
+
+## For Design: an open filter covers the lines beneath it, and how many depends on which (8 Oct, evening)
+
+The lines are in the order Genre, Label, Store, Tag, and a panel runs from
+beneath its own line to the viewport's bottom. So what is unreachable
+while a filter is open is asymmetric by position:
+
+| open | covered | still pressable |
+|---|---|---|
+| Genre | Label, Store, Tag | none |
+| Label | Store, Tag | Genre |
+| Store | Tag | Genre, Label |
+| Tag | none | Genre, Label, Store |
+
+A press where a covered line sits lands on the paper and closes the
+panel, so reaching a covered filter is two presses and reaching one above
+is one. The Sort control is above all four and always reachable; the
+no-release-year toggle and Clear filters are below all four and always
+covered.
