@@ -100,6 +100,8 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  /* Tailwind's own 2px, which is not derived from the shared radius and was the commonest corner in the app (39 uses). */
+  --radius-xs: 0rem;
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -174,8 +176,8 @@
   --chart-4: oklch(0.72 0.035 60);
   --chart-5: oklch(0.82 0.02 75);
 
-  /* Near-square. Rounded corners are the SaaS tell. */
-  --radius: 0.1875rem;
+  /* §T.6 (step 103): "No corner is rounded anywhere in the app. The shared 3px radius becomes 0." */
+  --radius: 0rem;
 
   --sidebar: oklch(0.965 0.006 82);
   --sidebar-foreground: var(--foreground);
