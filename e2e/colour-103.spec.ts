@@ -22,9 +22,10 @@ registerCleanup();
  * `--muted-foreground`; and the destructive red, which §T.6 does not name
  * as a colour and rules by role ("a destructive action ink").
  *
- * Sign-in is not among §T.6's screens and keeps its colours this round, by
- * the coordinator's ruling of 9 Oct; the last test holds that, so the
- * exception is on the record and does not spread or vanish unnoticed.
+ * Sign-in was first left out, by the coordinator's ruling of 9 Oct, and a
+ * test here held its oxblood so the exception was on the record. §T.6 then
+ * reached it ("It reaches login too, for colour as for radius"), and the
+ * last test reads it as any other screen.
  */
 const GOING = { oxblood: 'oklch(0.36 0.098 18)', 'the survey’s grey': 'oklch(0.48 0.012 60)', 'destructive red': 'oklch(0.52 0.2 27)' };
 const INK = 'oklch(0.19 0.008 60)';
@@ -131,11 +132,26 @@ test.describe('§T.6: oxblood, the survey’s grey and the destructive red are g
   });
 });
 
-test.describe('sign-in is not one of §T.6’s screens', () => {
-  /* Fails if sign-in takes the mapping before it is ruled, or if its oxblood goes some other way: either is a change nobody decided. */
-  test('its Sign in button is still filled oxblood (the coordinator’s ruling of 9 Oct: the radius, not the colour)', async ({ page }) => {
+test.describe('§T.6: "It reaches login too, for colour as for radius"', () => {
+  /*
+    Fails against sign-in as 103b left it: a filled oxblood button, a grey line,
+    an oxblood ring on the focused field and a red refusal. This replaces a
+    test that HELD that oxblood, written for the coordinator's ruling of 9 Oct
+    that sign-in took the radius and not the colour; §T.6 was then extended to
+    it and the ruling superseded.
+  */
+  test('sign-in has none of them, at rest, with its field focused, and with a wrong password refused', async ({ page }) => {
     await openScreen(page, '/login', GRID_FORK);
-    const r = await going(page);
-    expect(r.found.filter((line) => line.startsWith('oxblood: fill of button'))).toHaveLength(1);
+    await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
+    await expectNone(page, 'sign-in at rest');
+    await page.locator('#password').focus();
+    await expectNone(page, 'sign-in, the field focused');
+    await page.locator('#password').pressSequentially('not-the-password');
+    /* The form's submit, by its type: this is a refusal and not a sign-in, and the repo's check keeps the button's name to the sign-in helper. */
+    await page.locator('form button[type=submit]').click();
+    await page.locator('#password-error').waitFor({ timeout: 15_000 });
+    await expectNone(page, 'sign-in, refused');
+    const m = await page.locator('form button[type=submit]').evaluate((b) => { const cs = getComputedStyle(b); return { fill: cs.backgroundColor, border: cs.borderTopWidth, radius: cs.borderTopLeftRadius }; });
+    expect(m, 'its button is §9.3’s unfilled box').toEqual({ fill: 'rgba(0, 0, 0, 0)', border: '1px', radius: '0px' });
   });
 });
