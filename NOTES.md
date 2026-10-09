@@ -38426,3 +38426,51 @@ requires the rectangle beside the heading's type. On the table and grid
 the air's foot is 35 lower than the last filter line, so an open filter's
 panel covers that much of it; and it runs to the edge of ADD RECORD and
 of the header, with no margin taken.
+
+## The second gate failed on a defect of mine; the collection's own source record; three answers (9 Oct, afternoon)
+
+**The gate on eef6bd1 is NOT OK, twice over.** Unit: `4205 passed, 2
+failed, tree CHANGED — not a result` (a Design drop landed mid-run again;
+the two failures are the two checks that read the design folder).
+Playwright: `812 passed, 1 failed, 13 skipped, ledger clean, tree
+unchanged — NOT OK`, 37m 29s. The one failure is real and mine:
+`nav-menu-84.spec.ts:199`, and it failed its retry. Step 104 positioned
+the far view's drawing container to hold the empty shelf's sentence,
+always; that spec holds that no far seat has a positioned ancestor, which
+is what lets a fixed panel cover them. Positioned only while the sentence
+is there now. **Step level could not have found it:** the spec is the
+header menu's, not the wall's, and was not in the wall's covering run.
+That is what a gate is for, and it is the gate working.
+
+**The 117 was the sample's, and the collection's is 170.7.** §T.6's
+source is "the one in the collection whose construction clears §29's 6px
+at the smallest height". The 117 was the least of 1,000 random ids. Read
+from the real collection's 17 (`docs/captures/air-103/air.md`): the
+lowest is Grave New World, 170.7, needing 203.5 of width; the next is
+Wired at 174.2; the highest 308.3. Against each screen's air:
+
+- holds it: the table and the grid at all three widths; stats, by 6.3
+- does not: manage (short by 10.7, and 26.7 at 768), the want list
+  (27.7), the record form editing (46.7) and new (58.7), look up (105.7)
+
+Three screens of eight, not the six the 117 gave. And it moves with the
+collection: a record added whose construction clears lower becomes the
+source. The step's own test, "adding a record never removes a figure",
+holds by construction (the minimum only falls).
+
+**The panel and the air.** The filter's panel is the window's whole width
+(`filter-panel-101.spec.ts`: left 0, width the viewport's); only its list
+is held to 443. The air on the table at 1440 runs from x 463, where the
+search field ends, and from y 53 to 553; the last filter line ends at
+518. So an open filter's paper covers the air's lowest 35 across its
+whole width.
+
+**"Most recently added" was carried in a drop Code took:** e7d89df, 9 Oct
+12:01, with "the figure's size follows the record that draws it". No
+earlier drop has either. Both were replaced in the drop after.
+
+**The record page's Delete is not red.** Settled §9.3, "Delete is on
+every record, so it cannot be red here". Measured before the change: red
+type on the red tint over the dialog's ground, 5.03 : 1 at 14px, which
+clears §59's 4.5, so there was one defect in it and not two. The dialog
+takes §T.6's mapping and its Delete is the ink box its Cancel is.

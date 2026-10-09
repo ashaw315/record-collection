@@ -31,3 +31,58 @@ The air is the largest empty rectangle among the screen’s type, controls, imag
 | record-form-edit | 1024 | 736 | 124 | 553 × 124 at 327, 77 | input | 0 | 553 × 124 | 553 × 124 |
 | record-form-edit | 768 | 736 | 124 | 553 × 124 at 199, 77 | input | 0 | 553 × 124 | 553 × 124 |
 
+## The collection’s constructions, and the one that clears lowest
+
+The table’s count reads "17 records", and 17 records were read from it. Clearing height: where the construction’s narrowest side face is §29’s 6px. Ties and "the oldest" are not read here: no two below share a height.
+
+| record | clears at | as wide, for its height |
+|---|---|---|
+| Grave New WorldDischargeProfile RecordsProfile RecordsLP1986 | 170.7 | 1.19 |
+| WiredJeff BeckEpicEpicLP1976—— | 174.2 | 1.56 |
+| PsychicDarkside (22)Matador · NMMatadorLP2013NM$10.00 | 192.2 | 0.96 |
+| Super RichBuddy RichVerve Records · VG+Verve RecordsLP1970VG | 200.1 | 1.01 |
+| The Hurdy Gurdy ManDonovanEpicEpicLP1968—— | 200.7 | 1.07 |
+| Mind GamesJohn LennonCapitol RecordsCapitol RecordsLP1980—— | 205.9 | 1.17 |
+| GauchoSteely DanMCA RecordsMCA RecordsLP1987—— | 206.1 | 1.21 |
+| The Money StoreDeath GripsEpicEpicLP2018—— | 220.7 | 1.02 |
+| Bridge Over Troubled WaterSimon & GarfunkelColumbiaColumbiaL | 224.6 | 1.14 |
+| Loss Of LifeMGMTMom + Pop · MMom + PopLP2024M— | 229.8 | 1.31 |
+| The Soft ParadeThe DoorsElektraElektraLP1969—— | 249.3 | 0.79 |
+| Dire StraitsDire StraitsWarner Bros. RecordsWarner Bros. Rec | 256.6 | 0.83 |
+| Never Too MuchLuther VandrossEpic · VGEpicLP1981VG— | 271.0 | 1.06 |
+| Bitches BrewMiles DavisColumbia · VGColumbiaLP1970VG— | 276.2 | 0.91 |
+| BelieverSmerz (2)XL Recordings · MXL RecordingsLP2021M— | 282.6 | 0.86 |
+| On The Radio: Greatest Hits Vol. 1 & 2Donna SummerCasablanca | 290.2 | 0.85 |
+| The Best Of The Blues ProjectThe Blues ProjectVerve Forecast | 308.3 | 0.82 |
+
+## Whether each screen’s air holds it
+
+The source is the first above: it needs 170.7 of height and 203.5 of width.
+
+| screen | window | the air | holds the source’s figure | height to spare |
+|---|---|---|---|---|
+| table | 1440 | 880 × 500 | yes | 329.3 |
+| table | 1024 | 464 × 500 | yes | 329.3 |
+| table | 768 | 305 × 382 | yes | 211.3 |
+| grid | 1440 | 880 × 485 | yes | 314.3 |
+| grid | 1024 | 464 × 485 | yes | 314.3 |
+| grid | 768 | 305 × 367 | yes | 196.3 |
+| want-list | 1440 | 531 × 143 | NO | -27.7 |
+| want-list | 1024 | 531 × 143 | NO | -27.7 |
+| want-list | 768 | 531 × 143 | NO | -27.7 |
+| lookup | 1440 | 454 × 65 | NO | -105.7 |
+| lookup | 1024 | 454 × 65 | NO | -105.7 |
+| lookup | 768 | 454 × 65 | NO | -105.7 |
+| stats | 1440 | 601 × 177 | yes | 6.3 |
+| stats | 1024 | 601 × 177 | yes | 6.3 |
+| stats | 768 | 601 × 177 | yes | 6.3 |
+| manage | 1440 | 340 × 160 | NO | -10.7 |
+| manage | 1024 | 212 × 160 | NO | -10.7 |
+| manage | 768 | 195 × 144 | NO | -26.7 |
+| record-form-new | 1440 | 519 × 112 | NO | -58.7 |
+| record-form-new | 1024 | 519 × 112 | NO | -58.7 |
+| record-form-new | 768 | 519 × 112 | NO | -58.7 |
+| record-form-edit | 1440 | 553 × 124 | NO | -46.7 |
+| record-form-edit | 1024 | 553 × 124 | NO | -46.7 |
+| record-form-edit | 768 | 553 × 124 | NO | -46.7 |
+

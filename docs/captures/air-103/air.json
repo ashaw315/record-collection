@@ -1,1154 +1,1261 @@
-[
- {
-  "screen": "table",
-  "width": 1440,
-  "file": "air-table-1440x900.png",
-  "zone": {
-   "left": 0,
-   "right": 1440,
-   "top": 53,
-   "width": 1440
+{
+ "countLine": "17 records",
+ "records": [
+  {
+   "id": "158a3163-6a56-4673-8f88-27e7b2aec724",
+   "name": "Grave New WorldDischargeProfile RecordsProfile RecordsLP1986",
+   "height": 170.70562651528027,
+   "aspect": 1.192211347096534
   },
-  "heading": {
-   "text": "Collection",
-   "left": 20,
-   "top": 211,
-   "bottom": 260,
-   "textRight": 191
+  {
+   "id": "48461309-e0e0-42a8-b903-f60642c923ca",
+   "name": "WiredJeff BeckEpicEpicLP1976——",
+   "height": 174.1723697198322,
+   "aspect": 1.5583424375110957
   },
-  "boxes": 127,
-  "best": {
-   "left": 463,
-   "top": 53,
-   "width": 880,
-   "height": 500,
-   "square": 500,
-   "under": "span \"Year\""
+  {
+   "id": "bac64213-9673-4ae7-862f-fc5b17dc16d3",
+   "name": "PsychicDarkside (22)Matador · NMMatadorLP2013NM$10.00",
+   "height": 192.15171299475958,
+   "aspect": 0.9644758878176425
   },
-  "tallest": {
-   "left": 592,
-   "top": 53,
-   "width": 298,
-   "height": 529,
-   "square": 298,
-   "under": "th rule"
+  {
+   "id": "1d4a4107-3153-4e98-b48a-d00a28266f94",
+   "name": "Super RichBuddy RichVerve Records · VG+Verve RecordsLP1970VG",
+   "height": 200.06073506130065,
+   "aspect": 1.0108968305188233
   },
-  "widest": {
-   "left": 191,
-   "top": 171,
-   "width": 1249,
-   "height": 171,
-   "square": 171,
-   "under": "button"
+  {
+   "id": "e73e1de1-3686-4a81-8544-ca2300e187bb",
+   "name": "The Hurdy Gurdy ManDonovanEpicEpicLP1968——",
+   "height": 200.71509700048875,
+   "aspect": 1.070454234938255
   },
-  "hairlinesCrossed": {
-   "best": 0,
-   "tallest": 0,
-   "widest": 0
+  {
+   "id": "ce57a185-6182-4a9d-9af1-37bae019db10",
+   "name": "Mind GamesJohn LennonCapitol RecordsCapitol RecordsLP1980——",
+   "height": 205.93934613015057,
+   "aspect": 1.1716556807380367
+  },
+  {
+   "id": "b19cd530-f2d9-4936-b55d-3893b9f74420",
+   "name": "GauchoSteely DanMCA RecordsMCA RecordsLP1987——",
+   "height": 206.06958405835766,
+   "aspect": 1.210975321561053
+  },
+  {
+   "id": "7a333685-81d3-4a8a-8515-cf29f4d587a7",
+   "name": "The Money StoreDeath GripsEpicEpicLP2018——",
+   "height": 220.71838533728922,
+   "aspect": 1.0197592937294075
+  },
+  {
+   "id": "cdcf94cb-7c7f-45f5-ad04-584a1fb0b30a",
+   "name": "Bridge Over Troubled WaterSimon & GarfunkelColumbiaColumbiaL",
+   "height": 224.55587282579418,
+   "aspect": 1.1385886860600518
+  },
+  {
+   "id": "c8bc3a1d-e5ba-4794-a4b9-bcfe89d6fbed",
+   "name": "Loss Of LifeMGMTMom + Pop · MMom + PopLP2024M—",
+   "height": 229.8339945487963,
+   "aspect": 1.3093887397335255
+  },
+  {
+   "id": "9a514311-ad88-4205-a37a-a5a4cdd231d2",
+   "name": "The Soft ParadeThe DoorsElektraElektraLP1969——",
+   "height": 249.30878692589266,
+   "aspect": 0.7948333022771132
+  },
+  {
+   "id": "fadd5c0e-5146-4421-aebc-cd53eed2f8b1",
+   "name": "Dire StraitsDire StraitsWarner Bros. RecordsWarner Bros. Rec",
+   "height": 256.62909510538407,
+   "aspect": 0.834911105631641
+  },
+  {
+   "id": "d7047c62-149e-42fa-8cda-fac3f90c47cc",
+   "name": "Never Too MuchLuther VandrossEpic · VGEpicLP1981VG—",
+   "height": 271.03397976108675,
+   "aspect": 1.0567497745571193
+  },
+  {
+   "id": "2be8579e-2ee7-44fa-81e8-9713a6aaa714",
+   "name": "Bitches BrewMiles DavisColumbia · VGColumbiaLP1970VG—",
+   "height": 276.2080856217286,
+   "aspect": 0.906142780011821
+  },
+  {
+   "id": "de2ad140-86af-44e1-84a4-977324346cca",
+   "name": "BelieverSmerz (2)XL Recordings · MXL RecordingsLP2021M—",
+   "height": 282.5867899111168,
+   "aspect": 0.8578849911630074
+  },
+  {
+   "id": "c61c5919-8f50-4782-8e04-419fb3d2b148",
+   "name": "On The Radio: Greatest Hits Vol. 1 & 2Donna SummerCasablanca",
+   "height": 290.18536698091714,
+   "aspect": 0.8476499946347112
+  },
+  {
+   "id": "d5c483aa-047c-475f-8439-2adc2a4e9b0a",
+   "name": "The Best Of The Blues ProjectThe Blues ProjectVerve Forecast",
+   "height": 308.28020114680385,
+   "aspect": 0.8210816937287623
   }
- },
- {
-  "screen": "table",
-  "width": 1024,
-  "file": "air-table-1024x900.png",
-  "zone": {
-   "left": 0,
-   "right": 1024,
-   "top": 53,
-   "width": 1024
+ ],
+ "screens": [
+  {
+   "screen": "table",
+   "width": 1440,
+   "file": "air-table-1440x900.png",
+   "zone": {
+    "left": 0,
+    "right": 1440,
+    "top": 53,
+    "width": 1440
+   },
+   "heading": {
+    "text": "Collection",
+    "left": 20,
+    "top": 211,
+    "bottom": 260,
+    "textRight": 191
+   },
+   "boxes": 127,
+   "best": {
+    "left": 463,
+    "top": 53,
+    "width": 880,
+    "height": 500,
+    "square": 500,
+    "under": "span \"Year\""
+   },
+   "tallest": {
+    "left": 592,
+    "top": 53,
+    "width": 298,
+    "height": 529,
+    "square": 298,
+    "under": "th rule"
+   },
+   "widest": {
+    "left": 191,
+    "top": 171,
+    "width": 1249,
+    "height": 171,
+    "square": 171,
+    "under": "button"
+   },
+   "hairlinesCrossed": {
+    "best": 0,
+    "tallest": 0,
+    "widest": 0
+   }
   },
-  "heading": {
-   "text": "Collection",
-   "left": 20,
-   "top": 211,
-   "bottom": 260,
-   "textRight": 191
+  {
+   "screen": "table",
+   "width": 1024,
+   "file": "air-table-1024x900.png",
+   "zone": {
+    "left": 0,
+    "right": 1024,
+    "top": 53,
+    "width": 1024
+   },
+   "heading": {
+    "text": "Collection",
+    "left": 20,
+    "top": 211,
+    "bottom": 260,
+    "textRight": 191
+   },
+   "boxes": 127,
+   "best": {
+    "left": 463,
+    "top": 53,
+    "width": 464,
+    "height": 500,
+    "square": 464,
+    "under": "span \"Year\""
+   },
+   "tallest": {
+    "left": 463,
+    "top": 53,
+    "width": 173,
+    "height": 529,
+    "square": 173,
+    "under": "th rule"
+   },
+   "widest": {
+    "left": 191,
+    "top": 171,
+    "width": 833,
+    "height": 171,
+    "square": 171,
+    "under": "button"
+   },
+   "hairlinesCrossed": {
+    "best": 0,
+    "tallest": 0,
+    "widest": 0
+   }
   },
-  "boxes": 127,
-  "best": {
-   "left": 463,
-   "top": 53,
-   "width": 464,
-   "height": 500,
-   "square": 464,
-   "under": "span \"Year\""
+  {
+   "screen": "table",
+   "width": 768,
+   "file": "air-table-0768x900.png",
+   "zone": {
+    "left": 0,
+    "right": 768,
+    "top": 53,
+    "width": 768
+   },
+   "heading": {
+    "text": "Collection",
+    "left": 20,
+    "top": 211,
+    "bottom": 260,
+    "textRight": 191
+   },
+   "boxes": 127,
+   "best": {
+    "left": 463,
+    "top": 171,
+    "width": 305,
+    "height": 382,
+    "square": 305,
+    "under": "span \"Year\""
+   },
+   "tallest": {
+    "left": 526,
+    "top": 53,
+    "width": 47,
+    "height": 529,
+    "square": 47,
+    "under": "th rule"
+   },
+   "widest": {
+    "left": 191,
+    "top": 171,
+    "width": 577,
+    "height": 171,
+    "square": 171,
+    "under": "button"
+   },
+   "hairlinesCrossed": {
+    "best": 0,
+    "tallest": 0,
+    "widest": 0
+   }
   },
-  "tallest": {
-   "left": 463,
-   "top": 53,
-   "width": 173,
-   "height": 529,
-   "square": 173,
-   "under": "th rule"
+  {
+   "screen": "grid",
+   "width": 1440,
+   "file": "air-grid-1440x900.png",
+   "zone": {
+    "left": 0,
+    "right": 1440,
+    "top": 53,
+    "width": 1440
+   },
+   "heading": {
+    "text": "Collection",
+    "left": 20,
+    "top": 211,
+    "bottom": 260,
+    "textRight": 191
+   },
+   "boxes": 52,
+   "best": {
+    "left": 463,
+    "top": 53,
+    "width": 880,
+    "height": 485,
+    "square": 485,
+    "under": "img"
+   },
+   "tallest": {
+    "left": 606,
+    "top": 53,
+    "width": 24,
+    "height": 847,
+    "square": 24,
+    "under": "the end of the first view"
+   },
+   "widest": {
+    "left": 191,
+    "top": 171,
+    "width": 1249,
+    "height": 171,
+    "square": 171,
+    "under": "button"
+   },
+   "hairlinesCrossed": {
+    "best": 0,
+    "tallest": 0,
+    "widest": 0
+   }
   },
-  "widest": {
-   "left": 191,
-   "top": 171,
-   "width": 833,
-   "height": 171,
-   "square": 171,
-   "under": "button"
+  {
+   "screen": "grid",
+   "width": 1024,
+   "file": "air-grid-1024x900.png",
+   "zone": {
+    "left": 0,
+    "right": 1024,
+    "top": 53,
+    "width": 1024
+   },
+   "heading": {
+    "text": "Collection",
+    "left": 20,
+    "top": 211,
+    "bottom": 260,
+    "textRight": 191
+   },
+   "boxes": 42,
+   "best": {
+    "left": 463,
+    "top": 53,
+    "width": 464,
+    "height": 485,
+    "square": 464,
+    "under": "img"
+   },
+   "tallest": {
+    "left": 601,
+    "top": 53,
+    "width": 24,
+    "height": 847,
+    "square": 24,
+    "under": "the end of the first view"
+   },
+   "widest": {
+    "left": 191,
+    "top": 171,
+    "width": 833,
+    "height": 171,
+    "square": 171,
+    "under": "button"
+   },
+   "hairlinesCrossed": {
+    "best": 0,
+    "tallest": 0,
+    "widest": 0
+   }
   },
-  "hairlinesCrossed": {
-   "best": 0,
-   "tallest": 0,
-   "widest": 0
+  {
+   "screen": "grid",
+   "width": 768,
+   "file": "air-grid-0768x900.png",
+   "zone": {
+    "left": 0,
+    "right": 768,
+    "top": 53,
+    "width": 768
+   },
+   "heading": {
+    "text": "Collection",
+    "left": 20,
+    "top": 211,
+    "bottom": 260,
+    "textRight": 191
+   },
+   "boxes": 38,
+   "best": {
+    "left": 463,
+    "top": 171,
+    "width": 305,
+    "height": 367,
+    "square": 305,
+    "under": "img"
+   },
+   "tallest": {
+    "left": 560,
+    "top": 53,
+    "width": 24,
+    "height": 847,
+    "square": 24,
+    "under": "the end of the first view"
+   },
+   "widest": {
+    "left": 191,
+    "top": 171,
+    "width": 577,
+    "height": 171,
+    "square": 171,
+    "under": "button"
+   },
+   "hairlinesCrossed": {
+    "best": 0,
+    "tallest": 0,
+    "widest": 0
+   }
+  },
+  {
+   "screen": "want-list",
+   "width": 1440,
+   "file": "air-want-list-1440x900.png",
+   "zone": {
+    "left": 352,
+    "right": 1088,
+    "top": 77,
+    "width": 736
+   },
+   "heading": {
+    "text": "Want list",
+    "left": 352,
+    "top": 82,
+    "bottom": 131,
+    "textRight": 498
+   },
+   "boxes": 146,
+   "best": {
+    "left": 498,
+    "top": 77,
+    "width": 531,
+    "height": 143,
+    "square": 143,
+    "under": "ul rule"
+   },
+   "tallest": {
+    "left": 498,
+    "top": 77,
+    "width": 531,
+    "height": 143,
+    "square": 143,
+    "under": "ul rule"
+   },
+   "widest": {
+    "left": 498,
+    "top": 77,
+    "width": 531,
+    "height": 143,
+    "square": 143,
+    "under": "ul rule"
+   },
+   "hairlinesCrossed": {
+    "best": 0,
+    "tallest": 0,
+    "widest": 0
+   }
+  },
+  {
+   "screen": "want-list",
+   "width": 1024,
+   "file": "air-want-list-1024x900.png",
+   "zone": {
+    "left": 144,
+    "right": 880,
+    "top": 77,
+    "width": 736
+   },
+   "heading": {
+    "text": "Want list",
+    "left": 144,
+    "top": 82,
+    "bottom": 131,
+    "textRight": 290
+   },
+   "boxes": 146,
+   "best": {
+    "left": 290,
+    "top": 77,
+    "width": 531,
+    "height": 143,
+    "square": 143,
+    "under": "ul rule"
+   },
+   "tallest": {
+    "left": 290,
+    "top": 77,
+    "width": 531,
+    "height": 143,
+    "square": 143,
+    "under": "ul rule"
+   },
+   "widest": {
+    "left": 290,
+    "top": 77,
+    "width": 531,
+    "height": 143,
+    "square": 143,
+    "under": "ul rule"
+   },
+   "hairlinesCrossed": {
+    "best": 0,
+    "tallest": 0,
+    "widest": 0
+   }
+  },
+  {
+   "screen": "want-list",
+   "width": 768,
+   "file": "air-want-list-0768x900.png",
+   "zone": {
+    "left": 16,
+    "right": 752,
+    "top": 77,
+    "width": 736
+   },
+   "heading": {
+    "text": "Want list",
+    "left": 16,
+    "top": 82,
+    "bottom": 131,
+    "textRight": 162
+   },
+   "boxes": 146,
+   "best": {
+    "left": 162,
+    "top": 77,
+    "width": 531,
+    "height": 143,
+    "square": 143,
+    "under": "ul rule"
+   },
+   "tallest": {
+    "left": 162,
+    "top": 77,
+    "width": 531,
+    "height": 143,
+    "square": 143,
+    "under": "ul rule"
+   },
+   "widest": {
+    "left": 162,
+    "top": 77,
+    "width": 531,
+    "height": 143,
+    "square": 143,
+    "under": "ul rule"
+   },
+   "hairlinesCrossed": {
+    "best": 0,
+    "tallest": 0,
+    "widest": 0
+   }
+  },
+  {
+   "screen": "lookup",
+   "width": 1440,
+   "file": "air-lookup-1440x900.png",
+   "zone": {
+    "left": 352,
+    "right": 1088,
+    "top": 73,
+    "width": 736
+   },
+   "heading": {
+    "text": "Look up a record",
+    "left": 352,
+    "top": 78,
+    "bottom": 127,
+    "textRight": 634
+   },
+   "boxes": 18,
+   "best": {
+    "left": 634,
+    "top": 73,
+    "width": 454,
+    "height": 65,
+    "square": 65,
+    "under": "p \"Search Discogs for\""
+   },
+   "tallest": {
+    "left": 1050,
+    "top": 73,
+    "width": 38,
+    "height": 146,
+    "square": 38,
+    "under": "input"
+   },
+   "widest": {
+    "left": 634,
+    "top": 73,
+    "width": 454,
+    "height": 65,
+    "square": 65,
+    "under": "p \"Search Discogs for\""
+   },
+   "hairlinesCrossed": {
+    "best": 0,
+    "tallest": 0,
+    "widest": 0
+   }
+  },
+  {
+   "screen": "lookup",
+   "width": 1024,
+   "file": "air-lookup-1024x900.png",
+   "zone": {
+    "left": 144,
+    "right": 880,
+    "top": 73,
+    "width": 736
+   },
+   "heading": {
+    "text": "Look up a record",
+    "left": 144,
+    "top": 78,
+    "bottom": 127,
+    "textRight": 426
+   },
+   "boxes": 18,
+   "best": {
+    "left": 426,
+    "top": 73,
+    "width": 454,
+    "height": 65,
+    "square": 65,
+    "under": "p \"Search Discogs for\""
+   },
+   "tallest": {
+    "left": 842,
+    "top": 73,
+    "width": 38,
+    "height": 146,
+    "square": 38,
+    "under": "input"
+   },
+   "widest": {
+    "left": 426,
+    "top": 73,
+    "width": 454,
+    "height": 65,
+    "square": 65,
+    "under": "p \"Search Discogs for\""
+   },
+   "hairlinesCrossed": {
+    "best": 0,
+    "tallest": 0,
+    "widest": 0
+   }
+  },
+  {
+   "screen": "lookup",
+   "width": 768,
+   "file": "air-lookup-0768x900.png",
+   "zone": {
+    "left": 16,
+    "right": 752,
+    "top": 73,
+    "width": 736
+   },
+   "heading": {
+    "text": "Look up a record",
+    "left": 16,
+    "top": 78,
+    "bottom": 127,
+    "textRight": 298
+   },
+   "boxes": 18,
+   "best": {
+    "left": 298,
+    "top": 73,
+    "width": 454,
+    "height": 65,
+    "square": 65,
+    "under": "p \"Search Discogs for\""
+   },
+   "tallest": {
+    "left": 714,
+    "top": 73,
+    "width": 38,
+    "height": 146,
+    "square": 38,
+    "under": "input"
+   },
+   "widest": {
+    "left": 298,
+    "top": 73,
+    "width": 454,
+    "height": 65,
+    "square": 65,
+    "under": "p \"Search Discogs for\""
+   },
+   "hairlinesCrossed": {
+    "best": 0,
+    "tallest": 0,
+    "widest": 0
+   }
+  },
+  {
+   "screen": "stats",
+   "width": 1440,
+   "file": "air-stats-1440x900.png",
+   "zone": {
+    "left": 352,
+    "right": 1088,
+    "top": 77,
+    "width": 736
+   },
+   "heading": {
+    "text": "Stats",
+    "left": 352,
+    "top": 82,
+    "bottom": 131,
+    "textRight": 441
+   },
+   "boxes": 53,
+   "best": {
+    "left": 487,
+    "top": 77,
+    "width": 601,
+    "height": 177,
+    "square": 177,
+    "under": "p \"Estimated value of\""
+   },
+   "tallest": {
+    "left": 487,
+    "top": 77,
+    "width": 601,
+    "height": 177,
+    "square": 177,
+    "under": "p \"Estimated value of\""
+   },
+   "widest": {
+    "left": 441,
+    "top": 77,
+    "width": 647,
+    "height": 145,
+    "square": 145,
+    "under": "p \"in the collection.\""
+   },
+   "hairlinesCrossed": {
+    "best": 0,
+    "tallest": 0,
+    "widest": 0
+   }
+  },
+  {
+   "screen": "stats",
+   "width": 1024,
+   "file": "air-stats-1024x900.png",
+   "zone": {
+    "left": 144,
+    "right": 880,
+    "top": 77,
+    "width": 736
+   },
+   "heading": {
+    "text": "Stats",
+    "left": 144,
+    "top": 82,
+    "bottom": 131,
+    "textRight": 233
+   },
+   "boxes": 53,
+   "best": {
+    "left": 279,
+    "top": 77,
+    "width": 601,
+    "height": 177,
+    "square": 177,
+    "under": "p \"Estimated value of\""
+   },
+   "tallest": {
+    "left": 279,
+    "top": 77,
+    "width": 601,
+    "height": 177,
+    "square": 177,
+    "under": "p \"Estimated value of\""
+   },
+   "widest": {
+    "left": 233,
+    "top": 77,
+    "width": 647,
+    "height": 145,
+    "square": 145,
+    "under": "p \"in the collection.\""
+   },
+   "hairlinesCrossed": {
+    "best": 0,
+    "tallest": 0,
+    "widest": 0
+   }
+  },
+  {
+   "screen": "stats",
+   "width": 768,
+   "file": "air-stats-0768x900.png",
+   "zone": {
+    "left": 16,
+    "right": 752,
+    "top": 77,
+    "width": 736
+   },
+   "heading": {
+    "text": "Stats",
+    "left": 16,
+    "top": 82,
+    "bottom": 131,
+    "textRight": 105
+   },
+   "boxes": 53,
+   "best": {
+    "left": 151,
+    "top": 77,
+    "width": 601,
+    "height": 177,
+    "square": 177,
+    "under": "p \"Estimated value of\""
+   },
+   "tallest": {
+    "left": 151,
+    "top": 77,
+    "width": 601,
+    "height": 177,
+    "square": 177,
+    "under": "p \"Estimated value of\""
+   },
+   "widest": {
+    "left": 105,
+    "top": 77,
+    "width": 647,
+    "height": 145,
+    "square": 145,
+    "under": "p \"in the collection.\""
+   },
+   "hairlinesCrossed": {
+    "best": 0,
+    "tallest": 0,
+    "widest": 0
+   }
+  },
+  {
+   "screen": "manage",
+   "width": 1440,
+   "file": "air-manage-1440x900.png",
+   "zone": {
+    "left": 160,
+    "right": 1280,
+    "top": 93,
+    "width": 1120
+   },
+   "heading": {
+    "text": "Manage",
+    "left": 160,
+    "top": 98,
+    "bottom": 147,
+    "textRight": 301
+   },
+   "boxes": 161,
+   "best": {
+    "left": 580,
+    "top": 93,
+    "width": 340,
+    "height": 160,
+    "square": 160,
+    "under": "tr rule"
+   },
+   "tallest": {
+    "left": 580,
+    "top": 93,
+    "width": 340,
+    "height": 160,
+    "square": 160,
+    "under": "tr rule"
+   },
+   "widest": {
+    "left": 301,
+    "top": 93,
+    "width": 979,
+    "height": 63,
+    "square": 63,
+    "under": "p \"Reference data use\""
+   },
+   "hairlinesCrossed": {
+    "best": 0,
+    "tallest": 0,
+    "widest": 0
+   }
+  },
+  {
+   "screen": "manage",
+   "width": 1024,
+   "file": "air-manage-1024x900.png",
+   "zone": {
+    "left": 16,
+    "right": 1008,
+    "top": 93,
+    "width": 992
+   },
+   "heading": {
+    "text": "Manage",
+    "left": 16,
+    "top": 98,
+    "bottom": 147,
+    "textRight": 157
+   },
+   "boxes": 161,
+   "best": {
+    "left": 436,
+    "top": 93,
+    "width": 212,
+    "height": 160,
+    "square": 160,
+    "under": "tr rule"
+   },
+   "tallest": {
+    "left": 436,
+    "top": 93,
+    "width": 212,
+    "height": 160,
+    "square": 160,
+    "under": "tr rule"
+   },
+   "widest": {
+    "left": 157,
+    "top": 93,
+    "width": 851,
+    "height": 63,
+    "square": 63,
+    "under": "p \"Reference data use\""
+   },
+   "hairlinesCrossed": {
+    "best": 0,
+    "tallest": 0,
+    "widest": 0
+   }
+  },
+  {
+   "screen": "manage",
+   "width": 768,
+   "file": "air-manage-0768x900.png",
+   "zone": {
+    "left": 16,
+    "right": 752,
+    "top": 93,
+    "width": 736
+   },
+   "heading": {
+    "text": "Manage",
+    "left": 16,
+    "top": 98,
+    "bottom": 147,
+    "textRight": 157
+   },
+   "boxes": 161,
+   "best": {
+    "left": 557,
+    "top": 93,
+    "width": 195,
+    "height": 144,
+    "square": 144,
+    "under": "span \"Actions\""
+   },
+   "tallest": {
+    "left": 677,
+    "top": 93,
+    "width": 75,
+    "height": 160,
+    "square": 75,
+    "under": "tr rule"
+   },
+   "widest": {
+    "left": 157,
+    "top": 93,
+    "width": 595,
+    "height": 63,
+    "square": 63,
+    "under": "p \"Reference data use\""
+   },
+   "hairlinesCrossed": {
+    "best": 0,
+    "tallest": 0,
+    "widest": 0
+   }
+  },
+  {
+   "screen": "record-form-new",
+   "width": 1440,
+   "file": "air-record-form-new-1440x900.png",
+   "zone": {
+    "left": 352,
+    "right": 1088,
+    "top": 77,
+    "width": 736
+   },
+   "heading": {
+    "text": "Add a record",
+    "left": 352,
+    "top": 118,
+    "bottom": 167,
+    "textRight": 569
+   },
+   "boxes": 19,
+   "best": {
+    "left": 569,
+    "top": 77,
+    "width": 519,
+    "height": 112,
+    "square": 112,
+    "under": "input"
+   },
+   "tallest": {
+    "left": 569,
+    "top": 77,
+    "width": 519,
+    "height": 112,
+    "square": 112,
+    "under": "input"
+   },
+   "widest": {
+    "left": 569,
+    "top": 77,
+    "width": 519,
+    "height": 112,
+    "square": 112,
+    "under": "input"
+   },
+   "hairlinesCrossed": {
+    "best": 0,
+    "tallest": 0,
+    "widest": 0
+   }
+  },
+  {
+   "screen": "record-form-new",
+   "width": 1024,
+   "file": "air-record-form-new-1024x900.png",
+   "zone": {
+    "left": 144,
+    "right": 880,
+    "top": 77,
+    "width": 736
+   },
+   "heading": {
+    "text": "Add a record",
+    "left": 144,
+    "top": 118,
+    "bottom": 167,
+    "textRight": 361
+   },
+   "boxes": 19,
+   "best": {
+    "left": 361,
+    "top": 77,
+    "width": 519,
+    "height": 112,
+    "square": 112,
+    "under": "input"
+   },
+   "tallest": {
+    "left": 361,
+    "top": 77,
+    "width": 519,
+    "height": 112,
+    "square": 112,
+    "under": "input"
+   },
+   "widest": {
+    "left": 361,
+    "top": 77,
+    "width": 519,
+    "height": 112,
+    "square": 112,
+    "under": "input"
+   },
+   "hairlinesCrossed": {
+    "best": 0,
+    "tallest": 0,
+    "widest": 0
+   }
+  },
+  {
+   "screen": "record-form-new",
+   "width": 768,
+   "file": "air-record-form-new-0768x900.png",
+   "zone": {
+    "left": 16,
+    "right": 752,
+    "top": 77,
+    "width": 736
+   },
+   "heading": {
+    "text": "Add a record",
+    "left": 16,
+    "top": 118,
+    "bottom": 167,
+    "textRight": 233
+   },
+   "boxes": 19,
+   "best": {
+    "left": 233,
+    "top": 77,
+    "width": 519,
+    "height": 112,
+    "square": 112,
+    "under": "input"
+   },
+   "tallest": {
+    "left": 233,
+    "top": 77,
+    "width": 519,
+    "height": 112,
+    "square": 112,
+    "under": "input"
+   },
+   "widest": {
+    "left": 233,
+    "top": 77,
+    "width": 519,
+    "height": 112,
+    "square": 112,
+    "under": "input"
+   },
+   "hairlinesCrossed": {
+    "best": 0,
+    "tallest": 0,
+    "widest": 0
+   }
+  },
+  {
+   "screen": "record-form-edit",
+   "width": 1440,
+   "file": "air-record-form-edit-1440x900.png",
+   "zone": {
+    "left": 352,
+    "right": 1088,
+    "top": 77,
+    "width": 736
+   },
+   "heading": {
+    "text": "Edit record",
+    "left": 352,
+    "top": 118,
+    "bottom": 167,
+    "textRight": 535
+   },
+   "boxes": 36,
+   "best": {
+    "left": 535,
+    "top": 77,
+    "width": 553,
+    "height": 124,
+    "square": 124,
+    "under": "input"
+   },
+   "tallest": {
+    "left": 535,
+    "top": 77,
+    "width": 553,
+    "height": 124,
+    "square": 124,
+    "under": "input"
+   },
+   "widest": {
+    "left": 535,
+    "top": 77,
+    "width": 553,
+    "height": 124,
+    "square": 124,
+    "under": "input"
+   },
+   "hairlinesCrossed": {
+    "best": 0,
+    "tallest": 0,
+    "widest": 0
+   }
+  },
+  {
+   "screen": "record-form-edit",
+   "width": 1024,
+   "file": "air-record-form-edit-1024x900.png",
+   "zone": {
+    "left": 144,
+    "right": 880,
+    "top": 77,
+    "width": 736
+   },
+   "heading": {
+    "text": "Edit record",
+    "left": 144,
+    "top": 118,
+    "bottom": 167,
+    "textRight": 327
+   },
+   "boxes": 36,
+   "best": {
+    "left": 327,
+    "top": 77,
+    "width": 553,
+    "height": 124,
+    "square": 124,
+    "under": "input"
+   },
+   "tallest": {
+    "left": 327,
+    "top": 77,
+    "width": 553,
+    "height": 124,
+    "square": 124,
+    "under": "input"
+   },
+   "widest": {
+    "left": 327,
+    "top": 77,
+    "width": 553,
+    "height": 124,
+    "square": 124,
+    "under": "input"
+   },
+   "hairlinesCrossed": {
+    "best": 0,
+    "tallest": 0,
+    "widest": 0
+   }
+  },
+  {
+   "screen": "record-form-edit",
+   "width": 768,
+   "file": "air-record-form-edit-0768x900.png",
+   "zone": {
+    "left": 16,
+    "right": 752,
+    "top": 77,
+    "width": 736
+   },
+   "heading": {
+    "text": "Edit record",
+    "left": 16,
+    "top": 118,
+    "bottom": 167,
+    "textRight": 199
+   },
+   "boxes": 36,
+   "best": {
+    "left": 199,
+    "top": 77,
+    "width": 553,
+    "height": 124,
+    "square": 124,
+    "under": "input"
+   },
+   "tallest": {
+    "left": 199,
+    "top": 77,
+    "width": 553,
+    "height": 124,
+    "square": 124,
+    "under": "input"
+   },
+   "widest": {
+    "left": 199,
+    "top": 77,
+    "width": 553,
+    "height": 124,
+    "square": 124,
+    "under": "input"
+   },
+   "hairlinesCrossed": {
+    "best": 0,
+    "tallest": 0,
+    "widest": 0
+   }
   }
- },
- {
-  "screen": "table",
-  "width": 768,
-  "file": "air-table-0768x900.png",
-  "zone": {
-   "left": 0,
-   "right": 768,
-   "top": 53,
-   "width": 768
-  },
-  "heading": {
-   "text": "Collection",
-   "left": 20,
-   "top": 211,
-   "bottom": 260,
-   "textRight": 191
-  },
-  "boxes": 127,
-  "best": {
-   "left": 463,
-   "top": 171,
-   "width": 305,
-   "height": 382,
-   "square": 305,
-   "under": "span \"Year\""
-  },
-  "tallest": {
-   "left": 526,
-   "top": 53,
-   "width": 47,
-   "height": 529,
-   "square": 47,
-   "under": "th rule"
-  },
-  "widest": {
-   "left": 191,
-   "top": 171,
-   "width": 577,
-   "height": 171,
-   "square": 171,
-   "under": "button"
-  },
-  "hairlinesCrossed": {
-   "best": 0,
-   "tallest": 0,
-   "widest": 0
-  }
- },
- {
-  "screen": "grid",
-  "width": 1440,
-  "file": "air-grid-1440x900.png",
-  "zone": {
-   "left": 0,
-   "right": 1440,
-   "top": 53,
-   "width": 1440
-  },
-  "heading": {
-   "text": "Collection",
-   "left": 20,
-   "top": 211,
-   "bottom": 260,
-   "textRight": 191
-  },
-  "boxes": 52,
-  "best": {
-   "left": 463,
-   "top": 53,
-   "width": 880,
-   "height": 485,
-   "square": 485,
-   "under": "img"
-  },
-  "tallest": {
-   "left": 606,
-   "top": 53,
-   "width": 24,
-   "height": 847,
-   "square": 24,
-   "under": "the end of the first view"
-  },
-  "widest": {
-   "left": 191,
-   "top": 171,
-   "width": 1249,
-   "height": 171,
-   "square": 171,
-   "under": "button"
-  },
-  "hairlinesCrossed": {
-   "best": 0,
-   "tallest": 0,
-   "widest": 0
-  }
- },
- {
-  "screen": "grid",
-  "width": 1024,
-  "file": "air-grid-1024x900.png",
-  "zone": {
-   "left": 0,
-   "right": 1024,
-   "top": 53,
-   "width": 1024
-  },
-  "heading": {
-   "text": "Collection",
-   "left": 20,
-   "top": 211,
-   "bottom": 260,
-   "textRight": 191
-  },
-  "boxes": 42,
-  "best": {
-   "left": 463,
-   "top": 53,
-   "width": 464,
-   "height": 485,
-   "square": 464,
-   "under": "img"
-  },
-  "tallest": {
-   "left": 601,
-   "top": 53,
-   "width": 24,
-   "height": 847,
-   "square": 24,
-   "under": "the end of the first view"
-  },
-  "widest": {
-   "left": 191,
-   "top": 171,
-   "width": 833,
-   "height": 171,
-   "square": 171,
-   "under": "button"
-  },
-  "hairlinesCrossed": {
-   "best": 0,
-   "tallest": 0,
-   "widest": 0
-  }
- },
- {
-  "screen": "grid",
-  "width": 768,
-  "file": "air-grid-0768x900.png",
-  "zone": {
-   "left": 0,
-   "right": 768,
-   "top": 53,
-   "width": 768
-  },
-  "heading": {
-   "text": "Collection",
-   "left": 20,
-   "top": 211,
-   "bottom": 260,
-   "textRight": 191
-  },
-  "boxes": 38,
-  "best": {
-   "left": 463,
-   "top": 171,
-   "width": 305,
-   "height": 367,
-   "square": 305,
-   "under": "img"
-  },
-  "tallest": {
-   "left": 560,
-   "top": 53,
-   "width": 24,
-   "height": 847,
-   "square": 24,
-   "under": "the end of the first view"
-  },
-  "widest": {
-   "left": 191,
-   "top": 171,
-   "width": 577,
-   "height": 171,
-   "square": 171,
-   "under": "button"
-  },
-  "hairlinesCrossed": {
-   "best": 0,
-   "tallest": 0,
-   "widest": 0
-  }
- },
- {
-  "screen": "want-list",
-  "width": 1440,
-  "file": "air-want-list-1440x900.png",
-  "zone": {
-   "left": 352,
-   "right": 1088,
-   "top": 77,
-   "width": 736
-  },
-  "heading": {
-   "text": "Want list",
-   "left": 352,
-   "top": 82,
-   "bottom": 131,
-   "textRight": 498
-  },
-  "boxes": 146,
-  "best": {
-   "left": 498,
-   "top": 77,
-   "width": 531,
-   "height": 143,
-   "square": 143,
-   "under": "ul rule"
-  },
-  "tallest": {
-   "left": 498,
-   "top": 77,
-   "width": 531,
-   "height": 143,
-   "square": 143,
-   "under": "ul rule"
-  },
-  "widest": {
-   "left": 498,
-   "top": 77,
-   "width": 531,
-   "height": 143,
-   "square": 143,
-   "under": "ul rule"
-  },
-  "hairlinesCrossed": {
-   "best": 0,
-   "tallest": 0,
-   "widest": 0
-  }
- },
- {
-  "screen": "want-list",
-  "width": 1024,
-  "file": "air-want-list-1024x900.png",
-  "zone": {
-   "left": 144,
-   "right": 880,
-   "top": 77,
-   "width": 736
-  },
-  "heading": {
-   "text": "Want list",
-   "left": 144,
-   "top": 82,
-   "bottom": 131,
-   "textRight": 290
-  },
-  "boxes": 146,
-  "best": {
-   "left": 290,
-   "top": 77,
-   "width": 531,
-   "height": 143,
-   "square": 143,
-   "under": "ul rule"
-  },
-  "tallest": {
-   "left": 290,
-   "top": 77,
-   "width": 531,
-   "height": 143,
-   "square": 143,
-   "under": "ul rule"
-  },
-  "widest": {
-   "left": 290,
-   "top": 77,
-   "width": 531,
-   "height": 143,
-   "square": 143,
-   "under": "ul rule"
-  },
-  "hairlinesCrossed": {
-   "best": 0,
-   "tallest": 0,
-   "widest": 0
-  }
- },
- {
-  "screen": "want-list",
-  "width": 768,
-  "file": "air-want-list-0768x900.png",
-  "zone": {
-   "left": 16,
-   "right": 752,
-   "top": 77,
-   "width": 736
-  },
-  "heading": {
-   "text": "Want list",
-   "left": 16,
-   "top": 82,
-   "bottom": 131,
-   "textRight": 162
-  },
-  "boxes": 146,
-  "best": {
-   "left": 162,
-   "top": 77,
-   "width": 531,
-   "height": 143,
-   "square": 143,
-   "under": "ul rule"
-  },
-  "tallest": {
-   "left": 162,
-   "top": 77,
-   "width": 531,
-   "height": 143,
-   "square": 143,
-   "under": "ul rule"
-  },
-  "widest": {
-   "left": 162,
-   "top": 77,
-   "width": 531,
-   "height": 143,
-   "square": 143,
-   "under": "ul rule"
-  },
-  "hairlinesCrossed": {
-   "best": 0,
-   "tallest": 0,
-   "widest": 0
-  }
- },
- {
-  "screen": "lookup",
-  "width": 1440,
-  "file": "air-lookup-1440x900.png",
-  "zone": {
-   "left": 352,
-   "right": 1088,
-   "top": 73,
-   "width": 736
-  },
-  "heading": {
-   "text": "Look up a record",
-   "left": 352,
-   "top": 78,
-   "bottom": 127,
-   "textRight": 634
-  },
-  "boxes": 18,
-  "best": {
-   "left": 634,
-   "top": 73,
-   "width": 454,
-   "height": 65,
-   "square": 65,
-   "under": "p \"Search Discogs for\""
-  },
-  "tallest": {
-   "left": 1050,
-   "top": 73,
-   "width": 38,
-   "height": 146,
-   "square": 38,
-   "under": "input"
-  },
-  "widest": {
-   "left": 634,
-   "top": 73,
-   "width": 454,
-   "height": 65,
-   "square": 65,
-   "under": "p \"Search Discogs for\""
-  },
-  "hairlinesCrossed": {
-   "best": 0,
-   "tallest": 0,
-   "widest": 0
-  }
- },
- {
-  "screen": "lookup",
-  "width": 1024,
-  "file": "air-lookup-1024x900.png",
-  "zone": {
-   "left": 144,
-   "right": 880,
-   "top": 73,
-   "width": 736
-  },
-  "heading": {
-   "text": "Look up a record",
-   "left": 144,
-   "top": 78,
-   "bottom": 127,
-   "textRight": 426
-  },
-  "boxes": 18,
-  "best": {
-   "left": 426,
-   "top": 73,
-   "width": 454,
-   "height": 65,
-   "square": 65,
-   "under": "p \"Search Discogs for\""
-  },
-  "tallest": {
-   "left": 842,
-   "top": 73,
-   "width": 38,
-   "height": 146,
-   "square": 38,
-   "under": "input"
-  },
-  "widest": {
-   "left": 426,
-   "top": 73,
-   "width": 454,
-   "height": 65,
-   "square": 65,
-   "under": "p \"Search Discogs for\""
-  },
-  "hairlinesCrossed": {
-   "best": 0,
-   "tallest": 0,
-   "widest": 0
-  }
- },
- {
-  "screen": "lookup",
-  "width": 768,
-  "file": "air-lookup-0768x900.png",
-  "zone": {
-   "left": 16,
-   "right": 752,
-   "top": 73,
-   "width": 736
-  },
-  "heading": {
-   "text": "Look up a record",
-   "left": 16,
-   "top": 78,
-   "bottom": 127,
-   "textRight": 298
-  },
-  "boxes": 18,
-  "best": {
-   "left": 298,
-   "top": 73,
-   "width": 454,
-   "height": 65,
-   "square": 65,
-   "under": "p \"Search Discogs for\""
-  },
-  "tallest": {
-   "left": 714,
-   "top": 73,
-   "width": 38,
-   "height": 146,
-   "square": 38,
-   "under": "input"
-  },
-  "widest": {
-   "left": 298,
-   "top": 73,
-   "width": 454,
-   "height": 65,
-   "square": 65,
-   "under": "p \"Search Discogs for\""
-  },
-  "hairlinesCrossed": {
-   "best": 0,
-   "tallest": 0,
-   "widest": 0
-  }
- },
- {
-  "screen": "stats",
-  "width": 1440,
-  "file": "air-stats-1440x900.png",
-  "zone": {
-   "left": 352,
-   "right": 1088,
-   "top": 77,
-   "width": 736
-  },
-  "heading": {
-   "text": "Stats",
-   "left": 352,
-   "top": 82,
-   "bottom": 131,
-   "textRight": 441
-  },
-  "boxes": 53,
-  "best": {
-   "left": 487,
-   "top": 77,
-   "width": 601,
-   "height": 177,
-   "square": 177,
-   "under": "p \"Estimated value of\""
-  },
-  "tallest": {
-   "left": 487,
-   "top": 77,
-   "width": 601,
-   "height": 177,
-   "square": 177,
-   "under": "p \"Estimated value of\""
-  },
-  "widest": {
-   "left": 441,
-   "top": 77,
-   "width": 647,
-   "height": 145,
-   "square": 145,
-   "under": "p \"in the collection.\""
-  },
-  "hairlinesCrossed": {
-   "best": 0,
-   "tallest": 0,
-   "widest": 0
-  }
- },
- {
-  "screen": "stats",
-  "width": 1024,
-  "file": "air-stats-1024x900.png",
-  "zone": {
-   "left": 144,
-   "right": 880,
-   "top": 77,
-   "width": 736
-  },
-  "heading": {
-   "text": "Stats",
-   "left": 144,
-   "top": 82,
-   "bottom": 131,
-   "textRight": 233
-  },
-  "boxes": 53,
-  "best": {
-   "left": 279,
-   "top": 77,
-   "width": 601,
-   "height": 177,
-   "square": 177,
-   "under": "p \"Estimated value of\""
-  },
-  "tallest": {
-   "left": 279,
-   "top": 77,
-   "width": 601,
-   "height": 177,
-   "square": 177,
-   "under": "p \"Estimated value of\""
-  },
-  "widest": {
-   "left": 233,
-   "top": 77,
-   "width": 647,
-   "height": 145,
-   "square": 145,
-   "under": "p \"in the collection.\""
-  },
-  "hairlinesCrossed": {
-   "best": 0,
-   "tallest": 0,
-   "widest": 0
-  }
- },
- {
-  "screen": "stats",
-  "width": 768,
-  "file": "air-stats-0768x900.png",
-  "zone": {
-   "left": 16,
-   "right": 752,
-   "top": 77,
-   "width": 736
-  },
-  "heading": {
-   "text": "Stats",
-   "left": 16,
-   "top": 82,
-   "bottom": 131,
-   "textRight": 105
-  },
-  "boxes": 53,
-  "best": {
-   "left": 151,
-   "top": 77,
-   "width": 601,
-   "height": 177,
-   "square": 177,
-   "under": "p \"Estimated value of\""
-  },
-  "tallest": {
-   "left": 151,
-   "top": 77,
-   "width": 601,
-   "height": 177,
-   "square": 177,
-   "under": "p \"Estimated value of\""
-  },
-  "widest": {
-   "left": 105,
-   "top": 77,
-   "width": 647,
-   "height": 145,
-   "square": 145,
-   "under": "p \"in the collection.\""
-  },
-  "hairlinesCrossed": {
-   "best": 0,
-   "tallest": 0,
-   "widest": 0
-  }
- },
- {
-  "screen": "manage",
-  "width": 1440,
-  "file": "air-manage-1440x900.png",
-  "zone": {
-   "left": 160,
-   "right": 1280,
-   "top": 93,
-   "width": 1120
-  },
-  "heading": {
-   "text": "Manage",
-   "left": 160,
-   "top": 98,
-   "bottom": 147,
-   "textRight": 301
-  },
-  "boxes": 161,
-  "best": {
-   "left": 580,
-   "top": 93,
-   "width": 340,
-   "height": 160,
-   "square": 160,
-   "under": "tr rule"
-  },
-  "tallest": {
-   "left": 580,
-   "top": 93,
-   "width": 340,
-   "height": 160,
-   "square": 160,
-   "under": "tr rule"
-  },
-  "widest": {
-   "left": 301,
-   "top": 93,
-   "width": 979,
-   "height": 63,
-   "square": 63,
-   "under": "p \"Reference data use\""
-  },
-  "hairlinesCrossed": {
-   "best": 0,
-   "tallest": 0,
-   "widest": 0
-  }
- },
- {
-  "screen": "manage",
-  "width": 1024,
-  "file": "air-manage-1024x900.png",
-  "zone": {
-   "left": 16,
-   "right": 1008,
-   "top": 93,
-   "width": 992
-  },
-  "heading": {
-   "text": "Manage",
-   "left": 16,
-   "top": 98,
-   "bottom": 147,
-   "textRight": 157
-  },
-  "boxes": 161,
-  "best": {
-   "left": 436,
-   "top": 93,
-   "width": 212,
-   "height": 160,
-   "square": 160,
-   "under": "tr rule"
-  },
-  "tallest": {
-   "left": 436,
-   "top": 93,
-   "width": 212,
-   "height": 160,
-   "square": 160,
-   "under": "tr rule"
-  },
-  "widest": {
-   "left": 157,
-   "top": 93,
-   "width": 851,
-   "height": 63,
-   "square": 63,
-   "under": "p \"Reference data use\""
-  },
-  "hairlinesCrossed": {
-   "best": 0,
-   "tallest": 0,
-   "widest": 0
-  }
- },
- {
-  "screen": "manage",
-  "width": 768,
-  "file": "air-manage-0768x900.png",
-  "zone": {
-   "left": 16,
-   "right": 752,
-   "top": 93,
-   "width": 736
-  },
-  "heading": {
-   "text": "Manage",
-   "left": 16,
-   "top": 98,
-   "bottom": 147,
-   "textRight": 157
-  },
-  "boxes": 161,
-  "best": {
-   "left": 557,
-   "top": 93,
-   "width": 195,
-   "height": 144,
-   "square": 144,
-   "under": "span \"Actions\""
-  },
-  "tallest": {
-   "left": 677,
-   "top": 93,
-   "width": 75,
-   "height": 160,
-   "square": 75,
-   "under": "tr rule"
-  },
-  "widest": {
-   "left": 157,
-   "top": 93,
-   "width": 595,
-   "height": 63,
-   "square": 63,
-   "under": "p \"Reference data use\""
-  },
-  "hairlinesCrossed": {
-   "best": 0,
-   "tallest": 0,
-   "widest": 0
-  }
- },
- {
-  "screen": "record-form-new",
-  "width": 1440,
-  "file": "air-record-form-new-1440x900.png",
-  "zone": {
-   "left": 352,
-   "right": 1088,
-   "top": 77,
-   "width": 736
-  },
-  "heading": {
-   "text": "Add a record",
-   "left": 352,
-   "top": 118,
-   "bottom": 167,
-   "textRight": 569
-  },
-  "boxes": 19,
-  "best": {
-   "left": 569,
-   "top": 77,
-   "width": 519,
-   "height": 112,
-   "square": 112,
-   "under": "input"
-  },
-  "tallest": {
-   "left": 569,
-   "top": 77,
-   "width": 519,
-   "height": 112,
-   "square": 112,
-   "under": "input"
-  },
-  "widest": {
-   "left": 569,
-   "top": 77,
-   "width": 519,
-   "height": 112,
-   "square": 112,
-   "under": "input"
-  },
-  "hairlinesCrossed": {
-   "best": 0,
-   "tallest": 0,
-   "widest": 0
-  }
- },
- {
-  "screen": "record-form-new",
-  "width": 1024,
-  "file": "air-record-form-new-1024x900.png",
-  "zone": {
-   "left": 144,
-   "right": 880,
-   "top": 77,
-   "width": 736
-  },
-  "heading": {
-   "text": "Add a record",
-   "left": 144,
-   "top": 118,
-   "bottom": 167,
-   "textRight": 361
-  },
-  "boxes": 19,
-  "best": {
-   "left": 361,
-   "top": 77,
-   "width": 519,
-   "height": 112,
-   "square": 112,
-   "under": "input"
-  },
-  "tallest": {
-   "left": 361,
-   "top": 77,
-   "width": 519,
-   "height": 112,
-   "square": 112,
-   "under": "input"
-  },
-  "widest": {
-   "left": 361,
-   "top": 77,
-   "width": 519,
-   "height": 112,
-   "square": 112,
-   "under": "input"
-  },
-  "hairlinesCrossed": {
-   "best": 0,
-   "tallest": 0,
-   "widest": 0
-  }
- },
- {
-  "screen": "record-form-new",
-  "width": 768,
-  "file": "air-record-form-new-0768x900.png",
-  "zone": {
-   "left": 16,
-   "right": 752,
-   "top": 77,
-   "width": 736
-  },
-  "heading": {
-   "text": "Add a record",
-   "left": 16,
-   "top": 118,
-   "bottom": 167,
-   "textRight": 233
-  },
-  "boxes": 19,
-  "best": {
-   "left": 233,
-   "top": 77,
-   "width": 519,
-   "height": 112,
-   "square": 112,
-   "under": "input"
-  },
-  "tallest": {
-   "left": 233,
-   "top": 77,
-   "width": 519,
-   "height": 112,
-   "square": 112,
-   "under": "input"
-  },
-  "widest": {
-   "left": 233,
-   "top": 77,
-   "width": 519,
-   "height": 112,
-   "square": 112,
-   "under": "input"
-  },
-  "hairlinesCrossed": {
-   "best": 0,
-   "tallest": 0,
-   "widest": 0
-  }
- },
- {
-  "screen": "record-form-edit",
-  "width": 1440,
-  "file": "air-record-form-edit-1440x900.png",
-  "zone": {
-   "left": 352,
-   "right": 1088,
-   "top": 77,
-   "width": 736
-  },
-  "heading": {
-   "text": "Edit record",
-   "left": 352,
-   "top": 118,
-   "bottom": 167,
-   "textRight": 535
-  },
-  "boxes": 36,
-  "best": {
-   "left": 535,
-   "top": 77,
-   "width": 553,
-   "height": 124,
-   "square": 124,
-   "under": "input"
-  },
-  "tallest": {
-   "left": 535,
-   "top": 77,
-   "width": 553,
-   "height": 124,
-   "square": 124,
-   "under": "input"
-  },
-  "widest": {
-   "left": 535,
-   "top": 77,
-   "width": 553,
-   "height": 124,
-   "square": 124,
-   "under": "input"
-  },
-  "hairlinesCrossed": {
-   "best": 0,
-   "tallest": 0,
-   "widest": 0
-  }
- },
- {
-  "screen": "record-form-edit",
-  "width": 1024,
-  "file": "air-record-form-edit-1024x900.png",
-  "zone": {
-   "left": 144,
-   "right": 880,
-   "top": 77,
-   "width": 736
-  },
-  "heading": {
-   "text": "Edit record",
-   "left": 144,
-   "top": 118,
-   "bottom": 167,
-   "textRight": 327
-  },
-  "boxes": 36,
-  "best": {
-   "left": 327,
-   "top": 77,
-   "width": 553,
-   "height": 124,
-   "square": 124,
-   "under": "input"
-  },
-  "tallest": {
-   "left": 327,
-   "top": 77,
-   "width": 553,
-   "height": 124,
-   "square": 124,
-   "under": "input"
-  },
-  "widest": {
-   "left": 327,
-   "top": 77,
-   "width": 553,
-   "height": 124,
-   "square": 124,
-   "under": "input"
-  },
-  "hairlinesCrossed": {
-   "best": 0,
-   "tallest": 0,
-   "widest": 0
-  }
- },
- {
-  "screen": "record-form-edit",
-  "width": 768,
-  "file": "air-record-form-edit-0768x900.png",
-  "zone": {
-   "left": 16,
-   "right": 752,
-   "top": 77,
-   "width": 736
-  },
-  "heading": {
-   "text": "Edit record",
-   "left": 16,
-   "top": 118,
-   "bottom": 167,
-   "textRight": 199
-  },
-  "boxes": 36,
-  "best": {
-   "left": 199,
-   "top": 77,
-   "width": 553,
-   "height": 124,
-   "square": 124,
-   "under": "input"
-  },
-  "tallest": {
-   "left": 199,
-   "top": 77,
-   "width": 553,
-   "height": 124,
-   "square": 124,
-   "under": "input"
-  },
-  "widest": {
-   "left": 199,
-   "top": 77,
-   "width": 553,
-   "height": 124,
-   "square": 124,
-   "under": "input"
-  },
-  "hairlinesCrossed": {
-   "best": 0,
-   "tallest": 0,
-   "widest": 0
-  }
- }
-]
+ ]
+}
