@@ -38138,3 +38138,26 @@ Design drops.
   retried.
 - Recorded, not judged: swap-outs rose by 8.8M pages over the run; load
   3.33 at the start of the Playwright run and 9.51 at its end.
+
+## Three, then four, then five: an inventory that grew each time it was read (9 Oct)
+
+The third instance of one defect, after the tail's exit status and the
+export diff: an instrument's output reported as a reading. The count of
+frame-dependent claims in `cover-travel-92.spec.ts` was reported as
+three (from a search for the word), was four when the returns were
+rewritten (the 80ms equality), and five when the opening's test was read
+assertion by assertion ("by the end it is fitted", read on the last
+travelling frame). It stopped growing when every assertion was read and
+asked what it needs of the sampler. **A search finds the lines that use
+the word; an inventory is every line read.** A report built on a search
+says it was a search.
+
+The same day, the other way round: the coordinator read a commit's
+contents off my one-line summary of two drops. Read from the commits:
+4e97675 carried §T.6 with "The solids are at most a third of its area";
+74036f8 replaced it with "no more area than the construction's ink" and
+added "An earlier draft capped them at a third of the figure's area,
+which measured the box and corrected before Code built it." The earlier
+wording was in a drop Code took, was in the gated tree's history and is
+pushed. Reported to the coordinator; the entry and the sentence are
+Design's, and nothing was filed or edited.
