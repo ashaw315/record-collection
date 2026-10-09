@@ -235,6 +235,8 @@ export default defineConfig({
        */
       testMatch: [
         /collection-filters\.spec\.ts$/,
+        /* Step 105: the table row's link box and presses inside an open panel, on the phone's engine. */
+        /table-row-box-105\.spec\.ts$/,
         /collection-widths\.spec\.ts$/,
         /lookup-flows\.spec\.ts$/,
         /nav-mobile\.spec\.ts$/,

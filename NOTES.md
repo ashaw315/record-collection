@@ -38491,3 +38491,49 @@ and air sheets, and the Design drops between.
   retried.
 - Recorded, not judged: swap-outs rose by 31.2M pages over the run; load
   8.30 at the start of the Playwright run and 18.18 at its end.
+
+## Step 105: on Adam's phone every press on the table opened Wired (9 Oct, evening)
+
+**The defect is step 98's, not step 101's or 102's, and it is not the
+panel.** §T.4's row is one link: an empty box laid over the row by
+`position: absolute; inset: 0` against the row's `position: relative`.
+Safari did not make a positioned `<tr>` a containing block (WebKit bug
+240961), so there every row's box is laid over the first screenful, the
+last row's on top. The last row by title is Wired.
+
+**How it was established, and what was not.** Read first: the panel is
+mounted in no link. Three probes then failed to reproduce it, with a
+mouse at 390 and 1440 in Chromium and with taps on Playwright's WebKit
+phone: every press inside the panel stayed on the collection, option
+rows included. Staged with the row's `position` forced static, which is
+what that Safari computes: the box of every row measures 390 by 664, and
+every point on the header, the band, the sort control and the four
+filter lines opens Wired, at 1440 as at 390. **Not established: that
+this is what Adam's phone does.** Nothing here runs his Safari. The
+staging matches "always Wired" and "any buttons or area"; it does not
+match "with a filter panel open", since staged the line cannot be
+pressed to open one, and an open panel (fixed, `z-50`) stays above the
+boxes and its options apply. So either the panel was not open on the
+phone when it happened, or there is a second cause this did not find.
+The check on the phone is Adam's.
+
+**The fix.** The row carries an identity transform as well, which makes
+it a containing block in every engine. The grid's cell is an `li`, and
+was never affected.
+
+**Why a full gate cleared it: the family again, a guard running where
+the real thing is not.** No browser the suite runs has the defect,
+Playwright's WebKit included, so `table-98` read the row's box as the
+row's and was right about the browsers it ran in. And
+`filter-panel-101` runs on desktop Chromium only: nothing pressed
+inside an open panel on the phone's engine. `table-row-box-105.spec.ts`
+does both, staged and not, at 390 and 1440, and is in the mobile
+project's list. Its staged tests name the proxy they are; its unstaged
+tests pass against the build before the fix and are there for the
+coverage that was missing.
+
+**Seen in the probe, not acted on.** On Playwright's WebKit a tap
+(`touchscreen.tap`) on the panel's 20 inset beside the list chose the
+option on that row and did not close the panel; a mouse press at the
+same point closes it. Whether a finger on a phone does the same is not
+known.

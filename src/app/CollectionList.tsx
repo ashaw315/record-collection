@@ -184,7 +184,15 @@ export function CollectionList({
               .join(' · ');
 
             return (
-              <tr key={row.id} className="relative h-[44px]">
+              /*
+                The identity transform is what holds the link's box to the
+                row. Safari did not make a positioned `<tr>` a containing
+                block (WebKit bug 240961), so there every row's box was laid
+                over the first screenful and the last row's took every press
+                (step 105). A transformed element is a containing block in
+                every engine. `relative` stays for the engines that honour it.
+              */
+              <tr key={row.id} className="relative h-[44px] [transform:translate(0)]">
                 <td className={`${cell} text-left`}>
                   {/*
                     §T.4: "a row is one link to its record", which is why
