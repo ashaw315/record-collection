@@ -38306,3 +38306,46 @@ Built on the seat; for Design.
 **Seen in the capture, not looked into:** with a genre set, the rail's
 set bar is drawn across the top of the GENRE label
 (`docs/captures/arrival-104/empty-shelf-1440x900.png`).
+
+## A guard that passed because of what ran beside it (9 Oct; the family, not a one-off)
+
+The fourth instance today of one defect, and the sharpest: **a green that
+is a fact about the run's neighbours and not about the code.**
+
+- `wall-route.spec.ts:205` and `:106` passed in two gates by which tests
+  seeded beside them (8 Oct): they asserted the geometry of a wall whose
+  size other tests set.
+- My re-landing in db54ba0 passed its step-level run, with no retry, and
+  failed the next one: `wall-route.spec.ts:167` reads "exactly once", and
+  whether the collection grew under its open wall depended on what the
+  other worker was doing at that second.
+- The same shape, one layer down: the tail's exit status, the export
+  diff, and the inventory that grew from three to five. Each is an
+  instrument's output taken for a reading of the thing.
+
+What the two wall cases share is the shared database: a test reading a
+quantity another test can change is a test of the schedule. The fix both
+times was the same and is the rule: **stage the neighbour inside the
+test.** `:205` seeds its own 240; `wall-arrival-104` adds a record under
+the open wall itself. A pass that needs luck to fail is not evidence, and
+a step-level run on two workers cannot tell the two apart; the staged
+case can.
+
+## The rail's set bar was drawn across its label: a build defect, fixed (9 Oct)
+
+Classified before fixing, by the coordinator's order. Two rulings fix
+where the bar sits: §W.32, a set filter "takes the rail's own set-mark:
+the short ink bar under the label that §W.13 gives the active view name";
+and §W.36, "drawn against the label's baseline and occupies no height".
+Measured at 1440: the GENRE label's type runs 172.5 to 186.5 and the bar
+was drawn at 176 to 178, across it. The current view's bar sits 9 below
+its name's type. So it was a build defect, and mine to fix: the bar is
+placed from the label's foot now, 9 below its type, and
+`rail-set-bar.spec.ts` reads it against the view's bar and asserts that
+setting a genre moves nothing in the rail.
+
+How it lasted: the unit test named "gives a set filter's bar the same
+treatment" asserts only that the bar's class contains `absolute`. A bar
+drawn anywhere is positioned. The name claims the treatment and the
+assertion checks a proxy for it; left as it is and said here, since the
+new spec carries the claim.

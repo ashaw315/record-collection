@@ -99,21 +99,24 @@ export function WallRail({
         <div data-rail-filter="" className="relative">
           {genres.length > 0 && (
             <>
-              <label
-                htmlFor="rail-genre"
-                className={`mt-[18px] block ${LABEL}`}
-              >
-                Genre
-              </label>
-              {/* §W.36: out of flow — GENRE sits above the switcher, so a set filter in flow would move the control you choose the view with. */}
-              {params.filters.genreId !== undefined && (
-                <span
-                  data-set-bar=""
-                  aria-hidden="true"
-                  className="absolute mt-[-12px] block bg-[oklch(0.19_0.008_60)]"
-                  style={{ width: 44, height: 2 }}
-                />
-              )}
+              {/*
+                §W.36: out of flow — GENRE sits above the switcher, so a set filter in flow would move the control you choose the view with.
+                §W.32: "the short ink bar UNDER the label". Placed from the label's own foot, 9 below its type as the current view's bar is
+                below its name. It was placed by a negative margin from the same foot and drew across the label (found 9 Oct).
+              */}
+              <div className="relative mt-[18px]">
+                <label htmlFor="rail-genre" className={`block ${LABEL}`}>
+                  Genre
+                </label>
+                {params.filters.genreId !== undefined && (
+                  <span
+                    data-set-bar=""
+                    aria-hidden="true"
+                    className="absolute top-full left-0 mt-[7.5px] block bg-[oklch(0.19_0.008_60)]"
+                    style={{ width: 44, height: 2 }}
+                  />
+                )}
+              </div>
               {/*
                 §W.32: a SET filter takes the rail's own set mark — §W.13's
                 44-wide ink bar at §W.31's 2px — not oxblood, and not the
