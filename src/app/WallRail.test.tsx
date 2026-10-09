@@ -7,8 +7,8 @@ import { LABEL } from './records/[id]/grid-type';
 
 /**
  * §W.13: the header band is withdrawn and the page's controls go down a
- * 148px rail on the left — SEARCH at the head (a ruled field, §9.3's 34px
- * control), the three views stacked as a list with the current one marked
+ * 148px rail on the left — SEARCH at the head (a ruled field, 44 tall by
+ * §W.24), the three views stacked as a list with the current one marked
  * the way this page marks a current thing (ink against muted, the 44 × 4
  * bar, no box), and Add record at the foot below a rule that bleeds to both
  * edges of the rail. The rail carries no identity: COLLECTION and the count
@@ -63,10 +63,18 @@ describe('the rail (§W.13)', () => {
     expect(html).toMatch(/<input[^>]*name="q"[^>]*value="wired"/);
   });
 
-  it('draws the search as §9.3’s ruled field: 34px, a 1px ink underline, the 16px sans line, no box', () => {
+  /*
+    The height was §9.3's 34 until step 100: §W.24 rules "the search field is
+    44 tall", the floor every control a finger hits meets. This test pinned
+    the 34 as a class and was changed for that ruling, not to pass a build;
+    the rendered 44 is read on all three views in `e2e/band-100.spec.ts`.
+    The rail's two selects below are not the search field and keep 34.
+  */
+  it('draws the search as a ruled field at §W.24’s 44: a 1px ink underline, the 16px sans line, no box', () => {
     const html = render();
     const input = /<input[^>]*name="q"[^>]*>/.exec(html)?.[0] ?? '';
-    expect(input).toContain('h-[34px]');
+    expect(input).toContain('h-[44px]');
+    expect(input).not.toContain('h-[34px]');
     expect(input).toContain('border-b');
     expect(input).toContain('text-[16px]');
     expect(input).toContain('font-sans');
