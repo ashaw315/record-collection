@@ -129,6 +129,7 @@ The wall at rest is line, ink and paper; colour arrives with the pull. Everythin
 | §T.3 | The heading, the count, search and filters | The count and heading, search, and the filters as a disclosure. |
 | §T.4 | The table | The table’s rows, alignment, sort, sticky header row and hover. |
 | §T.5 | The grid | The grid’s covers, captions, spacing, column counts and Sort control. |
+| §T.6 | Ornament and colour, for every screen | Ornament, oxblood, the grey and headings, across the table, grid and five screens. |
 
 ## Structural sections — pointers
 
@@ -460,6 +461,9 @@ Its rows are in the governs table above, one per section; this section does not 
 102. **§T.3 — the panel below all four lines.** A supersession of step 101's panel position, in its own step; if step 101 is not yet committed, the two may land in one commit, as 74 and 76 did. Open every filter's panel beneath the last filter line, so all four lines stay visible and pressable; a press on another line closes this panel and opens that one; the open filter's label in ink, the others in the label colour. Test that a press on each other line from each open filter opens that line's list in one tap, and that the panel still covers a positioned cover in the grid.
    > An open filter’s panel covers what lies beneath the last filter line, so all four lines stay in view, and a press on another filter’s line closes this panel and opens that one.
 
+103. **§T.6 — ornament and colour, across the table, grid and five screens.** A supersession of step 97a's colour, in its own step. Remove oxblood and the survey's grey everywhere, by role as §T.6 gives. Set every screen's heading at 40. Draw the heading's ornament from §30's construction and §26's solids in the first three shown records' tints, at the height of count and heading, solids at most a third of its area, only where the row has room; report on each screen the width at which it appears. Draw the empty states in ink alone with their sentence and control. Measure on the real collection and say so. Capture each screen at 1440, 390 and 320, and each empty state, for Adam.
+   > Ornament is §30’s construction in ink, with §26’s solids in the tints of the records the screen shows, and it sits in two places only: the air beside the heading and count, and an empty state.
+
 No step: §G.7. It rules nothing. Hover and focus wait on Code's second pass, the breakpoint is settled and recorded in §G.8, and the eyebrow repetition is an observation, not a ruling.
 
 **The record-detail screen is closed at 7983d4d, on 1 October 2026,** by Adam’s pass over the 119 captures, which found nothing that changes what a reader understands about a record. Steps run 0 to 71; steps 72 and 73 follow the close and change values, not structure. This is the baseline the record modal builds against: its marks, its type ladder and its colour system.
@@ -483,11 +487,11 @@ Found by measurement on a screen that has rulings, and left for that screen's ta
 
 - **Closed, accepted. §W, the last record on each shelf sits mostly behind the upright.** Adam accepts it as how a shelf end looks, so nothing changes. Code measured the overview: for the record it measured, 65% of the spine is under the upright's painted faces and 35% visible. Across the seventeen, the smallest visible share of any spine is about 18%, hidden mainly by neighbours. The neighbour case is what a shelf looks like. The upright case is systematic: it is the last record on every shelf, hidden by furniture rather than by records. The choices are to inset the record from the upright, to draw the upright behind the last record, or to accept it as how a shelf end looks. It is not a hit-testing fault.
 
-## Held for the survey pass
-
-- **Ornament for the table and grid, and likely manage, stats and the record form.** Adam asked for it. Held until Code's five surveys land, to be ruled once across the screens that want it. Its likely shape, not ruled: two places only, the air beside the heading and count at wide widths and the empty states, drawn from §26, §30, §50 and §57, never inside rows or cells. Any tint withdraws §T.2's colour sentence, which is in force from 5d123ee, and owes that entry when it is ruled.
-
 ## Findings for screens without a pass
+
+- **Manage is wider than the window on a phone, a defect.** Five of six sections are 408 or 460 at 390 and 320, its table scrolls sideways inside itself, and 67 of the Artists section's 77 controls sit past the window's edge. For Code, not the ornament.
+- **No control on the five surveyed screens meets the 44 floor, except the edit form's textarea.** The floor is app-wide, so each is a defect, for Code.
+- **Not surveyed, not ruled:** Look up's results, the suggestions page, the want list's own forms, and a want-list item's page.
 
 Logged against a screen's future pass, not patched. Nothing here is a ruling, and nothing here is a build step.
 
