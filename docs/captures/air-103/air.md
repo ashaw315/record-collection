@@ -86,3 +86,34 @@ The source is the first above: it needs 170.7 of height and 203.5 of width.
 | record-form-edit | 1024 | 553 × 124 | NO | -46.7 |
 | record-form-edit | 768 | 553 × 124 | NO | -46.7 |
 
+## The air after §T.6’s 24 margin
+
+"The air is measured after a 24 margin on every side where it meets a control, type or the header." Type and controls are grown by 24 and the header’s foot lowered by 24 before the search; rules, images and the measure’s own edges are not, because the sentence does not name them. Each side says what the air found meets there. Both rectangles are dashed onto each capture.
+
+| screen | window | the air before | after the margin | left | top | right | bottom | holds the source’s figure | height to spare |
+|---|---|---|---|---|---|---|---|---|---|
+| table | 1440 | 880 × 500 | 832 × 452 at 487, 77 | input (control) | the header | a "Add record" (type) | span "Label" (type) | yes | 281.3 |
+| table | 1024 | 464 × 500 | 416 × 452 at 487, 77 | input (control) | the header | a "Add record" (type) | span "Format" (type) | yes | 281.3 |
+| table | 768 | 305 × 382 | 281 × 334 at 487, 195 | button (control) | a "Add record" (type) | the measure’s edge | span "Format" (type) | yes | 163.3 |
+| grid | 1440 | 880 × 485 | 832 × 461 at 487, 77 | input (control) | the header | a "Add record" (type) | img (image) | yes | 290.3 |
+| grid | 1024 | 464 × 485 | 416 × 461 at 487, 77 | input (control) | the header | a "Add record" (type) | img (image) | yes | 290.3 |
+| grid | 768 | 305 × 367 | 281 × 343 at 487, 195 | button (control) | a "Add record" (type) | the measure’s edge | img (image) | yes | 172.3 |
+| want-list | 1440 | 531 × 143 | 366 × 143 at 522, 77 | h1 "Want list" (type) | the header | span "High" (type) | ul rule (rule) | NO | -27.7 |
+| want-list | 1024 | 531 × 143 | 366 × 143 at 314, 77 | h1 "Want list" (type) | the header | span "High" (type) | ul rule (rule) | NO | -27.7 |
+| want-list | 768 | 531 × 143 | 366 × 143 at 186, 77 | h1 "Want list" (type) | the header | span "High" (type) | ul rule (rule) | NO | -27.7 |
+| lookup | 1440 | 454 × 65 | 430 × 37 at 658, 77 | h1 "Look up a record" (type) | the header | the measure’s edge | p "Search Discogs for" (type) | NO | -133.7 |
+| lookup | 1024 | 454 × 65 | 430 × 37 at 450, 77 | h1 "Look up a record" (type) | the header | the measure’s edge | p "Search Discogs for" (type) | NO | -133.7 |
+| lookup | 768 | 454 × 65 | 430 × 37 at 322, 77 | h1 "Look up a record" (type) | the header | the measure’s edge | p "Search Discogs for" (type) | NO | -133.7 |
+| stats | 1440 | 601 × 177 | 577 × 153 at 511, 77 | p "in the collection." (type) | the header | the measure’s edge | p "Estimated value of" (type) | NO | -17.7 |
+| stats | 1024 | 601 × 177 | 577 × 153 at 303, 77 | p "in the collection." (type) | the header | the measure’s edge | p "Estimated value of" (type) | NO | -17.7 |
+| stats | 768 | 601 × 177 | 577 × 153 at 175, 77 | p "in the collection." (type) | the header | the measure’s edge | p "Estimated value of" (type) | NO | -17.7 |
+| manage | 1440 | 340 × 160 | 292 × 143 at 604, 93 | a "Show all" (type) | the region’s own top | th "Formed" (type) | input (control) | NO | -27.7 |
+| manage | 1024 | 212 × 160 | 164 × 143 at 460, 93 | a "Show all" (type) | the region’s own top | th "Formed" (type) | input (control) | NO | -27.7 |
+| manage | 768 | 195 × 144 | 171 × 120 at 581, 93 | th "Country" (type) | the region’s own top | the measure’s edge | span "Actions" (type) | NO | -50.7 |
+| record-form-new | 1440 | 519 × 112 | 495 × 88 at 593, 77 | h1 "Add a record" (type) | the header | the measure’s edge | input (control) | NO | -82.7 |
+| record-form-new | 1024 | 519 × 112 | 495 × 88 at 385, 77 | h1 "Add a record" (type) | the header | the measure’s edge | input (control) | NO | -82.7 |
+| record-form-new | 768 | 519 × 112 | 495 × 88 at 257, 77 | h1 "Add a record" (type) | the header | the measure’s edge | input (control) | NO | -82.7 |
+| record-form-edit | 1440 | 553 × 124 | 529 × 100 at 559, 77 | h1 "Edit record" (type) | the header | the measure’s edge | input (control) | NO | -70.7 |
+| record-form-edit | 1024 | 553 × 124 | 529 × 100 at 351, 77 | h1 "Edit record" (type) | the header | the measure’s edge | input (control) | NO | -70.7 |
+| record-form-edit | 768 | 553 × 124 | 529 × 100 at 223, 77 | h1 "Edit record" (type) | the header | the measure’s edge | input (control) | NO | -70.7 |
+

@@ -109,6 +109,13 @@
    "screen": "table",
    "width": 1440,
    "file": "air-table-1440x900.png",
+   "sides": {
+    "left": "input (control)",
+    "right": "a \"Add record\" (type)",
+    "top": "the header",
+    "bottom": "span \"Label\" (type)"
+   },
+   "headerFoot": 53,
    "zone": {
     "left": 0,
     "right": 1440,
@@ -129,7 +136,8 @@
     "width": 880,
     "height": 500,
     "square": 500,
-    "under": "span \"Year\""
+    "under": "span \"Year\"",
+    "underKind": "type"
    },
    "tallest": {
     "left": 592,
@@ -137,7 +145,8 @@
     "width": 298,
     "height": 529,
     "square": 298,
-    "under": "th rule"
+    "under": "th rule",
+    "underKind": "rule"
    },
    "widest": {
     "left": 191,
@@ -145,18 +154,81 @@
     "width": 1249,
     "height": 171,
     "square": 171,
-    "under": "button"
+    "under": "button",
+    "underKind": "control"
    },
    "hairlinesCrossed": {
     "best": 0,
     "tallest": 0,
     "widest": 0
+   },
+   "margined": {
+    "sides": {
+     "left": "input (control)",
+     "right": "a \"Add record\" (type)",
+     "top": "the header",
+     "bottom": "span \"Label\" (type)"
+    },
+    "headerFoot": 53,
+    "zone": {
+     "left": 0,
+     "right": 1440,
+     "top": 53,
+     "width": 1440
+    },
+    "heading": {
+     "text": "Collection",
+     "left": 20,
+     "top": 211,
+     "bottom": 260,
+     "textRight": 191
+    },
+    "boxes": 133,
+    "best": {
+     "left": 487,
+     "top": 77,
+     "width": 832,
+     "height": 452,
+     "square": 452,
+     "under": "span \"Year\"",
+     "underKind": "type"
+    },
+    "tallest": {
+     "left": 658,
+     "top": 77,
+     "width": 208,
+     "height": 505,
+     "square": 208,
+     "under": "th rule",
+     "underKind": "rule"
+    },
+    "widest": {
+     "left": 215,
+     "top": 195,
+     "width": 1225,
+     "height": 123,
+     "square": 123,
+     "under": "button",
+     "underKind": "control"
+    },
+    "hairlinesCrossed": {
+     "best": 0,
+     "tallest": 0,
+     "widest": 0
+    }
    }
   },
   {
    "screen": "table",
    "width": 1024,
    "file": "air-table-1024x900.png",
+   "sides": {
+    "left": "input (control)",
+    "right": "a \"Add record\" (type)",
+    "top": "the header",
+    "bottom": "span \"Format\" (type)"
+   },
+   "headerFoot": 53,
    "zone": {
     "left": 0,
     "right": 1024,
@@ -177,7 +249,8 @@
     "width": 464,
     "height": 500,
     "square": 464,
-    "under": "span \"Year\""
+    "under": "span \"Year\"",
+    "underKind": "type"
    },
    "tallest": {
     "left": 463,
@@ -185,7 +258,8 @@
     "width": 173,
     "height": 529,
     "square": 173,
-    "under": "th rule"
+    "under": "th rule",
+    "underKind": "rule"
    },
    "widest": {
     "left": 191,
@@ -193,18 +267,81 @@
     "width": 833,
     "height": 171,
     "square": 171,
-    "under": "button"
+    "under": "button",
+    "underKind": "control"
    },
    "hairlinesCrossed": {
     "best": 0,
     "tallest": 0,
     "widest": 0
+   },
+   "margined": {
+    "sides": {
+     "left": "input (control)",
+     "right": "a \"Add record\" (type)",
+     "top": "the header",
+     "bottom": "span \"Format\" (type)"
+    },
+    "headerFoot": 53,
+    "zone": {
+     "left": 0,
+     "right": 1024,
+     "top": 53,
+     "width": 1024
+    },
+    "heading": {
+     "text": "Collection",
+     "left": 20,
+     "top": 211,
+     "bottom": 260,
+     "textRight": 191
+    },
+    "boxes": 133,
+    "best": {
+     "left": 487,
+     "top": 77,
+     "width": 416,
+     "height": 452,
+     "square": 416,
+     "under": "span \"Year\"",
+     "underKind": "type"
+    },
+    "tallest": {
+     "left": 504,
+     "top": 77,
+     "width": 108,
+     "height": 505,
+     "square": 108,
+     "under": "th rule",
+     "underKind": "rule"
+    },
+    "widest": {
+     "left": 215,
+     "top": 195,
+     "width": 809,
+     "height": 123,
+     "square": 123,
+     "under": "button",
+     "underKind": "control"
+    },
+    "hairlinesCrossed": {
+     "best": 0,
+     "tallest": 0,
+     "widest": 0
+    }
    }
   },
   {
    "screen": "table",
    "width": 768,
    "file": "air-table-0768x900.png",
+   "sides": {
+    "left": "button (control)",
+    "right": "the measure’s edge",
+    "top": "a \"Add record\" (type)",
+    "bottom": "span \"Format\" (type)"
+   },
+   "headerFoot": 53,
    "zone": {
     "left": 0,
     "right": 768,
@@ -225,7 +362,8 @@
     "width": 305,
     "height": 382,
     "square": 305,
-    "under": "span \"Year\""
+    "under": "span \"Year\"",
+    "underKind": "type"
    },
    "tallest": {
     "left": 526,
@@ -233,7 +371,8 @@
     "width": 47,
     "height": 529,
     "square": 47,
-    "under": "th rule"
+    "under": "th rule",
+    "underKind": "rule"
    },
    "widest": {
     "left": 191,
@@ -241,18 +380,81 @@
     "width": 577,
     "height": 171,
     "square": 171,
-    "under": "button"
+    "under": "button",
+    "underKind": "control"
    },
    "hairlinesCrossed": {
     "best": 0,
     "tallest": 0,
     "widest": 0
+   },
+   "margined": {
+    "sides": {
+     "left": "button (control)",
+     "right": "the measure’s edge",
+     "top": "a \"Add record\" (type)",
+     "bottom": "span \"Format\" (type)"
+    },
+    "headerFoot": 53,
+    "zone": {
+     "left": 0,
+     "right": 768,
+     "top": 53,
+     "width": 768
+    },
+    "heading": {
+     "text": "Collection",
+     "left": 20,
+     "top": 211,
+     "bottom": 260,
+     "textRight": 191
+    },
+    "boxes": 133,
+    "best": {
+     "left": 487,
+     "top": 195,
+     "width": 281,
+     "height": 334,
+     "square": 281,
+     "under": "span \"Year\"",
+     "underKind": "type"
+    },
+    "tallest": {
+     "left": 487,
+     "top": 77,
+     "width": 160,
+     "height": 452,
+     "square": 160,
+     "under": "span \"Year\"",
+     "underKind": "type"
+    },
+    "widest": {
+     "left": 215,
+     "top": 195,
+     "width": 553,
+     "height": 123,
+     "square": 123,
+     "under": "button",
+     "underKind": "control"
+    },
+    "hairlinesCrossed": {
+     "best": 0,
+     "tallest": 0,
+     "widest": 0
+    }
    }
   },
   {
    "screen": "grid",
    "width": 1440,
    "file": "air-grid-1440x900.png",
+   "sides": {
+    "left": "input (control)",
+    "right": "a \"Add record\" (type)",
+    "top": "the header",
+    "bottom": "img (image)"
+   },
+   "headerFoot": 53,
    "zone": {
     "left": 0,
     "right": 1440,
@@ -273,7 +475,8 @@
     "width": 880,
     "height": 485,
     "square": 485,
-    "under": "img"
+    "under": "img",
+    "underKind": "image"
    },
    "tallest": {
     "left": 606,
@@ -281,7 +484,8 @@
     "width": 24,
     "height": 847,
     "square": 24,
-    "under": "the end of the first view"
+    "under": "the end of the first view",
+    "underKind": "edge"
    },
    "widest": {
     "left": 191,
@@ -289,18 +493,81 @@
     "width": 1249,
     "height": 171,
     "square": 171,
-    "under": "button"
+    "under": "button",
+    "underKind": "control"
    },
    "hairlinesCrossed": {
     "best": 0,
     "tallest": 0,
     "widest": 0
+   },
+   "margined": {
+    "sides": {
+     "left": "input (control)",
+     "right": "a \"Add record\" (type)",
+     "top": "the header",
+     "bottom": "img (image)"
+    },
+    "headerFoot": 53,
+    "zone": {
+     "left": 0,
+     "right": 1440,
+     "top": 53,
+     "width": 1440
+    },
+    "heading": {
+     "text": "Collection",
+     "left": 20,
+     "top": 211,
+     "bottom": 260,
+     "textRight": 191
+    },
+    "boxes": 52,
+    "best": {
+     "left": 487,
+     "top": 77,
+     "width": 832,
+     "height": 461,
+     "square": 461,
+     "under": "img",
+     "underKind": "image"
+    },
+    "tallest": {
+     "left": 606,
+     "top": 77,
+     "width": 24,
+     "height": 625,
+     "square": 24,
+     "under": "a \"Dire Straits\"",
+     "underKind": "type"
+    },
+    "widest": {
+     "left": 215,
+     "top": 195,
+     "width": 1225,
+     "height": 123,
+     "square": 123,
+     "under": "button",
+     "underKind": "control"
+    },
+    "hairlinesCrossed": {
+     "best": 0,
+     "tallest": 0,
+     "widest": 0
+    }
    }
   },
   {
    "screen": "grid",
    "width": 1024,
    "file": "air-grid-1024x900.png",
+   "sides": {
+    "left": "input (control)",
+    "right": "a \"Add record\" (type)",
+    "top": "the header",
+    "bottom": "img (image)"
+   },
+   "headerFoot": 53,
    "zone": {
     "left": 0,
     "right": 1024,
@@ -321,7 +588,8 @@
     "width": 464,
     "height": 485,
     "square": 464,
-    "under": "img"
+    "under": "img",
+    "underKind": "image"
    },
    "tallest": {
     "left": 601,
@@ -329,7 +597,8 @@
     "width": 24,
     "height": 847,
     "square": 24,
-    "under": "the end of the first view"
+    "under": "the end of the first view",
+    "underKind": "edge"
    },
    "widest": {
     "left": 191,
@@ -337,18 +606,81 @@
     "width": 833,
     "height": 171,
     "square": 171,
-    "under": "button"
+    "under": "button",
+    "underKind": "control"
    },
    "hairlinesCrossed": {
     "best": 0,
     "tallest": 0,
     "widest": 0
+   },
+   "margined": {
+    "sides": {
+     "left": "input (control)",
+     "right": "a \"Add record\" (type)",
+     "top": "the header",
+     "bottom": "img (image)"
+    },
+    "headerFoot": 53,
+    "zone": {
+     "left": 0,
+     "right": 1024,
+     "top": 53,
+     "width": 1024
+    },
+    "heading": {
+     "text": "Collection",
+     "left": 20,
+     "top": 211,
+     "bottom": 260,
+     "textRight": 191
+    },
+    "boxes": 42,
+    "best": {
+     "left": 487,
+     "top": 77,
+     "width": 416,
+     "height": 461,
+     "square": 416,
+     "under": "img",
+     "underKind": "image"
+    },
+    "tallest": {
+     "left": 601,
+     "top": 77,
+     "width": 24,
+     "height": 624,
+     "square": 24,
+     "under": "a \"Dire Straits\"",
+     "underKind": "type"
+    },
+    "widest": {
+     "left": 215,
+     "top": 195,
+     "width": 809,
+     "height": 123,
+     "square": 123,
+     "under": "button",
+     "underKind": "control"
+    },
+    "hairlinesCrossed": {
+     "best": 0,
+     "tallest": 0,
+     "widest": 0
+    }
    }
   },
   {
    "screen": "grid",
    "width": 768,
    "file": "air-grid-0768x900.png",
+   "sides": {
+    "left": "button (control)",
+    "right": "the measure’s edge",
+    "top": "a \"Add record\" (type)",
+    "bottom": "img (image)"
+   },
+   "headerFoot": 53,
    "zone": {
     "left": 0,
     "right": 768,
@@ -369,7 +701,8 @@
     "width": 305,
     "height": 367,
     "square": 305,
-    "under": "img"
+    "under": "img",
+    "underKind": "image"
    },
    "tallest": {
     "left": 560,
@@ -377,7 +710,8 @@
     "width": 24,
     "height": 847,
     "square": 24,
-    "under": "the end of the first view"
+    "under": "the end of the first view",
+    "underKind": "edge"
    },
    "widest": {
     "left": 191,
@@ -385,18 +719,81 @@
     "width": 577,
     "height": 171,
     "square": 171,
-    "under": "button"
+    "under": "button",
+    "underKind": "control"
    },
    "hairlinesCrossed": {
     "best": 0,
     "tallest": 0,
     "widest": 0
+   },
+   "margined": {
+    "sides": {
+     "left": "button (control)",
+     "right": "the measure’s edge",
+     "top": "a \"Add record\" (type)",
+     "bottom": "img (image)"
+    },
+    "headerFoot": 53,
+    "zone": {
+     "left": 0,
+     "right": 768,
+     "top": 53,
+     "width": 768
+    },
+    "heading": {
+     "text": "Collection",
+     "left": 20,
+     "top": 211,
+     "bottom": 260,
+     "textRight": 191
+    },
+    "boxes": 38,
+    "best": {
+     "left": 487,
+     "top": 195,
+     "width": 281,
+     "height": 343,
+     "square": 281,
+     "under": "img",
+     "underKind": "image"
+    },
+    "tallest": {
+     "left": 560,
+     "top": 77,
+     "width": 24,
+     "height": 610,
+     "square": 24,
+     "under": "a \"Bridge Over Troubl\"",
+     "underKind": "type"
+    },
+    "widest": {
+     "left": 215,
+     "top": 195,
+     "width": 553,
+     "height": 123,
+     "square": 123,
+     "under": "button",
+     "underKind": "control"
+    },
+    "hairlinesCrossed": {
+     "best": 0,
+     "tallest": 0,
+     "widest": 0
+    }
    }
   },
   {
    "screen": "want-list",
    "width": 1440,
    "file": "air-want-list-1440x900.png",
+   "sides": {
+    "left": "h1 \"Want list\" (type)",
+    "right": "a \"Suggestions\" (type)",
+    "top": "the region’s own top",
+    "bottom": "ul rule (rule)"
+   },
+   "headerFoot": 53,
    "zone": {
     "left": 352,
     "right": 1088,
@@ -417,7 +814,8 @@
     "width": 531,
     "height": 143,
     "square": 143,
-    "under": "ul rule"
+    "under": "ul rule",
+    "underKind": "rule"
    },
    "tallest": {
     "left": 498,
@@ -425,7 +823,8 @@
     "width": 531,
     "height": 143,
     "square": 143,
-    "under": "ul rule"
+    "under": "ul rule",
+    "underKind": "rule"
    },
    "widest": {
     "left": 498,
@@ -433,18 +832,81 @@
     "width": 531,
     "height": 143,
     "square": 143,
-    "under": "ul rule"
+    "under": "ul rule",
+    "underKind": "rule"
    },
    "hairlinesCrossed": {
     "best": 0,
     "tallest": 0,
     "widest": 0
+   },
+   "margined": {
+    "sides": {
+     "left": "h1 \"Want list\" (type)",
+     "right": "span \"High\" (type)",
+     "top": "the header",
+     "bottom": "ul rule (rule)"
+    },
+    "headerFoot": 53,
+    "zone": {
+     "left": 352,
+     "right": 1088,
+     "top": 77,
+     "width": 736
+    },
+    "heading": {
+     "text": "Want list",
+     "left": 352,
+     "top": 82,
+     "bottom": 131,
+     "textRight": 498
+    },
+    "boxes": 146,
+    "best": {
+     "left": 522,
+     "top": 77,
+     "width": 366,
+     "height": 143,
+     "square": 143,
+     "under": "ul rule",
+     "underKind": "rule"
+    },
+    "tallest": {
+     "left": 522,
+     "top": 77,
+     "width": 366,
+     "height": 143,
+     "square": 143,
+     "under": "ul rule",
+     "underKind": "rule"
+    },
+    "widest": {
+     "left": 522,
+     "top": 77,
+     "width": 483,
+     "height": 139,
+     "square": 139,
+     "under": "a \"Mark acquired\"",
+     "underKind": "type"
+    },
+    "hairlinesCrossed": {
+     "best": 0,
+     "tallest": 0,
+     "widest": 0
+    }
    }
   },
   {
    "screen": "want-list",
    "width": 1024,
    "file": "air-want-list-1024x900.png",
+   "sides": {
+    "left": "h1 \"Want list\" (type)",
+    "right": "a \"Suggestions\" (type)",
+    "top": "the region’s own top",
+    "bottom": "ul rule (rule)"
+   },
+   "headerFoot": 53,
    "zone": {
     "left": 144,
     "right": 880,
@@ -465,7 +927,8 @@
     "width": 531,
     "height": 143,
     "square": 143,
-    "under": "ul rule"
+    "under": "ul rule",
+    "underKind": "rule"
    },
    "tallest": {
     "left": 290,
@@ -473,7 +936,8 @@
     "width": 531,
     "height": 143,
     "square": 143,
-    "under": "ul rule"
+    "under": "ul rule",
+    "underKind": "rule"
    },
    "widest": {
     "left": 290,
@@ -481,18 +945,81 @@
     "width": 531,
     "height": 143,
     "square": 143,
-    "under": "ul rule"
+    "under": "ul rule",
+    "underKind": "rule"
    },
    "hairlinesCrossed": {
     "best": 0,
     "tallest": 0,
     "widest": 0
+   },
+   "margined": {
+    "sides": {
+     "left": "h1 \"Want list\" (type)",
+     "right": "span \"High\" (type)",
+     "top": "the header",
+     "bottom": "ul rule (rule)"
+    },
+    "headerFoot": 53,
+    "zone": {
+     "left": 144,
+     "right": 880,
+     "top": 77,
+     "width": 736
+    },
+    "heading": {
+     "text": "Want list",
+     "left": 144,
+     "top": 82,
+     "bottom": 131,
+     "textRight": 290
+    },
+    "boxes": 146,
+    "best": {
+     "left": 314,
+     "top": 77,
+     "width": 366,
+     "height": 143,
+     "square": 143,
+     "under": "ul rule",
+     "underKind": "rule"
+    },
+    "tallest": {
+     "left": 314,
+     "top": 77,
+     "width": 366,
+     "height": 143,
+     "square": 143,
+     "under": "ul rule",
+     "underKind": "rule"
+    },
+    "widest": {
+     "left": 314,
+     "top": 77,
+     "width": 483,
+     "height": 139,
+     "square": 139,
+     "under": "a \"Mark acquired\"",
+     "underKind": "type"
+    },
+    "hairlinesCrossed": {
+     "best": 0,
+     "tallest": 0,
+     "widest": 0
+    }
    }
   },
   {
    "screen": "want-list",
    "width": 768,
    "file": "air-want-list-0768x900.png",
+   "sides": {
+    "left": "h1 \"Want list\" (type)",
+    "right": "a \"Suggestions\" (type)",
+    "top": "the region’s own top",
+    "bottom": "ul rule (rule)"
+   },
+   "headerFoot": 53,
    "zone": {
     "left": 16,
     "right": 752,
@@ -513,7 +1040,8 @@
     "width": 531,
     "height": 143,
     "square": 143,
-    "under": "ul rule"
+    "under": "ul rule",
+    "underKind": "rule"
    },
    "tallest": {
     "left": 162,
@@ -521,7 +1049,8 @@
     "width": 531,
     "height": 143,
     "square": 143,
-    "under": "ul rule"
+    "under": "ul rule",
+    "underKind": "rule"
    },
    "widest": {
     "left": 162,
@@ -529,18 +1058,81 @@
     "width": 531,
     "height": 143,
     "square": 143,
-    "under": "ul rule"
+    "under": "ul rule",
+    "underKind": "rule"
    },
    "hairlinesCrossed": {
     "best": 0,
     "tallest": 0,
     "widest": 0
+   },
+   "margined": {
+    "sides": {
+     "left": "h1 \"Want list\" (type)",
+     "right": "span \"High\" (type)",
+     "top": "the header",
+     "bottom": "ul rule (rule)"
+    },
+    "headerFoot": 53,
+    "zone": {
+     "left": 16,
+     "right": 752,
+     "top": 77,
+     "width": 736
+    },
+    "heading": {
+     "text": "Want list",
+     "left": 16,
+     "top": 82,
+     "bottom": 131,
+     "textRight": 162
+    },
+    "boxes": 146,
+    "best": {
+     "left": 186,
+     "top": 77,
+     "width": 366,
+     "height": 143,
+     "square": 143,
+     "under": "ul rule",
+     "underKind": "rule"
+    },
+    "tallest": {
+     "left": 186,
+     "top": 77,
+     "width": 366,
+     "height": 143,
+     "square": 143,
+     "under": "ul rule",
+     "underKind": "rule"
+    },
+    "widest": {
+     "left": 186,
+     "top": 77,
+     "width": 483,
+     "height": 139,
+     "square": 139,
+     "under": "a \"Mark acquired\"",
+     "underKind": "type"
+    },
+    "hairlinesCrossed": {
+     "best": 0,
+     "tallest": 0,
+     "widest": 0
+    }
    }
   },
   {
    "screen": "lookup",
    "width": 1440,
    "file": "air-lookup-1440x900.png",
+   "sides": {
+    "left": "h1 \"Look up a record\" (type)",
+    "right": "the measure’s edge",
+    "top": "the region’s own top",
+    "bottom": "p \"Search Discogs for\" (type)"
+   },
+   "headerFoot": 53,
    "zone": {
     "left": 352,
     "right": 1088,
@@ -561,7 +1153,8 @@
     "width": 454,
     "height": 65,
     "square": 65,
-    "under": "p \"Search Discogs for\""
+    "under": "p \"Search Discogs for\"",
+    "underKind": "type"
    },
    "tallest": {
     "left": 1050,
@@ -569,7 +1162,8 @@
     "width": 38,
     "height": 146,
     "square": 38,
-    "under": "input"
+    "under": "input",
+    "underKind": "control"
    },
    "widest": {
     "left": 634,
@@ -577,18 +1171,81 @@
     "width": 454,
     "height": 65,
     "square": 65,
-    "under": "p \"Search Discogs for\""
+    "under": "p \"Search Discogs for\"",
+    "underKind": "type"
    },
    "hairlinesCrossed": {
     "best": 0,
     "tallest": 0,
     "widest": 0
+   },
+   "margined": {
+    "sides": {
+     "left": "h1 \"Look up a record\" (type)",
+     "right": "the measure’s edge",
+     "top": "the header",
+     "bottom": "p \"Search Discogs for\" (type)"
+    },
+    "headerFoot": 53,
+    "zone": {
+     "left": 352,
+     "right": 1088,
+     "top": 73,
+     "width": 736
+    },
+    "heading": {
+     "text": "Look up a record",
+     "left": 352,
+     "top": 78,
+     "bottom": 127,
+     "textRight": 634
+    },
+    "boxes": 18,
+    "best": {
+     "left": 658,
+     "top": 77,
+     "width": 430,
+     "height": 37,
+     "square": 37,
+     "under": "p \"Search Discogs for\"",
+     "underKind": "type"
+    },
+    "tallest": {
+     "left": 658,
+     "top": 77,
+     "width": 430,
+     "height": 37,
+     "square": 37,
+     "under": "p \"Search Discogs for\"",
+     "underKind": "type"
+    },
+    "widest": {
+     "left": 658,
+     "top": 77,
+     "width": 430,
+     "height": 37,
+     "square": 37,
+     "under": "p \"Search Discogs for\"",
+     "underKind": "type"
+    },
+    "hairlinesCrossed": {
+     "best": 0,
+     "tallest": 0,
+     "widest": 0
+    }
    }
   },
   {
    "screen": "lookup",
    "width": 1024,
    "file": "air-lookup-1024x900.png",
+   "sides": {
+    "left": "h1 \"Look up a record\" (type)",
+    "right": "the measure’s edge",
+    "top": "the region’s own top",
+    "bottom": "p \"Search Discogs for\" (type)"
+   },
+   "headerFoot": 53,
    "zone": {
     "left": 144,
     "right": 880,
@@ -609,7 +1266,8 @@
     "width": 454,
     "height": 65,
     "square": 65,
-    "under": "p \"Search Discogs for\""
+    "under": "p \"Search Discogs for\"",
+    "underKind": "type"
    },
    "tallest": {
     "left": 842,
@@ -617,7 +1275,8 @@
     "width": 38,
     "height": 146,
     "square": 38,
-    "under": "input"
+    "under": "input",
+    "underKind": "control"
    },
    "widest": {
     "left": 426,
@@ -625,18 +1284,81 @@
     "width": 454,
     "height": 65,
     "square": 65,
-    "under": "p \"Search Discogs for\""
+    "under": "p \"Search Discogs for\"",
+    "underKind": "type"
    },
    "hairlinesCrossed": {
     "best": 0,
     "tallest": 0,
     "widest": 0
+   },
+   "margined": {
+    "sides": {
+     "left": "h1 \"Look up a record\" (type)",
+     "right": "the measure’s edge",
+     "top": "the header",
+     "bottom": "p \"Search Discogs for\" (type)"
+    },
+    "headerFoot": 53,
+    "zone": {
+     "left": 144,
+     "right": 880,
+     "top": 73,
+     "width": 736
+    },
+    "heading": {
+     "text": "Look up a record",
+     "left": 144,
+     "top": 78,
+     "bottom": 127,
+     "textRight": 426
+    },
+    "boxes": 18,
+    "best": {
+     "left": 450,
+     "top": 77,
+     "width": 430,
+     "height": 37,
+     "square": 37,
+     "under": "p \"Search Discogs for\"",
+     "underKind": "type"
+    },
+    "tallest": {
+     "left": 450,
+     "top": 77,
+     "width": 430,
+     "height": 37,
+     "square": 37,
+     "under": "p \"Search Discogs for\"",
+     "underKind": "type"
+    },
+    "widest": {
+     "left": 450,
+     "top": 77,
+     "width": 430,
+     "height": 37,
+     "square": 37,
+     "under": "p \"Search Discogs for\"",
+     "underKind": "type"
+    },
+    "hairlinesCrossed": {
+     "best": 0,
+     "tallest": 0,
+     "widest": 0
+    }
    }
   },
   {
    "screen": "lookup",
    "width": 768,
    "file": "air-lookup-0768x900.png",
+   "sides": {
+    "left": "h1 \"Look up a record\" (type)",
+    "right": "the measure’s edge",
+    "top": "the region’s own top",
+    "bottom": "p \"Search Discogs for\" (type)"
+   },
+   "headerFoot": 53,
    "zone": {
     "left": 16,
     "right": 752,
@@ -657,7 +1379,8 @@
     "width": 454,
     "height": 65,
     "square": 65,
-    "under": "p \"Search Discogs for\""
+    "under": "p \"Search Discogs for\"",
+    "underKind": "type"
    },
    "tallest": {
     "left": 714,
@@ -665,7 +1388,8 @@
     "width": 38,
     "height": 146,
     "square": 38,
-    "under": "input"
+    "under": "input",
+    "underKind": "control"
    },
    "widest": {
     "left": 298,
@@ -673,18 +1397,81 @@
     "width": 454,
     "height": 65,
     "square": 65,
-    "under": "p \"Search Discogs for\""
+    "under": "p \"Search Discogs for\"",
+    "underKind": "type"
    },
    "hairlinesCrossed": {
     "best": 0,
     "tallest": 0,
     "widest": 0
+   },
+   "margined": {
+    "sides": {
+     "left": "h1 \"Look up a record\" (type)",
+     "right": "the measure’s edge",
+     "top": "the header",
+     "bottom": "p \"Search Discogs for\" (type)"
+    },
+    "headerFoot": 53,
+    "zone": {
+     "left": 16,
+     "right": 752,
+     "top": 73,
+     "width": 736
+    },
+    "heading": {
+     "text": "Look up a record",
+     "left": 16,
+     "top": 78,
+     "bottom": 127,
+     "textRight": 298
+    },
+    "boxes": 18,
+    "best": {
+     "left": 322,
+     "top": 77,
+     "width": 430,
+     "height": 37,
+     "square": 37,
+     "under": "p \"Search Discogs for\"",
+     "underKind": "type"
+    },
+    "tallest": {
+     "left": 322,
+     "top": 77,
+     "width": 430,
+     "height": 37,
+     "square": 37,
+     "under": "p \"Search Discogs for\"",
+     "underKind": "type"
+    },
+    "widest": {
+     "left": 322,
+     "top": 77,
+     "width": 430,
+     "height": 37,
+     "square": 37,
+     "under": "p \"Search Discogs for\"",
+     "underKind": "type"
+    },
+    "hairlinesCrossed": {
+     "best": 0,
+     "tallest": 0,
+     "widest": 0
+    }
    }
   },
   {
    "screen": "stats",
    "width": 1440,
    "file": "air-stats-1440x900.png",
+   "sides": {
+    "left": "p \"in the collection.\" (type)",
+    "right": "the measure’s edge",
+    "top": "the region’s own top",
+    "bottom": "p \"Estimated value of\" (type)"
+   },
+   "headerFoot": 53,
    "zone": {
     "left": 352,
     "right": 1088,
@@ -705,7 +1492,8 @@
     "width": 601,
     "height": 177,
     "square": 177,
-    "under": "p \"Estimated value of\""
+    "under": "p \"Estimated value of\"",
+    "underKind": "type"
    },
    "tallest": {
     "left": 487,
@@ -713,7 +1501,8 @@
     "width": 601,
     "height": 177,
     "square": 177,
-    "under": "p \"Estimated value of\""
+    "under": "p \"Estimated value of\"",
+    "underKind": "type"
    },
    "widest": {
     "left": 441,
@@ -721,18 +1510,81 @@
     "width": 647,
     "height": 145,
     "square": 145,
-    "under": "p \"in the collection.\""
+    "under": "p \"in the collection.\"",
+    "underKind": "type"
    },
    "hairlinesCrossed": {
     "best": 0,
     "tallest": 0,
     "widest": 0
+   },
+   "margined": {
+    "sides": {
+     "left": "p \"in the collection.\" (type)",
+     "right": "the measure’s edge",
+     "top": "the header",
+     "bottom": "p \"Estimated value of\" (type)"
+    },
+    "headerFoot": 53,
+    "zone": {
+     "left": 352,
+     "right": 1088,
+     "top": 77,
+     "width": 736
+    },
+    "heading": {
+     "text": "Stats",
+     "left": 352,
+     "top": 82,
+     "bottom": 131,
+     "textRight": 441
+    },
+    "boxes": 55,
+    "best": {
+     "left": 511,
+     "top": 77,
+     "width": 577,
+     "height": 153,
+     "square": 153,
+     "under": "p \"Estimated value of\"",
+     "underKind": "type"
+    },
+    "tallest": {
+     "left": 511,
+     "top": 77,
+     "width": 577,
+     "height": 153,
+     "square": 153,
+     "under": "p \"Estimated value of\"",
+     "underKind": "type"
+    },
+    "widest": {
+     "left": 465,
+     "top": 77,
+     "width": 623,
+     "height": 121,
+     "square": 121,
+     "under": "p \"in the collection.\"",
+     "underKind": "type"
+    },
+    "hairlinesCrossed": {
+     "best": 0,
+     "tallest": 0,
+     "widest": 0
+    }
    }
   },
   {
    "screen": "stats",
    "width": 1024,
    "file": "air-stats-1024x900.png",
+   "sides": {
+    "left": "p \"in the collection.\" (type)",
+    "right": "the measure’s edge",
+    "top": "the region’s own top",
+    "bottom": "p \"Estimated value of\" (type)"
+   },
+   "headerFoot": 53,
    "zone": {
     "left": 144,
     "right": 880,
@@ -753,7 +1605,8 @@
     "width": 601,
     "height": 177,
     "square": 177,
-    "under": "p \"Estimated value of\""
+    "under": "p \"Estimated value of\"",
+    "underKind": "type"
    },
    "tallest": {
     "left": 279,
@@ -761,7 +1614,8 @@
     "width": 601,
     "height": 177,
     "square": 177,
-    "under": "p \"Estimated value of\""
+    "under": "p \"Estimated value of\"",
+    "underKind": "type"
    },
    "widest": {
     "left": 233,
@@ -769,18 +1623,81 @@
     "width": 647,
     "height": 145,
     "square": 145,
-    "under": "p \"in the collection.\""
+    "under": "p \"in the collection.\"",
+    "underKind": "type"
    },
    "hairlinesCrossed": {
     "best": 0,
     "tallest": 0,
     "widest": 0
+   },
+   "margined": {
+    "sides": {
+     "left": "p \"in the collection.\" (type)",
+     "right": "the measure’s edge",
+     "top": "the header",
+     "bottom": "p \"Estimated value of\" (type)"
+    },
+    "headerFoot": 53,
+    "zone": {
+     "left": 144,
+     "right": 880,
+     "top": 77,
+     "width": 736
+    },
+    "heading": {
+     "text": "Stats",
+     "left": 144,
+     "top": 82,
+     "bottom": 131,
+     "textRight": 233
+    },
+    "boxes": 55,
+    "best": {
+     "left": 303,
+     "top": 77,
+     "width": 577,
+     "height": 153,
+     "square": 153,
+     "under": "p \"Estimated value of\"",
+     "underKind": "type"
+    },
+    "tallest": {
+     "left": 303,
+     "top": 77,
+     "width": 577,
+     "height": 153,
+     "square": 153,
+     "under": "p \"Estimated value of\"",
+     "underKind": "type"
+    },
+    "widest": {
+     "left": 257,
+     "top": 77,
+     "width": 623,
+     "height": 121,
+     "square": 121,
+     "under": "p \"in the collection.\"",
+     "underKind": "type"
+    },
+    "hairlinesCrossed": {
+     "best": 0,
+     "tallest": 0,
+     "widest": 0
+    }
    }
   },
   {
    "screen": "stats",
    "width": 768,
    "file": "air-stats-0768x900.png",
+   "sides": {
+    "left": "p \"in the collection.\" (type)",
+    "right": "the measure’s edge",
+    "top": "the region’s own top",
+    "bottom": "p \"Estimated value of\" (type)"
+   },
+   "headerFoot": 53,
    "zone": {
     "left": 16,
     "right": 752,
@@ -801,7 +1718,8 @@
     "width": 601,
     "height": 177,
     "square": 177,
-    "under": "p \"Estimated value of\""
+    "under": "p \"Estimated value of\"",
+    "underKind": "type"
    },
    "tallest": {
     "left": 151,
@@ -809,7 +1727,8 @@
     "width": 601,
     "height": 177,
     "square": 177,
-    "under": "p \"Estimated value of\""
+    "under": "p \"Estimated value of\"",
+    "underKind": "type"
    },
    "widest": {
     "left": 105,
@@ -817,18 +1736,81 @@
     "width": 647,
     "height": 145,
     "square": 145,
-    "under": "p \"in the collection.\""
+    "under": "p \"in the collection.\"",
+    "underKind": "type"
    },
    "hairlinesCrossed": {
     "best": 0,
     "tallest": 0,
     "widest": 0
+   },
+   "margined": {
+    "sides": {
+     "left": "p \"in the collection.\" (type)",
+     "right": "the measure’s edge",
+     "top": "the header",
+     "bottom": "p \"Estimated value of\" (type)"
+    },
+    "headerFoot": 53,
+    "zone": {
+     "left": 16,
+     "right": 752,
+     "top": 77,
+     "width": 736
+    },
+    "heading": {
+     "text": "Stats",
+     "left": 16,
+     "top": 82,
+     "bottom": 131,
+     "textRight": 105
+    },
+    "boxes": 55,
+    "best": {
+     "left": 175,
+     "top": 77,
+     "width": 577,
+     "height": 153,
+     "square": 153,
+     "under": "p \"Estimated value of\"",
+     "underKind": "type"
+    },
+    "tallest": {
+     "left": 175,
+     "top": 77,
+     "width": 577,
+     "height": 153,
+     "square": 153,
+     "under": "p \"Estimated value of\"",
+     "underKind": "type"
+    },
+    "widest": {
+     "left": 129,
+     "top": 77,
+     "width": 623,
+     "height": 121,
+     "square": 121,
+     "under": "p \"in the collection.\"",
+     "underKind": "type"
+    },
+    "hairlinesCrossed": {
+     "best": 0,
+     "tallest": 0,
+     "widest": 0
+    }
    }
   },
   {
    "screen": "manage",
    "width": 1440,
    "file": "air-manage-1440x900.png",
+   "sides": {
+    "left": "a \"Show all\" (type)",
+    "right": "th \"Formed\" (type)",
+    "top": "the region’s own top",
+    "bottom": "tr rule (rule)"
+   },
+   "headerFoot": 53,
    "zone": {
     "left": 160,
     "right": 1280,
@@ -849,7 +1831,8 @@
     "width": 340,
     "height": 160,
     "square": 160,
-    "under": "tr rule"
+    "under": "tr rule",
+    "underKind": "rule"
    },
    "tallest": {
     "left": 580,
@@ -857,7 +1840,8 @@
     "width": 340,
     "height": 160,
     "square": 160,
-    "under": "tr rule"
+    "under": "tr rule",
+    "underKind": "rule"
    },
    "widest": {
     "left": 301,
@@ -865,18 +1849,81 @@
     "width": 979,
     "height": 63,
     "square": 63,
-    "under": "p \"Reference data use\""
+    "under": "p \"Reference data use\"",
+    "underKind": "type"
    },
    "hairlinesCrossed": {
     "best": 0,
     "tallest": 0,
     "widest": 0
+   },
+   "margined": {
+    "sides": {
+     "left": "a \"Show all\" (type)",
+     "right": "th \"Formed\" (type)",
+     "top": "the region’s own top",
+     "bottom": "input (control)"
+    },
+    "headerFoot": 53,
+    "zone": {
+     "left": 160,
+     "right": 1280,
+     "top": 93,
+     "width": 1120
+    },
+    "heading": {
+     "text": "Manage",
+     "left": 160,
+     "top": 98,
+     "bottom": 147,
+     "textRight": 301
+    },
+    "boxes": 164,
+    "best": {
+     "left": 604,
+     "top": 93,
+     "width": 292,
+     "height": 143,
+     "square": 143,
+     "under": "input",
+     "underKind": "control"
+    },
+    "tallest": {
+     "left": 604,
+     "top": 93,
+     "width": 292,
+     "height": 143,
+     "square": 143,
+     "under": "input",
+     "underKind": "control"
+    },
+    "widest": {
+     "left": 325,
+     "top": 93,
+     "width": 955,
+     "height": 39,
+     "square": 39,
+     "under": "p \"Reference data use\"",
+     "underKind": "type"
+    },
+    "hairlinesCrossed": {
+     "best": 0,
+     "tallest": 0,
+     "widest": 0
+    }
    }
   },
   {
    "screen": "manage",
    "width": 1024,
    "file": "air-manage-1024x900.png",
+   "sides": {
+    "left": "a \"Show all\" (type)",
+    "right": "th \"Formed\" (type)",
+    "top": "the region’s own top",
+    "bottom": "tr rule (rule)"
+   },
+   "headerFoot": 53,
    "zone": {
     "left": 16,
     "right": 1008,
@@ -897,7 +1944,8 @@
     "width": 212,
     "height": 160,
     "square": 160,
-    "under": "tr rule"
+    "under": "tr rule",
+    "underKind": "rule"
    },
    "tallest": {
     "left": 436,
@@ -905,7 +1953,8 @@
     "width": 212,
     "height": 160,
     "square": 160,
-    "under": "tr rule"
+    "under": "tr rule",
+    "underKind": "rule"
    },
    "widest": {
     "left": 157,
@@ -913,18 +1962,81 @@
     "width": 851,
     "height": 63,
     "square": 63,
-    "under": "p \"Reference data use\""
+    "under": "p \"Reference data use\"",
+    "underKind": "type"
    },
    "hairlinesCrossed": {
     "best": 0,
     "tallest": 0,
     "widest": 0
+   },
+   "margined": {
+    "sides": {
+     "left": "a \"Show all\" (type)",
+     "right": "th \"Formed\" (type)",
+     "top": "the region’s own top",
+     "bottom": "input (control)"
+    },
+    "headerFoot": 53,
+    "zone": {
+     "left": 16,
+     "right": 1008,
+     "top": 93,
+     "width": 992
+    },
+    "heading": {
+     "text": "Manage",
+     "left": 16,
+     "top": 98,
+     "bottom": 147,
+     "textRight": 157
+    },
+    "boxes": 164,
+    "best": {
+     "left": 460,
+     "top": 93,
+     "width": 164,
+     "height": 143,
+     "square": 143,
+     "under": "input",
+     "underKind": "control"
+    },
+    "tallest": {
+     "left": 460,
+     "top": 93,
+     "width": 164,
+     "height": 143,
+     "square": 143,
+     "under": "input",
+     "underKind": "control"
+    },
+    "widest": {
+     "left": 181,
+     "top": 93,
+     "width": 827,
+     "height": 39,
+     "square": 39,
+     "under": "p \"Reference data use\"",
+     "underKind": "type"
+    },
+    "hairlinesCrossed": {
+     "best": 0,
+     "tallest": 0,
+     "widest": 0
+    }
    }
   },
   {
    "screen": "manage",
    "width": 768,
    "file": "air-manage-0768x900.png",
+   "sides": {
+    "left": "th \"Country\" (type)",
+    "right": "the measure’s edge",
+    "top": "the region’s own top",
+    "bottom": "span \"Actions\" (type)"
+   },
+   "headerFoot": 53,
    "zone": {
     "left": 16,
     "right": 752,
@@ -945,7 +2057,8 @@
     "width": 195,
     "height": 144,
     "square": 144,
-    "under": "span \"Actions\""
+    "under": "span \"Actions\"",
+    "underKind": "type"
    },
    "tallest": {
     "left": 677,
@@ -953,7 +2066,8 @@
     "width": 75,
     "height": 160,
     "square": 75,
-    "under": "tr rule"
+    "under": "tr rule",
+    "underKind": "rule"
    },
    "widest": {
     "left": 157,
@@ -961,18 +2075,81 @@
     "width": 595,
     "height": 63,
     "square": 63,
-    "under": "p \"Reference data use\""
+    "under": "p \"Reference data use\"",
+    "underKind": "type"
    },
    "hairlinesCrossed": {
     "best": 0,
     "tallest": 0,
     "widest": 0
+   },
+   "margined": {
+    "sides": {
+     "left": "th \"Country\" (type)",
+     "right": "the measure’s edge",
+     "top": "the region’s own top",
+     "bottom": "span \"Actions\" (type)"
+    },
+    "headerFoot": 53,
+    "zone": {
+     "left": 16,
+     "right": 752,
+     "top": 93,
+     "width": 736
+    },
+    "heading": {
+     "text": "Manage",
+     "left": 16,
+     "top": 98,
+     "bottom": 147,
+     "textRight": 157
+    },
+    "boxes": 164,
+    "best": {
+     "left": 581,
+     "top": 93,
+     "width": 171,
+     "height": 120,
+     "square": 120,
+     "under": "span \"Actions\"",
+     "underKind": "type"
+    },
+    "tallest": {
+     "left": 701,
+     "top": 93,
+     "width": 51,
+     "height": 143,
+     "square": 51,
+     "under": "button",
+     "underKind": "control"
+    },
+    "widest": {
+     "left": 181,
+     "top": 93,
+     "width": 571,
+     "height": 39,
+     "square": 39,
+     "under": "p \"Reference data use\"",
+     "underKind": "type"
+    },
+    "hairlinesCrossed": {
+     "best": 0,
+     "tallest": 0,
+     "widest": 0
+    }
    }
   },
   {
    "screen": "record-form-new",
    "width": 1440,
    "file": "air-record-form-new-1440x900.png",
+   "sides": {
+    "left": "h1 \"Add a record\" (type)",
+    "right": "the measure’s edge",
+    "top": "the region’s own top",
+    "bottom": "input (control)"
+   },
+   "headerFoot": 53,
    "zone": {
     "left": 352,
     "right": 1088,
@@ -993,7 +2170,8 @@
     "width": 519,
     "height": 112,
     "square": 112,
-    "under": "input"
+    "under": "input",
+    "underKind": "control"
    },
    "tallest": {
     "left": 569,
@@ -1001,7 +2179,8 @@
     "width": 519,
     "height": 112,
     "square": 112,
-    "under": "input"
+    "under": "input",
+    "underKind": "control"
    },
    "widest": {
     "left": 569,
@@ -1009,18 +2188,81 @@
     "width": 519,
     "height": 112,
     "square": 112,
-    "under": "input"
+    "under": "input",
+    "underKind": "control"
    },
    "hairlinesCrossed": {
     "best": 0,
     "tallest": 0,
     "widest": 0
+   },
+   "margined": {
+    "sides": {
+     "left": "h1 \"Add a record\" (type)",
+     "right": "the measure’s edge",
+     "top": "the header",
+     "bottom": "input (control)"
+    },
+    "headerFoot": 53,
+    "zone": {
+     "left": 352,
+     "right": 1088,
+     "top": 77,
+     "width": 736
+    },
+    "heading": {
+     "text": "Add a record",
+     "left": 352,
+     "top": 118,
+     "bottom": 167,
+     "textRight": 569
+    },
+    "boxes": 19,
+    "best": {
+     "left": 593,
+     "top": 77,
+     "width": 495,
+     "height": 88,
+     "square": 88,
+     "under": "input",
+     "underKind": "control"
+    },
+    "tallest": {
+     "left": 593,
+     "top": 77,
+     "width": 495,
+     "height": 88,
+     "square": 88,
+     "under": "input",
+     "underKind": "control"
+    },
+    "widest": {
+     "left": 593,
+     "top": 77,
+     "width": 495,
+     "height": 88,
+     "square": 88,
+     "under": "input",
+     "underKind": "control"
+    },
+    "hairlinesCrossed": {
+     "best": 0,
+     "tallest": 0,
+     "widest": 0
+    }
    }
   },
   {
    "screen": "record-form-new",
    "width": 1024,
    "file": "air-record-form-new-1024x900.png",
+   "sides": {
+    "left": "h1 \"Add a record\" (type)",
+    "right": "the measure’s edge",
+    "top": "the region’s own top",
+    "bottom": "input (control)"
+   },
+   "headerFoot": 53,
    "zone": {
     "left": 144,
     "right": 880,
@@ -1041,7 +2283,8 @@
     "width": 519,
     "height": 112,
     "square": 112,
-    "under": "input"
+    "under": "input",
+    "underKind": "control"
    },
    "tallest": {
     "left": 361,
@@ -1049,7 +2292,8 @@
     "width": 519,
     "height": 112,
     "square": 112,
-    "under": "input"
+    "under": "input",
+    "underKind": "control"
    },
    "widest": {
     "left": 361,
@@ -1057,18 +2301,81 @@
     "width": 519,
     "height": 112,
     "square": 112,
-    "under": "input"
+    "under": "input",
+    "underKind": "control"
    },
    "hairlinesCrossed": {
     "best": 0,
     "tallest": 0,
     "widest": 0
+   },
+   "margined": {
+    "sides": {
+     "left": "h1 \"Add a record\" (type)",
+     "right": "the measure’s edge",
+     "top": "the header",
+     "bottom": "input (control)"
+    },
+    "headerFoot": 53,
+    "zone": {
+     "left": 144,
+     "right": 880,
+     "top": 77,
+     "width": 736
+    },
+    "heading": {
+     "text": "Add a record",
+     "left": 144,
+     "top": 118,
+     "bottom": 167,
+     "textRight": 361
+    },
+    "boxes": 19,
+    "best": {
+     "left": 385,
+     "top": 77,
+     "width": 495,
+     "height": 88,
+     "square": 88,
+     "under": "input",
+     "underKind": "control"
+    },
+    "tallest": {
+     "left": 385,
+     "top": 77,
+     "width": 495,
+     "height": 88,
+     "square": 88,
+     "under": "input",
+     "underKind": "control"
+    },
+    "widest": {
+     "left": 385,
+     "top": 77,
+     "width": 495,
+     "height": 88,
+     "square": 88,
+     "under": "input",
+     "underKind": "control"
+    },
+    "hairlinesCrossed": {
+     "best": 0,
+     "tallest": 0,
+     "widest": 0
+    }
    }
   },
   {
    "screen": "record-form-new",
    "width": 768,
    "file": "air-record-form-new-0768x900.png",
+   "sides": {
+    "left": "h1 \"Add a record\" (type)",
+    "right": "the measure’s edge",
+    "top": "the region’s own top",
+    "bottom": "input (control)"
+   },
+   "headerFoot": 53,
    "zone": {
     "left": 16,
     "right": 752,
@@ -1089,7 +2396,8 @@
     "width": 519,
     "height": 112,
     "square": 112,
-    "under": "input"
+    "under": "input",
+    "underKind": "control"
    },
    "tallest": {
     "left": 233,
@@ -1097,7 +2405,8 @@
     "width": 519,
     "height": 112,
     "square": 112,
-    "under": "input"
+    "under": "input",
+    "underKind": "control"
    },
    "widest": {
     "left": 233,
@@ -1105,18 +2414,81 @@
     "width": 519,
     "height": 112,
     "square": 112,
-    "under": "input"
+    "under": "input",
+    "underKind": "control"
    },
    "hairlinesCrossed": {
     "best": 0,
     "tallest": 0,
     "widest": 0
+   },
+   "margined": {
+    "sides": {
+     "left": "h1 \"Add a record\" (type)",
+     "right": "the measure’s edge",
+     "top": "the header",
+     "bottom": "input (control)"
+    },
+    "headerFoot": 53,
+    "zone": {
+     "left": 16,
+     "right": 752,
+     "top": 77,
+     "width": 736
+    },
+    "heading": {
+     "text": "Add a record",
+     "left": 16,
+     "top": 118,
+     "bottom": 167,
+     "textRight": 233
+    },
+    "boxes": 19,
+    "best": {
+     "left": 257,
+     "top": 77,
+     "width": 495,
+     "height": 88,
+     "square": 88,
+     "under": "input",
+     "underKind": "control"
+    },
+    "tallest": {
+     "left": 257,
+     "top": 77,
+     "width": 495,
+     "height": 88,
+     "square": 88,
+     "under": "input",
+     "underKind": "control"
+    },
+    "widest": {
+     "left": 257,
+     "top": 77,
+     "width": 495,
+     "height": 88,
+     "square": 88,
+     "under": "input",
+     "underKind": "control"
+    },
+    "hairlinesCrossed": {
+     "best": 0,
+     "tallest": 0,
+     "widest": 0
+    }
    }
   },
   {
    "screen": "record-form-edit",
    "width": 1440,
    "file": "air-record-form-edit-1440x900.png",
+   "sides": {
+    "left": "h1 \"Edit record\" (type)",
+    "right": "the measure’s edge",
+    "top": "the region’s own top",
+    "bottom": "input (control)"
+   },
+   "headerFoot": 53,
    "zone": {
     "left": 352,
     "right": 1088,
@@ -1137,7 +2509,8 @@
     "width": 553,
     "height": 124,
     "square": 124,
-    "under": "input"
+    "under": "input",
+    "underKind": "control"
    },
    "tallest": {
     "left": 535,
@@ -1145,7 +2518,8 @@
     "width": 553,
     "height": 124,
     "square": 124,
-    "under": "input"
+    "under": "input",
+    "underKind": "control"
    },
    "widest": {
     "left": 535,
@@ -1153,18 +2527,81 @@
     "width": 553,
     "height": 124,
     "square": 124,
-    "under": "input"
+    "under": "input",
+    "underKind": "control"
    },
    "hairlinesCrossed": {
     "best": 0,
     "tallest": 0,
     "widest": 0
+   },
+   "margined": {
+    "sides": {
+     "left": "h1 \"Edit record\" (type)",
+     "right": "the measure’s edge",
+     "top": "the header",
+     "bottom": "input (control)"
+    },
+    "headerFoot": 53,
+    "zone": {
+     "left": 352,
+     "right": 1088,
+     "top": 77,
+     "width": 736
+    },
+    "heading": {
+     "text": "Edit record",
+     "left": 352,
+     "top": 118,
+     "bottom": 167,
+     "textRight": 535
+    },
+    "boxes": 37,
+    "best": {
+     "left": 559,
+     "top": 77,
+     "width": 529,
+     "height": 100,
+     "square": 100,
+     "under": "input",
+     "underKind": "control"
+    },
+    "tallest": {
+     "left": 559,
+     "top": 77,
+     "width": 529,
+     "height": 100,
+     "square": 100,
+     "under": "input",
+     "underKind": "control"
+    },
+    "widest": {
+     "left": 559,
+     "top": 77,
+     "width": 529,
+     "height": 100,
+     "square": 100,
+     "under": "input",
+     "underKind": "control"
+    },
+    "hairlinesCrossed": {
+     "best": 0,
+     "tallest": 0,
+     "widest": 0
+    }
    }
   },
   {
    "screen": "record-form-edit",
    "width": 1024,
    "file": "air-record-form-edit-1024x900.png",
+   "sides": {
+    "left": "h1 \"Edit record\" (type)",
+    "right": "the measure’s edge",
+    "top": "the region’s own top",
+    "bottom": "input (control)"
+   },
+   "headerFoot": 53,
    "zone": {
     "left": 144,
     "right": 880,
@@ -1185,7 +2622,8 @@
     "width": 553,
     "height": 124,
     "square": 124,
-    "under": "input"
+    "under": "input",
+    "underKind": "control"
    },
    "tallest": {
     "left": 327,
@@ -1193,7 +2631,8 @@
     "width": 553,
     "height": 124,
     "square": 124,
-    "under": "input"
+    "under": "input",
+    "underKind": "control"
    },
    "widest": {
     "left": 327,
@@ -1201,18 +2640,81 @@
     "width": 553,
     "height": 124,
     "square": 124,
-    "under": "input"
+    "under": "input",
+    "underKind": "control"
    },
    "hairlinesCrossed": {
     "best": 0,
     "tallest": 0,
     "widest": 0
+   },
+   "margined": {
+    "sides": {
+     "left": "h1 \"Edit record\" (type)",
+     "right": "the measure’s edge",
+     "top": "the header",
+     "bottom": "input (control)"
+    },
+    "headerFoot": 53,
+    "zone": {
+     "left": 144,
+     "right": 880,
+     "top": 77,
+     "width": 736
+    },
+    "heading": {
+     "text": "Edit record",
+     "left": 144,
+     "top": 118,
+     "bottom": 167,
+     "textRight": 327
+    },
+    "boxes": 37,
+    "best": {
+     "left": 351,
+     "top": 77,
+     "width": 529,
+     "height": 100,
+     "square": 100,
+     "under": "input",
+     "underKind": "control"
+    },
+    "tallest": {
+     "left": 351,
+     "top": 77,
+     "width": 529,
+     "height": 100,
+     "square": 100,
+     "under": "input",
+     "underKind": "control"
+    },
+    "widest": {
+     "left": 351,
+     "top": 77,
+     "width": 529,
+     "height": 100,
+     "square": 100,
+     "under": "input",
+     "underKind": "control"
+    },
+    "hairlinesCrossed": {
+     "best": 0,
+     "tallest": 0,
+     "widest": 0
+    }
    }
   },
   {
    "screen": "record-form-edit",
    "width": 768,
    "file": "air-record-form-edit-0768x900.png",
+   "sides": {
+    "left": "h1 \"Edit record\" (type)",
+    "right": "the measure’s edge",
+    "top": "the region’s own top",
+    "bottom": "input (control)"
+   },
+   "headerFoot": 53,
    "zone": {
     "left": 16,
     "right": 752,
@@ -1233,7 +2735,8 @@
     "width": 553,
     "height": 124,
     "square": 124,
-    "under": "input"
+    "under": "input",
+    "underKind": "control"
    },
    "tallest": {
     "left": 199,
@@ -1241,7 +2744,8 @@
     "width": 553,
     "height": 124,
     "square": 124,
-    "under": "input"
+    "under": "input",
+    "underKind": "control"
    },
    "widest": {
     "left": 199,
@@ -1249,12 +2753,68 @@
     "width": 553,
     "height": 124,
     "square": 124,
-    "under": "input"
+    "under": "input",
+    "underKind": "control"
    },
    "hairlinesCrossed": {
     "best": 0,
     "tallest": 0,
     "widest": 0
+   },
+   "margined": {
+    "sides": {
+     "left": "h1 \"Edit record\" (type)",
+     "right": "the measure’s edge",
+     "top": "the header",
+     "bottom": "input (control)"
+    },
+    "headerFoot": 53,
+    "zone": {
+     "left": 16,
+     "right": 752,
+     "top": 77,
+     "width": 736
+    },
+    "heading": {
+     "text": "Edit record",
+     "left": 16,
+     "top": 118,
+     "bottom": 167,
+     "textRight": 199
+    },
+    "boxes": 37,
+    "best": {
+     "left": 223,
+     "top": 77,
+     "width": 529,
+     "height": 100,
+     "square": 100,
+     "under": "input",
+     "underKind": "control"
+    },
+    "tallest": {
+     "left": 223,
+     "top": 77,
+     "width": 529,
+     "height": 100,
+     "square": 100,
+     "under": "input",
+     "underKind": "control"
+    },
+    "widest": {
+     "left": 223,
+     "top": 77,
+     "width": 529,
+     "height": 100,
+     "square": 100,
+     "under": "input",
+     "underKind": "control"
+    },
+    "hairlinesCrossed": {
+     "best": 0,
+     "tallest": 0,
+     "widest": 0
+    }
    }
   }
  ]

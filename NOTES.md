@@ -38597,3 +38597,71 @@ in the next gate, it is diagnosed before anything else lands.**
 
 **Still outstanding:** Adam's check of the table view on the phone. The
 fix for step 105 rests on it and is not proved without it.
+
+## Adam's phone check, and the narrow panel measured (9 Oct, evening)
+
+**The phone check is partial, and is recorded as partial.** Adam: the
+filters are "mostly working". That is the filters. He did not report on
+the header's or the band's presses, which step 105's staging says were
+taken too. The whole check is not clean; "mostly" is his word and is not
+explained.
+
+**"The dropdown boxes are wonky", measured before anyone rules.**
+`e2e/sheet/panel-narrow.sheet.ts`, read-only on the real collection, at
+390 and 320 by 664, table and grid, Genre (32 options, a 1,408 list) and
+Store (2), from the page's top and from 150 down; output and captures in
+`docs/captures/panel-narrow/`.
+
+- **Against steps 101 and 102 the panel is as ruled, in both engines and
+  at both widths.** Top at the last line's foot (518; 368 from 150 down),
+  bottom at the window's, the window's full width, the list at the 20
+  inset.
+- **Nothing moves on open or close**: the page's scroll, length and
+  width, every line's top and the first row's top are the same closed,
+  open and closed again.
+- **The page behind holds against everything staged that a person does.**
+  A finger's drag (Chromium's touch stream) on the list, on the inset and
+  above the lines, both directions: the page stays. End and Home, in
+  both engines: the page stays. The list scrolls under the finger, from
+  the inset as from the rows; a list shorter than the panel moves nothing.
+- **It does not hold against a script**: `scrollBy(0, 300)` moves the
+  page 300 in both engines, and then the four lines go up by 300 while
+  the panel stays where it was placed, so the panel is no longer beneath
+  its lines. The panel is re-placed on a resize and not on a scroll. No
+  person's gesture staged here does that.
+- **NOT READ: a finger's drag on the phone's engine.** Playwright's
+  WebKit has no touch drag and no wheel, and neither engine is Mobile
+  Safari with its collapsing toolbar and rubber band. The hold is
+  `overflow: hidden` on the root; whether that Safari holds a root so
+  marked against a finger is exactly what this could not stage. If it
+  does not, the bullet above is what he would see.
+- **The panel is 146 tall at 664**: three rows and a third of 32, with a
+  scroll range of 1,263. From 150 down it is 296. That is as ruled, and
+  it is the figure the captures show.
+
+**No defect against an existing ruling was found in what could be
+staged.** Nothing was changed.
+
+## §T.6's air after the 24 margin (9 Oct, evening)
+
+Re-measured by the air sheet, not subtracted: type and controls are
+grown by 24 and the header's foot lowered by 24 before the search.
+Rules, images and the measure's own edges are not grown, because the
+sentence names "a control, type or the header" and not them. Each side's
+neighbour is in `docs/captures/air-103/air.md`.
+
+- Table: 832 × 452 at 1440, 416 × 452 at 1024, 281 × 334 at 768. Draws.
+- Grid: 832 × 461, 416 × 461, 281 × 343. Draws. The coordinator's
+  arithmetic gave 437 and 319: the grid's air ends on a cover, an image,
+  which the sentence does not name. If an image takes the margin it is
+  437 and 319, and still draws.
+- Stats: 577 × 153, at every width. **Does not draw, short by 17.7.** It
+  loses 24 and not 48: beneath is type; above, the screen's own padding
+  already keeps it 24 off the header; left is type and right the
+  measure's edge, which cost width and not height.
+- Want list 143 (ends on a rule; 119 if a rule takes the margin), manage
+  143 / 143 / 120, record form 88 new and 100 editing, look up 37. None
+  draws.
+
+So on today's collection the heading's figure is on the table and the
+grid alone.
