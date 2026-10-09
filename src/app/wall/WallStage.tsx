@@ -288,7 +288,12 @@ export function WallStage({
           style={{ background: "oklch(0.72 0.004 80)" }}
         />
       </div>
-      <div className="relative min-h-0 min-w-0 flex-1">
+      {/*
+        Positioned only while the sentence is there to place. Positioned always, every far seat sat in a layer, and
+        `nav-menu-84.spec.ts` holds that they sit in none: it is what lets a fixed panel cover them, raised or not.
+        The step that added this found out at a gate (9 Oct).
+      */}
+      <div className={`${nothingMatches ? 'relative ' : ''}min-h-0 min-w-0 flex-1`}>
         <WallOverview seats={seats} pulledId={null} linked onSeatClick={onZoomIn} />
         {nothingMatches ? <ShelfEmpty /> : null}
       </div>

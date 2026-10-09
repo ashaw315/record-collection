@@ -31,8 +31,8 @@ const GOING = { oxblood: 'oklch(0.36 0.098 18)', 'the survey’s grey': 'oklch(0
 const INK = 'oklch(0.19 0.008 60)';
 
 /** Every element painting one of the colours that go, as "what, where, which". */
-const going = (page: Page) =>
-  page.evaluate((GOING) => {
+const going = (page: Page, within = 'body') =>
+  page.evaluate(({ GOING, within }) => {
     const canvas = document.createElement('canvas'); canvas.width = 1; canvas.height = 1;
     const ctx = canvas.getContext('2d', { willReadFrequently: true }) as CanvasRenderingContext2D;
     const cache = new Map<string, [number, number, number, number]>();
@@ -51,7 +51,7 @@ const going = (page: Page) =>
     };
     const colours = (value: string) => value.match(/(?:rgba?|lab|oklab|oklch|lch|color)\([^)]*\)/g) ?? [];
     const found = new Set<string>();
-    const all = Array.from(document.querySelectorAll('body, body *')).filter((el) => el.closest('nextjs-portal, script, style') === null);
+    const all = Array.from(document.querySelectorAll(`${within}, ${within} *`)).filter((el) => el.closest('nextjs-portal, script, style') === null);
     for (const el of all) {
       const cs = getComputedStyle(el);
       const text = Array.from(el.childNodes).some((n) => n.nodeType === Node.TEXT_NODE && (n.textContent ?? '').trim() !== '') || el instanceof HTMLInputElement || el instanceof HTMLSelectElement || el instanceof HTMLTextAreaElement;
@@ -70,10 +70,10 @@ const going = (page: Page) =>
       }
     }
     return { found: [...found].sort(), read: all.length };
-  }, GOING);
+  }, { GOING, within });
 
-async function expectNone(page: Page, name: string) {
-  const r = await going(page);
+async function expectNone(page: Page, name: string, within = 'body') {
+  const r = await going(page, within);
   expect(r.read, `${name}: the precondition, the page was read`).toBeGreaterThan(5);
   /* Soft, so one run names every screen and not only the first. */
   expect.soft(r.found, `${name}: oxblood, the grey or the destructive red`).toEqual([]);
@@ -129,6 +129,25 @@ test.describe('§T.6: oxblood, the survey’s grey and the destructive red are g
       });
       expect(m, path.replace(f.record, '<record>')).toEqual({ fill: 0, border: '1px', borderColour: ink, text: ink, radius: '0px' });
     }
+  });
+});
+
+test.describe('§9.3, settled: "Delete is on every record, so it cannot be red here"', () => {
+  /*
+    Fails against the record page's confirmation as built: its Delete was the shared destructive variant, red type on
+    a red tint (5.03 : 1, measured 9 Oct). §9.3: "Destructive actions are identical to constructive ones... The
+    confirmation carries the weight instead." §T.6 maps a destructive action to ink independently. Only the dialog is
+    read: the record page beneath it is a closed screen and is not this test's.
+  */
+  test('the record page’s delete confirmation has no red: its Delete is the ink box its Cancel is', async ({ page }) => {
+    await login(page);
+    const f = await seedFixture(page, 'Colour103');
+    await openScreen(page, `/records/${f.record}`, GRID_FORK);
+    await page.locator('[data-control="delete"]').click();
+    await page.getByTestId('confirm-delete').waitFor();
+    await expectNone(page, 'the record page’s confirmation', '[data-slot="dialog-content"]');
+    const m = await page.getByTestId('confirm-delete').evaluate((b) => { const cs = getComputedStyle(b); return { fill: cs.backgroundColor, border: cs.borderTopWidth, radius: cs.borderTopLeftRadius }; });
+    expect(m).toEqual({ fill: 'rgba(0, 0, 0, 0)', border: '1px', radius: '0px' });
   });
 });
 
