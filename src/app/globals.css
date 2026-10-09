@@ -223,6 +223,31 @@
   --sidebar-ring: oklch(0.556 0 0);
 }
 
+/*
+ * §T.6 (step 103): "Oxblood goes from every screen... colour in this app now
+ * means a record's own." On the screens §T.6 reaches, each constant colour
+ * becomes what its role takes: text, a rule, a ring and a mark in ink; the
+ * survey's grey, the label colour; a destructive action, ink.
+ *
+ * Scoped by attribute and not set at the root, because §T.6 "does not reach
+ * the shelf, the record page or the modal", and sign-in is not among its
+ * screens: the record page still draws from these tokens (its price
+ * sparkline, its asides, its confirmation), and a root change would restyle
+ * a closed screen inside a build step. A screen takes the mapping by
+ * carrying `data-t6` on its root, and a dialog on its popup, since a dialog
+ * is drawn outside the page.
+ *
+ * A FILLED control is not a colour swap, so it is not here: the shared
+ * button answers `in-data-t6:` with §9.3's unfilled ink box.
+ */
+[data-t6] {
+  --primary: var(--foreground);
+  --primary-foreground: var(--background);
+  --destructive: var(--foreground);
+  --ring: var(--foreground);
+  --muted-foreground: oklch(0.44 0.008 70);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

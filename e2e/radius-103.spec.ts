@@ -1,9 +1,7 @@
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
-import { registerCleanup, trackArtist } from './cleanup';
-import { seedImage } from './seed';
-import { GRID_FORK, NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
+import { registerCleanup } from './cleanup';
+import { GRID_FORK } from '../src/app/records/[id]/band-geometry';
+import { eachScreen, openScreen as open, seedFixture } from './screens-103';
 import { login } from './sign-in';
 
 registerCleanup();
@@ -25,28 +23,6 @@ registerCleanup();
  * for is not: the confirmation dialogs on manage and the want list, and
  * tooltips.
  */
-async function seed(page: Page): Promise<{ record: string; want: string }> {
-  const suffix = `${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
-  const artist = await page.request.post('/api/artists', { data: { name: `Radius103-${suffix}` } });
-  const artistId = ((await artist.json()) as { id: string }).id;
-  trackArtist(artistId);
-  const record = await page.request.post('/api/records', { data: { title: `Radius103 ${suffix}`, artistId } });
-  expect(record.status(), 'the fixture record exists').toBe(201);
-  /* A cover, so the record has a modal to open. */
-  await seedImage({ recordId: ((await record.json()) as { id: string }).id, imageType: 'cover', url: `data:image/png;base64,${readFileSync(join('test', 'fixtures', 'covers', 'cover-inside-1000x951.png')).toString('base64')}` });
-  const want = await page.request.post('/api/want-list', { data: { title: `Radius103 want ${suffix}`, artistId, priority: 3 } });
-  expect(want.status(), 'the fixture want-list item exists').toBe(201);
-  return { record: ((await record.json()) as { id: string }).id, want: ((await want.json()) as { id: string }).id };
-}
-
-async function open(page: Page, path: string, width: number) {
-  await page.setViewportSize({ width, height: NO_SCROLL_HEIGHT });
-  await page.goto(path);
-  await page.locator('h1, [data-testid="wall"], [data-testid="record-page-8a"]').first().waitFor({ state: 'attached', timeout: 30_000 });
-  await page.waitForLoadState('load');
-  await page.addStyleTag({ content: 'nextjs-portal{display:none!important}' });
-}
-
 /** Every element with a rounded corner, as "what radius", and how many elements were read. */
 const rounded = (page: Page) =>
   page.evaluate(() => {
@@ -99,7 +75,7 @@ test.describe('§T.6’s premise: every ruled surface is already square', () => 
     });
 
     test(`at ${width}: a record’s page, its delete confirmation and its modal`, async ({ page }) => {
-      const f = await seed(page);
+      const f = await seedFixture(page, 'Radius103');
       await open(page, `/records/${f.record}`, width);
       await expectSquare(page, 'the record page');
       await page.locator('[data-cover-trigger]').click();
@@ -119,19 +95,8 @@ test.describe('§T.6: no corner is rounded on the screens it reaches', () => {
   for (const width of [390, GRID_FORK]) {
     test(`at ${width}: the want list, look up, stats, manage’s six sections, the record form, and the four pages not surveyed`, async ({ page }) => {
       await login(page);
-      const f = await seed(page);
-      for (const path of ['/want-list', '/lookup', '/stats', '/records/new', `/records/${f.record}/edit`, '/suggestions', '/want-list/new', `/want-list/${f.want}`, `/want-list/${f.want}/edit`]) {
-        await open(page, path, width);
-        await expectSquare(page, path.replace(f.record, '<record>').replace(f.want, '<item>'));
-      }
-      await open(page, '/manage', width);
-      const names = page.locator('nav[aria-label="Resource"] button');
-      const count = await names.count();
-      expect(count, 'manage’s sections').toBe(6);
-      for (let i = 0; i < count; i += 1) {
-        await names.nth(i).click();
-        await expectSquare(page, `manage, ${(await names.nth(i).textContent()) ?? i}`);
-      }
+      const f = await seedFixture(page, 'Radius103');
+      await eachScreen(page, f, width, (name) => expectSquare(page, name));
     });
 
     test(`at ${width}: sign-in, signed out`, async ({ page }) => {

@@ -156,7 +156,8 @@ function CheckboxGroup({
               key={option.id}
               className={cn(
                 'cursor-pointer rounded-xs border px-2 py-1 text-xs transition-colors',
-                active ? 'border-primary bg-primary text-primary-foreground' : 'border-border hover:bg-accent',
+                /* §T.6: no fill. A chosen one takes §3's mark for a choice, the 2px underline 7 below. */
+                active ? 'border-foreground text-foreground underline decoration-2 underline-offset-[7px]' : 'border-border hover:bg-accent',
               )}
             >
               <input

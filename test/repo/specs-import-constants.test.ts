@@ -100,6 +100,8 @@ const GOVERNED = [
   'e2e/grid-99.spec.ts',
   /* §T.6 (step 103a): the record page, its confirmation and its modal read for a rounded corner. */
   'e2e/radius-103.spec.ts',
+  'e2e/colour-103.spec.ts',
+  'e2e/screens-103.ts',
   'e2e/sheet/cover-boxes.sheet.ts',
   'e2e/sheet/record-modal.sheet.ts',
   'e2e/sheet/record-modal-92.sheet.ts',

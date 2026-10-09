@@ -137,7 +137,7 @@ export function WantListRow({ item }: { item: WantListItem }) {
              */
             <Link
               href={`/records/new?wantListId=${item.id}`}
-              className="rounded-xs bg-primary px-2 py-1 text-label text-primary-foreground transition-opacity hover:opacity-90"
+              className="border border-foreground px-2 py-1 text-label text-foreground hover:underline"
             >
               Mark acquired
             </Link>
@@ -209,7 +209,7 @@ export function WantListRow({ item }: { item: WantListItem }) {
       />
 
       <Dialog open={confirming} onOpenChange={setConfirming}>
-        <DialogContent>
+        <DialogContent data-t6="">
           <DialogTitle>Delete “{item.title}”?</DialogTitle>
           {/*
             §7.3 requires the consequence to be legible BEFORE it happens, and

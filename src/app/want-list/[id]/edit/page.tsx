@@ -34,7 +34,7 @@ export default async function EditWantListItemPage({
   return (
     <>
       <AppHeader />
-      <main className="mx-auto w-full max-w-2xl px-4 py-5">
+      <main data-t6="" className="mx-auto w-full max-w-2xl px-4 py-5">
         <Link
           href={`/want-list/${item.id}`}
           className="text-meta text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"

@@ -93,7 +93,7 @@ export default async function ManagePage({
   return (
     <>
       <AppHeader />
-      <div className="mx-auto w-full max-w-5xl px-3 pt-4">
+      <div data-t6="" className="mx-auto w-full max-w-5xl px-3 pt-4">
         <MatchReview candidates={matchCandidates} />
       </div>
       <ManageClient

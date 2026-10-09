@@ -359,6 +359,7 @@ export function LookupClient() {
       )}
 
       <form
+        data-t6=""
         hidden={results !== null && !queryOpen}
         ref={formRef}
         id={formId}

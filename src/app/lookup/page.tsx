@@ -18,11 +18,14 @@ export default function LookupPage() {
     <>
       <AppHeader />
       <main className="mx-auto w-full max-w-3xl px-4 py-5">
+        {/* §T.6 reaches look up's heading and its empty state only: "Its results were not surveyed and are not ruled." So the mapping is on these and on the form, and not on the page. */}
+        <div data-t6="">
         <h1 className="mb-1 font-heading text-headline font-semibold tracking-tight">Look up a record</h1>
         <p className="mb-4 text-lede text-muted-foreground">
           Search Discogs for the record in your hand. A catalogue number narrows to an album, not a
           pressing — often dozens share one. A barcode narrows further.
         </p>
+        </div>
 
         <LookupClient />
       </main>

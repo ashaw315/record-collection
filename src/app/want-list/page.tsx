@@ -43,7 +43,7 @@ export default async function WantListPage({ searchParams }: PageProps<'/want-li
     <>
       <AppHeader />
 
-      <main className="mx-auto w-full max-w-3xl px-4 py-6">
+      <main data-t6="" className="mx-auto w-full max-w-3xl px-4 py-6">
         <header className="mb-4 flex items-start justify-between gap-4">
           <div>
             <h1 className="font-heading text-headline font-semibold tracking-tight">
@@ -91,7 +91,8 @@ export default async function WantListPage({ searchParams }: PageProps<'/want-li
               className={cn(
                 'rounded-xs border px-2 py-1 text-label transition-colors',
                 tab.active
-                  ? 'border-primary bg-primary text-primary-foreground'
+                  /* §T.6: no fill. The current one takes §3's mark for a choice, the 2px underline 7 below, as a chosen filter does. */
+                  ? 'border-foreground text-foreground underline decoration-2 underline-offset-[7px]'
                   : 'border-border hover:bg-accent',
               )}
             >
