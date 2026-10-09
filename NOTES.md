@@ -38161,3 +38161,89 @@ which measured the box and corrected before Code built it." The earlier
 wording was in a drop Code took, was in the gated tree's history and is
 pushed. Reported to the coordinator; the entry and the sentence are
 Design's, and nothing was filed or edited.
+
+## Step 103, a to c, and what its first measurement says about the figure (9 Oct, afternoon)
+
+**The before reading was taken and committed first** (c727bc2,
+`docs/captures/step103-before/`), by the coordinator's order: once the
+radius is 0 the pre-state is not in the tree. The sheet reads a wider set
+under `SURVEY_SET=step103`: the five screens, the four pages the survey
+left out, sign-in signed out, and the shelf, table and grid.
+
+**A sheet caused a live Discogs call, three times, and no longer does.**
+The first take of that reading included a record's page. Loaded under the
+sheet's config (the ordinary development environment, so the real Discogs
+token) the page asked Discogs for the market's prices, once a width; it
+showed as three refused writes to `market_cache`. The record page is out
+of the set and the reading was retaken. **By the same path, any sheet that
+opens a record's page would do the same.** Seven sheets build a record's
+address (contact-sheet, cover-boxes, disc-59, figures-57, record-modal,
+record-modal-92 and this one's edit form); I have not run them to see,
+and the edit form in this run caused none. Since the sheets went
+read-only the cache cannot be refreshed by them, so a page that asks
+would ask on every load.
+`no-live-discogs.test.ts` guards the test environment, not this one. Not
+fixed: reported.
+
+**103a, the radius (0463d21).** The shared radius and Tailwind's own 2px
+are 0. §T.6's premise, "every ruled surface is already square", read
+before the change by `radius-103.spec.ts`: true of the shelf near and
+far, the table, the grid, their filter panel, the header's menu, the
+record page and its modal. **False of one: the record page's delete
+confirmation**, a dialog at 4.2px with buttons at 2.4 and 3. It is square
+now, by the token. §59's disc (50%) is a drawn circle, named in the spec
+as not a corner. Not read: the dialogs on manage and the want list, and
+tooltips, which are not in the page until asked for.
+
+**103b, the colour (a5a3580).** One mapping, scoped by `data-t6` on each
+screen's root and on its dialogs. Scoped because the tokens are shared
+with the record page. Three roles §T.6 does not name were decided in the
+build and are for Design to confirm or change:
+1. the current one of a set (the want list's two tabs, manage's section,
+   a chosen chip on the record form): §3's 2px underline, 7 below, in
+   place of the fill;
+2. the stats bars: ink;
+3. the want list's Mark acquired, a filled link: the ink box.
+Also: a button keeps its own height and type. §T.6 says "§9.3's unfilled
+ink box", and §9.3's control is 44 tall in an 11 mono label; only the
+fill and the box were taken, because hit areas are their own step after
+this one.
+
+**Colour on the closed screens, read in the source and not drawn in a
+test.** §T.6's "colour in this app now means a record's own" has these
+exceptions on the record page:
+- `PriceHistory.tsx:116`: the sparkline is `text-primary`, oxblood, drawn
+  when a record has paid prices.
+- the grey (`text-muted-foreground`): asides in `PriceHistory`,
+  `ImageGallery`, `RecordJournal` (the journal's Delete at rest),
+  `RecordDetail` and `MarketPanel`.
+- the destructive red, which is not oxblood: error lines in `AboutCell`
+  (two), `ImageGallery` and `RecordJournal`; the journal Delete's hover;
+  and the delete confirmation's refusal and its Delete button
+  (`DeleteRecord.tsx`).
+- `WallRail.tsx` and `WallLabelled.tsx`: the word only, in comments.
+Sign-in keeps an oxblood button, a grey line and a red error.
+
+**103c, the headings (the commit after).** The record form's was 20, new
+and editing; all are 40.
+
+**The diff the coordinator asked for** is `docs/captures/step103-diff.md`,
+made by `scripts/survey-diff.mjs` from the two readings. On the real
+collection the shelf, table and grid are unchanged in every measure read,
+at all three widths, and sign-in changed in its two radii only.
+
+**103d is not built: the construction does not clear §29's face minimum
+at 56.** §T.6: "whether §30's construction reads at that height is
+measured. Where it does not, there is no figure." The app's one ruled
+test for whether a solid is drawn is §29's, "no face narrower than 6px as
+drawn" (`MIN_FACE_WIDTH`, applied by `freeHeightSolid`). Across 1,000
+record ids, a construction fitted to 56 tall has its narrowest side face
+at 0.74 to 2.84px (median 1.52); none of the thousand clears 6. It would
+clear at 118 tall for the best id, 221 at the median, 451 for the worst.
+§26's two figures at 56: 5.13px (pressing-detail's, clear at 65) and
+3.70px (price-history's, clear at 91). Measured by a scratch script on
+the build's own `construction()` and `boundsOf()`; it becomes a test when
+the criterion is ruled. Whether §29's minimum IS what "reads" means is
+Design's, and two more things are not stated: which record's id draws a
+screen's construction (manage and stats show no record), and how tall the
+empty state's figure is.
