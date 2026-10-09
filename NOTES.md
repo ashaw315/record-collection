@@ -38665,3 +38665,16 @@ neighbour is in `docs/captures/air-103/air.md`.
 
 So on today's collection the heading's figure is on the table and the
 grid alone.
+
+## A latent defect, whatever Adam reports: the panel is placed once and re-placed only on a resize (9 Oct)
+
+The open filter's panel takes its top from the last filter line's foot
+when it opens, and again on a window resize (`CollectionFilters.tsx`,
+`place`). Nothing re-places it when the page scrolls. So anything that
+moves the page under an open panel parts the panel from its lines: the
+sheet staged it by script (300 down, the lines 300 up, the panel where
+it was). No gesture staged reaches it, but on a phone more than a
+finger moves a page: the keyboard, the collapsing toolbar, a scroll to
+the focused control, find-in-page, scroll restoration. **The fix is the
+same whichever of them it turns out to be: re-place the panel on scroll
+and not only on resize.** Not built; it waits on step 106's order.
