@@ -38122,3 +38122,19 @@ rerun in a worktree, by the coordinator's decision.
 
 **Drops taken this round:** 4e97675 and the one after it. They carry step
 103 and §T.6, which are not built and not started.
+
+## The gate on 3707601 reads OK, at 2.43 seconds a test (9 Oct, morning)
+
+Gate: build, then the full suites, one after the other, on `3707601`.
+It covers step 102, both rounds of `cover-travel-92`, the two
+`wall-route` tests, the Collection survey's sheet and relabel, and three
+Design drops.
+
+- Build: compiled.
+- Unit, `npm test`: `4201 passed, 2 skipped, tree unchanged — OK`, 4m 15s.
+- Playwright, both projects, no file argument:
+  `791 passed, 13 skipped, ledger clean, tree unchanged — OK`, 32m 30s
+  for 804 tests, 2.43 seconds a test. Nothing failed and nothing was
+  retried.
+- Recorded, not judged: swap-outs rose by 8.8M pages over the run; load
+  3.33 at the start of the Playwright run and 9.51 at its end.
