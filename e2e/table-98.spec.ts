@@ -231,3 +231,20 @@ test('a row is as tall as its content: the match reason under a genre filter, an
   const plain = await page.locator('main table tbody tr').nth(1).evaluate((r) => r.getBoundingClientRect().height);
   expect(plain, 'a row with no such line is still at least 44').toBeGreaterThanOrEqual(44);
 });
+
+/* Fails against the line drawn empty: its 2px margin made such a row 46 (step 98's capture, 8 Oct). */
+test('below 768 a record with no label and no condition has no line for them, and its row is the floor', async ({ page }) => {
+  const f = await seed(page);
+  await open(page, `&artistId=${f.artistId}&sort=title:asc`, 390);
+  const rows = await page.locator('main table tbody tr').evaluateAll((all) => all.map((r) => ({
+    title: (r.querySelector('a')?.textContent ?? '').trim(),
+    height: r.getBoundingClientRect().height,
+    empty: Array.from(r.querySelectorAll('td div')).filter((d) => (d.textContent ?? '').trim() === '').length,
+  })));
+  const bravo = rows.find((r) => r.title === `Bravo ${f.suffix}`);
+  expect(bravo, 'the record with neither').toBeDefined();
+  expect(bravo?.empty, 'no element drawn with nothing in it').toBe(0);
+  expect(bravo?.height, 'two lines of 19.5 and 5 of padding').toBe(44);
+  const alpha = rows.find((r) => r.title === `Alpha ${f.suffix}`);
+  expect(alpha?.height, 'and the record with both keeps its line').toBeGreaterThan(44);
+});

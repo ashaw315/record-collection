@@ -20,20 +20,11 @@ import { bandRules } from './wall/band-rules';
  */
 const SEARCH_MEASURE = 443;
 
-/*
-  §T.2: Add record is ink. The rail's link carries the label style and the
-  ink class together, and the label style's colour wins, so it draws in the
-  label colour (measured, 8 Oct). Set here for these views; the shelf's is
-  reported and not changed by this step.
-*/
-const INK_VALUE = 'oklch(0.19 0.008 60)';
-
 export function CollectionBand({ params, genres }: { params: CollectionParams; genres: readonly FilterOption[] }) {
   return (
     <div data-collection-band="">
       <style>{`${bandRules('[data-collection-band] ')}
-  [data-collection-band] #rail-search { max-width: ${SEARCH_MEASURE}px; }
-  [data-collection-band] [data-testid="wall-rail"] > a { color: ${INK_VALUE}; }`}</style>
+  [data-collection-band] #rail-search { max-width: ${SEARCH_MEASURE}px; }`}</style>
       <WallRail params={params} genres={genres} />
     </div>
   );

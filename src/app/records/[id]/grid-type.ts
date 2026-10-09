@@ -30,6 +30,16 @@ export const LABEL_INK = 'oklch(0.44 0.008 70)';
 /** §4's field and section label: 11px mono, uppercase, tracked, one grey. */
 export const LABEL = 'text-label font-mono uppercase tracking-[0.10em] text-[oklch(0.44_0.008_70)]';
 
+/**
+ * The label's type with no colour, for a label that is set in ink.
+ *
+ * `LABEL` and `INK` together are two colour classes on one element, and
+ * which wins is the stylesheet's order and not the order they are written
+ * in: the band's Add record carried both and drew in the label colour
+ * (step 100). An element takes one colour class.
+ */
+export const LABEL_TYPE = 'text-label font-mono uppercase tracking-[0.10em]';
+
 /** The ink everything on this screen is set in. */
 export const INK = 'text-[oklch(0.19_0.008_60)]';
 

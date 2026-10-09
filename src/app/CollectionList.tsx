@@ -178,6 +178,10 @@ export function CollectionList({
         <tbody>
           {rows.map((row) => {
             const explanation = matchExplanation(row.matchedVia);
+            /* Drawn only when it has text: empty, its 2px margin made the row 46 for nothing (step 100). */
+            const narrowLine = [row.label?.name, row.conditionMedia]
+              .filter((value) => value !== null && value !== undefined)
+              .join(' · ');
 
             return (
               <tr key={row.id} className="relative h-[44px]">
@@ -222,11 +226,9 @@ export function CollectionList({
                     Format is no longer listed here: it is now a real column at
                     every width, and printing it twice below md was redundant.
                   */}
-                  <div className="mt-0.5 text-detail text-[oklch(0.44_0.008_70)] md:hidden">
-                    {[row.label?.name, row.conditionMedia]
-                      .filter((value) => value !== null && value !== undefined)
-                      .join(' · ')}
-                  </div>
+                  {narrowLine !== '' && (
+                    <div className="mt-0.5 text-detail text-[oklch(0.44_0.008_70)] md:hidden">{narrowLine}</div>
+                  )}
                 </td>
 
                 <td className={`${cell} hidden pl-4 text-left text-[oklch(0.44_0.008_70)] md:table-cell`}>

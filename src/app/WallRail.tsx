@@ -9,7 +9,7 @@ import {
   type CollectionParams,
   type ViewMode,
 } from "./collection-params";
-import { HAIRLINE, INK, LABEL, LABEL_INK } from "./records/[id]/grid-type";
+import { HAIRLINE, INK, LABEL, LABEL_INK, LABEL_TYPE } from "./records/[id]/grid-type";
 
 /**
  * **The rail (8a §W.13): the page's controls leave the horizontal band.**
@@ -17,7 +17,7 @@ import { HAIRLINE, INK, LABEL, LABEL_INK } from "./records/[id]/grid-type";
  * The 260px header band cost height in the one dimension the unit is
  * measured in, so the wall starts directly under the app nav and the
  * controls go down a 148px rail on the left: SEARCH at the head — a ruled
- * field, §9.3's 34px control — then the three views stacked, then Add record
+ * field, 44 tall by §W.24 (step 100) — then the three views stacked, then Add record
  * at the foot below a rule that bleeds to both edges of the rail.
  *
  * Stacked, the switcher stops being buttons and becomes a list of views —
@@ -49,7 +49,10 @@ const VIEW_NAMES: Record<ViewMode, string> = {
   grid: "Grid",
 };
 
-const FIELD = `mt-[6px] block h-[34px] w-full border-b bg-transparent px-0 outline-none ${HAIRLINE} ${INK}`;
+const FIELD_BASE = `mt-[6px] block w-full border-b bg-transparent px-0 outline-none ${HAIRLINE} ${INK}`;
+const FIELD = `${FIELD_BASE} h-[34px]`;
+/* §W.24 (step 100): the search field meets the 44 floor, in the rail and in the band. */
+const SEARCH_FIELD = `${FIELD_BASE} h-[44px]`;
 
 export function WallRail({
   params,
@@ -90,7 +93,7 @@ export function WallRail({
           name="q"
           type="search"
           defaultValue={params.filters.q ?? ""}
-          className={`${FIELD} font-sans text-[16px] leading-[1.9]`}
+          className={`${SEARCH_FIELD} font-sans text-[16px] leading-[1.9]`}
         />
 
         <div data-rail-filter="" className="relative">
@@ -211,7 +214,7 @@ export function WallRail({
         className={`mt-[34px] border-t ${HAIRLINE}`}
         style={{ margin: "34px -20px 0" }}
       />
-      <Link href="/records/new" className={`mt-[18px] block ${LABEL} ${INK}`}>
+      <Link href="/records/new" className={`mt-[18px] block ${LABEL_TYPE} ${INK}`}>
         Add record
       </Link>
     </nav>

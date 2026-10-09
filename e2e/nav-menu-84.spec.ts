@@ -22,12 +22,14 @@ registerCleanup();
  * on the panel (it takes input), and the pixel at that point is the panel's
  * paper (it is painted on top).
  *
- * The figures for Collection at 390 by 844 -- page 971 long, the far region
+ * The figures for Collection at 390 by 844 -- page 981 long, the far region
  * 791 tall, seats 81.9 by 133.8 -- are the test environment's seeded
  * seventeen, measured before the menu covered. The page was 929 until step
  * 95 (7 Oct) gave the narrow rail a second row: the band went from 84.5 to
  * 126.5, which is the 42. The full gate found it here, a contract in a
  * file step 95 never opened, on its first run after the change.
+ * And 971 until step 100 (9 Oct) made the band's search field 44 from 34:
+ * the 10 was predicted from §T.1 before it was measured, and it measured 981.
  */
 
 const MENU_BELOW = 584;
@@ -104,10 +106,10 @@ test.describe('§G.8: the panel covers, and nothing beneath it moves', () => {
     const closed = await wallState(page);
     /* The preconditions: the figures this step's ruling quotes are the ones on the page. */
     expect(closed.header, 'closed: the header is 53').toBe(53);
-    expect(closed.page, 'closed: the page is 971 long').toBe(971);
+    expect(closed.page, 'closed: the page is 981 long').toBe(981);
     expect(closed.regionHeight, 'closed: the far region is 791 tall').toBe(791);
     /*
-      The page's 971 and the region's 791 do not depend on how many records
+      The page's 981 and the region's 791 do not depend on how many records
       the wall holds; a seat's size does, because the overview fits every
       seat into the region. The test database is shared, and in a run with
       other specs the wall held more than the seeded seventeen. So the seat's
