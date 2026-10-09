@@ -38347,5 +38347,82 @@ setting a genre moves nothing in the rail.
 How it lasted: the unit test named "gives a set filter's bar the same
 treatment" asserts only that the bar's class contains `absolute`. A bar
 drawn anywhere is positioned. The name claims the treatment and the
-assertion checks a proxy for it; left as it is and said here, since the
-new spec carries the claim.
+assertion checks a proxy for it. **Deleted, by the coordinator's decision
+of 9 Oct, not left with a note:** it was green by construction, passing
+with the bar drawn anywhere on the page, which is the defect it was named
+for, and a test like that is one someone trusts in six months.
+`rail-set-bar.spec.ts` carries the claim, so nothing was lost with it.
+
+## The air beside each heading, measured for 103d; the shelf and not the seat; a gate voided (9 Oct, late)
+
+**A gate was stopped and is not a result.** The gate on a85ecb6 was
+running when a Design drop landed in the tree. Its unit phase read `4204
+passed, 2 failed, tree CHANGED — not a result`: the two failures were the
+handoff's code region and the index, both reading the drop's files. The
+drop also changed step 104's ruling, so the tree was going to change
+whatever the Playwright phase said; I stopped it part-way and ran one
+gate on the final tree. Nothing was taken from the stopped run.
+
+**Step 104, the shelf and not the seat.** Design: "the arrival is placed
+as for the unfiltered occupied shelf, and the filter chooses which shelf...
+so a filter never moves the reader for nothing." `arrivalSeat` returns
+the first seat of the first match's shelf. The unit test and the spec
+asserted the seat and are rewritten for the ruling: the spec now reads
+the match's shelf framed with its top face uncut and the wall not moved
+sideways. On the real collection all 32 genres now open at the unfiltered
+wall's own scroll (0, 75); four opened at 84 or 92 before.
+
+**Whether any record-detail section rules the delete dialog's radius: none
+found.** A search of the three record-detail targets and the modal's for
+"dialog" and "confirmation" (a search, and said to be one) finds two
+sentences about the confirmation and neither is about its corners: §24,
+"Delete record asks before it acts, a confirmation naming the record";
+and the settled file's §9.3, "Destructive actions are identical to
+constructive ones... Delete is on every record, so it cannot be red here
+... The confirmation carries the weight instead." §9.3's control is "no
+radius". **That second sentence is a ruling the build does not meet:**
+the confirmation's Delete button on the record page is the shared
+destructive variant, red on a red tint. Not changed; the record page is
+closed and it is Design's to say.
+
+**The air, for 103d** (`docs/captures/air-103/`, read-only on the real
+collection, each capture with the rectangle dashed onto it). The air is
+the largest empty rectangle among a screen's type, controls, images and
+rules that lies right of the heading's type and begins no lower than its
+top.
+
+| screen | at 1440 | at 1024 | at 768 |
+|---|---|---|---|
+| table | 880 × 500 | 464 × 500 | 305 × 382 |
+| grid | 880 × 485 | 464 × 485 | 305 × 367 |
+| want list | 531 × 143 | 531 × 143 | 531 × 143 |
+| look up | 454 × 65 | 454 × 65 | 454 × 65 |
+| stats | 601 × 177 | 601 × 177 | 601 × 177 |
+| manage | 340 × 160 | 212 × 160 | 195 × 144 |
+| record form, new | 519 × 112 | 519 × 112 | 519 × 112 |
+| record form, editing | 553 × 124 | 553 × 124 | 553 × 124 |
+
+The five screens' measure is 736 (manage 1120, 992, 736), so their air
+does not change with the window. Against the constructions' clearing
+heights (1,000 ids: 117 at the least, 220 at the median, 400 at the
+most; a figure 0.79 to 1.95 times as wide as tall), the share that would
+clear §29's 6px in each screen's air, at 1440 / 1024 / 768:
+
+- table 1000 / 1000 / 958 of 1,000; grid 1000 / 1000 / 955
+- stats 182; manage 92 / 47 / 10; want list 23; record form editing 3
+- look up 0; record form new 0
+
+So the figure's place is real on the table and the grid, and on the five
+screens it would be drawn for a minority of source records or for none,
+by which record happens to draw it. Which record draws it on a screen
+that shows records is with Design and was not picked.
+
+**Two defects in the first version of that sheet, caught against its own
+captures before reporting.** It let a rectangle begin at the heading's
+foot, and found the gap between a form's labels and its fields, below
+the heading; and it did not count rules, and on the want list ran down
+across three row rules into the list. It reads rules as boxes now and
+requires the rectangle beside the heading's type. On the table and grid
+the air's foot is 35 lower than the last filter line, so an open filter's
+panel covers that much of it; and it runs to the edge of ADD RECORD and
+of the header, with no margin taken.

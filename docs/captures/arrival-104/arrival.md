@@ -23,7 +23,7 @@ Far from the first seat: the genre’s first match, by the collection’s order,
 | AOR 1 | 1 | 12: Dire Straits · Dire Straits | no | yes | 0, 75 |
 | Ambient 1 | 1 | 1: Darkside (22) · Psychic | no | yes | 0, 75 |
 | Blues Rock 1 | 1 | 9: Jeff Beck · Wired | no | yes | 0, 75 |
-| Classic Rock 1 | 1 | 14: John Lennon · Mind Games | no | yes | 0, 92 |
+| Classic Rock 1 | 1 | 14: John Lennon · Mind Games | no | yes | 0, 75 |
 | Disco 1 | 1 | 3: Donna Summer · On The Radio: Greatest Hits Vol. 1 & 2 | no | yes | 0, 75 |
 | Dub 1 | 1 | 1: Darkside (22) · Psychic | no | yes | 0, 75 |
 | Folk Rock 1 | 1 | 7: Simon & Garfunkel · Bridge Over Troubled Water | no | yes | 0, 75 |
@@ -31,17 +31,17 @@ Far from the first seat: the genre’s first match, by the collection’s order,
 | Funk / Soul 1 | 1 | 3: Donna Summer · On The Radio: Greatest Hits Vol. 1 & 2 | no | yes | 0, 75 |
 | Gospel 1 | 1 | 7: Simon & Garfunkel · Bridge Over Troubled Water | no | yes | 0, 75 |
 | Hardcore Hip-Hop 1 | 1 | 2: Death Grips · The Money Store | no | yes | 0, 75 |
-| Heavy Metal 1 | 1 | 13: Discharge · Grave New World | no | yes | 0, 84 |
+| Heavy Metal 1 | 1 | 13: Discharge · Grave New World | no | yes | 0, 75 |
 | Hip Hop 1 | 1 | 2: Death Grips · The Money Store | no | yes | 0, 75 |
 | Indie Pop 1 | 1 | 4: MGMT · Loss Of Life | no | yes | 0, 75 |
 | Indie Rock 1 | 1 | 4: MGMT · Loss Of Life | no | yes | 0, 75 |
 | Industrial 1 | 1 | 2: Death Grips · The Money Store | no | yes | 0, 75 |
 | Jazz-Rock 1 | 1 | 9: Jeff Beck · Wired | no | yes | 0, 75 |
-| Punk 1 | 1 | 13: Discharge · Grave New World | no | yes | 0, 84 |
+| Punk 1 | 1 | 13: Discharge · Grave New World | no | yes | 0, 75 |
 | Swing 1 | 1 | 8: Buddy Rich · Super Rich | no | yes | 0, 75 |
 | Synth-pop 1 | 1 | 5: Smerz (2) · Believer | no | yes | 0, 75 |
 | Trip Hop 1 | 1 | 5: Smerz (2) · Believer | no | yes | 0, 75 |
-| UK82 1 | 1 | 13: Discharge · Grave New World | no | yes | 0, 84 |
+| UK82 1 | 1 | 13: Discharge · Grave New World | no | yes | 0, 75 |
 
 Cases: 0 of 32 genres. Of those, the arrival has the first match in the region on 0.
 

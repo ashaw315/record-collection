@@ -156,12 +156,6 @@ describe('§W.36: the set bar leaves the flow', () => {
     expect(bar).toMatch(/height:\s*2px/);
   });
 
-  it('gives a set filter’s bar the same treatment, so choosing a genre moves nothing', () => {
-    const bar = barOf(render(`genreId=${GENRES[0].id}`), 'data-set-bar');
-    expect(bar).not.toBe('');
-    expect(bar).toMatch(/absolute/);
-  });
-
   it('leaves each view name’s own box unchanged whether it is set or not — the pitch is the type’s', () => {
     /*
       The bar contributes no height, so the element that carries it is the

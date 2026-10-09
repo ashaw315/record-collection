@@ -26,6 +26,14 @@ registerCleanup();
  * of their own, whose place in the collection's order is READ from the
  * unfiltered wall and asserted to be past the first two shelves before
  * anything is claimed about where a filter arrives.
+ *
+ * "The shelf, not the seat" (Design, 9 Oct, after the first build): the
+ * arrival is placed as the unfiltered occupied shelf is, and the filter
+ * chooses which shelf. So what is read is that the match's SHELF is the
+ * one framed, top face uncut, and that the wall has not moved sideways:
+ * across, it is where the unfiltered wall is. The first build landed on
+ * the matching seat and these tests asserted that seat in the region on
+ * both axes; they are rewritten for the ruling.
  */
 type Fixture = { genreId: string; ids: string[]; word: string };
 
@@ -77,9 +85,10 @@ const read = (page: Page, ids: string[]) =>
   }, ids);
 
 type Read = Awaited<ReturnType<typeof read>>;
+/** The seat's shelf is the one in the region: its spine within the region's height and its top face uncut. Across is the shelf's own placing, read apart. */
 const inRegion = (m: Read, index: number) => {
   const s = m.seats[index];
-  return s.spine !== null && s.top !== null && s.spine.left >= m.region.left - 1 && s.spine.right <= m.region.right + 1 && s.spine.top >= m.region.top - 1 && s.spine.bottom <= m.region.bottom + 1 && s.top.top >= m.region.top - 1;
+  return s.spine !== null && s.top !== null && s.spine.top >= m.region.top - 1 && s.spine.bottom <= m.region.bottom + 1 && s.top.top >= m.region.top - 1;
 };
 
 test.beforeEach(async ({ page }) => {
@@ -101,7 +110,9 @@ test('under a filter the near view arrives on the first matching record’s shel
   expect(m.drawn, 'only the three matches are seated').toBe(3);
   expect(m.footprints, 'and the rest of the collection is emptied seats, still placed').toBeGreaterThanOrEqual(77);
   const index = m.seats.findIndex((s) => s.id === first.id);
-  expect(inRegion(m, index), `the first match by the collection’s order is in the region with its top face uncut: ${JSON.stringify(m.seats[index])} in ${JSON.stringify(m.region)}`).toBe(true);
+  expect(inRegion(m, index), `the first match’s shelf is the one framed, its top face uncut: ${JSON.stringify(m.seats[index])} in ${JSON.stringify(m.region)}`).toBe(true);
+  expect(m.scroll.left, 'placed as the unfiltered shelf is: across, the wall is where the unfiltered wall opens').toBe(whole.scroll.left);
+  expect(m.scroll.top, 'and down, it has gone to that shelf').toBeGreaterThan(whole.scroll.top);
 });
 
 /* Fails against a wall that keeps its place when the filter changes under it: the search matches three records nobody can see. */
@@ -116,8 +127,9 @@ test('a search applied while the near view is open moves it to the first match, 
   await page.waitForTimeout(900);
   const m = await read(page, f.ids);
   const first = [...m.seats].sort((a, b) => a.order - b.order)[0];
-  expect(inRegion(m, m.seats.indexOf(first)), 'the first match is in the region').toBe(true);
-  expect(m.scroll, 'and the wall has moved to it').not.toEqual(start.scroll);
+  expect(inRegion(m, m.seats.indexOf(first)), 'the first match’s shelf is the one framed').toBe(true);
+  expect(m.scroll.top, 'and the wall has moved down to it').toBeGreaterThan(start.scroll.top);
+  expect(m.scroll.left, 'and not sideways').toBe(start.scroll.left);
 
   await page.locator('#rail-search').fill('');
   await page.locator('#rail-search').press('Enter');

@@ -72,14 +72,31 @@ describe('the route’s two views (§W.12, §W.29)', () => {
     expect(arrivalSeat([])).toBeNull();
   });
 
-  /* Step 104. Fails against an arrival that is the first placed seat whatever it holds: under a filter that seat can be hundreds from any match. */
-  it('under a filter, names the first MATCHING record’s shelf, by the collection’s order (§W.29)', () => {
+  /*
+    Step 104, as Design ruled it on 9 Oct after the first build: "The shelf, not the seat: the arrival is placed as
+    for the unfiltered occupied shelf, and the filter chooses which shelf." The first build named the matching SEAT,
+    and this test asserted that; it is rewritten for the ruling. Fails against the first placed seat whatever it
+    holds, and against the matching seat itself.
+  */
+  it('under a filter, names the first seat of the first MATCHING record’s shelf, by the collection’s order (§W.29)', () => {
     const seats = Array.from({ length: 60 }, (_, i) => ({ id: `r${i}`, section: 'S' }));
     const { placed } = wallLayout(seats, [], 872, 799);
     const emptied = new Set(seats.filter((_, i) => i !== 47 && i !== 52).map((s) => s.id));
     const arrival = arrivalSeat(placed, emptied);
-    expect(arrival?.id, 'the first match in wall order, not the first seat and not the later match').toBe('r47');
-    expect(arrival?.z, 'which is on a lower shelf than the first seat’s').toBeLessThan(placed[0].z);
+    const match = placed.find((p) => p.id === 'r47');
+    const shelfStart = placed.find((p) => p.z === match?.z);
+    expect(shelfStart?.id, 'the precondition: the first match is not the first seat of its shelf').not.toBe('r47');
+    expect(arrival?.id, 'the start of the first match’s shelf').toBe(shelfStart?.id);
+    expect(arrival?.z, 'which is a lower shelf than the first seat’s').toBeLessThan(placed[0].z);
+  });
+
+  /* Fails against the matching seat: "A filtered view whose match shares the unfiltered arrival's shelf opens exactly where the unfiltered view does, so a filter never moves the reader for nothing." */
+  it('a match on the unfiltered arrival’s own shelf arrives exactly as unfiltered (§W.29)', () => {
+    const seats = Array.from({ length: 60 }, (_, i) => ({ id: `r${i}`, section: 'S' }));
+    const { placed } = wallLayout(seats, [], 872, 799);
+    const late = placed.filter((p) => p.z === placed[0].z).at(-1);
+    expect(late?.id, 'the precondition: a seat late on the first shelf').not.toBe('r0');
+    expect(arrivalSeat(placed, new Set(seats.filter((s) => s.id !== late?.id).map((s) => s.id)))?.id).toBe('r0');
   });
 
   /* Fails against an arrival that returns nothing, or the last seat, when every seat is emptied. */

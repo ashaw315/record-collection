@@ -49,10 +49,19 @@ export const DEFAULT_ROUTE_VIEW: RouteView = 'near';
  * them placed, so the first placed seat can be hundreds from any match;
  * `emptied` names those seats. The first match and not the densest run,
  * because it is the one place the reader can predict from the order.
+ *
+ * **The shelf, not the seat.** "The arrival is placed as for the unfiltered
+ * occupied shelf, and the filter chooses which shelf... so a filter never
+ * moves the reader for nothing." What is returned is the first seat of the
+ * first match's shelf. The first build returned the match itself, and on
+ * the real collection four genres whose match sits late on the one shelf
+ * opened 9 or 17 lower than the unfiltered wall.
  */
 export function arrivalSeat(placed: readonly PlacedSeat[], emptied: ReadonlySet<string> = new Set()): PlacedSeat | null {
   if (placed.length === 0) return null;
-  return placed.find((seat) => !emptied.has(seat.id)) ?? placed[0];
+  const match = placed.find((seat) => !emptied.has(seat.id));
+  if (match === undefined) return placed[0];
+  return placed.find((seat) => seat.z === match.z) ?? match;
 }
 
 /**
