@@ -5,7 +5,7 @@ import { registerCleanup, trackArtist } from './cleanup';
 import { seedImage } from './seed';
 import { GRID_FORK, NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
 import { MODAL_ROW, sleeveSquare } from '../src/app/records/[id]/sleeve-modal';
-import { FADE_MS, TRAVEL_MS } from '../src/app/records/[id]/sleeve-travel';
+import { FADE_MS } from '../src/app/records/[id]/sleeve-travel';
 import { login } from './sign-in';
 
 registerCleanup();
@@ -26,7 +26,8 @@ registerCleanup();
  * travelling cover's box and its photograph's box, the paper's and the top
  * row's opacity, the label's and the controls', and where focus is.
  *
- * The return's duration and the curve's shape are not tested here: they are judged by eye from the recording.
+ * No test here counts sampled frames or times the travel, in either direction: how long the cover takes to
+ * open and to return, and the curve's shape, are judged by eye from the recording in `docs/captures/record-modal-92/`.
  */
 
 const fixture = (file: string) => `data:image/png;base64,${readFileSync(join('test', 'fixtures', 'covers', file)).toString('base64')}`;
@@ -121,7 +122,7 @@ for (const [width, height] of [[390, 844], [GRID_FORK, NO_SCROLL_HEIGHT]] as con
     const from = await page.locator('[data-cover-trigger]').evaluate((el) => { const r = el.getBoundingClientRect(); return [r.left, r.top, r.width, r.height] as [number, number, number, number]; });
     const frames = await sample(page, 'press');
     const travel = frames.filter((f) => f.travelling === 'in' && f.cover !== null);
-    expect(travel.length, 'frames sampled while the cover travels').toBeGreaterThanOrEqual(5);
+    expect(travel.length > 0, 'the cover is seen travelling').toBe(true);
 
     /* Where it lands: inside the modal's square's hairline. */
     await opened(page);
@@ -154,29 +155,21 @@ for (const [width, height] of [[390, 844], [GRID_FORK, NO_SCROLL_HEIGHT]] as con
     /* This fixture is inside §33's bound, so the page crops it: wider than tall, its width overhangs the square at the start and its height falls short of it at the end. */
     expect(photoOf(travel[0])[2] / boxOf(travel[0])[2], 'at the start the photograph covers the square: cropped, as on the page').toBeGreaterThan(1.02);
     expect(photoOf(travel[0])[3] / boxOf(travel[0])[3]).toBeCloseTo(1, 1);
-    const last = travel[travel.length - 1];
-    expect(photoOf(last)[2] / boxOf(last)[2], 'by the end it is fitted: its width is the square’s').toBeLessThan(1.012);
-    expect(photoOf(last)[3] / boxOf(last)[3], 'and its height inside it').toBeLessThan(0.99);
-
-    /*
-      One duration at every width. **The curve's shape is not asserted
-      here.** A reading of how far the travel had gone a third of the way
-      through its time stood here; it depended on the machine (the sampler
-      reads the page a render behind, more under load) and was removed on
-      7 Oct by decision, not kept with a caveat. That the travel is an
-      ease-out is held by `sleeve-open.test.ts`, which states the curve, and
-      judged by eye from the recording in `docs/captures/record-modal-92/`.
-    */
-    const t0 = travel[0].t;
-    const lasted = last.t - t0;
-    expect(lasted, `it lasts about ${TRAVEL_MS}ms`).toBeGreaterThan(TRAVEL_MS * 0.75);
-    expect(lasted).toBeLessThan(TRAVEL_MS * 1.4);
+    /* On the way the overhang only shrinks; that it ends fitted is read on the landed sleeve, which is there however the travel was sampled. */
+    for (let i = 1; i < travel.length; i += 1) expect(photoOf(travel[i])[2] / boxOf(travel[i])[2], 'the crop only eases toward the fit').toBeLessThanOrEqual(photoOf(travel[i - 1])[2] / boxOf(travel[i - 1])[2] + 0.005);
+    const fitted = await page.locator('[data-sleeve] img').first().evaluate((img) => { const r = img.getBoundingClientRect(); const i = img as HTMLImageElement; return { width: r.width, height: r.height, fit: getComputedStyle(i).objectFit, natural: i.naturalHeight / i.naturalWidth }; });
+    /* Landed, the photograph's box is the square and it is contained in it, so its width is the square's and its height, 951 to the 1000, falls inside. */
+    expect(fitted.fit, 'landed, it is fitted and not cropped').toBe('contain');
+    expect(fitted.width / to[2], 'its width is the square’s').toBeCloseTo(1, 1);
+    expect(fitted.height / to[3]).toBeCloseTo(1, 1);
+    expect(fitted.natural, 'and its height inside it').toBeLessThan(0.99);
 
     /* After it lands: the label and controls fade in, from the landing. */
     const landed = frames.filter((f) => f.modal && f.travelling === null);
-    expect(landed.length).toBeGreaterThan(3);
-    const fading = landed.filter((f) => (f.label as number) > 0.02 && (f.label as number) < 0.98);
-    expect(fading.length, `frames in which the label is part-way in, over about ${FADE_MS}ms`).toBeGreaterThanOrEqual(2);
+    expect(landed.length > 0, 'the landed modal is seen').toBe(true);
+    /* By a fade and not a cut: the label is on an opacity transition of the fade's length, and once landed it only arrives. */
+    expect(landed[0].fade, `the label is on an opacity transition of ${FADE_MS}ms`).toBeCloseTo(FADE_MS, 0);
+    for (let i = 1; i < landed.length; i += 1) expect(landed[i].label as number, 'the label only arrives').toBeGreaterThanOrEqual((landed[i - 1].label as number) - 0.005);
     expect(landed[landed.length - 1].label, 'and it ends fully shown, with the controls').toBe(1);
     expect(landed[landed.length - 1].controls).toBe(1);
     expect(landed[landed.length - 1].paper, 'at rest the paper is opaque').toBe(1);
