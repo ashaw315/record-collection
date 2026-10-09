@@ -37849,3 +37849,20 @@ seeds 200. Run alone, `:205` passed six times of six with the wall at
 set.** They passed in both of yesterday's gates, by which tests happened
 to run beside them. Not a read before the page settled, so not covered by
 the standing say; reported and not changed.
+
+## The gate on eb10734 reads OK, at 2.44 seconds a test (8 Oct, evening)
+
+Gate: full suites, both projects, on `eb10734`: the sign-in as one
+function, Design's drop of the covering filter, and steps 100 and 101.
+
+- `npm test`: `4200 passed, 2 skipped, tree unchanged — OK`, 4m 27s.
+- `npx playwright test`: `789 passed, 13 skipped, ledger clean, tree
+  unchanged — OK`. None failed and none passed only on retry. 32m 36s for
+  802 tests: 2.44 seconds a test. Swap-outs rose by about 13.2 million.
+  Load 4.33 at the start and 20.89 at the end.
+
+The first gate since the sign-in's wait was given the chain's budget, and
+the first of the last four with nothing retried. One run, so it says the
+sign-in failures did not happen, and not that they cannot. Both
+`wall-route` tests that fail beside heavy seeding passed here, as they
+did yesterday, by what ran beside them.
