@@ -38248,3 +38248,61 @@ the criterion is ruled. Whether §29's minimum IS what "reads" means is
 Design's, and two more things are not stated: which record's id draws a
 screen's construction (manage and stats show no record), and how tall the
 empty state's figure is.
+
+## Step 104, sign-in's colour, and what the real collection can and cannot show (9 Oct, evening)
+
+**Sign-in takes §T.6's colour** (f763264), the coordinator's earlier
+ruling superseded by "It reaches login too". The test that held its
+oxblood is replaced by one that reads it at rest, focused and refused.
+
+**Step 104** (db54ba0, e8d99e7): the near view arrives on the first
+matching record, lands again when the filter in force changes, and where
+every seat is emptied the shelf carries one sentence and CLEAR FILTERS.
+
+**A defect of my own in db54ba0, caught by a neighbour and then staged.**
+The re-landing was keyed on the filter's answer (how many seats were
+emptied, of how many). The collection growing under an open wall changes
+that with no filter touched, and a zoom-in then landed twice:
+`wall-route.spec.ts:167`, "exactly once", failed beside another worker's
+seeding. The step-level run that preceded the commit passed, with no
+retry, by which tests ran beside it. It is keyed on the filter the route
+states now, and `wall-arrival-104.spec.ts` stages the collection changing
+so it does not depend on a neighbour.
+
+**The sentence's contrast, for §59.** Bare over the shelving, as the first
+build drew it: 70% of the pixels under it at 1440 and 90% at 390 were not
+paper (the shelves are drawn planes, not only lines), and the worst gave
+1.31 : 1 at 1440 and 1.95 at 390, where a glyph crosses an edge. On
+paper it is 6.22. Design ruled the paper block the same afternoon; as
+built, 3,800 pixels under the sentence, none not paper, the worst 6.22.
+The spec asserts that reading.
+
+**"Centred over the arrival's region" and "does not move with the pan"**
+were two readings until Design said which: the region is the on-screen
+one. Built so: the block lies over the region's box, outside what the
+region scrolls. Had the region meant a place on the wall, the sentence
+would have scrolled away with the shelving, and the reader who pans
+furthest would see emptied shelves and nothing saying why.
+
+**The real collection is 17 records, and the case Design asked to be
+staged on it cannot be.** `e2e/sheet/arrival-104.sheet.ts` reads every
+genre: all 32 have their first match already in the region as the
+unfiltered wall opens, because one shelf holds the whole collection. So
+"a genre of few records far from the first seat" does not exist there,
+and the reading says so instead of passing on a case that proves
+nothing. The defect is shown on a seeded collection (sixty and three),
+where the match's spine sat at 1002 in a region ending at 900.
+
+**What the real collection does show: the arrival is on the SEAT, and the
+ruling says the shelf.** Under four genres whose first match sits late on
+the shelf (Classic Rock, Heavy Metal, Punk, UK82) the wall opens 9 or 17
+lower than unfiltered (scroll 84 or 92 against 75), because the landing's
+vertical target takes in the top faces from the addressed seat rightward
+and the wall descends to the right. "Arrives on the first matching
+record's shelf": if that means the shelf's first seat, as a click on a
+run lands, those four would open exactly where the unfiltered wall does.
+Built on the seat; for Design.
+
+**Seen in the capture, not looked into:** with a genre set, the rail's
+set bar is drawn across the top of the GENRE label
+(`docs/captures/arrival-104/empty-shelf-1440x900.png`).

@@ -1,0 +1,512 @@
+{
+ "staged": false,
+ "collection": 17,
+ "region": [
+  872,
+  847
+ ],
+ "unfilteredScroll": [
+  0,
+  75
+ ],
+ "shownUnfiltered": 17,
+ "genres": [
+  {
+   "genre": "Rock 10",
+   "id": "9bd8cf2e-b236-434d-b0ec-6ca91e4cfb7a",
+   "matches": 10,
+   "firstOrder": 1,
+   "first": "Darkside (22) · Psychic",
+   "farFromFirstSeat": false,
+   "arrivesOnIt": true,
+   "anyMatchInRegion": true,
+   "scroll": [
+    0,
+    75
+   ]
+  },
+  {
+   "genre": "Electronic 5",
+   "id": "2ce4cac5-3469-4834-9bc2-2d34f0d5465c",
+   "matches": 5,
+   "firstOrder": 1,
+   "first": "Darkside (22) · Psychic",
+   "farFromFirstSeat": false,
+   "arrivesOnIt": true,
+   "anyMatchInRegion": true,
+   "scroll": [
+    0,
+    75
+   ]
+  },
+  {
+   "genre": "Jazz 4",
+   "id": "7325491c-24ae-4674-80a7-fcafc2873ed8",
+   "matches": 4,
+   "firstOrder": 8,
+   "first": "Buddy Rich · Super Rich",
+   "farFromFirstSeat": false,
+   "arrivesOnIt": true,
+   "anyMatchInRegion": true,
+   "scroll": [
+    0,
+    75
+   ]
+  },
+  {
+   "genre": "Fusion 3",
+   "id": "33dd9baf-cec3-4c18-8ea3-1196806b37ec",
+   "matches": 3,
+   "firstOrder": 9,
+   "first": "Jeff Beck · Wired",
+   "farFromFirstSeat": false,
+   "arrivesOnIt": true,
+   "anyMatchInRegion": true,
+   "scroll": [
+    0,
+    75
+   ]
+  },
+  {
+   "genre": "Pop 3",
+   "id": "d3b87a28-b671-4b02-b6b5-89aad47772f7",
+   "matches": 3,
+   "firstOrder": 3,
+   "first": "Donna Summer · On The Radio: Greatest Hits Vol. 1 & 2",
+   "farFromFirstSeat": false,
+   "arrivesOnIt": true,
+   "anyMatchInRegion": true,
+   "scroll": [
+    0,
+    75
+   ]
+  },
+  {
+   "genre": "Pop Rock 3",
+   "id": "6d3119c0-442d-4eb3-b404-e20b6ec992dd",
+   "matches": 3,
+   "firstOrder": 6,
+   "first": "Donovan · The Hurdy Gurdy Man",
+   "farFromFirstSeat": false,
+   "arrivesOnIt": true,
+   "anyMatchInRegion": true,
+   "scroll": [
+    0,
+    75
+   ]
+  },
+  {
+   "genre": "Psychedelic Rock 3",
+   "id": "f58e86f0-3ac5-4b74-9eb0-c968f24b01a3",
+   "matches": 3,
+   "firstOrder": 4,
+   "first": "MGMT · Loss Of Life",
+   "farFromFirstSeat": false,
+   "arrivesOnIt": true,
+   "anyMatchInRegion": true,
+   "scroll": [
+    0,
+    75
+   ]
+  },
+  {
+   "genre": "Downtempo 2",
+   "id": "4cc92e7e-5f60-42cf-ace4-c8cd36b73605",
+   "matches": 2,
+   "firstOrder": 1,
+   "first": "Darkside (22) · Psychic",
+   "farFromFirstSeat": false,
+   "arrivesOnIt": true,
+   "anyMatchInRegion": true,
+   "scroll": [
+    0,
+    75
+   ]
+  },
+  {
+   "genre": "Experimental 2",
+   "id": "9162efbe-2e6a-4a99-ac3b-4550b86a4f31",
+   "matches": 2,
+   "firstOrder": 1,
+   "first": "Darkside (22) · Psychic",
+   "farFromFirstSeat": false,
+   "arrivesOnIt": true,
+   "anyMatchInRegion": true,
+   "scroll": [
+    0,
+    75
+   ]
+  },
+  {
+   "genre": "Rock & Roll 2",
+   "id": "c9130c34-1dde-4f6c-a4d7-7a5cf6d0827a",
+   "matches": 2,
+   "firstOrder": 7,
+   "first": "Simon & Garfunkel · Bridge Over Troubled Water",
+   "farFromFirstSeat": false,
+   "arrivesOnIt": true,
+   "anyMatchInRegion": true,
+   "scroll": [
+    0,
+    75
+   ]
+  },
+  {
+   "genre": "AOR 1",
+   "id": "d79ddd35-8025-405f-b5ee-4b628dfe27c0",
+   "matches": 1,
+   "firstOrder": 12,
+   "first": "Dire Straits · Dire Straits",
+   "farFromFirstSeat": false,
+   "arrivesOnIt": true,
+   "anyMatchInRegion": true,
+   "scroll": [
+    0,
+    75
+   ]
+  },
+  {
+   "genre": "Ambient 1",
+   "id": "ca02dc8d-b5e3-46af-9344-42d295a789f4",
+   "matches": 1,
+   "firstOrder": 1,
+   "first": "Darkside (22) · Psychic",
+   "farFromFirstSeat": false,
+   "arrivesOnIt": true,
+   "anyMatchInRegion": true,
+   "scroll": [
+    0,
+    75
+   ]
+  },
+  {
+   "genre": "Blues Rock 1",
+   "id": "fadfb20b-35da-4ff3-af5f-540846686499",
+   "matches": 1,
+   "firstOrder": 9,
+   "first": "Jeff Beck · Wired",
+   "farFromFirstSeat": false,
+   "arrivesOnIt": true,
+   "anyMatchInRegion": true,
+   "scroll": [
+    0,
+    75
+   ]
+  },
+  {
+   "genre": "Classic Rock 1",
+   "id": "4d3a926a-f2cf-4a23-9318-11862e1973df",
+   "matches": 1,
+   "firstOrder": 14,
+   "first": "John Lennon · Mind Games",
+   "farFromFirstSeat": false,
+   "arrivesOnIt": true,
+   "anyMatchInRegion": true,
+   "scroll": [
+    0,
+    92
+   ]
+  },
+  {
+   "genre": "Disco 1",
+   "id": "fdd17934-850f-4272-93a8-90891d5625b6",
+   "matches": 1,
+   "firstOrder": 3,
+   "first": "Donna Summer · On The Radio: Greatest Hits Vol. 1 & 2",
+   "farFromFirstSeat": false,
+   "arrivesOnIt": true,
+   "anyMatchInRegion": true,
+   "scroll": [
+    0,
+    75
+   ]
+  },
+  {
+   "genre": "Dub 1",
+   "id": "f3b8adfe-5ab2-4646-8739-082469ad4ce4",
+   "matches": 1,
+   "firstOrder": 1,
+   "first": "Darkside (22) · Psychic",
+   "farFromFirstSeat": false,
+   "arrivesOnIt": true,
+   "anyMatchInRegion": true,
+   "scroll": [
+    0,
+    75
+   ]
+  },
+  {
+   "genre": "Folk Rock 1",
+   "id": "02698f07-86c3-4c92-9da1-222501f44935",
+   "matches": 1,
+   "firstOrder": 7,
+   "first": "Simon & Garfunkel · Bridge Over Troubled Water",
+   "farFromFirstSeat": false,
+   "arrivesOnIt": true,
+   "anyMatchInRegion": true,
+   "scroll": [
+    0,
+    75
+   ]
+  },
+  {
+   "genre": "Folk, World, & Country 1",
+   "id": "977fe011-f78f-4702-9cab-cf0885597e95",
+   "matches": 1,
+   "firstOrder": 6,
+   "first": "Donovan · The Hurdy Gurdy Man",
+   "farFromFirstSeat": false,
+   "arrivesOnIt": true,
+   "anyMatchInRegion": true,
+   "scroll": [
+    0,
+    75
+   ]
+  },
+  {
+   "genre": "Funk / Soul 1",
+   "id": "10b323c3-14a6-4a0c-b11a-c2c8b7cf7b78",
+   "matches": 1,
+   "firstOrder": 3,
+   "first": "Donna Summer · On The Radio: Greatest Hits Vol. 1 & 2",
+   "farFromFirstSeat": false,
+   "arrivesOnIt": true,
+   "anyMatchInRegion": true,
+   "scroll": [
+    0,
+    75
+   ]
+  },
+  {
+   "genre": "Gospel 1",
+   "id": "3f61f44b-fef3-47db-b51a-24b81e77ceed",
+   "matches": 1,
+   "firstOrder": 7,
+   "first": "Simon & Garfunkel · Bridge Over Troubled Water",
+   "farFromFirstSeat": false,
+   "arrivesOnIt": true,
+   "anyMatchInRegion": true,
+   "scroll": [
+    0,
+    75
+   ]
+  },
+  {
+   "genre": "Hardcore Hip-Hop 1",
+   "id": "64a04029-ef0f-4fcb-943b-7637803ec9fa",
+   "matches": 1,
+   "firstOrder": 2,
+   "first": "Death Grips · The Money Store",
+   "farFromFirstSeat": false,
+   "arrivesOnIt": true,
+   "anyMatchInRegion": true,
+   "scroll": [
+    0,
+    75
+   ]
+  },
+  {
+   "genre": "Heavy Metal 1",
+   "id": "34a2d924-8eaf-47a7-bb89-faec49fd8743",
+   "matches": 1,
+   "firstOrder": 13,
+   "first": "Discharge · Grave New World",
+   "farFromFirstSeat": false,
+   "arrivesOnIt": true,
+   "anyMatchInRegion": true,
+   "scroll": [
+    0,
+    84
+   ]
+  },
+  {
+   "genre": "Hip Hop 1",
+   "id": "fca3e25e-7cc5-4d30-be23-13ff590de133",
+   "matches": 1,
+   "firstOrder": 2,
+   "first": "Death Grips · The Money Store",
+   "farFromFirstSeat": false,
+   "arrivesOnIt": true,
+   "anyMatchInRegion": true,
+   "scroll": [
+    0,
+    75
+   ]
+  },
+  {
+   "genre": "Indie Pop 1",
+   "id": "866df9d0-4e79-497f-8159-277fd2a742b5",
+   "matches": 1,
+   "firstOrder": 4,
+   "first": "MGMT · Loss Of Life",
+   "farFromFirstSeat": false,
+   "arrivesOnIt": true,
+   "anyMatchInRegion": true,
+   "scroll": [
+    0,
+    75
+   ]
+  },
+  {
+   "genre": "Indie Rock 1",
+   "id": "d75ed69b-f7a1-44c1-b923-ffada455bc6c",
+   "matches": 1,
+   "firstOrder": 4,
+   "first": "MGMT · Loss Of Life",
+   "farFromFirstSeat": false,
+   "arrivesOnIt": true,
+   "anyMatchInRegion": true,
+   "scroll": [
+    0,
+    75
+   ]
+  },
+  {
+   "genre": "Industrial 1",
+   "id": "47443372-7778-4e87-9563-55c69f177cff",
+   "matches": 1,
+   "firstOrder": 2,
+   "first": "Death Grips · The Money Store",
+   "farFromFirstSeat": false,
+   "arrivesOnIt": true,
+   "anyMatchInRegion": true,
+   "scroll": [
+    0,
+    75
+   ]
+  },
+  {
+   "genre": "Jazz-Rock 1",
+   "id": "a15265a3-c14b-4649-b7b7-72ff9d37dba7",
+   "matches": 1,
+   "firstOrder": 9,
+   "first": "Jeff Beck · Wired",
+   "farFromFirstSeat": false,
+   "arrivesOnIt": true,
+   "anyMatchInRegion": true,
+   "scroll": [
+    0,
+    75
+   ]
+  },
+  {
+   "genre": "Punk 1",
+   "id": "ffeb4ad8-9733-4cf4-8379-b71aee041a39",
+   "matches": 1,
+   "firstOrder": 13,
+   "first": "Discharge · Grave New World",
+   "farFromFirstSeat": false,
+   "arrivesOnIt": true,
+   "anyMatchInRegion": true,
+   "scroll": [
+    0,
+    84
+   ]
+  },
+  {
+   "genre": "Swing 1",
+   "id": "f3494fc4-1331-4da7-a694-5c2635f33d3b",
+   "matches": 1,
+   "firstOrder": 8,
+   "first": "Buddy Rich · Super Rich",
+   "farFromFirstSeat": false,
+   "arrivesOnIt": true,
+   "anyMatchInRegion": true,
+   "scroll": [
+    0,
+    75
+   ]
+  },
+  {
+   "genre": "Synth-pop 1",
+   "id": "a7ea93e8-1501-4690-afc0-565d555bcf0e",
+   "matches": 1,
+   "firstOrder": 5,
+   "first": "Smerz (2) · Believer",
+   "farFromFirstSeat": false,
+   "arrivesOnIt": true,
+   "anyMatchInRegion": true,
+   "scroll": [
+    0,
+    75
+   ]
+  },
+  {
+   "genre": "Trip Hop 1",
+   "id": "91e56ab6-8dbe-416d-992a-de62a585165a",
+   "matches": 1,
+   "firstOrder": 5,
+   "first": "Smerz (2) · Believer",
+   "farFromFirstSeat": false,
+   "arrivesOnIt": true,
+   "anyMatchInRegion": true,
+   "scroll": [
+    0,
+    75
+   ]
+  },
+  {
+   "genre": "UK82 1",
+   "id": "4d754ea5-4f95-4768-bcdd-9ca6020050c8",
+   "matches": 1,
+   "firstOrder": 13,
+   "first": "Discharge · Grave New World",
+   "farFromFirstSeat": false,
+   "arrivesOnIt": true,
+   "anyMatchInRegion": true,
+   "scroll": [
+    0,
+    84
+   ]
+  }
+ ],
+ "chosen": "Classic Rock 1",
+ "noMatch": {
+  "seated": 0,
+  "footprints": 17,
+  "scroll": [
+   0,
+   75
+  ],
+  "sentence": "Nothing in the collection matches.",
+  "size": "13px",
+  "block": [
+   229,
+   122
+  ],
+  "sentenceWidth": 189,
+  "offCentre": [
+   0,
+   0
+  ],
+  "text": [
+   85,
+   82,
+   78
+  ],
+  "paper": [
+   231,
+   230,
+   227
+  ],
+  "clip": {
+   "x": 909,
+   "y": 435,
+   "width": 190,
+   "height": 20
+  },
+  "ground": {
+   "worst": 6.22,
+   "notPaper": 0,
+   "pixels": 3800
+  }
+ },
+ "cleared": {
+  "scroll": [
+   0,
+   75
+  ],
+  "seated": 17,
+  "url": ""
+ }
+}
