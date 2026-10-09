@@ -56,7 +56,7 @@ export default async function EditRecordPage({ params }: PageProps<'/records/[id
         >
           ← {record.title}
         </Link>
-        <h1 className="mt-3 mb-4 font-heading text-xl font-semibold tracking-tight">Edit record</h1>
+        <h1 className="mt-3 mb-4 font-heading text-headline font-semibold tracking-tight">Edit record</h1>
 
         <RecordForm
           reference={reference}

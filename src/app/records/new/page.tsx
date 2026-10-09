@@ -88,7 +88,7 @@ export default async function NewRecordPage({ searchParams }: PageProps<'/record
         >
           ← Collection
         </Link>
-        <h1 className="mt-3 mb-1 font-heading text-xl font-semibold tracking-tight">
+        <h1 className="mt-3 mb-1 font-heading text-headline font-semibold tracking-tight">
           {wanted === undefined ? 'Add a record' : 'Mark acquired'}
         </h1>
 
