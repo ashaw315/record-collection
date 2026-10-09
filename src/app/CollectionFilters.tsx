@@ -1,7 +1,8 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { holdScroll } from '@/components/scroll-hold';
 import { cn } from '@/lib/utils';
 import { HAIRLINE, LABEL } from '@/app/records/[id]/grid-type';
 import { RECORD_SORT_FIELDS, type RecordSortField } from '@/lib/records/fields';
@@ -39,6 +40,9 @@ const LABEL_TEXT = 'text-[oklch(0.44_0.008_70)]';
 
 /** The measure the band gives search, and the record page its title: a list row wider than this parts a name from its count. */
 const FILTER_MEASURE = 443;
+
+/** Whether the history entry in force is the one an open filter added. */
+const hasEntry = () => (window.history.state as { collectionFilter?: boolean } | null)?.collectionFilter === true;
 
 const FILTER_GROUPS = [
   { key: 'genreId', label: 'Genre', options: 'genres' },
@@ -98,21 +102,65 @@ export function CollectionFilters({
     rootRef.current?.setAttribute('data-hydrated', 'true');
   }, []);
 
-  /** Which filter's list is open: one at a time (§T.3). */
+  /**
+   * Which filter is open: one at a time (§T.3).
+   *
+   * Step 101: an open filter covers. Its options are on a fixed panel of
+   * opaque paper from beneath its own line to the viewport's bottom, and
+   * the page beneath does not move. The mechanics are §G.8's, the menu's
+   * (`AppHeader`): opening adds one history entry at the same URL, so Back
+   * closes the filter rather than leaving the screen; closing by any other
+   * means goes back over that entry, so entries do not pile up; and a
+   * chosen option replaces it. Step 97b pushed the page down instead
+   * (`T.3/push-down`).
+   */
   const [openKey, setOpenKey] = useState<string | null>(null);
+  const [panelTop, setPanelTop] = useState(0);
+  const closeFilter = useCallback(() => {
+    setOpenKey(null);
+    if (hasEntry()) window.history.back();
+  }, []);
+  const openFilter = useCallback((key: string, lineBottom: number) => {
+    /* Placed in the press itself, so the panel's first paint is already beneath its line. */
+    setPanelTop(lineBottom);
+    /* A second filter opened over the first takes the first's entry: one entry however many are tried. */
+    if (!hasEntry()) window.history.pushState({ ...(window.history.state as object | null), collectionFilter: true }, '');
+    setOpenKey(key);
+  }, []);
+
   useEffect(() => {
     if (openKey === null) return undefined;
+    const trigger = () => rootRef.current?.querySelector<HTMLElement>(`[data-filter="${openKey}"] [data-filter-trigger]`);
+    /* Where the filter's own line ends in the window: the panel starts there, and the line stays where it is. */
+    const place = () => {
+      const line = trigger()?.getBoundingClientRect();
+      if (line !== undefined) setPanelTop(line.bottom);
+    };
+    place();
     const onKey = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return;
-      setOpenKey(null);
+      closeFilter();
       // Focus goes back to the line, which is where the list was opened from and has not moved.
-      rootRef.current?.querySelector<HTMLElement>(`[data-filter="${openKey}"] [data-filter-trigger]`)?.focus();
+      trigger()?.focus();
     };
+    /* Back, or anything else that leaves the filter's entry: the filter is closed. */
+    const onPop = () => {
+      if (!hasEntry()) setOpenKey(null);
+    };
+    /* "The page beneath does not move": held in both directions, with step 86's compensation. */
+    const release = holdScroll(document.documentElement, window);
     document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [openKey]);
+    window.addEventListener('popstate', onPop);
+    window.addEventListener('resize', place);
+    return () => {
+      release();
+      document.removeEventListener('keydown', onKey);
+      window.removeEventListener('popstate', onPop);
+      window.removeEventListener('resize', place);
+    };
+  }, [openKey, closeFilter]);
 
-  function change(mutate: (current: CollectionParams) => CollectionParams) {
+  function change(mutate: (current: CollectionParams) => CollectionParams, how: 'push' | 'replace' = 'push') {
     /**
      * Reconciled HERE, in the event handler, not during render — reading a ref
      * while rendering is unsound and react-hooks/refs rejects it, correctly.
@@ -131,7 +179,7 @@ export function CollectionFilters({
 
     const query = toQueryString(mutate(base));
     pending.current = query;
-    router.push(query === '' ? '/' : `/?${query}`);
+    router[how](query === '' ? '/' : `/?${query}`);
   }
 
   const hasYearFilter =
@@ -189,9 +237,9 @@ export function CollectionFilters({
         The options grow with the collection (genres were 6 in the seed and
         are 32), so anything that shows them all always fails at some
         count. Closed, a filter is one line whatever the count: its label
-        and the one option chosen. Open, its options are a list in the
-        page's own flow, which pushes the page and leaves the line under
-        the finger that pressed it.
+        and the one option chosen. Open, its options are on a panel that
+        covers what lies beneath its line (step 101), and the line stays
+        under the finger that pressed it.
       */}
       <div className="flex flex-col" style={{ maxWidth: FILTER_MEASURE }}>
         {FILTER_GROUPS.map((group) => {
@@ -209,7 +257,7 @@ export function CollectionFilters({
                 data-filter-trigger=""
                 aria-expanded={open}
                 aria-controls={`filter-${group.key}`}
-                onClick={() => setOpenKey(open ? null : group.key)}
+                onClick={(event) => (open ? closeFilter() : openFilter(group.key, event.currentTarget.getBoundingClientRect().bottom))}
                 className="flex h-[44px] w-full items-baseline gap-3 text-left leading-[44px]"
               >
                 <span data-filter-label="" className={`w-12 shrink-0 ${LABEL}`}>
@@ -220,39 +268,59 @@ export function CollectionFilters({
                 </span>
               </button>
               {open && (
-                <ul id={`filter-${group.key}`} data-filter-list="">
-                  {list.map((option) => {
-                    const active = selected === option.id;
-                    return (
-                      <li key={option.id}>
-                        <button
-                          type="button"
-                          data-filter-option=""
-                          aria-pressed={active}
-                          onClick={() => {
-                            // Single-valued: choosing the chosen one clears it, so the list both applies and removes.
-                            setOpenKey(null);
-                            change((current) =>
-                              withFacet(current, { filters: { [group.key]: active ? undefined : option.id } }),
-                            );
-                          }}
-                          className="flex h-[44px] w-full items-baseline justify-between gap-3 border-t border-border text-left leading-[43px]"
-                        >
-                          <span
-                            data-filter-name=""
-                            className={cn('min-w-0 truncate text-detail', active && 'underline decoration-2 underline-offset-[7px]')}
+                /*
+                  §T.3 by §G.8: fixed, opaque paper, full width, from the
+                  line's end to the viewport's bottom. `z-50` raises it above
+                  the table's rows and the grid's cells, which are positioned
+                  and later in the page, so they would paint over it and take
+                  its taps; asserted on the grid in `filter-panel-101.spec.ts`.
+                  A list longer than the panel scrolls within it. A tap on
+                  the paper, anywhere off the list, closes it.
+                */
+                <div
+                  data-filter-panel=""
+                  onClick={(event) => {
+                    if (!(event.target as HTMLElement).closest('[data-filter-list]')) closeFilter();
+                  }}
+                  style={{ top: panelTop }}
+                  className="fixed inset-x-0 bottom-0 z-50 overflow-y-auto overscroll-contain bg-background"
+                >
+                  <ul id={`filter-${group.key}`} data-filter-list="" className="mx-5" style={{ maxWidth: FILTER_MEASURE }}>
+                    {list.map((option) => {
+                      const active = selected === option.id;
+                      return (
+                        <li key={option.id}>
+                          <button
+                            type="button"
+                            data-filter-option=""
+                            aria-pressed={active}
+                            onClick={() => {
+                              // Single-valued: choosing the chosen one clears it, so the list both applies and removes.
+                              // The choice replaces the filter's history entry (§G.8), so one Back leaves the filtered page.
+                              setOpenKey(null);
+                              change(
+                                (current) => withFacet(current, { filters: { [group.key]: active ? undefined : option.id } }),
+                                hasEntry() ? 'replace' : 'push',
+                              );
+                            }}
+                            className="flex h-[44px] w-full items-baseline justify-between gap-3 border-t border-border text-left leading-[43px]"
                           >
-                            {option.name}
-                          </span>
-                          {/* The count follows §7.1 for genres, so it is what choosing the option returns. Right-aligned so the counts read down the list. */}
-                          <span data-filter-count="" className={`shrink-0 tabular-nums ${LABEL}`}>
-                            {option.count}
-                          </span>
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
+                            <span
+                              data-filter-name=""
+                              className={cn('min-w-0 truncate text-detail', active && 'underline decoration-2 underline-offset-[7px]')}
+                            >
+                              {option.name}
+                            </span>
+                            {/* The count follows §7.1 for genres, so it is what choosing the option returns. Right-aligned so the counts read down the list. */}
+                            <span data-filter-count="" className={`shrink-0 tabular-nums ${LABEL}`}>
+                              {option.count}
+                            </span>
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
               )}
             </div>
           );
