@@ -37743,3 +37743,109 @@ weaker line above about the burner count not predicting the load.
 load**, because the old copies had not failed there and so a pass would
 have been evidence of nothing. A green that cannot fail is refused, not
 collected.
+
+## Step 100: the search field at 44, Add record in ink, the empty line gone (8 Oct, evening)
+
+§W.24, a defect fix to step 95. Step level.
+
+- **The search field is 44** in the rail and in the band, on the shelf,
+  the table and the grid. The rail's Genre and Sort selects are other
+  controls and keep 34; in the band they are not shown.
+- **Add record has one colour class.** `LABEL` and `INK` together were two,
+  and the stylesheet's order chose the label's. `LABEL_TYPE` is the label
+  with no colour (`grid-type.ts`). The scoped override the table and grid
+  carried since step 97a is removed, since the cause is gone. Nothing
+  pinned the shelf's old colour: no spec, no capture, no computed read.
+- **The Label-and-Cond. line draws only when it has text**, so a row with
+  neither is 44 and not 46.
+
+**The pins, against the coordinator's predictions, each plus 10:**
+
+| | before | predicted | measured |
+|---|---|---|---|
+| the shelf's page at 390 (`nav-menu-84`) | 971 | 981 | 981 |
+| the band on the table and grid | 126.5 | 136.5 | 136.5 |
+| table page, seeded seventeen, 390 / 320 / 1440 | 1688 / 1766 / 1303 | plus 10 | 1698 / 1776 / 1313 |
+| grid page, seeded seventeen, 390 / 320 / 1440 | 2604 / 2341 / 1247 | plus 10 | 2614 / 2351 / 1257 |
+
+Nothing moved but the 10. **The real collection's figures (1,786 and
+1,903, 2,702 and 2,439) are NOT measured.** They are the sheet's, and I
+did not run it: looking up how it was last run was refused by the
+session's permissions, and I did not go round that. One thing is known to
+differ there: every row on the real table with no label and no condition
+is now 2 shorter below 768, and the seeded seventeen have none such, so
+the real table's page will be the prediction LESS 2 for each. The count
+of such rows is the sheet's to give.
+
+**A test nobody remembered, found late.** `src/app/WallRail.test.tsx`
+pinned the 34 as a class. I committed step 100 (`05c5ecf`) having run the
+specs, typecheck, lint and build, and not the unit files that import what
+I changed; it was red in that commit and is corrected in `7787fda`. The
+step-level list in CLAUDE.md §10 names specs and not unit files, and the
+habit that follows from it is the gap: **a step that changes a component
+runs the unit files that import it.**
+
+## Step 101: the filter covers (8 Oct, evening)
+
+§T.3 by §G.8, superseding step 97b's push-down (`T.3/push-down`). An
+open filter is a fixed panel of opaque paper from beneath its own line to
+the viewport's bottom, full width, `z-50`. Opening adds one history entry
+at the same URL; Back, Escape, a second press, or a tap on the paper off
+the list closes it and goes back over that entry; a chosen option
+replaces it. The page is held with `holdScroll`, step 86's. A list longer
+than the panel scrolls in it. Placed in the press itself, from the line's
+bottom, so its first paint is already beneath the line.
+
+- **The grid's covers are not positioned as the record page's is**, which
+  the coordinator asked to be said before the assertion was built. A grid
+  cover is an ordinary image. What is positioned is its cell (`li`,
+  relative) and the cell's link, whose `::after` covers the cell. That
+  still outranks an un-raised panel, cover and all, so step 84's case
+  holds with a different precondition: the test asserts the cell is
+  relative and the image static, then the pixel and the tap. Staged with
+  the `z-50` removed, confirmed taken: the tap landed in the cell.
+- **A choice that pushes** leaves an extra entry. Staged, confirmed
+  taken: 5 entries for 4. That test passed on its first run against the
+  old build, which adds no entry at all, so the staged break is what
+  shows it can fail.
+- **A consequence of covering, not ruled either way:** while a filter is
+  open the lines beneath it are under its panel. Genre open, Label cannot
+  be pressed; Label open, Genre can. A press where a covered line sits
+  lands on the paper and closes the panel.
+- **Two step 97b tests were rewritten for the ruling**, not to pass a
+  build, and say so in the file: the one asserting the list in flow and
+  the table pushed down, and the one pressing a second line beneath an
+  open one.
+- `e2e/pixel-read.ts` holds the painted-pixel helpers for this second
+  use. `nav-menu-84.spec.ts` keeps its own copies; not touched.
+- `e2e/sheet/collection-97.sheet.ts` measures the open lists as page
+  length. Since the panel covers, that reading is of the panel's list and
+  no longer a cost to the page. Not run, not changed.
+
+Step level, both projects: `filter-panel-101`, `collection-filters-97`,
+`collection-filters`, `table-98`, `grid-99`, `band-100`,
+`collection-band-97`, `nav-menu-84`, `collection-widths`, `shelf`,
+`shelf-narrow`: `112 passed, 2 skipped, ledger clean, tree unchanged —
+OK`. Unit: `src/app`, `src/components` and `test/repo`, 1658 passed.
+Typecheck, lint (28 warnings, as before), build.
+
+## `wall-route.spec.ts` depends on what else is in the database (8 Oct, evening; not step 100's)
+
+Two of its tests fail when the file runs on its own or beside the table's
+specs, with and without step 100, and with the spec as it stood at the
+gated `74b3a8a`:
+
+- `:205`, "a wall that fits the region": every one of five runs of the
+  file alone. The region read 872 wide and the wall 929 to 988.
+- `:106`, "a bare / opens NEAR": in the multi-file runs, a seat's foot at
+  1286 against a region ending at 901.
+
+The failure's capture reads "20 of 277 records". The wall under an artist
+filter is still the whole collection's wall, with the other seats
+emptied, so its size is the collection's. `:154` in the same file seeds
+240 records and runs beside `:205` on the second worker, and `table-98`
+seeds 200. Run alone, `:205` passed six times of six with the wall at
+872. **These tests assert the geometry of a wall whose size other tests
+set.** They passed in both of yesterday's gates, by which tests happened
+to run beside them. Not a read before the page settled, so not covered by
+the standing say; reported and not changed.
