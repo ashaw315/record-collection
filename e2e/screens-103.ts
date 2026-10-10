@@ -52,3 +52,15 @@ export async function eachScreen(page: Page, f: Fixture, width: number, visit: (
     await visit(`manage, ${((await names.nth(i).textContent()) ?? String(i)).trim()}`);
   }
 }
+
+/** The five screens §T.6 names, the record form twice, each with the measure step 118 keeps for it. */
+export function fiveScreens(f: Fixture): { name: string; path: string; manage: boolean }[] {
+  return [
+    { name: 'stats', path: '/stats', manage: false },
+    { name: 'the want list', path: '/want-list', manage: false },
+    { name: 'look up', path: '/lookup', manage: false },
+    { name: 'the record form, new', path: '/records/new', manage: false },
+    { name: 'the record form, editing', path: `/records/${f.record}/edit`, manage: false },
+    { name: 'manage', path: '/manage', manage: true },
+  ];
+}

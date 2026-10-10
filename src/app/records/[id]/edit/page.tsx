@@ -7,6 +7,7 @@ import type { FormValues } from '../../record-form';
 import { pressingToForm } from '../../pressing-form';
 import { hydrateRecord } from '@/lib/db/queries/records';
 import { isUuid } from '@/lib/api/errors';
+import { SCREEN_FRAME } from '@/app/screen-frame';
 
 /** SPEC.md §10 `/records/:id/edit`. */
 
@@ -49,7 +50,7 @@ export default async function EditRecordPage({ params }: PageProps<'/records/[id
   return (
     <>
       <AppHeader />
-      <main className="mx-auto w-full max-w-3xl px-4 py-6">
+      <main data-screen-frame="" className={`${SCREEN_FRAME} py-6`}>
         <Link
           href={`/records/${id}`}
           className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"

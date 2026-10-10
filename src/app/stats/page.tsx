@@ -5,6 +5,7 @@ import { genreDirectRecords, recordStats } from '@/lib/db/queries/records';
 import { genrePairs } from './genre-pairs';
 import { GenreTree } from './GenreTree';
 import { estimatedValueStatement, spendStatement } from './value-statement';
+import { SCREEN_FRAME } from '@/app/screen-frame';
 
 /**
  * SPEC.md §10 `/stats`: "Total records, total spend, estimated value, breakdown
@@ -145,7 +146,7 @@ export default async function StatsPage({
     <>
       <AppHeader />
 
-      <main className="mx-auto w-full max-w-3xl px-4 py-6">
+      <main data-screen-frame="" className={`${SCREEN_FRAME} py-6`}>
         <h1 className="font-heading text-headline font-semibold tracking-tight">Stats</h1>
 
         {/*

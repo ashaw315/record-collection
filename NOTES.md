@@ -40569,3 +40569,71 @@ yours"), so it is carried in `scripts/handoff-code-region.json` as 71,
 measurement is filed in Code's region in the same commit, not
 retroactively.** Otherwise the next renumber by Design opens a hole in the
 handoff's sequence that only Code can fill, which is what 116 did.
+
+## Step 118: the five screens pinned left at the 20 inset, their measures kept (10 Oct)
+
+**Not ruled.** The coordinator's reading, built so Design can rule against
+the captures: stats, the want list, look up and the record form (new and
+editing) keep their 736 and manage its 1,120, and each starts at the 20
+inset where it stood in a centred column. `src/app/screen-frame.ts` holds
+the three frames; `e2e/pinned-118.spec.ts` reads each screen at 390,
+1024, 1440 and 1920; `docs/captures/pinned-118/` is the real collection
+at the eight usual widths, read-only.
+
+**Readings taken, to be ruled with it:**
+- *20 at every width, the phone included.* The inset was 16, so at 390
+  each screen's content is 350 where it was 358. That is the table's and
+  grid's inset there too.
+- *Manage's match review* stood in a second, narrower centred column
+  (1,000, inset 12). It is pinned at 20 with its 1,000 kept.
+- *The heading is 2 right of the wordmark* (20 against the header's 18),
+  as on the table and grid below the fork.
+- *The four pages the survey left out* (suggestions, the want list's new
+  form, an item's page and its edit form) and the not-found page are
+  still centred. Not in the five; not touched.
+
+**Manage's sideways scroll at 390 grew from 18 to 22**, by the 4 the
+inset added. It is the survey's finding of 8 Oct (the page 408 wide in
+390), which is its own step and still not built; this step did not cause
+it and makes it 4 worse.
+
+**The unit test passed the first time it ran**, because it holds three
+class strings written in the same sitting to the figures beside them. It
+is a guard on the constants, not the step's fail-first. The fail-first is
+the screen spec: with the frames marked and the old classes still on,
+4 failed, reading the content's left as 592 at 1920, 352 at 1440, 144 at
+1024 and 16 at 390, and the measure as 358 at 390.
+
+**118 is not in Code's region.** The region places a step in front of the
+next one's line, and there is no 119 to stand in front of. If Design
+writes a 119 before it writes this one, 118 is the next hole.
+
+### §T.6 on the five screens, surveyed against the target as it stands
+
+Common to all five, built at step 103 and still tested: no oxblood, grey
+or red (103b, `colour-103.spec.ts`), no radius (103a,
+`radius-103.spec.ts`), the heading at 40 (103c, `headings-103.spec.ts`).
+All three specs ran in this step's covering set.
+
+| screen | built | ruled and not built | no ruling |
+|---|---|---|---|
+| stats | colour, radius, heading | nothing | its heading's figure: "Stats is next" stands in the target with no rule after the wireframe withdrew the figure it described; where its content stands in the window |
+| want list | colour, radius, heading; LOOK UP A RECORD in the heading's row; the empty state's figure and sentence | the empty state's figure in the source's tint, if the wireframe's "in tint" reaches it (built in ink, as first ruled) | its heading's figure; the Acquired view's empty sentence; whether it reaches /want-list/new directly (the target leaves that to SPEC.md and Adam) |
+| look up | colour, radius, heading; the empty state's figure above "Nothing found. Try another search." | the same question of tint | its results ("not surveyed and are not ruled"); the market line's height while it loads (asked of Design today) |
+| record form | colour, radius, heading at 40 in both states; no figure, as ruled | nothing | nothing found |
+| manage | colour, radius, heading; no figure in its empty rows, as ruled | nothing | its sideways scroll on a phone and its missing `main` (the survey's, never ruled as a step); its heading's figure |
+
+**Two sentences in the target that the source rule has overtaken.** §T.6
+gives the five screens' airs "against the collection's smallest clearing
+height of 172.4", and says that figure "by the single-source rule... can
+only fall", so stats would draw "with nobody doing anything" once a record
+clears below 153. Since step 115 the source is the record that first
+draws at the narrowest window, not the one that clears lowest: it is
+Psychic, clearing at 193.2, and the collection's lowest (The Doors,
+159.6) is not the source. So the figure the screens wait on went up, and
+it no longer only falls.
+
+**Not ruled anywhere, for all five: the 44 floor.** The survey found no
+control on any of the five at 44 by its hit area but one textarea. The
+coordinator queued it on 9 Oct as its own step after 103; no step
+carries it.

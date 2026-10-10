@@ -10,6 +10,7 @@ import { listFormats } from '@/lib/db/queries/formats';
 import { listStores } from '@/lib/db/queries/stores';
 import { listTags } from '@/lib/db/queries/tags';
 import type { Offset } from '@/lib/api/query-params';
+import { REVIEW_FRAME } from '@/app/screen-frame';
 
 /**
  * SPEC.md §10 `/manage`: CRUD for genres (incl. hierarchy), labels, formats,
@@ -93,7 +94,7 @@ export default async function ManagePage({
   return (
     <>
       <AppHeader />
-      <div className="mx-auto w-full max-w-5xl px-3 pt-4">
+      <div data-review-frame="" className={`${REVIEW_FRAME} pt-4`}>
         <MatchReview candidates={matchCandidates} />
       </div>
       <ManageClient

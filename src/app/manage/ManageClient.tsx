@@ -26,6 +26,7 @@ import { GenreTree } from './GenreTree';
 import { ParentProposal } from './ParentProposal';
 import type { Evidence, ProposedPairing } from './parent-proposal';
 import { nameOf, type GenreRow } from './genre-tree';
+import { MANAGE_FRAME } from '@/app/screen-frame';
 
 /**
  * One screen for eight resources (SPEC.md §10 `/manage`).
@@ -387,7 +388,7 @@ export function ManageClient({
   const resource = RESOURCES.find((entry) => entry.key === activeKey) as ResourceSpec;
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-6">
+    <div data-screen-frame="" className={`${MANAGE_FRAME} py-6`}>
       <header className="mb-5">
         <h1 className="font-heading text-headline font-semibold tracking-tight">Manage</h1>
         <p className="mt-0.5 text-lede text-muted-foreground">

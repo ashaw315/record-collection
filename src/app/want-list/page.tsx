@@ -10,6 +10,7 @@ import { listWantList } from '@/lib/db/queries/want-list';
 import { hydrateWantListItem } from '@/lib/db/queries/want-list';
 import type { Offset } from '@/lib/api/query-params';
 import { cn } from '@/lib/utils';
+import { SCREEN_FRAME } from '@/app/screen-frame';
 
 /**
  * SPEC.md §10 `/want-list`.
@@ -50,7 +51,7 @@ export default async function WantListPage({ searchParams }: PageProps<'/want-li
     <>
       <AppHeader />
 
-      <main className="mx-auto w-full max-w-3xl px-4 py-6">
+      <main data-screen-frame="" className={`${SCREEN_FRAME} py-6`}>
         <header className="mb-4 flex flex-wrap items-start justify-between gap-4">
           <div>
             <h1 className="font-heading text-headline font-semibold tracking-tight">

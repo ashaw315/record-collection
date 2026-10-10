@@ -3,6 +3,7 @@ import { LookupClient } from './LookupClient';
 import { ConstructionStill } from '../records/[id]/ConstructionStill';
 import { figureSource } from '../figure-source';
 import { listRecordAges } from '@/lib/db/queries/records';
+import { SCREEN_FRAME } from '@/app/screen-frame';
 
 /**
  * SPEC.md §10 `/lookup` — "Mobile-optimized — this is the in-store screen."
@@ -22,7 +23,7 @@ export default async function LookupPage() {
   return (
     <>
       <AppHeader />
-      <main className="mx-auto w-full max-w-3xl px-4 py-5">
+      <main data-screen-frame="" className={`${SCREEN_FRAME} py-5`}>
         {/* §T.6 reaches look up's heading and its empty state only: "Its results were not surveyed and are not ruled." So the mapping is on these and on the form, and not on the page. */}
         <div>
         <h1 className="mb-1 font-heading text-headline font-semibold tracking-tight">Look up a record</h1>
