@@ -352,54 +352,81 @@ test.describe('§T.3: the floor’s return is suppressed once the reader has scr
   });
 });
 
+type RingProbe = { ringAtFocus: () => number; ringReport: () => { total: number; missed: string[]; bad: string[] } };
+
 test.describe('§M.6’s ring on every focusable control of the table and the grid', () => {
   for (const view of VIEWS) {
     for (const width of [1440, 390]) {
-      /* Fails against the browser's own outline, in any colour: "a recolour of the default does not meet it". */
-      test(`the ${view} at ${width}, with a filter open: each control focused draws no outline of its own and §M.6’s ring, 2px of paper and 2px of ink inside its box`, async ({ page, browserName }) => {
-        /* Seen on the mobile project, 10 Oct: every link and button read "no shadow", the fields passing. The phone's engine is not tested for the ring. */
-        test.skip(browserName !== 'chromium', 'a scripted focus on a link or a button is not :focus-visible on WebKit, so the ring cannot be read there this way');
+      /* Fails against the browser's own outline, in any colour: "a recolour of the default does not meet it"; and against the ring's rule in `globals.css` taken out. */
+      test(`the ${view} at ${width}, with a filter open: each control reached by the keyboard draws no outline of its own and §M.6’s ring, 2px of paper and 2px of ink inside its box`, async ({ page, browserName }) => {
         await open(page, width, view);
         await page.locator('[data-filter="genreId"] [data-filter-trigger]').click();
         await page.locator('[data-filter-panel]').waitFor();
-        await page.keyboard.press('Shift');
-        const r = await page.evaluate(() => {
+        const total = await page.evaluate(() => {
           const canvas = document.createElement('canvas'); canvas.width = 1; canvas.height = 1;
           const ctx = canvas.getContext('2d', { willReadFrequently: true }) as CanvasRenderingContext2D;
           const paint = (css: string) => { ctx.clearRect(0, 0, 1, 1); ctx.fillStyle = '#000'; ctx.fillStyle = css; ctx.fillRect(0, 0, 1, 1); return Array.from(ctx.getImageData(0, 0, 1, 1).data).join(','); };
           const root = getComputedStyle(document.documentElement);
           const paper = paint(root.backgroundColor === 'rgba(0, 0, 0, 0)' ? getComputedStyle(document.body).backgroundColor : root.backgroundColor);
           const inkProbe = document.createElement('i'); inkProbe.style.color = 'oklch(0.19 0.008 60)'; document.body.append(inkProbe); const ink = paint(getComputedStyle(inkProbe).color); inkProbe.remove();
+          const COLOUR = /(?:rgba?|lab|oklab|oklch|lch|color)\([^)]*\)/;
+          const read = (p: string) => ({ colour: paint((p.match(COLOUR) ?? [''])[0]), spread: (p.replace(COLOUR, '').match(/-?[\d.]+px/g) ?? []).map(parseFloat).join(',') });
+          const split = (shadow: string) => shadow.split(/,(?![^(]*\))/).map((p) => p.trim());
           /* A ring is two inset shadows with no blur: 2px of paper, then ink to 4px. */
           const ring = (shadow: string) => {
-            const parts = shadow.split(/,(?![^(]*\))/).map((p) => p.trim());
+            const parts = split(shadow);
             if (parts.length !== 2 || !parts.every((p) => p.includes('inset'))) return false;
-            const read = (p: string) => ({ colour: paint((p.match(/(?:rgba?|lab|oklab|oklch|lch|color)\([^)]*\)/) ?? [''])[0]), spread: (p.replace(/(?:rgba?|lab|oklab|oklch|lch|color)\([^)]*\)/, '').match(/-?[\d.]+px/g) ?? []).map(parseFloat) });
             const [a, b] = parts.map(read);
-            return a.colour === paper && a.spread.join(',') === '0,0,0,2' && b.colour === ink && b.spread.join(',') === '0,0,0,4';
+            return a.colour === paper && a.spread === '0,0,0,2' && b.colour === ink && b.spread === '0,0,0,4';
           };
           const focusable = Array.from(document.querySelectorAll<HTMLElement>('main :is(a[href], button, input:not([type=hidden]), select, textarea, [tabindex]:not([tabindex="-1"]))')).filter((el) => el.closest('nextjs-portal') === null && !(el as HTMLButtonElement).disabled && el.getClientRects().length > 0);
+          const nameOf = (el: HTMLElement) => `${el.tagName.toLowerCase()} "${((el.textContent ?? '').trim() || el.getAttribute('aria-label') || el.id || '').slice(0, 18)}"`;
+          const names = focusable.map(nameOf);
+          const seen = new Set<number>();
           const bad: string[] = [];
-          let focused = 0;
-          for (const el of focusable) {
-            el.focus({ preventScroll: true });
-            if (document.activeElement !== el) continue;
-            focused += 1;
-            const name = `${el.tagName.toLowerCase()} "${((el.textContent ?? '').trim() || el.getAttribute('aria-label') || el.id || '').slice(0, 18)}"`;
-            const cs = getComputedStyle(el);
-            if (cs.outlineStyle !== 'none' && cs.outlineWidth !== '0px') bad.push(`${name}: an outline, ${cs.outlineStyle} ${cs.outlineWidth}`);
-            /* On its own box, on the overlay that is its hit area, or on the label that is its box. */
-            const places = [cs.boxShadow, getComputedStyle(el, '::before').boxShadow, getComputedStyle(el, '::after').boxShadow, el.closest('label') === null ? 'none' : getComputedStyle(el.closest('label') as HTMLElement).boxShadow];
-            /* The same ring as the table's rows have drawn it since step 98: the 2px of paper as the overlay's border, and the ink as one shadow inside it. */
-            const after = getComputedStyle(el, '::after');
-            const inkInset = after.boxShadow.split(/,(?![^(]*\))/).some((part) => /inset/.test(part) && paint((part.match(/(?:rgba?|lab|oklab|oklch|lch|color)\([^)]*\)/) ?? [''])[0]) === ink && (part.replace(/(?:rgba?|lab|oklab|oklch|lch|color)\([^)]*\)/, '').match(/-?[\d.]+px/g) ?? []).map(parseFloat).join(',') === '0,0,0,2');
-            const asBuilt = after.borderTopWidth === '2px' && paint(after.borderTopColor) === paper && inkInset;
-            if (!places.some(ring) && !asBuilt) bad.push(`${name}: no ring (${places.filter((p) => p !== 'none').join(' | ').slice(0, 80) || 'no shadow'})`);
-          }
-          (document.activeElement as HTMLElement | null)?.blur();
-          return { focused, bad };
+          const probe: RingProbe = {
+            /* Reads the control the keyboard has just landed on, where it stands, and says how many have been read. */
+            ringAtFocus: () => {
+              const el = document.activeElement as HTMLElement | null;
+              const index = el === null ? -1 : focusable.indexOf(el);
+              if (el === null || index < 0 || seen.has(index)) return seen.size;
+              seen.add(index);
+              const name = names[index];
+              /* The precondition the scripted focus broke without a sound on WebKit: the ring's rule is on `:focus-visible`. */
+              if (!el.matches(':focus-visible')) bad.push(`${name}: focused and not :focus-visible`);
+              const cs = getComputedStyle(el);
+              if (cs.outlineStyle !== 'none' && cs.outlineWidth !== '0px') bad.push(`${name}: an outline, ${cs.outlineStyle} ${cs.outlineWidth}`);
+              /* On its own box, on the overlay that is its hit area, or on the label that is its box. */
+              const places = [cs.boxShadow, getComputedStyle(el, '::before').boxShadow, getComputedStyle(el, '::after').boxShadow, el.closest('label') === null ? 'none' : getComputedStyle(el.closest('label') as HTMLElement).boxShadow];
+              /* The same ring as the table's rows have drawn it since step 98: the 2px of paper as the overlay's border, and the ink as one shadow inside it. */
+              const after = getComputedStyle(el, '::after');
+              const inkInset = split(after.boxShadow).some((part) => /inset/.test(part) && read(part).colour === ink && read(part).spread === '0,0,0,2');
+              const asBuilt = after.borderTopWidth === '2px' && paint(after.borderTopColor) === paper && inkInset;
+              if (!places.some(ring) && !asBuilt) bad.push(`${name}: no ring (${places.filter((p) => p !== 'none').join(' | ').slice(0, 80) || 'no shadow'})`);
+              return seen.size;
+            },
+            ringReport: () => ({ total: focusable.length, missed: names.filter((_, i) => !seen.has(i)), bad }),
+          };
+          Object.assign(window, probe);
+          return focusable.length;
         });
-        expect(r.focused, 'the precondition: controls took focus').toBeGreaterThan(8);
+        expect(total, 'the precondition: the screen has controls to reach').toBeGreaterThan(8);
+        /*
+         * By the keyboard and not by `focus()`: a scripted focus on a link or
+         * a button is not `:focus-visible` on WebKit, so this test read "no
+         * shadow" there and was skipped, a guard passing where the real thing
+         * was not (10 Oct). WebKit steps to links and buttons on Option+Tab,
+         * as Safari does unless the reader has turned on "Press Tab to
+         * highlight each item"; that setting is the reader's and not shown.
+         */
+        const step = browserName === 'webkit' ? 'Alt+Tab' : 'Tab';
+        let reached = 0;
+        for (let presses = 0; presses < total * 2 + 40 && reached < total; presses += 1) {
+          await page.keyboard.press(step);
+          reached = await page.evaluate(() => (window as unknown as RingProbe).ringAtFocus());
+        }
+        const r = await page.evaluate(() => (window as unknown as RingProbe).ringReport());
+        expect(r.missed, 'every control was reached by the keyboard').toEqual([]);
         expect(r.bad).toEqual([]);
       });
     }

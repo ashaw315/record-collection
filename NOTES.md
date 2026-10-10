@@ -40200,9 +40200,57 @@ undated count as sentence or figure) and `collection-filters-97`
   link or button is not `:focus-visible` on WebKit, and every one read
   "no shadow" there while the fields passed. Whether a keyboard on Safari
   draws it is unverified.
+  (Closed the same day: see the next entry.)
 - `colour-103`'s want-list confirmation test failed once in the broad run
   on `ECONNRESET` posting its fixture and passed on retry; not diagnosed.
 - The broad covering run read 264 passed, 41 failed, 1 flaky before the
   corrections; the 41 were the specs above and the ring on WebKit. The
   rerun of the corrected specs is the green one; the whole covering set
   was not run again after it.
+
+## After step 113's report: the ring is read by the keyboard on both engines; two rules written, not built (10 Oct)
+
+**The ring test no longer skips the phone's engine.** It skipped WebKit
+because a scripted `focus()` on a link or a button is not `:focus-visible`
+there, so every one read "no shadow". That was the first defect family: a
+guard passing because it ran where the real thing was not. It now walks the
+screen by the keyboard, Tab on Chromium and Option+Tab on WebKit, reads the
+control the keyboard lands on, and fails if any control of `main` was never
+reached or was focused without being `:focus-visible`.
+
+- Fail-first: with the ring's `box-shadow` taken out of `globals.css`,
+  `0 passed, 8 failed` on both projects, each naming the controls with no
+  ring. Put back: `8 passed, ledger clean, tree unchanged — OK`.
+- Still not shown: WebKit reaches links and buttons on Option+Tab, as
+  Safari does by default. Plain Tab reaching them is the reader's own
+  setting ("Press Tab to highlight each item") and nothing here stages it.
+  The ring's rule does not depend on which key arrived, only on
+  `:focus-visible`.
+
+**Rule, written and not built: a step's covering set is derived, not
+chosen.** The covering run for a step has been picked by judgement, and
+that is how `label-tracking-80` broke at fff63d8 and stood four hours: the
+container step removed the classes its selector named, and the spec was
+not among the ones I thought to run. The structural answer is a covering
+set derived from what the change touches: for each changed source file,
+every spec that reads a selector, attribute, class or export the diff
+removed or renamed, plus every spec that opens a screen the file renders.
+Until that exists, the least a step does is grep the specs for each
+selector and class its diff deletes before choosing what to run. Building
+the derivation waits for a ruling.
+
+**For Design, after Adam has looked: "the chevron turns over" is the
+sentence that is wrong, not the build.** Sort is the platform's own
+select, laid over its label, so the page has no open state to turn a
+chevron on. Adam's wireframe draws Sort with a chevron and the filters
+with a +, so the picture already tells the two apart and the native select
+reads right. Nothing is changed in the build; the handoff's sentence goes
+to Design (coordinator, 10 Oct).
+
+**The fork, held.** 1054 came from Record at 269, which is the
+arithmetic's figure and not the drawn one (236 at 1054). Not re-derived
+by arithmetic. Adam looks at the 1053/1054 pair first; if the table reads
+cramped, the one measurement owed is the window at which the DRAWN Record
+reaches 269. The grid's five-to-three across the fork stays, and the fork
+is not moved onto a grid boundary. No floor on the figure, which clears
+by 3.6 at the fork; revisit only if the fork moves down.
