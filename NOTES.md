@@ -40063,3 +40063,8 @@ figure is good to about 2.
   40 to 297, and each filter line from 42 to its + ending at 295. So the
   picture's inset is 40, and its lines are about 257 wide under a 277
   search, where Design's ruling is 18 to 318.
+- *The full span's midpoint (asked after).* The marks with both diagonals
+  run 580 to 1235, so their middle is at 907.5: 68 LEFT of the column's
+  centre (975.5), further off than the figure alone (35). What it does
+  land on is the middle of the room left of ADD RECORD: the column's left
+  at 375 to ADD RECORD's left at 1437 has its middle at 906, 1.5 away.
