@@ -418,4 +418,4 @@ The table and grid target's entries go here. Code first took that target at 5d12
 - **`T.6/header-full-window-reason`**: §T.6, withdrawn by §G.3. The header said to run the full window when it was capped at 1152 above that width; true again from step 114.
   > Withdrawn within §T.6: the header described as running the full window with its wordmark at the left inset, which was false above 1152 when written.
 - **`T.5/grid-945-1129`**: §T.5, withdrawn by §T.1. Grid changes at 945 and 1129 above a fork they fall below.
-  > Withdrawn within §T.5: above the sidebar fork, the grid changing at 945, 1129 and 1313, which fall below the fork and never fire.
+  > Withdrawn within §T.5: above the sidebar fork, the grid changing at 945 and 1129, which fall below the fork and never fire.
