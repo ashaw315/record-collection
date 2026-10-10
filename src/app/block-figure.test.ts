@@ -116,4 +116,14 @@ describe('a row of cubes', () => {
       expect(b.maxY, 'on the ground line').toBeCloseTo(box.y + box.height, 9);
     }
   });
+
+  /* Why the solids stop under 12 wide: §29's 6 is asked of each face, and a cube's two side faces are each half its width (measured in the browser on 10 Oct: 6.02 at a solid 12.04 wide). Fails against a threshold set on the solid's own width as if that were a face's. */
+  it('each side face is half the solid’s width and the top face the whole of it', () => {
+    const width = 2 * 30 * COS30;
+    for (const slot of row) {
+      expect(extent(slot.base).maxX - extent(slot.base).minX).toBeCloseTo(width / 2, 9);
+      expect(extent(slot.shade).maxX - extent(slot.shade).minX).toBeCloseTo(width / 2, 9);
+      expect(extent(slot.top).maxX - extent(slot.top).minX).toBeCloseTo(width, 9);
+    }
+  });
 });

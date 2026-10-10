@@ -39629,3 +39629,36 @@ let `e1dbf41` through with typecheck red. So it belongs with
 each replaced a habit that had been learned and had failed anyway with
 something that cannot be skipped. The family is "a verdict that nothing
 depends on".
+
+## Two measurements before the batch gate; the year-filter state is unblocked (10 Oct)
+
+Design's ruling: the filter block is Sort and the four filters and
+nothing else; the no-release-year line and CLEAR follow it and are not
+lines of it. That is what is built, so nothing changes. The want list is
+with Design as a question of capability; nothing is built there.
+
+`docs/captures/composition-111/composition-111-two-measurements.md`,
+read-only on the real collection, desktop Chromium, numbers and no change.
+
+**1. At 768 the figure keeps its proportion and its foot, and it is its
+TOP that gives.** Neither of the two readings offered. The block is 286
+to 506 and the width beside the column less 24 is 261. The construction
+is drawn 260.985 × 219.281, which is its own 194 : 163; its right edge is
+at 748.000, the content's; its foot is at 505.984; its top is at 286.703,
+**0.703 below the block's first line's top**. So "to the pixel" in the
+last report was true of the right edge and of the foot at the widths
+where the figure is the block's height, and at 768 the foot is a
+sixty-fourth of a pixel short (0.016): the figure is placed by its top
+and its height, each rounded by the browser. The earlier table's
+"261 × 219" beside "block 220" was this, rounded. Whether a narrowed
+figure should meet the top as well, which only a stretch can do, is the
+principle Design is ruling. Not changed.
+
+**2. The 12 threshold is right: a solid 12 wide has faces of 6.** A
+cube's two side faces are each half its width and its top face the whole
+of it. Measured where the solids first draw, at 823: a solid 12.039 wide
+with faces 6.020, 6.020 and 12.039. At 822 the width left gives a solid
+under 12 and none is drawn. At 824, 6.128; at 830, 6.79; at 1024, 28.3;
+at 1440, 52.5. So the narrowest face first reaches 6 at 823, which is
+where the threshold already stops them. Held now by a unit test
+(`block-figure.test.ts`): each side face is half the solid's width.
