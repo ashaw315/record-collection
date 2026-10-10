@@ -39368,3 +39368,68 @@ again**. Neither loss cost any built work. Each cost the thing that would
 have said what happened: a save's own bytes, a failure's own trace. Both
 rules put the evidence somewhere the next action cannot reach before that
 action is taken.
+
+## A commit now depends on its check (`scripts/commit-checked.sh`, 9 Oct, night)
+
+Step 110 was committed and pushed with `captures-unchanged` reading
+`1 failed` on the line above. The checks and the commit were typed as one
+command; the checks' output went through `grep`; the commit ran whatever
+they said. The coordinator's word for it: the same shape as reading
+`tail`'s exit status. The verdict was printed and nothing depended on it.
+(That red was the known one, new captures staged before the check; it
+read `410 passed` after the commit. Being right about the cause is not
+the mechanism.)
+
+`scripts/commit-checked.sh -m "message" path...` runs the repo checks
+through the judged runner and stages and commits the named paths only if
+they passed. It stages nothing until then and refuses to start with
+anything already staged, which also removes the staged-captures red.
+`test/repo/commit-checked.test.ts` stages it in a throwaway repository: a
+failing check, a failing check behind a pipe that itself succeeds, a
+passing one, a tree staged beforehand. Seen failing with the script
+absent. Step commits go through it from here.
+
+## For step 111, held for a ruling: the filter block measured, and a contradiction in the step (9 Oct, night)
+
+Step 111 is not started. The coordinator holds it for Design's ruling on
+the solids' size, since at 1024 the width beside the column cannot hold
+the figure with its row at the ink's full allowance. What the step asks
+to be measured first is measured (`docs/captures/filter-block-111/`,
+read-only on the real collection, the same at 1920, 1440, 1024 and 768
+and on both views):
+
+| line | top | foot | gap above |
+|---|---|---|---|
+| Sort | 286 | 330 | |
+| Genre | 342 | 386 | 12 |
+| Label | 386 | 430 | 0 |
+| Store | 430 | 474 | 0 |
+| Tag | 474 | 518 | 0 |
+
+First line's top to last line's foot: 232. The one gap beyond the 44s is
+12, between Sort and Genre, so with it removed the block is 220. The list
+starts 20 below the block's foot today; the step rules 24. With a year
+filter in force two more lines follow Tag, each 12 below the last: the
+line about records with no release year (530 to 574) and CLEAR (586 to
+630), and the block is 344.
+
+**The step contradicts itself on the foot.** It rules "foot to its last
+line's foot" and tests "that the figure's foot equals the Sort line's
+foot". Sort is the FIRST line as built, at 286 to 330; the last is Tag,
+at 518. Either the test names the wrong line or Design takes Sort to be
+last. And which is "the last line" with a year filter in force is not
+said: Tag, or CLEAR 112 further down, which would make the figure 344
+tall in that state and 232 out of it.
+
+**The air's right edge: fixed at `94c32cb`, live for 73 minutes.** Step
+103d's figure at 768 ran to the window's edge, past the page's 20 inset.
+It went live with `dea598d` at 22:13 and was corrected with step 110 at
+23:26, where the edge became the list's own. At 768 the fault was 20 of
+air the figure could use and, the construction being placed in its box by
+its hash, a figure that could stand against the glass. Step 111 rules the
+right edge as "the content's right edge", which is what is built now.
+
+**Step 110's captures are of a composition about to change.** 933 × 279
+at 1440 and 1,312 × 393 at 1920 are the figure sized to its air; 111
+sizes it to the filter block. They are retaken after 111 and should not
+be read as the step's result.
