@@ -40034,3 +40034,32 @@ focused. The other `--sidebar-*` tokens are shadcn's and not oxblood;
 nothing rules them, and a sidebar built here should not take its colours
 from them unread. Carried forward: hover is a state the colour check never
 enters.
+
+## Adam's wireframe, measured (10 Oct)
+
+`docs/design/table-grid-wireframe.png`, 1616 by 973, tracked from here (an
+allow line in `.gitignore`, since `docs/design/*` is ignored by default).
+Read from its pixels after converting to a bitmap; edges are soft, so each
+figure is good to about 2.
+
+- *The frame.* Header's rule at y 57 to 58. Sidebar's rule at x 335 to
+  336. The table's hairlines run 375 to 1576, so the content column is
+  1,202 wide, 39 to 40 from the rule and 40 from the picture's right.
+- *The head figure, disc and forms, without the two diagonals:* x 743 to
+  1137, y 105 to 423: 394 wide, 319 tall, 1.235 wide to tall. **0.328 of
+  the content column's width**; its height is 0.265 of that width. With
+  the diagonals the marks span 580 to 1235, 0.545 of the column.
+- *It is not centred on the column as drawn.* Its middle is at 940 and
+  the column's at 975.5, so 35 left of centre; ADD RECORD's rule runs 1437
+  to 1569 at the right.
+- *Its place in the head.* Top 47 below the header's rule; foot at 423,
+  with the column labels at 465 to 480 and the first hairline at 496.
+- *What the fraction gives.* The content column is 1,023 at 1440 and at
+  1920 (capped) and 728 at a 1145 fork. At the wireframe's own shape: 336
+  by 272 at 1440 and 1920; 239 by 193 at the fork. At the source record's
+  shape (1.19) and the same width: 282 tall and 201. All clear 172.4.
+- *The wireframe's sidebar does not start at 18.* The wordmark's left is
+  at 41, the search rule runs 40 to 317, the hairline under the heading
+  40 to 297, and each filter line from 42 to its + ending at 295. So the
+  picture's inset is 40, and its lines are about 257 wide under a 277
+  search, where Design's ruling is 18 to 318.

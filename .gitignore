@@ -142,3 +142,8 @@ docs/design/*
 # the moved ones are current. Ignored rather than deleted: they are Adam's
 # working files and a diff I cannot prove is a duplicate is not mine to remove.
 /*.dc.html
+# Adam's wireframe for the table and grid (10 Oct). §T.6 rules the head figure
+# as "the fraction of the content column's width that it is in the wireframe,
+# which the build step measures from Adam's picture": the same reachability
+# rule, a measurement's source is tracked with what was measured from it.
+!docs/design/table-grid-wireframe.png
