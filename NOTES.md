@@ -39809,3 +39809,32 @@ the corrected commit is the coordinator's.
   runner. They could overlap only on two databases. The unit phase is 5.1
   minutes of a 44-minute gate, so overlapping it would save about a
   ninth.
+
+## The stop order: three read-only answers, and the table and grid's ring is still oxblood (10 Oct)
+
+Adam rejected the built composition; Design is re-ruling §T.6's figure and
+§T.3's panel. Nothing on the table or grid was changed. Two Design saves
+arrived and were committed on arrival (`410e4d0`, `5e12cf1`), each with its
+intake after.
+
+- **Out of scope, found and not fixed: the collection's focus ring is
+  oxblood.** §T.6 takes oxblood from every screen by `data-t6` on a
+  screen's root (`globals.css:243`), which maps `--ring` to ink. `/`
+  (`src/app/page.tsx`) does not carry it, so on the table and the grid
+  `--ring` is still the root's `oklch(0.36 0.098 18)` (`globals.css:171`).
+  The base layer gives every element `outline-ring/50` (`globals.css:253`),
+  and a filter line's button sets no focus style of its own
+  (`CollectionFilters.tsx:395`), so a focused line draws the browser's own
+  `outline: auto 1px` in oxblood at half strength, which on the paper is
+  dusty pink. Read on the real collection at 1440, read-only: at rest
+  `outline-style: none`; focused by Tab, by script, or after Escape closes
+  the panel (which returns focus to the line) `auto`, `1px`,
+  `oklab(0.36 0.093 0.030 / 0.5)`; opened or closed by a mouse press, none.
+  The line has no border and no shadow. `colour-103.spec.ts` did not catch
+  it because it reads elements at rest. Every other focusable thing on `/`
+  that sets no outline colour of its own would draw the same.
+- **The real collection has no record without a release year**: 17 records,
+  no undated line and no undated control drawn (it draws when the count is
+  above 0, `CollectionFilters.tsx:491`). So the state that failed the batch
+  gate does not occur on the real collection today, and would with the
+  first record added without a year.
