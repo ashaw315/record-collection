@@ -1,3 +1,8 @@
+import { WantListEmpty } from './WantListEmpty';
+import { ConstructionStill } from '../records/[id]/ConstructionStill';
+import { figureSource } from '../figure-source';
+import { HAIRLINE, INK, LABEL_TYPE } from '../records/[id]/grid-type';
+import { listRecordAges } from '@/lib/db/queries/records';
 import Link from 'next/link';
 import { AppHeader } from '@/components/AppHeader';
 import { WantListRow, type WantListItem } from './WantListRow';
@@ -38,13 +43,15 @@ export default async function WantListPage({ searchParams }: PageProps<'/want-li
    */
   const items = await Promise.all(rows.map((row) => hydrateWantListItem(row.id)));
   const hydrated = items.filter((item): item is NonNullable<typeof item> => item !== undefined);
+  /* §T.6's one source record, asked for only where the empty state will draw it. */
+  const source = hydrated.length === 0 ? figureSource(await listRecordAges()) : null;
 
   return (
     <>
       <AppHeader />
 
       <main data-t6="" className="mx-auto w-full max-w-3xl px-4 py-6">
-        <header className="mb-4 flex items-start justify-between gap-4">
+        <header className="mb-4 flex flex-wrap items-start justify-between gap-4">
           <div>
             <h1 className="font-heading text-headline font-semibold tracking-tight">
               {showAcquired ? 'Acquired' : 'Want list'}
@@ -66,12 +73,28 @@ export default async function WantListPage({ searchParams }: PageProps<'/want-li
             output is want-list rows, so the want list is where a user is when
             they want more of them.
           */}
-          <Link
-            href="/suggestions"
-            className="shrink-0 text-label underline underline-offset-2 hover:text-foreground"
-          >
-            Suggestions
-          </Link>
+          <div className="flex shrink-0 flex-col items-end gap-2">
+            {/*
+              §T.6: "The want list carries LOOK UP A RECORD, a §9.3 control
+              in its heading's row, in both states... A want-list item comes
+              from looking a record up, so the want list's way in is the
+              screen that makes one. It links to look up, which exists, and
+              opens no new way into the form."
+            */}
+            <Link
+              data-want-list-lookup=""
+              href="/lookup"
+              className={`${LABEL_TYPE} ${INK} box-border flex h-[44px] items-center justify-center border ${HAIRLINE} px-[18px] decoration-1 underline-offset-[3px] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground`}
+            >
+              Look up a record
+            </Link>
+            <Link
+              href="/suggestions"
+              className="text-label underline underline-offset-2 hover:text-foreground"
+            >
+              Suggestions
+            </Link>
+          </div>
         </header>
 
         {/*
@@ -102,11 +125,17 @@ export default async function WantListPage({ searchParams }: PageProps<'/want-li
         </nav>
 
         {hydrated.length === 0 ? (
-          <div className="border border-border px-4 py-12 text-center">
-            <p className="text-prose text-muted-foreground">
-              {showAcquired ? 'Nothing acquired yet.' : 'Nothing on the want list.'}
-            </p>
-          </div>
+          <WantListEmpty
+            acquired={showAcquired}
+            figure={
+              /* "At the clearing height and no larger", from the one source record; none where the collection is empty. */
+              source === null ? null : (
+                <div style={{ height: source.clearing, width: source.clearing * source.aspect }}>
+                  <ConstructionStill recordId={source.id} spineColour={null} />
+                </div>
+              )
+            }
+          />
         ) : (
           <ul className="border-t border-border">
             {hydrated.map((item) => (

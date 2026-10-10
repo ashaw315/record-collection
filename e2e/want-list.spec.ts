@@ -995,3 +995,69 @@ test('the retired assessment is gone, and real versions are pointed at instead',
   absent basis is never invented. If a ranking feature is ever built from real
   retrieved releases (SPEC §12b), those two rules apply to it unchanged.
 */
+
+/*
+  §T.6: "The want list carries LOOK UP A RECORD, a §9.3 control in its
+  heading's row, in both states, and its empty state adds none... It links
+  to look up, which exists, and opens no new way into the form."
+
+  Fails against the page as built, which has no way to an item from here
+  at all. The filled state is staged; whichever state the Acquired view
+  is in on the shared database is read as it is found, and where it is
+  empty its figure is read too.
+*/
+for (const width of [1440, 390, 320]) {
+  test(`at ${width}: LOOK UP A RECORD is a §9.3 control in the heading’s row on a filled list and on the Acquired view, and goes to look up`, async ({ page }) => {
+    const suffix = makeSuffix();
+    await login(page);
+    const artist = await post(page, '/api/artists', { name: `Wanted-${suffix}` });
+    trackArtist(artist.id);
+    await post(page, '/api/want-list', { title: `A want ${suffix}`, artistId: artist.id, priority: 3 });
+    await page.setViewportSize({ width, height: 800 });
+
+    for (const path of ['/want-list', '/want-list?acquired=true']) {
+      await page.goto(path);
+      const control = page.locator('[data-want-list-lookup]');
+      await expect(control, path).toHaveCount(1);
+      await expect(control).toHaveText(/^look up a record$/i);
+      await expect(control).toHaveAttribute('href', '/lookup');
+      const m = await page.evaluate(() => {
+        const c = document.querySelector('[data-want-list-lookup]') as HTMLElement;
+        const h = document.querySelector('main h1') as HTMLElement;
+        const cs = getComputedStyle(c);
+        const cr = c.getBoundingClientRect();
+        const hr = h.getBoundingClientRect();
+        const empty = document.querySelector('[data-want-list-empty]');
+        const svg = empty?.querySelector('[data-testid="construction-still"]')?.getBoundingClientRect() ?? null;
+        return {
+          height: cr.height, border: [cs.borderTopWidth, cs.borderTopStyle, cs.borderTopLeftRadius], background: cs.backgroundColor, paper: getComputedStyle(document.body).backgroundColor,
+          header: (c.closest('header') as HTMLElement | null)?.contains(h) === true, rightOfHeading: cr.left >= hr.left, right: cr.right,
+          window: window.innerWidth, scrollWidth: document.documentElement.scrollWidth,
+          rows: document.querySelectorAll('main ul > li').length, empty: empty !== null, emptyControls: empty?.querySelectorAll('a, button, input, select').length ?? 0,
+          sentence: (empty?.querySelector('p')?.textContent ?? '').trim(), figure: svg === null ? null : { width: svg.width, height: svg.height, left: svg.left, right: svg.right },
+          stills: document.querySelectorAll('[data-testid="construction-still"]').length,
+        };
+      });
+      expect(m.height, `${path}: §9.3, 44 tall`).toBeCloseTo(44, 0);
+      expect(m.border, `${path}: an unfilled 1px box, square`).toEqual(['1px', 'solid', '0px']);
+      expect([m.paper, 'rgba(0, 0, 0, 0)'], 'unfilled').toContain(m.background);
+      expect(m.header, `${path}: in the heading’s row`).toBe(true);
+      expect(m.right, `${path}: inside the window`).toBeLessThanOrEqual(m.window);
+      expect(m.scrollWidth, `${path}: the page is no wider than the window`).toBe(m.window);
+      if (path === '/want-list') expect(m.rows, 'the precondition: the list is filled').toBeGreaterThan(0);
+      if (m.empty) {
+        /* The Acquired view, found empty: the figure where the collection has a source, its own sentence, and no control. */
+        expect(m.rows).toBe(0);
+        expect(m.emptyControls, 'the empty state adds no control').toBe(0);
+        expect(m.sentence).toBe(path === '/want-list' ? 'Nothing on the want list yet. Look up a record to add one.' : 'Nothing acquired yet.');
+        expect(m.stills, 'one construction').toBe(1);
+        expect(m.figure !== null && m.figure.left >= 0 && m.figure.right <= m.window, 'the figure is inside the window').toBe(true);
+      } else {
+        expect(m.stills, 'a filled list has no figure').toBe(0);
+      }
+    }
+    await page.goto('/want-list');
+    await page.locator('[data-want-list-lookup]').click();
+    await expect(page).toHaveURL('/lookup');
+  });
+}

@@ -39662,3 +39662,72 @@ under 12 and none is drawn. At 824, 6.128; at 830, 6.79; at 1024, 28.3;
 at 1440, 52.5. So the narrowest face first reaches 6 at 823, which is
 where the threshold already stops them. Held now by a unit test
 (`block-figure.test.ts`): each side face is half the solid's width.
+
+## The want list's way in, and its empty state (10 Oct)
+
+§T.6, Design's save of 10 Oct 00:56 (`5b46573`). Ungated until the batch
+gate that follows.
+
+**Built.** LOOK UP A RECORD, a §9.3 control linking to `/lookup`, in the
+heading's row on both views and in both states. The empty state
+(`WantListEmpty.tsx`) is the source record's construction in ink at its
+clearing height and one sentence, with no control: "Nothing on the want
+list yet. Look up a record to add one." The Acquired view keeps "Nothing
+acquired yet.", which is not ruled, and has the figure, its whole list
+being empty too.
+
+**Whether the figure holds: yes, at every width read.** On the real
+collection (`docs/captures/want-list-empty-112/`) the Acquired view is
+empty and draws it 205.1 × 172.3 in a column 736 wide at 1440, 358 at
+390 and 288 at 320: 83 to spare at the narrowest. The still-wanted view
+has seven rows there, so its empty state is not on the real collection
+and is held by the component test.
+
+**At 320 the control is not in the heading's row.** The row wraps: the
+control and the Suggestions link go beneath the heading, from the left
+inset. Without the wrap the control ran 28 past the window on the
+Acquired view, where the heading is one unbreakable word (measured:
+347.8 against 320). For Design: the row at 320.
+
+**Tests.** `WantListEmpty.test.tsx`, failed first: the figure above the
+ruled sentence and no control; the Acquired sentence; the sentence alone
+where there is no figure. `want-list.spec.ts`, both projects, at 1440,
+390 and 320, failed first: the control is 44 tall in an unfilled square
+1px box, in the heading's header, inside the window, on a staged filled
+list and on the Acquired view as found, and goes to look up; where a
+view is found empty, its sentence, no control in it, and one
+construction. **Not staged in a browser: an empty still-wanted list**, on
+a database the other worker fills.
+
+**Four questions for WITHDRAWALS.md, each read in every committed drop.**
+- *T.6/want-list-own-add*, "On the want list, the control is the one it
+  already uses to add an item, by its existing label": **yes**, carried
+  as a ruling from `844b158` (9 Oct 23:35) through `07471cd`, and
+  withdrawn in `5b46573`. Nothing was built against it; the want list
+  was reported and left.
+- *T.6/figure-by-hash*, the ratification of the figure placed in its air
+  by the record's hash: **yes**, carried from `a50eff2` (9 Oct 22:27)
+  through `07471cd`, and withdrawn in `5b46573`. It was built at `dea598d`
+  and replaced at `c6beb46`, where the figure's place became the block's
+  and the content's edge.
+- *The 24 between the solids*: **no**. From `a50eff2` on, the 24 appears
+  only as "an earlier draft of this sentence put §G.3's 24 between them".
+  No drop carried it as the wording.
+- *A filter with no options still draws a line*: **no**. The only
+  sentence on it in any drop is `5b46573`'s, and it says the opposite, "a
+  filter with no options draws no line". §T.3 does say "There are four,
+  GENRE, LABEL, STORE and TAG... each on a line of its own", which reads
+  as four always; that is not the sentence asked about.
+
+**A capture edited on purpose trips its own guard.** The note about the
+face columns was added to a committed capture file, and
+`captures-unchanged` then reads red until that edit is committed, so
+`commit-checked.sh` cannot commit it. It was committed alone and plainly
+(the commit before this one), which is the one case the script cannot
+take: the check's failure IS the change.
+
+**Step level:** `want-list`, `colour-103`, `radius-103`,
+`every-page-has-nav`, `nav-mobile` and `nav-type-74` on both projects,
+`87 passed, ledger clean, tree unchanged — OK`; app and repo checks
+`1699 passed` once the capture edit was committed; typecheck, lint (0
+errors), build.
