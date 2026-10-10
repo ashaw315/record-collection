@@ -1,0 +1,122 @@
+[
+ {
+  "view": "table",
+  "width": 1400,
+  "height": 117.5,
+  "top": 594,
+  "left": 20,
+  "text": "No records yet.",
+  "windowHeight": 900,
+  "clearing": 172.35534251090962,
+  "headingFigure": true,
+  "aspect": 1.1901840490797546
+ },
+ {
+  "view": "table",
+  "width": 984,
+  "height": 117.5,
+  "top": 594,
+  "left": 20,
+  "text": "No records yet.",
+  "windowHeight": 900,
+  "clearing": 172.35534251090962,
+  "headingFigure": true,
+  "aspect": 1.1901840490797546
+ },
+ {
+  "view": "table",
+  "width": 728,
+  "height": 117.5,
+  "top": 594,
+  "left": 20,
+  "text": "No records yet.",
+  "windowHeight": 900,
+  "clearing": 172.35534251090962,
+  "headingFigure": true,
+  "aspect": 1.1901840490797546
+ },
+ {
+  "view": "table",
+  "width": 350,
+  "height": 117.5,
+  "top": 594,
+  "left": 20,
+  "text": "No records yet.",
+  "windowHeight": 664,
+  "clearing": 172.35534251090962,
+  "headingFigure": false,
+  "aspect": null
+ },
+ {
+  "view": "table",
+  "width": 280,
+  "height": 117.5,
+  "top": 594,
+  "left": 20,
+  "text": "No records yet.",
+  "windowHeight": 664,
+  "clearing": 172.35534251090962,
+  "headingFigure": false,
+  "aspect": null
+ },
+ {
+  "view": "grid",
+  "width": 1400,
+  "height": 117.5,
+  "top": 594,
+  "left": 20,
+  "text": "No records yet.",
+  "windowHeight": 900,
+  "clearing": 172.35534251090962,
+  "headingFigure": true,
+  "aspect": 1.1901840490797546
+ },
+ {
+  "view": "grid",
+  "width": 984,
+  "height": 117.5,
+  "top": 594,
+  "left": 20,
+  "text": "No records yet.",
+  "windowHeight": 900,
+  "clearing": 172.35534251090962,
+  "headingFigure": true,
+  "aspect": 1.1901840490797546
+ },
+ {
+  "view": "grid",
+  "width": 728,
+  "height": 117.5,
+  "top": 594,
+  "left": 20,
+  "text": "No records yet.",
+  "windowHeight": 900,
+  "clearing": 172.35534251090962,
+  "headingFigure": true,
+  "aspect": 1.1901840490797546
+ },
+ {
+  "view": "grid",
+  "width": 350,
+  "height": 117.5,
+  "top": 594,
+  "left": 20,
+  "text": "No records yet.",
+  "windowHeight": 664,
+  "clearing": 172.35534251090962,
+  "headingFigure": false,
+  "aspect": null
+ },
+ {
+  "view": "grid",
+  "width": 280,
+  "height": 117.5,
+  "top": 594,
+  "left": 20,
+  "text": "No records yet.",
+  "windowHeight": 664,
+  "clearing": 172.35534251090962,
+  "headingFigure": false,
+  "aspect": null
+ }
+]

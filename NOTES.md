@@ -39092,3 +39092,42 @@ skipped, ledger clean, tree unchanged — OK`; repo, app, component and the
 new integration test `1698 passed`; typecheck, lint (0 errors), build.
 Ungated commits so far, for a bisect: `26d408c` (106), `bbbc841` (108),
 and this one.
+
+## Step 103e is not built: what bounds an empty state's space is not ruled; the table's and grid's measured (9 Oct, night)
+
+§T.6: the empty state's figure is "at the largest height its space holds,
+and no smaller than the height at which its narrowest face clears §29's
+6px". Nothing says what the space is, and the two readings there are
+disagree at every width. Measured on the real collection under a search
+that matches nothing (`docs/captures/empty-space-103e/`), the figure
+1.19 wide to 1 tall and clearing at 172.4, with the sentence's line, 18
+and a 44 control beneath it and 24 above and below:
+
+| window | the list's place starts | to the window's bottom | figure if the window bounds it | figure if only the column's width does |
+|---|---|---|---|---|
+| 1440 × 900 | 594 | 306 | 176 | 1,176 |
+| 1024 × 900 | 594 | 306 | 176 | 827 |
+| 768 × 900 | 594 | 306 | 176 | 612 |
+| 390 × 664 | 594 | 70 | none | 294 |
+| 320 × 664 | 594 | 70 | none | 235 |
+
+The same on the table and the grid. Bounded by the window, a desktop
+draws it 4 over its clearing height and a phone draws none, which is
+against "on a phone the only ornament is the empty state's". Bounded by
+the column's width alone, a phone draws it at 294 and a desktop at 1,176.
+Neither is plainly meant.
+
+**Four things for Design before this is built.**
+1. What bounds the space, per the table above.
+2. At 768 and up the heading's figure is ALSO drawn in this state, so the
+   same construction would stand twice on one screen, 452 beside the
+   heading and again in the list's place.
+3. Which empty states §T.6 reaches. "Never inside rows, cells, forms,
+   controls or charts": manage's are a row inside each table ("No labels
+   yet.") and stats' are inside its charts. The want list's and look up's
+   are their own regions. Look up's follows a search, which a sheet may
+   not run against Discogs; it can be read on fixtures only.
+4. The sentence. The table and grid say "No records yet." whatever
+   emptied them, which is false under a filter or a search. That is a
+   defect in the built page today, apart from this step. The shelf's
+   (step 104) says "Nothing in the collection matches."
