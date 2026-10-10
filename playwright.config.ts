@@ -238,6 +238,7 @@ export default defineConfig({
         /* Step 107: the panel under its lines and nothing moving on open or close, on the phone's engine. */
         /panel-hold-107\.spec\.ts$/,
         /filter-box-106\.spec\.ts$/,
+        /filter-box-109\.spec\.ts$/,
         /panel-leaves-108\.spec\.ts$/,
         /heading-figure-103d\.spec\.ts$/,
         /empty-figure-103e\.spec\.ts$/,

@@ -39237,3 +39237,43 @@ reads the sentence's own line now.
 the filters', table, grid, colour and radius specs on both projects,
 `105 passed, 3 skipped, ledger clean, tree unchanged — OK`; repo, app and
 component checks `1704 passed`; typecheck, lint (0 errors), build.
+
+## Step 109: a name is 18 inside the box's edge, and a page the floor moved returns on close (9 Oct, night)
+
+§T.3, Design's save of 22:27. It ratifies step 106's floor on the room and
+CLOSE at the right as built, and rules the two interims 106 flagged.
+Ungated.
+
+**Built.**
+- In the box (768 and up) each option row is padded 18 a side inside the
+  1px edge, so a name starts 18 in and a count ends 18 in; the row and
+  its hit area still run to the edge. The sheet below 768 is unchanged.
+- The distance the floor actually moved the page is kept, and a close
+  gives it back in one instant move: CLOSE, Escape, a press outside, a
+  second press on the line, Back, and a chosen option. A close caused by
+  the line leaving the window (step 108) gives nothing back.
+
+**Decided in the build.** §T.3 rules the name's inset; the count's 18 at
+the right is the same inset applied to the other end of the row, since a
+count touching the edge is the fault the ruling names. For Design.
+
+**Seen in the tests.** Choosing an option already returned the page
+before this step, because the navigation it starts resets the scroll;
+that test passed against step 106 and is kept as coverage. The return
+after a step back is applied again once the step has landed, for the
+reason step 108 found: the browser restores the position the entry's
+predecessor was left at, which here is the moved one.
+
+**Tests** (`filter-box-109.spec.ts`, both projects): the name and count
+at 18 from the ink edge, the row to the edge, a press 6 inside the edge
+choosing; the sheet's names where they were; at 1024 by 600 the page back
+where it was after each of five closes and after a choice, and staying
+there; not returned when the line leaves the window; one return after a
+switch between filters. Seven of ten failed before the build.
+
+**Step level, ungated:** this spec with the filter, panel and figure
+specs on both projects, `181 passed, 4 skipped, ledger clean, tree
+unchanged — OK`; repo, app and component checks `1704 passed`; typecheck,
+lint (0 errors), build. Ungated commits so far, for a bisect: `26d408c`
+(106), `bbbc841` (108), `dea598d` (103d), `d8ddcfa` (the sentence),
+`caa43c2` (103e), and this one.

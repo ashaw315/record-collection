@@ -138,10 +138,29 @@ export function CollectionFilters({
   const [panelTop, setPanelTop] = useState(0);
   /* The box's left and the most it may be tall; null below 768, where the panel is the sheet. */
   const [panelBox, setPanelBox] = useState<{ left: number; maxHeight: number } | null>(null);
+  /*
+    Step 109: how far the floor moved the page to make room for the box,
+    so a close can give it back. "When the panel closes, a page the floor
+    moved returns by the same distance in one instant move, unless the
+    close came from the page moving."
+  */
+  const floorMove = useRef(0);
+  /* Where the page goes back to; called once the close is certain, and again after anything that could undo it. */
+  const returnPage = useCallback(() => {
+    const moved = floorMove.current;
+    floorMove.current = 0;
+    if (moved <= 0) return;
+    const top = Math.max(0, window.scrollY - moved);
+    const go = () => window.scrollTo({ top, behavior: 'instant' });
+    go();
+    /* A step back over the filter's entry restores the position that entry's predecessor was left at, which is the moved one. */
+    window.addEventListener('popstate', () => { go(); requestAnimationFrame(() => { go(); requestAnimationFrame(go); }); }, { once: true });
+  }, []);
   const closeFilter = useCallback(() => {
     setOpenKey(null);
+    returnPage();
     if (hasEntry()) window.history.back();
-  }, []);
+  }, [returnPage]);
   /* Where the last filter line ends in the window: every filter's panel starts there. */
   const lastLine = useCallback(() => {
     const lines = rootRef.current?.querySelectorAll<HTMLElement>('[data-filter-trigger]');
@@ -166,7 +185,12 @@ export function CollectionFilters({
     const line = lastLine();
     if (line !== undefined && window.innerWidth >= BOX_FROM) {
       const shortfall = Math.min(BOX_FLOOR, ROW * (rows + 1) + 2) - (window.innerHeight - BOX_FOOT - line.bottom);
-      if (shortfall > 0) window.scrollBy({ top: shortfall, behavior: 'instant' });
+      if (shortfall > 0) {
+        const from = window.scrollY;
+        window.scrollBy({ top: shortfall, behavior: 'instant' });
+        /* What the page actually went, which is less than the shortfall where it could not scroll that far. */
+        floorMove.current += window.scrollY - from;
+      }
     }
     /* Placed in the press itself, so the panel's first paint is already beneath the last line. */
     place();
@@ -186,7 +210,17 @@ export function CollectionFilters({
     };
     /* Back, or anything else that leaves the filter's entry: the filter is closed. */
     const onPop = () => {
-      if (!hasEntry()) setOpenKey(null);
+      if (hasEntry()) return;
+      setOpenKey(null);
+      /* Back: after the browser has put the page where the entry was left, which is the moved place. */
+      const moved = floorMove.current;
+      floorMove.current = 0;
+      if (moved > 0) {
+        const top = Math.max(0, window.scrollY - moved);
+        const go = () => window.scrollTo({ top, behavior: 'instant' });
+        go();
+        requestAnimationFrame(() => { go(); requestAnimationFrame(go); });
+      }
     };
     /* "The page beneath does not move": held in both directions, with step 86's compensation. */
     const release = holdScroll(document.documentElement, window);
@@ -216,6 +250,8 @@ export function CollectionFilters({
         would go back to them (measured, both engines). So the position
         the page has now is put back once the step has landed.
       */
+      /* "Unless the close came from the page moving": the reader's own move stands, and the floor's is not given back. */
+      floorMove.current = 0;
       if (hasEntry()) {
         const at = { left: window.scrollX, top: window.scrollY };
         const keep = () => window.scrollTo({ ...at, behavior: 'instant' });
@@ -381,6 +417,9 @@ export function CollectionFilters({
                   panel is the scrolling box at both, so a drag that starts
                   on the sheet's inset scrolls the list. CLOSE is its top
                   row and stays there while the list passes beneath.
+                  Step 109: in the box a name is 18 inside the ink edge
+                  (§G.3's inset) and the row, with its hit area, runs to
+                  the edge.
                 */
                 <div
                   data-filter-panel=""
@@ -411,12 +450,13 @@ export function CollectionFilters({
                               // Single-valued: choosing the chosen one clears it, so the list both applies and removes.
                               // The choice replaces the filter's history entry (§G.8), so one Back leaves the filtered page.
                               setOpenKey(null);
+                              returnPage();
                               change(
                                 (current) => withFacet(current, { filters: { [group.key]: active ? undefined : option.id } }),
                                 hasEntry() ? 'replace' : 'push',
                               );
                             }}
-                            className="flex h-[44px] w-full items-baseline justify-between gap-3 border-t border-border text-left leading-[43px]"
+                            className="flex h-[44px] w-full items-baseline justify-between gap-3 border-t border-border text-left leading-[43px] md:px-[18px]"
                           >
                             <span
                               data-filter-name=""
