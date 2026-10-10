@@ -26,7 +26,8 @@ const VIEWS = [
 test.beforeEach(async ({ page }) => login(page));
 
 for (const [view, path] of VIEWS) {
-  for (const width of [390, 1440]) {
+  /* Step 113: above the sidebar's fork the table's and the grid's band is the sidebar's head, so its two-row height is read below it. The shelf's is its own at any width. */
+  for (const width of [390, view === 'shelf' ? 1440 : 1024]) {
     /* Fails against the 34 field, and on the shelf against the link drawn in the label colour. */
     test(`${view} at ${width}: the search field is 44 tall and Add record is ink by one colour class`, async ({ page }) => {
       await page.setViewportSize({ width, height: 844 });

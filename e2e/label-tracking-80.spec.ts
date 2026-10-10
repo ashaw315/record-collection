@@ -71,8 +71,9 @@ test.describe('§G.1: the shared label style is .10em in all four areas it reach
   test('the collection’s filters and the wall’s rail', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: NO_SCROLL_HEIGHT });
     await page.goto('/?view=table');
-    await page.locator('span.w-12.shrink-0').first().waitFor({ timeout: 20_000 });
-    expect(await trackingOf(page, 'span.w-12.shrink-0'), 'the collection’s filters: a group label').toBe(TEN);
+    /* By its role and not its classes: the label lost `w-12 shrink-0` at step 113's container (fff63d8), and this selector went on waiting for them. */
+    await page.locator('[data-filter-label]').first().waitFor({ timeout: 20_000 });
+    expect(await trackingOf(page, '[data-filter-label]'), 'the collection’s filters: a group label').toBe(TEN);
     await page.goto('/');
     await page.locator('label[for="rail-search"]').waitFor({ timeout: 30_000 });
     expect(await trackingOf(page, 'label[for="rail-search"]'), 'the wall: the rail’s SEARCH').toBe(TEN);

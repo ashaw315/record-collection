@@ -235,7 +235,9 @@ export default defineConfig({
        */
       testMatch: [
         /collection-filters\.spec\.ts$/,
-        /composition-111\.spec\.ts$/,
+        /* Steps 113 and 114: the sidebar, its figures and rings, and the header's full width, on the phone's engine. */
+        /sidebar-113\.spec\.ts$/,
+        /header-114\.spec\.ts$/,
         /* Step 113: the filter container in place, on the phone's engine. */
         /filter-container-113\.spec\.ts$/,
         /empty-figure-103e\.spec\.ts$/,

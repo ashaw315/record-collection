@@ -205,7 +205,8 @@ test('the no-release-year toggle and Clear filters are controls of 44, and Clear
   }));
   expect(m.toggle, 'the toggle’s label').toBeGreaterThanOrEqual(44);
   expect(m.clear, 'Clear filters').toBeGreaterThanOrEqual(44);
-  expect(m.clearText).toMatch(/^Clear all 3 filters$/);
+  /* §T.1 names the control CLEAR FILTERS; it read "Clear all 3 filters" until step 113. */
+  expect(m.clearText).toMatch(/^Clear filters$/);
   await page.locator('[data-filter-clear]').click();
   await expect(page).toHaveURL(/\?view=table$/, { timeout: 15_000 });
 });

@@ -596,3 +596,40 @@
     transform: none;
   }
 }
+
+/*
+ * §T.1, step 113: "§M.6's ring governs every focusable control on these
+ * screens, the sidebar's lines, glyphs and containers included... A browser
+ * default outline, in oxblood or anything else, is a defect against this."
+ *
+ * A rule on the screen and not a class on each control, for the reason the
+ * colours left `data-t6`: a control added later takes the ring without
+ * anyone remembering to give it one. The drawing is §M.6's inside ring, as
+ * the table's rows and the grid's cells already draw it, "2px of paper at
+ * its edge, and 2px of ink inside that": inside, because these controls sit
+ * edge to edge in a column and in a scrolling container, where a ring
+ * outside the box would be under its neighbour or cut.
+ *
+ * Four kinds of control do not draw it on their own box. A row's and a
+ * cell's link draw it on the overlay that is the row (`data-ring`). A view
+ * name's box is the 11 of its type, so it is drawn on its 44 hit area.
+ * Sort's select is laid over its label unseen, and the year line's
+ * checkbox is 14 wide, so each is drawn on its label.
+ */
+[data-collection-views] :is(a, button, input, select, textarea, [tabindex], [data-filter-panel]):focus-visible {
+  outline: none;
+}
+[data-collection-views] :is(a, button, input, textarea, [tabindex], [data-filter-panel]):not([data-ring], [type='checkbox']):focus-visible,
+[data-collection-views] label:has(:is(select, [type='checkbox']):focus-visible) {
+  box-shadow:
+    inset 0 0 0 2px var(--background),
+    inset 0 0 0 4px var(--foreground);
+}
+[data-collection-band] [data-testid='wall-rail'] a:focus-visible {
+  box-shadow: none;
+}
+[data-collection-band] [data-testid='wall-rail'] a:focus-visible::before {
+  box-shadow:
+    inset 0 0 0 2px var(--background),
+    inset 0 0 0 4px var(--foreground);
+}

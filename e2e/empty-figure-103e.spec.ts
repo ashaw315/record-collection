@@ -1,3 +1,4 @@
+import { FORK } from '../src/app/sidebar-layout';
 import { expect, test, type Page } from '@playwright/test';
 import { clearing } from '../src/app/figure-source';
 import { login } from './sign-in';
@@ -40,8 +41,11 @@ const reading = (page: Page) =>
     const clear = empty?.querySelector<HTMLElement>('[data-collection-empty-clear]') ?? null;
     const cs = clear === null ? null : getComputedStyle(clear);
     return {
-      stills: document.querySelectorAll('[data-testid="construction-still"]').length,
-      heading: document.querySelector('[data-heading-figure]') !== null,
+      /* The ones drawn. Step 113: above the sidebar's fork a second figure, the fragment, stands at the sidebar's foot. */
+      stills: Array.from(document.querySelectorAll('[data-testid="construction-still"]')).filter((s) => s.getClientRects().length > 0 && s.closest('[data-sidebar-fragment]') === null).length,
+      fragments: Array.from(document.querySelectorAll('[data-sidebar-fragment] [data-testid="construction-still"]')).filter((s) => s.getClientRects().length > 0).length,
+      heading: Array.from(document.querySelectorAll('[data-head-figure]')).some((h) => h.getClientRects().length > 0),
+      tint: (figure?.querySelector<HTMLElement>('[data-tint]')?.dataset.tint ?? ''),
       figure: box(figure), svg: box(svg), record: svg?.getAttribute('data-record') ?? null,
       fills: svg === null ? [] : Array.from(new Set(Array.from(svg.querySelectorAll('polygon[data-face], circle')).map((el) => getComputedStyle(el).fill))),
       inRow: figure?.closest('table, tr, td, li, ul') !== null && figure !== null,
@@ -61,7 +65,8 @@ for (const view of ['table', 'grid'] as const) {
       await open(page, view, width, NOTHING);
       await expect(page.locator('[data-collection-empty] [data-testid="construction-still"]')).toHaveCount(1);
       const r = await reading(page);
-      expect(r.stills, 'the construction stands once on the screen').toBe(1);
+      expect(r.stills, 'the construction stands once in the content, as the empty state’s').toBe(1);
+      expect(r.fragments, 'and the sidebar’s fragment only above the fork').toBeLessThanOrEqual(width >= FORK ? 1 : 0);
       /* "The empty state carries no solids." Carried from `heading-solids-110.spec.ts`, which step 112 superseded. */
       expect(await page.locator('[data-solid]').count(), 'and it carries no solids').toBe(0);
       expect(r.heading, 'the heading’s figure is not drawn while the empty state shows').toBe(false);
@@ -73,7 +78,10 @@ for (const view of ['table', 'grid'] as const) {
       expect(r.svg?.right, 'inside the window').toBeLessThanOrEqual(r.window);
       expect(r.scrollWidth, 'and the page is no wider for it').toBe(r.window);
       expect(r.inRow, 'never inside a table’s rows or a list’s cells').toBe(false);
-      for (const fill of r.fills) expect(INKS, `in ink alone: ${fill}`).toContain(fill);
+      /* Step 113: "The empty state's figure is this construction in tint." A source with no cover has no tint and is ink (§5.3). It was ink alone until then. */
+      const tinted = r.fills.filter((fill) => !INKS.includes(fill));
+      if (r.tint === '') expect(tinted, 'no cover, so ink').toEqual([]);
+      else expect(tinted.length, `in the source’s tint, ${r.tint}`).toBeGreaterThan(0);
 
       expect(r.text).toBe('Nothing in the collection matches.');
       expect(r.clearText).toMatch(/^clear filters$/i);
@@ -97,13 +105,13 @@ for (const view of ['table', 'grid'] as const) {
       drawn; what holds is that its place is back and measured, and the
       construction stands no more than once.
     */
-    await expect(page.locator('[data-heading-figure][data-measured="true"]')).toHaveCount(1, { timeout: 15_000 });
-    expect((await reading(page)).stills, 'no more than once').toBeLessThanOrEqual(1);
+    await expect(page.locator('[data-head-figure]')).toHaveCount(1, { timeout: 15_000 });
+    expect((await reading(page)).stills, 'no more than once in the content').toBeLessThanOrEqual(1);
   });
 }
 
 /* "Test that a screen never draws the construction twice", across the states a reader can reach by the address. */
-test('no state of the table or the grid draws the construction twice', async ({ page }) => {
+test('no state of the table or the grid draws the construction twice in the content, or more than one fragment in the sidebar, and none below the fork', async ({ page }) => {
   /* Twenty-four pages opened in one test: the default 30 seconds was this loop's own length on WebKit, and it ran out mid-load (step 110's run). */
   test.setTimeout(180_000);
   for (const view of ['table', 'grid'] as const) {
@@ -111,7 +119,9 @@ test('no state of the table or the grid draws the construction twice', async ({ 
       for (const query of ['', NOTHING, '&page=99', '&sort=title:asc']) {
         await open(page, view, width, query);
         await page.waitForTimeout(500);
-        expect((await reading(page)).stills, `${view} at ${width} with "${query}"`).toBeLessThanOrEqual(1);
+        const r = await reading(page);
+        expect(r.stills, `${view} at ${width} with "${query}"`).toBeLessThanOrEqual(1);
+        expect(r.fragments, `${view} at ${width} with "${query}": fragments`).toBeLessThanOrEqual(width >= FORK ? 1 : 0);
       }
     }
   }

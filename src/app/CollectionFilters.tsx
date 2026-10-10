@@ -38,9 +38,6 @@ export type FilterOptions = {
 /** The label colour as a text class: every figure and aside in these views that is not ink (§T.2). */
 const LABEL_TEXT = 'text-[oklch(0.44_0.008_70)]';
 
-/** The measure the band gives search, and the record page its title: a list row wider than this parts a name from its count. */
-const FILTER_MEASURE = 443;
-
 /** §T.3, step 113: "Its floor: three rows, 132." */
 const FLOOR = 132;
 
@@ -187,8 +184,23 @@ export function CollectionFilters({
     }
     const fit = () => root.style.setProperty('--filter-room', `${Math.max(need, roomUnder(title))}px`);
     fit();
+    /*
+      "Suppress the floor's return once the reader has scrolled since
+      opening": the page is not held, so a reader can move it with a
+      filter open, and a close that took the floor's distance back off
+      would move them again. Where the page is after these moves is where
+      this effect left it; a scroll that finds it anywhere else is theirs.
+    */
+    const left = window.scrollY;
+    const onScroll = () => {
+      if (Math.abs(window.scrollY - left) > 1) floorMove.current = 0;
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', fit);
-    return () => window.removeEventListener('resize', fit);
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', fit);
+    };
   }, [openKey, titleOf, roomUnder]);
 
   useEffect(() => {
@@ -241,7 +253,7 @@ export function CollectionFilters({
   /* Step 111: Sort and the filter lines are one block, five lines at the 44 floor with nothing between; a 12 gap stood under Sort until then. What follows the block keeps its 12. */
   const body = (
     <div className="flex flex-col">
-      <div className="flex flex-wrap items-center gap-2">
+      <div data-sort-row="" className="flex flex-wrap items-center gap-2">
         {/*
           §T.5's Sort control, kept by the table at every width (§T.4): a
           control whose label names the order in force, since Date bought
@@ -278,6 +290,10 @@ export function CollectionFilters({
               </optgroup>
             ))}
           </select>
+          {/* §T.1: "SORT · DEFAULT with a chevron", a 1px ink stroke in a 12 square. Drawn above the sidebar's fork only (`sidebar-layout.ts`). */}
+          <svg data-sort-chevron="" aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" className="pointer-events-none shrink-0 fill-none stroke-[oklch(0.19_0.008_60)] stroke-1">
+            <polyline points="1.5,4 6,8.5 10.5,4" />
+          </svg>
         </label>
       </div>
 
@@ -289,7 +305,8 @@ export function CollectionFilters({
         the one option chosen, and a +. Open, its options are beneath it in
         a container of bounded height, and the lines below move down.
       */}
-      <div className="flex flex-col" style={{ maxWidth: FILTER_MEASURE }}>
+      {/* The lines' measure is the stylesheet's: the band's below the sidebar's fork, and the sidebar's own width above it. */}
+      <div data-collection-lines="" className="flex flex-col">
         {FILTER_GROUPS.map((group) => {
           const list = options[group.options];
           if (list.length === 0) return null;
@@ -370,58 +387,69 @@ export function CollectionFilters({
       </div>
 
       {/*
-        The undated control, and the count that makes it honest.
-        §4.2 makes release_year nullable, so a year range silently excludes
-        every undated record — records vanish behind a successful page. The
-        count is stated whether they are shown or hidden, so the omission is
-        never invisible (NOTES.md, and SPEC.md §5.2's meta.undatedCount).
-      */}
-      {(hasYearFilter || undatedCount > 0) && (
-        <div className={`mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-label ${LABEL_TEXT}`}>
-          {hasYearFilter && (
-            <label data-filter-undated="" className="flex min-h-[44px] items-center gap-1.5">
-              <input
-                type="checkbox"
-                checked={params.filters.includeUndated !== false}
-                onChange={(event) =>
-                  change((current) =>
-                    withFacet(current, {
-                      filters: { includeUndated: event.target.checked ? undefined : false },
-                    }),
-                  )
-                }
-                className="size-3.5 accent-[oklch(0.19_0.008_60)]"
-              />
-              Include records with no release year
-            </label>
-          )}
-          <span>
-            {undatedCount === 1
-              ? '1 record has no release year'
-              : `${undatedCount} records have no release year`}
-          </span>
-        </div>
-      )}
+        What follows the lines when a filter is in force. §T.1, step 113:
+        "a hairline follows TAG, then CLEAR FILTERS; with a year filter in
+        force, INCLUDE RECORDS WITH NO RELEASE YEAR and its count stand
+        between them... Neither shows when no filter is in force." The
+        hairline and the 44 lines are the sidebar's, above its fork.
 
+        The undated control, and the count that makes it honest: §4.2 makes
+        release_year nullable, so a year range silently excludes every
+        undated record. "No control or link in the app sets a year filter,
+        which is read only from the address. So the year line never draws"
+        in use, and it was drawn with no year filter until step 113,
+        whenever a record had no year.
+      */}
       {activeCount > 0 && (
-        <div className="mt-3">
-          <button
-            type="button"
-            onClick={() =>
-              change((current) => ({
-                filters: {},
-                sort: current.sort,
-                view: current.view,
-                wall: current.wall,
-                shelf: current.shelf,
-                page: 1,
-              }))
-            }
-            data-filter-clear=""
-            className={`min-h-[44px] text-label underline underline-offset-2 ${LABEL_TEXT}`}
-          >
-            Clear {activeCount === 1 ? 'filter' : `all ${activeCount} filters`}
-          </button>
+        <div data-filter-after="">
+          {hasYearFilter && (
+            <div data-filter-undated-row="" className={`mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-label ${LABEL_TEXT}`}>
+              <label data-filter-undated="" className="flex min-h-[44px] items-center gap-1.5">
+                <input
+                  type="checkbox"
+                  checked={params.filters.includeUndated !== false}
+                  onChange={(event) =>
+                    change((current) =>
+                      withFacet(current, {
+                        filters: { includeUndated: event.target.checked ? undefined : false },
+                      }),
+                    )
+                  }
+                  className="size-3.5 accent-[oklch(0.19_0.008_60)]"
+                />
+                Include records with no release year
+              </label>
+              <span data-undated-sentence="">
+                {undatedCount === 1
+                  ? '1 record has no release year'
+                  : `${undatedCount} records have no release year`}
+              </span>
+              {/* Above the fork the count stands alone at the line's right, "as an option row's is". */}
+              <span data-undated-figure="" aria-hidden="true" className="tabular-nums">
+                {undatedCount}
+              </span>
+            </div>
+          )}
+
+          <div className="mt-3">
+            <button
+              type="button"
+              onClick={() =>
+                change((current) => ({
+                  filters: {},
+                  sort: current.sort,
+                  view: current.view,
+                  wall: current.wall,
+                  shelf: current.shelf,
+                  page: 1,
+                }))
+              }
+              data-filter-clear=""
+              className={`min-h-[44px] text-label underline underline-offset-2 ${LABEL_TEXT}`}
+            >
+              Clear filters
+            </button>
+          </div>
         </div>
       )}
     </div>

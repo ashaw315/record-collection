@@ -11,13 +11,10 @@ import { wallSeats, wallSummaries } from './wall/producer';
 import { CollectionPagination } from './CollectionPagination';
 import { parseCollectionParams } from './collection-params';
 import { listRecords, listRecordAges, recordFacets, countAllRecords, spineColoursOf } from '@/lib/db/queries/records';
-import { SOLID_SLOTS } from './block-figure';
-import { solidCapEdge } from './figure-solids';
-import { recordLadder } from '@/lib/colour/record-ladder';
-import { construction } from './records/[id]/construction';
 import { ConstructionStill } from './records/[id]/ConstructionStill';
-import { HeadingFigure } from './HeadingFigure';
 import { figureSource } from './figure-source';
+import { sidebarRules } from './sidebar-layout';
+import { AddRecord } from './AddRecord';
 import { shelfRecords } from '@/lib/db/queries/shelf';
 import { newestCoverUrls } from '@/lib/db/queries/images';
 import { DEFAULT_PAGE_SIZE, type Offset } from '@/lib/api/query-params';
@@ -111,22 +108,14 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
   */
   const source = shelf === null ? figureSource(await listRecordAges()) : null;
   /*
-    Steps 110 to 112: the heading's figure is the source's construction
-    beside the filter block, and on the table a cube for each of "the
-    first three records the screen shows" that has a colour, sized by the
-    browser to the width left. "The grid's figure in ink alone." None
-    where the list is empty: the empty state's figure stands instead.
+    Step 113, from Adam's wireframe: "The figure is the source record's
+    construction in that record's tint... The tint is the source record's,
+    so the whole figure belongs to one record and nothing changes on a
+    re-sort." A source with no cover has no colour and draws in ink (§5.3).
   */
-  const heading = (() => {
-    if (source === null || records.rows.length === 0) return null;
-    const cap = solidCapEdge(construction(source.id));
-    return { id: source.id, clearing: source.clearing, aspect: source.aspect, unitHeight: cap.box.height, capEdge: cap.edge, box: cap.box };
-  })();
-  const firstShown = params.view === 'grid' ? [] : records.rows.slice(0, SOLID_SLOTS).map((row) => row.id);
-  const solids = heading === null ? [] : (await spineColoursOf(firstShown)).flatMap((spineColour, i) => {
-    const ladder = recordLadder(spineColour);
-    return ladder === null ? [] : [{ id: firstShown[i], base: ladder.base, shade: ladder.shade, top: ladder.top }];
-  });
+  const tint = source === null ? null : ((await spineColoursOf([source.id]))[0] ?? null);
+  const figure = source === null ? null : { clearing: source.clearing, aspect: source.aspect };
+  const still = source === null ? null : <ConstructionStill recordId={source.id} spineColour={tint} />;
 
   /*
     §T.5: the grid shows each record's cover, the newest by §61. Asked for
@@ -162,61 +151,91 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
           />
         </main>
       ) : (
-        <main data-collection-views="" className="relative">
-          {/* §T.6: "Where the empty state shows, the heading's figure is not drawn, so the construction stands once on a screen." */}
-          {heading !== null && (
-            <HeadingFigure source={heading} solids={solids}>
-              <ConstructionStill recordId={heading.id} spineColour={null} placed={heading.box} />
-            </HeadingFigure>
-          )}
-          {/* §T.1: the shelf's band, in its two-row form at every width. Search, the three views and Add record are its. */}
+        <main data-collection-views="">
           {/*
-            Step 111, §T.6: "Above a 1440 window the table's and grid's
-            content stops growing at 1,400 wide from the 20 inset, and the
-            window beyond it is paper." Pinned left and not centred, so the
-            header's wordmark still stands over the heading. The band is
-            held with it, so Add record ends where the table does.
+            Step 113, §T.1: above the fork "the table and grid have a sidebar
+            336 wide, closed by a full-height 1px rule, and a content column
+            beside it". The sidebar's contents are, in the wireframe's order,
+            what stood above the table in the same order: the band's search
+            and view names, the count and heading, Sort and the filters. So
+            the page is one document at every width, and the fork is in the
+            stylesheet (`sidebar-layout.ts`) and nowhere else.
           */}
-          <div className="max-w-[1440px]">
-          <CollectionBand params={params} genres={facets.genres} />
-          <div className="px-5 pb-6">
-          <header data-collection-heading="" className="mb-5">
+          <style>{sidebarRules(figure)}</style>
+          <aside data-collection-sidebar="">
+            {/* §T.1: the shelf's band. Below the fork it is the two-row band, with Add record at its right; above, search over the view names. */}
+            <CollectionBand params={params} genres={facets.genres} />
+            <div data-collection-controls="" className="px-5">
+              <header data-collection-heading="" className="mb-5">
+                {/*
+                  §T.3: the count directly above the heading, an 11 label over
+                  a 40, small first and nothing between. Filter-aware: "34 of
+                  312 records" when a filter is active.
+                */}
+                <p data-collection-count="" className={LABEL}>
+                  {collectionCountLabel({
+                    matched: records.total,
+                    total: collectionTotal,
+                    filtered: activeFilterCount(params) > 0,
+                  })}
+                </p>
+                <h1 className="font-heading text-headline font-semibold tracking-tight">Collection</h1>
+              </header>
+
+              <CollectionFilters params={params} undatedCount={records.undatedCount} options={facets} />
+            </div>
             {/*
-              §T.3: the count directly above the heading, an 11 label over
-              a 40, small first and nothing between. Filter-aware: "34 of
-              312 records" when a filter is active.
+              §T.6: "The second figure is a fragment of the same construction
+              in the same tint. It sits 24 below the last filter line, or
+              below an open container, bleeding off the window's left edge
+              and cut at the sidebar's rule... and the reader scrolls to it."
+              In the sidebar's flow, so it is beneath whatever is last.
             */}
-            <p data-collection-count="" className={LABEL}>
-              {collectionCountLabel({
-                matched: records.total,
-                total: collectionTotal,
-                filtered: activeFilterCount(params) > 0,
-              })}
-            </p>
-            <h1 className="font-heading text-headline font-semibold tracking-tight">Collection</h1>
-          </header>
+            {still !== null && (
+              <div data-sidebar-fragment="" aria-hidden="true">
+                <i data-diagonal="fragment-rule" />
+                <i data-diagonal="fragment-air" />
+                <div data-fragment-figure="">{still}</div>
+              </div>
+            )}
+          </aside>
 
-          {/* Grid and table carry their controls ON THE PAGE, above the rows, because a list wants its controls visible (§10). */}
-          <CollectionFilters params={params} undatedCount={records.undatedCount} options={facets} />
+          <div data-collection-content="" className="px-5 pb-6">
+            {/*
+              The content column's head, above the fork only: ADD RECORD at
+              its top right and the head figure centred in the column, "the
+              head [being] that height plus 24 above and below". "The empty
+              state's figure is this construction... and the head figure is
+              not drawn while it shows."
+            */}
+            <div data-collection-head="">
+              <AddRecord />
+              {source !== null && still !== null && records.rows.length > 0 && (
+                <>
+                  <i data-diagonal="head-air" aria-hidden="true" />
+                  <i data-diagonal="head-rule" aria-hidden="true" />
+                  <div data-head-figure="" data-record={source.id} data-clearing={source.clearing} data-aspect={source.aspect} data-tint={tint ?? ''} aria-hidden="true">
+                    {still}
+                  </div>
+                </>
+              )}
+            </div>
 
-          {/*
-            Narrowed, not cast. `CollectionList` handles table and grid and the
-            shelf is its SIBLING rather than a third case inside it — so the
-            branch above is what proves `view` is not 'shelf' here.
-          */}
-          <CollectionList rows={records.rows as CollectionRow[]} params={params} covers={covers} view={params.view === 'grid' ? 'grid' : 'table'} collectionTotal={collectionTotal}
-            emptyFigure={
-              source === null ? null : (
-                /* "At the clearing height and no larger": the still's box at that height and its own proportion. */
-                <div style={{ height: source.clearing, width: source.clearing * source.aspect }}>
-                  <ConstructionStill recordId={source.id} spineColour={null} />
-                </div>
-              )
-            }
-          />
+            {/*
+              Narrowed, not cast. `CollectionList` handles table and grid and the
+              shelf is its SIBLING rather than a third case inside it — so the
+              branch above is what proves `view` is not 'shelf' here.
+            */}
+            <CollectionList rows={records.rows as CollectionRow[]} params={params} covers={covers} view={params.view === 'grid' ? 'grid' : 'table'} collectionTotal={collectionTotal}
+              emptyFigure={
+                source === null ? null : (
+                  /* "At the clearing height and no larger": the still's box at that height and its own proportion, in the source's tint. */
+                  <div data-tint={tint ?? ''} style={{ height: source.clearing, width: source.clearing * source.aspect }}>{still}</div>
+                )
+              }
+            />
 
-          <CollectionPagination params={params} total={records.total} rows={records.rows.length} pageSize={PAGE_SIZE} />
-          </div>
+            <CollectionPagination params={params} total={records.total} rows={records.rows.length} pageSize={PAGE_SIZE} />
           </div>
         </main>
       )}

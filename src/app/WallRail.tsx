@@ -57,9 +57,17 @@ const SEARCH_FIELD = `${FIELD_BASE} h-[44px]`;
 export function WallRail({
   params,
   genres = [],
+  searchGlyph = false,
 }: {
   params: CollectionParams;
   genres?: readonly FilterOption[];
+  /**
+   * §T.1, step 113: "The search glyph is the same weight at 18, and it is a
+   * control. Pressing it submits, with §9.3's 44 hit area by overlay." The
+   * table's and the grid's band asks for it; the shelf's rail is not
+   * reached by that ruling and keeps a field with no control.
+   */
+  searchGlyph?: boolean;
 }) {
   const hidden = new URLSearchParams(
     toQueryString({
@@ -88,13 +96,23 @@ export function WallRail({
         <label htmlFor="rail-search" className={`block ${LABEL}`}>
           Search
         </label>
-        <input
-          id="rail-search"
-          name="q"
-          type="search"
-          defaultValue={params.filters.q ?? ""}
-          className={`${SEARCH_FIELD} font-sans text-[16px] leading-[1.9]`}
-        />
+        <div data-search-box="" className="relative">
+          <input
+            id="rail-search"
+            name="q"
+            type="search"
+            defaultValue={params.filters.q ?? ""}
+            className={`${SEARCH_FIELD} font-sans text-[16px] leading-[1.9] ${searchGlyph ? 'pr-[30px]' : ''}`}
+          />
+          {searchGlyph && (
+            <button type="submit" data-search-glyph="" aria-label="Search" className="absolute top-[6px] right-0 flex h-[44px] w-[44px] cursor-pointer items-center justify-end">
+              <svg aria-hidden="true" width="18" height="18" viewBox="0 0 18 18" className="fill-none stroke-[oklch(0.19_0.008_60)] stroke-1">
+                <circle cx="7.5" cy="7.5" r="6" />
+                <line x1="12" y1="12" x2="17" y2="17" />
+              </svg>
+            </button>
+          )}
+        </div>
 
         <div data-rail-filter="" className="relative">
           {genres.length > 0 && (

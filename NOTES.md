@@ -40090,3 +40090,119 @@ figure is good to about 2.
   before against after, 30 pages at two widths and sign-in, at rest and
   focused: 61 of 61 identical, so nothing drew the red outside a `data-t6`
   root and the record page's asides did not move.
+
+## Step 113: Adam's wireframe built whole — the sidebar, the head figure, the fragment, the diagonals, the rings (10 Oct)
+
+Built in one pass on the coordinator's word ("build the whole thing, then
+capture, then we tweak"), after step 114. Captures and the reported
+figures are `docs/captures/sidebar-113/`, on the real collection.
+
+**What is built.** `sidebar-layout.ts` holds every figure and writes the
+stylesheet; the page is one document at every width and the fork is a
+media query. Above 1054: a sidebar from the window's left edge, 336 and a
+1px ink rule to the window's foot, content 18 to 318; search with an 18
+glyph that submits, the view names, the count, the heading, Sort between
+two hairlines with a chevron, the filter lines with the container of the
+earlier commit, and under a filter a hairline and CLEAR FILTERS. The
+content column runs 377 to 40 short of the window and stops at 1,400, with
+ADD RECORD and a + at its top right on the search field's rule. The head
+figure is the source record's construction in its tint, 0.328 of the
+column wide at the construction's own ratio, centred, with 24 above and
+below; a fragment of it, half off the window's left, stands in the
+sidebar's flow 24 below whatever is last; each carries two 1px diagonals
+at 30°. §M.6's inside ring is drawn on every focusable control of the
+table and grid by one rule on the screen (`globals.css`). The floor's
+return is suppressed once the reader has scrolled. Record's floor of 128
+is declared beside the sidebar.
+
+**Reported.**
+
+- *The fork.* Record's stated minimum is 128 (10 Oct, "On The Radio:
+  Greatest Hits Vol. 1 & 2" in two lines), which alone gives 913. The fork
+  is built at 1054, from Record at 269, on the coordinator's ruling.
+  **At 1054 Record is in fact 236, not 269:** the table's layout shares the
+  column's slack among all six columns, so the 269 is the arithmetic's and
+  not the drawn width. Just below, at 1053, it is 375.
+- *The grid, from the arithmetic.* Against the content column: three
+  covers from the fork (196 wide at 1054), four from 1129, five from 1313
+  and at the cap (185). Just below the fork, against the window, five of
+  183. So the count falls from five to three across the fork, and 945
+  never fires. §T.5's "four covers from the fork" is not what a 1054 fork
+  gives.
+- *The figure.* 335.5 by 281.9 at 1440 and 1920, head 329.9; 208.9 by
+  175.5 at the fork, head 223.5, which clears 172.4 by 3. No figure at
+  1024 or 768: both are below the fork. The narrowest column that clears
+  is 625.5, a 1043 window, so the figure is drawn wherever the sidebar is.
+- *The wordmark's left* is 18 at 320, 1024, 1440 and 1920 on the table,
+  the shelf and the want list.
+
+**Readings I picked, to overrule.**
+
+1. *The fragment's size and place are mine.* 1.5 times the head figure,
+   half of it off the window's left, always drawn above the fork: it is
+   in the sidebar's flow, so the sidebar always has room and "the reader
+   scrolls to it". Nothing ruled its size.
+2. *The diagonals' places are mine.* Head: one from inside the figure
+   down-left to air 6 above the head's foot, one up-right to the header's
+   rule. Fragment: one from the window's left edge to the sidebar's rule,
+   one short one in air. They are drawn under the figure, so the forms
+   cover them. The wireframe's are longer and one crosses its disc.
+3. *The ring is §M.6's inside ring on every control,* 2px of paper and
+   2px of ink inside the box, not the outside ring §M.6 gives the modal's
+   boxed controls: these sit edge to edge and inside a scrolling
+   container. On a view name it is on the 44 hit area; on Sort and the
+   year line's checkbox, on the label.
+4. *The sidebar's vertical rhythm is mine,* from the system's own steps
+   (34 above SEARCH, 34 between its groups, 9 around Sort, 12 before the
+   lines). The wireframe's are near these and not equal to them.
+5. *The search glyph is on the band at every width,* since
+   `T.3/search-no-button` is not scoped to the sidebar. The shelf's rail,
+   which shares the component, does not take it.
+6. *"Clear filters" is the control's text at every width.* It read "Clear
+   filter" or "Clear all N filters".
+7. *The year line.* The handoff says not to show or describe it; the
+   target lays it out. It is built as the target lays it out and draws
+   only when the address carries a year filter. The count of undated
+   records no longer draws without one, at any width: it did whenever a
+   record had no year.
+8. *With the empty state showing, the fragment stays* and the head figure
+   goes. "The construction stands once on a screen" predates two figures.
+9. *Sort's chevron does not turn over:* the list is the platform's own
+   select, which gives the page no open state.
+10. *ADD RECORD is 132 wide,* the wireframe's.
+
+**Tests replaced, said plainly.** `composition-111.spec.ts` and its sheet
+are deleted with the figure they read (`HeadingFigure`, `block-figure`,
+`figure-solids` and their tests). Rewritten to the new rulings:
+`empty-figure-103e` (one construction in the content and the fragment
+above the fork; the figure in tint where it was ink alone), `grid-99`
+(the count against the window stops at the fork), `collection-band-97`
+and `band-100` (the two-row band read at 1024 where they read 1440; one
+drawn Add record; the search field's button), `collection-filters` (the
+undated count as sentence or figure) and `collection-filters-97`
+(the control's text). More than eight files: one supersession.
+
+**Found by the covering run and fixed.**
+
+- `label-tracking-80` selected the filter label by `span.w-12.shrink-0`,
+  classes the container step removed at fff63d8. That step's covering run
+  did not include this spec, so the break was pushed and stood for four
+  hours unseen. The selector is the label's own attribute now.
+- Record's floor was first a class on the column and made a 320 window's
+  table 284 wide in a 280 column (`table-98`). It is in the fork's rules.
+- The head's own top moved by the figure's margin, which put ADD RECORD
+  24 below the search rule and a diagonal across the table. The head is a
+  flow root.
+
+**Not shown.**
+
+- The ring is not tested on the phone's engine: a scripted focus on a
+  link or button is not `:focus-visible` on WebKit, and every one read
+  "no shadow" there while the fields passed. Whether a keyboard on Safari
+  draws it is unverified.
+- `colour-103`'s want-list confirmation test failed once in the broad run
+  on `ECONNRESET` posting its fixture and passed on retry; not diagnosed.
+- The broad covering run read 264 passed, 41 failed, 1 flaky before the
+  corrections; the 41 were the specs above and the ring on WebKit. The
+  rerun of the corrected specs is the green one; the whole covering set
+  was not run again after it.

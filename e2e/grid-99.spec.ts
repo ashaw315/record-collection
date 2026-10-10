@@ -1,3 +1,4 @@
+import { FORK } from '../src/app/sidebar-layout';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
@@ -156,15 +157,17 @@ test('covers are 24 apart at the 20 inset: two of 163 at 390, two of 128 at 320'
 
 /* Fails against fixed breakpoints: the count would change at 640 and 1024, where no 160 newly fits. */
 /*
-  Step 111 (§T.6): "Above a 1440 window the table's and grid's content
-  stops growing at 1,400 wide from the 20 inset", "so the grid stops at
-  seven columns". This read on to ten covers at 1856 and 1920 until then.
+  Step 113 (§T.5): "Above the fork the grid fills the content column, 417
+  less than the window." So the count against the whole window is read
+  below the sidebar's fork, 1054, and `sidebar-113.spec.ts` reads it above.
+  This ran on to six at 1120 and seven from 1304 until then
+  (`T.5/grid-full-window`).
 */
-test('one more cover joins a row at each width where another 160 and its 24 fit, from 568 to 1304, and above 1440 the row stays at seven', async ({ page }) => {
+test('below the sidebar’s fork one more cover joins a row at each width where another 160 and its 24 fit, 568, 752 and 936, and there are five just below the fork', async ({ page }) => {
   const f = await seed(page, 9);
   /* n covers fit when the window less its insets holds n of 160 and n - 1 of 24: 184n + 16. */
-  const changes = [3, 4, 5, 6, 7].map((n) => ({ n, at: 184 * n + 16 }));
-  expect(changes.map((c) => c.at)).toEqual([568, 752, 936, 1120, 1304]);
+  const changes = [3, 4, 5].map((n) => ({ n, at: 184 * n + 16 }));
+  expect(changes.map((c) => c.at)).toEqual([568, 752, 936]);
   const count = async (width: number) => {
     await page.setViewportSize({ width, height: 800 });
     await page.waitForTimeout(60);
@@ -179,8 +182,7 @@ test('one more cover joins a row at each width where another 160 and its 24 fit,
     expect(after.n, `${at}: ${n} covers`).toBe(n);
     expect(after.width, `${at}: each exactly 160`).toBeCloseTo(160, 0);
   }
-  /* 1488 is where an eighth of 160 would fit a window-wide grid; the content is 1,400 there and holds seven. */
-  for (const width of [1440, 1488, 1672, 1920]) expect((await count(width)).n, `at ${width}`).toBe(7);
+  expect((await count(FORK - 1)).n, 'one below the fork').toBe(5);
 });
 
 /* Fails against a grid that drops the control: with no headers, nothing else names or changes the order. */

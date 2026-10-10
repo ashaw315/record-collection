@@ -23,6 +23,12 @@ import { login } from './sign-in';
 const INK = ['lab(6.18075 1.20374 2.12039)', 'oklch(0.19 0.008 60)'];
 const LABEL_INK = ['lab(35.0433 0.937879 2.8959)', 'oklch(0.44 0.008 70)'];
 const VIEWS = ['table', 'grid'] as const;
+/*
+  The widest window these read the two-row band at. It was 1440 until step
+  113, where the band above the sidebar's fork (1054) became the sidebar's
+  head: `sidebar-113.spec.ts` reads it there.
+*/
+const BAND_WIDE = 1024;
 
 async function open(page: Page, view: (typeof VIEWS)[number], width: number, height = 900) {
   await page.setViewportSize({ width, height });
@@ -37,19 +43,19 @@ for (const view of VIEWS) {
   test.describe(`§T.1: the ${view} view takes the shelf's band`, () => {
     /* Fails against the built views, which carry a search field, a Search button and a switch of their own, and no band. */
     test('the band’s search field and view names are there, and the view’s own are gone', async ({ page }) => {
-      await open(page, view, 1440);
+      await open(page, view, BAND_WIDE);
       const band = page.locator('[data-collection-band]');
       await expect(band.locator('#rail-search')).toBeVisible();
       await expect(band.getByRole('link', { name: 'Shelf', exact: true })).toBeVisible();
       await expect(band.getByRole('link', { name: view === 'table' ? 'Table' : 'Grid', exact: true })).toHaveAttribute('aria-current', 'page');
       await expect(page.locator('#collection-search')).toHaveCount(0);
       await expect(page.locator('main [role="group"][aria-label="View"]')).toHaveCount(0);
-      /* §T.3 as ruled 8 Oct: no button. Enter submits, and the no-JavaScript Apply stays hidden. */
-      const buttons = await page.locator('main form[role="search"] button').evaluateAll((all) => all.map((b) => ({ text: (b.textContent ?? '').trim(), drawn: b.getBoundingClientRect().width > 1 })));
-      expect(buttons).toEqual([{ text: 'Apply', drawn: false }]);
+      /* §T.3 ruled no button on 8 Oct and withdrew that at step 113 (`T.3/search-no-button`): the glyph is the field's control. The no-JavaScript Apply stays hidden. */
+      const buttons = await page.locator('main form[role="search"] button').evaluateAll((all) => all.map((b) => ({ text: (b.textContent ?? '').trim() || (b.getAttribute('aria-label') ?? ''), drawn: b.getBoundingClientRect().width > 1 })));
+      expect(buttons).toEqual([{ text: 'Search', drawn: true }, { text: 'Apply', drawn: false }]);
     });
 
-    for (const [width, field] of [[320, 280], [390, 350], [482, 442], [483, 443], [1440, 443]] as const) {
+    for (const [width, field] of [[320, 280], [390, 350], [482, 442], [483, 443], [BAND_WIDE, 443]] as const) {
       /* Fails against a band that is a rail when wide, and against a field given the band's whole width: 1400 at 1440. */
       test(`at ${width} the band is two rows and the search field is ${field} wide at the 20 inset`, async ({ page }) => {
         await open(page, view, width);
@@ -72,12 +78,13 @@ for (const view of VIEWS) {
 
     /* Fails against the built header: the count is a 15 line under the heading, and Add record is an oxblood button. */
     test('the count is an 11 label directly above the 40 heading, and Add record is one ink link in the band', async ({ page }) => {
-      await open(page, view, 1440);
+      await open(page, view, BAND_WIDE);
       const m = await page.evaluate(() => {
         const type = (el: Element) => { const cs = getComputedStyle(el); return { size: cs.fontSize, color: cs.color, transform: cs.textTransform, family: cs.fontFamily.includes('Mono') || cs.fontFamily.includes('mono') }; };
         const h1 = document.querySelector('main h1') as HTMLElement;
         const count = document.querySelector('[data-collection-count]') as HTMLElement;
-        const adds = Array.from(document.querySelectorAll('main a')).filter((a) => (a.textContent ?? '').trim() === 'Add record');
+        /* The ones drawn: above the sidebar's fork the content column carries its own and the band's is not drawn, and here it is the other way. */
+        const adds = Array.from(document.querySelectorAll('main a')).filter((a) => (a.textContent ?? '').trim() === 'Add record' && a.getClientRects().length > 0);
         const add = adds[0] as HTMLElement;
         return { heading: { text: h1.textContent, ...type(h1) }, count: { text: (count.textContent ?? '').trim(), ...type(count), next: count.nextElementSibling === h1, bottom: count.getBoundingClientRect().bottom, headingTop: h1.getBoundingClientRect().top }, adds: adds.length, add: { ...type(add), background: getComputedStyle(add).backgroundColor, inBand: add.closest('[data-collection-band]') !== null } };
       });
@@ -125,8 +132,8 @@ for (const view of VIEWS) {
     }
 
     /* Fails against a band whose links have only their drawn boxes: 11 tall. Read by what a tap at each point reaches. */
-    test('each view name and Add record is tappable over 44, at 390 and at 1440', async ({ page }) => {
-      for (const width of [390, 1440]) {
+    test(`each view name and Add record is tappable over 44, at 390 and at ${BAND_WIDE}`, async ({ page }) => {
+      for (const width of [390, BAND_WIDE]) {
         await open(page, view, width);
         const reach = await page.evaluate(() => Array.from(document.querySelectorAll<HTMLElement>('[data-collection-band] ul[aria-label="View"] a, [data-collection-band] nav > a')).map((a) => {
           const r = a.getBoundingClientRect();

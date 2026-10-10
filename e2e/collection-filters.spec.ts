@@ -367,7 +367,8 @@ test('a year range keeps undated records until they are excluded, and says how m
    */
   await page.goto(`/?view=table&artistId=${f.artistId}&yearFrom=1980&yearTo=1983`);
 
-  await expect(page.getByText(/records? (has|have) no release year/)).toBeVisible();
+  /* The count, as a sentence below the sidebar's fork and as the figure at the line's right above it (step 113). */
+  await expect(page.locator('[data-undated-sentence]:visible, [data-undated-figure]:visible')).toHaveText(/^1( record has no release year)?$/);
 
   // Included by default (§5.2), so the undated record is present alongside the
   // in-range one.
@@ -389,7 +390,8 @@ test('a year range keeps undated records until they are excluded, and says how m
   await expectTitles(page, f.suffix, [`Hear Nothing ${f.suffix}`]);
   // The count is still stated when they are hidden — that is what stops the
   // omission being invisible.
-  await expect(page.getByText(/records? (has|have) no release year/)).toBeVisible();
+  /* The count, as a sentence below the sidebar's fork and as the figure at the line's right above it (step 113). */
+  await expect(page.locator('[data-undated-sentence]:visible, [data-undated-figure]:visible')).toHaveText(/^1( record has no release year)?$/);
 });
 
 test('sorting reorders the rows', async ({ page }) => {

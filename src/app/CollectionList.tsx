@@ -110,6 +110,7 @@ function Grid({ rows, covers }: { rows: CollectionRow[]; covers: Readonly<Record
           <GridCover url={covers[row.id] ?? null} />
           <Link
             data-grid-title=""
+            data-ring="after"
             href={`/records/${row.id}`}
             className="mt-2 block text-detail outline-none after:absolute after:inset-0 after:box-border after:content-[''] focus-visible:after:border-2 focus-visible:after:border-background focus-visible:after:shadow-[inset_0_0_0_2px_var(--foreground)]"
           >
@@ -244,6 +245,7 @@ export function CollectionList({
                     focus is §M.6's ring on that same box, inside the row.
                   */}
                   <Link
+                    data-ring="after"
                     href={`/records/${row.id}`}
                     className="font-medium outline-none after:absolute after:inset-0 after:box-border after:content-[''] focus-visible:after:border-2 focus-visible:after:border-background focus-visible:after:shadow-[inset_0_0_0_2px_var(--foreground)]"
                   >

@@ -2,6 +2,7 @@ import type { FilterOption } from './CollectionFilters';
 import type { CollectionParams } from './collection-params';
 import { WallRail } from './WallRail';
 import { bandRules } from './wall/band-rules';
+import { bandForkRules } from './sidebar-layout';
 
 /**
  * **The table and grid's band (§T.1): the shelf's, in its two-row form at
@@ -17,15 +18,16 @@ import { bandRules } from './wall/band-rules';
  * field the band's whole width is 1400 at 1440. The form keeps the row, so
  * the view names stay beneath it; only the field and its label are held to
  * the measure.
+ *
+ * Step 113: above the sidebar's fork the same band is the head of the
+ * sidebar, search over the view names at the sidebar's own width, and the
+ * measure and that fork are `sidebar-layout.ts`'s.
  */
-const SEARCH_MEASURE = 443;
-
 export function CollectionBand({ params, genres }: { params: CollectionParams; genres: readonly FilterOption[] }) {
   return (
     <div data-collection-band="">
-      <style>{`${bandRules('[data-collection-band] ')}
-  [data-collection-band] #rail-search { max-width: ${SEARCH_MEASURE}px; }`}</style>
-      <WallRail params={params} genres={genres} />
+      <style>{`${bandRules('[data-collection-band] ')}${bandForkRules()}`}</style>
+      <WallRail params={params} genres={genres} searchGlyph />
     </div>
   );
 }
