@@ -156,34 +156,66 @@ describe('the CLI streams as the child writes', () => {
     `console.log('EARLY LINE'); setTimeout(() => { console.log('  Tests  4 passed (4)'); }, 2500);`,
   ];
 
-  it('shows a line the child wrote long before the child exits', async () => {
+  /**
+   * **Watched by ORDER, not by the clock** (step 106's machinery).
+   *
+   * This sampled the stream 1,500 ms after the spawn, against a child that
+   * finishes at 2,500. On 9 Oct, in a gate, on a machine swapping with other
+   * work, `npx tsx` took longer than that to start: the sample was empty and
+   * the unit suite read `1 failed`. The claim was never about 1,500 ms. It is
+   * that the early line arrives while the run is still in flight, and that
+   * has an order and no duration: the child's own 2,500 ms wait starts after
+   * it has written the line, however late the child itself started.
+   *
+   * So the watch resolves on the first output that carries the early line,
+   * and reads what else had arrived by then.
+   */
+  const watch = async (command: string, args: string[]) => {
     const { spawn } = await import('node:child_process');
-
-    const child = spawn('npx', ['tsx', 'scripts/run-tests.ts', ...CHILD], {
-      stdio: ['ignore', 'pipe', 'pipe'],
-    });
+    const child = spawn(command, args, { stdio: ['ignore', 'pipe', 'pipe'] });
 
     let seen = '';
+    let closed = false;
+    let atEarly: { seen: string; closed: boolean } | undefined;
     child.stdout.on('data', (chunk: Buffer) => {
       seen += chunk.toString();
+      /* Taken WHILE the child is alive: the whole claim is about this moment. */
+      if (atEarly === undefined && seen.includes('EARLY LINE')) atEarly = { seen, closed };
     });
-
-    /* Sampled WHILE the child is alive: the whole claim is about this moment. */
-    const early = await new Promise<string>((resolve) => {
-      setTimeout(() => resolve(seen), 1500);
-    });
-
     const exitCode = await new Promise<number>((resolve) => {
-      child.on('close', (code) => resolve(code ?? 1));
+      child.on('close', (code) => {
+        closed = true;
+        resolve(code ?? 1);
+      });
     });
+    return { atEarly, seen, exitCode };
+  };
 
-    expect(early, 'the early line must be visible before the child exits').toMatch(/EARLY LINE/);
-    /* And it must not have finished yet, or the sample proves nothing. */
-    expect(early, 'the run must still be in flight at the sample').not.toMatch(/4 passed/);
+  it('shows a line the child wrote long before the child exits', async () => {
+    const { atEarly, seen, exitCode } = await watch('npx', ['tsx', 'scripts/run-tests.ts', ...CHILD]);
+
+    expect(atEarly, 'the early line must arrive at all').toBeDefined();
+    expect(atEarly?.closed, 'and before the run has closed').toBe(false);
+    /* And the run must not have finished yet, or the moment proves nothing. */
+    expect(atEarly?.seen, 'the run must still be in flight when the early line shows').not.toMatch(/4 passed/);
 
     expect(exitCode).toBe(0);
     expect(seen).toMatch(/4 passed/);
-  }, 20_000);
+  }, 60_000);
+
+  /**
+   * The neighbour, staged: a wrapper that withholds everything until its
+   * child exits, which is what `spawnSync` did. The same watch must see the
+   * summary already there when the early line shows, or the test above
+   * cannot fail on the defect it is named for.
+   */
+  it('the same watch, on a wrapper that withholds until exit, finds the summary already there', async () => {
+    const withholding = `const r = require('node:child_process').spawnSync(process.argv[1], process.argv.slice(2), { encoding: 'utf8' }); process.stdout.write(r.stdout);`;
+    const { atEarly, exitCode } = await watch('node', ['-e', withholding, ...CHILD]);
+
+    expect(exitCode, 'the precondition: the staged wrapper ran').toBe(0);
+    expect(atEarly?.seen, 'withheld: the early line and the summary arrive together').toMatch(/4 passed/);
+  }, 60_000);
 
   /**
    * The verdict still has to be right, judged over everything the child wrote

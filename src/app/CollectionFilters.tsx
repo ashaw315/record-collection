@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { holdScroll, holdTouch } from '@/components/scroll-hold';
+import { closeOnOutsidePress } from '@/components/outside-press';
 import { cn } from '@/lib/utils';
 import { HAIRLINE, INK, LABEL, LABEL_TYPE } from '@/app/records/[id]/grid-type';
 import { RECORD_SORT_FIELDS, type RecordSortField } from '@/lib/records/fields';
@@ -40,6 +41,23 @@ const LABEL_TEXT = 'text-[oklch(0.44_0.008_70)]';
 
 /** The measure the band gives search, and the record page its title: a list row wider than this parts a name from its count. */
 const FILTER_MEASURE = 443;
+
+/** §T.3, step 106: from this width the open filter is a box and not the full-width sheet. Tailwind's `md`. */
+const BOX_FROM = 768;
+/** "Never less than 176": the box's CLOSE row and three options. */
+const BOX_FLOOR = 176;
+/** "Up to the viewport's bottom less 24." */
+const BOX_FOOT = 24;
+const ROW = 44;
+
+/**
+ * WebKit sends a finger's tap as a click only to an element that answers
+ * clicks itself; a listener on the document does not count. The layer and
+ * the panel's paper carry this so a tap on them is a click at all, and the
+ * document's listener then decides what it does (measured on Playwright's
+ * WebKit, step 106: without it a tap on the layer closed nothing).
+ */
+const answersTaps = () => undefined;
 
 /** Whether the history entry in force is the one an open filter added. */
 const hasEntry = () => (window.history.state as { collectionFilter?: boolean } | null)?.collectionFilter === true;
@@ -118,32 +136,49 @@ export function CollectionFilters({
    */
   const [openKey, setOpenKey] = useState<string | null>(null);
   const [panelTop, setPanelTop] = useState(0);
+  /* The box's left and the most it may be tall; null below 768, where the panel is the sheet. */
+  const [panelBox, setPanelBox] = useState<{ left: number; maxHeight: number } | null>(null);
   const closeFilter = useCallback(() => {
     setOpenKey(null);
     if (hasEntry()) window.history.back();
   }, []);
   /* Where the last filter line ends in the window: every filter's panel starts there. */
-  const lastLineBottom = useCallback(() => {
+  const lastLine = useCallback(() => {
     const lines = rootRef.current?.querySelectorAll<HTMLElement>('[data-filter-trigger]');
-    return lines === undefined || lines.length === 0 ? undefined : lines[lines.length - 1].getBoundingClientRect().bottom;
+    return lines === undefined || lines.length === 0 ? undefined : lines[lines.length - 1].getBoundingClientRect();
   }, []);
-  const openFilter = useCallback((key: string) => {
+  /* Never above the window: with the lines gone over its top, the list still starts in view. */
+  const place = useCallback(() => {
+    const line = lastLine();
+    if (line === undefined) return;
+    const top = Math.max(0, line.bottom);
+    setPanelTop(top);
+    setPanelBox(window.innerWidth >= BOX_FROM ? { left: line.left, maxHeight: Math.max(0, window.innerHeight - BOX_FOOT - top) } : null);
+  }, [lastLine]);
+  const openFilter = useCallback((key: string, rows: number) => {
+    /*
+      §T.3's one exception to the trigger never moving: "Where the space
+      below the last filter line is less [than the floor], opening first
+      scrolls the page by the shortfall, in one instant move, and then
+      holds it." The box needs its floor, or its whole height where its
+      list is shorter than the floor: the CLOSE row, the options and the
+      two edges.
+    */
+    const line = lastLine();
+    if (line !== undefined && window.innerWidth >= BOX_FROM) {
+      const shortfall = Math.min(BOX_FLOOR, ROW * (rows + 1) + 2) - (window.innerHeight - BOX_FOOT - line.bottom);
+      if (shortfall > 0) window.scrollBy({ top: shortfall, behavior: 'instant' });
+    }
     /* Placed in the press itself, so the panel's first paint is already beneath the last line. */
-    setPanelTop(lastLineBottom() ?? 0);
+    place();
     /* A second filter opened over the first takes the first's entry: one entry however many are tried. */
     if (!hasEntry()) window.history.pushState({ ...(window.history.state as object | null), collectionFilter: true }, '');
     setOpenKey(key);
-  }, [lastLineBottom]);
+  }, [lastLine, place]);
 
   useEffect(() => {
     if (openKey === null) return undefined;
     const trigger = () => rootRef.current?.querySelector<HTMLElement>(`[data-filter="${openKey}"] [data-filter-trigger]`);
-    /* Never above the window: with the lines gone over its top, the list still starts in view. */
-    const place = () => {
-      const bottom = lastLineBottom();
-      if (bottom !== undefined) setPanelTop(Math.max(0, bottom));
-    };
-    place();
     const onKey = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return;
       closeFilter();
@@ -164,6 +199,12 @@ export function CollectionFilters({
       again, so it stays beneath its lines.
     */
     const releaseTouch = holdTouch(document, () => rootRef.current?.querySelector<HTMLElement>('[data-filter-panel]') ?? null);
+    /* Step 106's close set: a press that did not land on an option row, on CLOSE or on a filter line closes, and does nothing else. */
+    const releasePress = closeOnOutsidePress(
+      document,
+      (node) => node instanceof Element && node.closest('[data-filter-option], [data-filter-close], [data-filter-trigger]') !== null && rootRef.current?.contains(node) === true,
+      closeFilter,
+    );
     window.addEventListener('scroll', place, { passive: true });
     document.addEventListener('keydown', onKey);
     window.addEventListener('popstate', onPop);
@@ -171,12 +212,13 @@ export function CollectionFilters({
     return () => {
       release();
       releaseTouch();
+      releasePress();
       window.removeEventListener('scroll', place);
       document.removeEventListener('keydown', onKey);
       window.removeEventListener('popstate', onPop);
       window.removeEventListener('resize', place);
     };
-  }, [openKey, closeFilter, lastLineBottom]);
+  }, [openKey, closeFilter, place]);
 
   function change(mutate: (current: CollectionParams) => CollectionParams, how: 'push' | 'replace' = 'push') {
     /**
@@ -260,7 +302,18 @@ export function CollectionFilters({
         line stays where it is, and the open one's label is in ink so the
         panel says whose it is.
       */}
-      <div className="flex flex-col" style={{ maxWidth: FILTER_MEASURE }}>
+      {/*
+        Step 106, "one close set": "a tap anywhere outside the list's rows
+        ... or the page beside the box" closes, and "a press that closes the
+        panel does nothing else". So while a filter is open the page takes
+        no press: a clear layer over the whole window takes it, and the
+        open effect's `closeOnOutsidePress` closes on it. The layer draws
+        nothing, so the page stays "visible, undimmed". The filter lines
+        and the panel are raised above it, the lines because a press on one
+        switches or closes by its own handler.
+      */}
+      {openKey !== null && <div data-filter-outside="" onClick={answersTaps} className="fixed inset-0 z-40" />}
+      <div className={cn('flex flex-col', openKey !== null && 'relative z-[45]')} style={{ maxWidth: FILTER_MEASURE }}>
         {FILTER_GROUPS.map((group) => {
           const list = options[group.options];
           if (list.length === 0) return null;
@@ -276,10 +329,11 @@ export function CollectionFilters({
                 data-filter-trigger=""
                 aria-expanded={open}
                 aria-controls={`filter-${group.key}`}
-                onClick={() => (open ? closeFilter() : openFilter(group.key))}
+                onClick={() => (open ? closeFilter() : openFilter(group.key, list.length))}
                 className="flex h-[44px] w-full items-baseline gap-3 text-left leading-[44px]"
               >
-                <span data-filter-label="" className={`w-12 shrink-0 ${open ? `${LABEL_TYPE} ${INK}` : LABEL}`}>
+                {/* §3's underline on the open one: "ink alone did not tell Adam which was open" (step 106). */}
+                <span data-filter-label="" className={`w-12 shrink-0 ${open ? `${LABEL_TYPE} ${INK} underline decoration-2 underline-offset-[7px]` : LABEL}`}>
                   {group.label}
                 </span>
                 <span data-filter-chosen="" className="min-w-0 truncate text-detail">
@@ -295,16 +349,31 @@ export function CollectionFilters({
                   its taps; asserted on the grid in `filter-panel-101.spec.ts`.
                   A list longer than the panel scrolls within it. A tap on
                   the paper, anywhere off the list, closes it.
+
+                  Step 106: at 768 and up it is a box, at the lines' left,
+                  443 wide in a 1px ink edge, as tall as its list up to 24
+                  above the window's bottom; below, the sheet as it was. The
+                  panel is the scrolling box at both, so a drag that starts
+                  on the sheet's inset scrolls the list. CLOSE is its top
+                  row and stays there while the list passes beneath.
                 */
                 <div
                   data-filter-panel=""
-                  onClick={(event) => {
-                    if (!(event.target as HTMLElement).closest('[data-filter-list]')) closeFilter();
-                  }}
-                  style={{ top: panelTop }}
-                  className="fixed inset-x-0 bottom-0 z-50 overflow-y-auto overscroll-contain bg-background"
+                  onClick={answersTaps}
+                  style={panelBox === null ? { top: panelTop } : { top: panelTop, left: panelBox.left, maxHeight: panelBox.maxHeight }}
+                  className="fixed inset-x-0 bottom-0 z-50 box-border overflow-y-auto overscroll-contain bg-background md:inset-x-auto md:bottom-auto md:w-[443px] md:border md:border-[oklch(0.19_0.008_60)]"
                 >
-                  <ul id={`filter-${group.key}`} data-filter-list="" className="mx-5" style={{ maxWidth: FILTER_MEASURE }}>
+                  <div data-filter-close-row="" className="sticky top-0 z-10 mx-5 flex h-[44px] items-center justify-end bg-background md:mx-0" style={{ maxWidth: FILTER_MEASURE }}>
+                    <button
+                      type="button"
+                      data-filter-close=""
+                      onClick={closeFilter}
+                      className={`${LABEL_TYPE} ${INK} box-border flex h-[44px] cursor-pointer items-center justify-center border ${HAIRLINE} px-[18px] decoration-1 underline-offset-[3px] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground`}
+                    >
+                      Close
+                    </button>
+                  </div>
+                  <ul id={`filter-${group.key}`} data-filter-list="" className="mx-5 md:mx-0" style={{ maxWidth: FILTER_MEASURE }}>
                     {list.map((option) => {
                       const active = selected === option.id;
                       return (

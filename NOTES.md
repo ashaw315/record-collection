@@ -38768,3 +38768,114 @@ no file argument, serially, on `57e954a`.
   its end.
 - Not pushed: held for the word. Adam's phone check of the hold follows
   the push.
+
+## Step 106: the open filter is a box at 768 and up, with one close set (9 Oct, night)
+
+§T.3, as Design's drop at `13e0684` rules it. The handoff committed there
+numbers this step 105; the coordinator ruled 106, because 105 is the table
+row's link box.
+
+**What was built.**
+- *The box.* At 768 and up the panel is fixed beneath the last filter
+  line, at the lines' left, 443 wide with its 1px ink edge inside the 443,
+  opaque paper, no radius, no shadow, as tall as its list and no taller
+  than the window's bottom less 24. Below 768 it is the sheet as it was.
+- *The floor.* Where the room beneath the last line is less than 176 (or
+  less than the whole box, for a list shorter than the floor), opening
+  scrolls the page by the shortfall in one instant move and then holds it.
+  The page is not put back on close.
+- *CLOSE.* A §9.3 control in the panel's top row at both widths, at the
+  row's right, staying there while the list passes beneath.
+- *The close set.* While a filter is open a clear layer over the window
+  takes every press that is not on an option row, CLOSE or a filter line,
+  and the press closes and does nothing else (`closeOnOutsidePress`,
+  `src/components/outside-press.ts`). So the search field, the header, the
+  Sort control and the table's rows do not answer a press while a filter
+  is open, at both widths.
+- *The mark.* The open filter's label carries §3's 2px underline, 7 below.
+
+**Two things about WebKit, found by the tests and not by reading.**
+- A finger's tap on the sheet's inset, within about 13 of a row, arrives
+  as a click on that row's count: the touch began on the paper and the
+  click was handed to the row. So a press is judged by where the touch
+  began. Left of the rows the tap was not handed on; right of them it was.
+- A tap on an element that does not answer clicks itself is not sent as a
+  click at all, and a listener on the document does not count. The layer
+  and the panel's paper carry an empty handler for that.
+Both are Playwright's WebKit. Whether Mobile Safari does the same is not
+known; the build is right under either.
+
+**Decided in the build, for Design to rule.**
+- The option rows fill the box from edge to edge, so an option's name
+  starts at the ink edge with nothing between: "aligned with the filter
+  lines" was read as the box's edge on the lines' left, and no inset is
+  ruled inside it.
+- "Never less than 176" was read as the floor on the ROOM, not on the box:
+  a list of one option makes a box 90 tall, not 176 with paper under it.
+- CLOSE sits at the top row's right; the row's place for it is not ruled.
+- The page is left where the floor's move put it when the filter closes.
+
+**Tests changed, each because the ruling under it was superseded, not to
+pass a build.**
+- `collection-filters-97` and `filter-panel-101`: the first option was
+  "at the panel's top" and is now beneath the CLOSE row.
+- `filter-panel-101`, the close set at 900: it pressed 30 in from the
+  panel's right and foot as "the paper". With a box as tall as its list
+  that point is an option row, and the test STILL PASSED there, because it
+  read the address before the choice had landed. It now presses the paper
+  beside CLOSE, asserts that point is not CLOSE, and waits before reading.
+- `table-row-box-105` at 1440: its two "paper" points were the sheet's
+  paper right of the list; they are now the page beside the box.
+
+**What is tested and what is not** (`filter-box-106.spec.ts`, both
+projects, so Playwright's WebKit; taps there, mouse presses on Chromium).
+For real: the box's geometry at 768, 1024 and 1440 and the sheet at 767;
+the floor's move, exact, with every line still in view; nothing moving
+where there is room; CLOSE at both widths; the underline; a press on a
+table row beside the box closing without opening the record, and the same
+press opening it once closed; a press on the search field; a press on
+each inset; a row still choosing. **Not on WebKit: a drag.** Playwright's
+WebKit has no touch drag, so "a drag from the inset scrolls and leaves the
+panel open" is Chromium's touch stream only, and it passed before the
+build too. Mobile Safari is in no test.
+
+**The two reports** (`docs/captures/filter-box-106/`, read-only on the
+real collection, desktop Chromium).
+- Beside the box at 768: the box runs from 20 to 463 and the table ends
+  at 748, so the 285 beside it shows the Format, Year, Cond. and Paid
+  columns and their header. The Record column (title and artist) and, from
+  1024, the Label column's left are under the box.
+- The box against Genre's list (1,408 of options and the 44 CLOSE row):
+  at 768 or 1024 by 800 the last line's foot is at 518, the box is 258
+  tall and shows 18% of the list; at 1440 by 900, 358 and 25%. At 1024 by
+  700 and every shorter window read (640, 600, 560, 500) the room is short
+  of the floor, the page moves by 18, 78, 118, 158 and 218, the box is 176
+  and shows 12%: CLOSE and three options. All four lines stay in view in
+  each. At 1024 by 500 the room was negative before the move.
+
+**The runner's timing test** (`run-tests-cli.test.ts`), owed since the
+gate on `1a20490`: it sampled the stream 1,500 ms after the spawn and
+failed when the runner took longer than that to start. It now resolves on
+the first output carrying the early line and reads what else had arrived,
+so it has an order and no duration. A second test stages the defect it is
+named for, a wrapper that withholds until exit, and the same watch finds
+the summary already there. Not staged under load: load staging is retired.
+
+**Design's later save, not taken, and half of it lost by Code.** The
+tree held an uncommitted save of the handoff and the table and grid target
+(9 Oct, 20:59) that renumbers the box's step to 106 and adds §T.6's
+accepted outcome. With the saved handoff, `check-index` read `3 missing
+105`: its steps ran 104, 106, and step 105 is Code's, with no entry in the
+handoff. Meaning to set the save aside for this step's gate, Code ran
+`git checkout` on the handoff BEFORE copying it, so the saved handoff is
+gone from the disk and is not recoverable here (no stash, no snapshot).
+What it held, as read from its diff before that: the box's step numbered
+106 where the committed one says 105, and in step 103's paragraph "type"
+become "type, an image, a rule" after "anything drawn:". Design has to
+save it again. The table and grid target's save is untouched in the tree,
+with a copy in the scratchpad, and the index reads 11 PASS with it.
+**Copy first, then revert**: the order was known and not kept.
+
+**Seen, not acted on.** Tab still reaches the page's controls behind the
+layer while a filter is open; the close set rules presses, not the
+keyboard.

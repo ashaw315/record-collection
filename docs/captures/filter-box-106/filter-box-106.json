@@ -1,0 +1,871 @@
+[
+ {
+  "window": "767 x 800",
+  "closed": {
+   "innerWidth": 767,
+   "innerHeight": 800,
+   "scrollY": 0,
+   "lines": [
+    {
+     "top": 342,
+     "bottom": 386,
+     "left": 20
+    },
+    {
+     "top": 386,
+     "bottom": 430,
+     "left": 20
+    },
+    {
+     "top": 430,
+     "bottom": 474,
+     "left": 20
+    },
+    {
+     "top": 474,
+     "bottom": 518,
+     "left": 20
+    }
+   ],
+   "lastLineBottom": 518,
+   "panel": null,
+   "beside": null
+  },
+  "open": {
+   "innerWidth": 767,
+   "innerHeight": 800,
+   "scrollY": 0,
+   "lines": [
+    {
+     "top": 342,
+     "bottom": 386,
+     "left": 20
+    },
+    {
+     "top": 386,
+     "bottom": 430,
+     "left": 20
+    },
+    {
+     "top": 430,
+     "bottom": 474,
+     "left": 20
+    },
+    {
+     "top": 474,
+     "bottom": 518,
+     "left": 20
+    }
+   ],
+   "lastLineBottom": 518,
+   "panel": {
+    "top": 518,
+    "bottom": 800,
+    "left": 0,
+    "right": 767,
+    "width": 767,
+    "height": 282,
+    "content": 1453,
+    "options": 32
+   },
+   "beside": {
+    "columns": [],
+    "rows": 4,
+    "text": [
+     "",
+     "",
+     "",
+     ""
+    ],
+    "pageRight": 747
+   }
+  }
+ },
+ {
+  "window": "768 x 800",
+  "closed": {
+   "innerWidth": 768,
+   "innerHeight": 800,
+   "scrollY": 0,
+   "lines": [
+    {
+     "top": 342,
+     "bottom": 386,
+     "left": 20
+    },
+    {
+     "top": 386,
+     "bottom": 430,
+     "left": 20
+    },
+    {
+     "top": 430,
+     "bottom": 474,
+     "left": 20
+    },
+    {
+     "top": 474,
+     "bottom": 518,
+     "left": 20
+    }
+   ],
+   "lastLineBottom": 518,
+   "panel": null,
+   "beside": null
+  },
+  "open": {
+   "innerWidth": 768,
+   "innerHeight": 800,
+   "scrollY": 0,
+   "lines": [
+    {
+     "top": 342,
+     "bottom": 386,
+     "left": 20
+    },
+    {
+     "top": 386,
+     "bottom": 430,
+     "left": 20
+    },
+    {
+     "top": 430,
+     "bottom": 474,
+     "left": 20
+    },
+    {
+     "top": 474,
+     "bottom": 518,
+     "left": 20
+    }
+   ],
+   "lastLineBottom": 518,
+   "panel": {
+    "top": 518,
+    "bottom": 776,
+    "left": 20,
+    "right": 463,
+    "width": 443,
+    "height": 258,
+    "content": 1453,
+    "options": 32
+   },
+   "beside": {
+    "columns": [
+     "Label",
+     "Format",
+     "Year",
+     "Cond.",
+     "Paid"
+    ],
+    "rows": 5,
+    "text": [
+     "LP | 2021 | M | —",
+     "LP | 1970 | VG | —",
+     "LP | 1970 | — | —",
+     "LP | 1978 | — | $10.00"
+    ],
+    "pageRight": 748
+   }
+  }
+ },
+ {
+  "window": "1024 x 800",
+  "closed": {
+   "innerWidth": 1024,
+   "innerHeight": 800,
+   "scrollY": 0,
+   "lines": [
+    {
+     "top": 342,
+     "bottom": 386,
+     "left": 20
+    },
+    {
+     "top": 386,
+     "bottom": 430,
+     "left": 20
+    },
+    {
+     "top": 430,
+     "bottom": 474,
+     "left": 20
+    },
+    {
+     "top": 474,
+     "bottom": 518,
+     "left": 20
+    }
+   ],
+   "lastLineBottom": 518,
+   "panel": null,
+   "beside": null
+  },
+  "open": {
+   "innerWidth": 1024,
+   "innerHeight": 800,
+   "scrollY": 0,
+   "lines": [
+    {
+     "top": 342,
+     "bottom": 386,
+     "left": 20
+    },
+    {
+     "top": 386,
+     "bottom": 430,
+     "left": 20
+    },
+    {
+     "top": 430,
+     "bottom": 474,
+     "left": 20
+    },
+    {
+     "top": 474,
+     "bottom": 518,
+     "left": 20
+    }
+   ],
+   "lastLineBottom": 518,
+   "panel": {
+    "top": 518,
+    "bottom": 776,
+    "left": 20,
+    "right": 463,
+    "width": 443,
+    "height": 258,
+    "content": 1453,
+    "options": 32
+   },
+   "beside": {
+    "columns": [
+     "Label",
+     "Format",
+     "Year",
+     "Cond.",
+     "Paid"
+    ],
+    "rows": 5,
+    "text": [
+     "LP | 2021 | M | —",
+     "LP | 1970 | VG | —",
+     "LP | 1970 | — | —",
+     "LP | 1978 | — | $10.00"
+    ],
+    "pageRight": 1004
+   }
+  }
+ },
+ {
+  "window": "1440 x 900",
+  "closed": {
+   "innerWidth": 1440,
+   "innerHeight": 900,
+   "scrollY": 0,
+   "lines": [
+    {
+     "top": 342,
+     "bottom": 386,
+     "left": 20
+    },
+    {
+     "top": 386,
+     "bottom": 430,
+     "left": 20
+    },
+    {
+     "top": 430,
+     "bottom": 474,
+     "left": 20
+    },
+    {
+     "top": 474,
+     "bottom": 518,
+     "left": 20
+    }
+   ],
+   "lastLineBottom": 518,
+   "panel": null,
+   "beside": null
+  },
+  "open": {
+   "innerWidth": 1440,
+   "innerHeight": 900,
+   "scrollY": 0,
+   "lines": [
+    {
+     "top": 342,
+     "bottom": 386,
+     "left": 20
+    },
+    {
+     "top": 386,
+     "bottom": 430,
+     "left": 20
+    },
+    {
+     "top": 430,
+     "bottom": 474,
+     "left": 20
+    },
+    {
+     "top": 474,
+     "bottom": 518,
+     "left": 20
+    }
+   ],
+   "lastLineBottom": 518,
+   "panel": {
+    "top": 518,
+    "bottom": 876,
+    "left": 20,
+    "right": 463,
+    "width": 443,
+    "height": 358,
+    "content": 1453,
+    "options": 32
+   },
+   "beside": {
+    "columns": [
+     "Record",
+     "Label",
+     "Format",
+     "Year",
+     "Cond.",
+     "Paid"
+    ],
+    "rows": 7,
+    "text": [
+     "XL Recordings | LP | 2021 | M | —",
+     "Columbia | LP | 1970 | VG | —",
+     "Columbia | LP | 1970 | — | —",
+     "Warner Bros. Records | LP | 1978 | — | $10.00"
+    ],
+    "pageRight": 1420
+   }
+  }
+ },
+ {
+  "window": "1024 x 700",
+  "closed": {
+   "innerWidth": 1024,
+   "innerHeight": 700,
+   "scrollY": 0,
+   "lines": [
+    {
+     "top": 342,
+     "bottom": 386,
+     "left": 20
+    },
+    {
+     "top": 386,
+     "bottom": 430,
+     "left": 20
+    },
+    {
+     "top": 430,
+     "bottom": 474,
+     "left": 20
+    },
+    {
+     "top": 474,
+     "bottom": 518,
+     "left": 20
+    }
+   ],
+   "lastLineBottom": 518,
+   "panel": null,
+   "beside": null
+  },
+  "open": {
+   "innerWidth": 1024,
+   "innerHeight": 700,
+   "scrollY": 18,
+   "lines": [
+    {
+     "top": 324,
+     "bottom": 368,
+     "left": 20
+    },
+    {
+     "top": 368,
+     "bottom": 412,
+     "left": 20
+    },
+    {
+     "top": 412,
+     "bottom": 456,
+     "left": 20
+    },
+    {
+     "top": 456,
+     "bottom": 500,
+     "left": 20
+    }
+   ],
+   "lastLineBottom": 500,
+   "panel": {
+    "top": 500,
+    "bottom": 676,
+    "left": 20,
+    "right": 463,
+    "width": 443,
+    "height": 176,
+    "content": 1453,
+    "options": 32
+   },
+   "beside": {
+    "columns": [
+     "Label",
+     "Format",
+     "Year",
+     "Cond.",
+     "Paid"
+    ],
+    "rows": 3,
+    "text": [
+     "LP | 2021 | M | —",
+     "LP | 1970 | VG | —",
+     "LP | 1970 | — | —"
+    ],
+    "pageRight": 1004
+   }
+  }
+ },
+ {
+  "window": "1024 x 640",
+  "closed": {
+   "innerWidth": 1024,
+   "innerHeight": 640,
+   "scrollY": 0,
+   "lines": [
+    {
+     "top": 342,
+     "bottom": 386,
+     "left": 20
+    },
+    {
+     "top": 386,
+     "bottom": 430,
+     "left": 20
+    },
+    {
+     "top": 430,
+     "bottom": 474,
+     "left": 20
+    },
+    {
+     "top": 474,
+     "bottom": 518,
+     "left": 20
+    }
+   ],
+   "lastLineBottom": 518,
+   "panel": null,
+   "beside": null
+  },
+  "open": {
+   "innerWidth": 1024,
+   "innerHeight": 640,
+   "scrollY": 78,
+   "lines": [
+    {
+     "top": 264,
+     "bottom": 308,
+     "left": 20
+    },
+    {
+     "top": 308,
+     "bottom": 352,
+     "left": 20
+    },
+    {
+     "top": 352,
+     "bottom": 396,
+     "left": 20
+    },
+    {
+     "top": 396,
+     "bottom": 440,
+     "left": 20
+    }
+   ],
+   "lastLineBottom": 440,
+   "panel": {
+    "top": 440,
+    "bottom": 616,
+    "left": 20,
+    "right": 463,
+    "width": 443,
+    "height": 176,
+    "content": 1453,
+    "options": 32
+   },
+   "beside": {
+    "columns": [
+     "Label",
+     "Format",
+     "Year",
+     "Cond.",
+     "Paid"
+    ],
+    "rows": 3,
+    "text": [
+     "LP | 2021 | M | —",
+     "LP | 1970 | VG | —",
+     "LP | 1970 | — | —"
+    ],
+    "pageRight": 1004
+   }
+  }
+ },
+ {
+  "window": "1024 x 600",
+  "closed": {
+   "innerWidth": 1024,
+   "innerHeight": 600,
+   "scrollY": 0,
+   "lines": [
+    {
+     "top": 342,
+     "bottom": 386,
+     "left": 20
+    },
+    {
+     "top": 386,
+     "bottom": 430,
+     "left": 20
+    },
+    {
+     "top": 430,
+     "bottom": 474,
+     "left": 20
+    },
+    {
+     "top": 474,
+     "bottom": 518,
+     "left": 20
+    }
+   ],
+   "lastLineBottom": 518,
+   "panel": null,
+   "beside": null
+  },
+  "open": {
+   "innerWidth": 1024,
+   "innerHeight": 600,
+   "scrollY": 118,
+   "lines": [
+    {
+     "top": 224,
+     "bottom": 268,
+     "left": 20
+    },
+    {
+     "top": 268,
+     "bottom": 312,
+     "left": 20
+    },
+    {
+     "top": 312,
+     "bottom": 356,
+     "left": 20
+    },
+    {
+     "top": 356,
+     "bottom": 400,
+     "left": 20
+    }
+   ],
+   "lastLineBottom": 400,
+   "panel": {
+    "top": 400,
+    "bottom": 576,
+    "left": 20,
+    "right": 463,
+    "width": 443,
+    "height": 176,
+    "content": 1453,
+    "options": 32
+   },
+   "beside": {
+    "columns": [
+     "Label",
+     "Format",
+     "Year",
+     "Cond.",
+     "Paid"
+    ],
+    "rows": 3,
+    "text": [
+     "LP | 2021 | M | —",
+     "LP | 1970 | VG | —",
+     "LP | 1970 | — | —"
+    ],
+    "pageRight": 1004
+   }
+  }
+ },
+ {
+  "window": "1024 x 560",
+  "closed": {
+   "innerWidth": 1024,
+   "innerHeight": 560,
+   "scrollY": 0,
+   "lines": [
+    {
+     "top": 342,
+     "bottom": 386,
+     "left": 20
+    },
+    {
+     "top": 386,
+     "bottom": 430,
+     "left": 20
+    },
+    {
+     "top": 430,
+     "bottom": 474,
+     "left": 20
+    },
+    {
+     "top": 474,
+     "bottom": 518,
+     "left": 20
+    }
+   ],
+   "lastLineBottom": 518,
+   "panel": null,
+   "beside": null
+  },
+  "open": {
+   "innerWidth": 1024,
+   "innerHeight": 560,
+   "scrollY": 158,
+   "lines": [
+    {
+     "top": 184,
+     "bottom": 228,
+     "left": 20
+    },
+    {
+     "top": 228,
+     "bottom": 272,
+     "left": 20
+    },
+    {
+     "top": 272,
+     "bottom": 316,
+     "left": 20
+    },
+    {
+     "top": 316,
+     "bottom": 360,
+     "left": 20
+    }
+   ],
+   "lastLineBottom": 360,
+   "panel": {
+    "top": 360,
+    "bottom": 536,
+    "left": 20,
+    "right": 463,
+    "width": 443,
+    "height": 176,
+    "content": 1453,
+    "options": 32
+   },
+   "beside": {
+    "columns": [
+     "Label",
+     "Format",
+     "Year",
+     "Cond.",
+     "Paid"
+    ],
+    "rows": 3,
+    "text": [
+     "LP | 2021 | M | —",
+     "LP | 1970 | VG | —",
+     "LP | 1970 | — | —"
+    ],
+    "pageRight": 1004
+   }
+  }
+ },
+ {
+  "window": "1024 x 500",
+  "closed": {
+   "innerWidth": 1024,
+   "innerHeight": 500,
+   "scrollY": 0,
+   "lines": [
+    {
+     "top": 342,
+     "bottom": 386,
+     "left": 20
+    },
+    {
+     "top": 386,
+     "bottom": 430,
+     "left": 20
+    },
+    {
+     "top": 430,
+     "bottom": 474,
+     "left": 20
+    },
+    {
+     "top": 474,
+     "bottom": 518,
+     "left": 20
+    }
+   ],
+   "lastLineBottom": 518,
+   "panel": null,
+   "beside": null
+  },
+  "open": {
+   "innerWidth": 1024,
+   "innerHeight": 500,
+   "scrollY": 218,
+   "lines": [
+    {
+     "top": 124,
+     "bottom": 168,
+     "left": 20
+    },
+    {
+     "top": 168,
+     "bottom": 212,
+     "left": 20
+    },
+    {
+     "top": 212,
+     "bottom": 256,
+     "left": 20
+    },
+    {
+     "top": 256,
+     "bottom": 300,
+     "left": 20
+    }
+   ],
+   "lastLineBottom": 300,
+   "panel": {
+    "top": 300,
+    "bottom": 476,
+    "left": 20,
+    "right": 463,
+    "width": 443,
+    "height": 176,
+    "content": 1453,
+    "options": 32
+   },
+   "beside": {
+    "columns": [
+     "Label",
+     "Format",
+     "Year",
+     "Cond.",
+     "Paid"
+    ],
+    "rows": 3,
+    "text": [
+     "LP | 2021 | M | —",
+     "LP | 1970 | VG | —",
+     "LP | 1970 | — | —"
+    ],
+    "pageRight": 1004
+   }
+  }
+ },
+ {
+  "window": "768 x 600",
+  "closed": {
+   "innerWidth": 768,
+   "innerHeight": 600,
+   "scrollY": 0,
+   "lines": [
+    {
+     "top": 342,
+     "bottom": 386,
+     "left": 20
+    },
+    {
+     "top": 386,
+     "bottom": 430,
+     "left": 20
+    },
+    {
+     "top": 430,
+     "bottom": 474,
+     "left": 20
+    },
+    {
+     "top": 474,
+     "bottom": 518,
+     "left": 20
+    }
+   ],
+   "lastLineBottom": 518,
+   "panel": null,
+   "beside": null
+  },
+  "open": {
+   "innerWidth": 768,
+   "innerHeight": 600,
+   "scrollY": 118,
+   "lines": [
+    {
+     "top": 224,
+     "bottom": 268,
+     "left": 20
+    },
+    {
+     "top": 268,
+     "bottom": 312,
+     "left": 20
+    },
+    {
+     "top": 312,
+     "bottom": 356,
+     "left": 20
+    },
+    {
+     "top": 356,
+     "bottom": 400,
+     "left": 20
+    }
+   ],
+   "lastLineBottom": 400,
+   "panel": {
+    "top": 400,
+    "bottom": 576,
+    "left": 20,
+    "right": 463,
+    "width": 443,
+    "height": 176,
+    "content": 1453,
+    "options": 32
+   },
+   "beside": {
+    "columns": [
+     "Label",
+     "Format",
+     "Year",
+     "Cond.",
+     "Paid"
+    ],
+    "rows": 3,
+    "text": [
+     "LP | 2021 | M | —",
+     "LP | 1970 | VG | —",
+     "LP | 1970 | — | —"
+    ],
+    "pageRight": 748
+   }
+  }
+ }
+]

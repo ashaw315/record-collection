@@ -114,7 +114,8 @@ test('pressed, a filter opens its options beneath the last filter line, 44 a row
   /* Step 102: beneath the last line and not Genre's own, three lines above it, which is the 132 Design's ruling names as its cost. */
   expect(m.lines, 'the precondition: all four lines, this test’s fixture has each').toBe(4);
   expect(m.lastBottom - m.triggerBottom, 'three lines of 44 lie between').toBeCloseTo(132, 0);
-  expect(m.rows[0].top, 'directly beneath the last line').toBeCloseTo(m.lastBottom, 0);
+  /* Step 106: CLOSE is the panel's top row, so the first option is the row beneath it. This read "directly beneath the last line" until then. */
+  expect(m.rows[0].top, 'beneath the CLOSE row, which is directly beneath the last line').toBeCloseTo(m.lastBottom + 44, 0);
   for (const [i, row] of m.rows.entries()) {
     expect(row.height, `${row.name}: a 44 row`).toBe(44);
     expect(row.borderTop, `${row.name}: a hairline above`).toBe('1px');

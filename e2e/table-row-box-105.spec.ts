@@ -83,8 +83,13 @@ for (const staged of [true, false]) {
       expect(page.url(), 'opening the filter').toBe(url);
       const p = await panel(page).evaluate((el) => { const r = el.getBoundingClientRect(); const l = (el.querySelector('[data-filter-list]') as HTMLElement).getBoundingClientRect(); return { top: r.top, right: r.right, listRight: l.right }; });
 
-      /* The paper off the list: the inset beside it at 390; at 1440, far right, where the table's rows lie beneath. */
-      const papers: [number, number][] = width === 390 ? [[8, p.top + 66], [p.right - 6, p.top + 110]] : [[p.right - 200, p.top + 66], [p.listRight + 300, p.top + 200]];
+      /*
+        Off the rows: the inset beside the list at 390. At 1440 these were
+        the sheet's paper far right of the list, over the table's rows;
+        step 106 made the panel a box there, so the same two places are
+        now the page beside the box, which closes by the same rule.
+      */
+      const papers: [number, number][] = width === 390 ? [[8, p.top + 66], [p.right - 6, p.top + 110]] : [[p.right + 200, p.top + 66], [p.listRight + 300, p.top + 200]];
       for (const [x, y] of papers) {
         if ((await panel(page).count()) === 0) { await trigger(page).click(); await expect(panel(page)).toHaveCount(1); }
         expect(await recordAt(page, x, y), `no record link at ${x},${y}`).toBeNull();

@@ -129,7 +129,8 @@ for (const view of ['table', 'grid'] as const) {
     expect(m.bottom, 'to the viewport’s bottom').toBe(m.viewport.height);
     expect(m.background, 'opaque paper').toBe(m.body);
     expect(m.opacity).toBe('1');
-    expect(m.firstTop, 'the list starts at the panel’s top').toBeCloseTo(m.top, 0);
+    /* Step 106 put CLOSE in the panel's top row; until then the list started at the panel's top. */
+    expect(m.firstTop, 'the list starts beneath the panel’s CLOSE row').toBeCloseTo(m.top + 44, 0);
     expect(m.firstLeft, 'under its line, at the line’s inset').toBeCloseTo(m.triggerLeft, 0);
   });
 }
@@ -208,9 +209,20 @@ test.describe('§T.3: how the covering filter closes', () => {
 
     await trigger(page, 'labelId').click();
     await isOpen(page, 'labelId');
-    const off = await panel(page).evaluate((p) => { const r = p.getBoundingClientRect(); return { x: r.right - 30, y: r.bottom - 30 }; });
+    /*
+      Step 106: at 900 the panel is a box as tall as its list, so there is
+      no paper inside it below the list, and the point this pressed until
+      then (30 in from its right and its foot) is an option row. It kept
+      passing on that row only because the address was read before the
+      choice had landed. The paper beside CLOSE, in the top row, is the
+      box's own paper off the rows.
+    */
+    const off = await panel(page).evaluate((p) => { const r = p.getBoundingClientRect(); const c = (p.querySelector('[data-filter-close]') as HTMLElement).getBoundingClientRect(); return { x: r.left + 30, y: r.top + 22, clear: c.left > r.left + 60 }; });
+    expect(off.clear, 'the precondition: the point is paper beside CLOSE, not CLOSE').toBe(true);
     await page.mouse.click(off.x, off.y);
     await isClosed(page);
+    /* Long enough for a choice to have landed, had the press been a row's. */
+    await page.waitForTimeout(500);
 
     /* Each close went back over the entry its opening added, so they have not piled up: one more open adds exactly one again. */
     expect(page.url()).toBe(url);
