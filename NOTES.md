@@ -39565,3 +39565,67 @@ the panel and chooses nothing. That fits every observation and is not
 shown. If it is right, the page is correct and the test is at the mercy
 of the shared database. It stays marked unproven; the batch gate keeps
 traces.
+
+## Step 112's last two empty states: look up built; the want list has no add control to repeat (10 Oct, early)
+
+**Look up, built.** A search that finds nothing shows the source record's
+construction in ink at its clearing height, then "Nothing found. Try
+another search.", and no control: the form above it is what changes the
+search. It said "No matches on Discogs." in the results' summary line.
+With matches the results are as they were, which §T.6 does not reach.
+Test in `lookup-flows.spec.ts`, both projects, the search faked as
+everywhere, seen failing first: the sentence, no control in the block,
+one construction on the screen at the clearing height, in ink, inside
+the window; and none before a search.
+
+**The want list, reported and not built.** Step 112: "report its
+existing add control and whether it is on screen when the list is empty;
+repeat it as a §9.3 control only if it is not." **There is no add control
+on the want list at all**, empty or not. The page holds its heading and
+count, a link to Suggestions, and the two tabs. `/want-list/new` is
+reached from three places only, none of them this screen: a look up
+result's "Add to want list", and two links on the suggestions screen. So
+there is nothing to repeat. Putting an add control on the empty state
+would be a new way into the form, which is Design's and SPEC.md §10's to
+say, not a restyle. Its empty state is unchanged: "Nothing on the want
+list." and "Nothing acquired yet.", in a hairline box, no figure.
+
+**A check changed for the checked commit.** `dotenv-quiet.test.ts` read
+every file git tracks and threw on one the tree had deleted, which is
+exactly the state `commit-checked.sh` runs it in when a step retires a
+file. It passes over files that no longer exist. The script refused the
+first commit of steps 111 and 112 on that, which is the script working.
+
+**One red line in this step's first run, read from its trace.**
+`lookup-flows.spec.ts:1562` on the mobile project, "notes stay separable
+from the evidence they sit beside": the evidence panel never appeared.
+The trace's network log has NO request for the release's detail, so the
+press on "Identify this pressing" did not reach it; the page at failure
+shows that button still unexpanded and, directly above it, the line
+"Could not reach Discogs. Try again shortly.", which is the unstubbed
+market call's 502 arriving 30 ms after the search. That line is inserted
+above the button and moves it down. Read, not measured to the pixel: the
+press was aimed before the line arrived and landed after. It is the
+test's order (it presses without waiting for the card to settle) and is
+not touched by this step, which changes only the case with no results.
+The same file passed whole on the next run (`81 passed`). Artefacts in
+the scratchpad, `fail-112-*`. For the batch gate: this test wants a wait
+for the market line before its press.
+
+**Step level, ungated:** `lookup-flows`, `radius-103` and `colour-103` on
+both projects, `81 passed, ledger clean, tree unchanged — OK` (the first
+run `80 passed, 1 failed`, above); app and repo checks `1695 passed`;
+typecheck, lint (0 errors), build. Ungated commits so far, for a bisect:
+`26d408c` (106), `bbbc841` (108), `dea598d` (103d), `d8ddcfa` (the
+sentence), `caa43c2` (103e), `03e230b` (109), `94c32cb` (110), `c6beb46`
+(111 and 112), and this one.
+
+## `commit-checked.sh` closes a family, it is not tooling (10 Oct)
+
+The coordinator's reading, recorded as given: the script's test against a
+failing check behind a pipe that itself succeeds is the exact case that
+let `e1dbf41` through with typecheck red. So it belongs with
+`run-result.ts`, `run-tests.ts` and the runner guard in `test/helpers/db.ts`:
+each replaced a habit that had been learned and had failed anyway with
+something that cannot be skipped. The family is "a verdict that nothing
+depends on".

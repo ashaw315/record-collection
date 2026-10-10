@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
+import { clearing } from '../src/app/figure-source';
 import { registerCleanup, trackArtist } from './cleanup';
 import { seedDiscogsCache } from './seed';
 import { normalizeRelease } from '@/lib/discogs/normalize-release';
@@ -1706,4 +1707,44 @@ test('the variant line stays off where there is nothing to disambiguate', async 
 
   await expect(page.getByTestId('evidence-runouts')).toBeVisible();
   await expect(page.getByTestId('variant-limit')).toHaveCount(0);
+});
+
+/*
+  Step 112, §T.6: look up's empty state. "The sentence 'Nothing found. Try
+  another search.' and no control", with the empty state's figure, "drawn
+  at the clearing height and no larger", in ink alone; "Look up... its only
+  ornament is its empty state's figure". The search itself is faked here,
+  as everywhere: no test calls Discogs.
+
+  Fails against the summary line as built: "No matches on Discogs.", with
+  no figure.
+*/
+test('a search that finds nothing shows the figure at its clearing height above "Nothing found. Try another search.", and no control', async ({ page }) => {
+  await page.route('**/api/discogs/search**', async (route) => {
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: [], meta: { total: 0, page: 1, pageSize: 25 } }) });
+  });
+  await page.goto('/lookup');
+  await formReady(page);
+  expect(await page.locator('[data-lookup-empty]').count(), 'before a search there is no empty state').toBe(0);
+  expect(await page.locator('[data-testid="construction-still"]').count(), 'and no figure').toBe(0);
+
+  await page.getByLabel('Artist').fill('Nobody At All');
+  await page.getByRole('button', { name: 'Search Discogs' }).click();
+  const empty = page.locator('[data-lookup-empty]');
+  await expect(empty.locator('p')).toHaveText('Nothing found. Try another search.');
+  await expect(page.getByText('No matches on Discogs.')).toHaveCount(0);
+  await expect(empty.locator('a, button, input, select'), 'no control in the empty state').toHaveCount(0);
+
+  const m = await page.evaluate(() => {
+    const block = document.querySelector('[data-lookup-empty]') as HTMLElement;
+    const svg = block.querySelector('[data-testid="construction-still"]') as SVGSVGElement;
+    const s = svg.getBoundingClientRect();
+    const p = (block.querySelector('p') as HTMLElement).getBoundingClientRect();
+    return { stills: document.querySelectorAll('[data-testid="construction-still"]').length, height: s.height, right: s.right, left: s.left, foot: s.bottom, sentenceTop: p.top, record: svg.getAttribute('data-record'), window: window.innerWidth, scrollWidth: document.documentElement.scrollWidth, fills: Array.from(new Set(Array.from(svg.querySelectorAll('polygon[data-face], circle')).map((el) => getComputedStyle(el).fill))) };
+  });
+  expect(m.stills, 'one construction on the screen').toBe(1);
+  expect(m.height, 'at the clearing height and no larger').toBeCloseTo(clearing(m.record as string).height, 0);
+  expect(m.sentenceTop, 'the sentence is beneath the figure').toBeGreaterThanOrEqual(m.foot - 0.5);
+  expect(m.left >= 0 && m.right <= m.window && m.scrollWidth === m.window, 'inside the window, and the page no wider for it').toBe(true);
+  for (const fill of m.fills) expect(['lab(6.18075 1.20374 2.12039)', 'oklch(0.19 0.008 60)', 'lab(71.4 0.5 1.1)', 'oklch(0.74 0.004 80)'], `in ink alone: ${fill}`).toContain(fill);
 });

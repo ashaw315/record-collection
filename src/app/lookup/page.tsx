@@ -1,5 +1,8 @@
 import { AppHeader } from '@/components/AppHeader';
 import { LookupClient } from './LookupClient';
+import { ConstructionStill } from '../records/[id]/ConstructionStill';
+import { figureSource } from '../figure-source';
+import { listRecordAges } from '@/lib/db/queries/records';
 
 /**
  * SPEC.md §10 `/lookup` — "Mobile-optimized — this is the in-store screen."
@@ -13,7 +16,9 @@ export const dynamic = 'force-dynamic';
 
 export const metadata = { title: 'Look up a record · Record Collection' };
 
-export default function LookupPage() {
+export default async function LookupPage() {
+  /* §T.6's one source record: "every figure in the app is drawn from one record". None where the collection is empty. */
+  const source = figureSource(await listRecordAges());
   return (
     <>
       <AppHeader />
@@ -27,7 +32,15 @@ export default function LookupPage() {
         </p>
         </div>
 
-        <LookupClient />
+        <LookupClient
+          emptyFigure={
+            source === null ? null : (
+              <div style={{ height: source.clearing, width: source.clearing * source.aspect }}>
+                <ConstructionStill recordId={source.id} spineColour={null} />
+              </div>
+            )
+          }
+        />
       </main>
     </>
   );

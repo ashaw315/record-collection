@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useId, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -172,7 +172,7 @@ const EMPTY: Record<FieldName, string> = {
   q: '',
 };
 
-export function LookupClient() {
+export function LookupClient({ emptyFigure = null }: { /** §T.6's figure for a search that finds nothing, drawn by the page from the one source record; none where the collection is empty. */ emptyFigure?: ReactNode } = {}) {
   const formId = useId();
   const [values, setValues] = useState<Record<FieldName, string>>(EMPTY);
   const [results, setResults] = useState<SearchResult[] | null>(null);
@@ -423,14 +423,25 @@ export function LookupClient() {
         )}
       </form>
 
-      {results !== null && (
+      {/*
+        Step 112, §T.6: look up's empty state, "the sentence 'Nothing found.
+        Try another search.' and no control", beneath the figure "at the
+        clearing height and no larger". It is the screen's one ornament. The
+        form above it is what changes the search, so there is no control.
+      */}
+      {results !== null && total === 0 && (
+        <section aria-label="Results" data-lookup-empty="" className="flex flex-col items-center gap-[18px] py-12 text-center">
+          {emptyFigure}
+          <p data-testid="lookup-summary" className="text-detail" style={{ color: 'oklch(0.44 0.008 70)' }}>
+            Nothing found. Try another search.
+          </p>
+        </section>
+      )}
+
+      {results !== null && total > 0 && (
         <section aria-label="Results" className="space-y-3">
           <p data-testid="lookup-summary" className="text-meta text-muted-foreground">
-            {total === 0
-              ? 'No matches on Discogs.'
-              : `${total} match${total === 1 ? '' : 'es'}${
-                  total > results.length ? ` · showing ${results.length}` : ''
-                }`}
+            {`${total} match${total === 1 ? '' : 'es'}${total > results.length ? ` · showing ${results.length}` : ''}`}
           </p>
 
           {/*
