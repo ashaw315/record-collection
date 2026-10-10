@@ -40564,3 +40564,8 @@ check failed (`3 missing 116`) and the first intake was not committed.
 116 is Code's own step (the grid measurement; the coordinator: "116 is
 yours"), so it is carried in `scripts/handoff-code-region.json` as 71,
 105 and 107 are.
+
+**Rule, 10 Oct (the coordinator's): a step number Code takes for its own
+measurement is filed in Code's region in the same commit, not
+retroactively.** Otherwise the next renumber by Design opens a hole in the
+handoff's sequence that only Code can fill, which is what 116 did.
