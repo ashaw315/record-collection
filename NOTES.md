@@ -39897,8 +39897,8 @@ the row now clips to its box.
 
 - A finger's drag at the container's ends is shown on Chromium by CDP
   only; the phone's engine is not tested for it, as before.
-- With the pressed title and `overscroll-behavior`, a wheel is contained
-  by CSS alone; the touch guard is `containDrag` (`scroll-hold.ts`).
+- A wheel is contained by `overscroll-behavior` alone; the guard against
+  a finger is `containDrag` (`scroll-hold.ts`).
 - The heading figure (void, still drawn) measures the filter block; what
   it does while a container is open was not looked at.
 - `holdTouch` has no caller left in `src`; the sheets that captured the
@@ -39906,3 +39906,48 @@ the row now clips to its box.
 - Sort's chevron is the sidebar's and is not built.
 - `playwright.config.ts` changed (the mobile project's list), which §10
   names as a gate; it waits for the batch gate.
+
+## The ink inversion, surveyed and NOT landed: it changes the record page (10 Oct)
+
+Ordered by the coordinator: make ink the root default and drop `data-t6`,
+report what changes on every page before pushing, and "if anything outside
+T.6's scope changes appearance, stop and report instead of landing it".
+It does, so nothing landed; the tree is as it was.
+
+How it was read. A throwaway spec painted every element's text, fill,
+borders, outline, ring, svg fill and stroke to a pixel on 30 pages at
+1440 and 390 and on sign-in, at rest and with each focusable control
+focused (up to 120 a page), before and after the change in the working
+tree (`:root` taking `[data-t6]`'s five values, and the shared button's
+`in-data-t6:` variants made its defaults). Run twice unchanged first:
+61 of 61 pages identical, so the apparatus adds no difference of its own.
+
+What the inversion changes.
+
+- *At rest, one screen: the record page.* Its asides go from
+  `--muted-foreground` 0.48 to the label colour 0.44 (5 elements on a bare
+  record, 12 to 13 on a seeded one: the journal's and price history's
+  dates, figures and notes), and the price history's sparkline goes from
+  oxblood to ink (`PriceHistory.tsx`). The record page is a closed screen
+  that §T.6 "does not reach". Nothing else changes at rest: no shelf, no
+  table or grid, no §T.6 screen, not sign-in, not the not-found page.
+- *Focused, every page but sign-in.* The browser's own ring, `auto 1px`
+  in the root's oxblood at half strength, becomes ink at half strength:
+  the header's controls on every page, the §T.6 screens included, since
+  the header is outside each screen's `data-t6` root (6 controls at 1440,
+  2 at 390, 30 with the menu open); the shelf (12 near, 30 far); the
+  table and grid (14 to 23); the record page and its modal (15 to 26).
+- No filled button is drawn outside a `data-t6` root, so making the
+  unfilled ink box the button's default changes no page.
+
+So "oxblood gone from every screen" is not true of the build in two
+places the opt-in hid: every focus ring outside a `data-t6` root, which
+is the header's on every screen, and the record page's sparkline.
+
+A correction to the order's premise: `colour-103.spec.ts` does read a
+focused state, one field and the submit on each of five forms. It reads
+no other control, none in the header, and nothing on the table or grid.
+
+The focus-state colour check is not written: against the build it fails
+on the header's controls on every screen, and what would pass it is the
+inversion. The patch and the survey are kept outside the tree.
