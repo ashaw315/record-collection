@@ -22,5 +22,11 @@
     "before": "117. ",
     "why": "Code's own step (the grid measured either side of the fork), asked for by the coordinator on 10 Oct and named as Code's (\"116 is yours\"); never in Design's source. Design renumbered the cap to 117, which leaves 116 a hole in the handoff's numbering without this. Carried as steps 71, 105 and 107 are.",
     "text": "116. **Done: measured at 11ac534; no code changed.** **§T.5 — the grid's covers either side of the 1054 fork, measured.** On the real collection, read-only, in desktop Chromium (`docs/captures/grid-fork-116/`): five covers of 185.4 at 1920 and 1440; three of 205.3 at 1081, 205 at 1080 and 196.3 at 1054, with the sidebar; five of 183.4 at 1053 and 177.6 at 1024, and two of 163 at 390, without it. The gap is 24 throughout and every row agrees with 184n − 24 on the grid's own width. The two boundaries above the fork were measured with step 117."
+  },
+  {
+    "id": "step-119",
+    "before": "No step: §G.7",
+    "why": "Code's own step (the five screens' air measured against the source's clearing height), asked for by the coordinator on 10 Oct; never in Design's source. Filed in the commit that takes the number, by the rule of 10 Oct. It stands in front of the line that follows the last step, since there is no 120 to stand in front of; if Design writes its own 119, one of the two is renumbered.",
+    "text": "119. **Done: measured; no code changed.** **§T.6 — the five screens' air against the source's clearing height.** On the real collection, read-only (`docs/captures/air-119/`). The source is Psychic, clearing at 193.2, so its figure is 186.6 × 193.2, where §T.6 reasoned against 172.4. The air beside each heading holds it on none of the five: stats 153 tall, the want list and manage 143, the record form 100 and 88, look up 37. No heading's figure is built on those screens, so nothing is drawn short. The want list's empty figure is drawn at 186.6 × 193.2 and stands inside its column at every width, by 93.4 at 320, with its sentence in the first view. Look up's empty state needs a search and was not opened."
   }
 ]

@@ -40637,3 +40637,50 @@ it no longer only falls.
 control on any of the five at 44 by its hit area but one textarea. The
 coordinator queued it on 9 Oct as its own step after 103; no step
 carries it.
+
+## Step 119: the five screens' air against 193.2, measured; nothing built (10 Oct)
+
+Asked for by the coordinator before anything is changed.
+`e2e/sheet/air-119.sheet.ts`, `docs/captures/air-119/`, the real
+collection, read-only. The source's clearing height is read from the head
+figure the table draws (Psychic, 193.2, aspect 0.966), so its figure is
+186.6 × 193.2.
+
+**The air beside each heading holds it nowhere**, at 1920, 1440, 1024 or
+768, after §T.6's 24 margin: stats 153 tall (40.2 short), the want list
+143 (50.2), manage 143 and 120 at 768 (50.2, 73.2; and too narrow at
+1024 and 768), the record form 100 editing and 88 new, look up 37. None
+held 172.4 either. **No heading's figure is built on any of the five**,
+so this is not a build defect: nothing is drawn where it does not fit.
+The want list's air reads 143 where §T.6 has 119; the heading's row has
+gained LOOK UP A RECORD since, and the difference was not traced.
+
+**The want list's empty figure, the one empty state the real collection
+shows** (Acquired): drawn at 186.6 × 193.2, exactly the source's, where
+step 112 read 205.1 × 172.3. So it is 20.9 taller and 18.5 narrower than
+when its space was reasoned about. It stands inside its column at every
+width (by 549.4 at 736, 163.4 at 390, 93.4 at 320), the page does not
+scroll sideways, and its sentence ends in the first view (by 165.3 at
+390 × 664 and 80.8 at 320 × 664). **No defect found.**
+
+**Look up's empty state was not opened**: it needs a search, which under
+the sheet's config is a live call to Discogs. Its markup is the want
+list's (the same centred column, the same figure at the clearing height
+in the same 736 or 350 frame), so the same size is expected and the
+width holds by the same margins; where it stands down the page is not
+measured. `lookup-flows.spec.ts` holds it inside the window on the test
+database, with that database's source.
+
+**119 is in Code's region**, placed in front of the line that follows the
+last step, since there is no 120. If Design writes its own 119, one of
+the two is renumbered. `air-103.sheet.ts`'s measure moved into
+`e2e/sheet/air-measure.ts`, unchanged, so both sheets read the air the
+same way.
+
+**Held, not built** (the coordinator, 10 Oct): the inset stays at 20
+though Design's step 118 now says the wordmark's 18, until Design rules
+it once for the whole app; the four unsurveyed pages and not-found wait
+for that; the tint on the two empty figures waits on Design's one
+sentence. **Ruled and not built:** step 118's "wherever a pending answer
+replaces a control with a status line, give the status line the
+control's height", with its test on look up on both projects.
