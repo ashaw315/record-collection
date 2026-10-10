@@ -76,3 +76,31 @@ export function holdTouch<S extends HoldScroller & { contains: (node: never) => 
     doc.removeEventListener('touchmove', onMove);
   };
 }
+
+/**
+ * §T.3, step 113: "A drag in the container scrolls it and does not carry on
+ * into the page at its ends. The page itself is not held." So only a move
+ * that began on the box, and that the box cannot follow, is cancelled; a
+ * box whose list fits has no ends, and a drag on it is the page's.
+ * `overscroll-behavior` says the same where it is honoured, as above.
+ */
+export function containDrag<S extends HoldScroller & { contains: (node: never) => boolean }>(doc: HoldTouchDocument, scroller: () => S | null): () => void {
+  let startY = 0;
+  let within: S | null = null;
+  const onStart = (event: HoldTouchEvent) => {
+    if (event.touches.length !== 1) return;
+    startY = event.touches[0].clientY;
+    const box = scroller();
+    within = box !== null && box.contains(event.target as never) ? box : null;
+  };
+  const onMove = (event: HoldTouchEvent) => {
+    if (event.touches.length !== 1 || within === null || within.scrollHeight <= within.clientHeight) return;
+    if (!allowsTouchMove(within, event.touches[0].clientY - startY) && event.cancelable) event.preventDefault();
+  };
+  doc.addEventListener('touchstart', onStart, { passive: true });
+  doc.addEventListener('touchmove', onMove, { passive: false });
+  return () => {
+    doc.removeEventListener('touchstart', onStart);
+    doc.removeEventListener('touchmove', onMove);
+  };
+}

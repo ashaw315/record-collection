@@ -1,9 +1,8 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { holdScroll, holdTouch } from '@/components/scroll-hold';
-import { closeOnOutsidePress } from '@/components/outside-press';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { containDrag } from '@/components/scroll-hold';
 import { cn } from '@/lib/utils';
 import { HAIRLINE, INK, LABEL, LABEL_TYPE } from '@/app/records/[id]/grid-type';
 import { RECORD_SORT_FIELDS, type RecordSortField } from '@/lib/records/fields';
@@ -42,25 +41,21 @@ const LABEL_TEXT = 'text-[oklch(0.44_0.008_70)]';
 /** The measure the band gives search, and the record page its title: a list row wider than this parts a name from its count. */
 const FILTER_MEASURE = 443;
 
-/** §T.3, step 106: from this width the open filter is a box and not the full-width sheet. Tailwind's `md`. */
-const BOX_FROM = 768;
-/** "Never less than 176": the box's CLOSE row and three options. */
-const BOX_FLOOR = 176;
-/** "Up to the viewport's bottom less 24." */
-const BOX_FOOT = 24;
-const ROW = 44;
+/** §T.3, step 113: "Its floor: three rows, 132." */
+const FLOOR = 132;
 
 /**
- * WebKit sends a finger's tap as a click only to an element that answers
- * clicks itself; a listener on the document does not count. The layer and
- * the panel's paper carry this so a tap on them is a click at all, and the
- * document's listener then decides what it does (measured on Playwright's
- * WebKit, step 106: without it a tap on the layer closed nothing).
+ * §T.3: "+ closed and − open, at the line's right", and "the + and − ...
+ * are 1px ink strokes in a 12 square, the system's hairline weight."
  */
-const answersTaps = () => undefined;
-
-/** Whether the history entry in force is the one an open filter added. */
-const hasEntry = () => (window.history.state as { collectionFilter?: boolean } | null)?.collectionFilter === true;
+function FilterMark({ open }: { open: boolean }) {
+  return (
+    <svg data-filter-mark={open ? 'minus' : 'plus'} aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" shapeRendering="crispEdges" className="shrink-0 fill-none stroke-[oklch(0.19_0.008_60)] stroke-1">
+      <line x1="0" y1="6" x2="12" y2="6" />
+      {!open && <line x1="6" y1="0" x2="6" y2="12" />}
+    </svg>
+  );
+}
 
 const FILTER_GROUPS = [
   { key: 'genreId', label: 'Genre', options: 'genres' },
@@ -123,165 +118,97 @@ export function CollectionFilters({
   /**
    * Which filter is open: one at a time (§T.3).
    *
-   * Step 101: an open filter covers. Its options are on a fixed panel of
-   * opaque paper to the viewport's bottom, and the page beneath does not
-   * move. Step 102: the panel starts beneath the LAST filter line, whichever
-   * is open, so all four lines stay in view and a press on another closes
-   * this one and opens that (`T.3/covers-own-line` was beneath its own). The mechanics are §G.8's, the menu's
-   * (`AppHeader`): opening adds one history entry at the same URL, so Back
-   * closes the filter rather than leaving the screen; closing by any other
-   * means goes back over that entry, so entries do not pile up; and a
-   * chosen option replaces it. Step 97b pushed the page down instead
-   * (`T.3/push-down`).
+   * Step 113, from Adam's wireframe: "A filter's options open in place,
+   * beneath its own title in the sidebar, in a container that scrolls."
+   * The container is in the page's flow, so the lines below it move down
+   * by its height, and it is bounded, so its height does not grow with the
+   * option count, which is what `T.3/push-down` was withdrawn for. Nothing
+   * is covered and the page is not held, so there is no outside to tap, no
+   * CLOSE and no history entry: steps 101, 102 and 106 to 108 built those,
+   * and each is withdrawn within §T.3.
    */
   const [openKey, setOpenKey] = useState<string | null>(null);
-  const [panelTop, setPanelTop] = useState(0);
-  /* The box's left and the most it may be tall; null below 768, where the panel is the sheet. */
-  const [panelBox, setPanelBox] = useState<{ left: number; maxHeight: number } | null>(null);
   /*
-    Step 109: how far the floor moved the page to make room for the box,
-    so a close can give it back. "When the panel closes, a page the floor
-    moved returns by the same distance in one instant move, unless the
-    close came from the page moving."
+    How far the floor moved the page to make room, so a close can give it
+    back: "opening first scrolls the page by the shortfall in one instant
+    move, and closing returns it, as step 109 ruled."
   */
   const floorMove = useRef(0);
-  /* Where the page goes back to; called once the close is certain, and again after anything that could undo it. */
+  /* Where the pressed title was in the window, so it can be kept there when a container above it closes. */
+  const pressedTop = useRef<number | null>(null);
+  const titleOf = useCallback((key: string) => rootRef.current?.querySelector<HTMLElement>(`[data-filter="${key}"] [data-filter-trigger]`) ?? null, []);
   const returnPage = useCallback(() => {
     const moved = floorMove.current;
     floorMove.current = 0;
-    if (moved <= 0) return;
-    const top = Math.max(0, window.scrollY - moved);
-    const go = () => window.scrollTo({ top, behavior: 'instant' });
-    go();
-    /* A step back over the filter's entry restores the position that entry's predecessor was left at, which is the moved one. */
-    window.addEventListener('popstate', () => { go(); requestAnimationFrame(() => { go(); requestAnimationFrame(go); }); }, { once: true });
+    if (moved > 0) window.scrollTo({ top: Math.max(0, window.scrollY - moved), behavior: 'instant' });
   }, []);
   const closeFilter = useCallback(() => {
     setOpenKey(null);
     returnPage();
-    if (hasEntry()) window.history.back();
   }, [returnPage]);
-  /* Where the last filter line ends in the window: every filter's panel starts there. */
-  const lastLine = useCallback(() => {
-    const lines = rootRef.current?.querySelectorAll<HTMLElement>('[data-filter-trigger]');
-    return lines === undefined || lines.length === 0 ? undefined : lines[lines.length - 1].getBoundingClientRect();
-  }, []);
-  const place = useCallback(() => {
-    const line = lastLine();
-    if (line === undefined) return;
-    const top = line.bottom;
-    setPanelTop(top);
-    setPanelBox(window.innerWidth >= BOX_FROM ? { left: line.left, maxHeight: Math.max(0, window.innerHeight - BOX_FOOT - top) } : null);
-  }, [lastLine]);
-  const openFilter = useCallback((key: string, rows: number) => {
-    /*
-      §T.3's one exception to the trigger never moving: "Where the space
-      below the last filter line is less [than the floor], opening first
-      scrolls the page by the shortfall, in one instant move, and then
-      holds it." The box needs its floor, or its whole height where its
-      list is shorter than the floor: the CLOSE row, the options and the
-      two edges.
-    */
-    const line = lastLine();
-    if (line !== undefined && window.innerWidth >= BOX_FROM) {
-      const shortfall = Math.min(BOX_FLOOR, ROW * (rows + 1) + 2) - (window.innerHeight - BOX_FOOT - line.bottom);
-      if (shortfall > 0) {
-        const from = window.scrollY;
-        window.scrollBy({ top: shortfall, behavior: 'instant' });
-        /* What the page actually went, which is less than the shortfall where it could not scroll that far. */
-        floorMove.current += window.scrollY - from;
-      }
-    }
-    /* Placed in the press itself, so the panel's first paint is already beneath the last line. */
-    place();
-    /* A second filter opened over the first takes the first's entry: one entry however many are tried. */
-    if (!hasEntry()) window.history.pushState({ ...(window.history.state as object | null), collectionFilter: true }, '');
+  const openFilter = useCallback((key: string) => {
+    pressedTop.current = titleOf(key)?.getBoundingClientRect().top ?? null;
     setOpenKey(key);
-  }, [lastLine, place]);
+  }, [titleOf]);
+  /* "The room left in the window after the filter lines below it, so all four lines stay in view." */
+  const roomUnder = useCallback((title: HTMLElement) => {
+    const lines = Array.from(rootRef.current?.querySelectorAll<HTMLElement>('[data-filter-trigger]') ?? []);
+    const below = lines.slice(lines.indexOf(title) + 1).reduce((sum, line) => sum + line.getBoundingClientRect().height, 0);
+    return window.innerHeight - title.getBoundingClientRect().bottom - below;
+  }, []);
+
+  /*
+    Before the open container is painted: the page is put where the ruling
+    wants it, and the container is told its room. The room is a property on
+    the root and not state, since it is read from the page after the page
+    has been moved.
+  */
+  useLayoutEffect(() => {
+    const root = rootRef.current;
+    if (openKey === null || root === null) return undefined;
+    const title = titleOf(openKey);
+    const panel = root.querySelector<HTMLElement>('[data-filter-panel]');
+    if (title === null || panel === null) return undefined;
+    /* The floor, or the whole list where it is shorter than the floor. */
+    const need = Math.min(FLOOR, panel.scrollHeight);
+    root.style.setProperty('--filter-room', `${need}px`);
+    /* "Opening another closes this one. The page moves by the height that closed, so the pressed title stays under the finger." */
+    if (pressedTop.current !== null) {
+      const shift = title.getBoundingClientRect().top - pressedTop.current;
+      pressedTop.current = null;
+      if (shift !== 0) window.scrollBy({ top: shift, behavior: 'instant' });
+    }
+    const shortfall = need - roomUnder(title);
+    if (shortfall > 0) {
+      const from = window.scrollY;
+      /* No further than the title's own top: "the floor wins and those lines are reached by scrolling the page." */
+      window.scrollBy({ top: Math.min(shortfall, Math.max(0, title.getBoundingClientRect().top)), behavior: 'instant' });
+      floorMove.current += window.scrollY - from;
+    }
+    const fit = () => root.style.setProperty('--filter-room', `${Math.max(need, roomUnder(title))}px`);
+    fit();
+    window.addEventListener('resize', fit);
+    return () => window.removeEventListener('resize', fit);
+  }, [openKey, titleOf, roomUnder]);
 
   useEffect(() => {
     if (openKey === null) return undefined;
-    const trigger = () => rootRef.current?.querySelector<HTMLElement>(`[data-filter="${openKey}"] [data-filter-trigger]`);
     const onKey = (event: KeyboardEvent) => {
       if (event.key !== 'Escape') return;
       closeFilter();
-      // Focus goes back to the line, which is where the list was opened from and has not moved.
-      trigger()?.focus();
+      /* Focus goes back to the title the list was opened from, without the focus itself moving the page the close has just returned. */
+      titleOf(openKey)?.focus({ preventScroll: true });
     };
-    /* Back, or anything else that leaves the filter's entry: the filter is closed. */
-    const onPop = () => {
-      if (hasEntry()) return;
-      setOpenKey(null);
-      /* Back: after the browser has put the page where the entry was left, which is the moved place. */
-      const moved = floorMove.current;
-      floorMove.current = 0;
-      if (moved > 0) {
-        const top = Math.max(0, window.scrollY - moved);
-        const go = () => window.scrollTo({ top, behavior: 'instant' });
-        go();
-        requestAnimationFrame(() => { go(); requestAnimationFrame(go); });
-      }
-    };
-    /* "The page beneath does not move": held in both directions, with step 86's compensation. */
-    const release = holdScroll(document.documentElement, window);
-    /*
-      Step 107. The root's `overflow` does not hold the page against a finger
-      on Mobile Safari, so a finger's move is cancelled unless it is the
-      list's own. And whatever else moves the page (a script, a scroll to
-      the focused control, find-in-page), the panel is placed again, so it
-      stays beneath its lines while they are in the window.
-    */
-    /*
-      Step 108: "When the page moves far enough that the last filter line
-      leaves the window, the open panel closes", since with the line gone
-      it would be an open list with no trigger. Focus is not sent to the
-      line, which is out of view: sending it would bring the page back.
-    */
-    const follow = () => {
-      const line = lastLine();
-      if (line === undefined || (line.bottom > 0 && line.top < window.innerHeight)) {
-        place();
-        return;
-      }
-      /*
-        "The close does nothing else." Stepping back over the filter's
-        entry makes the browser restore the scroll position that entry's
-        predecessor was left at, which is where the lines are: the page
-        would go back to them (measured, both engines). So the position
-        the page has now is put back once the step has landed.
-      */
-      /* "Unless the close came from the page moving": the reader's own move stands, and the floor's is not given back. */
-      floorMove.current = 0;
-      if (hasEntry()) {
-        const at = { left: window.scrollX, top: window.scrollY };
-        const keep = () => window.scrollTo({ ...at, behavior: 'instant' });
-        window.addEventListener('popstate', () => { keep(); requestAnimationFrame(() => { keep(); requestAnimationFrame(keep); }); }, { once: true });
-      }
-      closeFilter();
-    };
-    const releaseTouch = holdTouch(document, () => rootRef.current?.querySelector<HTMLElement>('[data-filter-panel]') ?? null);
-    /* Step 106's close set: a press that did not land on an option row, on CLOSE or on a filter line closes, and does nothing else. */
-    const releasePress = closeOnOutsidePress(
-      document,
-      (node) => node instanceof Element && node.closest('[data-filter-option], [data-filter-close], [data-filter-trigger]') !== null && rootRef.current?.contains(node) === true,
-      closeFilter,
-    );
-    window.addEventListener('scroll', follow, { passive: true });
+    /* "A drag in the container scrolls it and does not carry on into the page at its ends. The page itself is not held." */
+    const releaseDrag = containDrag(document, () => rootRef.current?.querySelector<HTMLElement>('[data-filter-panel]') ?? null);
     document.addEventListener('keydown', onKey);
-    window.addEventListener('popstate', onPop);
-    window.addEventListener('resize', follow);
     return () => {
-      release();
-      releaseTouch();
-      releasePress();
-      window.removeEventListener('scroll', follow);
+      releaseDrag();
       document.removeEventListener('keydown', onKey);
-      window.removeEventListener('popstate', onPop);
-      window.removeEventListener('resize', follow);
     };
-  }, [openKey, closeFilter, place, lastLine]);
+  }, [openKey, closeFilter, titleOf]);
 
-  function change(mutate: (current: CollectionParams) => CollectionParams, how: 'push' | 'replace' = 'push') {
+  function change(mutate: (current: CollectionParams) => CollectionParams) {
     /**
      * Reconciled HERE, in the event handler, not during render — reading a ref
      * while rendering is unsound and react-hooks/refs rejects it, correctly.
@@ -300,7 +227,7 @@ export function CollectionFilters({
 
     const query = toQueryString(mutate(base));
     pending.current = query;
-    router[how](query === '' ? '/' : `/?${query}`);
+    router.push(query === '' ? '/' : `/?${query}`);
   }
 
   const hasYearFilter =
@@ -358,24 +285,11 @@ export function CollectionFilters({
         §T.3: "Filters are a disclosure, not a set of chips always shown."
         The options grow with the collection (genres were 6 in the seed and
         are 32), so anything that shows them all always fails at some
-        count. Closed, a filter is one line whatever the count: its label
-        and the one option chosen. Open, its options are on a panel that
-        covers what lies beneath the last line (steps 101 and 102), every
-        line stays where it is, and the open one's label is in ink so the
-        panel says whose it is.
+        count. Closed, a filter is one line whatever the count: its label,
+        the one option chosen, and a +. Open, its options are beneath it in
+        a container of bounded height, and the lines below move down.
       */}
-      {/*
-        Step 106, "one close set": "a tap anywhere outside the list's rows
-        ... or the page beside the box" closes, and "a press that closes the
-        panel does nothing else". So while a filter is open the page takes
-        no press: a clear layer over the whole window takes it, and the
-        open effect's `closeOnOutsidePress` closes on it. The layer draws
-        nothing, so the page stays "visible, undimmed". The filter lines
-        and the panel are raised above it, the lines because a press on one
-        switches or closes by its own handler.
-      */}
-      {openKey !== null && <div data-filter-outside="" onClick={answersTaps} className="fixed inset-0 z-40" />}
-      <div className={cn('flex flex-col', openKey !== null && 'relative z-[45]')} style={{ maxWidth: FILTER_MEASURE }}>
+      <div className="flex flex-col" style={{ maxWidth: FILTER_MEASURE }}>
         {FILTER_GROUPS.map((group) => {
           const list = options[group.options];
           if (list.length === 0) return null;
@@ -391,54 +305,31 @@ export function CollectionFilters({
                 data-filter-trigger=""
                 aria-expanded={open}
                 aria-controls={`filter-${group.key}`}
-                onClick={() => (open ? closeFilter() : openFilter(group.key, list.length))}
-                className="flex h-[44px] w-full items-baseline gap-3 text-left leading-[44px]"
+                onClick={() => (open ? closeFilter() : openFilter(group.key))}
+                className="flex h-[44px] w-full items-center gap-3 text-left"
               >
-                {/* §3's underline on the open one: "ink alone did not tell Adam which was open" (step 106). */}
-                <span data-filter-label="" className={`w-12 shrink-0 ${open ? `${LABEL_TYPE} ${INK} underline decoration-2 underline-offset-[7px]` : LABEL}`}>
-                  {group.label}
+                {/* "A chosen option shows on the line as GENRE · JAZZ, the value in ink." The open state "needs no underline, because the − and the list beneath say it". */}
+                <span className="min-w-0 flex-1 truncate">
+                  <span data-filter-label="" className={open ? `${LABEL_TYPE} ${INK}` : LABEL}>
+                    {group.label}
+                  </span>
+                  {chosen !== undefined && <span className={`${LABEL_TYPE} ${INK}`}> · </span>}
+                  <span data-filter-chosen="" className={`${LABEL_TYPE} ${INK}`}>
+                    {chosen?.name ?? ''}
+                  </span>
                 </span>
-                <span data-filter-chosen="" className="min-w-0 truncate text-detail">
-                  {chosen?.name ?? ''}
-                </span>
+                <FilterMark open={open} />
               </button>
               {open && (
                 /*
-                  §T.3 by §G.8: fixed, opaque paper, full width, from the
-                  last line's end to the viewport's bottom. `z-50` raises it above
-                  the table's rows and the grid's cells, which are positioned
-                  and later in the page, so they would paint over it and take
-                  its taps; asserted on the grid in `filter-panel-101.spec.ts`.
-                  A list longer than the panel scrolls within it. A tap on
-                  the paper, anywhere off the list, closes it.
-
-                  Step 106: at 768 and up it is a box, at the lines' left,
-                  443 wide in a 1px ink edge, as tall as its list up to 24
-                  above the window's bottom; below, the sheet as it was. The
-                  panel is the scrolling box at both, so a drag that starts
-                  on the sheet's inset scrolls the list. CLOSE is its top
-                  row and stays there while the list passes beneath.
-                  Step 109: in the box a name is 18 inside the ink edge
-                  (§G.3's inset) and the row, with its hit area, runs to
-                  the edge.
+                  As wide as its line, whatever width the sidebar gives
+                  that: nothing here names one. As tall as its list up to
+                  the room the open effect measured; a list longer than
+                  that scrolls within it, and does not hand the scroll on
+                  to the page at its ends.
                 */
-                <div
-                  data-filter-panel=""
-                  onClick={answersTaps}
-                  style={panelBox === null ? { top: panelTop } : { top: panelTop, left: panelBox.left, maxHeight: panelBox.maxHeight }}
-                  className="fixed inset-x-0 bottom-0 z-50 box-border overflow-y-auto overscroll-contain bg-background md:inset-x-auto md:bottom-auto md:w-[443px] md:border md:border-[oklch(0.19_0.008_60)]"
-                >
-                  <div data-filter-close-row="" className="sticky top-0 z-10 mx-5 flex h-[44px] items-center justify-end bg-background md:mx-0" style={{ maxWidth: FILTER_MEASURE }}>
-                    <button
-                      type="button"
-                      data-filter-close=""
-                      onClick={closeFilter}
-                      className={`${LABEL_TYPE} ${INK} box-border flex h-[44px] cursor-pointer items-center justify-center border ${HAIRLINE} px-[18px] decoration-1 underline-offset-[3px] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground`}
-                    >
-                      Close
-                    </button>
-                  </div>
-                  <ul id={`filter-${group.key}`} data-filter-list="" className="mx-5 md:mx-0" style={{ maxWidth: FILTER_MEASURE }}>
+                <div data-filter-panel="" className="max-h-[var(--filter-room)] overflow-y-auto overscroll-contain">
+                  <ul id={`filter-${group.key}`} data-filter-list="">
                     {list.map((option) => {
                       const active = selected === option.id;
                       return (
@@ -449,15 +340,12 @@ export function CollectionFilters({
                             aria-pressed={active}
                             onClick={() => {
                               // Single-valued: choosing the chosen one clears it, so the list both applies and removes.
-                              // The choice replaces the filter's history entry (§G.8), so one Back leaves the filtered page.
                               setOpenKey(null);
                               returnPage();
-                              change(
-                                (current) => withFacet(current, { filters: { [group.key]: active ? undefined : option.id } }),
-                                hasEntry() ? 'replace' : 'push',
-                              );
+                              change((current) => withFacet(current, { filters: { [group.key]: active ? undefined : option.id } }));
                             }}
-                            className="flex h-[44px] w-full items-baseline justify-between gap-3 border-t border-border text-left leading-[43px] md:px-[18px]"
+                            /* Clipped to its 44: the text's line box hangs a pixel below it, which made a list that fits a list that scrolls by one. */
+                            className="flex h-[44px] w-full items-baseline justify-between gap-3 overflow-hidden border-t border-border text-left leading-[43px]"
                           >
                             <span
                               data-filter-name=""
@@ -476,7 +364,7 @@ export function CollectionFilters({
                   </ul>
                 </div>
               )}
-            </div>
+                </div>
           );
         })}
       </div>

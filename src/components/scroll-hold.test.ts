@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { allowsTouchMove, holdScroll, holdTouch, type HoldRoot, type HoldTouchEvent, type HoldWindow } from './scroll-hold';
+import { allowsTouchMove, containDrag, holdScroll, holdTouch, type HoldRoot, type HoldTouchEvent, type HoldWindow } from './scroll-hold';
 
 /**
  * Step 86, §G.8: "Where holding the page removes a classic scrollbar, the
@@ -149,6 +149,70 @@ describe('holdTouch: the moves are cancelled while it is on, and not after', () 
 
   it('released, it cancels nothing', () => {
     const s = stage(null);
+    s.release();
+    expect(s.on.size).toBe(0);
+  });
+});
+
+/**
+ * Step 113, §T.3: "a drag in the container scrolls it and does not carry on
+ * into the page at its ends. The page itself is not held." The opposite of
+ * `holdTouch` everywhere but on the box: a move that began off it is the
+ * page's and is never cancelled.
+ */
+describe('containDrag: only a drag on the box that the box cannot follow is cancelled', () => {
+  type Listener = (event: HoldTouchEvent) => void;
+  function stage(scroller: { scrollTop: number; scrollHeight: number; clientHeight: number; contains: (n: unknown) => boolean } | null) {
+    const on = new Map<string, { listener: Listener; passive: boolean | undefined }>();
+    const doc = {
+      addEventListener: (type: string, listener: Listener, options?: { passive?: boolean }) => { on.set(type, { listener, passive: options?.passive }); },
+      removeEventListener: (type: string) => { on.delete(type); },
+    };
+    const release = containDrag(doc, () => scroller);
+    const move = (target: unknown, fromY: number, toY: number, fingers = 1) => {
+      let prevented = false;
+      const touches = (y: number) => Array.from({ length: fingers }, () => ({ clientY: y }));
+      on.get('touchstart')?.listener({ target, touches: touches(fromY), cancelable: true, preventDefault: () => undefined });
+      on.get('touchmove')?.listener({ target, touches: touches(toY), cancelable: true, preventDefault: () => { prevented = true; } });
+      return prevented;
+    };
+    return { on, release, move };
+  }
+  const inside = {};
+  const box = (scrollTop: number, scrollHeight = 1408) => ({ scrollTop, scrollHeight, clientHeight: 132, contains: (n: unknown) => n === inside });
+
+  it('listens for the move as one it may cancel', () => {
+    expect(stage(box(0)).on.get('touchmove')?.passive).toBe(false);
+  });
+
+  /* Fails against `holdTouch`, which cancels every move off the list. */
+  it('never cancels a drag that began on the page', () => {
+    const s = stage(box(300));
+    expect(s.move({}, 400, 300)).toBe(false);
+    expect(s.move({}, 300, 400)).toBe(false);
+  });
+
+  it('lets a drag on the box through while the box can follow it', () => {
+    const s = stage(box(300));
+    expect(s.move(inside, 400, 300)).toBe(false);
+    expect(s.move(inside, 300, 400)).toBe(false);
+  });
+
+  it('cancels a drag on the box past its top and past its foot', () => {
+    expect(stage(box(0)).move(inside, 300, 400), 'at the top, a finger going down').toBe(true);
+    expect(stage(box(1408 - 132)).move(inside, 400, 300), 'at the foot, a finger going up').toBe(true);
+  });
+
+  /* Fails against `holdTouch`'s rule alone: a list that fits has no ends to carry on from, and cancelling would pin the page under it. */
+  it('cancels nothing on a box whose list fits', () => {
+    const s = stage(box(0, 132));
+    expect(s.move(inside, 300, 400)).toBe(false);
+    expect(s.move(inside, 400, 300)).toBe(false);
+  });
+
+  it('lets two fingers through, and cancels nothing once released', () => {
+    const s = stage(box(0));
+    expect(s.move(inside, 300, 400, 2)).toBe(false);
     s.release();
     expect(s.on.size).toBe(0);
   });

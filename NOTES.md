@@ -39838,3 +39838,71 @@ intake after.
   above 0, `CollectionFilters.tsx:491`). So the state that failed the batch
   gate does not occur on the real collection today, and would with the
   first record added without a year.
+
+## Step 113, the part that is §T.3's container: filters open in place (10 Oct)
+
+Built on the coordinator's word while four arithmetic conflicts are with
+Design; the sidebar, the content column, the grid's counts and the figures
+are not built. `CollectionFilters.tsx`: a filter's options are in the
+page's flow beneath its own title, in a container as wide as that title
+(no width is named for it), `overflow-y: auto`, as tall as its list up to
+the room left in the window after the filter lines below it, floor 132 or
+the whole list where that is shorter. Where the room is short the page is
+scrolled by the shortfall before the first paint and returned on close.
+One open at a time; + closed and − open, 1px ink strokes in a 12 square at
+the line's right; a chosen option reads GENRE · JAZZ; closing is the title
+or the −, Escape, choosing, or opening another. Gone: the fixed panel, the
+443 box, the sheet, CLOSE, the clear layer and the tap outside, the
+history entry and Back, the page's hold, the close when the line leaves
+the window, the underline on the open label.
+
+**Tests replaced, said plainly.** Five specs encoded rulings withdrawn
+within §T.3 and are deleted: `filter-panel-101`, `filter-box-106`,
+`filter-box-109`, `panel-hold-107`, `panel-leaves-108`. Three tests were
+rewritten to the new ruling: `collection-filters-97` (the list beneath its
+own title and the table pushed down, where it asserted beneath the last
+line and the table still; the chosen value at 11 where it asserted 13) and
+`table-row-box-105` (the presses on the panel's paper are gone, the
+presses on rows stay). `outside-press.ts` and its test are deleted, having
+no caller. More than eight files: one supersession and what encoded the
+old one.
+
+**Decisions of mine, for Design or the coordinator to overrule.**
+
+- *The pressed title cannot always stay under the finger.* The page moves
+  by the height that closed only as far as it can: with the page at its
+  top and Genre open, pressing Label lets Label rise by Genre's
+  container, since the page cannot scroll above its top. Tested where the
+  page is scrolled further than the height that closes.
+- *The return is by the same distance whatever the reader did between.*
+  The page is no longer held, so a reader can scroll it with a filter
+  open; closing still takes the floor's move back off wherever they are.
+- *The floor's scroll stops at the title's own top*, so the title is never
+  scrolled out of the window: that is where "the floor wins and those
+  lines are reached by scrolling the page" begins.
+- *The chosen value is in the label's type*, 11 uppercase in ink, read
+  from "GENRE · JAZZ". It was 13 in the detail size.
+- *Back no longer closes*, and choosing an option adds one entry, so one
+  Back from a filtered page is the page before the choice.
+- *The room is measured on open and on resize*, not as the page scrolls.
+- *The filter lines' own measure is still the old 443 maximum*
+  (`FILTER_MEASURE`): the column's width is Design's, and the container
+  takes whatever its line has.
+
+**Found and fixed inside the step.** An option row's text hung one pixel
+below its 44 (265 for six rows), so a list that fitted scrolled by one;
+the row now clips to its box.
+
+**Not done, or not shown.**
+
+- A finger's drag at the container's ends is shown on Chromium by CDP
+  only; the phone's engine is not tested for it, as before.
+- With the pressed title and `overscroll-behavior`, a wheel is contained
+  by CSS alone; the touch guard is `containDrag` (`scroll-hold.ts`).
+- The heading figure (void, still drawn) measures the filter block; what
+  it does while a container is open was not looked at.
+- `holdTouch` has no caller left in `src`; the sheets that captured the
+  old panel (`filter-box-106`, `panel-narrow`, `collection-97`) are left.
+- Sort's chevron is the sidebar's and is not built.
+- `playwright.config.ts` changed (the mobile project's list), which §10
+  names as a gate; it waits for the batch gate.

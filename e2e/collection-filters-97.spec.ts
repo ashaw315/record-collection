@@ -89,8 +89,8 @@ test('closed, each filter is one line of its label and nothing else, in §10’s
   }
 });
 
-/* Fails against rows under 44, against counts set beside their names, and against a list that pushes the page down (step 97b's, superseded). */
-test('pressed, a filter opens its options beneath the last filter line, 44 a row, counts right-aligned, and the table stays where it was', async ({ page }) => {
+/* Fails against rows under 44 and against counts set beside their names. Step 113: the list is in place beneath its own title and pushes the lines and the table down by its height; until then it covered what lay beneath the last line and the table stayed. */
+test('pressed, a filter opens its options beneath its own title, 44 a row, counts right-aligned, and the table moves down by the container’s height', async ({ page }) => {
   const f = await seed(page);
   await open(page, '', 390);
   const tableTop = () => page.locator('main table').evaluate((t) => t.getBoundingClientRect().top + window.scrollY);
@@ -111,11 +111,7 @@ test('pressed, a filter opens its options beneath the last filter line, 44 a row
     return { lastBottom: lines[lines.length - 1].getBoundingClientRect().bottom, lines: lines.length, triggerBottom: t.bottom, triggerLeft: t.left, rows };
   });
   expect(m.rows.length, 'every genre the collection has').toBeGreaterThan(1);
-  /* Step 102: beneath the last line and not Genre's own, three lines above it, which is the 132 Design's ruling names as its cost. */
-  expect(m.lines, 'the precondition: all four lines, this test’s fixture has each').toBe(4);
-  expect(m.lastBottom - m.triggerBottom, 'three lines of 44 lie between').toBeCloseTo(132, 0);
-  /* Step 106: CLOSE is the panel's top row, so the first option is the row beneath it. This read "directly beneath the last line" until then. */
-  expect(m.rows[0].top, 'beneath the CLOSE row, which is directly beneath the last line').toBeCloseTo(m.lastBottom + 44, 0);
+  expect(m.rows[0].top, 'the first option is directly beneath its own title').toBeCloseTo(m.triggerBottom, 0);
   for (const [i, row] of m.rows.entries()) {
     expect(row.height, `${row.name}: a 44 row`).toBe(44);
     expect(row.borderTop, `${row.name}: a hairline above`).toBe('1px');
@@ -127,14 +123,16 @@ test('pressed, a filter opens its options beneath the last filter line, 44 a row
   }
   const ours = m.rows.find((row) => row.name === f.genre);
   expect(ours?.count, 'the count is what choosing it returns').toBe('2');
-  expect(await tableTop(), 'the table has not moved').toBe(before);
+  const pushed = await page.locator('[data-filter-panel]').evaluate((p) => p.getBoundingClientRect().height);
+  expect(pushed, 'the container has a height').toBeGreaterThan(0);
+  expect((await tableTop()) - before, 'the table is down by the container’s height').toBeCloseTo(pushed, 0);
 });
 
 /* Fails against a build that leaves a list open when another is pressed, or that ignores Escape or the second press. */
 test('one filter is open at a time; a second press closes it, and so does Escape, which returns focus to the line', async ({ page }) => {
   await seed(page);
   await open(page, '');
-  /* Genre first and then Label, the line BELOW it: the panel is beneath the last line, so every line can be pressed while one is open (step 102). */
+  /* Genre first and then Label, the line BELOW it: the container pushes it down and covers nothing, so every line can be pressed while one is open. */
   await trigger(page, 'genreId').click();
   await expect(options(page, 'genreId').first()).toBeVisible();
   const under = await trigger(page, 'labelId').evaluate((t) => { const r = t.getBoundingClientRect(); const el = document.elementFromPoint(r.left + 10, r.top + r.height / 2); return { onPanel: el?.closest('[data-filter-panel]') !== null, onLine: el?.closest('[data-filter-trigger]') === t }; });
@@ -175,7 +173,7 @@ test('choosing an option filters, closes the list and names the choice on the li
   await expect(options(page, 'labelId')).toHaveCount(0);
   const chosen = line(page, 'labelId').locator('[data-filter-chosen]');
   await expect(chosen).toHaveText(f.label);
-  expect(await chosen.evaluate((el) => ({ size: getComputedStyle(el).fontSize, colour: getComputedStyle(el).color }))).toEqual({ size: '13px', colour: 'lab(6.18075 1.20374 2.12039)' });
+  expect(await chosen.evaluate((el) => ({ size: getComputedStyle(el).fontSize, colour: getComputedStyle(el).color }))).toEqual({ size: '11px', colour: 'lab(6.18075 1.20374 2.12039)' });
 
   await trigger(page, 'labelId').click();
   const marks = await options(page, 'labelId').evaluateAll((all) => all.map((o) => {

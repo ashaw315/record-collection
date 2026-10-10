@@ -74,33 +74,16 @@ for (const staged of [true, false]) {
     });
 
     /* Staged, fails against the same build: the press on Genre's line lands on the last row's link and opens its record. */
-    test(`${where}: presses inside the open panel apply, or close, and none leaves the collection`, async ({ page }) => {
+    test(`${where}: presses on the open filter’s rows apply, and none leaves the collection`, async ({ page }) => {
       await open(page, width, staged);
       const url = page.url();
 
       await trigger(page).click();
       await expect(trigger(page)).toHaveAttribute('aria-expanded', 'true');
       expect(page.url(), 'opening the filter').toBe(url);
-      const p = await panel(page).evaluate((el) => { const r = el.getBoundingClientRect(); const l = (el.querySelector('[data-filter-list]') as HTMLElement).getBoundingClientRect(); return { top: r.top, right: r.right, listRight: l.right }; });
-
-      /*
-        Off the rows: the inset beside the list at 390. At 1440 these were
-        the sheet's paper far right of the list, over the table's rows;
-        step 106 made the panel a box there, so the same two places are
-        now the page beside the box, which closes by the same rule.
-      */
-      const papers: [number, number][] = width === 390 ? [[8, p.top + 66], [p.right - 6, p.top + 110]] : [[p.right + 200, p.top + 66], [p.listRight + 300, p.top + 200]];
-      for (const [x, y] of papers) {
-        if ((await panel(page).count()) === 0) { await trigger(page).click(); await expect(panel(page)).toHaveCount(1); }
-        expect(await recordAt(page, x, y), `no record link at ${x},${y}`).toBeNull();
-        await page.mouse.click(x, y);
-        await expect(panel(page), `the paper at ${x},${y} closes the panel`).toHaveCount(0);
-        await expect(page, 'and the address is where it was').toHaveURL(url);
-      }
-
       /* Two option rows: each applies its own genre and stays on the table. */
       for (const index of [0, 2]) {
-        await trigger(page).click();
+        if ((await panel(page).count()) === 0) await trigger(page).click();
         const option = panel(page).locator('[data-filter-option]').nth(index);
         const name = (await option.locator('[data-filter-name]').textContent()) ?? '';
         await option.click();
