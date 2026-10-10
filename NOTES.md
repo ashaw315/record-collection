@@ -38879,3 +38879,67 @@ with a copy in the scratchpad, and the index reads 11 PASS with it.
 **Seen, not acted on.** Tab still reaches the page's controls behind the
 layer while a filter is open; the close set rules presses, not the
 keyboard.
+
+## A Design drop is committed the moment it arrives (rule, 9 Oct, night)
+
+**The rule, the coordinator's:** commit a Design drop the moment it
+arrives, before doing anything else with the tree. Not after the gate, not
+after reading it, not after deciding whether to take it. If the drop needs
+changes (Code's region put back, the withdrawals derived, a sentence
+refused), that is a second commit.
+
+**Why: four times on 9 Oct the working tree cost something, and all four
+share one cause.** Design's output lands in the tree uncommitted, where it
+is at the mercy of whatever Code does next.
+- Three gates were voided by a save landing in the tree while they ran:
+  the runner reads `tree unchanged` at the end, and a changed tree is a
+  gate about some other tree.
+- The fourth: Code ran `git checkout` on the saved handoff before copying
+  it, and the save was gone (step 106's entry above). Small damage, since
+  its diff had been read, but nothing would have been lost at all had the
+  save been a commit.
+A commit is cheap and reversible; an uncommitted file in a shared tree is
+neither. First kept at `d6a42d2`: Design's re-save (the box's step as 106,
+step 108, §T.6's accepted outcome) committed as it stood, then Code's
+region applied in the commit after.
+
+**Steps 105 and 107 are in Code's region of the handoff**
+(`scripts/handoff-code-region.json`), carried as step 71 is. 105 was
+authorised by the coordinator: it is Code's step, and Design writing
+entries for Code's steps would be the only reason the numbering had a
+hole. 107 is the same kind and was added with it, because with step 108
+in the handoff the index would otherwise read `3 missing 107`; that one
+was Code's call and is reported. `check-index`: 11 PASS.
+
+## Another test green for a reason unrelated to its claim: `filter-panel-101` at 900 (9 Oct)
+
+For the family CLAUDE.md §2 records (a name the assertion cannot support).
+"a tap on the paper … close[s] it and leave[s] none behind" pressed a
+point 30 in from the panel's right and foot. After step 106 that point was
+an option row, the press CHOSE the option, and the test stayed green: the
+panel did close, and `page.url()` was read once, at once, before the
+choice's navigation had landed. A read taken at once cannot fail on
+something that arrives later. Two changes: the point's own precondition is
+asserted (paper beside CLOSE, not CLOSE), and the address is read after a
+wait long enough for a choice to land. The shape to look for elsewhere: a
+single immediate read standing in for "nothing happened".
+
+## Working without a gate between steps, by Adam's word (9 Oct, night)
+
+The gate on `26d408c` (step 106) was stopped two minutes in, on the
+coordinator's instruction, with nothing judged. Step 106 was pushed
+UNGATED on its step-level record: the filter specs on both projects
+`95 passed, 4 skipped, ledger clean, tree unchanged — OK`, repo and
+component checks `434 passed`, typecheck, lint, build.
+
+Until Adam says otherwise: no gate between steps; each commit keeps its
+full step-level discipline (fail first, typecheck, lint, build, the
+touched specs on both projects, ledger clean, tree unchanged) and is
+pushed as it finishes; one full gate when the batch is done, before any
+of it is called finished. The cost accepted: production carries ungated
+work, and a cross-file break of the kind the gate found in `nav-menu-84`
+after step 104 is found late and has to be bisected. **Ungated commits,
+in order, for that bisect:** `26d408c` (step 106), and what follows it.
+The gate's own diagnosis (workers against cores, the projects' split, the
+slowest twenty, whether the phases can overlap) rides with that batch
+gate.
