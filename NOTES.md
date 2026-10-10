@@ -40447,3 +40447,62 @@ routes plus a backfill; and a stored fact that can disagree with the
 derived one, so a check that they agree. A cheaper half-measure with no
 schema: on create and delete, log one line when the derived source
 changes, naming the old and the new.
+
+## Step 117: the head figure's height capped at 0.328 of the content column (10 Oct)
+
+Built as 117. Design's save `8f1ec4d` numbers the cap 116, which is the
+grid measurement's; Design is renumbering (coordinator).
+
+**The drawing reading, as instructed.** `figureBox(aspect)` in
+`sidebar-layout.ts`: below an aspect of 1 the figure is 0.328 of the
+column tall and height × aspect wide; at 1 and above it is as step 113
+built it. So 0.328 is the figure's longer side and neither side passes
+it. Nothing reserves a square: the box is the drawing's, centred.
+
+**One thing follows that the step did not name.** "Below the clearing
+height there is no figure" is read from the drawn height, so
+`figureColumnMinimum` now divides by the capped height. A tall
+construction therefore first draws later than before: Psychic at 1006.0
+and not 986.1. `figure-source.ts` is untouched and still takes the
+smallest, but the widths it compares are the capped ones, so the order of
+the tall records changes. Psychic is still the source and still below the
+fork. Design's step 115 sentence "today Psychic at 986.1" is now 1006.0.
+
+**Design's test sentence cannot hold under this reading.** "Test that the
+figure's height never exceeds its width": a capped figure is 324.1 wide
+and 335.5 tall. Tested instead: neither side exceeds 0.328 of the column,
+and the ratio is the construction's. Under the square reading the
+sentence would be about the reserved box, which is the open question.
+
+**On the real collection** (`docs/captures/head-cap-117/`):
+
+| window | figure | square side | paper a square would add | list's top |
+|---|---|---|---|---|
+| 1920, 1440 | 324.1 × 335.5 | 335.5 | 11.4 | 436.5 |
+| 1054 | 201.8 × 208.9 | 208.9 | 7.1 | 309.9 |
+
+The list's top was 382.9 at 1440 and 276.5 at 1054 with this morning's
+source (measured, step 113). With Psychic uncapped it was 448.3 and 317.3
+(derived from the figure's heights, not measured). So the cap recovers
+11.8 of the 65.4 at 1440 and 7.4 of the 40.8 at 1054. It is not a fix
+for the drop: the list is still 53.6 lower at 1440 than this morning.
+
+**The grid's two changes, in a browser:** 3 covers of 221 at 1128 and 4
+of 160 at 1129; 4 of 205.8 at 1312 and 5 of 160 at 1313.
+
+**Step level.** Fail-first: five unit tests failed on `figureBox` not
+existing, and the screen test failed 12 times on `its width, 335.5 of a
+1023 column` (and 208.9 of 637). Built: `src/app` unit `1283 passed —
+OK`; the five specs that read the figure or its layout (derived:
+empty-figure-103e, grid-99, lookup-flows, source-115, sidebar-113) on
+both projects `159 passed, 1 flaky, 1 skipped, ledger clean, tree
+unchanged — OK`.
+
+**The flaky, not diagnosed.** `lookup-flows:1562` on mobile, "notes stay
+separable from the evidence": the evidence panel read "Could not reach
+Discogs. Try again shortly." on the first attempt and passed on the
+retry. The state it failed in is a search with one result, which draws no
+figure and none of this step's layout, so this step is not its cause; why
+the stubbed release detail did not answer is not established. Artefacts
+copied before anything else ran. One existing screen test was changed to
+the new rule (the figure's longer side) and is declared here.

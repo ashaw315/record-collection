@@ -225,19 +225,24 @@ for (const view of VIEWS) {
   test.describe(`§T.6, the ${view}: the head figure, the fragment and their diagonals`, () => {
     for (const width of ABOVE) {
       /* Fails against the figure beside the filter block (steps 110 to 112), which was the block's height and in ink. */
-      test(`at ${width}: the head figure is 0.328 of the content column wide at its construction’s own ratio, centred in the column, 24 or more from the header, the list and ADD RECORD, and drawn only where it clears`, async ({ page }) => {
+      test(`at ${width}: the head figure is 0.328 of the content column on its longer side at its construction’s own ratio, centred in the column, 24 or more from the header, the list and ADD RECORD, and drawn only where it clears`, async ({ page }) => {
         await open(page, width, view);
         const r = await reading(page);
         const figure = await page.locator('[data-head-figure]').evaluate((el) => ({ clearing: Number((el as HTMLElement).dataset.clearing), aspect: Number((el as HTMLElement).dataset.aspect), record: (el as HTMLElement).dataset.record }));
         if (r.list === null || r.header === null || r.add === null) throw new Error('nothing drawn');
         const column = r.list.width;
-        const wide = column * FIGURE_FRACTION;
-        const tall = wide / figure.aspect;
+        /* Step 117: a construction taller than wide is capped at the fraction in height, and its width follows. */
+        const side = column * FIGURE_FRACTION;
+        const wide = side * Math.min(1, figure.aspect);
+        const tall = side * Math.min(1, 1 / figure.aspect);
         expect(figure.clearing, 'the precondition: the source has a clearing height').toBeGreaterThan(0);
         if (tall < figure.clearing) { expect(r.head, `no figure: ${tall.toFixed(1)} would not clear ${figure.clearing}`).toBeNull(); return; }
         if (r.head === null) throw new Error(`the figure clears (${tall.toFixed(1)} against ${figure.clearing}) and is not drawn`);
         expect(Math.abs(r.head.width - wide), `its width, ${r.head.width} of a ${column} column`).toBeLessThan(0.5);
         expect(Math.abs(r.head.height - tall), 'its height, at the construction’s own ratio').toBeLessThan(0.5);
+        /* Fails against the figure 0.328 wide at any aspect (step 113), which drew the seeded source, taller than wide, above the fraction. */
+        expect(r.head.height, `never taller than 0.328 of the column, ${side.toFixed(1)}`).toBeLessThanOrEqual(side + 0.5);
+        expect(r.head.width, 'nor wider').toBeLessThanOrEqual(side + 0.5);
         expect(Math.abs((r.head.left + r.head.right) / 2 - (r.list.left + r.list.right) / 2), 'centred in the column').toBeLessThan(0.5);
         expect(r.head.top - r.header.bottom, 'the 24 is a floor: from the header’s rule').toBeGreaterThanOrEqual(24 - 0.5);
         expect(r.list.top - r.head.bottom, 'from the list').toBeGreaterThanOrEqual(24 - 0.5);

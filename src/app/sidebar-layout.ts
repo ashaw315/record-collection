@@ -67,9 +67,21 @@ export function gridColumns(width: number): number {
 
 export type FigureShape = { /** The construction's clearing height (§29's 6px on its narrowest face). */ clearing: number; /** Its own width over its height. */ aspect: number };
 
-/** The narrowest content column whose figure is as tall as its clearing height: "below the clearing height there is no figure." */
+/**
+ * §T.6, step 117: the head figure's box as fractions of the content column.
+ * "Where the source's aspect is below 1, set the head figure's height to
+ * 0.328 of the content column and its width to height × aspect." A wider
+ * construction is 0.328 wide at its own ratio, as step 113 built every
+ * one; so the fraction is the figure's longer side and neither side
+ * passes it. Nothing reserves the square: the box is the drawing's.
+ */
+export function figureBox(aspect: number): { width: number; height: number } {
+  return aspect < 1 ? { width: FIGURE_FRACTION * aspect, height: FIGURE_FRACTION } : { width: FIGURE_FRACTION, height: FIGURE_FRACTION / aspect };
+}
+
+/** The narrowest content column whose figure is as tall as its clearing height: "below the clearing height there is no figure." The height is the capped one, so a tall construction clears no sooner for being narrow. */
 export function figureColumnMinimum(figure: FigureShape): number {
-  return (figure.clearing * figure.aspect) / FIGURE_FRACTION;
+  return figure.clearing / figureBox(figure.aspect).height;
 }
 
 /**
@@ -100,7 +112,7 @@ export function sidebarRules(figure: FigureShape | null): string {
     figure === null
       ? ''
       : `
-    [data-collection-sidebar], [data-collection-content] { --figure-width: calc(${column} * ${FIGURE_FRACTION}); --figure-height: calc(var(--figure-width) / ${figure.aspect}); }
+    [data-collection-sidebar], [data-collection-content] { ${figure.aspect < 1 ? `--figure-height: calc(${column} * ${FIGURE_FRACTION}); --figure-width: calc(var(--figure-height) * ${figure.aspect});` : `--figure-width: calc(${column} * ${FIGURE_FRACTION}); --figure-height: calc(var(--figure-width) / ${figure.aspect});`} }
     [data-head-figure] { position: relative; width: var(--figure-width); height: var(--figure-height); margin: 24px auto; }
     [data-diagonal] { display: block; position: absolute; height: 0; border-top: 1px solid ${INK}; transform-origin: 0 0; pointer-events: none; }
     /* Down and to the left from inside the figure, ending in air 6 above the head's foot. */

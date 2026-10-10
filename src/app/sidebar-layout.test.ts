@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CAP, FIGURE_FRACTION, FORK, OTHER_COLUMNS, RECORD_AT_FORK, RECORD_MINIMUM, SIDEBAR, contentColumn, figureColumnMinimum, gridColumns, sidebarRules } from './sidebar-layout';
+import { CAP, FIGURE_FRACTION, FORK, OTHER_COLUMNS, RECORD_AT_FORK, RECORD_MINIMUM, SIDEBAR, contentColumn, figureBox, figureColumnMinimum, gridColumns, sidebarRules } from './sidebar-layout';
 
 /**
  * Step 113, §T.1: the sidebar's arithmetic, held in one module so the
@@ -60,6 +60,43 @@ describe('the head figure', () => {
     expect(column).toBeCloseTo((172.4 * (194 / 163)) / 0.328, 6);
     expect(column, 'so it draws from the fork up').toBeLessThan(contentColumn(FORK));
   });
+
+  /*
+    Step 117, §T.6: "Where the source's aspect is below 1, set the head
+    figure's height to 0.328 of the content column and its width to height
+    × aspect." Fails against the figure as built to step 113, 0.328 wide at
+    any aspect, which made a tall construction taller than the fraction.
+  */
+  it('caps a tall construction’s height at 0.328 of the column and takes its width from the aspect', () => {
+    const tall = figureBox(0.966);
+    expect(tall.height).toBe(FIGURE_FRACTION);
+    expect(tall.width).toBeCloseTo(FIGURE_FRACTION * 0.966, 9);
+    /* At 1440 the column is 1023: Psychic's figure. */
+    expect([tall.width * 1023, tall.height * 1023].map((n) => Math.round(n * 10) / 10)).toEqual([324.1, 335.5]);
+  });
+
+  it('leaves a wide construction as it was: 0.328 of the column wide at its own ratio', () => {
+    const wide = figureBox(194 / 163);
+    expect(wide.width).toBe(FIGURE_FRACTION);
+    expect(wide.height).toBeCloseTo(FIGURE_FRACTION / (194 / 163), 9);
+    expect(figureBox(1)).toEqual({ width: FIGURE_FRACTION, height: FIGURE_FRACTION });
+  });
+
+  it('never draws a figure taller or wider than 0.328 of the column, at any aspect', () => {
+    for (const aspect of [0.5, 0.794, 0.966, 1, 1.19, 1.548, 2]) {
+      const box = figureBox(aspect);
+      expect(box.height, `aspect ${aspect}`).toBeLessThanOrEqual(FIGURE_FRACTION);
+      expect(box.width, `aspect ${aspect}`).toBeLessThanOrEqual(FIGURE_FRACTION);
+      expect(box.width / box.height, 'at the construction’s own ratio').toBeCloseTo(aspect, 9);
+    }
+  });
+
+  /* Fails against the minimum left as clearing × aspect: a capped figure is 0.328 of the column tall, so it clears later than the uncapped one did. */
+  it('names the column at which a capped figure clears: its height is the fraction, so the aspect does not shorten it', () => {
+    expect(figureColumnMinimum({ clearing: 193.2, aspect: 0.966 })).toBeCloseTo(193.2 / 0.328, 6);
+    expect(figureColumnMinimum({ clearing: 193.2, aspect: 0.966 }) * figureBox(0.966).height, 'at that column the figure is exactly the clearing height tall').toBeCloseTo(193.2, 6);
+    expect(figureColumnMinimum({ clearing: 172.4, aspect: 1.19 }) * figureBox(1.19).height).toBeCloseTo(172.4, 6);
+  });
 });
 
 describe('the stylesheet', () => {
@@ -74,6 +111,13 @@ describe('the stylesheet', () => {
     expect(css).toContain('--figure-width: calc((100cqw - 417px) * 0.328)');
     expect(css).toContain(`--figure-height: calc(var(--figure-width) / ${194 / 163})`);
     expect(css).toContain(`@container collection (width < ${figureColumnMinimum({ clearing: 172.4, aspect: 194 / 163 }) + 417}px)`);
+  });
+
+  it('sizes a tall construction from its height: 0.328 of the column tall, and as wide as its ratio makes that', () => {
+    const tall = sidebarRules({ clearing: 193.2, aspect: 0.966 });
+    expect(tall).toContain('--figure-height: calc((100cqw - 417px) * 0.328)');
+    expect(tall).toContain('--figure-width: calc(var(--figure-height) * 0.966)');
+    expect(tall).toContain(`@container collection (width < ${193.2 / 0.328 + 417}px)`);
   });
 
   it('draws no figure rules where there is no source', () => {
