@@ -40322,3 +40322,62 @@ the 1054 fork, short of 159.6, and first draws at a 1081 window. From
 1054 to 1080 the sidebar and its fragment draw and the head figure does
 not. Seen: no figure at 1054 and 1080, a figure of 217.8 × 159.8 at 1081.
 Needs a ruling; not changed.
+
+## Step 115: the source record is the one whose figure first draws at the narrowest window (10 Oct)
+
+**Built to Design's sentence and its reason, which agree; not to the
+coordinator's reading of them.** The instruction said the reason (adding a
+record never removes a figure) needs the LARGEST first-drawing width and
+to build "source = largest clearing × aspect". It needs the smallest: a
+figure draws at a window when the window is at least the source's
+first-drawing width, the smallest of a growing set can only fall, and the
+largest can rise, which is a figure removed. Design's save says the same
+("That width can only fall as records are added"), and the test the
+instruction asked for ("a record that clears lower but draws wider does
+not take the source") passes only for the smallest. The two halves of the
+instruction could not both be built; I built the half the test, the
+sentence and the reason share, and say so here. One comparison's sign in
+`figure-source.ts` is the whole difference if this is ruled the other way.
+
+**The rule.** `firstDrawingWidth` = the sidebar's 417 + clearing × aspect
+/ 0.328. `figureSource` takes the smallest, the oldest on a tie.
+- Fail-first, twice: against the selection on clearing height alone the
+  owed test read `picked "the newcomer, lower and wider" (clears at 159.6,
+  first draws at 1079.7); it should have kept "the standing source"
+  (clears at 172.4, first draws at 1042.5)`, 3 failed of 9; against the
+  largest width the same 3 failed with the same message. Built: `9 passed
+  — OK`.
+- Two unit tests encoded the withdrawn rule (smallest clearing height,
+  and a clearing height that never rises) and were rewritten to the new
+  one. Design withdrew that rule by name in this save.
+
+**On the real collection the source is neither The Doors nor the record
+before it.** Design's save says "the old source holds, drawing from
+1042.5". It does not: the old rule's source (Grave New World, Discharge,
+172.4 × 1.190) had the smallest clearing height and only the fourth
+narrowest first-drawing width. The narrowest is **Psychic, Darkside**:
+193.2, aspect 0.966, first drawing at 986.1, tint `#6e636a`. All eighteen
+are in `docs/captures/source-115/source-115.md`. So every figure changes
+shape again with this step, and the head figure is taller: 335.5 × 347.3
+at 1440 where it was 335.5 × 281.9 this morning, so the list starts about
+65 lower. The 1054 to 1080 band is closed: the figure draws at the fork
+(208.9 × 216.3 against 193.2) and its first-drawing width is below the
+fork, so there is no window where the sidebar draws and it does not.
+
+**The source is named.** My call on where: (1) the head figure carries
+`data-first-draws` beside `data-record`, and `e2e/source-115.spec.ts`
+fails if a listed record first draws narrower than the one drawn, naming
+the source and the records that should have been it; (2)
+`e2e/sheet/source-record.sheet.ts` writes the source by title, with every
+record's first-drawing width, into a committed file. Run after a record
+is added, a changed first line is a changed source. It is a record kept
+by running the sheet, not one the app keeps itself; nothing in the app
+stores or announces the source, which is with Adam and Design.
+
+**Step level:** `figure-source.test.ts` `9 passed — OK`; source-115,
+sidebar-113, empty-figure-103e, lookup-flows and want-list on both
+projects `196 passed, 1 skipped, ledger clean, tree unchanged — OK`. The
+covering set was derived this time, by the rule written this morning:
+every spec that imports `figure-source` or reads a figure's record.
+
+**Not touched:** the rose, a floor for the figure, announcing the source.

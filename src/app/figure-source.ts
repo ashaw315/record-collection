@@ -1,6 +1,7 @@
 import { construction } from './records/[id]/construction';
 import { MIN_FACE_WIDTH } from './records/[id]/ornament';
 import { ownFitViewBox } from './records/[id]/own-fit';
+import { SIDEBAR, figureColumnMinimum } from './sidebar-layout';
 
 /** A record's construction as a figure: the height at which it clears §29, and its width over its height. */
 export type Clearing = { height: number; aspect: number };
@@ -32,26 +33,43 @@ export function clearing(recordId: string): Clearing {
   return result;
 }
 
-export type FigureSource = { id: string; clearing: number; aspect: number };
+/**
+ * The narrowest window at which a record's figure draws: the sidebar's 417
+ * and the content column whose figure, 0.328 of it wide, is as tall as the
+ * clearing height. It counts the aspect, since "the figure is sized by
+ * width, and its height follows its aspect".
+ */
+export function firstDrawingWidth(shape: Clearing): number {
+  return SIDEBAR.taken + figureColumnMinimum({ clearing: shape.height, aspect: shape.aspect });
+}
+
+export type FigureSource = { id: string; clearing: number; aspect: number; /** The narrowest window its figure draws at. */ firstDraws: number };
 
 /**
- * §T.6: "Every figure in the app is drawn from one record, the one in the
- * collection whose construction clears §29's 6px at the smallest height,
- * the oldest where two tie." It is asked of the whole collection and never
- * of a page of it, which is why a re-sort, a filter or a page cannot change
- * it. "An empty collection has no figure."
+ * §T.6, step 115: "The source record is the one whose figure first draws at
+ * the narrowest window, which folds in its construction's aspect", the
+ * oldest where two tie. "That width can only fall as records are added, so
+ * adding a record never removes a figure." It is asked of the whole
+ * collection and never of a page of it, which is why a re-sort, a filter
+ * or a page cannot change it. "An empty collection has no figure."
+ *
+ * Not the smallest clearing height, which this was until The Doors
+ * (10 Oct): it clears lower, at 159.6 against 172.4, and draws wider, so
+ * as the source it needed a 1080 window where the figure had drawn from
+ * 1042.5, and the figure went from the fork's first 27 windows.
  */
 export function figureSource(records: ReadonlyArray<{ id: string; createdAt: Date }>, measure: (id: string) => Clearing = clearing): FigureSource | null {
-  let best: { id: string; createdAt: Date; clearing: Clearing } | null = null;
+  let best: { id: string; createdAt: Date; clearing: Clearing; firstDraws: number } | null = null;
   for (const record of records) {
     const c = measure(record.id);
+    const firstDraws = firstDrawingWidth(c);
     if (
       best === null ||
-      c.height < best.clearing.height ||
-      (c.height === best.clearing.height && (record.createdAt < best.createdAt || (record.createdAt.getTime() === best.createdAt.getTime() && record.id < best.id)))
+      firstDraws < best.firstDraws ||
+      (firstDraws === best.firstDraws && (record.createdAt < best.createdAt || (record.createdAt.getTime() === best.createdAt.getTime() && record.id < best.id)))
     ) {
-      best = { ...record, clearing: c };
+      best = { ...record, clearing: c, firstDraws };
     }
   }
-  return best === null ? null : { id: best.id, clearing: best.clearing.height, aspect: best.clearing.aspect };
+  return best === null ? null : { id: best.id, clearing: best.clearing.height, aspect: best.clearing.aspect, firstDraws: best.firstDraws };
 }

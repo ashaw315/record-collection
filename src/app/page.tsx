@@ -214,7 +214,7 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
                 <>
                   <i data-diagonal="head-air" aria-hidden="true" />
                   <i data-diagonal="head-rule" aria-hidden="true" />
-                  <div data-head-figure="" data-record={source.id} data-clearing={source.clearing} data-aspect={source.aspect} data-tint={tint ?? ''} aria-hidden="true">
+                  <div data-head-figure="" data-record={source.id} data-clearing={source.clearing} data-aspect={source.aspect} data-first-draws={source.firstDraws} data-tint={tint ?? ''} aria-hidden="true">
                     {still}
                   </div>
                 </>
