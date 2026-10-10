@@ -177,7 +177,8 @@
   --input: oklch(0.72 0.004 80);
   --ring: var(--foreground);
 
-  --chart-1: oklch(0.36 0.098 18);
+  /* Was oxblood, the first of a ramp drawn from it. Nothing reads these; the first is ink so no token holds the colour §T.6 took away (step 113). */
+  --chart-1: var(--foreground);
   --chart-2: oklch(0.5 0.07 30);
   --chart-3: oklch(0.62 0.05 45);
   --chart-4: oklch(0.72 0.035 60);
@@ -188,12 +189,13 @@
 
   --sidebar: oklch(0.965 0.006 82);
   --sidebar-foreground: var(--foreground);
-  --sidebar-primary: oklch(0.36 0.098 18);
-  --sidebar-primary-foreground: oklch(0.98 0.005 85);
+  /* Were oxblood and its white, unread by anything, and named for the sidebar step 113 builds: ink and paper, as `--primary` and `--ring` are. */
+  --sidebar-primary: var(--foreground);
+  --sidebar-primary-foreground: var(--background);
   --sidebar-accent: oklch(0.93 0.009 80);
   --sidebar-accent-foreground: var(--foreground);
   --sidebar-border: oklch(0.72 0.004 80);
-  --sidebar-ring: oklch(0.36 0.098 18);
+  --sidebar-ring: var(--foreground);
 }
 
 .dark {

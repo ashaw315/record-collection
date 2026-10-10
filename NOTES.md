@@ -40019,3 +40019,18 @@ app-wide.
   line's, Tag's, on the coordinator's ruling.
 - **The head figure's fraction is not measured: the wireframe is not in
   the tree.** No image or file of it is under `docs/`.
+
+## The three leftover oxblood tokens cleared, and a check on the tokens themselves (10 Oct)
+
+`--chart-1`, `--sidebar-primary` and `--sidebar-ring` held the oxblood
+value with nothing reading them, two of them named for the sidebar step
+113 builds. They are ink at the root now, and `--sidebar-primary-foreground`
+(oxblood's white) is paper, as `--primary-foreground` is. `colour-103.spec.ts`
+gains "no token resolves to oxblood at the root, whether anything reads it
+or not": every custom property the stylesheets declare, resolved through an
+element. Seen failing on exactly those three. The survey of 30 pages at two
+widths and sign-in, before against after: 61 of 61 identical, at rest and
+focused. The other `--sidebar-*` tokens are shadcn's and not oxblood;
+nothing rules them, and a sidebar built here should not take its colours
+from them unread. Carried forward: hover is a state the colour check never
+enters.

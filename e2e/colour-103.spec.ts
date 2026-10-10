@@ -272,6 +272,56 @@ test('§T.6: the record page’s price history draws its line in ink', async ({ 
   expect(lines, 'the precondition: a seeded record draws a price line').toBeGreaterThan(0);
 });
 
+/**
+ * The tokens themselves, used or not. Three root tokens held the oxblood
+ * value after it had left every screen, two of them named for a sidebar
+ * (`--sidebar-primary`, `--sidebar-ring`) on the eve of a sidebar being
+ * built: a component reaching for the token named after it would have
+ * brought the colour back. So no custom property the stylesheets declare
+ * may resolve, at the root, to oxblood. The grey and the red are not read
+ * here: both are still the root's, scoped out by `data-t6` (NOTES, 10 Oct).
+ */
+test('§T.6: no token resolves to oxblood at the root, whether anything reads it or not', async ({ page }) => {
+  await login(page);
+  await openScreen(page, '/?view=table', GRID_FORK);
+  const r = await page.evaluate((oxblood) => {
+    const canvas = document.createElement('canvas'); canvas.width = 1; canvas.height = 1;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true }) as CanvasRenderingContext2D;
+    const paint = (css: string) => { ctx.clearRect(0, 0, 1, 1); ctx.fillStyle = '#000'; ctx.fillStyle = css; ctx.fillRect(0, 0, 1, 1); const d = ctx.getImageData(0, 0, 1, 1).data; return [d[0], d[1], d[2], d[3]]; };
+    const target = paint(oxblood);
+    const names = new Set<string>();
+    const walk = (rules: CSSRuleList) => {
+      for (const rule of Array.from(rules)) {
+        if (rule instanceof CSSStyleRule) for (const name of Array.from(rule.style)) if (name.startsWith('--')) names.add(name);
+        const inner = (rule as CSSGroupingRule).cssRules as CSSRuleList | undefined;
+        if (inner !== undefined && inner.length > 0) walk(inner);
+      }
+    };
+    for (const sheet of Array.from(document.styleSheets)) { try { walk(sheet.cssRules); } catch { /* a sheet from another origin has no rules to read */ } }
+    const root = getComputedStyle(document.documentElement);
+    const probe = document.createElement('i');
+    document.body.append(probe);
+    const found: string[] = [];
+    let colours = 0;
+    for (const name of names) {
+      if (root.getPropertyValue(name).trim() === '') continue;
+      /* Resolved through an element, so a token defined by another token is read as the colour it ends at. */
+      probe.style.color = '';
+      probe.style.color = `var(${name})`;
+      if (probe.style.color === '') continue;
+      const [red, green, blue, alpha] = paint(getComputedStyle(probe).color);
+      if (alpha === 0) continue;
+      colours += 1;
+      if (Math.abs(red - target[0]) <= 3 && Math.abs(green - target[1]) <= 3 && Math.abs(blue - target[2]) <= 3) found.push(name);
+    }
+    probe.remove();
+    return { names: names.size, colours, found: found.sort() };
+  }, GOING.oxblood);
+  expect(r.names, 'the precondition: the stylesheets’ custom properties were found').toBeGreaterThan(40);
+  expect(r.colours, 'the precondition: colours among them were resolved').toBeGreaterThan(20);
+  expect(r.found, 'tokens that are oxblood').toEqual([]);
+});
+
 test.describe('§9.3, settled: "Delete is on every record, so it cannot be red here"', () => {
   /*
     Fails against the record page's confirmation as built: its Delete was the shared destructive variant, red type on
