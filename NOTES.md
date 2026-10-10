@@ -40381,3 +40381,69 @@ covering set was derived this time, by the rule written this morning:
 every spec that imports `figure-source` or reads a figure's record.
 
 **Not touched:** the rose, a floor for the figure, announcing the source.
+
+## A Design save arriving alone is committed raw, without the checked script (rule's exception, 10 Oct)
+
+Written so it is not argued again. Two standing rules meet: a Design drop
+is committed the moment it arrives, as it came; and every commit goes
+through `scripts/commit-checked.sh`. A raw save cannot pass the second.
+Design's export does not carry Code's region of the handoff, so on any raw
+save `test/repo/code-region.test.ts` fails (blocks missing: step-71,
+step-105, step-107) and `test/repo/index-assertions.test.ts` fails with it
+(the index reads the holes). Both are red by construction until the intake
+runs, and neither says anything about the save.
+
+So the order is: **commit raw with plain `git commit`, naming the two
+failures in the message; then the intake (`apply-code-region.mjs`,
+`derive-withdrawals.mjs`), committed through the checked script; then the
+index (`check-index.mjs`, `RESULT: 11 PASS`) and `export-diff.mjs`.** The
+raw commit is the one exception to the checked script, and only for a
+commit that holds Design's files and nothing else. Why not intake first
+and one checked commit: the save would sit in the tree uncommitted while
+scripts rewrite it, which is the loss the on-arrival rule exists to stop.
+Kept at `e26bede`/`99572b4` and `04be966`/`876d8af`.
+
+**The check's summary line is kept from now on.** `a82213f` (step 115)
+went through the checked script, which commits only on a pass, but I
+tailed its output and the line was lost. The script's own refusal is the
+evidence for that commit; the line itself is not recoverable. Checked
+commits now write their output to a file and the line is read from it:
+`876d8af` read `416 passed, tree unchanged — OK`.
+
+**Design's save `04be966` still says "today the old source, 1042.5"** in
+step 115 and in the target. It is false on today's collection (Psychic,
+Darkside, 986.1). Taken as it came: the coordinator has it as its own
+line, with an entry owed and Design filing it.
+
+## Step 116: the grid's covers either side of the 1054 fork, measured (10 Oct)
+
+A measurement for Design, on the real collection, read-only;
+`docs/captures/grid-fork-116/`. No code changed. The sheet passed; the
+figures are as drawn in desktop Chromium.
+
+| window | sidebar | grid's width | covers to a row | cover |
+|---|---|---|---|---|
+| 1920, 1440 | yes | 1023 | 5 | 185.4 |
+| 1081 | yes | 664 | 3 | 205.3 |
+| 1080 | yes | 663 | 3 | 205 |
+| 1054 | yes | 637 | 3 | 196.3 |
+| 1053 | no | 1013 | 5 | 183.4 |
+| 1024 | no | 984 | 5 | 177.6 |
+| 390 | no | 350 | 2 | 163 |
+
+Every row agrees with 184n − 24 on the grid's own width, and the gap is
+24 throughout. Both stale figures are wrong for this fork: it is **three
+covers of 196 at the fork**, not four, and **five of 183 just below it**,
+not six of 164. By arithmetic and not measured here: four covers from a
+1129 window and five from 1313.
+
+**What a stored source would take** (asked for; not built). The source is
+derived on every request from the ids alone. To make it a stored fact: a
+one-row table or a setting holding the source's record id and the time it
+became the source, written when a record is created or deleted, since
+those are the only events that change the set. Cost: a migration and a
+schema SPEC.md §4 does not have, so a spec ruling first; a write in two
+routes plus a backfill; and a stored fact that can disagree with the
+derived one, so a check that they agree. A cheaper half-measure with no
+schema: on create and delete, log one line when the derived source
+changes, naming the old and the new.
