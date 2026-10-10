@@ -16,5 +16,11 @@
     "before": "108. ",
     "why": "Code's own step (the hold against a finger and the panel placed again on scroll), from Adam's phone check on 9 Oct; never in Design's source. Carried as steps 71 and 105 are, so the handoff's numbering has no hole.",
     "text": "107. **Done: built and deployed at 57e954a.** **§T.3 — the page held against a finger, and the panel placed again on scroll.** Adam, on his phone: with a filter open, the page behind moved under a finger. The hold was `overflow: hidden` on the root, which Mobile Safari does not keep against a finger, and the panel was placed on open and on resize only, so once the page moved the lines went and the panel stayed. Cancel a finger's move unless it began on the panel and the list can still follow it; do not reposition the page to hold it, so nothing moves on open or close. Place the panel again on every scroll. Test for real that a scripted scroll moves the page and the panel follows its lines, and that open and close move nothing; test the finger as a staged proxy on Chromium's touch stream with the root's overflow taken off. The engine that showed it is the one no test here runs; the check on the phone is Adam's. Step 108 replaces the interim hold of the panel's top at the window's top."
+  },
+  {
+    "id": "step-116",
+    "before": "117. ",
+    "why": "Code's own step (the grid measured either side of the fork), asked for by the coordinator on 10 Oct and named as Code's (\"116 is yours\"); never in Design's source. Design renumbered the cap to 117, which leaves 116 a hole in the handoff's numbering without this. Carried as steps 71, 105 and 107 are.",
+    "text": "116. **Done: measured at 11ac534; no code changed.** **§T.5 — the grid's covers either side of the 1054 fork, measured.** On the real collection, read-only, in desktop Chromium (`docs/captures/grid-fork-116/`): five covers of 185.4 at 1920 and 1440; three of 205.3 at 1081, 205 at 1080 and 196.3 at 1054, with the sidebar; five of 183.4 at 1053 and 177.6 at 1024, and two of 163 at 390, without it. The gap is 24 throughout and every row agrees with 184n − 24 on the grid's own width. The two boundaries above the fork were measured with step 117."
   }
 ]
