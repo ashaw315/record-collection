@@ -42,3 +42,13 @@ Read-only, desktop Chromium, the table. To a thousandth of a pixel.
 | 822 | 0 | | | | | |
 | 821 | 0 | | | | | |
 | 820 | 0 | | | | | |
+
+**Do not read the face columns as the rule.** At 823 and 824 the side
+faces are half the solid's width; at 830, 1024 and 1440 one of the two
+comes out 0.0065 below half and the other 0.0065 above (6.789 and 6.802
+at 13.591; 28.344 and 28.357 at 56.701; 52.543 and 52.556 at 105.099).
+The same absolute offset at 13.6 wide and at 105 wide is neither rounding
+nor proportional: it is how the face was measured here, a polygon's client
+box, which the browser snaps to its layout grid at the two faces' shared
+edge. The rule is the geometry, held by `block-figure.test.ts`: each side
+face is exactly half the solid's width, so a solid 12 wide has faces of 6.
