@@ -239,6 +239,7 @@ export default defineConfig({
         /panel-hold-107\.spec\.ts$/,
         /filter-box-106\.spec\.ts$/,
         /panel-leaves-108\.spec\.ts$/,
+        /heading-figure-103d\.spec\.ts$/,
         /* Step 105: the table row's link box and presses inside an open panel, on the phone's engine. */
         /table-row-box-105\.spec\.ts$/,
         /collection-widths\.spec\.ts$/,

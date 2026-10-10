@@ -10,7 +10,10 @@ import { WallUrlState } from './WallUrlState';
 import { wallSeats, wallSummaries } from './wall/producer';
 import { CollectionPagination } from './CollectionPagination';
 import { parseCollectionParams } from './collection-params';
-import { listRecords, recordFacets, countAllRecords } from '@/lib/db/queries/records';
+import { listRecords, listRecordAges, recordFacets, countAllRecords } from '@/lib/db/queries/records';
+import { ConstructionStill } from './records/[id]/ConstructionStill';
+import { HeadingFigure } from './HeadingFigure';
+import { figureSource } from './figure-source';
 import { shelfRecords } from '@/lib/db/queries/shelf';
 import { newestCoverUrls } from '@/lib/db/queries/images';
 import { DEFAULT_PAGE_SIZE, type Offset } from '@/lib/api/query-params';
@@ -98,6 +101,13 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
   ]);
 
   /*
+    §T.6's one source record, for the table's and the grid's heading figure
+    (step 103d): chosen from the whole collection, so no filter, order or
+    page moves it. The shelf is not reached by §T.6 and does not pay for it.
+  */
+  const source = shelf === null ? figureSource(await listRecordAges()) : null;
+
+  /*
     §T.5: the grid shows each record's cover, the newest by §61. Asked for
     the records on this page only, and only by the grid, so the table and
     the shelf do not pay for it and the records endpoint keeps its shape.
@@ -131,11 +141,16 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
           />
         </main>
       ) : (
-        <main data-collection-views="">
+        <main data-collection-views="" className="relative">
+          {source !== null && (
+            <HeadingFigure source={source}>
+              <ConstructionStill recordId={source.id} spineColour={null} />
+            </HeadingFigure>
+          )}
           {/* §T.1: the shelf's band, in its two-row form at every width. Search, the three views and Add record are its. */}
           <CollectionBand params={params} genres={facets.genres} />
           <div className="px-5 pb-6">
-          <header className="mb-5">
+          <header data-collection-heading="" className="mb-5">
             {/*
               §T.3: the count directly above the heading, an 11 label over
               a 40, small first and nothing between. Filter-aware: "34 of

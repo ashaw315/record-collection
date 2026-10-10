@@ -603,6 +603,16 @@ export async function countAllRecords(): Promise<number> {
   return row?.value ?? 0;
 }
 
+/**
+ * Every record's id and when it was added, ignoring every filter: what
+ * §T.6's one source record is chosen from. "The source names no screen",
+ * so this reads no filter, order or page.
+ */
+export async function listRecordAges(): Promise<Array<{ id: string; createdAt: Date }>> {
+  const db = getDb();
+  return db.select({ id: records.id, createdAt: records.createdAt }).from(records);
+}
+
 export type RecordDeleteOutcome =
   /**
    * `orphanedBlobUrls` — the images that cascaded, so the caller can delete the

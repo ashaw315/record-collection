@@ -39004,3 +39004,91 @@ overwritten by the next run. Copy a failure's artefacts before running
 anything again. This test has been red in gates before (5, 6, 7 Oct) for
 a different stated cause. It is watched at the batch gate, with traces
 kept.
+
+## Step 103d: the heading's figure on the table and the grid, in ink alone; the solids are not built (9 Oct, night)
+
+§T.6. Ungated; the step-level record is at the end.
+
+**Built.**
+- *The source* (`figure-source.ts`): the record in the whole collection
+  whose construction clears §29's 6px at the smallest height, the oldest
+  on a tie. It is asked of every record's id and age (`listRecordAges`),
+  never of a page, so sort, filter and page cannot reach it.
+- *The air* (`heading-air.ts`, `HeadingFigure.tsx`): measured in the
+  browser at render, as the matrix solid's space is. Left of it, the
+  widest thing the band's column draws, plus 24; above, the header's foot
+  plus 24; below, the list's first type or cover, less 24. Add record
+  stands in it, so there are two rectangles, beside it or under it, and
+  the one holding the taller figure is the air. The figure is drawn only
+  where its height there is at least its clearing height.
+- *The figure*: the record page's own still (`ConstructionStill`) with no
+  colour, so every face is ink or the neutral grey, in the air's box,
+  placed in the box's slack by the record's hash as §33 places it. Laid
+  over the page, out of its flow, taking no press.
+
+**On the real collection** (`docs/captures/heading-figure-103d/`):
+
+| view | 1920 | 1440 | 1024 | 768 | 390, 320 |
+|---|---|---|---|---|---|
+| table, air's height | 451.8 | 451.8 | 451.8 | 332.8 | none |
+| table, figure | 538 × 452 | 538 × 452 | 416 × 350 | 281 × 236 | none |
+| grid, air's height | 437 | 437 | 437 | 318 | none |
+| grid, figure | 520 × 437 | 520 × 437 | 416 × 350 | 281 × 236 | none |
+
+The source's clearing height is 172.4. The figure is 1.19 times as wide
+as tall, so at 1024 and 768 it is the air's WIDTH that binds: the figure
+is 350 and 236 tall there, not the air's 452 and 334 that §T.6 writes.
+It appears at 693 wide and not at 692, on both views; below that there
+is nothing right of the band. **The solids-to-ink ratio is 0: no solid
+is drawn.**
+
+**172.4, where the air sheet said 170.7.** The sheet scaled from the
+forms' own bounds; the still is drawn in its box of whole units
+(`ownFitViewBox`), which is slightly larger, so a figure of a given
+height draws its faces slightly smaller. The build's figure is the one
+that is true of what is drawn. No screen's outcome changes: stats' 153
+was already short.
+
+**Not built, and with Design: §26's solids.** "§26's solids in the tints
+of the first three shown records." Nothing in the app draws three solids
+together (§26's figures are solos and pairs, in one record's ladder), and
+§T.6 does not say which solids, where they stand against the
+construction, or how the area the ink allows is shared among them. "Nothing
+new is drawn" rules out composing one here. Questions: which archetypes;
+beside, in front of or among the construction's forms; one size or three;
+and whether a record's solid takes that record's three ladder steps or
+its tint alone.
+
+**Decided in the build, for Design to rule.**
+- Where the figure stands in its air: by the record's hash, §33's rule
+  for a still in a box. §T.6 does not say.
+- "The largest height that air holds" was read as the tallest the figure
+  can be in the air keeping its proportion, so a wide figure in narrow
+  air is shorter than the air.
+- "The states of one screen share the smaller air" is NOT built for the
+  table and the grid: the air is measured in each state, so with a filter
+  in force (CLEAR FILTER adds a row to the column and moves the list
+  down) the figure is a little taller. It does not come or go.
+- The still's footprints, its three flat shadows, are drawn as on the
+  record page. "In ink" was read as the still with no colour.
+
+**Tests.** Unit: the clearing height is the height at which the narrowest
+side face is 6; the source is the least, ignores order, takes the oldest
+on a staged tie, and never rises as records are added; the air at 1440
+and 768 from the real table's figures, the margin, the fit by width, the
+threshold, a phone. Integration: `listRecordAges` gives all sixty of
+sixty, past the list's page of 50. E2E (`heading-figure-103d.spec.ts`,
+both projects): at 1440, 1024 and 768 on both views, nothing drawn is
+within 24 of the air, the construction is the named record's and in ink
+alone, its height clears, and no record shown clears lower; none at 390
+or 320; drawn under three sorts and a filter; it goes with the page when
+scrolled. **Not asserted end to end: that the figure is THE source
+record's**, because the other worker adds and deletes records under the
+test; the unit tests carry the choice.
+
+**Step level, ungated:** the figure's spec with colour-103, radius-103,
+table-98, grid-99 and the filter specs on both projects, `161 passed, 5
+skipped, ledger clean, tree unchanged — OK`; repo, app, component and the
+new integration test `1698 passed`; typecheck, lint (0 errors), build.
+Ungated commits so far, for a bisect: `26d408c` (106), `bbbc841` (108),
+and this one.

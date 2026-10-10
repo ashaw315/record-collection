@@ -30,7 +30,7 @@ export type CollectionRow = {
 
 function Empty() {
   return (
-    <div className="border border-border px-4 py-12 text-center">
+    <div data-collection-empty="" className="border border-border px-4 py-12 text-center">
       <p className="text-prose text-[oklch(0.44_0.008_70)]">No records yet.</p>
     </div>
   );
