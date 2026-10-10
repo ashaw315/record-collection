@@ -24,8 +24,8 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        /* §T.6: on a screen it reaches, "a filled button [is] §9.3's unfilled ink box, square". */
-        default: "bg-primary text-primary-foreground hover:bg-primary/80 in-data-t6:border-foreground in-data-t6:bg-transparent in-data-t6:text-foreground in-data-t6:hover:bg-transparent in-data-t6:hover:underline",
+        /* §T.6: "a filled button [is] §9.3's unfilled ink box, square", on every screen (step 113; it was scoped to `data-t6` until then, and no filled button was drawn outside one). */
+        default: "border-foreground bg-transparent text-foreground hover:bg-transparent hover:underline",
         outline:
           "border-border bg-background hover:bg-muted hover:text-foreground aria-expanded:bg-muted aria-expanded:text-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
         secondary:

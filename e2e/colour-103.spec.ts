@@ -132,6 +132,146 @@ test.describe('§T.6: oxblood, the survey’s grey and the destructive red are g
   });
 });
 
+/**
+ * Each focusable control on the page, focused in turn, and what it then
+ * paints in a colour that goes. A key is pressed first, so a scripted focus
+ * is one the engine draws a ring for, as it does for a reader on a keyboard.
+ */
+const goingFocused = (page: Page, names: string[]) =>
+  page.evaluate(({ GOING, names }) => {
+    const canvas = document.createElement('canvas'); canvas.width = 1; canvas.height = 1;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true }) as CanvasRenderingContext2D;
+    const paint = (css: string) => { ctx.clearRect(0, 0, 1, 1); ctx.fillStyle = '#000'; ctx.fillStyle = css; ctx.fillRect(0, 0, 1, 1); const d = ctx.getImageData(0, 0, 1, 1).data; return [d[0], d[1], d[2], d[3]]; };
+    const targets = Object.entries(GOING).filter(([name]) => names.includes(name)).map(([name, css]) => ({ name, rgb: paint(css) }));
+    const which = (css: string) => {
+      const [r, g, b, a] = paint(css);
+      if (a === 0) return null;
+      /* Unpremultiplied, the canvas gives a half-strength colour back within a step or two of the full one. */
+      const tol = a < 60 ? 14 : 3;
+      return targets.find((t) => Math.abs(t.rgb[0] - r) <= tol && Math.abs(t.rgb[1] - g) <= tol && Math.abs(t.rgb[2] - b) <= tol)?.name ?? null;
+    };
+    const colours = (value: string) => value.match(/(?:rgba?|lab|oklab|oklch|lch|color)\([^)]*\)/g) ?? [];
+    const focusable = Array.from(document.querySelectorAll<HTMLElement>('a[href], button, input:not([type=hidden]), select, textarea, [tabindex]:not([tabindex="-1"])')).filter((el) => el.closest('nextjs-portal') === null && !(el as HTMLButtonElement).disabled && el.getClientRects().length > 0);
+    const found = new Set<string>();
+    let focused = 0;
+    let ringed = 0;
+    for (const el of focusable) {
+      el.focus({ preventScroll: true });
+      if (document.activeElement !== el) continue;
+      focused += 1;
+      const cs = getComputedStyle(el);
+      const reads: Array<[string, string]> = [['fill', cs.backgroundColor], ['text', cs.color]];
+      for (const side of ['Top', 'Right', 'Bottom', 'Left'] as const) if (cs[`border${side}Width`] !== '0px' && cs[`border${side}Style`] !== 'none') reads.push(['border', cs[`border${side}Color`]]);
+      if (cs.outlineStyle !== 'none' && cs.outlineWidth !== '0px') { ringed += 1; reads.push(['outline', cs.outlineColor]); }
+      for (const c of colours(cs.boxShadow)) { ringed += 1; reads.push(['ring', c]); }
+      for (const [kind, css] of reads) {
+        const name = which(css);
+        if (name === null) continue;
+        const where = el.closest('[data-app-nav]') !== null ? 'the header’s ' : '';
+        found.add(`${name}: ${kind} of ${where}${el.tagName.toLowerCase()} "${((el.textContent ?? '').trim() || el.getAttribute('aria-label') || el.getAttribute('placeholder') || '').slice(0, 20)}"`);
+      }
+    }
+    (document.activeElement as HTMLElement | null)?.blur();
+    return { found: [...found].sort(), focused, ringed };
+  }, { GOING, names });
+
+async function expectNoneFocused(page: Page, name: string, names = Object.keys(GOING)) {
+  await page.keyboard.press('Shift');
+  const r = await goingFocused(page, names);
+  expect(r.focused, `${name}: the precondition, controls took focus`).toBeGreaterThan(1);
+  expect(r.ringed, `${name}: the precondition, a focused control draws a ring that was read`).toBeGreaterThan(0);
+  expect.soft(r.found, `${name}, each control focused: ${names.join(', ')}`).toEqual([]);
+}
+
+/**
+ * Step 113. §T.6 rules oxblood gone app-wide, and the build took it only
+ * from screens whose root carried `data-t6`: the header is outside every
+ * such root, and the table and grid never carried it, so every focus ring
+ * there was the root's oxblood (found on the GENRE line, 10 Oct). The ring
+ * is ink at the root now, and this reads the focused state of every
+ * control, where the tests above read one field and one submit on five
+ * forms.
+ */
+test.describe('§T.6: no control draws oxblood when focused, on any screen', () => {
+  test.beforeEach(async ({ page }) => login(page));
+
+  for (const width of [390, GRID_FORK]) {
+    /* Fails against the root's oxblood ring: the header's controls on every one of these, 6 at 1440 and 2 at 390. */
+    test(`at ${width}: every control on the five screens and the four pages, the header’s included, with the grey and the red gone too`, async ({ page }) => {
+      const f = await seedFixture(page, 'Focus113');
+      await eachScreen(page, f, width, (name) => expectNoneFocused(page, name));
+    });
+
+    /* Fails against the same ring on Sort, each filter line, each option, the view names and each row's link. */
+    test(`at ${width}: every control on the table and the grid, with a filter open and with a year filter in force`, async ({ page }) => {
+      for (const view of ['table', 'grid']) {
+        await openScreen(page, `/?view=${view}`, width);
+        await page.locator('[data-collection-filters][data-hydrated="true"]').waitFor({ timeout: 30_000 });
+        await expectNoneFocused(page, `the ${view}`);
+        await page.locator('[data-filter="genreId"] [data-filter-trigger]').click();
+        await page.locator('[data-filter-panel]').waitFor();
+        await expectNoneFocused(page, `the ${view}, Genre open`);
+        /* The undated control and CLEAR are drawn only in this state. */
+        await openScreen(page, `/?view=${view}&yearFrom=1900`, width);
+        await page.locator('[data-filter-undated]').waitFor();
+        await expectNoneFocused(page, `the ${view}, a year filter`);
+      }
+    });
+
+    /*
+      Oxblood alone: §T.6 "does not reach the shelf, the record page or the
+      modal" as compositions, and their grey is not ruled here. Fails against
+      the root's ring on each of them.
+    */
+    test(`at ${width}: no oxblood on a focused control on the shelf, the record page, its modal, its confirmation, or the page for an address that is not one`, async ({ page }) => {
+      const f = await seedFixture(page, 'Focus113');
+      const oxblood = ['oxblood'];
+      await openScreen(page, '/', width);
+      await expectNoneFocused(page, 'the shelf', oxblood);
+      if (width === GRID_FORK) {
+        await page.getByTestId('wall-zoom-out').click();
+        await page.locator('[data-wall="overview"]').waitFor();
+        await expectNoneFocused(page, 'the shelf, far', oxblood);
+      } else {
+        await page.locator('[data-app-nav] [data-menu-control]').click();
+        await page.locator('[data-menu-panel]').waitFor();
+        await expectNoneFocused(page, 'the header’s menu, open', oxblood);
+      }
+      await openScreen(page, `/records/${f.record}`, width);
+      await expectNoneFocused(page, 'the record page', oxblood);
+      await page.locator('[data-cover-trigger]').click();
+      await page.locator('[data-sleeve-modal]:not([data-travelling])').waitFor();
+      await expectNoneFocused(page, 'the record modal', oxblood);
+      await page.keyboard.press('Escape');
+      await page.locator('[data-sleeve-modal]').waitFor({ state: 'detached' });
+      await page.getByRole('button', { name: 'Delete record' }).click();
+      await page.getByRole('button', { name: 'Cancel' }).waitFor();
+      await expectNoneFocused(page, 'the record’s confirmation', oxblood);
+      await page.goto('/no-such-page');
+      await page.waitForLoadState('load');
+      await expectNoneFocused(page, 'not found', oxblood);
+    });
+  }
+});
+
+/* Fails against `text-primary` on the price history's line while the root's primary was oxblood. */
+test('§T.6: the record page’s price history draws its line in ink', async ({ page }) => {
+  await login(page);
+  await openScreen(page, '/?view=table', GRID_FORK);
+  const records = await page.locator('main [data-collection-table] tbody tr a').evaluateAll((as) => as.map((a) => a.getAttribute('href') ?? '').filter((h) => /^\/records\/[0-9a-f-]+$/.test(h)));
+  let lines = 0;
+  for (const href of records) {
+    await openScreen(page, href, GRID_FORK);
+    const strokes = await page.locator('polyline').evaluateAll((all) => all.map((l) => getComputedStyle(l).stroke));
+    if (strokes.length === 0) continue;
+    lines += strokes.length;
+    const r = await going(page);
+    expect(r.found.filter((line) => line.startsWith('oxblood')), `${href.slice(0, 12)}…: oxblood at rest`).toEqual([]);
+    if (lines >= 3) break;
+  }
+  expect(lines, 'the precondition: a seeded record draws a price line').toBeGreaterThan(0);
+});
+
 test.describe('§9.3, settled: "Delete is on every record, so it cannot be red here"', () => {
   /*
     Fails against the record page's confirmation as built: its Delete was the shared destructive variant, red type on

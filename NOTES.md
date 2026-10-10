@@ -39951,3 +39951,71 @@ no other control, none in the header, and nothing on the table or grid.
 The focus-state colour check is not written: against the build it fails
 on the header's controls on every screen, and what would pass it is the
 inversion. The patch and the survey are kept outside the tree.
+
+## The ink inversion, landed in part, and the focus-state colour check (10 Oct)
+
+On the coordinator's ruling, from §T.6's own split: it disclaims the shelf,
+the record page and the modal as compositions and asserts no oxblood
+app-wide.
+
+- **Landed.** `--primary`, `--primary-foreground` and `--ring` are ink at
+  the root (`globals.css`), so every focus ring and the record page's
+  price line are ink; the shared button's default is §9.3's unfilled ink
+  box on every screen, where it was scoped by `in-data-t6:`.
+- **Held, and still scoped by `data-t6`.** The grey (`--muted-foreground`
+  0.48 to 0.44): the record page's asides keep 0.48. And the destructive
+  red, which the ruling did not list: `--destructive` and the button's
+  destructive variant are ink only under `data-t6`, as before. So the
+  attribute has not gone; what it carries is two mappings and no longer
+  the oxblood. Whether red goes app-wide is the coordinator's to say.
+- **The survey, before against the landed subset** (the same throwaway
+  spec: 30 pages at 1440 and 390 and sign-in, every element at rest and
+  each control focused). At rest one thing changed: the price line's
+  stroke on the record page, oxblood to ink, on each seeded record that
+  draws one. No grey moved. Focused: the browser's ring, `auto 1px` (5px
+  on the shelf's spine links), from the root's oxblood at half strength
+  to ink at half strength, on every page but sign-in and `/wall/overview`,
+  which draw none. Three entries the survey files as "at rest" are a
+  control that holds focus when its page opens (the open filter's title,
+  the menu's control, the far shelf's zoom), so they are the ring too.
+- **The check** (`colour-103.spec.ts`, "no control draws oxblood when
+  focused, on any screen"): every focusable control focused in turn, on
+  §T.6's screens with the header, on the table and grid with a filter
+  open and with a year filter in force, and for oxblood alone on the
+  shelf, the record page, its modal and confirmation, and not-found; and
+  a test that the price line is ink. Seen failing on the build before the
+  change, on the header's controls on every screen and on every control
+  of the table, grid and shelf.
+- **Not closed by this.** Design has confirmed a recoloured browser
+  outline does not meet the focus rule: drawing §M.6's ring on these
+  controls is step 113's work. Three root tokens still hold the oxblood
+  value and nothing in `src` reads them: `--chart-1`, `--sidebar-primary`,
+  `--sidebar-ring`. Hover states were not surveyed.
+
+## Five measurements for the sidebar (10 Oct), read-only
+
+- **Nothing in the UI sets a year filter.** `yearFrom` and `yearTo` are
+  read from the address (`collection-params.ts:98`) and by the API; no
+  control or link writes one. The undated toggle and its count are drawn
+  when one is in the address, and CLEAR counts it.
+- **The wordmark's left is 18 inside the header's row, and the row is not
+  the window.** `AppHeader.tsx:241`: `px-[18px]` on a row capped at 1152
+  and centred. Measured on the table, the shelf and the want list: 18 at
+  320 to 1024; 162 at 1440; 402 at 1920. So a sidebar whose content starts
+  at 18 from the window's edge starts on the wordmark only up to a 1152
+  window.
+- **The fork, on the only measure the build has: 1145.** The table draws
+  its full six columns from a 768 window, where it is 728 wide and every
+  row is one line of 44 (real collection, 17 records); below that Label
+  goes, and at 640 rows are two lines. 728 and the 417 the sidebar takes
+  is 1145. That 768 is Tailwind's `md`, not a measured fit, and no minimum
+  is ruled for Record, which takes the slack and was 269 wide at 728; a
+  different minimum for Record gives a different fork.
+- **The line-named endpoints were never a rule in a committed target.**
+  "The first filter line's top to the Sort line's foot" first appears at
+  `3f23dd3`, already as "an earlier draft". The handoff is another matter:
+  step 111's entry, from `3f23dd3` to now, says "Test that the figure's
+  foot equals the Sort line's foot". The build put the foot on the last
+  line's, Tag's, on the coordinator's ruling.
+- **The head figure's fraction is not measured: the wireframe is not in
+  the tree.** No image or file of it is under `docs/`.

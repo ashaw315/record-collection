@@ -113,11 +113,10 @@
 
 /*
  * A shop's stock ledger, not a SaaS dashboard: warm paper ground, near-black
- * ink, hairline rules, and ONE accent used for actions only.
+ * ink and hairline rules.
  *
- * Oxblood (--primary) is the accent. It appears on buttons, focus rings and
- * active navigation — never on headers, borders or decoration. If it starts
- * showing up as a background wash, that is the drift to correct.
+ * There was one accent, oxblood, on buttons, focus rings and active
+ * navigation. §T.6 took it from every screen, and `--primary` is ink.
  *
  * SPEC.md §13 rules out a dark-mode toggle, so this light theme is the theme.
  * The .dark block below is shadcn's default, left untouched and unused rather
@@ -139,9 +138,17 @@
   --popover: oklch(0.995 0.003 85);
   --popover-foreground: var(--foreground);
 
-  /* Oxblood. Dark enough to carry white text at small sizes. */
-  --primary: oklch(0.36 0.098 18);
-  --primary-foreground: oklch(0.98 0.005 85);
+  /*
+   * Ink, at the root (step 113). This was oxblood, and §T.6 took it from
+   * every screen: "colour in this app now means a record's own." It was
+   * first taken only where a screen's root carried `data-t6`, and a rule
+   * kept by remembering to repeat it failed without a sound: the header
+   * is outside every such root and the table and grid never carried one,
+   * so each focus ring there stayed oxblood, as did the record page's
+   * price line.
+   */
+  --primary: var(--foreground);
+  --primary-foreground: var(--background);
 
   --secondary: oklch(0.955 0.006 85);
   --secondary-foreground: var(--foreground);
@@ -168,7 +175,7 @@
    */
   --border: oklch(0.72 0.004 80);
   --input: oklch(0.72 0.004 80);
-  --ring: oklch(0.36 0.098 18);
+  --ring: var(--foreground);
 
   --chart-1: oklch(0.36 0.098 18);
   --chart-2: oklch(0.5 0.07 30);
@@ -224,27 +231,19 @@
 }
 
 /*
- * §T.6 (step 103): "Oxblood goes from every screen... colour in this app now
- * means a record's own." On the screens §T.6 reaches, each constant colour
- * becomes what its role takes: text, a rule, a ring and a mark in ink; the
- * survey's grey, the label colour; a destructive action, ink.
+ * §T.6 (step 103), the part that is still scoped. Oxblood is gone at the
+ * root, above. What a screen takes by carrying `data-t6` on its root (and
+ * a dialog on its popup, since a dialog is drawn outside the page) is the
+ * rest of §T.6's mapping: the survey's grey becomes the label colour, and
+ * a destructive action ink.
  *
- * Scoped by attribute and not set at the root, because §T.6 "does not reach
- * the shelf, the record page or the modal", and sign-in is not among its
- * screens: the record page still draws from these tokens (its price
- * sparkline, its asides, its confirmation), and a root change would restyle
- * a closed screen inside a build step. A screen takes the mapping by
- * carrying `data-t6` on its root, and a dialog on its popup, since a dialog
- * is drawn outside the page.
- *
- * A FILLED control is not a colour swap, so it is not here: the shared
- * button answers `in-data-t6:` with §9.3's unfilled ink box.
+ * These two stay scoped on the coordinator's ruling of 10 Oct: the grey
+ * rule was written from a survey of §T.6's own screens, the record page is
+ * not one of them, and its asides are drawn in this grey. Design is
+ * deciding whether the record-detail target takes it up.
  */
 [data-t6] {
-  --primary: var(--foreground);
-  --primary-foreground: var(--background);
   --destructive: var(--foreground);
-  --ring: var(--foreground);
   --muted-foreground: oklch(0.44 0.008 70);
 }
 
