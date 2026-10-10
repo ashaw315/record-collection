@@ -1,8 +1,9 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { GridCover } from './GridCover';
-import { LABEL } from './records/[id]/grid-type';
+import { HAIRLINE, INK, LABEL, LABEL_TYPE } from './records/[id]/grid-type';
 import { toQueryString, withFacet, type CollectionParams } from './collection-params';
 import type { RecordSortField } from '@/lib/records/fields';
 import { formatPrice, formatYear, matchExplanation, type MatchedVia } from './collection-format';
@@ -35,10 +36,38 @@ export type CollectionRow = {
  * sentence then is the shelf's ruled one (§W.29), so the two screens say
  * the same thing. Design rules the final wording with step 103e.
  */
-function Empty({ collectionTotal }: { collectionTotal: number }) {
+function Empty({ collectionTotal, params, figure }: { collectionTotal: number; params: CollectionParams; figure: ReactNode }) {
+  /*
+    §T.6: "'No records yet.' only where the collection is empty, which has
+    no figure." Nothing to clear there either.
+  */
+  if (collectionTotal === 0) {
+    return (
+      <div data-collection-empty="" className="border border-border px-4 py-12 text-center">
+        <p className="text-prose text-[oklch(0.44_0.008_70)]">No records yet.</p>
+      </div>
+    );
+  }
+  /* Every filter and the search go; the order and the view the reader chose stay, as on the shelf (§W.29). */
+  const query = toQueryString({ ...params, filters: {}, page: 1 });
   return (
-    <div data-collection-empty="" className="border border-border px-4 py-12 text-center">
-      <p className="text-prose text-[oklch(0.44_0.008_70)]">{collectionTotal > 0 ? 'Nothing in the collection matches.' : 'No records yet.'}</p>
+    /*
+      Step 103e, §T.6: the figure "at the clearing height and no larger",
+      above "one sentence saying what is empty and a §9.3 control that
+      changes it". The block is the shelf's (step 104): the sentence in the
+      label colour, 18, and the control. It stands in the list's place and
+      is not a row or a cell of it.
+    */
+    <div data-collection-empty="" className="flex flex-col items-center gap-[18px] border border-border px-4 py-12 text-center">
+      {figure !== null && figure !== undefined && <div data-collection-empty-figure="">{figure}</div>}
+      <p className="text-detail text-[oklch(0.44_0.008_70)]">Nothing in the collection matches.</p>
+      <Link
+        data-collection-empty-clear=""
+        href={query === '' ? '/' : `/?${query}`}
+        className={`${LABEL_TYPE} ${INK} box-border flex h-[44px] cursor-pointer items-center justify-center border ${HAIRLINE} px-[18px] decoration-1 underline-offset-[3px] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground`}
+      >
+        Clear filters
+      </Link>
     </div>
   );
 }
@@ -156,6 +185,7 @@ export function CollectionList({
   view = 'table',
   covers = {},
   collectionTotal,
+  emptyFigure = null,
 }: {
   rows: CollectionRow[];
   params: CollectionParams;
@@ -164,8 +194,10 @@ export function CollectionList({
   covers?: Readonly<Record<string, string>>;
   /** The whole collection's size, whatever is filtered: what the empty state's sentence turns on. */
   collectionTotal: number;
+  /** §T.6's figure for the empty state, drawn by the page from the one source record; none where the collection is empty. */
+  emptyFigure?: ReactNode;
 }) {
-  if (rows.length === 0) return <Empty collectionTotal={collectionTotal} />;
+  if (rows.length === 0) return <Empty collectionTotal={collectionTotal} params={params} figure={emptyFigure} />;
   if (view === 'grid') return <Grid rows={rows} covers={covers} />;
 
   return (

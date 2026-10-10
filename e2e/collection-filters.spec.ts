@@ -695,7 +695,8 @@ test('a search that matches nothing says nothing matches, not that there are no 
   for (const view of ['table', 'grid']) {
     await page.goto(`/?view=${view}&q=zzzzqqqq-nothing-matches-this`);
     await controlsReady(page);
-    const empty = page.locator('[data-collection-empty]');
+    /* The sentence itself: step 103e put a figure and CLEAR FILTERS in the same block, so the block's whole text is no longer the sentence. */
+    const empty = page.locator('[data-collection-empty] p');
     await expect(empty, view).toHaveText('Nothing in the collection matches.');
     /* The precondition: the collection is not empty, so "No records yet." would be false. */
     await expect(page.locator('[data-collection-count]'), view).toHaveText(/^0 of [1-9]\d* records$/i);

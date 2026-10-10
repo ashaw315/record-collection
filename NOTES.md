@@ -39176,3 +39176,64 @@ failing against a zero total staged in `page.tsx`.
 `table-98` and `grid-99` on both projects, `68 passed, 3 skipped, ledger
 clean, tree unchanged — OK`; repo, app and component checks `1700
 passed`; typecheck, lint (0 errors), build.
+
+## A prediction that did not hold: the menu and the modal do not move under a finger (9 Oct, night)
+
+Step 107's entry said the header's menu and the record modal "very likely"
+move under a finger on Adam's phone, because they hold the page by the
+same root `overflow` as the filter panel did. Adam checked both on the
+phone: neither moves. No step is owed and `holdTouch` stays the filter
+panel's alone. The reasoning was from the source and the engine says
+otherwise; only the engine could settle it.
+
+**Why those two may survive, read in the source and NOT shown.** All
+three use the same hold and the same panel classes. What differs is how
+much of the PAGE is left under the finger: the modal covers the whole
+window, the menu everything beneath the header's 53 row, and the filter
+sheet on a phone started at 518 of 664, so three quarters of the window
+was still the page itself. If Mobile Safari keeps a held root against a
+finger that lands on a fixed layer and not against one that lands on the
+page, that is the difference, and step 107's fix is needed for exactly
+the part the other two do not have. That is a reading, not a finding; it
+is not luck that can be ruled out from here.
+
+## Step 103e: the empty state's figure on the table and the grid (9 Oct, night)
+
+§T.6 as Design's save of 22:27 rules it (`a50eff2`). Ungated.
+
+**Design's three questions, answered from the repository.** Steps 109
+and 110 were free, and that save carries them. No drop Code took carried
+a 24 gap between the solids: `13e0684`, `d6a42d2` and `a50eff2` were each
+searched, and the first sentence about the solids' spacing in any commit
+is "half a solid's width". So that correction is a draft fix.
+
+**Built.** With records in the collection and none shown, the list's
+place holds the source record's construction in ink at its clearing
+height and no larger, then "Nothing in the collection matches.", then
+CLEAR FILTERS as a §9.3 control, which drops the search and every filter
+and keeps the view and the order. The heading's figure is not drawn in
+that state. An empty collection keeps "No records yet." alone.
+
+**On the real collection** (`docs/captures/empty-figure-103e/`): the
+figure is 205 × 172 at 1440, 768, 390 and 320 on both views, and each
+screen draws one construction.
+
+**Decided in the build, for Design.** The block keeps the hairline box
+the empty state already had. A page past the end (no filter, no rows)
+shows the same block, and CLEAR FILTERS there returns to the first page.
+
+**Not built: the want list's and look up's empty states.** Both are a
+screen's whole list being empty, so the ruling reaches them, but each
+needs "a §9.3 control that changes it" and neither has one ruled: what
+the control is on an empty want list, on its Acquired tab, and after a
+look up that found nothing.
+
+**A test of the step before changed, and why.** `collection-filters`'
+sentence test read the whole empty block's text, which now also holds
+the control; it failed on both projects (artefacts copied first), and
+reads the sentence's own line now.
+
+**Step level, ungated:** `empty-figure-103e` with the heading figure's,
+the filters', table, grid, colour and radius specs on both projects,
+`105 passed, 3 skipped, ledger clean, tree unchanged — OK`; repo, app and
+component checks `1704 passed`; typecheck, lint (0 errors), build.

@@ -142,7 +142,8 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
         </main>
       ) : (
         <main data-collection-views="" className="relative">
-          {source !== null && (
+          {/* §T.6: "Where the empty state shows, the heading's figure is not drawn, so the construction stands once on a screen." */}
+          {source !== null && records.rows.length > 0 && (
             <HeadingFigure source={source}>
               <ConstructionStill recordId={source.id} spineColour={null} />
             </HeadingFigure>
@@ -174,7 +175,16 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
             shelf is its SIBLING rather than a third case inside it — so the
             branch above is what proves `view` is not 'shelf' here.
           */}
-          <CollectionList rows={records.rows as CollectionRow[]} params={params} covers={covers} view={params.view === 'grid' ? 'grid' : 'table'} collectionTotal={collectionTotal} />
+          <CollectionList rows={records.rows as CollectionRow[]} params={params} covers={covers} view={params.view === 'grid' ? 'grid' : 'table'} collectionTotal={collectionTotal}
+            emptyFigure={
+              source === null ? null : (
+                /* "At the clearing height and no larger": the still's box at that height and its own proportion. */
+                <div style={{ height: source.clearing, width: source.clearing * source.aspect }}>
+                  <ConstructionStill recordId={source.id} spineColour={null} />
+                </div>
+              )
+            }
+          />
 
           <CollectionPagination params={params} total={records.total} rows={records.rows.length} pageSize={PAGE_SIZE} />
           </div>

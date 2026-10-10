@@ -35,3 +35,40 @@ describe('the empty state’s sentence', () => {
     });
   }
 });
+
+/**
+ * Step 103e, §T.6: "The empty state's figure is drawn at the clearing
+ * height and no larger, and stands where a screen's whole list or view is
+ * empty... above one sentence saying what is empty and a §9.3 control that
+ * changes it, such as CLEAR FILTERS." "'No records yet.' only where the
+ * collection is empty, which has no figure."
+ */
+describe('the empty state’s figure, sentence and control', () => {
+  const figure = <svg data-probe-figure="" />;
+  const draw = (search: string, collectionTotal: number, view: 'table' | 'grid') =>
+    renderToStaticMarkup(<CollectionList rows={[]} params={parseCollectionParams(new URLSearchParams(search))} view={view} collectionTotal={collectionTotal} emptyFigure={figure} />);
+
+  for (const view of ['table', 'grid'] as const) {
+    /* Fails against the empty state as built: a sentence in a box, no figure and no control. */
+    it(`${view}: the figure, then the sentence, then CLEAR FILTERS, which keeps the view and the order and drops the search and every filter`, () => {
+      const html = draw(`view=${view}&q=zzzz&genreId=00000000-0000-4000-8000-00000000000a&sort=title:desc&page=3`, 17, view);
+      const order = ['data-probe-figure', 'Nothing in the collection matches.', 'data-collection-empty-clear'].map((m) => html.indexOf(m));
+      expect(order.every((i) => i > -1), html).toBe(true);
+      expect(order, 'figure, sentence, control').toEqual([...order].sort((a, b) => a - b));
+      const href = /<a[^>]*data-collection-empty-clear[^>]*>/.exec(html)?.[0] ?? '';
+      expect(href).toContain(`view=${view}`);
+      expect(href).toContain('sort=title%3Adesc');
+      expect(href).not.toMatch(/q=|genreId=|page=/);
+      expect(html).toMatch(/data-collection-empty-clear[^>]*>Clear filters</);
+    });
+
+    /* "Which has no figure": fails against a figure drawn whenever one is handed over. */
+    it(`${view}: an empty collection has the sentence alone, no figure and no control`, () => {
+      const html = draw(`view=${view}`, 0, view);
+      expect(html).toContain('No records yet.');
+      expect(html).not.toContain('data-probe-figure');
+      expect(html).not.toContain('data-collection-empty-clear');
+    });
+  }
+});
+
