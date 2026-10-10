@@ -38746,3 +38746,25 @@ The rule and its wiring are unit-tested on stubs in `scroll-hold.test.ts`.
 modal hold the page by the same root `overflow` and nothing else. If
 the phone moves the page behind an open filter it very likely moves it
 behind those too. Not verified, not changed.
+
+## The gate on 57e954a (step 107) reads OK, with no retry (9 Oct, night)
+
+Gate: build, `npm test`, then `npx playwright test` on both projects with
+no file argument, serially, on `57e954a`.
+
+- Build: compiled.
+- Unit, `npm test`: `4216 passed, 2 skipped, tree unchanged — OK`.
+  `run-tests-cli.test.ts` passed; its budget is still owed as machinery.
+- Playwright, both projects, no file argument:
+  `839 passed, 14 skipped, ledger clean, tree unchanged — OK`. No test
+  was retried and none was flaky.
+- `collection-filters.spec.ts:610` passed first time on both projects.
+- `panel-hold-107.spec.ts`: five passed on chromium, four on mobile; the
+  staged finger test is the one skip on mobile, as written (WebKit here
+  has no touch drag).
+- Recorded, not judged: 56m 30s for 853 tests, 3.97 seconds a test, above
+  the 3.2 mark, which applies to red results only. Swap-outs rose by
+  16.5M pages; load 5.96 at the start of the Playwright run and 14.92 at
+  its end.
+- Not pushed: held for the word. Adam's phone check of the hold follows
+  the push.
