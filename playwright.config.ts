@@ -240,8 +240,7 @@ export default defineConfig({
         /filter-box-106\.spec\.ts$/,
         /filter-box-109\.spec\.ts$/,
         /panel-leaves-108\.spec\.ts$/,
-        /heading-figure-103d\.spec\.ts$/,
-        /heading-solids-110\.spec\.ts$/,
+        /composition-111\.spec\.ts$/,
         /empty-figure-103e\.spec\.ts$/,
         /* Step 105: the table row's link box and presses inside an open panel, on the phone's engine. */
         /table-row-box-105\.spec\.ts$/,

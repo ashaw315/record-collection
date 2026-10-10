@@ -26,8 +26,17 @@ async function open(page: Page, width: number, height: number) {
   await page.evaluate(() => document.fonts.ready);
 }
 
-/** Opens Genre in a window short enough for the floor to move the page, and says how far it went. */
+/**
+ * Opens Genre in a window short enough for the floor to move the page, and
+ * says how far it went. The window is made from the last line's own place,
+ * leaving 100 beneath it less the 24: at a fixed 600 high the floor moved
+ * the page only while the block ended at 518, which step 111 changed and
+ * which the shared database's filter lines change too.
+ */
 async function openMoved(page: Page): Promise<{ before: number; moved: number }> {
+  const foot = await page.evaluate(() => { const l = Array.from(document.querySelectorAll<HTMLElement>('[data-filter-trigger]')); return l[l.length - 1].getBoundingClientRect().bottom; });
+  await page.setViewportSize({ width: 1024, height: Math.round(foot) + 24 + 100 });
+  await page.waitForTimeout(200);
   const before = await scrollY(page);
   await trigger(page).click();
   await expect(panel(page)).toHaveCount(1);

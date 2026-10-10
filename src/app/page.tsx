@@ -11,8 +11,9 @@ import { wallSeats, wallSummaries } from './wall/producer';
 import { CollectionPagination } from './CollectionPagination';
 import { parseCollectionParams } from './collection-params';
 import { listRecords, listRecordAges, recordFacets, countAllRecords, spineColoursOf } from '@/lib/db/queries/records';
-import { HeadingDrawing } from './HeadingDrawing';
-import { SOLID_SLOTS, figureWithSolids } from './figure-solids';
+import { SOLID_SLOTS } from './block-figure';
+import { solidCapEdge } from './figure-solids';
+import { recordLadder } from '@/lib/colour/record-ladder';
 import { construction } from './records/[id]/construction';
 import { ConstructionStill } from './records/[id]/ConstructionStill';
 import { HeadingFigure } from './HeadingFigure';
@@ -110,14 +111,22 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
   */
   const source = shelf === null ? figureSource(await listRecordAges()) : null;
   /*
-    Step 110: the heading's figure is the construction with its row of
-    solids, so the air is asked for the two together; and the solids are
-    "the tints of the first three records the screen shows, in its current
-    order", which is this page's first three.
+    Steps 110 to 112: the heading's figure is the source's construction
+    beside the filter block, and on the table a cube for each of "the
+    first three records the screen shows" that has a colour, sized by the
+    browser to the width left. "The grid's figure in ink alone." None
+    where the list is empty: the empty state's figure stands instead.
   */
-  const heading = source === null || records.rows.length === 0 ? null : { ...source, aspect: figureWithSolids(construction(source.id)).aspect };
-  const firstShown = records.rows.slice(0, SOLID_SLOTS).map((row) => row.id);
-  const shownColours = heading === null ? [] : (await spineColoursOf(firstShown)).map((spineColour, i) => ({ id: firstShown[i], spineColour }));
+  const heading = (() => {
+    if (source === null || records.rows.length === 0) return null;
+    const cap = solidCapEdge(construction(source.id));
+    return { id: source.id, clearing: source.clearing, aspect: source.aspect, unitHeight: cap.box.height, capEdge: cap.edge, box: cap.box };
+  })();
+  const firstShown = params.view === 'grid' ? [] : records.rows.slice(0, SOLID_SLOTS).map((row) => row.id);
+  const solids = heading === null ? [] : (await spineColoursOf(firstShown)).flatMap((spineColour, i) => {
+    const ladder = recordLadder(spineColour);
+    return ladder === null ? [] : [{ id: firstShown[i], base: ladder.base, shade: ladder.shade, top: ladder.top }];
+  });
 
   /*
     §T.5: the grid shows each record's cover, the newest by §61. Asked for
@@ -156,11 +165,19 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
         <main data-collection-views="" className="relative">
           {/* §T.6: "Where the empty state shows, the heading's figure is not drawn, so the construction stands once on a screen." */}
           {heading !== null && (
-            <HeadingFigure source={heading}>
-              <HeadingDrawing recordId={heading.id} shown={shownColours} />
+            <HeadingFigure source={heading} solids={solids}>
+              <ConstructionStill recordId={heading.id} spineColour={null} placed={heading.box} />
             </HeadingFigure>
           )}
           {/* §T.1: the shelf's band, in its two-row form at every width. Search, the three views and Add record are its. */}
+          {/*
+            Step 111, §T.6: "Above a 1440 window the table's and grid's
+            content stops growing at 1,400 wide from the 20 inset, and the
+            window beyond it is paper." Pinned left and not centred, so the
+            header's wordmark still stands over the heading. The band is
+            held with it, so Add record ends where the table does.
+          */}
+          <div className="max-w-[1440px]">
           <CollectionBand params={params} genres={facets.genres} />
           <div className="px-5 pb-6">
           <header data-collection-heading="" className="mb-5">
@@ -199,6 +216,7 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
           />
 
           <CollectionPagination params={params} total={records.total} rows={records.rows.length} pageSize={PAGE_SIZE} />
+          </div>
           </div>
         </main>
       )}

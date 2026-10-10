@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 /**
@@ -40,6 +40,13 @@ function filesCallingDotenvConfig(): string[] {
     .filter((line) => line !== '' && line !== SELF);
 
   return tracked.filter((file) => {
+    /*
+      A file git still tracks and the tree has deleted has no source to
+      read: `ls-files` lists it until the deletion is committed, and
+      `commit-checked.sh` runs this before anything is staged. It threw
+      ENOENT on the first step that deleted a spec (10 Oct).
+    */
+    if (!existsSync(file)) return false;
     const source = readFileSync(file, 'utf8');
     return /from ['"]dotenv['"]/.test(source) && /\bconfig\s*\(/.test(source);
   });

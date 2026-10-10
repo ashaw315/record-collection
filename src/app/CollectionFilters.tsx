@@ -311,8 +311,9 @@ export function CollectionFilters({
       (key) => key !== 'includeUndated' && params.filters[key as keyof typeof params.filters] !== undefined,
     ).length;
 
+  /* Step 111: Sort and the filter lines are one block, five lines at the 44 floor with nothing between; a 12 gap stood under Sort until then. What follows the block keeps its 12. */
   const body = (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col">
       <div className="flex flex-wrap items-center gap-2">
         {/*
           §T.5's Sort control, kept by the table at every width (§T.4): a
@@ -488,7 +489,7 @@ export function CollectionFilters({
         never invisible (NOTES.md, and SPEC.md §5.2's meta.undatedCount).
       */}
       {(hasYearFilter || undatedCount > 0) && (
-        <div className={`flex flex-wrap items-center gap-x-3 gap-y-1 text-label ${LABEL_TEXT}`}>
+        <div className={`mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-label ${LABEL_TEXT}`}>
           {hasYearFilter && (
             <label data-filter-undated="" className="flex min-h-[44px] items-center gap-1.5">
               <input
@@ -515,7 +516,7 @@ export function CollectionFilters({
       )}
 
       {activeCount > 0 && (
-        <div>
+        <div className="mt-3">
           <button
             type="button"
             onClick={() =>
@@ -539,7 +540,7 @@ export function CollectionFilters({
   );
 
   return (
-    <div ref={rootRef} data-collection-filters="" className="mb-5">
+    <div ref={rootRef} data-collection-filters="" className="mb-6">
       {body}
     </div>
   );

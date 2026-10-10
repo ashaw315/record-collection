@@ -155,11 +155,16 @@ test('covers are 24 apart at the 20 inset: two of 163 at 390, two of 128 at 320'
 });
 
 /* Fails against fixed breakpoints: the count would change at 640 and 1024, where no 160 newly fits. */
-test('one more cover joins a row at each width where another 160 and its 24 fit, from 568 to 1920', async ({ page }) => {
+/*
+  Step 111 (§T.6): "Above a 1440 window the table's and grid's content
+  stops growing at 1,400 wide from the 20 inset", "so the grid stops at
+  seven columns". This read on to ten covers at 1856 and 1920 until then.
+*/
+test('one more cover joins a row at each width where another 160 and its 24 fit, from 568 to 1304, and above 1440 the row stays at seven', async ({ page }) => {
   const f = await seed(page, 9);
   /* n covers fit when the window less its insets holds n of 160 and n - 1 of 24: 184n + 16. */
-  const changes = [3, 4, 5, 6, 7, 8, 9, 10].map((n) => ({ n, at: 184 * n + 16 }));
-  expect(changes.map((c) => c.at)).toEqual([568, 752, 936, 1120, 1304, 1488, 1672, 1856]);
+  const changes = [3, 4, 5, 6, 7].map((n) => ({ n, at: 184 * n + 16 }));
+  expect(changes.map((c) => c.at)).toEqual([568, 752, 936, 1120, 1304]);
   const count = async (width: number) => {
     await page.setViewportSize({ width, height: 800 });
     await page.waitForTimeout(60);
@@ -174,7 +179,8 @@ test('one more cover joins a row at each width where another 160 and its 24 fit,
     expect(after.n, `${at}: ${n} covers`).toBe(n);
     expect(after.width, `${at}: each exactly 160`).toBeCloseTo(160, 0);
   }
-  expect((await count(1920)).n, 'at 1920').toBe(10);
+  /* 1488 is where an eighth of 160 would fit a window-wide grid; the content is 1,400 there and holds seven. */
+  for (const width of [1440, 1488, 1672, 1920]) expect((await count(width)).n, `at ${width}`).toBe(7);
 });
 
 /* Fails against a grid that drops the control: with no headers, nothing else names or changes the order. */

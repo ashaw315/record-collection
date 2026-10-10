@@ -62,6 +62,8 @@ for (const view of ['table', 'grid'] as const) {
       await expect(page.locator('[data-collection-empty] [data-testid="construction-still"]')).toHaveCount(1);
       const r = await reading(page);
       expect(r.stills, 'the construction stands once on the screen').toBe(1);
+      /* "The empty state carries no solids." Carried from `heading-solids-110.spec.ts`, which step 112 superseded. */
+      expect(await page.locator('[data-solid]').count(), 'and it carries no solids').toBe(0);
       expect(r.heading, 'the heading’s figure is not drawn while the empty state shows').toBe(false);
 
       const height = clearing(r.record as string).height;
@@ -84,13 +86,19 @@ for (const view of ['table', 'grid'] as const) {
   }
 
   /* Fails against a control that does nothing, or one that drops the view. */
-  test(`${view}: CLEAR FILTERS brings the records back in the same view, and at 1440 the heading’s figure with them, still one construction`, async ({ page }) => {
+  test(`${view}: CLEAR FILTERS brings the records back in the same view, and the heading figure’s place with them`, async ({ page }) => {
     await open(page, view, 1440, NOTHING);
     await page.locator('[data-collection-empty-clear]').click();
     await expect(page).toHaveURL((url) => !url.searchParams.has('q') && url.searchParams.get('view') === view, { timeout: 15_000 });
     await expect(page.locator('[data-collection-empty]')).toHaveCount(0);
-    await expect(page.locator('[data-heading-figure][data-drawn="true"]')).toHaveCount(1, { timeout: 15_000 });
-    expect((await reading(page)).stills, 'once').toBe(1);
+    /*
+      Step 111: the heading's figure is as tall as the filter block, which
+      on the shared database is not always five lines, so it is not always
+      drawn; what holds is that its place is back and measured, and the
+      construction stands no more than once.
+    */
+    await expect(page.locator('[data-heading-figure][data-measured="true"]')).toHaveCount(1, { timeout: 15_000 });
+    expect((await reading(page)).stills, 'no more than once').toBeLessThanOrEqual(1);
   });
 }
 

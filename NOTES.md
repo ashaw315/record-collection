@@ -39433,3 +39433,135 @@ right edge as "the content's right edge", which is what is built now.
 at 1440 and 1,312 × 393 at 1920 are the figure sized to its air; 111
 sizes it to the filter block. They are retaken after 111 and should not
 be read as the step's result.
+
+## Steps 111 and 112: the figure beside the filter block, and the solids after the construction (10 Oct, early)
+
+§T.6 as Design's saves of 9 Oct late rule it (`3f23dd3`, `844b158`). They
+land in one commit: step 112 "land[s] with or after 111", and 111 alone
+would have shipped step 110's solids in the new composition, which is the
+state 112 exists to remove. Ungated.
+
+**Built.**
+- *The block.* Sort and the filter lines are one block, five lines of 44
+  with nothing between. **The gap removed was 12**, under Sort. The block
+  is 220 where it was 232. The list starts 24 below its foot, where it
+  was 20. Both at every width, the phone's included; the step's "at 768
+  and up" was read as the figure's.
+- *The figure* (`block-figure.ts`, `HeadingFigure.tsx`): at 768 and up,
+  its foot on the block's last line's foot (Tag's as built), its right
+  edge on the content's right edge, as tall as the block; where the width
+  beside the column less 24 cannot hold it, narrower with foot and right
+  edge kept; not drawn below its clearing height. It replaces step 103d's
+  figure in the air, and `heading-air.ts` is gone with it.
+- *The solids* (step 112): the construction is drawn at the block's
+  height first, and the three cubes take the width left, up to the ink's
+  allowance, half a solid apart; under 12 wide (a side face under 6) they
+  are not drawn and the construction stands alone at the content's edge.
+  On the table only. Three places are still kept whatever is drawn.
+- *The cap.* The band and the content stop at 1,400 from the 20 inset,
+  pinned left; the header runs the window. The grid stops at seven.
+
+**On the real collection** (`docs/captures/composition-111/`), the block
+286 to 506, the list at 530, the same on both views:
+
+| window | table: figure | its left | construction | solids, each | grid: figure | its left |
+|---|---|---|---|---|---|---|
+| 1920 | 735 × 220 | 685 | 262 × 220 | three, 105 | 262 × 220 | 1,158 |
+| 1440 | 735 × 220 | 685 | 262 × 220 | three, 105 | 262 × 220 | 1,158 |
+| 1024 | 517 × 220 | 487 | 262 × 220 | three, 57 | 262 × 220 | 742 |
+| 768 | 261 × 219 | 487 | 261 × 219 | none | 261 × 219 | 487 |
+
+The foot is 506 and the right edge the content's (1420, 1004, 748) at
+every width. The figure first appears at 768 and not at 767, by the fork:
+by its width alone it would appear from 713. The solids first draw at 823.
+At 1440 and up the cubes are at the ink's allowance (ratio 1.00); at 1024
+they are 57 wide, 29% of it by area.
+
+**Held, as ordered: the state with a year filter in force.** Two more
+lines follow Tag then (the line about no release year, and CLEAR). The
+figure's foot stays on Tag's and the list starts 24 below CLEAR. Which is
+"the last line" there is with Design.
+
+**A collection with fewer filter lines has a shorter block.** A filter
+with no options draws no line. With no stores and no tags the block is
+three lines, 132, under any clearing height, and there is no figure. The
+real collection has all four. Seen on the test database; for Design.
+
+**Decided in the build, for Design.** The band is capped with the
+content, so Add record ends where the table does and not at the window's
+edge. The gap's removal and the 24 apply below 768 too.
+
+**Step 112's last line, "fix 103d's 768 air", is not owed**: it was
+fixed inside step 110 (`94c32cb`), live for 73 minutes, and the air it
+names is gone with this step. Not built here: look up's and the want
+list's empty states, which are the next commit.
+
+**Specs retired and what was carried.** `heading-figure-103d.spec.ts`
+and `heading-solids-110.spec.ts` read the figure in the air and the
+solids at the ink's full size; both are superseded and deleted, with the
+two sheets that read attributes the page no longer carries (their
+captures stay). Carried into `composition-111.spec.ts`: the construction
+named is the one drawn, in ink, clearing no higher than any record shown,
+under three sorts and on both views; it goes with the page when scrolled.
+Into `empty-figure-103e.spec.ts`: no solids in the empty state.
+
+**Tests changed, by the ruling.** `grid-99`: the row grew to ten covers
+at 1856 and now stops at seven above 1440. `filter-box-109`: its window
+was a fixed 600 high, which made the floor move the page only while the
+block ended at 518; it is made from the last line's own place now.
+`empty-figure-103e`: after CLEAR it expected the heading's figure drawn,
+which now depends on the block's height.
+
+**Tests.** Unit, `block-figure.test.ts`, failed first: the span, the
+narrowing with foot and right kept, the clearing threshold, the 768 fork,
+the cubes from the width left, the ink's cap, the 6px face, the grid
+without solids, the row's geometry. E2E, `composition-111.spec.ts`, both
+projects, 16 of 17 failing first: the block's lines and the 24; the foot
+and right edge to the pixel at 1920, 1440, 1024 and 768 on both views;
+the cap at 1920; nothing at 390 and 320; and, on four seeded records with
+the second uncoloured, the construction at the block's height with two
+cubes, half a solid apart, every face 6 or wider. **A test that examines
+nothing on the shared database:** "at 767 no figure, at 768 one" skips
+there, because its source does not clear at 768; the fork is held by the
+unit test, seen failing.
+
+**Step level, ungated:** `226 passed, 1 failed, 9 skipped, ledger clean,
+tree unchanged — NOT OK`. The one is the entry below. Repo, app,
+component and integration checks `1722 passed`; typecheck, lint (0
+errors), build.
+
+## `collection-filters.spec.ts`: a second choice lost, traced this time; narrowed, not diagnosed (10 Oct)
+
+In step 111's step-level run `collection-filters.spec.ts:412` ("filters
+compose rather than replacing each other") failed on the mobile project:
+the address carried the genre and not the label. It is the same loss as
+`:441` on 9 Oct. This time the trace was copied before anything ran again
+(`fail-111-001146` in the scratchpad).
+
+**What the trace shows.** All four presses were made, within 200 ms: the
+Genre line, its option, the Label line, its option. The last was at
+195, 572, the centre of the third and last option of a three-option list
+(Label's line 374 to 418, CLOSE to 462, then rows of 44). The DOM written
+during that press is a large change: the first choice's render landed
+while the press was being made. Afterwards the panel is closed, no label
+is chosen, and the pointer rests over a table row where the list had
+been.
+
+**Three readings tested and put out.**
+- *The page remounts when a choice lands, dropping the open panel.* No:
+  staged with the landing held back 700 ms, the second panel stays open
+  across it, on both projects.
+- *The panel closes by itself at the landing.* No, by the same staging.
+- *A press at the instant of landing is dropped by the router.* Not
+  shown: 64 staged presses, from well before the landing to well after
+  and in 4 ms steps across it, on Chromium and WebKit, all composed.
+
+**What is left, unproven.** None of the staging had the other worker. The
+filters' options are the whole database's; the other worker's fixtures
+add and delete labels; a label deleted between the list being drawn and
+the first choice's render landing shortens the list by a row, and a press
+aimed at the last row then lands on the paper beneath it, which closes
+the panel and chooses nothing. That fits every observation and is not
+shown. If it is right, the page is correct and the test is at the mercy
+of the shared database. It stays marked unproven; the batch gate keeps
+traces.
