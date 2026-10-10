@@ -28,10 +28,17 @@ export type CollectionRow = {
   matchedVia: MatchedVia | null;
 };
 
-function Empty() {
+/**
+ * What the empty state says is decided by the collection and not by the
+ * page: with records in it and none shown, a filter, a search or a page
+ * past the end emptied the list, and "No records yet." would be false. The
+ * sentence then is the shelf's ruled one (§W.29), so the two screens say
+ * the same thing. Design rules the final wording with step 103e.
+ */
+function Empty({ collectionTotal }: { collectionTotal: number }) {
   return (
     <div data-collection-empty="" className="border border-border px-4 py-12 text-center">
-      <p className="text-prose text-[oklch(0.44_0.008_70)]">No records yet.</p>
+      <p className="text-prose text-[oklch(0.44_0.008_70)]">{collectionTotal > 0 ? 'Nothing in the collection matches.' : 'No records yet.'}</p>
     </div>
   );
 }
@@ -148,14 +155,17 @@ export function CollectionList({
   params,
   view = 'table',
   covers = {},
+  collectionTotal,
 }: {
   rows: CollectionRow[];
   params: CollectionParams;
   view?: 'table' | 'grid';
   /** The grid's covers, by record id: each record's newest (§61). Absent for a record with none. */
   covers?: Readonly<Record<string, string>>;
+  /** The whole collection's size, whatever is filtered: what the empty state's sentence turns on. */
+  collectionTotal: number;
 }) {
-  if (rows.length === 0) return <Empty />;
+  if (rows.length === 0) return <Empty collectionTotal={collectionTotal} />;
   if (view === 'grid') return <Grid rows={rows} covers={covers} />;
 
   return (

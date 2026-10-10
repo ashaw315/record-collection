@@ -39131,3 +39131,48 @@ Neither is plainly meant.
    emptied them, which is false under a filter or a search. That is a
    defect in the built page today, apart from this step. The shelf's
    (step 104) says "Nothing in the collection matches."
+
+## Copy a failure's trace before running anything again (rule, 9 Oct, night)
+
+**The rule, the coordinator's:** when a run has a red line, copy its
+artefacts (the trace, the screenshot, the log) out of `test-results`
+before running anything again, always, without first judging whether the
+failure looks interesting. A failure that reproduces costs one copy; one
+that does not costs the diagnosis.
+
+**Why: the same loss three times.** `cover-travel-92` came back red twice
+and each time the next day's run had cleared the evidence. On 9 Oct
+`collection-filters.spec.ts:441` failed once in step 108's step-level run
+and Code reran before copying; it has not failed since. Playwright empties
+`test-results` at the start of every run, so the rerun IS the deletion.
+
+**That failure stays marked unproven.** The reading in step 108's entry (a
+press on a label row landing off it while the first navigation lands) is
+plausible and not shown. It is confirmed or dropped when the batch gate
+reproduces it with traces kept, and not before. Step-level runs now pass
+`--trace=retain-on-failure`.
+
+## The table's and grid's empty state said "No records yet." with records in the collection (fixed, 9 Oct, night)
+
+Live and false: a reader with seventeen records whose filter or search
+matched nothing was told they had none. Found measuring for step 103e.
+
+**The fix removes a false statement and chooses no copy.** With records
+in the collection and none shown the list says "Nothing in the collection
+matches.", the shelf's ruled sentence (§W.29, step 104), so the two
+screens say the same thing; with an empty collection it still says "No
+records yet.", which is then true. It turns on the collection's total and
+not on whether a filter is set, so a page past the end is covered too.
+Design rules the final wording with 103e.
+
+**Tests.** `CollectionList.test.tsx` (component, failed first: two of
+four): a search, a genre, a page past the end and no filter at all, with
+17 in the collection, on both views; and the empty collection.
+`collection-filters.spec.ts`, both projects: the sentence on the page
+under a search that matches nothing, with the count reading "0 of N"; seen
+failing against a zero total staged in `page.tsx`.
+
+**Step level, ungated:** `collection-filters`, `heading-figure-103d`,
+`table-98` and `grid-99` on both projects, `68 passed, 3 skipped, ledger
+clean, tree unchanged — OK`; repo, app and component checks `1700
+passed`; typecheck, lint (0 errors), build.

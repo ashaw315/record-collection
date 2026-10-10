@@ -684,3 +684,20 @@ test('on a phone the grid is reached by the band’s view name, and a grid URL r
 });
 
 
+
+/*
+  The empty state's sentence, on the page. With records in the collection
+  and a search that matches none, the list said "No records yet." (found 9
+  Oct). Fails against the page handing the list no total, or zero: seen
+  failing with `collectionTotal={0}` staged in `page.tsx`.
+*/
+test('a search that matches nothing says nothing matches, not that there are no records', async ({ page }) => {
+  for (const view of ['table', 'grid']) {
+    await page.goto(`/?view=${view}&q=zzzzqqqq-nothing-matches-this`);
+    await controlsReady(page);
+    const empty = page.locator('[data-collection-empty]');
+    await expect(empty, view).toHaveText('Nothing in the collection matches.');
+    /* The precondition: the collection is not empty, so "No records yet." would be false. */
+    await expect(page.locator('[data-collection-count]'), view).toHaveText(/^0 of [1-9]\d* records$/i);
+  }
+});
