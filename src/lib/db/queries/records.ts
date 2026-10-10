@@ -613,6 +613,19 @@ export async function listRecordAges(): Promise<Array<{ id: string; createdAt: D
   return db.select({ id: records.id, createdAt: records.createdAt }).from(records);
 }
 
+/**
+ * The stored colour of each record asked for, in the order asked, null
+ * where a record has none: §T.6's solids are "the tints of the first three
+ * records the screen shows, in its current order".
+ */
+export async function spineColoursOf(ids: readonly string[]): Promise<Array<string | null>> {
+  if (ids.length === 0) return [];
+  const db = getDb();
+  const rows = await db.select({ id: records.id, spineColour: records.spineColour }).from(records).where(inArray(records.id, [...ids]));
+  const byId = new Map(rows.map((row) => [row.id, row.spineColour]));
+  return ids.map((id) => byId.get(id) ?? null);
+}
+
 export type RecordDeleteOutcome =
   /**
    * `orphanedBlobUrls` — the images that cascaded, so the caller can delete the

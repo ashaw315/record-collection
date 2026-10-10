@@ -40,10 +40,18 @@ const INK = 'oklch(0.19 0.008 60)';
 export function ConstructionStill({
   recordId,
   spineColour,
+  placed,
 }: {
   recordId: string;
   /** `null` falls the whole construction back to ink (8a §5.3). */
   spineColour: string | null;
+  /**
+   * Step 110: where the still stands inside another drawing, in that
+   * drawing's units. The heading's figure is the construction with a row
+   * of solids beside it in one box, so there the still is a part and not
+   * the whole. Absent, it fills its cell as on the record page.
+   */
+  placed?: { x: number; y: number; width: number; height: number };
 }) {
   const scene = construction(recordId);
   const ladder = recordLadder(spineColour);
@@ -102,8 +110,8 @@ export function ConstructionStill({
         (the default, `xMidYMid`) would throw the offset away, so the hash
         picks the alignment instead.
       */
-      preserveAspectRatio={slackAlignment(recordId)}
-      className="block h-full w-full"
+      preserveAspectRatio={placed === undefined ? slackAlignment(recordId) : 'xMinYMin meet'}
+      {...(placed === undefined ? { className: 'block h-full w-full' } : placed)}
       aria-hidden="true"
     >
       {/* Ground: the disc, always tint, never base. */}

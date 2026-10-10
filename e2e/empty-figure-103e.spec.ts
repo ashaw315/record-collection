@@ -96,6 +96,8 @@ for (const view of ['table', 'grid'] as const) {
 
 /* "Test that a screen never draws the construction twice", across the states a reader can reach by the address. */
 test('no state of the table or the grid draws the construction twice', async ({ page }) => {
+  /* Twenty-four pages opened in one test: the default 30 seconds was this loop's own length on WebKit, and it ran out mid-load (step 110's run). */
+  test.setTimeout(180_000);
   for (const view of ['table', 'grid'] as const) {
     for (const width of [1440, 768, 390]) {
       for (const query of ['', NOTHING, '&page=99', '&sort=title:asc']) {

@@ -39277,3 +39277,94 @@ unchanged — OK`; repo, app and component checks `1704 passed`; typecheck,
 lint (0 errors), build. Ungated commits so far, for a bisect: `26d408c`
 (106), `bbbc841` (108), `dea598d` (103d), `d8ddcfa` (the sentence),
 `caa43c2` (103e), and this one.
+
+## Step 110: the solids beside the heading's construction; the figure is now drawn from 1083 wide (9 Oct, night)
+
+§T.6, Design's save of 22:27. Ungated.
+
+**Built.**
+- *The geometry* (`figure-solids.ts`): three places in one row to the
+  construction's right, on its ground line, each §26's cube at 30°, one
+  size, half a solid's width from the construction and from each other,
+  all in the still's own units so the figure scales whole. The three
+  together cover the construction's ink exactly, the ink measured as §50
+  measures it (`inkCoverage`) and not the box.
+- *The drawing* (`HeadingDrawing.tsx`): one drawing holding the still, in
+  ink, and a solid for each of the first three records shown that has a
+  colour, in the page's order, faced base, shade and top in that record's
+  own ladder as `OrnamentMarks` faces §26's. A record without a colour
+  gives none, and the ones drawn close up from the left.
+- *The air test* is asked of the construction and the row together.
+- `ConstructionStill` takes an optional place inside another drawing; on
+  the record page nothing is passed and nothing changes.
+- `spineColoursOf`: the colours of the records asked for, in order.
+
+**On the real collection** (`docs/captures/heading-solids-110/`). The
+source's figure with its row is 3.34 times as wide as tall (the
+construction alone was 1.19), and the solids-to-ink ratio is 1.00.
+
+| view | 1920 | 1440 | 1024 | 768 |
+|---|---|---|---|---|
+| table | 1,312 × 393, three solids | 933 × 279, three solids | none (155 against 172.4) | none (78) |
+| grid | 1,312 × 393 | 933 × 279 | none | none |
+
+**The figure now appears at 1083 wide, where the construction alone
+appeared at 693.** At 1024 and 768, where step 103d drew it, there is no
+heading figure. That is "on screens where width binds, the solids make
+the figure smaller", past the point where it is drawn at all. Design
+should see this before Adam does.
+
+**Decided in the build, for Design to rule.**
+- The cube, of §26's archetypes: "isometric boxes" names no one.
+- The size is the largest the ink allows (ratio 1.00). "No more than" also
+  allows smaller, and smaller solids are what would bring the figure back
+  at 1024. How much smaller is Design's to choose and was not measured.
+- Three places are kept whatever is drawn, so the figure does not change
+  size, or come and go, with how many of the first three records have a
+  colour.
+- The air's right edge is the page's own, where the list ends, and not
+  the window's: on the first capture at 1440 the last solid stood against
+  the glass, past the page's 20 inset. Step 103d's air at 768 ran to the
+  window's edge the same way (281 wide; it would be 261), which went
+  unseen because the construction alone did not reach it.
+
+**Tests.** Unit (`figure-solids.test.ts`, failed first): the three cover
+the ink and no more, are one size, a cube's proportion, half a width
+apart on the ground line, inside a box that is the construction and the
+row. `heading-air.test.ts`: air too small is reported and marked, not
+dropped (this one was written with its code and not seen failing).
+Integration: `spineColoursOf` in the order asked, null kept in place.
+E2E (`heading-solids-110.spec.ts`, both projects, two of three failing
+first): four records by one artist, the second without a colour, so two
+solids, the first's and the third's, each in three steps of its own;
+their places against the construction read through the drawing's own
+transform; drawn exactly where the whole figure reaches the clearing
+height at 1920, 1440, 1024 and 768; no solids in the empty state.
+
+**Tests changed, by the ruling.** `heading-figure-103d`: the construction
+is now the still inside the figure's drawing; 1920 added; at 1024 and 768
+it reads whichever is true and holds the rule, since the row has made the
+figure too wide for those on some collections; the air's right edge is
+the list's, with a staged test seen failing against the window's edge
+(1441 against 1421). `empty-figure-103e`: its twenty-four-page loop was
+given its own time, having run out of the default 30 seconds mid-load on
+WebKit (read in the log; artefacts copied).
+
+**Step level, ungated:** the three figure specs, the filter and panel
+specs, table, grid, colour, radius and two of the record page's specs,
+`192 passed, 4 skipped, ledger clean, tree unchanged — OK`. In that run
+the solids' own spec ran on chromium alone: it had not been added to the
+mobile project's list. Added, and run on both: `6 passed, ledger clean,
+tree unchanged — OK`. Also repo, app, component and the two new integration tests `1731
+passed`; typecheck, lint (0 errors), build. Ungated commits so far, for a
+bisect: `26d408c` (106), `bbbc841` (108), `dea598d` (103d), `d8ddcfa`
+(the sentence), `caa43c2` (103e), `03e230b` (109), and this one.
+
+## Two rules that came from losing evidence, not work (9 Oct)
+
+Kept together because they are one kind: **commit a Design drop the
+moment it arrives** and **copy a failure's trace before running anything
+again**. Neither loss cost any built work. Each cost the thing that would
+have said what happened: a save's own bytes, a failure's own trace. Both
+rules put the evidence somewhere the next action cannot reach before that
+action is taken.

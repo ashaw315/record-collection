@@ -45,9 +45,15 @@ describe('the figure in the air', () => {
 
   /* Fails against a figure drawn wherever there is air. */
   it('is not drawn where that height is under its clearing height, and is at exactly it', () => {
-    expect(headingAir(wide, 1, 452)).not.toBeNull();
-    expect(headingAir(wide, 1, 452.1)).toBeNull();
-    expect(headingAir(narrow, 1.5, 281 / 1.5 + 0.1)).toBeNull();
+    expect(headingAir(wide, 1, 452)?.drawn).toBe(true);
+    expect(headingAir(wide, 1, 452.1)?.drawn).toBe(false);
+    expect(headingAir(narrow, 1.5, 281 / 1.5 + 0.1)?.drawn).toBe(false);
+  });
+
+  /* Step 110: the air is still reported where the figure is too small for it, so a reader of the page can see by how much. */
+  it('where it is not drawn, still says the air and the height the figure would have had', () => {
+    expect(headingAir(narrow, 3, 172.4)).toMatchObject({ drawn: false, width: 281, height: 334 });
+    expect(headingAir(narrow, 3, 172.4)?.figure).toBeCloseTo(281 / 3, 6);
   });
 
   /* A phone: the column is the window's width, so there is nothing right of it. */

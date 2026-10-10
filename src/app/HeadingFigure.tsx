@@ -75,7 +75,8 @@ function measure(host: HTMLElement, source: FigureSource): HeadingAir | null {
       columnRight,
       add: addBox === undefined || addBox.width === 0 ? null : { left: addBox.left - frame.left, top: addBox.top - frame.top, right: addBox.right - frame.left, bottom: addBox.bottom - frame.top },
       listTop: listTop - frame.top,
-      edge: frame.width,
+      /* The page's own right edge, where the list ends: the window's edge is past the page's inset, and a figure run to it stands against the glass. */
+      edge: list.getBoundingClientRect().right - frame.left,
     },
     source.aspect,
     source.clearing,
@@ -102,13 +103,15 @@ export function HeadingFigure({ source, children }: { source: FigureSource; chil
     };
   }, [source]);
 
-  const box = air.air;
+  /* Air too small for the figure is measured and not drawn in: "there is no figure, not a simplified one". */
+  const box = air.air !== null && air.air.drawn ? air.air : null;
   return (
     <div
       ref={host}
       data-heading-figure=""
       data-measured={air.measured}
       data-drawn={box !== null}
+      data-air-figure={air.air === null ? undefined : air.air.figure}
       data-record={source.id}
       data-clearing={source.clearing}
       aria-hidden="true"

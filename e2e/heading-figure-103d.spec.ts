@@ -45,7 +45,8 @@ const reading = (page: Page) =>
     const host = document.querySelector<HTMLElement>('[data-heading-figure]');
     if (host === null) return null;
     const drawn = host.getAttribute('data-drawn') === 'true';
-    const svg = host.querySelector<SVGSVGElement>('svg');
+    /* Step 110: the figure is one drawing holding the construction's still and a row of solids; the construction is the still. */
+    const svg = host.querySelector<SVGSVGElement>('[data-testid="construction-still"]');
     const r = host.getBoundingClientRect();
     const air = { left: r.left, top: r.top, right: r.right, bottom: r.bottom, width: r.width, height: r.height };
     /* Everything drawn on the page that is not the figure: type by its own box, the rest by the element's. */
@@ -77,33 +78,44 @@ const reading = (page: Page) =>
     const shown = Array.from(document.querySelectorAll<HTMLAnchorElement>('main [data-collection-table] tbody a[href^="/records/"], main [data-collection-grid] a[href^="/records/"]')).map((a) => (a.getAttribute('href') ?? '').replace('/records/', ''));
     return {
       drawn, air, meets, fills, viewBox, shown,
-      record: host.getAttribute('data-record'), clearing: Number(host.getAttribute('data-clearing')),
+      record: host.getAttribute('data-record'), clearing: Number(host.getAttribute('data-clearing')), airFigure: Number(host.getAttribute('data-air-figure')),
       position: cs.position, pointer: cs.pointerEvents, hidden: host.getAttribute('aria-hidden'),
       stillRecord: svg?.getAttribute('data-record') ?? null,
       windowWidth: window.innerWidth, scrollWidth: document.documentElement.scrollWidth,
+      listRight: (document.querySelector('main [data-collection-table] table, main [data-collection-grid]') as HTMLElement).getBoundingClientRect().right,
     };
   }, MARGIN);
 
-/** The figure's height as drawn: its box fitted to the air, keeping its proportion. */
-const drawnHeight = (r: { air: { width: number; height: number }; viewBox: number[] | null }) => {
-  const [, , w, h] = r.viewBox as number[];
-  return Math.min(r.air.height, r.air.width * (h / w));
-};
+/** The figure's height as drawn: what the air says the whole figure, construction and row, has in it. */
+const drawnHeight = (r: { airFigure: number }) => r.airFigure;
 
 test.beforeEach(async ({ page }) => login(page));
 
 for (const view of ['table', 'grid'] as const) {
-  for (const width of [1440, 1024, 768]) {
+  /*
+    Step 110 put the row of solids in the figure's box, so the figure is
+    about three times as wide as tall and the air at 1024 and 768 no longer
+    holds it on every collection. 1920 and 1440 hold it; at the two
+    narrower widths the test reads whichever is true and holds the rule:
+    drawn exactly where the whole figure reaches the clearing height.
+  */
+  for (const width of [1920, 1440, 1024, 768]) {
     /* Fails against the page as built: there is no figure. */
-    test(`${view} at ${width}: the source record’s construction stands in the air in ink, 24 clear of everything drawn, at a height that clears §29`, async ({ page }) => {
+    test(`${view} at ${width}: the source record’s construction stands in the air in ink, 24 clear of everything drawn, at a height that clears §29, or the air is too small and nothing is drawn`, async ({ page }) => {
       await open(page, view, width);
       const r = await reading(page);
       expect(r, 'the figure’s place is on the page').not.toBeNull();
       const f = r as NonNullable<typeof r>;
-      expect(f.drawn, 'the figure is drawn').toBe(true);
+      expect(f.drawn, `drawn exactly where the figure clears: ${f.airFigure} against ${f.clearing}`).toBe(f.airFigure >= f.clearing);
+      if (width >= 1440) expect(f.drawn, 'the figure is drawn').toBe(true);
+      if (!f.drawn) {
+        expect(await page.locator('[data-heading-figure] svg').count(), 'not drawn: no construction and no solids').toBe(0);
+        return;
+      }
       expect(f.meets, 'nothing drawn is within 24 of the air').toEqual([]);
       expect(f.air.left, 'right of the band').toBeGreaterThan(443);
-      expect(f.air.right, 'inside the window').toBeLessThanOrEqual(f.windowWidth);
+      /* Step 110: the air ran to the window's edge, past the page's own inset, and the last solid stood against the glass. */
+      expect(f.air.right, 'no further right than the list, which is the page’s own edge').toBeLessThanOrEqual(f.listRight + 0.5);
       expect(f.scrollWidth, 'and the page is no wider for it').toBe(f.windowWidth);
 
       expect(f.stillRecord, 'the construction drawn is the named record’s').toBe(f.record);
@@ -146,6 +158,26 @@ test.describe('§T.6: the figure does not follow the page', () => {
     const f = (await reading(page)) as NonNullable<Awaited<ReturnType<typeof reading>>>;
     expect(f.meets, 'and still 24 clear, with CLEAR FILTER now in the column').toEqual([]);
     expect(f.clearing).toBeCloseTo(clearing(f.record as string).height, 3);
+  });
+
+  /*
+    Step 110, seen on the real collection's capture at 1440: the air under
+    Add record ran to the window's edge, past the page's 20 inset, and the
+    last solid stood against the glass. Staged, since which of the two
+    rectangles is the air depends on the collection: with Add record taken
+    out of the page there is one rectangle, and it runs to the edge.
+    Fails against an edge taken as the window's.
+  */
+  test('the air ends at the page’s own right edge, where the list ends, and not at the window’s', async ({ page }) => {
+    await open(page, 'table', 1440);
+    await page.addStyleTag({ content: '[data-collection-band] a[href="/records/new"]{display:none!important}' });
+    /* A change of the window's size is what makes the figure measure again. */
+    await page.setViewportSize({ width: 1441, height: 900 });
+    await page.waitForTimeout(500);
+    const f = (await reading(page)) as NonNullable<Awaited<ReturnType<typeof reading>>>;
+    expect(f.drawn, 'the precondition: the figure is drawn').toBe(true);
+    expect(f.listRight, 'the precondition: the list ends inside the window').toBeLessThan(f.windowWidth - 10);
+    expect(f.air.right, 'the air ends where the list ends').toBeCloseTo(f.listRight, 0);
   });
 
   /* The figure is placed against the page, so it goes with it: fails against a figure fixed to the window. */

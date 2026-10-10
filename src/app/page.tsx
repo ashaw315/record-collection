@@ -10,7 +10,10 @@ import { WallUrlState } from './WallUrlState';
 import { wallSeats, wallSummaries } from './wall/producer';
 import { CollectionPagination } from './CollectionPagination';
 import { parseCollectionParams } from './collection-params';
-import { listRecords, listRecordAges, recordFacets, countAllRecords } from '@/lib/db/queries/records';
+import { listRecords, listRecordAges, recordFacets, countAllRecords, spineColoursOf } from '@/lib/db/queries/records';
+import { HeadingDrawing } from './HeadingDrawing';
+import { SOLID_SLOTS, figureWithSolids } from './figure-solids';
+import { construction } from './records/[id]/construction';
 import { ConstructionStill } from './records/[id]/ConstructionStill';
 import { HeadingFigure } from './HeadingFigure';
 import { figureSource } from './figure-source';
@@ -106,6 +109,15 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
     page moves it. The shelf is not reached by §T.6 and does not pay for it.
   */
   const source = shelf === null ? figureSource(await listRecordAges()) : null;
+  /*
+    Step 110: the heading's figure is the construction with its row of
+    solids, so the air is asked for the two together; and the solids are
+    "the tints of the first three records the screen shows, in its current
+    order", which is this page's first three.
+  */
+  const heading = source === null || records.rows.length === 0 ? null : { ...source, aspect: figureWithSolids(construction(source.id)).aspect };
+  const firstShown = records.rows.slice(0, SOLID_SLOTS).map((row) => row.id);
+  const shownColours = heading === null ? [] : (await spineColoursOf(firstShown)).map((spineColour, i) => ({ id: firstShown[i], spineColour }));
 
   /*
     §T.5: the grid shows each record's cover, the newest by §61. Asked for
@@ -143,9 +155,9 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
       ) : (
         <main data-collection-views="" className="relative">
           {/* §T.6: "Where the empty state shows, the heading's figure is not drawn, so the construction stands once on a screen." */}
-          {source !== null && records.rows.length > 0 && (
-            <HeadingFigure source={source}>
-              <ConstructionStill recordId={source.id} spineColour={null} />
+          {heading !== null && (
+            <HeadingFigure source={heading}>
+              <HeadingDrawing recordId={heading.id} shown={shownColours} />
             </HeadingFigure>
           )}
           {/* §T.1: the shelf's band, in its two-row form at every width. Search, the three views and Add record are its. */}

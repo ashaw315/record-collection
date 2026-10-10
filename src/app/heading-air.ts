@@ -13,11 +13,11 @@ export type AirBounds = {
   add: Box | null;
   /** The top of the first thing the list draws: a header's label, or a cover. */
   listTop: number;
-  /** The window's right edge, which is not drawn and takes no margin. */
+  /** The page's right edge, where the list ends: not a drawn thing, so it takes no margin. */
   edge: number;
 };
 
-export type HeadingAir = { left: number; top: number; width: number; height: number; /** The figure's height in that air. */ figure: number };
+export type HeadingAir = { left: number; top: number; width: number; height: number; /** The figure's height in that air. */ figure: number; /** Whether that height is at least the clearing height. */ drawn: boolean };
 
 /**
  * §T.6: "The heading's figure takes the air right of the band at the
@@ -48,7 +48,8 @@ export function headingAir(bounds: AirBounds, aspect: number, clearingHeight: nu
     const height = box.bottom - box.top;
     if (width <= 0 || height <= 0) continue;
     const figure = Math.min(height, width / aspect);
-    if (best === null || figure > best.figure) best = { left: box.left, top: box.top, width, height, figure };
+    if (best === null || figure > best.figure) best = { left: box.left, top: box.top, width, height, figure, drawn: figure >= clearingHeight };
   }
-  return best !== null && best.figure >= clearingHeight ? best : null;
+  /* Null is no air at all; air too small for the figure is returned and marked, so the page can say by how much. */
+  return best;
 }
