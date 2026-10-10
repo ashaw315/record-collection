@@ -61,6 +61,9 @@ const reading = (page: Page) =>
     return {
       drawn: host.getAttribute('data-drawn') === 'true', record: host.getAttribute('data-record'),
       figure: box(host), lines, list: box(list), still: still === null ? null : placed(still),
+      /* The filters' own box: the block, and whatever controls follow it (the line about records with no release year, CLEAR). */
+      filters: box(document.querySelector('[data-collection-filters]') as HTMLElement),
+      follows: Array.from(document.querySelectorAll<HTMLElement>('[data-filter-undated], [data-filter-clear], [data-collection-filters] span')).filter((el) => /no release year|^Clear/.test((el.textContent ?? '').trim())).length,
       solids: Array.from(host.querySelectorAll('[data-solid]')).map((g) => ({ record: g.getAttribute('data-solid'), ...box(g), faces: Array.from(g.querySelectorAll('polygon')).map((p) => ({ face: p.getAttribute('data-face'), fill: p.getAttribute('fill'), width: p.getBoundingClientRect().width })) })),
       header: box(document.querySelector('header[data-app-nav]') as HTMLElement),
       columns: firstRowLinks.length, windowWidth: window.innerWidth, scrollWidth: document.documentElement.scrollWidth,
@@ -83,7 +86,19 @@ for (const view of ['table', 'grid'] as const) {
       }
       const first = r.lines[0];
       const last = r.lines[r.lines.length - 1];
-      expect(r.list.top - last.bottom, 'the list starts 24 below the block’s foot').toBe(24);
+      /*
+        "The filter block is Sort and the four filters, and nothing else.
+        The no-release-year line and CLEAR, where they show, are controls
+        that follow the block" (Design, 10 Oct). So the list is 24 below
+        the last of what the filters draw, which is the block's foot only
+        where nothing follows it. This read the block's foot always, and
+        failed the batch gate on the mobile project (52.5 against 24) when
+        the other worker's records put "3 records have no release year"
+        beneath the block.
+      */
+      expect(r.list.top - r.filters.bottom, 'the list starts 24 below the filters').toBe(24);
+      if (r.follows === 0) expect(r.list.top - last.bottom, 'and with nothing following the block, 24 below its foot').toBe(24);
+      else expect(r.filters.bottom, 'what follows the block is beneath it').toBeGreaterThan(last.bottom);
       expect(r.scrollWidth, 'the page is no wider than the window').toBe(r.windowWidth);
 
       const block = last.bottom - first.top;
@@ -105,6 +120,23 @@ for (const view of ['table', 'grid'] as const) {
       if (r.solids.length === 0) expect(still.right, 'alone, the construction stands at the content’s edge').toBeCloseTo(r.list.right, 0);
     });
   }
+
+  /* The state the batch gate found by accident, staged: a year filter in force, so the no-release-year line and CLEAR follow the block. Fails against a block that takes them for its last line: the figure's foot would be on CLEAR's. */
+  test(`${view} at 1440, a year filter in force: the block is still Sort and the filter lines, the figure’s foot is still on the last of them, and the list is 24 below CLEAR`, async ({ page }) => {
+    await open(page, view, 1440, '&yearFrom=1900');
+    const r = await reading(page);
+    const last = r.lines[r.lines.length - 1];
+    const clear = await page.locator('[data-filter-clear]').evaluate((el) => el.getBoundingClientRect().bottom);
+    expect(r.follows, 'the precondition: controls follow the block').toBeGreaterThan(0);
+    expect(clear, 'the precondition: CLEAR is beneath the block').toBeGreaterThan(last.bottom + 44);
+    for (const [i, line] of r.lines.entries()) if (i > 0) expect(line.top - r.lines[i - 1].bottom, `no gap above ${line.name}`).toBe(0);
+    expect(r.list.top - r.filters.bottom, 'the list starts 24 below the last of the filters’ controls').toBe(24);
+    expect(r.filters.bottom).toBeCloseTo(clear, 0);
+    if (r.drawn) {
+      expect(r.figure.bottom, 'the figure’s foot is the block’s last line’s foot, not CLEAR’s').toBe(last.bottom);
+      expect(r.figure.right).toBe(r.list.right);
+    }
+  });
 
   /* Fails against content as wide as the window: at 1920 the list ran to 1900. */
   test(`${view} at 1920: the content stops at 1,400 from the 20 inset, pinned left, with the header across the whole window`, async ({ page }) => {

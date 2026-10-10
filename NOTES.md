@@ -39731,3 +39731,81 @@ take: the check's failure IS the change.
 `87 passed, ledger clean, tree unchanged — OK`; app and repo checks
 `1699 passed` once the capture edit was committed; typecheck, lint (0
 errors), build.
+
+## The batch gate on 932d521 reads RED: one test, eight times, diagnosed (10 Oct, 01:08 to 01:53)
+
+Gate: build, `npm test`, then `npx playwright test` on both projects with
+no file argument and traces kept, serially, on `932d521`, over everything
+ungated since `26d408c`.
+
+- Build: compiled.
+- Unit, `npm test`: `4269 passed, 2 skipped, tree unchanged — OK`, 306 s.
+- Playwright: `968 passed, 8 failed, 19 skipped, ledger clean, tree
+  unchanged — NOT OK`, 39.0 minutes. No test was flaky. The eight are one
+  test at its eight sizes, on the mobile project, each failing twice (the
+  attempt and its retry): `composition-111.spec.ts:76`, the table and the
+  grid at 1920, 1440, 1024 and 768. Artefacts copied before anything ran
+  again (`g14-artefacts`, 16 directories).
+- `collection-filters.spec.ts:412` and `:441` and `lookup-flows.spec.ts:
+  1562` passed first time on both projects. Nothing reproduced the lost
+  second choice, so that reading stays unproven.
+- Recorded, not judged: 992 tests in 39.0 minutes, 2.36 seconds a test;
+  swap-outs rose by 8.6M pages; load 2.87 at the start of the Playwright
+  run and 10.77 at its end.
+
+**The diagnosis, read in all sixteen artefacts and not assumed.** Every
+one fails on the same line, "the list starts 24 below the block's foot":
+52.5 against 24. Every one's page has the line "3 records have no release
+year" beneath the filter block. That line is drawn whenever any record in
+the collection has no year, with no filter in force, and on the shared
+database the other worker's fixtures had made three. It stands 12 below
+the block and is 16.5 tall, and the list is 24 below IT: 12 + 16.5 + 24 =
+52.5. So the page is as Design ruled on 10 Oct ("the no-release-year line
+and CLEAR, where they show, are controls that follow the block, not lines
+of it"), and the test was wrong: it took the block's foot for the last
+thing the filters draw. On chromium, earlier in the same run, no record
+lacked a year and it passed. It failed its retries because the records
+were still there.
+
+**This is the gate doing what a step-level run could not.** The test
+passed at step level three times, on a database that happened to hold no
+undated record each time. The state it missed is one a real collection is
+in whenever a record has no year.
+
+**Corrected, at step level, not gated.** The test reads the list as 24
+below the filters' own box, and 24 below the block's foot only where
+nothing follows the block. The state is now staged and not left to the
+database: with a year filter in the address, the block is still Sort and
+the filter lines, the figure's foot is on the last of them and not on
+CLEAR's, and the list is 24 below CLEAR. `composition-111` on both
+projects: `42 passed, 4 skipped, ledger clean, tree unchanged — OK`.
+The gate on `932d521` stays red in the record; whether it is run again on
+the corrected commit is the coordinator's.
+
+**The gate diagnosis, reported and not acted on.**
+- *Workers against cores.* Playwright runs 2 workers (`workers: 2`) on a
+  machine with 12 logical cores, 6 physical. The config's own note says
+  why: more workers bought collisions on the one database, not speed. In
+  this run the two were busy 1.95 of 2 the whole time (76.0 minutes of
+  test time in 39.0 of wall clock), so the run is bound by the worker
+  count and not by waiting.
+- *The split.* chromium: 698 tests, 60.4 minutes of test time, 79% of
+  it. mobile: 294 tests, 15.6 minutes. The projects run one after the
+  other, chromium first.
+- *The slowest twenty* are 26.6 of the 76.0 minutes, 35%, and nineteen
+  of them are chromium's: title-ladder-45:57 (228 s), record-band-43:33
+  (168), floor-ceiling-measure:109 (156), real-records-paint:102 (150),
+  title-ladder-45:247 (102), wall-first-paint:202 (72), layout-sweep:498
+  (60) and :523 (59), record-band-43:76 (56), extended-grid:1159 (47),
+  title-ladder-45:185 (45), layout-sweep:273 (44) and :397 (42),
+  record-navigation:166 (34), empty-figure-103e:106 (28 on mobile, 24 on
+  chromium), layout-sweep:214 (26), record-navigation:292 (20),
+  images-row-56:93 (16), identity-measure:76 (13). The first five are the
+  record page's sweeps over every record at every width, and are 13.4
+  minutes between them.
+- *Whether the phases can overlap.* Not as they stand. The unit suite and
+  Playwright share `record_collection_test` on port 5433, the unit suite
+  truncates it between tests, and `test/helpers/db.ts` refuses a second
+  runner. They could overlap only on two databases. The unit phase is 5.1
+  minutes of a 44-minute gate, so overlapping it would save about a
+  ninth.
