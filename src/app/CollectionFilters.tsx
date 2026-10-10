@@ -147,11 +147,10 @@ export function CollectionFilters({
     const lines = rootRef.current?.querySelectorAll<HTMLElement>('[data-filter-trigger]');
     return lines === undefined || lines.length === 0 ? undefined : lines[lines.length - 1].getBoundingClientRect();
   }, []);
-  /* Never above the window: with the lines gone over its top, the list still starts in view. */
   const place = useCallback(() => {
     const line = lastLine();
     if (line === undefined) return;
-    const top = Math.max(0, line.bottom);
+    const top = line.bottom;
     setPanelTop(top);
     setPanelBox(window.innerWidth >= BOX_FROM ? { left: line.left, maxHeight: Math.max(0, window.innerHeight - BOX_FOOT - top) } : null);
   }, [lastLine]);
@@ -194,10 +193,36 @@ export function CollectionFilters({
     /*
       Step 107. The root's `overflow` does not hold the page against a finger
       on Mobile Safari, so a finger's move is cancelled unless it is the
-      list's own. And whatever else moves the page (a script, the keyboard,
-      a scroll to the focused control, find-in-page), the panel is placed
-      again, so it stays beneath its lines.
+      list's own. And whatever else moves the page (a script, a scroll to
+      the focused control, find-in-page), the panel is placed again, so it
+      stays beneath its lines while they are in the window.
     */
+    /*
+      Step 108: "When the page moves far enough that the last filter line
+      leaves the window, the open panel closes", since with the line gone
+      it would be an open list with no trigger. Focus is not sent to the
+      line, which is out of view: sending it would bring the page back.
+    */
+    const follow = () => {
+      const line = lastLine();
+      if (line === undefined || (line.bottom > 0 && line.top < window.innerHeight)) {
+        place();
+        return;
+      }
+      /*
+        "The close does nothing else." Stepping back over the filter's
+        entry makes the browser restore the scroll position that entry's
+        predecessor was left at, which is where the lines are: the page
+        would go back to them (measured, both engines). So the position
+        the page has now is put back once the step has landed.
+      */
+      if (hasEntry()) {
+        const at = { left: window.scrollX, top: window.scrollY };
+        const keep = () => window.scrollTo({ ...at, behavior: 'instant' });
+        window.addEventListener('popstate', () => { keep(); requestAnimationFrame(() => { keep(); requestAnimationFrame(keep); }); }, { once: true });
+      }
+      closeFilter();
+    };
     const releaseTouch = holdTouch(document, () => rootRef.current?.querySelector<HTMLElement>('[data-filter-panel]') ?? null);
     /* Step 106's close set: a press that did not land on an option row, on CLOSE or on a filter line closes, and does nothing else. */
     const releasePress = closeOnOutsidePress(
@@ -205,20 +230,20 @@ export function CollectionFilters({
       (node) => node instanceof Element && node.closest('[data-filter-option], [data-filter-close], [data-filter-trigger]') !== null && rootRef.current?.contains(node) === true,
       closeFilter,
     );
-    window.addEventListener('scroll', place, { passive: true });
+    window.addEventListener('scroll', follow, { passive: true });
     document.addEventListener('keydown', onKey);
     window.addEventListener('popstate', onPop);
-    window.addEventListener('resize', place);
+    window.addEventListener('resize', follow);
     return () => {
       release();
       releaseTouch();
       releasePress();
-      window.removeEventListener('scroll', place);
+      window.removeEventListener('scroll', follow);
       document.removeEventListener('keydown', onKey);
       window.removeEventListener('popstate', onPop);
-      window.removeEventListener('resize', place);
+      window.removeEventListener('resize', follow);
     };
-  }, [openKey, closeFilter, place]);
+  }, [openKey, closeFilter, place, lastLine]);
 
   function change(mutate: (current: CollectionParams) => CollectionParams, how: 'push' | 'replace' = 'push') {
     /**

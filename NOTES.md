@@ -38943,3 +38943,64 @@ in order, for that bisect:** `26d408c` (step 106), and what follows it.
 The gate's own diagnosis (workers against cores, the projects' split, the
 slowest twenty, whether the phases can overlap) rides with that batch
 gate.
+
+## Step 108: the panel closes when its last line leaves the window (9 Oct, night)
+
+§T.3, Design's save at `d6a42d2`: "When the page moves far enough that the
+last filter line leaves the window, the open panel closes." It replaces
+step 107's interim, the panel's top held at the window's top, which no
+ruling gave.
+
+**Built.** On every scroll and resize with a panel open: the line still in
+the window (any of it), the panel is placed beneath it; the line wholly
+above or wholly below, the panel closes. Focus is not sent to the line,
+which is out of view by then.
+
+**"The close does nothing else" needed one thing the tests found.** The
+close steps back over the filter's history entry, and the browser then
+restores the scroll position that entry's predecessor was left at, which
+is where the lines are: the page went back to the top (measured, both
+engines: 513 down became 0). So the position the page has is put back
+once the step has landed. Other closes never met this, because the page
+had not moved between open and close.
+
+**The keyboard is held: confirmed, no defect.** With a panel open, End,
+Page Down, Space and the arrows leave the page at 0 on both projects, at
+390 and 1024. The first reading said otherwise (41 on Chromium): that was
+the test's own precondition, End pressed with the panel closed, still
+animating when the panel opened. The apparatus, not the page.
+
+**Movers staged** (`panel-leaves-108.spec.ts`, both projects, 390 and
+1024; each reads that the line left the window before it reads the
+close): a script; focus sent to a link far down the page; a window made
+too short for the lines. And the edge: a line 10 into the window keeps
+its panel. **Not staged:** find-in-page (Playwright drives no browser's
+find bar); scroll restoration (it happens on a history traversal or a
+reload, and each of those closes the panel by itself, so there is no
+moment to stage); Mobile Safari.
+
+**A test retired.** `panel-hold-107`'s "with the lines gone above the
+window, the panel starts at the window's top" asserted the interim. It is
+replaced by a note pointing here.
+
+**One red line in the step-level run, NOT diagnosed.** The first run of
+the filter set read `112 passed, 1 failed`: `collection-filters.spec.ts:
+441` on chromium, "clicking through to a filtered view equals loading
+that URL directly", the address carrying the genre and the sort and not
+the label. It then passed 8 of 8 alone, 5 of 5 with its whole file, and
+in a second full run of the set (`113 passed, 4 skipped, ledger clean,
+tree unchanged — OK`). Fourteen greens are not a diagnosis. What is known:
+the server's "destination stream closed early" in that log is forty tests
+later and is not it. What is supposed and not shown: the test presses
+Genre's option and then Label's with the first navigation in flight; the
+label list is the whole database's, which the other worker's fixtures
+change; when the navigation lands the list is drawn again, and a row that
+moves between Playwright's aim and its press puts the press off the row.
+In the sheet that was another row or paper; in step 106's box, three rows
+tall, it is more likely the page beside the box, which closes and chooses
+nothing. If so the page is right and the test races. **The evidence was
+lost by rerunning**: the failing run's screenshot and trace were
+overwritten by the next run. Copy a failure's artefacts before running
+anything again. This test has been red in gates before (5, 6, 7 Oct) for
+a different stated cause. It is watched at the batch gate, with traces
+kept.

@@ -67,15 +67,12 @@ test.describe('§T.3: the panel stays beneath the last filter line when the page
     await expect.poll(async () => (await reading(page)).panelTop, 'and back').toBe(at.lastFoot);
   });
 
-  /* Fails against the same build, and against one that follows the line out of the window: the panel's top would be above it, its first rows out of reach. */
-  test('with the lines gone above the window, the panel starts at the window’s top', async ({ page }) => {
-    await open(page);
-    await trigger(page).click();
-    await expect(panel(page)).toHaveCount(1);
-    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
-    await expect.poll(async () => (await reading(page)).lastFoot, 'the precondition: the last line is above the window').toBeLessThan(0);
-    await expect.poll(async () => (await reading(page)).panelTop).toBe(0);
-  });
+  /*
+    A second test stood here: "with the lines gone above the window, the
+    panel starts at the window's top". That was step 107's interim, which
+    no ruling gave. Step 108 rules that the panel closes there, and its
+    spec (`panel-leaves-108.spec.ts`) holds the case.
+  */
 });
 
 test.describe('§T.3: nothing moves on open or on close', () => {
