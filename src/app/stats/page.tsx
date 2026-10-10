@@ -145,7 +145,7 @@ export default async function StatsPage({
     <>
       <AppHeader />
 
-      <main data-t6="" className="mx-auto w-full max-w-3xl px-4 py-6">
+      <main className="mx-auto w-full max-w-3xl px-4 py-6">
         <h1 className="font-heading text-headline font-semibold tracking-tight">Stats</h1>
 
         {/*

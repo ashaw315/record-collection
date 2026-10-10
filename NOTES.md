@@ -40068,3 +40068,25 @@ figure is good to about 2.
   centre (975.5), further off than the figure alone (35). What it does
   land on is the middle of the room left of ADD RECORD: the column's left
   at 375 to ADD RECORD's left at 1437 has its middle at 906, 1.5 away.
+
+## Step 114: the header runs the full window; the colour opt-in is gone (10 Oct)
+
+- **The header.** `AppHeader.tsx` no longer caps its row at 1152 or reads
+  the route to decide: the wordmark is 18 from the window's left at 320,
+  1024, 1440 and 1920 on the table, the shelf and the want list
+  (`header-114.spec.ts`, seen failing at 162 in a 1440 window). The record
+  page is unchanged; its measure comes from its own stylesheet.
+  *My reading, where the sentence could be taken two ways:* "the links
+  and the slot at the far right" is built as the slot's place. The links
+  still follow the wordmark, as built and as Adam's wireframe draws them.
+  `record-page-8a.spec.ts`'s test that `/records/new` "caps at 1152 and
+  centres" asserted the withdrawn cap and is rewritten to the full window.
+- **The colours.** `--destructive` is ink and `--muted-foreground` the
+  label colour at the root; `data-t6` is removed from its sixteen roots
+  and the button's destructive variant is the ink box everywhere. The one
+  exclusion is written as a rule, `[data-record-page]` keeps the grey at
+  0.48, on the record page's `main`. The token test now reads all three
+  colours and was seen failing on the root's red and grey. The survey,
+  before against after, 30 pages at two widths and sign-in, at rest and
+  focused: 61 of 61 identical, so nothing drew the red outside a `data-t6`
+  root and the record page's asides did not move.

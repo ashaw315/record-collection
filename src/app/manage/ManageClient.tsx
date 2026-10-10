@@ -353,7 +353,7 @@ function ResourcePanel({ resource, rows }: { resource: ResourceSpec; rows: Row[]
       {/* Destructive actions confirm. Any 409 that follows is shown on the row,
           so a refusal is not lost with the dialog. */}
       <Dialog open={pendingDelete !== null} onOpenChange={() => setPendingDelete(null)}>
-        <DialogContent data-t6="">
+        <DialogContent>
           <DialogTitle>Delete {pendingDelete?.resource.singular}?</DialogTitle>
           <DialogDescription>
             {String(pendingDelete?.row.name ?? 'This row')} will be removed. This cannot be undone.
@@ -387,7 +387,7 @@ export function ManageClient({
   const resource = RESOURCES.find((entry) => entry.key === activeKey) as ResourceSpec;
 
   return (
-    <div data-t6="" className="mx-auto w-full max-w-6xl px-4 py-6">
+    <div className="mx-auto w-full max-w-6xl px-4 py-6">
       <header className="mb-5">
         <h1 className="font-heading text-headline font-semibold tracking-tight">Manage</h1>
         <p className="mt-0.5 text-lede text-muted-foreground">

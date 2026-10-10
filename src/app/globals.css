@@ -153,16 +153,16 @@
   --secondary: oklch(0.955 0.006 85);
   --secondary-foreground: var(--foreground);
   --muted: oklch(0.955 0.006 85);
-  --muted-foreground: oklch(0.48 0.012 60);
+  /* §T.6: the survey's grey is the label colour, at the root since step 114. It was 0.48 0.012 60, which the record page keeps, below. */
+  --muted-foreground: oklch(0.44 0.008 70);
 
   /* Row hover / selected. Deliberately a warm neutral, NOT tinted oxblood:
      the accent is for actions, and a tinted row reads as selected-ness. */
   --accent: oklch(0.945 0.008 80);
   --accent-foreground: var(--foreground);
 
-  /* Distinct from the oxblood accent, or a delete button and a primary action
-     become the same colour. Brighter and more orange. */
-  --destructive: oklch(0.52 0.2 27);
+  /* §T.6 and §9.3: "a destructive action ink"; "Destructive actions are identical to constructive ones... The confirmation carries the weight instead." It was a red, drawn in ink only under `data-t6` until step 114. */
+  --destructive: var(--foreground);
 
   /*
    * Hairlines. Ledger rules, not card outlines — ONE value (8a §W.27),
@@ -233,20 +233,18 @@
 }
 
 /*
- * §T.6 (step 103), the part that is still scoped. Oxblood is gone at the
- * root, above. What a screen takes by carrying `data-t6` on its root (and
- * a dialog on its popup, since a dialog is drawn outside the page) is the
- * rest of §T.6's mapping: the survey's grey becomes the label colour, and
- * a destructive action ink.
+ * §T.6, step 114: "Once the grey and the red are both the system's own, the
+ * opt-in attribute that scoped them carries nothing and goes. A surviving
+ * constant colour behind an opt-in is the defect this section closes." So
+ * `data-t6` is gone and its mapping is the root's.
  *
- * These two stay scoped on the coordinator's ruling of 10 Oct: the grey
- * rule was written from a survey of §T.6's own screens, the record page is
- * not one of them, and its asides are drawn in this grey. Design is
- * deciding whether the record-detail target takes it up.
+ * One exclusion, written where it can be seen and not left to an attribute
+ * every other screen must remember: "The record page is outside this: its
+ * asides keep 0.48, and the grey's inversion is held out of it." A dialog it
+ * opens is drawn outside this element and takes the root's, as it did.
  */
-[data-t6] {
-  --destructive: var(--foreground);
-  --muted-foreground: oklch(0.44 0.008 70);
+[data-record-page] {
+  --muted-foreground: oklch(0.48 0.012 60);
 }
 
 @layer base {

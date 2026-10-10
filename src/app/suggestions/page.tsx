@@ -78,7 +78,7 @@ export default async function SuggestionsPage() {
   return (
     <>
       <AppHeader />
-      <main data-t6="" className="mx-auto w-full max-w-3xl px-4 py-5">
+      <main className="mx-auto w-full max-w-3xl px-4 py-5">
         <Link
           href="/want-list"
           className="text-meta text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"

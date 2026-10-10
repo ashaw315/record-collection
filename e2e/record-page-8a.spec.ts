@@ -367,17 +367,16 @@ test('the page caps, and the header caps with it', async ({ page }) => {
   }
 });
 
-test('the header on /records/new caps at 1152 and centres, like every screen that is not a record', async ({ page }) => {
+test('the header on /records/new runs the full window, as every screen’s does', async ({ page }) => {
   /**
-   * **"new" is a reserved segment, not a record id.** The header decided the
-   * record screen with `/^\/records\/[^/]+$/`, which any single segment
-   * satisfies, so /records/new took the record page's uncapped measure on a
-   * page whose stylesheet never supplies one: at 1920 the wordmark sat at the
-   * far left above a narrow centred form. Asserted on geometry, the channel
-   * the claim is about: the bar is 1152 wide and its left edge is the
-   * centring offset.
+   * Step 114, §G.3: "The header runs the full window on every screen."
+   * This asserted the opposite until then, a bar capped at 1152 and centred
+   * (`G.3/header-screen-measure`), and was written when `/records/new`
+   * wrongly took the record page's measure. That it is not the record page
+   * no longer shows in the bar's width; it shows in the bar being the
+   * window's at a width where the record page's would stop at its ceiling.
    */
-  for (const width of [1440, 1920]) {
+  for (const width of [1440, 1920, 2200]) {
     await page.setViewportSize({ width, height: NO_SCROLL_HEIGHT });
     await page.goto('/records/new');
     await page.locator('[data-app-nav]').waitFor({ timeout: 20_000 });
@@ -385,8 +384,7 @@ test('the header on /records/new caps at 1152 and centres, like every screen tha
       const r = (document.querySelector('[data-app-nav] > div') as HTMLElement).getBoundingClientRect();
       return { w: Math.round(r.width), left: Math.round(r.left) };
     });
-    expect(bar.w, `header width on /records/new at ${width}`).toBe(1152);
-    expect(bar.left, `header centred on /records/new at ${width}`).toBe((width - 1152) / 2);
+    expect(bar, `the header’s row on /records/new at ${width}`).toEqual({ w: width, left: 0 });
   }
 });
 

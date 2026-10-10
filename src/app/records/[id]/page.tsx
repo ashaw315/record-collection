@@ -131,7 +131,7 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
         The chrome did not have to go: it had to go BELOW the seam, where the
         sections that are meant to scroll already live.
       */}
-      <main className="w-full">
+      <main data-record-page="" className="w-full">
         <div>
           {/*
             **The composition's edge, which is what §9.1's rules bleed to.**

@@ -176,6 +176,9 @@ const goingFocused = (page: Page, names: string[]) =>
   }, { GOING, names });
 
 async function expectNoneFocused(page: Page, name: string, names = Object.keys(GOING)) {
+  /* At rest first, for the same colours: every element, as `going` reads them. */
+  const rest = await going(page);
+  expect.soft(rest.found.filter((line) => names.some((n) => line.startsWith(`${n}:`))), `${name}, at rest: ${names.join(', ')}`).toEqual([]);
   await page.keyboard.press('Shift');
   const r = await goingFocused(page, names);
   expect(r.focused, `${name}: the precondition, controls took focus`).toBeGreaterThan(1);
@@ -223,9 +226,10 @@ test.describe('§T.6: no control draws oxblood when focused, on any screen', () 
       modal" as compositions, and their grey is not ruled here. Fails against
       the root's ring on each of them.
     */
-    test(`at ${width}: no oxblood on a focused control on the shelf, the record page, its modal, its confirmation, or the page for an address that is not one`, async ({ page }) => {
+    test(`at ${width}: no oxblood and no red on a control, at rest or focused, on the shelf, the record page, its modal, its confirmation, or the page for an address that is not one`, async ({ page }) => {
       const f = await seedFixture(page, 'Focus113');
-      const oxblood = ['oxblood'];
+      /* Step 114: "test that no screen draws the red". The grey is the record page's to keep ("its asides keep 0.48"), so it is not read here. */
+      const oxblood = ['oxblood', 'destructive red'];
       await openScreen(page, '/', width);
       await expectNoneFocused(page, 'the shelf', oxblood);
       if (width === GRID_FORK) {
@@ -278,17 +282,21 @@ test('§T.6: the record page’s price history draws its line in ink', async ({ 
  * (`--sidebar-primary`, `--sidebar-ring`) on the eve of a sidebar being
  * built: a component reaching for the token named after it would have
  * brought the colour back. So no custom property the stylesheets declare
- * may resolve, at the root, to oxblood. The grey and the red are not read
- * here: both are still the root's, scoped out by `data-t6` (NOTES, 10 Oct).
+ * may resolve, at the root, to oxblood.
+ *
+ * Step 114 adds the grey and the red: "Once the grey and the red are both
+ * the system's own, the opt-in attribute that scoped them carries nothing
+ * and goes." Fails against the root's `--destructive` and
+ * `--muted-foreground` while `data-t6` was what replaced them.
  */
-test('§T.6: no token resolves to oxblood at the root, whether anything reads it or not', async ({ page }) => {
+test('§T.6: no token resolves to oxblood, the survey’s grey or the destructive red at the root, whether anything reads it or not', async ({ page }) => {
   await login(page);
   await openScreen(page, '/?view=table', GRID_FORK);
-  const r = await page.evaluate((oxblood) => {
+  const r = await page.evaluate((going) => {
     const canvas = document.createElement('canvas'); canvas.width = 1; canvas.height = 1;
     const ctx = canvas.getContext('2d', { willReadFrequently: true }) as CanvasRenderingContext2D;
     const paint = (css: string) => { ctx.clearRect(0, 0, 1, 1); ctx.fillStyle = '#000'; ctx.fillStyle = css; ctx.fillRect(0, 0, 1, 1); const d = ctx.getImageData(0, 0, 1, 1).data; return [d[0], d[1], d[2], d[3]]; };
-    const target = paint(oxblood);
+    const targets = Object.entries(going).map(([name, css]) => ({ name, rgb: paint(css) }));
     const names = new Set<string>();
     const walk = (rules: CSSRuleList) => {
       for (const rule of Array.from(rules)) {
@@ -312,14 +320,14 @@ test('§T.6: no token resolves to oxblood at the root, whether anything reads it
       const [red, green, blue, alpha] = paint(getComputedStyle(probe).color);
       if (alpha === 0) continue;
       colours += 1;
-      if (Math.abs(red - target[0]) <= 3 && Math.abs(green - target[1]) <= 3 && Math.abs(blue - target[2]) <= 3) found.push(name);
+      for (const t of targets) if (Math.abs(red - t.rgb[0]) <= 3 && Math.abs(green - t.rgb[1]) <= 3 && Math.abs(blue - t.rgb[2]) <= 3) found.push(`${name}: ${t.name}`);
     }
     probe.remove();
     return { names: names.size, colours, found: found.sort() };
-  }, GOING.oxblood);
+  }, GOING);
   expect(r.names, 'the precondition: the stylesheets’ custom properties were found').toBeGreaterThan(40);
   expect(r.colours, 'the precondition: colours among them were resolved').toBeGreaterThan(20);
-  expect(r.found, 'tokens that are oxblood').toEqual([]);
+  expect(r.found, 'tokens that are oxblood, the survey’s grey or the red').toEqual([]);
 });
 
 test.describe('§9.3, settled: "Delete is on every record, so it cannot be red here"', () => {

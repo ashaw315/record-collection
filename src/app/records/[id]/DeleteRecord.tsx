@@ -107,7 +107,7 @@ export function DeleteRecord({
           cannot be red here... The confirmation carries the weight instead." The dialog takes §T.6's mapping, which
           makes a destructive action ink on its own account; it was the shared destructive variant, red on a red tint.
         */}
-        <DialogContent data-t6="">
+        <DialogContent>
           {/* Named, not "this record" — the reader may have several open. */}
           <DialogTitle>Delete “{title}”?</DialogTitle>
           <DialogDescription>

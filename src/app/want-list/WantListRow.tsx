@@ -209,7 +209,7 @@ export function WantListRow({ item }: { item: WantListItem }) {
       />
 
       <Dialog open={confirming} onOpenChange={setConfirming}>
-        <DialogContent data-t6="">
+        <DialogContent>
           <DialogTitle>Delete “{item.title}”?</DialogTitle>
           {/*
             §7.3 requires the consequence to be legible BEFORE it happens, and

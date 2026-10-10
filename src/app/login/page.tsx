@@ -74,7 +74,7 @@ export default function LoginPage() {
   }
 
   return (
-    <main data-t6="" className="flex min-h-dvh items-center justify-center px-4">
+    <main className="flex min-h-dvh items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <h1 className="mb-1 text-headline font-semibold tracking-tight">Record Collection</h1>
         <p className="mb-6 text-lede text-muted-foreground">Enter the password to continue.</p>

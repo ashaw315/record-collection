@@ -81,7 +81,7 @@ export default async function NewRecordPage({ searchParams }: PageProps<'/record
   return (
     <>
       <AppHeader />
-      <main data-t6="" className="mx-auto w-full max-w-3xl px-4 py-6">
+      <main className="mx-auto w-full max-w-3xl px-4 py-6">
         <Link
           href="/"
           className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"

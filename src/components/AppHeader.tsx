@@ -54,15 +54,6 @@ const LINKS = [
  * rather than `bg-border`, so it resolves to the token itself rather than
  * through the colour-mix Tailwind's utilities emit.
  */
-/*
-  The record screen is `/records/<uuid>` and nothing else under `/records/`.
-  Any single segment used to match, so `/records/new` took the record page's
-  uncapped measure on a page that never supplies one. Matching the id's own
-  shape, rather than excluding "new", keeps any future reserved segment out
-  too. The same pattern as `isUuid` in `lib/api/errors.ts`, which this
-  client component cannot import.
-*/
-const RECORD_SCREEN = /^\/records\/[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 
 /*
@@ -174,13 +165,6 @@ export function AppHeader({ actions }: { actions?: React.ReactNode } = {}) {
     };
   }, [open, closeMenu]);
 
-  /*
-    The record detail screen is 8a's GRID_FORK measure (§18: twelve fixed
-    120px columns, so 1440); every other screen is the
-    1152 the app has used throughout. Matched on the route rather than passed as
-    a prop so a screen cannot forget to say which it is and silently misalign.
-  */
-  const wide = RECORD_SCREEN.test(pathname) || pathname.startsWith('/wall/probe/page8a');
 
   /*
     §W.13: the wall starts directly under this nav and takes the full height,
@@ -241,12 +225,14 @@ export function AppHeader({ actions }: { actions?: React.ReactNode } = {}) {
           'mx-auto flex w-full flex-wrap items-center gap-x-6 px-[18px]',
         )}
         /*
-          On the record screen the measure is §30's and comes from that
-          page's stylesheet, which addresses `[data-app-nav] > div`: the bar
-          takes the measure of the page it sits above, and above 1440 that
-          page grows. Everywhere else it is the app's own 1152.
+          Step 114, §G.3: "The header runs the full window on every screen:
+          the wordmark at the 18 inset." It was capped at the app's 1152 and
+          centred under a capped screen, which put the wordmark at 162 in a
+          1440 window (`G.3/header-screen-measure`). The record screen is
+          unchanged: its measure is §30's and comes from that page's
+          stylesheet, which addresses `[data-app-nav] > div`.
         */
-        style={wide ? undefined : { maxWidth: 1152 }}
+
       >
         {/*
           **`text-sm` is NOT converted to a role, and the gap is deliberate

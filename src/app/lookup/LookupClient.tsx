@@ -359,7 +359,6 @@ export function LookupClient({ emptyFigure = null }: { /** §T.6's figure for a 
       )}
 
       <form
-        data-t6=""
         hidden={results !== null && !queryOpen}
         ref={formRef}
         id={formId}
