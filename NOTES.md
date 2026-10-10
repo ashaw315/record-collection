@@ -40506,3 +40506,61 @@ figure and none of this step's layout, so this step is not its cause; why
 the stubbed release detail did not answer is not established. Artefacts
 copied before anything else ran. One existing screen test was changed to
 the new rule (the figure's longer side) and is declared here.
+
+## The look-up flake diagnosed: a click aimed at a button the market line was about to move (10 Oct)
+
+`lookup-flows.spec.ts` › `notes stay separable from the evidence they sit
+beside` failed once on mobile in step 117's covering run and passed on
+retry. The coordinator's first suspect was the release-detail stub racing
+the page's request. **It was not the stub.** The trace holds no request to
+`/api/discogs/release/*` at all: the press never reached the button.
+
+**What happened, from the trace.** A search with one result fetches the
+market unasked (§10a). The test stubs search and release detail and not
+the market, so that request goes to the server, where the no-live-calls
+guard answers 502. Its answer replaces the "Check the market" button
+(16.5 tall) with a status line (15 tall, and placed 5.5 higher), and
+"Identify this pressing" below it moves up by 9. In the failing attempt
+Playwright found the button still at 281338.3, began the click at
+281342.5, and the 502 landed at 281344.2, before the click finished at
+281348.2. The click went to where the button had been. The line the
+failure showed, "Could not reach Discogs. Try again shortly.", is the
+market's, not the evidence panel's.
+
+**Staged afterwards, on both projects** (a probe, held market answer,
+released after the button's box was read): the button moves from 571.1 to
+562.1 on mobile and from 510 to 501 on chromium; a click at its old centre
+lands on a `div`, 0.8 below the moved button's foot, and no release
+request is made. So chromium has the same race and has only not lost it
+yet.
+
+**The fix is in the tests, and it is a change to five tests, declared.**
+`pressEvidence(page)` waits for `check-market` to be gone, which is the
+market answered either way, and then clicks. The five tests that press
+the button on a one-result search use it; the two-result test does not
+fetch the market unasked and is untouched. Not weakened: every assertion
+stands, and the wait is on the thing that moves the target.
+
+**What the evidence is and is not.** The diagnosis is the trace and the
+staged probe. Three runs of the five tests at ten repeats on both
+projects read `100 passed, ledger clean, tree unchanged — OK` each, but
+the race lost once in many runs before the fix, so 300 greens would have
+been likely without it too, and they are not the proof. The probe is not
+committed: as a test it would pin a 9px jump as wanted.
+
+**Out of scope, not fixed: the same jump is the reader's.** In a shop, on
+a one-result search, a thumb going for "Identify this pressing" as the
+market answers can miss it the same way, by 9px on a 16.5 control. Whether
+the market line should hold its height while it loads is Design's.
+
+**Ruled out:** the stub racing the request (no request was made); the
+release-detail route's pattern (it matched in the retry and in every
+other test); step 117's diff (a one-result search draws no figure).
+Artefacts: the scratchpad's `flaky-117/`, not in the tree.
+
+**Also, 10 Oct: step 116 is in Code's region.** Design's save `09d7251`
+renumbered the cap to 117 and left no 116, so the index's step-sequence
+check failed (`3 missing 116`) and the first intake was not committed.
+116 is Code's own step (the grid measurement; the coordinator: "116 is
+yours"), so it is carried in `scripts/handoff-code-region.json` as 71,
+105 and 107 are.

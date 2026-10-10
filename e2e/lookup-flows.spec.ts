@@ -1442,6 +1442,25 @@ const collisionRow = (discogsId: number) => ({
 });
 
 /** Serves release detail from the committed pair, and counts the calls. */
+/**
+ * Presses "Identify this pressing" on a search with ONE result, once the
+ * market line above it has answered.
+ *
+ * One result fetches the market unasked (§10a), and its answer replaces the
+ * "Check the market" button with a line 9 shorter, so the evidence button
+ * moves up by 9 as it lands. A click aimed in between goes to where the
+ * button was and presses nothing: no release request is made and the panel
+ * never opens. On 10 Oct that was `notes stay separable` failing once on
+ * mobile, the market's 502 arriving 1.7ms after the click began (staged
+ * afterwards on both projects: the old centre misses the moved button by
+ * 0.8). Playwright's own stability wait cannot see it, because the button
+ * is still when it looks.
+ */
+async function pressEvidence(page: Page): Promise<void> {
+  await expect(page.getByTestId('check-market')).toHaveCount(0);
+  await page.getByTestId('expand-evidence').click();
+}
+
 async function stubReleaseDetail(page: Page, counter: { calls: number[] }) {
   await page.route('**/api/discogs/release/*', async (route) => {
     const id = Number(new URL(route.request().url()).pathname.split('/').pop());
@@ -1543,7 +1562,7 @@ test('the runout renders verbatim, spacing and glyphs intact', async ({ page }) 
   await formReady(page);
   await page.getByLabel('Artist').fill('Discharge');
   await page.getByRole('button', { name: 'Search Discogs' }).click();
-  await page.getByTestId('expand-evidence').click();
+  await pressEvidence(page);
 
   const value = page.getByTestId('runout-value');
   await expect(value).toBeVisible();
@@ -1576,7 +1595,7 @@ test('notes stay separable from the evidence they sit beside', async ({ page }) 
   await formReady(page);
   await page.getByLabel('Artist').fill('Discharge');
   await page.getByRole('button', { name: 'Search Discogs' }).click();
-  await page.getByTestId('expand-evidence').click();
+  await pressEvidence(page);
 
   const notes = page.getByTestId('evidence-notes');
   await expect(notes).toBeVisible();
@@ -1609,7 +1628,7 @@ test('a release with no pressing details says so rather than rendering blank', a
   await formReady(page);
   await page.getByLabel('Artist').fill('Discharge');
   await page.getByRole('button', { name: 'Search Discogs' }).click();
-  await page.getByTestId('expand-evidence').click();
+  await pressEvidence(page);
 
   const none = page.getByTestId('evidence-none');
   await expect(none).toBeVisible();
@@ -1681,7 +1700,7 @@ test('a release with runout variants says what a match identifies', async ({ pag
   await formReady(page);
   await page.getByLabel('Artist').fill('Discharge');
   await page.getByRole('button', { name: 'Search Discogs' }).click();
-  await page.getByTestId('expand-evidence').click();
+  await pressEvidence(page);
 
   await expect(page.getByTestId('variant-limit')).toHaveText(
     'Variants are different stampers within this release — a match identifies the release.',
@@ -1703,7 +1722,7 @@ test('the variant line stays off where there is nothing to disambiguate', async 
   await formReady(page);
   await page.getByLabel('Artist').fill('Discharge');
   await page.getByRole('button', { name: 'Search Discogs' }).click();
-  await page.getByTestId('expand-evidence').click();
+  await pressEvidence(page);
 
   await expect(page.getByTestId('evidence-runouts')).toBeVisible();
   await expect(page.getByTestId('variant-limit')).toHaveCount(0);
