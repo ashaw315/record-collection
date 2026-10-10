@@ -40254,3 +40254,71 @@ cramped, the one measurement owed is the window at which the DRAWN Record
 reaches 269. The grid's five-to-three across the fork stays, and the fork
 is not moved onto a grid boundary. No floor on the figure, which clears
 by 3.6 at the fork; revisit only if the fork moves down.
+
+## The batch gate on 80a6a54 reads OK, with no retry (10 Oct, 13:54 to 14:41)
+
+Gate: full suites, every project, no file argument. Run on `80a6a54` and
+not `20f2f16` as asked: the keyboard ring test and the two NOTES rules
+were already pushed when the instruction arrived, and `80a6a54` differs
+from `20f2f16` only in `e2e/sidebar-113.spec.ts` and `NOTES.md`.
+
+- Unit, `scripts/run-tests.ts npm test`: `4262 passed, 2 skipped, tree
+  unchanged — OK`.
+- Playwright, `scripts/run-tests.ts npx playwright test`: `973 passed, 16
+  skipped, ledger clean, tree unchanged — OK`, 41.8 minutes, 989 tests on
+  2 workers. No failure and no retry.
+- Load 2.8 at launch and 15.8 at the end, on 6 physical cores. The
+  machine was busy by the end and the run still read clean.
+
+The three things that rode on it are covered: the filter container after
+the `table-row-box-105` correction, step 113 after the 41 were corrected,
+and `playwright.config.ts`'s two changes to the mobile project's list.
+
+Ungated before this run, in bisect order: a09c6f7 (the gate fix),
+fff63d8 (the filter container), 974206a (ink at the root, the focus-state
+check), 6cc5e1a (the three tokens), 22d20c8 (step 114), 20f2f16 (step
+113), 80a6a54 (the ring by keyboard). Between them are Design's saves and
+intakes and NOTES-only commits, which change no code: 410e4d0, 6fc3354,
+5e12cf1, baeefe7, f7fdaa4, 6865658, 8fc1e48, d970e88, 545ff80, b31d96f,
+f882287, 829a131, c5d55c1, 36e4139, 4bbd315, 64a1233.
+
+## The Doors' rose is the new cover's colour, and The Doors is now §T.6's source record (10 Oct)
+
+Adam replaced a record's cover (The Doors / The Doors, Elektra EKS-74007)
+and the ornament read dusty rose against a cover of dark browns, flesh and
+a yellow-green logotype. Read-only throughout; a direct select against the
+real collection was denied as a production read and not pursued, and Adam
+ran the query in the Neon console himself.
+
+**It followed.** Stored `#8b4e51`. The app's own `averageColour` on the
+two cover files: the Discogs cover (18:11:34) gives `#666624`, an olive;
+Adam's upload (18:18:27) gives `#8b4e51`, exact. So the colour was
+re-derived from the new cover, as `rederiveSpineColour` says and as
+`record-images.test.ts:401` holds.
+
+**A claim of mine was wrong.** I said the spine write does not touch
+`updated_at`. It does: `set_updated_at()` is a trigger before every
+update on every table (`drizzle/0000`), so `records.updated_at` moved 49ms
+after the cover row. The coordinator read the timing right.
+
+**Why rose.** The cover is mostly black; the largest chromatic region is
+the lit face, a red-pink skin in this scan (OKLCH hue 17°, lightness 0.50,
+chroma 0.082). The logotype is outline strokes and loses on area. The
+record ladder then draws the base at lightness 0.62 with the chroma kept:
+`#b27274`, tint `#d49193`. Nothing stored is wrong; whether "the largest
+chromatic region, lightened" is the right rule for such a cover is
+Design's and Adam's. Not changed.
+
+**The source record moved, by rule.** The Doors clears at 159.6, below
+the previous source's 172.4, so §T.6 now draws every figure from it:
+the sidebar's head figure and fragment in its rose, the want list's and
+Look up's empty figures in its shape (those are ink). Measured in a
+browser, `docs/captures/source-record/`. Nothing announces the change.
+
+**And a ruling's premise no longer holds.** "There is no band where the
+sidebar draws and the figure does not" (answer 3, this morning) was true
+of the old source. With aspect 1.362 the head figure is 153.4 tall at
+the 1054 fork, short of 159.6, and first draws at a 1081 window. From
+1054 to 1080 the sidebar and its fragment draw and the head figure does
+not. Seen: no figure at 1054 and 1080, a figure of 217.8 × 159.8 at 1081.
+Needs a ruling; not changed.
