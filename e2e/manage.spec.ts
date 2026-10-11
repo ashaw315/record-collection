@@ -2,6 +2,7 @@ import { expect, test, type APIRequestContext, type Page } from '@playwright/tes
 import { registerCleanup, trackArtist, trackGenre, trackGenreNamed } from './cleanup';
 import { seedMatchCandidate } from './seed';
 import { login } from './sign-in';
+import { POINTERS, expectDialogControls } from './hit-area';
 
 /* Records and artists removed after each test — see e2e/cleanup.ts. */
 registerCleanup();
@@ -771,4 +772,29 @@ test('an empty proposal says the model found nothing, not that nothing was asked
 
   // After asking: an explicit result.
   await expect(page.getByTestId('proposal-empty')).toBeVisible();
+});
+
+/*
+  Step 128: manage's delete opens the shared dialog. Its three controls are
+  44 under a coarse pointer and as they were under a fine one. The rest of
+  manage's controls wait on its phone layout.
+*/
+for (const pointer of POINTERS) test.describe(`manage’s delete confirmation under a ${pointer} pointer`, () => {
+  test.use({ hasTouch: pointer === 'coarse' });
+  for (const width of [320, 390, 768, 1280]) {
+    /* Coarse fails against buttons of 32 and a cross of 28. Fine holds them there. */
+    test(`Cancel, Delete and Close are ${pointer === 'coarse' ? '44 to a finger' : 'their drawn size under a mouse'}, at ${width}`, async ({ page }) => {
+      const name = unique('e2e-reach');
+      await page.setViewportSize({ width, height: 844 });
+      await openResource(page, 'Tags');
+      await page.getByLabel('New tag name').fill(name);
+      await page.getByRole('button', { name: 'Add' }).click();
+      await expect(page.getByRole('cell', { name, exact: true })).toBeVisible({ timeout: 15_000 });
+      await page.getByRole('button', { name: `Delete ${name}` }).click();
+      await expectDialogControls(page, pointer, `manage’s delete at ${width}`);
+      /* The tag is this test's own; the confirmation removes it. */
+      await page.getByTestId('confirm-delete').click();
+      await expect(page.getByRole('cell', { name, exact: true })).toBeHidden({ timeout: 15_000 });
+    });
+  }
 });

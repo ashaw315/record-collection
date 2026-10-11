@@ -4,7 +4,7 @@ import { seedDiscogsCacheAs } from './seed';
 import { sql } from 'drizzle-orm';
 import { getTestDb } from '../test/helpers/db';
 import { login } from './sign-in';
-import { HIT_FLOOR, HIT_PAST, POINTERS, pointerIs, reachingPastItself, readReach, underFloor } from './hit-area';
+import { HIT_FLOOR, HIT_PAST, POINTERS, expectDialogControls, pointerIs, reachingPastItself, readReach, underFloor } from './hit-area';
 
 /* Records and artists removed after each test — see e2e/cleanup.ts. */
 registerCleanup();
@@ -1159,11 +1159,9 @@ for (const pointer of POINTERS) test.describe(`the want list under a ${pointer} 
       }
     }
 
-    /*
-      Not read here: the confirmation a row's Delete opens. Its Cancel,
-      Delete and Close are 28 to 34 to a finger (measured, 11 Oct), and
-      they are the shared dialog's, which every screen opens; NOTES.
-    */
+    /* Step 128: the confirmation a row's Delete opens, the shared dialog's three controls. Coarse fails against buttons of 32 and a cross of 28. */
+    await page.getByRole('listitem').filter({ hasText: `Reach Got ${suffix}` }).getByRole('button', { name: 'Delete' }).click();
+    await expectDialogControls(page, pointer, `the want list’s delete at ${width}`);
   });
  }
 });

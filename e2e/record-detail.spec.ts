@@ -2,6 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
 import { registerCleanup, trackArtist, trackCreated } from './cleanup';
 import { login } from './sign-in';
+import { POINTERS, expectDialogControls } from './hit-area';
 
 /* Records and artists removed after each test — see e2e/cleanup.ts. */
 registerCleanup();
@@ -792,4 +793,26 @@ test('the journal note field holds its own example without clipping', async ({ p
 
   expect(fits.width, 'wide enough to be written in').toBeGreaterThanOrEqual(260);
   expect(fits.scrollH, 'the example is not clipped').toBeLessThanOrEqual(fits.clientH + 1);
+});
+
+/*
+  Step 128: a record's delete opens the shared dialog. Its three controls
+  are 44 under a coarse pointer and as they were under a fine one. Nothing
+  else on the record's page is read or changed by this.
+*/
+for (const pointer of POINTERS) test.describe(`a record’s delete confirmation under a ${pointer} pointer`, () => {
+  test.use({ hasTouch: pointer === 'coarse' });
+  for (const width of [320, 390, 768, 1280]) {
+    /* Coarse fails against buttons of 32 and a cross of 28. Fine holds them there. */
+    test(`Cancel, Delete and Close are ${pointer === 'coarse' ? '44 to a finger' : 'their drawn size under a mouse'}, at ${width}`, async ({ page }) => {
+      const suffix = makeSuffix();
+      const artist = await post(page, '/api/artists', { name: `Reach-${suffix}` });
+      trackArtist(artist.id as string);
+      const record = await post(page, '/api/records', { title: `Reach ${suffix}`, artistId: artist.id });
+      await page.setViewportSize({ width, height: NO_SCROLL_HEIGHT });
+      await page.goto(`/records/${record.id}`);
+      await page.getByRole('button', { name: 'Delete record' }).click();
+      await expectDialogControls(page, pointer, `a record’s delete at ${width}`);
+    });
+  }
 });

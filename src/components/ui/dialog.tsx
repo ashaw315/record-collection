@@ -70,9 +70,16 @@ function DialogContent({
           <DialogPrimitive.Close
             data-slot="dialog-close"
             render={
+              /*
+                §9.3, step 128: the cross is 28, 8 from the dialog's top and
+                its right, so an overlay of 44 square reaches those two
+                edges exactly and 8 into the dialog on the other two, under
+                the handoff's 9. Displayed where the pointer is coarse, as
+                every hit area is (`src/app/hit-area.ts`).
+              */
               <Button
                 variant="ghost"
-                className="absolute top-2 right-2"
+                className="absolute top-2 right-2 before:absolute before:top-1/2 before:left-1/2 before:hidden before:size-[44px] before:-translate-x-1/2 before:-translate-y-1/2 before:content-[''] pointer-coarse:before:block"
                 size="icon-sm"
               />
             }
@@ -109,7 +116,8 @@ function DialogFooter({
     <div
       data-slot="dialog-footer"
       className={cn(
-        "-mx-4 -mb-4 flex flex-col-reverse gap-2 rounded-b-xl border-t bg-muted/50 p-4 sm:flex-row sm:justify-end",
+        /* §9.3, step 128: the footer's buttons are boxes, so they are 44 in the box where the pointer is coarse. On a phone they stack 8 apart, where no overlay would reach. */
+        "-mx-4 -mb-4 flex flex-col-reverse gap-2 rounded-b-xl border-t bg-muted/50 p-4 sm:flex-row sm:justify-end pointer-coarse:[&>button]:h-[44px]",
         className
       )}
       {...props}

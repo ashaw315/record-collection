@@ -41640,3 +41640,70 @@ above the box under 640, and a tap on it goes to the box anyway.
 
 **The edit form's N is a formula:** 27 plus one a genre and one a tag,
 whatever the collection holds that day. 70 today.
+
+## Step 128: the shared dialog's three controls (11 Oct)
+
+The handoff: "List every screen that uses the dialog, then bring Cancel,
+Delete and Close to the floor under a coarse pointer, capturing each
+screen."
+
+**The screens, by grep for the dialog's parts:** three, each a delete's
+confirmation and each with the same three controls. A record's page
+(`records/[id]/DeleteRecord.tsx`), a want-list row
+(`want-list/WantListRow.tsx`), manage (`manage/ManageClient.tsx`).
+Nothing else opens it; the sleeve's modal and the menu are their own.
+
+**Built, in `src/components/ui/dialog.tsx`, so once for all three.**
+Under a coarse pointer the footer's buttons are 44 in the box, from 32:
+on a phone they stack 8 apart, where no overlay would reach, and they
+are boxes. Close is its cross of 28 under an overlay of 44 square: the
+cross stands 8 from the dialog's top and right, so the overlay reaches
+those two edges exactly and 8 into the dialog on the other two. Under a
+fine pointer all three are as they were.
+
+**A record's page is a closed screen and this reaches it:** its delete
+confirmation's buttons are 12 taller under a finger. Nothing else on the
+page is touched, and it is the handoff's own instruction.
+
+**Tests, written first** (`expectDialogControls` in `e2e/hit-area.ts`,
+used from the want list's, manage's and the record page's specs, under
+each pointer at 320, 390, 768 and 1280). Against the dialog as it was:
+24 of 24 coarse tests failed on both projects ("Cancel: 33", "Delete:
+34", "Close: 29"). The fine tests passed on chromium, as they should,
+and failed on the mobile project for a reason of the reader's: a button
+of 32 placed by the dialog's transform read 34 on WebKit before anything
+was built, one row at each end. `reachingPastItself` allows two rows now
+and says why; an overlay adds twelve or more. With the build: 48 of 48.
+
+**Captures** (`e2e/capture/dialog-128.capture.ts`,
+`docs/captures/dialog-128/`, twelve and a table): each screen at 390 and
+1280 under each pointer. Cancel and Delete are drawn 44 and Close 28
+with 45 to a finger under a coarse pointer; 32, 32 and 28 under a fine
+one. On the test database, because a record's page is not opened on the
+real collection.
+
+**Step level.** Every spec that opens the dialog or uses the reader, by
+grep (12 files), both projects: `357 passed, 2 flaky, ledger clean, tree
+unchanged — OK`, `[projects] chromium 208, capture 0, mobile 151`. Unit
+under `src`: `2319 passed, tree unchanged — OK`. Typecheck and build
+clean; lint 0 errors, 27 warnings.
+
+**The two flaky are the seed request's connection reset, and for the
+first time it came with its evidence.** `record-detail.spec.ts:331` and
+the want list's fine test at 320, both chromium, both on the first seed
+request, both passing on the retry. The reporter built for this printed:
+
+    [reset] worker 1: POST "/api/artists" reset 6032ms after the worker's last request, its 84th; 83 had gone before
+    [reset] worker 0: POST "/api/artists" reset 6063ms after the worker's last request, its 221st; 220 had gone before
+
+**Both came six seconds after the worker's last request, and the dev
+server keeps an idle connection for five.** That is what the guess of 10
+Oct predicted (a kept connection reused as the server closes it) and
+what 21 staged requests then failed to show; two of two is not proof,
+but it is the first measurement and it points one way. The one failure
+"seen once and not caught" under step 127 was not this: it timed out
+waiting for a row. The retry is still off, as ruled. If a third arrives
+at six seconds, the fix to put to the coordinator is the request
+client's own, not a retry: not keeping connections alive between a
+test's last request and the next test's first. Artefacts kept in the
+scratchpad (`128-cover-results`).

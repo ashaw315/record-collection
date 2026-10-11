@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test';
+import { expect, type Page } from '@playwright/test';
 
 /**
  * **What a finger reaches, for every control on a screen.**
@@ -47,8 +47,14 @@ export async function pointerIs(page: Page): Promise<Pointer | 'neither'> {
 
 /** Under a fine pointer nothing reaches further than it is drawn: the controls a tap reaches over more rows than their box has, or from past their sides. */
 export function reachingPastItself(reach: Reach[]): string[] {
-  /* One pixel is the grain of the reading: a box that starts between two pixels is reached from the pixel it starts in. */
-  return reach.filter((r) => r.tall > Math.ceil(r.height) + 1 || r.left > 1 || r.right > 1).map((r) => `${r.name}: drawn ${r.height} tall, reached over ${r.tall}, ${r.left} left, ${r.right} right`);
+  /*
+    One pixel a side is the grain of the reading: a box that starts between
+    two pixels is reached from the pixel it starts in, and one placed by a
+    transform, as the dialog is, from one at each end (a button of 32 read
+    34 on WebKit before anything was built, step 128). An overlay adds 12
+    rows or more, so two do not hide one.
+  */
+  return reach.filter((r) => r.tall > Math.ceil(r.height) + 2 || r.left > 1 || r.right > 1).map((r) => `${r.name}: drawn ${r.height} tall, reached over ${r.tall}, ${r.left} left, ${r.right} right`);
 }
 
 export const HIT_FLOOR = 44;
@@ -140,4 +146,33 @@ export async function readReach(page: Page, within = 'main', except?: string): P
     }
     return out;
   }, [within, except ?? null] as const);
+}
+
+/** The shared dialog (`src/components/ui/dialog.tsx`), which a record's delete, a want-list row's delete and manage's delete each open. */
+export const DIALOG = '[data-slot="dialog-content"]';
+/** What its three controls are drawn under a mouse, as they were before step 128. */
+const DIALOG_DRAWN = { Cancel: 32, Delete: 32, Close: 28 } as const;
+
+/**
+ * Step 128, the handoff: "bring Cancel, Delete and Close to the floor under
+ * a coarse pointer". Read on an open dialog. Coarse: each is 44 to a finger
+ * and reaches no more than 9 past itself. Fine: each is the size it was and
+ * reaches no further.
+ */
+export async function expectDialogControls(page: Page, pointer: Pointer, where: string): Promise<void> {
+  expect(await pointerIs(page), 'the precondition: the page has the pointer this test is named for').toBe(pointer);
+  await page.locator(DIALOG).waitFor();
+  /* The dialog opens on a 100ms zoom, and a box read part way through it is not its box. */
+  await page.locator(DIALOG).evaluate((el) => Promise.all(el.getAnimations().map((animation) => animation.finished)));
+  const reach = await readReach(page, DIALOG);
+  expect(reach.map((r) => r.name).sort(), `${where}: the dialog’s controls`).toEqual(['Cancel', 'Close', 'Delete']);
+  if (pointer === 'coarse') {
+    expect.soft(underFloor(reach).map((r) => `${r.name}: ${r.tall}`), `${where}: controls under ${HIT_FLOOR} to a finger`).toEqual([]);
+    expect.soft(reach.filter((r) => r.left > HIT_PAST || r.right > HIT_PAST).map((r) => `${r.name}: ${r.left} left, ${r.right} right`), `${where}: controls a tap reaches from more than ${HIT_PAST} past them`).toEqual([]);
+    /* Close is an overlay on the cross it was; the two buttons are boxes and are 44 in the box. */
+    expect.soft(reach.find((r) => r.name === 'Close')?.height, `${where}: Close is drawn as it was`).toBe(DIALOG_DRAWN.Close);
+  } else {
+    expect.soft(reachingPastItself(reach), `${where}: controls a mouse reaches from outside their drawn box`).toEqual([]);
+    for (const r of reach) expect.soft(r.height, `${where}: ${r.name} is drawn as it was under a mouse`).toBe(DIALOG_DRAWN[r.name as keyof typeof DIALOG_DRAWN]);
+  }
 }

@@ -110,6 +110,8 @@ const GOVERNED = [
   'e2e/sheet/screens-survey.sheet.ts',
   /* The count of controls meeting 44 reaches the same form the same way. */
   'e2e/sheet/hit-44.sheet.ts',
+  /* Step 128's captures open a record's page for its delete confirmation. */
+  'e2e/capture/dialog-128.capture.ts',
   /* The form's chips and labels, measured for Design: the same form, the same way in. */
   'e2e/sheet/form-fields.sheet.ts',
   /* Step 103d's air: the record form's edit state, reached by a record's id. */
