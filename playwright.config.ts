@@ -88,7 +88,7 @@ export default defineConfig({
    * failing half the time reads as a clean run. The list reporter prints
    * "retry #1" inline, so the cost of the retry stays in view.
    */
-  reporter: [['list'], ['html', { open: 'never' }], ['./e2e/project-counts.ts']],
+  reporter: [['list'], ['html', { open: 'never' }], ['./e2e/project-counts.ts'], ['./e2e/reset-evidence.ts']],
   use: {
     baseURL,
     /*

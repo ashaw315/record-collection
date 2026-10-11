@@ -41024,3 +41024,32 @@ empty, and will stop testing silently the day it fills; it needs a
 fixture that can stage it. The look-up tint test does not hold a literal:
 it reads the source record's colour from the record's own API response
 and compares; `#a25829` was the value in that run's failure message.
+
+## 10 Oct, night: the pin check, and the reset's evidence
+
+**`test/repo/spec-constants-pinned.test.ts`** is the check built in place
+of the one that contradicted the standing rule: every constant a spec
+imports from the source must be met with a literal by a unit test. A
+ratchet: 37 of the 71 the specs import had no such test on 10 Oct and
+are listed; a new one fails, and so does a listed one that is pinned or
+gone. Staged both ways (CAP taken off the list; SCREEN put on it), each
+failing by name. "Pinned" is read from a unit test's text and does not
+know the literal is the ruling's. **The 37 are the candidates for the
+vacuous pair, not findings**: some are fixture records (EMPTIEST, WORST,
+SHORT_TITLE), some are arithmetic (COS30, SIN30), and some may be pinned
+in a form the matcher does not read. GRID_FORK and NO_SCROLL_HEIGHT are
+on it and are imported by 32 and 51 specs. Working the list down is its
+own step.
+
+**The reset's next occurrence logs itself.** `e2e/reset-evidence.ts`, a
+reporter in the default config: every `page.request` call is a step, so
+it keeps each worker's last request time and count, and for one that
+fails with ECONNRESET prints, for instance, `[reset] worker 0: POST
+"/api/artists" reset 705ms after the worker's last request, its 3rd; 2
+had gone before`. That line is from a staged reset (a local server that
+resets its third connection), the real error and the real reporter. It
+is the worker's quiet time, not a socket's age: Playwright does not show
+its sockets. No helper is changed and nothing is retried. **Both
+reporters are in the config, and `--reporter` on a command line replaces
+them; step-level runs here used `--reporter=line` and so would not have
+printed either. They no longer pass it.**
