@@ -20,7 +20,7 @@
 
 import { execFileSync, spawn } from 'node:child_process';
 import { existsSync, statSync } from 'node:fs';
-import { playwrightScope, readRunResult, suiteOf, summarise, type TreeState } from './run-result';
+import { playwrightScope, readRunResult, sleptDuring, suiteOf, summarise, type TreeState } from './run-result';
 
 const USAGE = `usage: run-tests.ts [--expect-at-least N] <command> [args...]
 
@@ -96,6 +96,19 @@ async function main(argv: string[]): Promise<number> {
   const treeAtStart = treeState();
   const child = spawn(command, rest, { stdio: ['ignore', 'pipe', 'pipe'], shell: false });
 
+  /*
+    **Sleep is held off for the run, and measured in case it happens anyway.**
+    `caffeinate` holds the idle sleep for as long as this process lives. It
+    cannot hold a sleep someone asks for (the menu, the lid, the power
+    button), which is what voided a run on 11 Oct, so the ticks are timed
+    too and a sleep goes on the judged line. Where there is no `caffeinate`
+    (not a Mac) the spawn fails and only the measuring is left.
+  */
+  spawn('caffeinate', ['-i', '-s', '-w', String(process.pid)], { stdio: 'ignore' }).on('error', () => {});
+  const TICK = 5_000;
+  const ticks = [Date.now()];
+  const ticking = setInterval(() => ticks.push(Date.now()), TICK);
+
   let output = '';
   const tee = (stream: NodeJS.ReadableStream, to: NodeJS.WritableStream) => {
     stream.on('data', (chunk: Buffer) => {
@@ -121,6 +134,10 @@ async function main(argv: string[]): Promise<number> {
     return null;
   });
 
+  clearInterval(ticking);
+  ticks.push(Date.now());
+  const slept = sleptDuring(ticks, TICK);
+
   if (exitCode === null) {
     process.stdout.write(`\n${summarise(readRunResult({ output: '', exitCode: 1 }))}\n`);
     return 1;
@@ -129,7 +146,7 @@ async function main(argv: string[]): Promise<number> {
   const treeAtEnd = treeState();
   const tree = treeAtStart === null || treeAtEnd === null ? undefined : { start: treeAtStart, end: treeAtEnd };
   /* The suite is what was launched, known here before the run says anything. */
-  const result = readRunResult({ output, exitCode, expectAtLeast, tree, suite: suiteOf([command, ...rest]), scope: playwrightScope([command, ...rest]) });
+  const result = readRunResult({ output, exitCode, expectAtLeast, tree, suite: suiteOf([command, ...rest]), scope: playwrightScope([command, ...rest]), slept });
 
   process.stdout.write(`\n${summarise(result)}\n`);
 

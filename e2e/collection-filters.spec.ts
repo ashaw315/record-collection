@@ -476,12 +476,25 @@ test('clicking through to a filtered view equals loading that URL directly', asy
   const clickedUrl = page.url();
   const clickedTitles = await visibleTitles(page, f.suffix);
 
-  // A FRESH context — new storage, nothing carried over from the clicking
-  // session, so only the URL can be conveying the state.
+  /*
+    A FRESH context, so only the URL can be conveying the state. The one
+    thing carried into it is the session cookie, and the test says so by
+    asserting that it is the only cookie there is: the app keeps nothing
+    else in cookies and nothing in web storage, and a second cookie
+    appearing would be state this context should not have been handed.
+
+    This signed in a second time through the form until 11 Oct. The
+    sign-in was never what the test was about, and it was most of its
+    time: in a gate where WebKit ran 2.3 times slow, typing the password
+    here took 8.3s and the test met its 30s limit with every assertion
+    passing.
+  */
+  const session = await page.context().cookies();
+  expect(session.map((cookie) => cookie.name), 'the session is the only cookie the clicking page holds').toEqual(['rc_session']);
   const context = await browser.newContext();
+  await context.addCookies(session);
   const cold = await context.newPage();
   try {
-    await login(cold);
     await cold.goto(clickedUrl);
 
     await expectTitles(cold, f.suffix, clickedTitles);

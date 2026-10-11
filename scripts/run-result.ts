@@ -42,7 +42,29 @@ export type RunResult = {
   tree: 'unchanged' | 'changed' | 'unchecked';
   /** Paths that changed during the run and that this suite does not read: reported, not judged. */
   treeUnread: string[];
+  /** Milliseconds the machine was asleep while the run was in flight (`sleptDuring`); 0 where none or unmeasured. */
+  slept: number;
 };
+
+/**
+ * How long the machine slept, read from when a repeating timer's ticks
+ * arrived. A timer does not fire while the machine is asleep, so a tick
+ * minutes late is the sleep. A minute is the line: a loaded machine has
+ * delayed a tick by tens of seconds and that is not sleep.
+ *
+ * On 11 Oct a gate's Playwright run was 25 minutes in when the laptop was
+ * put to sleep for six hours and forty minutes. The run came back with two
+ * failures that were the sleep's and no summary line, and what had
+ * happened was found in the system's power log, not in the run.
+ */
+export function sleptDuring(ticks: readonly number[], interval: number): number {
+  let slept = 0;
+  for (let index = 1; index < ticks.length; index += 1) {
+    const gap = (ticks[index] ?? 0) - (ticks[index - 1] ?? 0);
+    if (gap - interval >= 60_000) slept += gap - interval;
+  }
+  return slept;
+}
 
 /**
  * A fingerprint of the tree: `HEAD` and its commit, and every modified or
@@ -161,6 +183,7 @@ export function readRunResult({
   tree,
   suite = 'other',
   scope = 'narrowed',
+  slept = 0,
 }: {
   output: string;
   exitCode: number;
@@ -178,6 +201,8 @@ export function readRunResult({
   tree?: { start: TreeState; end: TreeState };
   /** Which suite this was, as the runner launched it (`suiteOf`). Not read from the output. */
   suite?: Suite;
+  /** Milliseconds the machine slept during the run. Reported on the line, not judged: what a sleep does to a run shows in its counts. */
+  slept?: number;
   /** Whether the whole suite was launched (`playwrightScope`). Only then must every project have run something, and said so. */
   scope?: Scope;
 }): RunResult {
@@ -204,7 +229,7 @@ export function readRunResult({
   const treeState: RunResult['tree'] = tree === undefined ? 'unchecked' : moved.length === 0 ? 'unchanged' : 'changed';
   const treeFault =
     moved.length === 0 ? null : `the tree changed during the run (${moved.slice(0, 4).join(', ')}${moved.length > 4 ? `, and ${moved.length - 4} more` : ''}) — not a result`;
-  const base = { passed: passed ?? 0, failed, flaky, skipped, ledger: ledger.state, tree: treeState, treeUnread };
+  const base = { passed: passed ?? 0, failed, flaky, skipped, ledger: ledger.state, tree: treeState, treeUnread, slept };
   const ledgerFault =
     ledger.state === 'failed' ? `the ledger failed: ${ledger.said}` : ledger.state === 'absent' ? 'the ledger did not report — the run ended without its teardown' : null;
 
@@ -280,6 +305,10 @@ export function summarise(result: RunResult): string {
   if (result.ledger === 'absent') parts.push('ledger ABSENT');
   if (result.tree === 'unchanged') parts.push(result.treeUnread.length === 0 ? 'tree unchanged' : `tree unchanged where this suite reads it (${result.treeUnread.length} design ${result.treeUnread.length === 1 ? 'file' : 'files'} changed, unread by this suite)`);
   if (result.tree === 'changed') parts.push('tree CHANGED');
+  if (result.slept > 0) {
+    const minutes = Math.round(result.slept / 60_000);
+    parts.push(`the machine SLEPT ${minutes >= 60 ? `${Math.floor(minutes / 60)}h ` : ''}${minutes % 60}m during the run`);
+  }
 
   const verdict = result.ok ? 'OK' : `NOT OK — ${result.reason}`;
 

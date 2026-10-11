@@ -41186,3 +41186,60 @@ engine is slow because it signs in twice.
 
 A gate needs the lid open for about an hour: `caffeinate` does not hold
 a lid-close sleep.
+
+## The gate on 54bd19e stands on its third run, ruled (11 Oct); and what was built from it
+
+**Ruled by the coordinator, to be cited and not argued again.** The rule
+against a rerun's green exists so a product defect cannot be papered over.
+Nothing in run 1 pointed at the product: no assertion failed, the test
+reached its last statement, chromium ran level, the tree was identical
+across the three runs, both complete runs printed `chromium 713, capture
+11, mobile 296`, and 1003 + 1 is run 3's 1004. The failure was located to
+a mechanism (a 30s limit met inside a password entry of 8.3s and 8.6s
+against 0.68s for the first sign-in in the same test, in a project
+running 2.3 times slow). What was missing was a root cause in the
+operating system, and that is not what the rule guards. The unattended
+mobile run was not staged: even reproduced it would not be actionable.
+
+**The gate's two halves are 9 hours apart and that is fine because the
+tree did not change between them.** Unit from 23:36 on the 10th,
+Playwright from 07:46 on the 11th, both on `54bd19e`, each line reading
+`tree unchanged`, and nothing committed or edited in between.
+
+Three things built from it, step level, not a gate:
+
+1. **`collection-filters.spec.ts:443` no longer signs in twice.** A test
+   was changed, at the coordinator's instruction, not to make code pass.
+   The fresh context is handed the session cookie and the test asserts
+   that it is the only cookie the clicking page holds (the app keeps
+   nothing else in cookies and nothing in web storage, by grep), so only
+   the address can be carrying the filters, which is its claim. Staged:
+   with the cold page sent to the address less its sort, it failed 2 of 2
+   on the address comparison, so the cold page is reached signed in and
+   its checks still bite. Whole spec, both projects: `22 passed, 2
+   skipped, ledger clean, tree unchanged — OK`.
+2. **A run prints the ten tests nearest their time limit.**
+   `scripts/test-margins.ts`, `e2e/margins.ts` (a reporter),
+   `test/repo/test-margins.test.ts` (failed first: no module). Ordered by
+   the share of the limit used, each test by its worst attempt, the limit
+   being the test's own after `test.setTimeout`. Nothing fails on it:
+   the duration and the limit are not over exactly the same span, so it
+   is a ranking to read. The list from a whole run comes with the next
+   gate.
+3. **The runner holds idle sleep off and reports a sleep it could not.**
+   `scripts/run-tests.ts` starts `caffeinate -i -s -w <its pid>`; staged,
+   the two assertions were held on the runner's behalf during a run and
+   gone after it. **It cannot hold what voided run 2.** The power log
+   for 01:05 reads "Software Sleep pid=211", which is loginwindow, with
+   keyboard or trackpad activity in the same second: the machine was
+   told to sleep, and an idle hold was already in place then and did
+   nothing. Only a system setting would stop that and I have not touched
+   one. So the runner also times its own ticks (`sleptDuring`, tests in
+   `run-result.test.ts`, 3 failed first) and the judged line says `the
+   machine SLEPT 6h 40m during the run`. Reported, not judged. Staged by
+   stopping the runner for 72s: `1 passed, tree unchanged, the machine
+   SLEPT 1m during the run — OK`. A runner that is suspended reads the
+   same as a machine that slept; neither is a run to trust the timing of.
+
+The config and the runner changed, so a gate is owed before the next
+step and is run next.

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { playwrightScope, projectsLine, readRunResult, suiteOf, summarise } from '../../scripts/run-result';
+import { playwrightScope, projectsLine, readRunResult, sleptDuring, suiteOf, summarise } from '../../scripts/run-result';
 
 /**
  * **Three exit-code concealments in ONE session, after the rule was already
@@ -455,5 +455,32 @@ describe('a project that runs no test is not a pass', () => {
     expect(playwrightScope(['npx', 'playwright', 'test', '--project', 'chromium'])).toBe('whole');
     expect(playwrightScope(['npx', 'playwright', 'test', '--grep-invert', 'slow'])).toBe('narrowed');
     expect(playwrightScope(['npm', 'test'])).toBe('narrowed');
+  });
+});
+
+describe('a run the machine slept through says so', () => {
+  const green = '  12 passed (41.0m)\n';
+
+  it('reads no sleep from ticks that arrived on time, late by seconds or not at all', () => {
+    expect(sleptDuring([0, 5_000, 10_000, 15_000], 5_000)).toBe(0);
+    expect(sleptDuring([0, 5_000, 38_000, 43_000], 5_000), 'a busy machine delays a tick; that is not sleep').toBe(0);
+    expect(sleptDuring([], 5_000)).toBe(0);
+  });
+
+  it('reads the time asleep from a tick that arrived minutes late, less the interval it was owed anyway', () => {
+    expect(sleptDuring([0, 5_000, 24_005_000, 24_010_000], 5_000)).toBe(23_995_000);
+    expect(sleptDuring([0, 125_000, 130_000, 430_000], 5_000), 'two sleeps are added').toBe(120_000 + 295_000);
+  });
+
+  it('puts the sleep on the judged line, on a green run and on a red one', () => {
+    const slept = readRunResult({ output: green, exitCode: 0, slept: 23_995_000 });
+    expect(summarise(slept)).toBe('12 passed, the machine SLEPT 6h 40m during the run — OK');
+    const red = readRunResult({ output: '  2 failed\n  322 passed (2.0h)\n', exitCode: 1, slept: 61_000 });
+    expect(summarise(red)).toBe('322 passed, 2 failed, the machine SLEPT 1m during the run — NOT OK — 2 failed');
+  });
+
+  it('says nothing of sleep where there was none or none was measured', () => {
+    expect(summarise(readRunResult({ output: green, exitCode: 0, slept: 0 }))).toBe('12 passed — OK');
+    expect(summarise(readRunResult({ output: green, exitCode: 0 }))).toBe('12 passed — OK');
   });
 });
