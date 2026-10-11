@@ -1767,3 +1767,48 @@ test('a search that finds nothing shows the figure at its clearing height above 
   expect(m.left >= 0 && m.right <= m.window && m.scrollWidth === m.window, 'inside the window, and the page no wider for it').toBe(true);
   for (const fill of m.fills) expect(['lab(6.18075 1.20374 2.12039)', 'oklch(0.19 0.008 60)', 'lab(71.4 0.5 1.1)', 'oklch(0.74 0.004 80)'], `in ink alone: ${fill}`).toContain(fill);
 });
+
+/*
+  Step 121, §T.6: "wherever a pending answer resolves and replaces a control
+  with a status line, the status line takes the control's height, so nothing
+  below it moves." One result fetches the market unasked, so its answer lands
+  while a reader is going for the button beneath it; on 10 Oct that button
+  moved up by 9 as it landed and a click begun 1.7ms earlier missed it.
+
+  The answer is HELD until the button's box has been read, so the test reads
+  the two states it names and not whichever the timing gave it.
+*/
+for (const [outcome, status, body, line] of [
+  ['an error', 502, { error: { message: 'Could not reach Discogs. Try again shortly.', code: 'UPSTREAM_ERROR' } }, 'market-error'],
+  /* An answer of one line at 390. A price with its estimates runs to two there, and a line longer than its control is not ruled. */
+  ['none for sale', 200, { numForSale: 0, lowestPrice: null, conditions: [], range: null, currency: 'USD' }, 'market-summary'],
+] as const) {
+  /* Fails against a status line of its own height: 15 for a 16.5 control in a 24 line, which took 9 from everything beneath. */
+  test(`"Identify this pressing" does not move when the market answers with ${outcome}`, async ({ page }) => {
+    await stubLookup(page, { results: [collisionRow(10405725)] });
+    let release: () => void = () => {};
+    const held = new Promise<void>((resolve) => { release = resolve; });
+    await page.route('**/api/discogs/market/**', async (route) => {
+      await held;
+      await route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
+    });
+
+    await login(page);
+    await page.goto('/lookup');
+    await formReady(page);
+    await page.getByLabel('Artist').fill('Discharge');
+    await page.getByRole('button', { name: 'Search Discogs' }).click();
+
+    const button = page.getByTestId('expand-evidence');
+    await expect(button).toBeVisible();
+    await expect(page.getByTestId('check-market'), 'the precondition: the market has not answered').toBeVisible();
+    const before = await button.boundingBox();
+    release();
+    await expect(page.getByTestId(line)).toBeVisible();
+    await expect(page.getByTestId('check-market'), 'the precondition: the answer replaced the control').toHaveCount(0);
+    const after = await button.boundingBox();
+    if (before === null || after === null) throw new Error('the button has no box');
+    expect(after.y, 'the button’s top, after against before').toBeCloseTo(before.y, 1);
+    expect(after.x).toBeCloseTo(before.x, 1);
+  });
+}

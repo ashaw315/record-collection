@@ -1061,3 +1061,39 @@ for (const width of [1440, 390, 320]) {
     await expect(page).toHaveURL('/lookup');
   });
 }
+
+/*
+  Step 121, §T.6: "wherever a pending answer resolves and replaces a control
+  with a status line, the status line takes the control's height, so nothing
+  below it moves." A row's Check the market is pressed and its answer takes
+  its place; the rows beneath are what would move.
+*/
+/* Fails against a one-line answer of its own height in place of a 44 control: the row lost the difference and every row beneath rose by it. */
+test('a row’s market answer takes the control’s height, so the row keeps its height', async ({ page }) => {
+  await page.route('**/api/discogs/market/**', async (route) => {
+    await route.fulfill({ status: 502, contentType: 'application/json', body: JSON.stringify({ error: { message: 'Could not reach Discogs. Try again shortly.', code: 'UPSTREAM_ERROR' } }) });
+  });
+  const suffix = makeSuffix();
+  const artist = await post(page, '/api/artists', { name: `Held-${suffix}` });
+  trackArtist(artist.id as string);
+  /* An id of this run's own, for the reason the test above gives. */
+  const releaseId = 900_000_000 + Math.floor(Math.random() * 90_000_000);
+  await seedDiscogsCacheAs(releaseId, 'release-detailed');
+  const pressing = await post(page, '/api/pressings', { catalogNumber: `HELD-${suffix}`, discogsReleaseId: releaseId });
+  await post(page, '/api/want-list', { title: `Held Height ${suffix}`, artistId: artist.id, targetPressingId: pressing.id });
+
+  await page.goto('/want-list');
+  const row = page.getByRole('listitem').filter({ hasText: `Held Height ${suffix}` });
+  const control = row.getByTestId('market-check');
+  await expect(control).toBeVisible();
+  const before = { row: await row.boundingBox(), control: await control.boundingBox() };
+  await control.click();
+  const line = row.getByTestId('market-error');
+  await expect(line).toBeVisible({ timeout: 15_000 });
+  await expect(control, 'the precondition: the answer replaced the control').toHaveCount(0);
+  const after = { row: await row.boundingBox(), line: await line.boundingBox() };
+  if (before.row === null || before.control === null || after.row === null || after.line === null) throw new Error('no box');
+  expect(after.line.height, 'the line is as tall as the control was').toBeCloseTo(before.control.height, 1);
+  expect(after.line.y, 'and stands where it stood').toBeCloseTo(before.control.y, 1);
+  expect(after.row.height, 'so the row is as tall as it was').toBeCloseTo(before.row.height, 1);
+});

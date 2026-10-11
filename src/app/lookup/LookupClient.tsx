@@ -172,6 +172,9 @@ const EMPTY: Record<FieldName, string> = {
   q: '',
 };
 
+/** The line a pending answer leaves where its control stood: as tall as that control's line, the text centred in it. */
+const ANSWER_LINE = 'flex min-h-6 items-center';
+
 export function LookupClient({ emptyFigure = null }: { /** §T.6's figure for a search that finds nothing, drawn by the page from the one source record; none where the collection is empty. */ emptyFigure?: ReactNode } = {}) {
   const formId = useId();
   const [values, setValues] = useState<Record<FieldName, string>>(EMPTY);
@@ -790,6 +793,14 @@ function ResultCard({
             automatically when there is exactly one result, which is the shop
             case (§10a).
           */}
+          {/*
+            Step 121, §T.6: "wherever a pending answer resolves and replaces a
+            control with a status line, the status line takes the control's
+            height, so nothing below it moves." The control is a 16.5 label in
+            this block's 24 line, so the line that answers it is 24 at the
+            least. An answer too long for one line is taller, and what is
+            beneath moves by the difference; that case is not ruled.
+          */}
           <div className="mt-1">
             {market === null && marketError === undefined && (
               <button
@@ -804,13 +815,13 @@ function ResultCard({
             )}
 
             {market !== null && (
-              <p data-testid="market-summary" className="text-meta text-muted-foreground">
+              <p data-testid="market-summary" className={`${ANSWER_LINE} text-meta text-muted-foreground`}>
                 {marketSummary(market)}
               </p>
             )}
 
             {marketError !== undefined && (
-              <p role="status" data-testid="market-error" className="text-meta text-muted-foreground">
+              <p role="status" data-testid="market-error" className={`${ANSWER_LINE} text-meta text-muted-foreground`}>
                 {marketError}
               </p>
             )}

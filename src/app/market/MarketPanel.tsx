@@ -120,13 +120,14 @@ export function MarketPanel({
       )}
 
       {market !== null && (
-        <p data-testid="market-summary" className="text-prose">
+        /* Step 121, §T.6: the answer takes the height of the control it replaces, so nothing below it moves; longer than one line, it is taller. */
+        <p data-testid="market-summary" className="flex items-center text-prose" style={{ minHeight: CONTROL_HEIGHT }}>
           {marketSummary(market)}
         </p>
       )}
 
       {error !== undefined && (
-        <p role="status" data-testid="market-error" className="text-meta text-muted-foreground">
+        <p role="status" data-testid="market-error" className="flex items-center text-meta text-muted-foreground" style={{ minHeight: CONTROL_HEIGHT }}>
           {error}
         </p>
       )}
