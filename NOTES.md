@@ -41129,3 +41129,60 @@ Formats, Stores and Tags at both widths; each table is 544 and scrolls
 inside its own box; Genres fits. Past the window's edge at 390: 73 of
 Artists' 83 controls, 46 of Labels' 53. The section names' row scrolls
 sideways at both widths (370 in 354; 300 in 284).
+
+## The gate on 54bd19e: one red, one void run, one green; the red's cause not established (10 to 11 Oct)
+
+Gate: full suites, every project, no file argument, on `54bd19e`.
+
+- Unit, 10 Oct 23:36: `4293 passed, 2 skipped, tree unchanged — OK`.
+- Playwright, first run, 23:41 to 00:37: `1003 passed, 1 failed, 16
+  skipped, ledger clean, tree unchanged — NOT OK — 1 failed`.
+  `[projects] chromium 713, capture 11, mobile 296`. No `[reset]` line.
+- Playwright, second run, 00:40: VOID. The laptop slept at 01:05:19
+  (`pmset -g log`: "Software Sleep", woken by the lid at 07:45) with 322
+  chromium tests passed; the run was stopped at its limit with no
+  summary line. Its two failures (`manage.spec.ts:66` at 29.9s as the
+  machine went down, a look-up slot test recorded at 6.7h) are the
+  sleep's and are evidence of nothing.
+- Playwright, third run, 11 Oct 07:46 to 08:27, same commit, nothing
+  changed: `1004 passed, 16 skipped, ledger clean, tree unchanged — OK`.
+
+**The third run's green is not a diagnosis of the first run's red.**
+
+The red: `collection-filters.spec.ts:443` on mobile, "clicking through
+to a filtered view equals loading that URL directly", the 30s test
+timeout on both attempts (31.0s, 31.5s). What its traces show:
+
+- No assertion failed. The test reached its last statement; the sort
+  check read `releaseYear:desc`. It ran out about half a second short.
+- The second sign-in, on the fresh context's page, typed the password in
+  8.3s and 8.6s; the first sign-in in the same test typed it in 0.68s.
+  No request was outstanding while it typed. Every action on that page
+  was slow, the click too (2.5s against 0.2s).
+- The whole mobile project was slow in that run. Tests shared with the
+  step 123 covering run an hour earlier on the same commit: 959s against
+  416s, 2.3 times. Chromium, 1.06. The slowdown was even through the
+  mobile phase (1.5 to 1.9 against the 8 Oct gate, by blocks of 40).
+- In the third run the mobile project ran at 1.02 of the covering run,
+  and this test took 8s.
+
+What is NOT established: why WebKit was slow in the first run.
+
+- Not machine load, as far as it was measured. The 15-minute load
+  average read 16.6 just after the first run, which I took for a cause;
+  the third run sampled it every 30s and the mobile phase passed at
+  normal speed under 12 to 17, and chromium passed under 20 to 60.
+- The display did not sleep during the first run.
+- Mobile runs last, so "WebKit" and "the last quarter of an hour of that
+  run" are not separated by any of this. Nobody was at the machine then
+  (00:25 to 00:37); a throttling of an unattended WebKit is a guess and
+  nothing here tests it.
+
+If it comes back: the sampler is in the third run's command (uptime and
+the top six processes every 30s, beside the run, touching nothing the
+run reads). Run a gate with it and compare the mobile phase's samples
+with the third run's. This test is the first to cross 30s when the
+engine is slow because it signs in twice.
+
+A gate needs the lid open for about an hour: `caffeinate` does not hold
+a lid-close sleep.
