@@ -184,12 +184,17 @@ test.describe('with a page of fifty', () => {
   }
 
   /* Fails against a table wider than a phone, which the built one avoided only by scrolling inside a wrapper. */
-  test('the table is no wider than the window at 390 and 320, with nothing scrolling inside it', async ({ page }) => {
+  /*
+    The table is the window less the inset a side, exactly. This read "no
+    wider than" until 10 Oct, which a table of any smaller width passes, and
+    one of no width: it could not fail when the inset went from 20 to 18.
+  */
+  test('the table is the window less its insets at 390 and 320, with nothing scrolling inside it', async ({ page }) => {
     for (const width of [390, 320]) {
       await open(page, `&artistId=${artistId}`, width);
       const m = await page.evaluate(() => ({ scroll: document.documentElement.scrollWidth, client: document.documentElement.clientWidth, table: (document.querySelector('main table') as HTMLElement).getBoundingClientRect().width, inner: Array.from(document.querySelectorAll('main *')).filter((el) => ['auto', 'scroll'].includes(getComputedStyle(el).overflowX)).length }));
       expect(m.scroll, `the page at ${width}`).toBe(m.client);
-      expect(m.table, `the table at ${width}`).toBeLessThanOrEqual(width - 2 * WORDMARK_INSET + 0.5);
+      expect(m.table, `the table at ${width}`).toBeCloseTo(width - 2 * WORDMARK_INSET, 0);
       expect(m.inner, 'no scrolling box').toBe(0);
     }
   });
