@@ -4,6 +4,7 @@ import { seedDiscogsCacheAs } from './seed';
 import { sql } from 'drizzle-orm';
 import { getTestDb } from '../test/helpers/db';
 import { login } from './sign-in';
+import { HIT_FLOOR, HIT_PAST, readReach } from './hit-area';
 
 /* Records and artists removed after each test — see e2e/cleanup.ts. */
 registerCleanup();
@@ -1100,3 +1101,53 @@ test('a row’s market answer takes the control’s height, so the row keeps its
   expect(after.line.y, 'and stands where it stood').toBeCloseTo(before.control.y, 1);
   expect(after.row.height, 'so the row is as tall as it was').toBeCloseTo(before.row.height, 1);
 });
+
+/*
+  Step 124, §9.3 and the handoff's hit-area rules: "Give every control under
+  44 its overlay, by the halfway-and-9 rule, or the row height where
+  controls stack with no gap." The want list, in both its views, with a row
+  that has a market control and a row that was acquired.
+*/
+for (const width of [320, 390, 768, 1280]) {
+  /* Fails against links and buttons with only their drawn boxes: 14 to 27 tall by what a tap reaches. */
+  test(`every control on the want list is 44 tall to a finger and reaches no more than 9 past itself, at ${width}`, async ({ page }) => {
+    const suffix = makeSuffix();
+    const artist = await post(page, '/api/artists', { name: `Reach-${suffix}` });
+    trackArtist(artist.id as string);
+    const releaseId = 900_000_000 + Math.floor(Math.random() * 90_000_000);
+    await seedDiscogsCacheAs(releaseId, 'release-detailed');
+    const pressing = await post(page, '/api/pressings', { catalogNumber: `REACH-${suffix}`, discogsReleaseId: releaseId });
+    await post(page, '/api/want-list', { title: `Reach Wanted ${suffix}`, artistId: artist.id, targetPressingId: pressing.id });
+    /* A title that takes two lines at a phone's width: the link is then two boxes and its overlay has to hold on both. */
+    const long = `Reach A Title Long Enough To Take A Second Line On A Phone ${suffix}`;
+    await post(page, '/api/want-list', { title: long, artistId: artist.id });
+    const got = await post(page, '/api/want-list', { title: `Reach Got ${suffix}`, artistId: artist.id });
+    const acquired = await page.request.post(`/api/want-list/${got.id}/acquire`, { data: { title: `Reach Got ${suffix}`, artistId: artist.id }, failOnStatusCode: false });
+    expect(acquired.status()).toBe(201);
+
+    await page.setViewportSize({ width, height: 844 });
+    for (const [path, mine, expected] of [
+      ['/want-list', `Reach Wanted ${suffix}`, ['Edit', 'Mark acquired', 'Delete', 'Check the market', long]],
+      ['/want-list?acquired=true', `Reach Got ${suffix}`, ['Edit', 'View record', 'Delete']],
+    ] as const) {
+      await page.goto(path);
+      await page.getByRole('listitem').filter({ hasText: mine }).waitFor();
+      await page.evaluate(() => document.fonts.ready);
+      const reach = await readReach(page);
+      const names = reach.map((r) => r.name);
+      for (const name of ['Look up a record', 'Suggestions', 'Still wanted', 'Acquired', mine, ...expected]) expect(names, `${path}: the control is on the screen to be read`).toContain(name);
+      expect(reach.filter((r) => r.tall < HIT_FLOOR).map((r) => `${r.name}: ${r.tall}`), `${path} at ${width}: controls under ${HIT_FLOOR} to a finger, of ${reach.length}`).toEqual([]);
+      /* An overlay and not a bigger box: what is drawn is the size it was. Suggestions alone is a row, the handoff's case of controls stacked with no gap. */
+      for (const [name, drawn] of [['Edit', 14], ['Delete', 16.5], ['Still wanted', 26.5], ['Acquired', 26.5], ['Mark acquired', 26.5], ['View record', 16.5], ['Suggestions', 44]] as const) {
+        for (const r of reach.filter((each) => each.name === name)) expect(Math.abs(r.height - drawn), `${name} is drawn ${drawn} tall, and was ${r.height}`).toBeLessThanOrEqual(1);
+      }
+      expect(reach.filter((r) => r.left > HIT_PAST || r.right > HIT_PAST).map((r) => `${r.name}: ${r.left} left, ${r.right} right`), `${path} at ${width}: controls a tap reaches from more than ${HIT_PAST} past them`).toEqual([]);
+    }
+
+    /*
+      Not read here: the confirmation a row's Delete opens. Its Cancel,
+      Delete and Close are 28 to 34 to a finger (measured, 11 Oct), and
+      they are the shared dialog's, which every screen opens; NOTES.
+    */
+  });
+}

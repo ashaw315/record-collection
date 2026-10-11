@@ -11,6 +11,7 @@ import { hydrateWantListItem } from '@/lib/db/queries/want-list';
 import type { Offset } from '@/lib/api/query-params';
 import { cn } from '@/lib/utils';
 import { SCREEN_FRAME } from '@/app/screen-frame';
+import { HIT } from '@/app/hit-area';
 
 /**
  * SPEC.md §10 `/want-list`.
@@ -75,7 +76,7 @@ export default async function WantListPage({ searchParams }: PageProps<'/want-li
             output is want-list rows, so the want list is where a user is when
             they want more of them.
           */}
-          <div className="flex shrink-0 flex-col items-end gap-2">
+          <div className="flex shrink-0 flex-col items-end">
             {/*
               §T.6: "The want list carries LOOK UP A RECORD, a §9.3 control
               in its heading's row, in both states... A want-list item comes
@@ -92,7 +93,14 @@ export default async function WantListPage({ searchParams }: PageProps<'/want-li
             </Link>
             <Link
               href="/suggestions"
-              className="text-label underline underline-offset-2 hover:text-foreground"
+              /*
+                A row of its own 44 tall, not an overlay: below the width
+                where the heading wraps it stands between look up's box and
+                the two views with 41 for all three, the handoff's "row
+                height where controls stack with no gap". One rule at every
+                width, so the box and this stack with nothing between.
+              */
+              className="relative flex h-[44px] items-center text-label underline underline-offset-2 before:absolute before:inset-y-0 before:-left-[9px] before:-right-[9px] before:content-[''] hover:text-foreground"
             >
               Suggestions
             </Link>
@@ -108,13 +116,15 @@ export default async function WantListPage({ searchParams }: PageProps<'/want-li
           {[
             { label: 'Still wanted', href: '/want-list', active: !showAcquired },
             { label: 'Acquired', href: '/want-list?acquired=true', active: showAcquired },
-          ].map((tab) => (
+          ].map((tab, index) => (
             <Link
               key={tab.href}
               href={tab.href}
               aria-current={tab.active ? 'page' : undefined}
               className={cn(
-                'rounded-xs border px-2 py-1 text-label transition-colors',
+                /* Inside the 1px border: 10 reaches 9 past, and 3 reaches 2, half the 4 between the two. */
+                `${HIT} rounded-xs border px-2 py-1 text-label transition-colors`,
+                index === 0 ? 'before:-left-[10px] before:-right-[3px]' : 'before:-left-[3px] before:-right-[10px]',
                 tab.active
                   /* §T.6: no fill. The current one takes §3's mark for a choice, the 2px underline 7 below, as a chosen filter does. */
                   ? 'border-foreground text-foreground underline decoration-2 underline-offset-[7px]'

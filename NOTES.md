@@ -41243,3 +41243,99 @@ Three things built from it, step level, not a gate:
 
 The config and the runner changed, so a gate is owed before the next
 step and is run next.
+
+## The gate on 02cc8bc, and the first whole-run margins (11 Oct)
+
+Gate: full suites, every project, no file argument, on `02cc8bc`, owed
+because the Playwright config and the runner changed. Unit: `4304 passed,
+2 skipped, tree unchanged — OK`. Playwright: `1004 passed, 16 skipped,
+ledger clean, tree unchanged — OK`, `[projects] chromium 713, capture 11,
+mobile 296`, no `[reset]` line, no sleep.
+
+The ten nearest their limit, of 1004: `identity-measure.spec.ts:76` with
+55% left (13.6s of 30s), `wall-route.spec.ts:218` and `:167` with 58%,
+`colour-103.spec.ts:87` 61%, `cover-travel-92.spec.ts:221` 62%,
+`record-navigation.spec.ts:292` 63% (22.3s of 60s),
+`nav-type-74.spec.ts:188` 64%, `nav-menu-76.spec.ts:68` and `:180` 65%,
+`manage.spec.ts:174` 68%. All chromium. **Nothing was within half its
+limit on a normal run**; the run that went red on 10 Oct was 2.3 times
+slow, which takes the first of these to 31s. So a slowdown of that size
+would now be expected to break `identity-measure:76` first, and the two
+`wall-route` tests next.
+
+## Step 124: the want list's hit areas (11 Oct)
+
+The first of five, one screen a step, manage last. The handoff's
+unnumbered step: "Give every control under 44 its overlay, by the
+halfway-and-9 rule, or the row height where controls stack with no gap.
+Report the count meeting 44 on each of the five screens."
+
+**Built.** `src/app/hit-area.ts` holds the overlay (`HIT`: a `::before`
+44 tall centred on the control, drawing nothing) and the handoff's two
+rules it comes from. On the want list:
+
+- Edit, Mark acquired, View record, Delete and the two views take the
+  overlay. Sideways: half the gap toward a neighbour in its set (4 of the
+  8 between a title and Edit, 2 of the 4 between the views), 9 where
+  there is none. On a bordered control the overlay is placed from inside
+  the border, so the class reads one more than it reaches.
+- **The title takes padding, not the overlay.** A title takes two lines
+  on a phone; the link is then a box a line, and an overlay placed
+  against it landed on neither (34 of 44 at 320, the first build).
+  Padding above and below an inline link moves no line, and the link
+  being positioned puts its padding over the type beneath, which is what
+  plain padding loses to.
+- **Suggestions is a row 44 tall, not an overlay**: the handoff's "row
+  height where controls stack with no gap". At 320 the heading wraps and
+  Suggestions stands between look up's box and the two views with 41 for
+  all three (the first build, an overlay reaching 4 up and the rest
+  down, read 28 there). One rule at every width, so the box and the row
+  stack with nothing between.
+- Delete's 12 of room below 640 moved from the button to a span round
+  it, so the button is its word and 9 is measured from the word.
+
+**What moved, measured before and after on one seeded row** (a probe
+inside the spec, removed; the durable part is the test's drawn heights):
+the Suggestions row makes the heading's block 3.5 taller from 390 up and
+19.5 at 320, so the two views and the list start that much lower, and
+Suggestions' word is 5.8 lower. Nothing else: the row is 98 tall at 320
+and 390 and 67.5 at 768 and 1280 as before, and Edit, Mark acquired and
+Delete stand where they stood within it.
+
+**Tests, written first.** `e2e/hit-area.ts` reads what a tap lands on,
+down each control's middle and out from each side;
+`e2e/want-list.spec.ts` uses it at 320, 390, 768 and 1280 on both views,
+with a row that has a market control, one acquired, and one whose title
+takes two lines. Failed first 4 of 4 (at the two widths it then had):
+"Suggestions: 17", "Still wanted: 27", "Edit: 14", "Mark acquired: 27",
+"Delete: 17", the title 20. It also holds each overlaid control's drawn
+height at what it was, which cannot fail first and is there so a later
+fix cannot meet 44 by making the thing bigger.
+
+**On the real collection** (`e2e/sheet/hit-44.sheet.ts`,
+`docs/captures/hit-44/hit-44.md`, read-only): the want list 32 of 32 at
+390 and at 320, its Acquired view 4 of 4, none past 9. The other four,
+not yet built: look up 0 of 7, stats 0 of 42, the edit form 1 of 70,
+manage 0 of 83, 135, 53, 22, 16 and 10 by section.
+
+**Step level.** The want-list spec, both projects: `52 passed, ledger
+clean, tree unchanged — OK`. Every spec that names the want list, by
+grep (25 files), both projects: `244 passed, ledger clean, tree unchanged
+— OK`, `[projects] chromium 151, capture 0, mobile 93`. Unit under
+`src/app`: `1292 passed, tree unchanged — OK`. Typecheck and build clean;
+lint 0 errors, 27 warnings.
+
+**Not done, and why.**
+
+- **The confirmation a row's Delete opens.** Cancel, Delete and Close
+  read 31 to 34 and 28 to a finger at all four widths. They are the
+  shared dialog's and the shared button's, which three screens open; a
+  change there is not this screen's step. For Design: on a phone the two
+  buttons stack, which is the row-height case.
+- The want list's new form, an item's page and its edit form are not
+  among the five screens and were not read.
+- The sheet's "off" column counts 1 where manage-phone counted 73: it
+  reads after scrolling each control into view. To be put right in
+  manage's step; it does not touch the four screens that fit.
+- The sheet's "past 9" reads 44 on the edit form: a label wrapped round
+  its field counts as reaching it. To be looked at in that screen's step.

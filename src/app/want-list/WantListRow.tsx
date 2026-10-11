@@ -21,6 +21,7 @@ import {
   targetPressingSummary,
 } from './want-list-format';
 import { MarketPanel } from '@/app/market/MarketPanel';
+import { HIT, HIT_ALONE } from '@/app/hit-area';
 
 /**
  * One want-list row (SPEC.md §10: "Sorted by priority. Each row shows target
@@ -84,7 +85,15 @@ export function WantListRow({ item }: { item: WantListItem }) {
           <Link
             href={`/want-list/${item.id}`}
             data-testid="want-list-detail-link"
-            className="font-medium underline-offset-2 hover:underline"
+            /*
+              Its hit area is its own padding, not `HIT`'s overlay: a title
+              takes two lines on a phone, the link is then a box a line, and
+              an overlay placed against a link in pieces lands on neither
+              (measured at 320: 34 of 44). Padding above and below an inline
+              link moves no line, and being positioned puts it over the
+              type beneath. 9 past its start and 4, half the 8, toward Edit.
+            */
+            className="relative -ml-[9px] -mr-[4px] py-[12px] pl-[9px] pr-[4px] font-medium underline-offset-2 hover:underline"
           >
             {item.title}
           </Link>
@@ -98,7 +107,7 @@ export function WantListRow({ item }: { item: WantListItem }) {
           <Link
             href={`/want-list/${item.id}/edit`}
             data-testid={`want-list-row-edit-${item.id}`}
-            className="ml-2 text-label text-muted-foreground underline underline-offset-2"
+            className={`${HIT} ml-2 text-label text-muted-foreground underline underline-offset-2 before:-left-[4px] before:-right-[9px]`}
           >
             Edit
           </Link>
@@ -123,7 +132,7 @@ export function WantListRow({ item }: { item: WantListItem }) {
               {item.acquiredRecordId !== null && (
                 <Link
                   href={`/records/${item.acquiredRecordId}`}
-                  className="text-label underline underline-offset-2"
+                  className={`${HIT_ALONE} text-label underline underline-offset-2`}
                 >
                   View record
                 </Link>
@@ -137,7 +146,8 @@ export function WantListRow({ item }: { item: WantListItem }) {
              */
             <Link
               href={`/records/new?wantListId=${item.id}`}
-              className="border border-foreground px-2 py-1 text-label text-foreground hover:underline"
+              /* The overlay is placed from inside the 1px border, so each side is one more than it reaches. */
+              className={`${HIT} border border-foreground px-2 py-1 text-label text-foreground before:-left-[10px] before:-right-[10px] hover:underline`}
             >
               Mark acquired
             </Link>
@@ -157,13 +167,16 @@ export function WantListRow({ item }: { item: WantListItem }) {
             would trade a small annoyance for a hunt.
           */}
           <span aria-hidden className="ml-1 hidden h-3 w-px bg-border sm:block" />
-          <button
-            type="button"
-            onClick={() => setConfirming(true)}
-            className="ml-auto pl-3 text-label text-muted-foreground underline underline-offset-2 hover:text-destructive sm:ml-1 sm:pl-0"
-          >
-            Delete
-          </button>
+          {/* The room is the span's, so the button is its word and its hit area is measured from the word. */}
+          <span className="ml-auto flex pl-3 sm:ml-1 sm:pl-0">
+            <button
+              type="button"
+              onClick={() => setConfirming(true)}
+              className={`${HIT_ALONE} text-label text-muted-foreground underline underline-offset-2 hover:text-destructive`}
+            >
+              Delete
+            </button>
+          </span>
         </div>
       </div>
 

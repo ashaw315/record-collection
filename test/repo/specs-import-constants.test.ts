@@ -108,6 +108,8 @@ const GOVERNED = [
   'e2e/sheet/collection-survey.sheet.ts',
   /* The five screens' survey reaches a record's edit form by its id. */
   'e2e/sheet/screens-survey.sheet.ts',
+  /* The count of controls meeting 44 reaches the same form the same way. */
+  'e2e/sheet/hit-44.sheet.ts',
   /* Step 103d's air: the record form's edit state, reached by a record's id. */
   'e2e/sheet/air-103.sheet.ts',
   /*
