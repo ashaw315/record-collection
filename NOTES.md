@@ -41548,3 +41548,95 @@ folder and never repair a file in it. Keep a copy of the bad file first.
 (`docs/captures/manage-phone/`, `54bd19e`): every section at 390 and
 320, the first view and the whole page, with `manage-phone.md`. Nothing
 more is owed on it; it is Design's to take.
+
+## Step 127: the floor is a coarse pointer's, on the three screens built (11 Oct)
+
+Design's save of 11 Oct (`64891a1`): "Scope every 44 hit area to a coarse
+primary pointer, with drawn sizes unchanged under a fine one; re-measure
+stats at 390 and 1280 under each... Test both pointer modes on both
+engines." This is that clause. The same step's fields and chips are not
+built: the coordinator holds the record form for the amended field
+ruling.
+
+**Built.** One commit across steps 124 to 126, by Tailwind's
+`pointer-coarse:`.
+
+- The overlay (`HIT`, `HIT_ALONE`, the new `HIT_ROW`) is not displayed
+  until the pointer is coarse. **Not by its `content`, which I tried
+  first:** Tailwind gives every `before:` class a content of its own, so
+  the overlay stayed under a mouse, and the fine tests said so (25 of 48
+  failed on the first build).
+- The want list: Suggestions is its word 8 below look up's box under a
+  mouse and a row of 44 under a finger; the title's padding is a
+  finger's.
+- Look up: Search Discogs, the searched line and Show more are 44 in the
+  box under a finger, and 32, 34 and 34 under a mouse.
+- Stats: a genre's row is 27.5 and a label's or store's pitch 33.5 under
+  a mouse, 44 under a finger.
+
+**Stats under each pointer, on the real collection**
+(`docs/captures/hit-44-127/`, the sheet now reads every screen under
+each): 390: 2347 coarse, 1839 fine. 320: 2401 and 1893. 1280: 2328 and
+1820. **The 508 is back under a mouse at every width, measured.** Under a
+coarse pointer the want list is 32 of 32, its Acquired view 4 of 4, look
+up 7 of 7 and stats 42 of 42 at 390 and 320.
+
+**Three things the reader got wrong, each found by a test and none in
+the product.**
+
+1. A title on two lines read 43: the reader took the middle of the box
+   round both lines, which at 320 fell on the Edit after the title's
+   last word. It reads a control on its first line now. (The title's
+   padding was also half a pixel short, 12 round a line box of 19.5; it
+   is 13.)
+2. The last row of a page read 14: the dev server's badge stands over
+   the bottom left corner and took the taps. The reader hides it.
+3. **A branch's row on stats read 43 of 44 about one run in three**, and
+   this one took the afternoon. Two guesses were wrong (a sample on a
+   rounding boundary; a page scrolled to a fraction). What settled it
+   was the reader saying what took the row (`lostTo`) and then a staging:
+   two branch rows together, the second scanned every quarter pixel. A
+   box 44 tall from 480.5 to 524.5 gives its last three samples to the
+   row beneath, with that row's cutting and its link's overlay each
+   switched off in turn: it is how the browser gives a point to a box
+   that starts on a half pixel, on both engines, and nothing built here.
+   So `underFloor` passes a control whose own drawn box is 44, which is
+   exact, and keeps the sampled rows as the test for an overlay.
+   - Along the way an overlay of 44 centred on a name was found to take
+     the first pixel of the row beneath where a long name reached; a
+     link in a row is `HIT_ROW` now, an overlay taller than the row,
+     cut by the row.
+   - **I ran again once without copying a failing run's trace**, the
+     standing rule broken; the next reproduction was copied first.
+
+**Tests.** The three screens' tests are one each under each pointer
+(`POINTERS`, `test.use({ hasTouch })`), with the pointer asserted as a
+precondition from the page itself. Against the source as steps 124 to
+126 left it: 24 of 24 fine tests failed and 24 of 24 coarse passed,
+which is the step. The source edit came before the tests were written;
+the tests were then run against the old source to see them fail. With
+the build: 144 of 144 over three repeats on both projects.
+
+**One failure seen once and not caught:** during the repeats, the want
+list's fine test at 390 on chromium timed out at 30s waiting for its
+seeded row. It did not recur in the 300 or so runs after, and its trace
+went with the run that followed. Not diagnosed.
+
+**Step level.** Every spec that reads the three screens or the reader,
+by grep (19 files), both projects: `447 passed, ledger clean, tree
+unchanged — OK`, `[projects] chromium 261, capture 0, mobile 186`. Unit
+under `src/app`: `1292 passed, tree unchanged — OK`. Typecheck and build
+clean; lint 0 errors, 27 warnings.
+
+**For the field ruling: the Reissue box** (`docs/captures/form-fields-127/`,
+the form-fields sheet again). 16 square, inside its own label "This is a
+reissue", 20 tall and the field's width. Under 640 its row is 72 tall:
+the nearest control above is the colour field, 55 above it, and the
+nearest below is the notes box, 54 below. From 640 the row is 48: 27
+above and 30 below. An overlay of 44 takes 14 either side, so the room
+is there at every width and nothing need be drawn differently. What is
+within the 14 is not a control: the row's own label "Reissue" ends 9
+above the box under 640, and a tap on it goes to the box anyway.
+
+**The edit form's N is a formula:** 27 plus one a genre and one a tag,
+whatever the collection holds that day. 70 today.

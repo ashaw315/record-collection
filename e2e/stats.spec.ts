@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist, trackCreated } from './cleanup';
 import { login } from './sign-in';
-import { HIT_FLOOR, HIT_PAST, readReach } from './hit-area';
+import { HIT_FLOOR, HIT_PAST, POINTERS, pointerIs, reachingPastItself, readReach, underFloor } from './hit-area';
 
 /* Records and artists removed after each test — see e2e/cleanup.ts. */
 registerCleanup();
@@ -463,9 +463,14 @@ test('empty genres stay on the screen and recede', async ({ page }) => {
   opened rows, a label's and a store's are each a link in a column of
   links, so the row is what is 44.
 */
-for (const width of [320, 390, 768, 1280]) {
-  /* Fails against rows of 27.5 and 33.5: the links read 16 and 17 to a finger, a branch's row 28. */
-  test(`every control on stats is 44 tall to a finger and reaches no more than 9 past itself, at ${width}`, async ({ page }) => {
+/* A genre's row and the pitch of a label's or store's row: 44 under a finger, and under a mouse what they were before step 126. */
+const ROWS = { coarse: { genre: 44, pitch: 44 }, fine: { genre: 27.5, pitch: 33.5 } } as const;
+for (const pointer of POINTERS) test.describe(`stats under a ${pointer} pointer`, () => {
+ test.use({ hasTouch: pointer === 'coarse' });
+ for (const width of [320, 390, 768, 1280]) {
+  /* Coarse fails against rows of 27.5 and 33.5: the links read 16 and 17 to a finger, a branch's row 28. Fine fails against step 126's build, whose rows were 44 under a mouse too. */
+  test(pointer === 'coarse' ? `every control on stats is 44 tall to a finger and reaches no more than 9 past itself, at ${width}` : `under a mouse stats’ rows are the height they were and no link reaches past its name, at ${width}`, async ({ page }) => {
+    expect(await pointerIs(page), 'the precondition: the page has the pointer this test is named for').toBe(pointer);
     const suffix = makeSuffix();
     const artist = await post(page, '/api/artists', { name: `Reach-${suffix}` });
     trackArtist(artist.id as string);
@@ -488,7 +493,21 @@ for (const width of [320, 390, 768, 1280]) {
     const names = reach.map((r) => r.name);
     for (const name of [`UK82-${suffix}`, `Label1-${suffix}`, `Label2-${suffix}`, `Shop1-${suffix}`, `Shop2-${suffix}`]) expect(names, 'the link is on the screen to be read').toContain(name);
     expect(reach.filter((r) => r.kind === 'summary').length, 'a branch’s row is a control too').toBeGreaterThan(0);
-    expect.soft(reach.filter((r) => r.tall < HIT_FLOOR).map((r) => `${r.kind} ${r.name.slice(0, 30)}: ${r.tall}`), `at ${width}: controls under ${HIT_FLOOR} to a finger, of ${reach.length}`).toEqual([]);
-    expect.soft(reach.filter((r) => r.kind === 'a' && (r.left > HIT_PAST || r.right > HIT_PAST)).map((r) => `${r.name}: ${r.left} left, ${r.right} right`), `at ${width}: links a tap reaches from more than ${HIT_PAST} past them`).toEqual([]);
+    if (pointer === 'coarse') {
+      expect.soft(underFloor(reach).map((r) => `${r.kind} ${r.name.slice(0, 30)}: ${r.tall}, lost to ${r.lostTo.join('; ')}`), `at ${width}: controls under ${HIT_FLOOR} to a finger, of ${reach.length}`).toEqual([]);
+      expect.soft(reach.filter((r) => r.kind === 'a' && (r.left > HIT_PAST || r.right > HIT_PAST)).map((r) => `${r.name}: ${r.left} left, ${r.right} right`), `at ${width}: links a tap reaches from more than ${HIT_PAST} past them`).toEqual([]);
+    } else {
+      expect.soft(reachingPastItself(reach.filter((r) => r.kind === 'a')), `at ${width}: links a mouse reaches from outside their drawn box`).toEqual([]);
+    }
+    const drawn = await page.evaluate(([genre, first, second]) => {
+      const row = (document.querySelector(`[data-testid="genre-row-${genre}"]`) as HTMLElement).getBoundingClientRect().height;
+      const items = Array.from(document.querySelectorAll('[data-testid="by-label"] li'));
+      const a = items.find((li) => (li.textContent ?? '').includes(first ?? ''));
+      const b = items.find((li) => (li.textContent ?? '').includes(second ?? ''));
+      return { genre: row, pitch: a === undefined || b === undefined ? null : Math.abs(b.getBoundingClientRect().top - a.getBoundingClientRect().top) };
+    }, [child.id as string, `Label1-${suffix}`, `Label2-${suffix}`]);
+    expect.soft(drawn.genre, `at ${width}: a genre’s row under a ${pointer} pointer`).toBeCloseTo(ROWS[pointer].genre, 0);
+    expect.soft(drawn.pitch, `at ${width}: from one label’s row to the next under a ${pointer} pointer`).toBeCloseTo(ROWS[pointer].pitch, 0);
   });
-}
+ }
+});

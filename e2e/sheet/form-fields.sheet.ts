@@ -54,14 +54,29 @@ test('the record form’s chips and its fields’ labels, at 320, 390 and 768', 
         const where = lb === null ? 'none' : wrapping !== null && tied === null ? 'wraps the field' : lb.bottom <= box.top + 1 ? 'above' : lb.right <= box.left + 1 ? 'beside, left' : 'overlapping';
         return { field: el.id || (el.getAttribute('aria-label') ?? el.tagName.toLowerCase()), kind: el.tagName.toLowerCase() + (el instanceof HTMLInputElement ? `[${el.type}]` : ''), width: round(box.width), height: round(box.height), label: label === null ? null : (label.textContent ?? '').trim().slice(0, 28), labelIs: label === null ? 'none' : `${label.tagName.toLowerCase()}${tied !== null ? ' for' : ''}${label.classList.contains('sr-only') ? ', not drawn' : ''}`, where, labelWidth: lb === null ? null : round(lb.width), labelHeight: lb === null ? null : round(lb.height), strip: lb === null || where !== 'above' ? null : round(box.top - lb.bottom) };
       });
+      /* The Reissue box: what stands above and below it, for whether an overlay of 44 on a box of 16 has its 14 either side. */
+      const box = document.querySelector<HTMLElement>('#isReissue');
+      const reissue = (() => {
+        if (box === null) return null;
+        const b = box.getBoundingClientRect();
+        const wrap = box.closest('label')?.getBoundingClientRect() ?? null;
+        const row = box.closest('.border-b')?.getBoundingClientRect() ?? null;
+        const controls = Array.from(document.querySelectorAll<HTMLElement>('main input:not([type=hidden]):not(.sr-only), main select, main textarea, main button, main a, main summary')).filter((el) => el !== box && el.getClientRects().length > 0 && el.checkVisibility());
+        const named = (el: HTMLElement) => `${el.tagName.toLowerCase()} ${el.id || (el.textContent ?? '').trim().slice(0, 20)}`;
+        const above = controls.filter((el) => el.getBoundingClientRect().bottom <= b.top).sort((p, q) => q.getBoundingClientRect().bottom - p.getBoundingClientRect().bottom)[0];
+        const below = controls.filter((el) => el.getBoundingClientRect().top >= b.bottom).sort((p, q) => p.getBoundingClientRect().top - q.getBoundingClientRect().top)[0];
+        const tied = document.querySelector<HTMLElement>('label[for="isReissue"]')?.getBoundingClientRect() ?? null;
+        return { box: `${round(b.width)} × ${round(b.height)}`, wrap: wrap === null ? null : `${round(wrap.width)} × ${round(wrap.height)}`, row: row === null ? null : `${round(row.height)} tall, the box ${round(b.top - row.top)} from its top and ${round(row.bottom - b.bottom)} from its bottom`, above: above === undefined ? null : `${named(above)}, its bottom ${round(b.top - above.getBoundingClientRect().bottom)} above the box`, below: below === undefined ? null : `${named(below)}, its top ${round(below.getBoundingClientRect().top - b.bottom)} below the box`, rowLabel: tied === null ? null : `"Reissue", its bottom ${round(b.top - tied.bottom)} above the box, or ${round(b.left - tied.right)} to its left` };
+      })();
       const others = Array.from(document.querySelectorAll<HTMLElement>('main a, main button, main summary')).filter((el) => el.getClientRects().length > 0 && el.checkVisibility()).map((el) => { const b = el.getBoundingClientRect(); return { name: (el.textContent ?? '').trim().slice(0, 28), kind: el.tagName.toLowerCase(), width: round(b.width), height: round(b.height) }; });
-      return { groups, fields, others };
+      return { groups, fields, others, reissue };
     });
     all[width] = m;
     md.push(`## At ${width}`, '', '### Chips', '', '| group | chips | lines | chip heights | chip widths | gap across, on a line | gap down, between lines | room after a line’s last chip |', '|---|---|---|---|---|---|---|---|');
     for (const g of m.groups) md.push(`| ${g.legend} | ${g.chips} | ${g.lines} (${g.perLine.join(', ')}) | ${Object.entries(g.heights).map(([k, n]) => `${k} ×${n}`).join(', ')} | ${g.widths.narrowest} to ${g.widths.widest} | ${Object.entries(g.across).map(([k, n]) => `${k} ×${n}`).join(', ')} | ${Object.entries(g.down).map(([k, n]) => `${k} ×${n}`).join(', ')} | ${Math.min(...g.endOfLine)} to ${Math.max(...g.endOfLine)} |`);
     md.push('', '### Fields', '', '| field | kind | box | its label | label is | label stands | label box | strip between |', '|---|---|---|---|---|---|---|---|');
     for (const f of m.fields) md.push(`| ${f.field} | ${f.kind} | ${f.width} × ${f.height} | ${f.label ?? '**none**'} | ${f.labelIs} | ${f.where} | ${f.labelWidth === null ? '' : `${f.labelWidth} × ${f.labelHeight}`} | ${f.strip ?? ''} |`);
+    if (m.reissue !== null) md.push('', '### The Reissue box', '', `The box is ${m.reissue.box}, inside its own label of ${m.reissue.wrap}, in a row ${m.reissue.row}. The nearest control above: ${m.reissue.above}. The nearest below: ${m.reissue.below}. The row’s label: ${m.reissue.rowLabel}.`);
     md.push('', '### Links, buttons and the disclosure', '', '| control | kind | box |', '|---|---|---|');
     for (const o of m.others) md.push(`| ${o.name} | ${o.kind} | ${o.width} × ${o.height} |`);
     md.push('');

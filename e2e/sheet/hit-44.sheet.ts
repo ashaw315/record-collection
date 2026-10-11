@@ -1,7 +1,7 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test, type Page } from '@playwright/test';
-import { HIT_FLOOR, HIT_PAST, readReach, type Reach } from '../hit-area';
+import { HIT_FLOOR, HIT_PAST, pointerIs, readReach, underFloor, type Reach } from '../hit-area';
 import { login } from './login';
 
 /**
@@ -10,6 +10,11 @@ import { login } from './login';
  * form and each section of manage, at 390 and 320, on the real collection:
  * how many controls a finger reaches over 44 rows of pixels, how many it
  * does not, and how many a tap reaches from more than 9 past them.
+ *
+ * Under each pointer (§T.6, step 127): the floor is a coarse pointer's, so
+ * the count that has to be N of N is the coarse one, and the page's height
+ * under a fine one is what it was before any of it. Stats is read at 1280
+ * as well, which the handoff asks for.
  *
  * Read-only. Nothing is pressed but manage's section names, which change
  * what is shown and write nothing. Look up is read at rest: a search there
@@ -27,47 +32,55 @@ async function settle(page: Page) {
   await page.waitForTimeout(600);
 }
 
-test('controls meeting 44 to a finger on the five screens, at 390 and 320', async ({ page }) => {
+test('controls meeting 44 on the five screens, under each pointer, at 390 and 320', async ({ browser }) => {
   mkdirSync(OUT, { recursive: true });
-  await login(page);
-
-  await page.setViewportSize({ width: 1280, height: 844 });
-  await page.goto('/?view=table');
-  await page.locator('main table tbody tr a').first().waitFor({ timeout: 60_000 });
-  const href = (await page.locator('main table tbody tr a').first().getAttribute('href')) ?? '';
-  const editPath = `/records/${href.split('/').pop() ?? ''}/edit`;
-
-  const md = ['# Controls meeting 44 to a finger, on the real collection', '', `Read-only, desktop Chromium at a phone’s widths. “Meets” is ${HIT_FLOOR} or more rows of pixels down the control’s middle on which a tap reaches it; “past ${HIT_PAST}” is a control a tap reaches from more than ${HIT_PAST} beyond its drawn edge; “off” is past the window’s edge, where nothing can be read.`, '',
-    '| screen | window | page height | controls | meets 44 | under 44 | past 9 | off | under 44, by name and rows |', '|---|---|---|---|---|---|---|---|---|'];
+  const md = ['# Controls meeting 44, on the real collection, under each pointer', '', `Read-only, desktop Chromium at each width, with touch on for the coarse pointer and off for the fine. “Meets” is a control whose own box is ${HIT_FLOOR} tall or that a tap reaches over ${HIT_FLOOR} rows of pixels down its middle; “past ${HIT_PAST}” is one a tap reaches from more than ${HIT_PAST} beyond its drawn edge; “off” is past the window’s edge, where nothing can be read. The floor is the coarse pointer’s: under a fine one the column says what a mouse has, and nothing is owed there.`, '',
+    '| pointer | screen | window | page height | controls | meets 44 | under 44 | past 9 | off | under 44, by name and rows |', '|---|---|---|---|---|---|---|---|---|---|'];
   const all: Record<string, Reach[]> = {};
-  const row = async (name: string, width: number, within: string) => {
-    const reach = await readReach(page, within);
-    const off = await page.evaluate((selector) => Array.from(document.querySelector(selector)?.querySelectorAll<HTMLElement>('button, a, select, input:not([type=hidden]), textarea, summary') ?? []).filter((el) => el.getClientRects().length > 0 && (el.getBoundingClientRect().left >= innerWidth || el.getBoundingClientRect().right <= 0)).length, within);
-    all[`${name} at ${width}`] = reach;
-    const under = reach.filter((r) => r.tall < HIT_FLOOR);
-    const tally = new Map<string, number>();
-    for (const r of under) tally.set(`${r.name.slice(0, 24)} ${r.tall}`, (tally.get(`${r.name.slice(0, 24)} ${r.tall}`) ?? 0) + 1);
-    const named = [...tally.entries()].slice(0, 12).map(([k, n]) => (n > 1 ? `${k} ×${n}` : k)).join('; ') + (tally.size > 12 ? `; and ${tally.size - 12} more kinds` : '');
-    md.push(`| ${name} | ${width} | ${await page.evaluate(() => document.documentElement.scrollHeight)} | ${reach.length} | **${reach.length - under.length}** | ${under.length} | ${reach.filter((r) => r.left > HIT_PAST || r.right > HIT_PAST).length} | ${off} | ${named} |`);
-    await page.screenshot({ path: join(OUT, `${name.toLowerCase().replace(/[^a-z]+/g, '-')}-w${width}-meets${reach.length - under.length}of${reach.length}.png`), fullPage: true });
-  };
+  for (const pointer of ['coarse', 'fine'] as const) {
+    const context = await browser.newContext({ hasTouch: pointer === 'coarse', viewport: { width: 1280, height: 844 } });
+    const page = await context.newPage();
+    await login(page);
+    if ((await pointerIs(page)) !== pointer) throw new Error(`the page was to have a ${pointer} pointer and has ${await pointerIs(page)}`);
+    await page.goto('/?view=table');
+    await page.locator('main table tbody tr a').first().waitFor({ timeout: 60_000 });
+    const href = (await page.locator('main table tbody tr a').first().getAttribute('href')) ?? '';
+    const editPath = `/records/${href.split('/').pop() ?? ''}/edit`;
 
-  for (const width of [390, 320]) {
-    await page.setViewportSize({ width, height: 844 });
-    for (const [name, path] of [['Want list', '/want-list'], ['Want list, acquired', '/want-list?acquired=true'], ['Look up', '/lookup'], ['Stats', '/stats'], ['Record form, editing', editPath]] as const) {
-      await page.goto(path);
+    const row = async (name: string, width: number, within: string) => {
+      const reach = await readReach(page, within);
+      const off = await page.evaluate((selector) => Array.from(document.querySelector(selector)?.querySelectorAll<HTMLElement>('button, a, select, input:not([type=hidden]), textarea, summary') ?? []).filter((el) => el.getClientRects().length > 0 && (el.getBoundingClientRect().left >= innerWidth || el.getBoundingClientRect().right <= 0)).length, within);
+      all[`${name} at ${width}, ${pointer}`] = reach;
+      const under = underFloor(reach);
+      const tally = new Map<string, number>();
+      for (const r of under) tally.set(`${r.name.slice(0, 24)} ${r.tall}`, (tally.get(`${r.name.slice(0, 24)} ${r.tall}`) ?? 0) + 1);
+      const named = [...tally.entries()].slice(0, 8).map(([k, n]) => (n > 1 ? `${k} ×${n}` : k)).join('; ') + (tally.size > 8 ? `; and ${tally.size - 8} more kinds` : '');
+      const height = await page.evaluate(() => document.documentElement.scrollHeight);
+      md.push(`| ${pointer} | ${name} | ${width} | ${height} | ${reach.length} | **${reach.length - under.length}** | ${under.length} | ${reach.filter((r) => r.left > HIT_PAST || r.right > HIT_PAST).length} | ${off} | ${named} |`);
+      await page.screenshot({ path: join(OUT, `${name.toLowerCase().replace(/[^a-z]+/g, '-')}-w${width}-${pointer}-h${height}-meets${reach.length - under.length}of${reach.length}.png`), fullPage: true });
+    };
+
+    for (const width of [390, 320, 1280]) {
+      await page.setViewportSize({ width, height: 844 });
+      const screens = [['Want list', '/want-list'], ['Want list, acquired', '/want-list?acquired=true'], ['Look up', '/lookup'], ['Stats', '/stats'], ['Record form, editing', editPath]] as const;
+      /* 1280 is read for stats alone, the screen whose length the pointer changes most. */
+      for (const [name, path] of width === 1280 ? screens.filter(([each]) => each === 'Stats') : screens) {
+        await page.goto(path);
+        await settle(page);
+        await row(name, width, 'main');
+      }
+      if (width === 1280) continue;
+      await page.goto('/manage');
       await settle(page);
-      await row(name, width, 'main');
+      const names = page.locator('nav[aria-label="Resource"] button');
+      const count = await names.count();
+      for (let i = 0; i < count; i += 1) {
+        await names.nth(i).click();
+        await page.waitForTimeout(400);
+        await row(`Manage, ${((await names.nth(i).textContent()) ?? String(i)).trim()}`, width, '[data-screen-frame]');
+      }
     }
-    await page.goto('/manage');
-    await settle(page);
-    const names = page.locator('nav[aria-label="Resource"] button');
-    const count = await names.count();
-    for (let i = 0; i < count; i += 1) {
-      await names.nth(i).click();
-      await page.waitForTimeout(400);
-      await row(`Manage, ${((await names.nth(i).textContent()) ?? String(i)).trim()}`, width, '[data-screen-frame]');
-    }
+    await context.close();
   }
   writeFileSync(join(OUT, 'hit-44.md'), `${md.join('\n')}\n`);
   writeFileSync(join(OUT, 'hit-44.json'), JSON.stringify(all, null, 1));

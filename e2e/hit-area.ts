@@ -26,14 +26,61 @@ export type Reach = {
   /** Pixels past the drawn box's left and right edges on which a tap still reaches it. */
   left: number;
   right: number;
+  /** What a tap landed on instead, on the rows of the 44 about the control's middle that did not reach it: so a short reading says what took the rows. */
+  lostTo: string[];
 };
 
+/**
+ * §T.6, step 127: "The 44 floor applies where the pointer is coarse... where
+ * the primary pointer is fine, controls keep their drawn size." A test runs
+ * under each; `test.use({ hasTouch })` is what sets it on both engines
+ * (measured 11 Oct: desktop Chromium is fine at any width and coarse with
+ * touch on; WebKit's iPhone is coarse and fine with touch off).
+ */
+export const POINTERS = ['coarse', 'fine'] as const;
+export type Pointer = (typeof POINTERS)[number];
+
+/** The precondition, asserted and not assumed: the page really has the pointer the test is named for. */
+export async function pointerIs(page: Page): Promise<Pointer | 'neither'> {
+  return page.evaluate(() => (matchMedia('(pointer: coarse)').matches ? 'coarse' : matchMedia('(pointer: fine)').matches ? 'fine' : 'neither'));
+}
+
+/** Under a fine pointer nothing reaches further than it is drawn: the controls a tap reaches over more rows than their box has, or from past their sides. */
+export function reachingPastItself(reach: Reach[]): string[] {
+  /* One pixel is the grain of the reading: a box that starts between two pixels is reached from the pixel it starts in. */
+  return reach.filter((r) => r.tall > Math.ceil(r.height) + 1 || r.left > 1 || r.right > 1).map((r) => `${r.name}: drawn ${r.height} tall, reached over ${r.tall}, ${r.left} left, ${r.right} right`);
+}
+
 export const HIT_FLOOR = 44;
+
+/**
+ * The controls short of the floor. A control whose own drawn box is 44 or
+ * more meets it by its box, whatever the sampled rows say; the sampled rows
+ * are the test for an overlay, which a box reading cannot see.
+ *
+ * Why the box and not the count, for a box: staged on 11 Oct (two branch
+ * rows on stats, the second scanned every quarter pixel). A box 44 tall
+ * from 480.5 to 524.5 gave its last three quarter-pixel samples (43.25,
+ * 43.5, 43.75 down) to the row beneath, on its own and with that row's
+ * cutting and its link's overlay each switched off. So it is how the
+ * browser gives a point to a box that starts on a half pixel, not anything
+ * built here, and it made a row of exactly 44 read 43 about one run in
+ * three as the rows above it changed. The box's own height is exact.
+ */
+export function underFloor(reach: Reach[]): Reach[] {
+  return reach.filter((r) => r.tall < HIT_FLOOR && r.height < HIT_FLOOR);
+}
 /** The handoff's figure: how far a hit area reaches past a thing with no neighbour. */
 export const HIT_PAST = 9;
 
 /** `except` leaves out the controls inside anything matching it: a part of the screen held for a ruling is named, not silently skipped. */
-export function readReach(page: Page, within = 'main', except?: string): Promise<Reach[]> {
+export async function readReach(page: Page, within = 'main', except?: string): Promise<Reach[]> {
+  /*
+    The dev server's own badge stands over the page's bottom left corner and
+    takes the taps there: the last row of a page read 14 of 44 under it
+    (stats at 320, step 127). It is not the app's and is not in a build.
+  */
+  await page.addStyleTag({ content: 'nextjs-portal{display:none!important}' });
   return page.evaluate(([selector, held]) => {
     const root = document.querySelector(selector ?? 'main');
     if (root === null) throw new Error(`no ${selector}`);
@@ -41,6 +88,8 @@ export function readReach(page: Page, within = 'main', except?: string): Promise
     const out: Reach[] = [];
     for (const el of Array.from(root.querySelectorAll<HTMLElement>('button, a, select, input:not([type=hidden]), textarea, summary')).filter(shown)) {
       el.scrollIntoView({ block: 'center', inline: 'nearest' });
+      /* Centring a control can leave the page scrolled to a fraction of a pixel; the reading is taken from a whole one. */
+      window.scrollTo(window.scrollX, Math.round(window.scrollY));
       const r = el.getBoundingClientRect();
       const reaches = (x: number, y: number) => {
         const at = document.elementFromPoint(x, y);
@@ -50,21 +99,44 @@ export function readReach(page: Page, within = 'main', except?: string): Promise
         const label = at.closest('label');
         return label !== null && el.id !== '' && label.htmlFor === el.id;
       };
-      const x = r.left + r.width / 2;
-      const y = r.top + r.height / 2;
+      /*
+        Read on the control's first line. A link that takes two lines is a
+        box a line, and the middle of the box round them all can be a place
+        the link is not: at 320 it fell on the Edit that follows a title's
+        last word, and the title read 43 for the rows Edit's own hit area
+        took (step 127). For a control on one line this is its own box.
+      */
+      const first = el.getClientRects()[0] ?? r;
+      const x = first.left + first.width / 2;
+      const y = first.top + first.height / 2;
       let tall = 0;
       /*
         From the middle itself and not the pixel nearest it: a row of exactly
         44 that starts between two pixels holds 43 whole ones, which is what
         a rounded middle counted (stats at 320, one engine, step 126).
+
+        A quarter of a pixel off the middle, for the same reason at the
+        other end. Boxes here start on whole and half pixels, and a sample
+        that lands exactly half way between two pixel rows is given to the
+        row below: with the middle on a whole pixel and samples half a
+        pixel off it, the last sample inside a row of 44 (at 443.5 of a box
+        from 400 to 444) landed on the row beneath, caught by `lostTo`
+        (stats at 320, both engines, about one run in three as the rows
+        above it changed). A quarter is on neither a whole nor a half.
       */
-      for (let dy = -40; dy <= 40; dy += 1) if (reaches(x, y + dy)) tall += 1;
+      const lostTo = new Set<string>();
+      for (let dy = -40; dy < 40; dy += 1) {
+        if (reaches(x, y + dy + 0.25)) { tall += 1; continue; }
+        if (dy < -22 || dy >= 22) continue;
+        const at = document.elementFromPoint(x, y + dy + 0.25);
+        lostTo.add(at === null ? `nothing at ${dy}` : `${at.tagName.toLowerCase()}${at.getAttribute('data-testid') === null ? '' : `[${at.getAttribute('data-testid')}]`} "${(at.textContent ?? '').trim().slice(0, 24)}" at ${dy} (its box ${Math.round(at.getBoundingClientRect().top * 100) / 100} to ${Math.round(at.getBoundingClientRect().bottom * 100) / 100}; this one ${Math.round(first.top * 100) / 100} to ${Math.round(first.bottom * 100) / 100})`);
+      }
       let left = 0;
-      while (left < 40 && reaches(r.left - left - 1, y)) left += 1;
+      while (left < 40 && reaches(first.left - left - 1, y)) left += 1;
       let right = 0;
-      while (right < 40 && reaches(r.right + right + 1, y)) right += 1;
+      while (right < 40 && reaches(first.right + right + 1, y)) right += 1;
       const name = ((el.textContent ?? '').trim() || el.getAttribute('aria-label') || (el as HTMLInputElement).placeholder || el.id || el.tagName).slice(0, 90);
-      out.push({ name, kind: el.tagName.toLowerCase(), width: Math.round(r.width * 10) / 10, height: Math.round(r.height * 10) / 10, tall, left, right });
+      out.push({ name, kind: el.tagName.toLowerCase(), width: Math.round(r.width * 10) / 10, height: Math.round(r.height * 10) / 10, tall, left, right, lostTo: [...lostTo] });
     }
     return out;
   }, [within, except ?? null] as const);

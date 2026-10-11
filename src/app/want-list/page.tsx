@@ -76,7 +76,7 @@ export default async function WantListPage({ searchParams }: PageProps<'/want-li
             output is want-list rows, so the want list is where a user is when
             they want more of them.
           */}
-          <div className="flex shrink-0 flex-col items-end">
+          <div className="flex shrink-0 flex-col items-end gap-2 pointer-coarse:gap-0">
             {/*
               §T.6: "The want list carries LOOK UP A RECORD, a §9.3 control
               in its heading's row, in both states... A want-list item comes
@@ -99,8 +99,10 @@ export default async function WantListPage({ searchParams }: PageProps<'/want-li
                 the two views with 41 for all three, the handoff's "row
                 height where controls stack with no gap". One rule at every
                 width, so the box and this stack with nothing between.
+                Under a coarse pointer only (step 127): with a mouse it is
+                its word, 8 below the box, as it was.
               */
-              className="relative flex h-[44px] items-center text-label underline underline-offset-2 before:absolute before:inset-y-0 before:-left-[9px] before:-right-[9px] before:content-[''] hover:text-foreground"
+              className="relative text-label underline underline-offset-2 before:absolute before:inset-y-0 before:-left-[9px] before:-right-[9px] hover:text-foreground pointer-coarse:flex pointer-coarse:h-[44px] pointer-coarse:items-center before:hidden before:content-[''] pointer-coarse:before:block"
             >
               Suggestions
             </Link>

@@ -89,11 +89,13 @@ export function WantListRow({ item }: { item: WantListItem }) {
               Its hit area is its own padding, not `HIT`'s overlay: a title
               takes two lines on a phone, the link is then a box a line, and
               an overlay placed against a link in pieces lands on neither
-              (measured at 320: 34 of 44). Padding above and below an inline
+              (measured at 320: 34 of 44). 13 above and below a line box of 19.5,
+              which 12 left half a pixel short. Padding above and below an inline
               link moves no line, and being positioned puts it over the
               type beneath. 9 past its start and 4, half the 8, toward Edit.
+              Under a coarse pointer only, as every hit area is (step 127).
             */
-            className="relative -ml-[9px] -mr-[4px] py-[12px] pl-[9px] pr-[4px] font-medium underline-offset-2 hover:underline"
+            className="relative font-medium underline-offset-2 hover:underline pointer-coarse:-ml-[9px] pointer-coarse:-mr-[4px] pointer-coarse:py-[13px] pointer-coarse:pl-[9px] pointer-coarse:pr-[4px]"
           >
             {item.title}
           </Link>

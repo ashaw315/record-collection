@@ -15,10 +15,32 @@
  * control: padding on an inline link reaches as far and is covered by the
  * next line of type.
  *
+ * **Only where the pointer is coarse** (§T.6, step 127): "The 44 floor
+ * applies where the pointer is coarse, a finger on a phone, a tablet or a
+ * touchscreen; where the primary pointer is fine, controls keep their
+ * drawn size." The overlay is not displayed until the pointer is coarse,
+ * and that one condition is the whole of it: the placing classes need
+ * none. (Not by its `content`: Tailwind gives every `before:` class a
+ * content of its own, so a condition there left the overlay in place
+ * under a mouse, found by the test.) It is not only tidiness: stats' rows
+ * are 27.5 apart under a mouse, and an overlay of 44 there would take the
+ * lower edge of the name above.
+ *
  * `HIT` is the 44, centred on the control. A control takes it with one
  * `HIT_*` for each side, written out where it is used because the figure
  * is the neighbour's and Tailwind reads classes from the source as text.
  */
-export const HIT = "relative before:absolute before:top-1/2 before:h-[44px] before:-translate-y-1/2 before:content-['']";
+export const HIT = "relative before:absolute before:top-1/2 before:h-[44px] before:-translate-y-1/2 before:hidden before:content-[''] pointer-coarse:before:block";
+/**
+ * For a link in a row that is itself the 44 (stats): the overlay is taller
+ * than any row and the row cuts it (`ROW_CUTS`), so the link's hit area is
+ * the row's height exactly, over the link's own width. An overlay of 44
+ * centred on the name is not that: the name does not stand at the row's
+ * exact middle, and the overlay took the first pixel of the row beneath
+ * (a branch's row read 43 where a long name above it reached its middle;
+ * stats at 320, step 127).
+ */
+export const HIT_ROW = "relative before:absolute before:inset-x-0 before:top-1/2 before:hidden before:h-[88px] before:-translate-y-1/2 before:content-[''] pointer-coarse:before:block";
+export const ROW_CUTS = 'pointer-coarse:overflow-y-clip';
 /** No neighbour on either side: 9 past the thing. */
 export const HIT_ALONE = `${HIT} before:-left-[9px] before:-right-[9px]`;

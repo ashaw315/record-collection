@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { flattenPairs, type GenrePairNode } from './genre-pairs';
-import { HIT } from '@/app/hit-area';
+import { HIT_ROW, ROW_CUTS } from '@/app/hit-area';
 
 /**
  * §10/A66: `/stats`' genre series is a TREE OF PAIRS, not a chart.
@@ -42,10 +42,11 @@ function Row({ node, href }: { node: GenrePairNode; href: (id: string) => string
       them, so it is the row that is 44 (the handoff's "row height where
       controls stack with no gap"), and the name's hit area is the row's
       height over the name's width. The name and its figures keep one
-      baseline inside it.
+      baseline inside it. Where the pointer is coarse (step 127): with a
+      mouse the row is the 27.5 it was.
     */
     <div
-      className={`flex min-h-[44px] items-center text-detail${empty ? ' text-muted-foreground' : ''}`}
+      className={`flex items-center py-1 text-detail pointer-coarse:min-h-[44px] pointer-coarse:py-0 ${ROW_CUTS}${empty ? ' text-muted-foreground' : ''}`}
       style={{ paddingLeft: `${node.depth * 0.875}rem` }}
       data-testid={`genre-row-${node.id}`}
     >
@@ -54,7 +55,7 @@ function Row({ node, href }: { node: GenrePairNode; href: (id: string) => string
       <span className="min-w-0 overflow-x-clip text-ellipsis whitespace-nowrap">
         {/* Linked where the collection can be filtered by it: an account is
             only useful if you can open what it counts. */}
-        <Link href={href(node.id)} className={`${HIT} underline-offset-2 before:inset-x-0 hover:underline`}>
+        <Link href={href(node.id)} className={`${HIT_ROW} underline-offset-2 hover:underline`}>
           {node.name}
         </Link>
       </span>

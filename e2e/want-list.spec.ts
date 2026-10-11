@@ -4,7 +4,7 @@ import { seedDiscogsCacheAs } from './seed';
 import { sql } from 'drizzle-orm';
 import { getTestDb } from '../test/helpers/db';
 import { login } from './sign-in';
-import { HIT_FLOOR, HIT_PAST, readReach } from './hit-area';
+import { HIT_FLOOR, HIT_PAST, POINTERS, pointerIs, reachingPastItself, readReach, underFloor } from './hit-area';
 
 /* Records and artists removed after each test — see e2e/cleanup.ts. */
 registerCleanup();
@@ -1108,9 +1108,16 @@ test('a row’s market answer takes the control’s height, so the row keeps its
   controls stack with no gap." The want list, in both its views, with a row
   that has a market control and a row that was acquired.
 */
-for (const width of [320, 390, 768, 1280]) {
-  /* Fails against links and buttons with only their drawn boxes: 14 to 27 tall by what a tap reaches. */
-  test(`every control on the want list is 44 tall to a finger and reaches no more than 9 past itself, at ${width}`, async ({ page }) => {
+/*
+  Step 127, §T.6: the floor is a coarse pointer's. Under a fine one every
+  control is its drawn size where it stood, and nothing reaches past itself.
+*/
+for (const pointer of POINTERS) test.describe(`the want list under a ${pointer} pointer`, () => {
+ test.use({ hasTouch: pointer === 'coarse' });
+ for (const width of [320, 390, 768, 1280]) {
+  /* Coarse fails against links and buttons with only their drawn boxes: 14 to 27 tall by what a tap reaches. Fine fails against step 124's build, which gave a mouse the 44 too: Suggestions a row of 44, the title 44. */
+  test(pointer === 'coarse' ? `every control on the want list is 44 tall to a finger and reaches no more than 9 past itself, at ${width}` : `under a mouse every control on the want list is its drawn size and reaches no further, at ${width}`, async ({ page }) => {
+    expect(await pointerIs(page), 'the precondition: the page has the pointer this test is named for').toBe(pointer);
     const suffix = makeSuffix();
     const artist = await post(page, '/api/artists', { name: `Reach-${suffix}` });
     trackArtist(artist.id as string);
@@ -1136,12 +1143,20 @@ for (const width of [320, 390, 768, 1280]) {
       const reach = await readReach(page);
       const names = reach.map((r) => r.name);
       for (const name of ['Look up a record', 'Suggestions', 'Still wanted', 'Acquired', mine, ...expected]) expect(names, `${path}: the control is on the screen to be read`).toContain(name);
-      expect(reach.filter((r) => r.tall < HIT_FLOOR).map((r) => `${r.name}: ${r.tall}`), `${path} at ${width}: controls under ${HIT_FLOOR} to a finger, of ${reach.length}`).toEqual([]);
-      /* An overlay and not a bigger box: what is drawn is the size it was. Suggestions alone is a row, the handoff's case of controls stacked with no gap. */
-      for (const [name, drawn] of [['Edit', 14], ['Delete', 16.5], ['Still wanted', 26.5], ['Acquired', 26.5], ['Mark acquired', 26.5], ['View record', 16.5], ['Suggestions', 44]] as const) {
-        for (const r of reach.filter((each) => each.name === name)) expect(Math.abs(r.height - drawn), `${name} is drawn ${drawn} tall, and was ${r.height}`).toBeLessThanOrEqual(1);
+      /* An overlay and not a bigger box: what is drawn is the size it was, under either pointer. Suggestions alone is a row under a coarse one, the handoff's case of controls stacked with no gap, and the title's own box holds its padding. */
+      for (const [name, drawn] of [['Edit', 14], ['Delete', 16.5], ['Still wanted', 26.5], ['Acquired', 26.5], ['Mark acquired', 26.5], ['View record', 16.5], ['Suggestions', pointer === 'coarse' ? 44 : 16.5]] as const) {
+        for (const r of reach.filter((each) => each.name === name)) expect.soft(Math.abs(r.height - drawn), `${path}: ${name} is drawn ${drawn} tall, and was ${r.height}`).toBeLessThanOrEqual(1);
       }
-      expect(reach.filter((r) => r.left > HIT_PAST || r.right > HIT_PAST).map((r) => `${r.name}: ${r.left} left, ${r.right} right`), `${path} at ${width}: controls a tap reaches from more than ${HIT_PAST} past them`).toEqual([]);
+      if (pointer === 'coarse') {
+        expect.soft(underFloor(reach).map((r) => `${r.name}: ${r.tall}`), `${path} at ${width}: controls under ${HIT_FLOOR} to a finger, of ${reach.length}`).toEqual([]);
+        expect.soft(reach.filter((r) => r.left > HIT_PAST || r.right > HIT_PAST).map((r) => `${r.name}: ${r.left} left, ${r.right} right`), `${path} at ${width}: controls a tap reaches from more than ${HIT_PAST} past them`).toEqual([]);
+      } else {
+        expect.soft(reachingPastItself(reach), `${path} at ${width}: controls a mouse reaches from outside their drawn box`).toEqual([]);
+        expect.soft(reach.filter((r) => r.tall >= HIT_FLOOR && r.height < HIT_FLOOR).map((r) => `${r.name}: ${r.tall}`), `${path} at ${width}: controls 44 tall under a mouse that were not drawn so`).toEqual([]);
+        /* Suggestions stands 8 below look up's box, where it stood. */
+        const gap = await page.evaluate(() => (document.querySelector('a[href="/suggestions"]') as HTMLElement).getBoundingClientRect().top - (document.querySelector('[data-want-list-lookup]') as HTMLElement).getBoundingClientRect().bottom);
+        expect.soft(gap, `${path} at ${width}: from look up’s box to Suggestions`).toBeCloseTo(8, 0);
+      }
     }
 
     /*
@@ -1150,4 +1165,5 @@ for (const width of [320, 390, 768, 1280]) {
       they are the shared dialog's, which every screen opens; NOTES.
     */
   });
-}
+ }
+});

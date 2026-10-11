@@ -5,7 +5,7 @@ import { registerCleanup, trackArtist } from './cleanup';
 import { seedDiscogsCache } from './seed';
 import { normalizeRelease } from '@/lib/discogs/normalize-release';
 import { login } from './sign-in';
-import { HIT_FLOOR, HIT_PAST, readReach } from './hit-area';
+import { HIT_FLOOR, HIT_PAST, POINTERS, pointerIs, reachingPastItself, readReach, underFloor } from './hit-area';
 
 /* Records and artists removed after each test — see e2e/cleanup.ts. */
 registerCleanup();
@@ -1888,9 +1888,14 @@ for (const { name, answer, needs } of MARKET_ANSWERS) {
   123's slot, ruled at two lines and one. NOTES, step 125.
 */
 const CARD = 'main li';
-for (const width of [320, 390, 768, 1280]) {
-  /* Fails against a summary of 17 and a button of 33 at rest, a searched line of 34, Clear of 17 and Show more of 34. */
-  test(`every control on look up outside a result’s card is 44 tall to a finger and reaches no more than 9 past itself, at ${width}`, async ({ page }) => {
+/* What three boxes are drawn under a mouse, as they were before step 125, and under a finger. */
+const BOXES = { coarse: { 'Search Discogs': 44, 'Searched:': 44, 'Show more': 44 }, fine: { 'Search Discogs': 32, 'Searched:': 34, 'Show more': 34 } } as const;
+for (const pointer of POINTERS) test.describe(`look up under a ${pointer} pointer`, () => {
+ test.use({ hasTouch: pointer === 'coarse' });
+ for (const width of [320, 390, 768, 1280]) {
+  /* Coarse fails against a summary of 17 and a button of 33 at rest, a searched line of 34, Clear of 17 and Show more of 34. Fine fails against step 125's build, which drew the three boxes 44 for a mouse too. */
+  test(pointer === 'coarse' ? `every control on look up outside a result’s card is 44 tall to a finger and reaches no more than 9 past itself, at ${width}` : `under a mouse every control on look up outside a result’s card is its drawn size and reaches no further, at ${width}`, async ({ page }) => {
+    expect(await pointerIs(page), 'the precondition: the page has the pointer this test is named for').toBe(pointer);
     await stubLookup(page, { results: [collisionRow(10405725), collisionRow(1553455)] });
     /* More matches than are shown, so Show more is on the screen. Registered after the stub's, so it is the one that answers. */
     await page.route('**/api/discogs/search**', async (route) => {
@@ -1905,15 +1910,22 @@ for (const width of [320, 390, 768, 1280]) {
       const names = reach.map((r) => r.name);
       for (const name of expected) expect(names.some((each) => each.startsWith(name)), `${state}: ${name} is on the screen to be read, among ${names.join(' | ')}`).toBe(true);
       /* Soft, so a failure names every state that is short and not only the first. */
-      expect.soft(reach.filter((r) => r.tall < HIT_FLOOR).map((r) => `${r.name}: ${r.tall}`), `${state} at ${width}: controls under ${HIT_FLOOR} to a finger, of ${reach.length}`).toEqual([]);
-      expect.soft(reach.filter((r) => r.left > HIT_PAST || r.right > HIT_PAST).map((r) => `${r.name}: ${r.left} left, ${r.right} right`), `${state} at ${width}: controls a tap reaches from more than ${HIT_PAST} past them`).toEqual([]);
+      if (pointer === 'coarse') {
+        expect.soft(underFloor(reach).map((r) => `${r.name}: ${r.tall}`), `${state} at ${width}: controls under ${HIT_FLOOR} to a finger, of ${reach.length}`).toEqual([]);
+        expect.soft(reach.filter((r) => r.left > HIT_PAST || r.right > HIT_PAST).map((r) => `${r.name}: ${r.left} left, ${r.right} right`), `${state} at ${width}: controls a tap reaches from more than ${HIT_PAST} past them`).toEqual([]);
+      } else {
+        /* A field's label is the field's under either pointer and draws nothing; everything else reaches no further than it is drawn. */
+        expect.soft(reachingPastItself(reach.filter((r) => !['input', 'select', 'textarea'].includes(r.kind))), `${state} at ${width}: controls a mouse reaches from outside their drawn box`).toEqual([]);
+      }
+      for (const [name, drawn] of Object.entries(BOXES[pointer])) {
+        for (const r of reach.filter((each) => each.name.startsWith(name))) expect.soft(Math.abs(r.height - drawn), `${state} at ${width}: ${name} is drawn ${drawn} tall under a ${pointer} pointer, and was ${r.height}`).toBeLessThanOrEqual(1.5);
+      }
       return reach;
     };
     const rest = await check('at rest', ['More search terms', 'Search Discogs']);
     expect(rest, 'five fields, the disclosure and the button').toHaveLength(7);
     /* A field is its drawn 36 and meets the floor with its label; the button is §9.3's box. */
     expect(rest.filter((r) => r.kind === 'input').map((r) => r.height)).toEqual([36, 36, 36, 36, 36]);
-    expect.soft(rest.find((r) => r.name === 'Search Discogs')?.height).toBe(44);
 
     await page.locator('summary', { hasText: 'More search terms' }).click();
     const open = await check('with the other terms open', ['More search terms', 'Search Discogs']);
@@ -1927,4 +1939,5 @@ for (const width of [320, 390, 768, 1280]) {
     await page.getByTestId('lookup-query-summary').click();
     await check('with results and the form open again', ['Search Discogs', 'Clear', 'Show more']);
   });
-}
+ }
+});

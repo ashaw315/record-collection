@@ -360,7 +360,7 @@ export function LookupClient({ emptyFigure = null }: { /** §T.6's figure for a 
           type="button"
           data-testid="lookup-query-summary"
           onClick={() => setQueryOpen(true)}
-          className="min-h-[44px] w-full rounded-xs border border-border px-3 py-2 text-left text-label text-muted-foreground"
+          className="w-full rounded-xs border border-border px-3 py-2 text-left text-label text-muted-foreground pointer-coarse:min-h-[44px]"
         >
           <span className="font-medium text-foreground">Searched:</span>{' '}
           {querySummary === '' ? 'everything' : querySummary}
@@ -397,7 +397,7 @@ export function LookupClient({ emptyFigure = null }: { /** §T.6's figure for a 
           onToggle={(event) => setRefinementsOpen((event.target as HTMLDetailsElement).open)}
         >
           {/* The button is 12 below, so the overlay reaches down half of that and takes the rest of its 44 above, over the hint, which is not a control. */}
-          <summary className="relative w-fit cursor-pointer text-label text-muted-foreground underline underline-offset-2 before:absolute before:-bottom-[6px] before:-left-[9px] before:-right-[9px] before:h-[44px] before:content-['']">
+          <summary className="relative w-fit cursor-pointer text-label text-muted-foreground underline underline-offset-2 before:absolute before:-bottom-[6px] before:-left-[9px] before:-right-[9px] before:hidden before:h-[44px] before:content-[''] pointer-coarse:before:block">
             More search terms
           </summary>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -408,8 +408,8 @@ export function LookupClient({ emptyFigure = null }: { /** §T.6's figure for a 
         </details>
 
         <div className="flex items-center gap-3">
-          {/* A boxed control is §9.3's 44 in its box. */}
-          <Button type="submit" disabled={searching} className="h-[44px]">
+          {/* A boxed control is §9.3's 44 in its box, where the pointer is coarse (step 127). */}
+          <Button type="submit" disabled={searching} className="pointer-coarse:h-[44px]">
             {searching ? 'Searching…' : 'Search Discogs'}
           </Button>
           {results !== null && (
@@ -472,7 +472,7 @@ export function LookupClient({ emptyFigure = null }: { /** §T.6's figure for a 
                 data-testid="load-more"
                 onClick={loadMore}
                 disabled={loadingMore}
-                className="min-h-[44px] w-full rounded-xs border border-border px-3 py-2 text-label hover:bg-accent disabled:opacity-60"
+                className="w-full rounded-xs border border-border px-3 py-2 text-label hover:bg-accent disabled:opacity-60 pointer-coarse:min-h-[44px]"
               >
                 {loadingMore ? 'Loading…' : `Show more (${total - results.length} left)`}
               </button>
