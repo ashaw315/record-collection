@@ -87,7 +87,7 @@ export function WallRail({
       data-testid="wall-rail"
       aria-label="Collection controls"
       className="flex flex-col"
-      style={{ width: 148, padding: "34px 20px 0" }}
+      style={{ width: 148, padding: "34px 18px 0" }}
     >
       <form role="search" action="/" method="get" className="mb-[34px]">
         {[...hidden.entries()].map(([key, value]) => (
@@ -186,7 +186,7 @@ export function WallRail({
       </form>
 
       {/* §W.31: above the view switcher, bleeding to both edges of the rail. */}
-      <hr data-line="rail-views" className={`border-t ${HAIRLINE}`} style={{ margin: "0 -20px 18px" }} />
+      <hr data-line="rail-views" className={`border-t ${HAIRLINE}`} style={{ margin: "0 -18px 18px" }} />
 
       <ul className="flex flex-col gap-[18px]" aria-label="View">
         {VIEW_MODES.map((mode) => {
@@ -233,7 +233,7 @@ export function WallRail({
         data-rail-rule=""
         data-line="rail-actions"
         className={`mt-[34px] border-t ${HAIRLINE}`}
-        style={{ margin: "34px -20px 0" }}
+        style={{ margin: "34px -18px 0" }}
       />
       <Link href="/records/new" className={`mt-[18px] block ${LABEL_TYPE} ${INK}`}>
         Add record

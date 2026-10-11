@@ -41053,3 +41053,79 @@ its sockets. No helper is changed and nothing is retried. **Both
 reporters are in the config, and `--reporter` on a command line replaces
 them; step-level runs here used `--reporter=line` and so would not have
 printed either. They no longer pass it.**
+
+## Step 123: the rail's first line at 18, and look up's market slot a stated number of lines (10 Oct, night)
+
+Design's unnumbered step; it supersedes step 121 on look up. **Step 121
+was built weaker than ruled, not on an unruled case**: "the status line
+takes the control's height" is a fixed height, and a floor that let a
+two-line answer grow past it was the build diverging. Named so the next
+one goes to the right place: unruled earns an entry, built-weaker is a
+defect.
+
+**The rail.** Its 20 was its own padding (`WallRail.tsx`), so by the
+ruling's first branch it is 18 a side and the box stays 148. On the real
+collection at 1920, 1440 and 1280 (`docs/captures/rail-123/`): the
+wordmark at 18, SEARCH's first line at **18**, the field 18 to 130, the
+view names at 18, the rail 0 to **148**. The full-bleed rules take −18
+where they took −20. Below the shelf's fork nothing was touched: the band
+overrides this padding with its own.
+
+**The slot, on look up.** Measured first, on both engines and the same on
+each, every answer at sixteen widths:
+- the errors, "None for sale" and "No market data" are one line from 360
+  ("No market data" is two at 320);
+- a price is two lines to 391 and one from 412; with three estimates two
+  to 430 and one from 480; a record in four figures with three estimates
+  two to 500 and one from 510;
+- a ladder lacking one of the three usual grades shows every grade it
+  has: seven grades are two lines to 600 and one from 768, and three at
+  320; in four figures, **three lines at 390 and 320**, two from 480, one
+  from 768 (its text is 680 wide, which a 742 window gives).
+So Design's predictions do not hold as stated: one line from just above
+390 would cut every price with estimates up to 480 and beyond, and two
+lines at 390 does not hold the longest. **Built: two lines (30) below a
+768 window and one (24) from it**, the control or its answer centred,
+cut with an ellipsis where longer, the whole answer in the line's title.
+768 is the first standard width at or past the measured 742. **The fork
+where the list's height steps is 768.** One answer of the twelve is cut:
+four figures with seven grades, at 480 and below. That is a priced grade
+not shown on a phone, which `market-summary.ts` calls misrepresenting
+what Discogs said ("never a partial filter"); it is visible as cut, and
+it is the ruling's "clips". Reported, not resolved.
+
+**The list's growth at 390:** each result's card is 6 taller (a slot of
+30 where the control's line was 24), answered or not: 150 on a page of
+25. From the slot's tested height; no list total was measured.
+
+**Tests** (`lookup-flows.spec.ts`, replacing step 121's two): for each of
+the twelve answers, held and released, the slot is 30 or 24 before and
+after at 320, 390, 767, 768 and 1280, the button beneath does not move,
+and the lines the answer needs at 390 and 768 are the measured ones, so
+the 6 and the 3 are pinned and not derived again. Red first, 24 of 24.
+`shelf.spec.ts`: the rail's first line at 18, 18 a side, 0 to 148; red
+first at 20.
+
+**Not built, and why.** The market panel on the want list and the record
+page keeps step 121's floor of 44. Its answer is 13px prose in a narrower
+box, where estimates run to three and four lines; a fixed slot there cuts
+prices on the record page, a closed screen, and its control is pressed by
+the reader, so nothing moves under a finger unasked. It needs its own
+measurement of every string at its widths, as look up had.
+
+**Verified, step level:** unit `src/app` `1292 passed, tree unchanged —
+OK`; the 15 specs that read the rail or a market line, both projects,
+`278 passed, 3 skipped, ledger clean, tree unchanged — OK`
+(`[projects] chromium 169, mobile 112`); typecheck and build clean, lint
+0 errors and 27 warnings.
+
+## Manage on a phone, captured for Design (10 Oct, night)
+
+`e2e/sheet/manage-phone.sheet.ts`, `docs/captures/manage-phone/`: every
+section at 390 and 320 on the real collection, the first view and the
+whole page at the width it scrolls to. Read-only; only the section names
+are pressed. The page is 410 wide for Artists and 462 for Labels,
+Formats, Stores and Tags at both widths; each table is 544 and scrolls
+inside its own box; Genres fits. Past the window's edge at 390: 73 of
+Artists' 83 controls, 46 of Labels' 53. The section names' row scrolls
+sideways at both widths (370 in 354; 300 in 284).

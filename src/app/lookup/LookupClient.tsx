@@ -172,8 +172,8 @@ const EMPTY: Record<FieldName, string> = {
   q: '',
 };
 
-/** The line a pending answer leaves where its control stood: as tall as that control's line, the text centred in it. */
-const ANSWER_LINE = 'flex min-h-6 items-center';
+/** The answer in the market's slot: held to the slot's lines, two below 768 and one from it, and cut with an ellipsis where it is longer. */
+const ANSWER_LINE = 'line-clamp-2 md:line-clamp-1';
 
 export function LookupClient({ emptyFigure = null }: { /** §T.6's figure for a search that finds nothing, drawn by the page from the one source record; none where the collection is empty. */ emptyFigure?: ReactNode } = {}) {
   const formId = useId();
@@ -794,14 +794,17 @@ function ResultCard({
             case (§10a).
           */}
           {/*
-            Step 121, §T.6: "wherever a pending answer resolves and replaces a
-            control with a status line, the status line takes the control's
-            height, so nothing below it moves." The control is a 16.5 label in
-            this block's 24 line, so the line that answers it is 24 at the
-            least. An answer too long for one line is taller, and what is
-            beneath moves by the difference; that case is not ruled.
+            Step 123, §T.6: "A pending answer's slot is a stated number of
+            lines... an answer longer than the slot wraps or clips inside it
+            and never grows it." Two lines of the answer's 15 below 768 and
+            one from it, the control or its answer centred in them, so
+            nothing beneath moves when the market answers unasked. 768 is
+            where the longest answer measured sets on one line (a record in
+            four figures with seven grades needs 680). Below it that answer
+            needs three lines at 390 and is cut at two, with an ellipsis; the
+            whole of it is the line's title.
           */}
-          <div className="mt-1">
+          <div data-market-slot="" className="mt-1 flex h-[30px] items-center overflow-hidden md:h-6">
             {market === null && marketError === undefined && (
               <button
                 type="button"
@@ -815,13 +818,13 @@ function ResultCard({
             )}
 
             {market !== null && (
-              <p data-testid="market-summary" className={`${ANSWER_LINE} text-meta text-muted-foreground`}>
+              <p data-testid="market-summary" title={marketSummary(market)} className={`${ANSWER_LINE} text-meta text-muted-foreground`}>
                 {marketSummary(market)}
               </p>
             )}
 
             {marketError !== undefined && (
-              <p role="status" data-testid="market-error" className={`${ANSWER_LINE} text-meta text-muted-foreground`}>
+              <p role="status" data-testid="market-error" title={marketError} className={`${ANSWER_LINE} text-meta text-muted-foreground`}>
                 {marketError}
               </p>
             )}
