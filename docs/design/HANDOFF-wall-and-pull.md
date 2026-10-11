@@ -507,6 +507,12 @@ Its rows are in the governs table above, one per section; this section does not 
 - **Unnumbered, for Code to number — §T.1 and §T.6: the rail's inset and the reserved slot.** Move the shelf rail's first line to the wordmark's 18, the rail keeping its right edge: if the rail's 20 is its own padding, make it 18 a side at 148; if it is outside the rail, grow the box to 150. Report where the first line lands, and that the right edge did not move. Give every slot a pending answer fills a stated number of lines, two at 390 and below and one above, with longer answers wrapping or clipping inside it. Enumerate every string each panel can show and test the slot's height is identical across all of them at every width. Report look up's total list growth at 390, and the width where the slot changes from two lines to one.
    > A pending answer’s slot is a stated number of lines, two at 390 and below and one above, measured by the step; an answer longer than the slot wraps or clips inside it and never grows it.
 
+- **Unnumbered, for Code to number — §W.7, §W.8, §W.19, §W.22: reduced motion, the panel title, the corner at 200, the swipe.** Under reduced motion, cut the pull and return to their end states and let the pan jump to rest, keeping reader-driven pan tracking; test a pull ends in one frame. Clamp the panel title to three lines at 420 with an ellipsis and start the drawing 24 below it. Capture the landed record on a 200-record fixture at 1440 and 390 for Adam. Make a sideways swipe from a spine pan and not pull. Capture Collection at 390 for the log, and every manage section at 390 and 320 for its pass.
+   > Under the reduced-motion setting the wall moves nothing on its own: a pull cuts to its landed state, a return cuts to the shelf, and the pan jumps to where it would have come to rest.
+
+- **Unnumbered, for Code to number — §W.24: no shelf below the fork.** Below 1044 the shelf is not offered: the Collection opens on the grid; the band's view names are TABLE and GRID; a shelf link or stored preference opens the grid silently with the address replaced, keeping the preference; resizing across 1044 changes view. Remove the far view's narrow route and the shelf's 390 pin; the band below the fork stands for the table and grid. Test at 390 that the Collection nav item lands on the grid, that a shelf link lands on the grid with no history entry, and at 1044 that the shelf draws. Capture both for Adam.
+   > Below the shelf’s fork, §W.24’s 1044, the shelf is not offered: the Collection opens on the grid, and the band’s view names are TABLE and GRID.
+
 No step: §G.7. It rules nothing. Hover and focus wait on Code's second pass, the breakpoint is settled and recorded in §G.8, and the eyebrow repetition is an observation, not a ruling.
 
 **The record-detail screen is closed at 7983d4d, on 1 October 2026,** by Adam’s pass over the 119 captures, which found nothing that changes what a reader understands about a record. Steps run 0 to 71; steps 72 and 73 follow the close and change values, not structure. This is the baseline the record modal builds against: its marks, its type ladder and its colour system.
@@ -532,13 +538,14 @@ Found by measurement on a screen that has rulings, and left for that screen's ta
 
 ## Findings for screens without a pass
 
+- **Manage on a phone is the next layout to design, and it blocks the last of the 44 work.** It needs Code's captures of every section at 390 and 320 before it is ruled, not a ruling from counts.
 - **Manage is wider than the window on a phone, a defect.** Five of six sections are 408 or 460 at 390 and 320, its table scrolls sideways inside itself, and 67 of the Artists section's 77 controls sit past the window's edge. For Code, not the ornament.
 - **No control on the five surveyed screens meets the 44 floor, except the edit form's textarea.** The floor is app-wide, so each is a defect, for Code.
 - **Not surveyed, not ruled:** Look up's results, the suggestions page, the want list's own forms, and a want-list item's page.
 
 Logged against a screen's future pass, not patched. Nothing here is a ruling, and nothing here is a build step.
 
-- **Collection, at 390:** SEARCH, SHELF, TABLE, GRID and ADD RECORD all set on one line, and the search field's rule runs into SHELF. Adam says it reads awkwardly. Found while he used the menu on his phone.
+- **Collection, at 390:** SEARCH, SHELF, TABLE, GRID and ADD RECORD all set on one line, and the search field's rule runs into SHELF. Adam says it reads awkwardly. Found while he used the menu on his phone. **Closed by Adam's ruling that there is no shelf below the fork; he was right that it read awkwardly.**
 - **Manage, the move-select:** it holds one option per genre for every row it draws, so its cost grows as the square of the genre count, up to the screen's page of 200 rows. Code measured it: 6 genres give 36 options and 0.2s; 156 give 24,336 and 2.3s; 406 give 200 rows at 40,000 and 3.5s. Code recorded this rather than fixing it, because what the move control holds is a design question, not a performance one. The test's budget stays at 30 seconds, which today's end state, 13 genres with a measured peak of 22, clears with room. **The finding is that the control's shape is unruled, and the ruling decides the cost.** Found while closing the genre leak.
 
 ## Maintaining this file
