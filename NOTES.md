@@ -41339,3 +41339,61 @@ lint 0 errors, 27 warnings.
   manage's step; it does not touch the four screens that fit.
 - The sheet's "past 9" reads 44 on the edit form: a label wrapped round
   its field counts as reaching it. To be looked at in that screen's step.
+
+## Step 125: look up's hit areas, but for a result's card, which is held (11 Oct)
+
+**Built, outside the card.**
+
+- **A field meets 44 with its label, and its box is the 36 it was.** No
+  overlay can be put on an input. A tap on a field's label goes to the
+  field, so the two are one thing to a finger: 16.5 of label, 4, 36 of
+  field. The 4 was a gap that reached neither; it is now the label's own
+  padding, which moves nothing. `e2e/hit-area.ts` counts a field's own
+  label as the field's, and says so. **This is a reading as much as a
+  build, and it is Design's to accept:** the alternative is a field 44
+  tall in its box, which §9.3's wording about boxes would also support
+  and which changes every form.
+- More search terms: an overlay reaching 6 down, half the 12 to the
+  button, and the rest of its 44 up over the hint, which is not a control.
+  Clear: the overlay, 6 toward the button and 9 away.
+- **Three boxes are 44 in the box, the drawn changes:** Search Discogs
+  from 33, the line that says what was searched from 34, Show more from
+  34. A box is §9.3's own case ("the box satisfies the floor"), as look
+  up a record and Check the market already are.
+
+**Held: a result's card, for Design.** Five controls in three rows:
+Add to collection, Add to want list and Compare pressings (26.5 tall, 4
+above), the market's slot (30 below 768, 24 from it, 4 above), Identify
+this pressing (16.5, 4 above): 85 for the three. They read 25, 27, 17, 17
+and 17 to a finger. No overlay reaches 44 in rows 32 and 27 apart, so it
+is the handoff's "row height where controls stack with no gap", and the
+middle row is step 123's slot, whose ruling is "a stated number of lines,
+two at 390 and below and one above". A slot of 44 is neither two lines
+of 15 nor one, and its height is pinned in the tests at 30 and 24. Two
+rulings meet in that row and I have not chosen between them. In figures:
+three rows of 44 with nothing between add 47 a card below 768 and 53
+from it, 1,175 on a page of 25 at 390, against the 150 step 123 added.
+The test names the card as held (`CARD`) and reads everything else.
+
+Not read: the evidence panel and the version table a card opens. They
+are the card's and wait with it.
+
+**Tests, written first.** `e2e/lookup-flows.spec.ts`, at 320, 390, 768
+and 1280, five states. Against the old source 8 of 8 failed, each state
+named: "More search terms: 17", "Search Discogs: 32" and 33, "Searched:
+…: 35", "Clear: 17" and 18, "Show more: 35". The assertions are soft so
+a failure names every short state and not the first.
+
+**On the real collection** (`docs/captures/hit-44-125/`, the sheet run
+again into a folder of its own: committed captures are not rewritten,
+and `captures-unchanged.test.ts` refused the commit that did): look up
+at rest 7 of 7 at 390 and at 320. The other rows are as step 124 left
+them; the edit form is still 1 of 70, its labels not being tied to
+their fields the way look up's are.
+
+**Step level.** Every spec that names look up, by grep (9 files), both
+projects: `270 passed, ledger clean, tree unchanged — OK`, `[projects]
+chromium 159, capture 0, mobile 111`; step 123's twelve slot tests are
+among them and hold at 30 and 24. Unit under `src/app`: `1292 passed,
+tree unchanged — OK`. Typecheck and build clean; lint 0 errors, 27
+warnings.

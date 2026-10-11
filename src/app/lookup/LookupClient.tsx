@@ -21,6 +21,7 @@ import { VersionTable, type VersionWithOwnership } from './VersionTable';
 import { PressingEvidencePanel } from './PressingEvidence';
 import { pressingEvidence, type PressingEvidence } from './pressing-evidence';
 import type { OwnershipPayload } from '@/lib/discogs/ownership-payload';
+import { HIT } from '@/app/hit-area';
 
 /**
  * SPEC.md §10 `/lookup` — the in-store screen.
@@ -315,8 +316,14 @@ export function LookupClient({ emptyFigure = null }: { /** §T.6's figure for a 
   }
 
   const renderField = (field: (typeof FIELDS)[number]) => (
-    <div key={field.name} className="space-y-1">
-      <label htmlFor={field.name} className="block text-label text-muted-foreground uppercase">
+    <div key={field.name}>
+      {/*
+        The 4 between the label and its field is the label's own, so the
+        two are one thing to a finger with no strip between them that
+        reaches neither: a tap on a label goes to its field, which is what
+        makes a field of 36 one of 56 (§9.3's floor, step 125).
+      */}
+      <label htmlFor={field.name} className="block pb-1 text-label text-muted-foreground uppercase">
         {field.label}
       </label>
       <Input
@@ -330,7 +337,7 @@ export function LookupClient({ emptyFigure = null }: { /** §T.6's figure for a 
         autoComplete="off"
       />
       {'hint' in field && field.hint !== undefined && (
-        <p className="text-meta text-muted-foreground">{field.hint}</p>
+        <p className="mt-1 text-meta text-muted-foreground">{field.hint}</p>
       )}
     </div>
   );
@@ -353,7 +360,7 @@ export function LookupClient({ emptyFigure = null }: { /** §T.6's figure for a 
           type="button"
           data-testid="lookup-query-summary"
           onClick={() => setQueryOpen(true)}
-          className="w-full rounded-xs border border-border px-3 py-2 text-left text-label text-muted-foreground"
+          className="min-h-[44px] w-full rounded-xs border border-border px-3 py-2 text-left text-label text-muted-foreground"
         >
           <span className="font-medium text-foreground">Searched:</span>{' '}
           {querySummary === '' ? 'everything' : querySummary}
@@ -389,7 +396,8 @@ export function LookupClient({ emptyFigure = null }: { /** §T.6's figure for a 
           open={refinementsOpen}
           onToggle={(event) => setRefinementsOpen((event.target as HTMLDetailsElement).open)}
         >
-          <summary className="cursor-pointer text-label text-muted-foreground underline underline-offset-2">
+          {/* The button is 12 below, so the overlay reaches down half of that and takes the rest of its 44 above, over the hint, which is not a control. */}
+          <summary className="relative w-fit cursor-pointer text-label text-muted-foreground underline underline-offset-2 before:absolute before:-bottom-[6px] before:-left-[9px] before:-right-[9px] before:h-[44px] before:content-['']">
             More search terms
           </summary>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -400,7 +408,8 @@ export function LookupClient({ emptyFigure = null }: { /** §T.6's figure for a 
         </details>
 
         <div className="flex items-center gap-3">
-          <Button type="submit" disabled={searching}>
+          {/* A boxed control is §9.3's 44 in its box. */}
+          <Button type="submit" disabled={searching} className="h-[44px]">
             {searching ? 'Searching…' : 'Search Discogs'}
           </Button>
           {results !== null && (
@@ -411,7 +420,7 @@ export function LookupClient({ emptyFigure = null }: { /** §T.6's figure for a 
                 setResults(null);
                 setError(undefined);
               }}
-              className="text-label text-muted-foreground underline underline-offset-2"
+              className={`${HIT} text-label text-muted-foreground underline underline-offset-2 before:-left-[6px] before:-right-[9px]`}
             >
               Clear
             </button>
@@ -463,7 +472,7 @@ export function LookupClient({ emptyFigure = null }: { /** §T.6's figure for a 
                 data-testid="load-more"
                 onClick={loadMore}
                 disabled={loadingMore}
-                className="w-full rounded-xs border border-border px-3 py-2 text-label hover:bg-accent disabled:opacity-60"
+                className="min-h-[44px] w-full rounded-xs border border-border px-3 py-2 text-label hover:bg-accent disabled:opacity-60"
               >
                 {loadingMore ? 'Loading…' : `Show more (${total - results.length} left)`}
               </button>

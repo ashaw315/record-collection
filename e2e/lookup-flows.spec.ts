@@ -5,6 +5,7 @@ import { registerCleanup, trackArtist } from './cleanup';
 import { seedDiscogsCache } from './seed';
 import { normalizeRelease } from '@/lib/discogs/normalize-release';
 import { login } from './sign-in';
+import { HIT_FLOOR, HIT_PAST, readReach } from './hit-area';
 
 /* Records and artists removed after each test — see e2e/cleanup.ts. */
 registerCleanup();
@@ -1872,5 +1873,58 @@ for (const { name, answer, needs } of MARKET_ANSWERS) {
     }
     /* What the answer would take if nothing held it, as measured: the slot's two lines and one are set against these. */
     expect({ 390: after[390].lines, 768: after[768].lines }, 'the lines this answer needs at 390 and at 768').toEqual(needs);
+  });
+}
+
+/*
+  Step 125, §9.3 and the handoff's hit-area rules, on look up: the form at
+  rest and with its other terms open, and after a search the line that
+  says what was searched, the form opened again with Clear, and Show more.
+
+  **A result's card is held and named here, not read.** Its five controls
+  stand in three rows inside 80 (the two Adds and Compare pressings, the
+  market's slot, Identify this pressing), so 44 each is the handoff's "row
+  height where controls stack with no gap", and the middle row is step
+  123's slot, ruled at two lines and one. NOTES, step 125.
+*/
+const CARD = 'main li';
+for (const width of [320, 390, 768, 1280]) {
+  /* Fails against a summary of 17 and a button of 33 at rest, a searched line of 34, Clear of 17 and Show more of 34. */
+  test(`every control on look up outside a result’s card is 44 tall to a finger and reaches no more than 9 past itself, at ${width}`, async ({ page }) => {
+    await stubLookup(page, { results: [collisionRow(10405725), collisionRow(1553455)] });
+    /* More matches than are shown, so Show more is on the screen. Registered after the stub's, so it is the one that answers. */
+    await page.route('**/api/discogs/search**', async (route) => {
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ data: [collisionRow(10405725), collisionRow(1553455)], meta: { total: 60, page: 1, pageSize: 25 } }) });
+    });
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto('/lookup');
+    await formReady(page);
+    const check = async (state: string, expected: string[]) => {
+      await page.evaluate(() => document.fonts.ready);
+      const reach = await readReach(page, 'main', CARD);
+      const names = reach.map((r) => r.name);
+      for (const name of expected) expect(names.some((each) => each.startsWith(name)), `${state}: ${name} is on the screen to be read, among ${names.join(' | ')}`).toBe(true);
+      /* Soft, so a failure names every state that is short and not only the first. */
+      expect.soft(reach.filter((r) => r.tall < HIT_FLOOR).map((r) => `${r.name}: ${r.tall}`), `${state} at ${width}: controls under ${HIT_FLOOR} to a finger, of ${reach.length}`).toEqual([]);
+      expect.soft(reach.filter((r) => r.left > HIT_PAST || r.right > HIT_PAST).map((r) => `${r.name}: ${r.left} left, ${r.right} right`), `${state} at ${width}: controls a tap reaches from more than ${HIT_PAST} past them`).toEqual([]);
+      return reach;
+    };
+    const rest = await check('at rest', ['More search terms', 'Search Discogs']);
+    expect(rest, 'five fields, the disclosure and the button').toHaveLength(7);
+    /* A field is its drawn 36 and meets the floor with its label; the button is §9.3's box. */
+    expect(rest.filter((r) => r.kind === 'input').map((r) => r.height)).toEqual([36, 36, 36, 36, 36]);
+    expect.soft(rest.find((r) => r.name === 'Search Discogs')?.height).toBe(44);
+
+    await page.locator('summary', { hasText: 'More search terms' }).click();
+    const open = await check('with the other terms open', ['More search terms', 'Search Discogs']);
+    expect(open.length, 'the other terms’ fields are read too').toBeGreaterThan(7);
+
+    await page.getByLabel('Artist').fill('Discharge');
+    await page.getByRole('button', { name: 'Search Discogs' }).click();
+    await expect(page.getByTestId('expand-evidence').first()).toBeVisible();
+    await check('with results', ['Searched:', 'Show more']);
+
+    await page.getByTestId('lookup-query-summary').click();
+    await check('with results and the form open again', ['Search Discogs', 'Clear', 'Show more']);
   });
 }

@@ -32,18 +32,23 @@ export const HIT_FLOOR = 44;
 /** The handoff's figure: how far a hit area reaches past a thing with no neighbour. */
 export const HIT_PAST = 9;
 
-export function readReach(page: Page, within = 'main'): Promise<Reach[]> {
-  return page.evaluate((selector) => {
-    const root = document.querySelector(selector);
+/** `except` leaves out the controls inside anything matching it: a part of the screen held for a ruling is named, not silently skipped. */
+export function readReach(page: Page, within = 'main', except?: string): Promise<Reach[]> {
+  return page.evaluate(([selector, held]) => {
+    const root = document.querySelector(selector ?? 'main');
     if (root === null) throw new Error(`no ${selector}`);
-    const shown = (el: Element) => el.getClientRects().length > 0 && el.checkVisibility({ contentVisibilityAuto: true, visibilityProperty: true });
+    const shown = (el: Element) => (held === null || el.closest(held) === null) && el.getClientRects().length > 0 && el.checkVisibility({ contentVisibilityAuto: true, visibilityProperty: true });
     const out: Reach[] = [];
     for (const el of Array.from(root.querySelectorAll<HTMLElement>('button, a, select, input:not([type=hidden]), textarea, summary')).filter(shown)) {
       el.scrollIntoView({ block: 'center', inline: 'nearest' });
       const r = el.getBoundingClientRect();
       const reaches = (x: number, y: number) => {
         const at = document.elementFromPoint(x, y);
-        return at !== null && (at === el || el.contains(at) || (at.contains(el) && (at.tagName === 'A' || at.tagName === 'LABEL')));
+        if (at === null) return false;
+        if (at === el || el.contains(at) || (at.contains(el) && (at.tagName === 'A' || at.tagName === 'LABEL'))) return true;
+        /* A field's own label: a tap on it goes to the field, so it is the field's to a finger. */
+        const label = at.closest('label');
+        return label !== null && el.id !== '' && label.htmlFor === el.id;
       };
       const x = r.left + r.width / 2;
       const y = r.top + r.height / 2;
@@ -57,5 +62,5 @@ export function readReach(page: Page, within = 'main'): Promise<Reach[]> {
       out.push({ name, kind: el.tagName.toLowerCase(), width: Math.round(r.width * 10) / 10, height: Math.round(r.height * 10) / 10, tall, left, right });
     }
     return out;
-  }, within);
+  }, [within, except ?? null] as const);
 }

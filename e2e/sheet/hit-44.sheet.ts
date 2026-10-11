@@ -16,6 +16,7 @@ import { login } from './login';
  * calls Discogs. A control past the window's edge has no hit area to read
  * and is counted apart.
  */
+/* Each run goes to a folder of its own, named by the caller: committed captures are not rewritten. */
 const OUT = process.env.SHEET_OUT ?? join('docs', 'captures', 'hit-44');
 
 async function settle(page: Page) {
