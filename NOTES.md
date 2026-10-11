@@ -41457,3 +41457,94 @@ server writes it again), and both passed. Not diagnosed further: what
 wrote it twice is not known, and this is the first time it has been
 seen. If it recurs, the fix to weigh is whether typecheck should read a
 folder a running server is writing.
+
+## Before the record form's hit areas: a count withdrawn, the chips and the labels measured, the pointer (11 Oct)
+
+Nothing built. Four things the coordinator asked for before step 127,
+and the shape of a fix.
+
+**1. "129 controls under 44 on the edit form" is withdrawn. It was never
+the edit form's.** The survey's table (8 Oct, above) reads, at 390: want
+list 31, look up 7, stats 38, manage "10 to 129 by section", record form
+"9 new, 68 editing". 129 is manage's Genres section. I carried it across
+a column when I restated the survey later, and reported it against the
+edit form. The edit form was 68 on 8 Oct: 67 under 44 by hit and one,
+the notes box, over.
+
+It reads 70 today because the collection grew by two genres
+(Alternative Rock, Math Rock), each a chip on the form: 42 chips where
+there were 40, by name against the survey's own file. The same two
+genres are manage's Genres going 129 to 135 (a select, an Edit and a
+Delete each), and with two labels (Frenchkiss, Matador) they are stats
+going 38 to 42. The want list's 31 to 32 is look up a record, built
+since. **So no screen's earlier figure plus its passes makes today's:
+each difference is the collection or a later step, named.** The edit
+form's N on the real collection is 27 plus one a genre and one a tag,
+70 today; the step's own test will count its own fixture.
+
+**2. The chips, measured** (`e2e/sheet/form-fields.sheet.ts`,
+`docs/captures/form-fields/`, a real record's edit form, read-only): 42
+genre chips and 1 tag, each 26 tall and 38.3 to 131.9 wide. **The gap is
+4 across and 4 down, at 320, 390 and 768 alike.** 13 lines at 320, 10 at
+390, 6 at 768. An overlay of 44 on a chip of 26 takes 9 above and 9
+below, so it needs 18 between lines and has 4: by overlay each chip
+would reach 30 (its 26 and half of each 4). Meeting 44 there is a drawn
+change either way: lines 44 apart with the chips as they are (a gap of
+18, the cloud 14 taller a line: 168 at 320, 126 at 390) or chips 44
+tall.
+
+**3. The fields and their labels.** All 19 fields have a label a tap
+sends to them (`label for`); none is without one. The select in an
+opened "+ New …" has a label that is not drawn; it was not open and is
+not in the table. What the label gives, though, is less than on look up:
+
+- **Below 640 the label stands above its field**, 15 tall, **as wide as
+  its words and no wider** (25.6 for "Paid" to 111 for "Sleeve
+  condition", against a field of 284 or 354), with 7 between them that
+  reaches neither. So a finger has 58 over the label's words and 36 over
+  the rest of the field. Look up's labels are the field's width; these
+  are not.
+- **From 640 the label stands beside its field**, in a column of 160. It
+  adds nothing to the field's height: 36 to a finger.
+- The Reissue box is 16 square inside a second label of its own, "This
+  is a reissue", 24 tall.
+
+So the label reading, as built on look up, carries this form only if the
+label is made the field's width and the 7 its own below 640, and not at
+all from 640. That is the list Design's ratification was conditional on.
+
+**4. A floor scoped by pointer.** Measured, not built: desktop Chromium
+reports a fine pointer at any width, and reports a coarse one with touch
+on; the mobile project (WebKit, iPhone 13) reports coarse. So today's
+tests, which ask for 44 at four widths on both projects, ask it of a
+mouse on one of them. Scoped by pointer:
+
+- the overlays can stay as they are, since they draw nothing, or go
+  behind the same condition in the one place they are defined (`HIT`);
+- every drawn change goes behind it: Suggestions' row, look up's three
+  boxes, stats' rows, and whatever the record form's chips and fields
+  become. Manage's two overlays already are (`pointer-coarse:`);
+- each screen's test runs twice, with touch on asserting 44 and with it
+  off asserting the drawn sizes as they were, which is what would give
+  stats its 508 back with a mouse and prove it;
+- the record form's step is the same controls either way. What changes
+  is that from 640 a coarse pointer is a tablet, where the label is
+  beside the field and gives it nothing, so the field's own height has
+  to be the answer there.
+
+It would mean going back into steps 124 to 126, one commit, not three
+rebuilds.
+
+**The generated file, and the shape of its fix if it comes again.**
+`tsconfig.json` includes `.next-test/dev/types/**`, which the test
+server writes while it runs. So anything that server leaves half
+written fails `npm run typecheck` and `npm run build` on a tree that is
+sound (once, 11 Oct, step 126: a stale tail after the file's end). Do
+not diagnose it again. The durable answers are two: take the test
+server's generated types out of what typecheck reads, or regenerate the
+folder and never repair a file in it. Keep a copy of the bad file first.
+
+**Manage on a phone is captured and has been since step 123**
+(`docs/captures/manage-phone/`, `54bd19e`): every section at 390 and
+320, the first view and the whole page, with `manage-phone.md`. Nothing
+more is owed on it; it is Design's to take.

@@ -1,0 +1,1038 @@
+{
+ "320": {
+  "groups": [
+   {
+    "legend": "Genres",
+    "chips": 42,
+    "lines": 13,
+    "perLine": [
+     4,
+     3,
+     3,
+     3,
+     2,
+     3,
+     3,
+     4,
+     4,
+     3,
+     4,
+     4,
+     2
+    ],
+    "heights": {
+     "26": 42
+    },
+    "widths": {
+     "narrowest": 38.3,
+     "widest": 131.9
+    },
+    "across": {
+     "4": 29
+    },
+    "down": {
+     "4": 12
+    },
+    "endOfLine": [
+     11.1,
+     75.1,
+     71.4,
+     86.8,
+     127.7,
+     17.9,
+     26.8,
+     11.1,
+     39.3,
+     99,
+     1.3,
+     17.5,
+     148.8
+    ]
+   },
+   {
+    "legend": "Tags",
+    "chips": 1,
+    "lines": 1,
+    "perLine": [
+     1
+    ],
+    "heights": {
+     "26": 1
+    },
+    "widths": {
+     "narrowest": 44.6,
+     "widest": 44.6
+    },
+    "across": {},
+    "down": {},
+    "endOfLine": [
+     239.4
+    ]
+   }
+  ],
+  "fields": [
+   {
+    "field": "title",
+    "kind": "input[text]",
+    "width": 284,
+    "height": 36,
+    "label": "Title",
+    "labelIs": "label for",
+    "where": "above",
+    "labelWidth": 31.2,
+    "labelHeight": 15,
+    "strip": 7
+   },
+   {
+    "field": "artistId",
+    "kind": "select",
+    "width": 284,
+    "height": 36,
+    "label": "Artist",
+    "labelIs": "label for",
+    "where": "above",
+    "labelWidth": 40.4,
+    "labelHeight": 15,
+    "strip": 7
+   },
+   {
+    "field": "catalogNumber",
+    "kind": "input[text]",
+    "width": 284,
+    "height": 36,
+    "label": "Catalog no.",
+    "labelIs": "label for",
+    "where": "above",
+    "labelWidth": 76.6,
+    "labelHeight": 15,
+    "strip": 7
+   },
+   {
+    "field": "matrixRunout",
+    "kind": "input[text]",
+    "width": 284,
+    "height": 36,
+    "label": "Matrix / runout",
+    "labelIs": "label for",
+    "where": "above",
+    "labelWidth": 102.5,
+    "labelHeight": 15,
+    "strip": 7
+   },
+   {
+    "field": "labelId",
+    "kind": "select",
+    "width": 284,
+    "height": 36,
+    "label": "Label",
+    "labelIs": "label for",
+    "where": "above",
+    "labelWidth": 35.8,
+    "labelHeight": 15,
+    "strip": 7
+   },
+   {
+    "field": "formatId",
+    "kind": "select",
+    "width": 284,
+    "height": 36,
+    "label": "Format",
+    "labelIs": "label for",
+    "where": "above",
+    "labelWidth": 47.8,
+    "labelHeight": 15,
+    "strip": 7
+   },
+   {
+    "field": "releaseYear",
+    "kind": "input[text]",
+    "width": 284,
+    "height": 36,
+    "label": "Release year",
+    "labelIs": "label for",
+    "where": "above",
+    "labelWidth": 82.9,
+    "labelHeight": 15,
+    "strip": 7
+   },
+   {
+    "field": "conditionMedia",
+    "kind": "select",
+    "width": 284,
+    "height": 36,
+    "label": "Media condition",
+    "labelIs": "label for",
+    "where": "above",
+    "labelWidth": 105,
+    "labelHeight": 15,
+    "strip": 7
+   },
+   {
+    "field": "conditionSleeve",
+    "kind": "select",
+    "width": 284,
+    "height": 36,
+    "label": "Sleeve condition",
+    "labelIs": "label for",
+    "where": "above",
+    "labelWidth": 111,
+    "labelHeight": 15,
+    "strip": 7
+   },
+   {
+    "field": "purchasePrice",
+    "kind": "input[text]",
+    "width": 284,
+    "height": 36,
+    "label": "Paid",
+    "labelIs": "label for",
+    "where": "above",
+    "labelWidth": 25.6,
+    "labelHeight": 15,
+    "strip": 7
+   },
+   {
+    "field": "purchaseDate",
+    "kind": "input[date]",
+    "width": 284,
+    "height": 36,
+    "label": "Bought on",
+    "labelIs": "label for",
+    "where": "above",
+    "labelWidth": 70.5,
+    "labelHeight": 15,
+    "strip": 7
+   },
+   {
+    "field": "storeId",
+    "kind": "select",
+    "width": 284,
+    "height": 36,
+    "label": "Bought from",
+    "labelIs": "label for",
+    "where": "above",
+    "labelWidth": 86.4,
+    "labelHeight": 15,
+    "strip": 7
+   },
+   {
+    "field": "countryPressed",
+    "kind": "input[text]",
+    "width": 284,
+    "height": 36,
+    "label": "Country",
+    "labelIs": "label for",
+    "where": "above",
+    "labelWidth": 57,
+    "labelHeight": 15,
+    "strip": 7
+   },
+   {
+    "field": "yearPressed",
+    "kind": "input[text]",
+    "width": 284,
+    "height": 36,
+    "label": "Year pressed",
+    "labelIs": "label for",
+    "where": "above",
+    "labelWidth": 84.7,
+    "labelHeight": 15,
+    "strip": 7
+   },
+   {
+    "field": "pressingPlant",
+    "kind": "input[text]",
+    "width": 284,
+    "height": 36,
+    "label": "Pressing plant",
+    "labelIs": "label for",
+    "where": "above",
+    "labelWidth": 98.4,
+    "labelHeight": 15,
+    "strip": 7
+   },
+   {
+    "field": "vinylWeightGrams",
+    "kind": "input[text]",
+    "width": 284,
+    "height": 36,
+    "label": "Weight (g)",
+    "labelIs": "label for",
+    "where": "above",
+    "labelWidth": 65.6,
+    "labelHeight": 15,
+    "strip": 7
+   },
+   {
+    "field": "colorVariant",
+    "kind": "input[text]",
+    "width": 284,
+    "height": 36,
+    "label": "Colour",
+    "labelIs": "label for",
+    "where": "above",
+    "labelWidth": 48.4,
+    "labelHeight": 15,
+    "strip": 7
+   },
+   {
+    "field": "isReissue",
+    "kind": "input[checkbox]",
+    "width": 16,
+    "height": 16,
+    "label": "Reissue",
+    "labelIs": "label for",
+    "where": "above",
+    "labelWidth": 47.5,
+    "labelHeight": 15,
+    "strip": 9
+   },
+   {
+    "field": "notes",
+    "kind": "textarea",
+    "width": 284,
+    "height": 94,
+    "label": "Notes",
+    "labelIs": "label for",
+    "where": "above",
+    "labelWidth": 39,
+    "labelHeight": 15,
+    "strip": 7
+   }
+  ],
+  "others": [
+   {
+    "name": "← Believer",
+    "kind": "a",
+    "width": 54.9,
+    "height": 15
+   },
+   {
+    "name": "+ New artist",
+    "kind": "button",
+    "width": 62.9,
+    "height": 16
+   },
+   {
+    "name": "Everything else",
+    "kind": "summary",
+    "width": 284,
+    "height": 20
+   },
+   {
+    "name": "+ New label",
+    "kind": "button",
+    "width": 60.8,
+    "height": 16
+   },
+   {
+    "name": "+ New store",
+    "kind": "button",
+    "width": 63,
+    "height": 16
+   },
+   {
+    "name": "+ New tag",
+    "kind": "button",
+    "width": 53.6,
+    "height": 16
+   },
+   {
+    "name": "Save changes",
+    "kind": "button",
+    "width": 108.3,
+    "height": 32
+   },
+   {
+    "name": "Cancel",
+    "kind": "a",
+    "width": 41.7,
+    "height": 20
+   }
+  ]
+ },
+ "390": {
+  "groups": [
+   {
+    "legend": "Genres",
+    "chips": 42,
+    "lines": 10,
+    "perLine": [
+     5,
+     4,
+     5,
+     4,
+     4,
+     5,
+     5,
+     4,
+     5,
+     1
+    ],
+    "heights": {
+     "26": 42
+    },
+    "widths": {
+     "narrowest": 38.3,
+     "widest": 131.9
+    },
+    "across": {
+     "4": 32
+    },
+    "down": {
+     "4": 9
+    },
+    "endOfLine": [
+     16,
+     44.4,
+     17.1,
+     16.4,
+     33,
+     22.1,
+     43.1,
+     71.3,
+     36.4,
+     269.9
+    ]
+   },
+   {
+    "legend": "Tags",
+    "chips": 1,
+    "lines": 1,
+    "perLine": [
+     1
+    ],
+    "heights": {
+     "26": 1
+    },
+    "widths": {
+     "narrowest": 44.6,
+     "widest": 44.6
+    },
+    "across": {},
+    "down": {},
+    "endOfLine": [
+     309.4
+    ]
+   }
+  ],
+  "fields": [
+   {
+    "field": "title",
+    "kind": "input[text]",
+    "width": 354,
+    "height": 36,
+    "label": "Title",
+    "labelIs": "label for",
+    "where": "above",
+    "labelWidth": 31.2,
+    "labelHeight": 15,
+    "strip": 7
+   },
+   {
+    "field": "artistId",
+    "kind": "select",
+    "width": 354,
+    "height": 36,
+    "label": "Artist",
+    "labelIs": "label for",
+    "where": "above",
+    "labelWidth": 40.4,
+    "labelHeight": 15,
+    "strip": 7
+   },
+   {
+    "field": "catalogNumber",
+    "kind": "input[text]",
+    "width": 354,
+    "height": 36,
+    "label": "Catalog no.",
+    "labelIs": "label for",
+    "where": "above",
+    "labelWidth": 76.6,
+    "labelHeight": 15,
+    "strip": 7
+   },
+   {
+    "field": "matrixRunout",
+    "kind": "input[text]",
+    "width": 354,
+    "height": 36,
+    "label": "Matrix / runout",
+    "labelIs": "label for",
+    "where": "above",
+    "labelWidth": 102.5,
+    "labelHeight": 15,
+    "strip": 7
+   },
+   {
+    "field": "labelId",
+    "kind": "select",
+    "width": 354,
+    "height": 36,
+    "label": "Label",
+    "labelIs": "label for",
+    "where": "above",
+    "labelWidth": 35.8,
+    "labelHeight": 15,
+    "strip": 7
+   },
+   {
+    "field": "formatId",
+    "kind": "select",
+    "width": 354,
+    "height": 36,
+    "label": "Format",
+    "labelIs": "label for",
+    "where": "above",
+    "labelWidth": 47.8,
+    "labelHeight": 15,
+    "strip": 7
+   },
+   {
+    "field": "releaseYear",
+    "kind": "input[text]",
+    "width": 354,
+    "height": 36,
+    "label": "Release year",
+    "labelIs": "label for",
+    "where": "above",
+    "labelWidth": 82.9,
+    "labelHeight": 15,
+    "strip": 7
+   },
+   {
+    "field": "conditionMedia",
+    "kind": "select",
+    "width": 354,
+    "height": 36,
+    "label": "Media condition",
+    "labelIs": "label for",
+    "where": "above",
+    "labelWidth": 105,
+    "labelHeight": 15,
+    "strip": 7
+   },
+   {
+    "field": "conditionSleeve",
+    "kind": "select",
+    "width": 354,
+    "height": 36,
+    "label": "Sleeve condition",
+    "labelIs": "label for",
+    "where": "above",
+    "labelWidth": 111,
+    "labelHeight": 15,
+    "strip": 7
+   },
+   {
+    "field": "purchasePrice",
+    "kind": "input[text]",
+    "width": 354,
+    "height": 36,
+    "label": "Paid",
+    "labelIs": "label for",
+    "where": "above",
+    "labelWidth": 25.6,
+    "labelHeight": 15,
+    "strip": 7
+   },
+   {
+    "field": "purchaseDate",
+    "kind": "input[date]",
+    "width": 354,
+    "height": 36,
+    "label": "Bought on",
+    "labelIs": "label for",
+    "where": "above",
+    "labelWidth": 70.5,
+    "labelHeight": 15,
+    "strip": 7
+   },
+   {
+    "field": "storeId",
+    "kind": "select",
+    "width": 354,
+    "height": 36,
+    "label": "Bought from",
+    "labelIs": "label for",
+    "where": "above",
+    "labelWidth": 86.4,
+    "labelHeight": 15,
+    "strip": 7
+   },
+   {
+    "field": "countryPressed",
+    "kind": "input[text]",
+    "width": 354,
+    "height": 36,
+    "label": "Country",
+    "labelIs": "label for",
+    "where": "above",
+    "labelWidth": 57,
+    "labelHeight": 15,
+    "strip": 7
+   },
+   {
+    "field": "yearPressed",
+    "kind": "input[text]",
+    "width": 354,
+    "height": 36,
+    "label": "Year pressed",
+    "labelIs": "label for",
+    "where": "above",
+    "labelWidth": 84.7,
+    "labelHeight": 15,
+    "strip": 7
+   },
+   {
+    "field": "pressingPlant",
+    "kind": "input[text]",
+    "width": 354,
+    "height": 36,
+    "label": "Pressing plant",
+    "labelIs": "label for",
+    "where": "above",
+    "labelWidth": 98.4,
+    "labelHeight": 15,
+    "strip": 7
+   },
+   {
+    "field": "vinylWeightGrams",
+    "kind": "input[text]",
+    "width": 354,
+    "height": 36,
+    "label": "Weight (g)",
+    "labelIs": "label for",
+    "where": "above",
+    "labelWidth": 65.6,
+    "labelHeight": 15,
+    "strip": 7
+   },
+   {
+    "field": "colorVariant",
+    "kind": "input[text]",
+    "width": 354,
+    "height": 36,
+    "label": "Colour",
+    "labelIs": "label for",
+    "where": "above",
+    "labelWidth": 48.4,
+    "labelHeight": 15,
+    "strip": 7
+   },
+   {
+    "field": "isReissue",
+    "kind": "input[checkbox]",
+    "width": 16,
+    "height": 16,
+    "label": "Reissue",
+    "labelIs": "label for",
+    "where": "above",
+    "labelWidth": 47.5,
+    "labelHeight": 15,
+    "strip": 9
+   },
+   {
+    "field": "notes",
+    "kind": "textarea",
+    "width": 354,
+    "height": 94,
+    "label": "Notes",
+    "labelIs": "label for",
+    "where": "above",
+    "labelWidth": 39,
+    "labelHeight": 15,
+    "strip": 7
+   }
+  ],
+  "others": [
+   {
+    "name": "← Believer",
+    "kind": "a",
+    "width": 54.9,
+    "height": 15
+   },
+   {
+    "name": "+ New artist",
+    "kind": "button",
+    "width": 62.9,
+    "height": 16
+   },
+   {
+    "name": "Everything else",
+    "kind": "summary",
+    "width": 354,
+    "height": 20
+   },
+   {
+    "name": "+ New label",
+    "kind": "button",
+    "width": 60.8,
+    "height": 16
+   },
+   {
+    "name": "+ New store",
+    "kind": "button",
+    "width": 63,
+    "height": 16
+   },
+   {
+    "name": "+ New tag",
+    "kind": "button",
+    "width": 53.6,
+    "height": 16
+   },
+   {
+    "name": "Save changes",
+    "kind": "button",
+    "width": 108.3,
+    "height": 32
+   },
+   {
+    "name": "Cancel",
+    "kind": "a",
+    "width": 41.7,
+    "height": 20
+   }
+  ]
+ },
+ "768": {
+  "groups": [
+   {
+    "legend": "Genres",
+    "chips": 42,
+    "lines": 6,
+    "perLine": [
+     7,
+     7,
+     6,
+     8,
+     8,
+     6
+    ],
+    "heights": {
+     "26": 42
+    },
+    "widths": {
+     "narrowest": 38.3,
+     "widest": 131.9
+    },
+    "across": {
+     "4": 36
+    },
+    "down": {
+     "4": 5
+    },
+    "endOfLine": [
+     70.2,
+     53.3,
+     43.8,
+     25.2,
+     6.9,
+     150.3
+    ]
+   },
+   {
+    "legend": "Tags",
+    "chips": 1,
+    "lines": 1,
+    "perLine": [
+     1
+    ],
+    "heights": {
+     "26": 1
+    },
+    "widths": {
+     "narrowest": 44.6,
+     "widest": 44.6
+    },
+    "across": {},
+    "down": {},
+    "endOfLine": [
+     511.4
+    ]
+   }
+  ],
+  "fields": [
+   {
+    "field": "title",
+    "kind": "input[text]",
+    "width": 556,
+    "height": 36,
+    "label": "Title",
+    "labelIs": "label for",
+    "where": "beside, left",
+    "labelWidth": 160,
+    "labelHeight": 36,
+    "strip": null
+   },
+   {
+    "field": "artistId",
+    "kind": "select",
+    "width": 556,
+    "height": 36,
+    "label": "Artist",
+    "labelIs": "label for",
+    "where": "beside, left",
+    "labelWidth": 160,
+    "labelHeight": 60,
+    "strip": null
+   },
+   {
+    "field": "catalogNumber",
+    "kind": "input[text]",
+    "width": 556,
+    "height": 36,
+    "label": "Catalog no.",
+    "labelIs": "label for",
+    "where": "beside, left",
+    "labelWidth": 160,
+    "labelHeight": 36,
+    "strip": null
+   },
+   {
+    "field": "matrixRunout",
+    "kind": "input[text]",
+    "width": 556,
+    "height": 36,
+    "label": "Matrix / runout",
+    "labelIs": "label for",
+    "where": "beside, left",
+    "labelWidth": 160,
+    "labelHeight": 56,
+    "strip": null
+   },
+   {
+    "field": "labelId",
+    "kind": "select",
+    "width": 556,
+    "height": 36,
+    "label": "Label",
+    "labelIs": "label for",
+    "where": "beside, left",
+    "labelWidth": 160,
+    "labelHeight": 60,
+    "strip": null
+   },
+   {
+    "field": "formatId",
+    "kind": "select",
+    "width": 556,
+    "height": 36,
+    "label": "Format",
+    "labelIs": "label for",
+    "where": "beside, left",
+    "labelWidth": 160,
+    "labelHeight": 36,
+    "strip": null
+   },
+   {
+    "field": "releaseYear",
+    "kind": "input[text]",
+    "width": 556,
+    "height": 36,
+    "label": "Release year",
+    "labelIs": "label for",
+    "where": "beside, left",
+    "labelWidth": 160,
+    "labelHeight": 56,
+    "strip": null
+   },
+   {
+    "field": "conditionMedia",
+    "kind": "select",
+    "width": 556,
+    "height": 36,
+    "label": "Media condition",
+    "labelIs": "label for",
+    "where": "beside, left",
+    "labelWidth": 160,
+    "labelHeight": 36,
+    "strip": null
+   },
+   {
+    "field": "conditionSleeve",
+    "kind": "select",
+    "width": 556,
+    "height": 36,
+    "label": "Sleeve condition",
+    "labelIs": "label for",
+    "where": "beside, left",
+    "labelWidth": 160,
+    "labelHeight": 36,
+    "strip": null
+   },
+   {
+    "field": "purchasePrice",
+    "kind": "input[text]",
+    "width": 556,
+    "height": 36,
+    "label": "Paid",
+    "labelIs": "label for",
+    "where": "beside, left",
+    "labelWidth": 160,
+    "labelHeight": 36,
+    "strip": null
+   },
+   {
+    "field": "purchaseDate",
+    "kind": "input[date]",
+    "width": 556,
+    "height": 36,
+    "label": "Bought on",
+    "labelIs": "label for",
+    "where": "beside, left",
+    "labelWidth": 160,
+    "labelHeight": 36,
+    "strip": null
+   },
+   {
+    "field": "storeId",
+    "kind": "select",
+    "width": 556,
+    "height": 36,
+    "label": "Bought from",
+    "labelIs": "label for",
+    "where": "beside, left",
+    "labelWidth": 160,
+    "labelHeight": 60,
+    "strip": null
+   },
+   {
+    "field": "countryPressed",
+    "kind": "input[text]",
+    "width": 556,
+    "height": 36,
+    "label": "Country",
+    "labelIs": "label for",
+    "where": "beside, left",
+    "labelWidth": 160,
+    "labelHeight": 36,
+    "strip": null
+   },
+   {
+    "field": "yearPressed",
+    "kind": "input[text]",
+    "width": 556,
+    "height": 36,
+    "label": "Year pressed",
+    "labelIs": "label for",
+    "where": "beside, left",
+    "labelWidth": 160,
+    "labelHeight": 56,
+    "strip": null
+   },
+   {
+    "field": "pressingPlant",
+    "kind": "input[text]",
+    "width": 556,
+    "height": 36,
+    "label": "Pressing plant",
+    "labelIs": "label for",
+    "where": "beside, left",
+    "labelWidth": 160,
+    "labelHeight": 36,
+    "strip": null
+   },
+   {
+    "field": "vinylWeightGrams",
+    "kind": "input[text]",
+    "width": 556,
+    "height": 36,
+    "label": "Weight (g)",
+    "labelIs": "label for",
+    "where": "beside, left",
+    "labelWidth": 160,
+    "labelHeight": 36,
+    "strip": null
+   },
+   {
+    "field": "colorVariant",
+    "kind": "input[text]",
+    "width": 556,
+    "height": 36,
+    "label": "Colour",
+    "labelIs": "label for",
+    "where": "beside, left",
+    "labelWidth": 160,
+    "labelHeight": 36,
+    "strip": null
+   },
+   {
+    "field": "isReissue",
+    "kind": "input[checkbox]",
+    "width": 16,
+    "height": 16,
+    "label": "Reissue",
+    "labelIs": "label for",
+    "where": "beside, left",
+    "labelWidth": 160,
+    "labelHeight": 24,
+    "strip": null
+   },
+   {
+    "field": "notes",
+    "kind": "textarea",
+    "width": 556,
+    "height": 94,
+    "label": "Notes",
+    "labelIs": "label for",
+    "where": "beside, left",
+    "labelWidth": 160,
+    "labelHeight": 100,
+    "strip": null
+   }
+  ],
+  "others": [
+   {
+    "name": "← Believer",
+    "kind": "a",
+    "width": 54.9,
+    "height": 15
+   },
+   {
+    "name": "+ New artist",
+    "kind": "button",
+    "width": 62.9,
+    "height": 16
+   },
+   {
+    "name": "Everything else",
+    "kind": "summary",
+    "width": 732,
+    "height": 20
+   },
+   {
+    "name": "+ New label",
+    "kind": "button",
+    "width": 60.8,
+    "height": 16
+   },
+   {
+    "name": "+ New store",
+    "kind": "button",
+    "width": 63,
+    "height": 16
+   },
+   {
+    "name": "+ New tag",
+    "kind": "button",
+    "width": 53.6,
+    "height": 16
+   },
+   {
+    "name": "Save changes",
+    "kind": "button",
+    "width": 108.3,
+    "height": 32
+   },
+   {
+    "name": "Cancel",
+    "kind": "a",
+    "width": 41.7,
+    "height": 20
+   }
+  ]
+ }
+}
