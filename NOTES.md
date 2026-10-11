@@ -41494,8 +41494,8 @@ change either way: lines 44 apart with the chips as they are (a gap of
 tall.
 
 **3. The fields and their labels.** All 19 fields have a label a tap
-sends to them (`label for`); none is without one. The select in an
-opened "+ New …" has a label that is not drawn; it was not open and is
+sends to them (`label for`); none is without one. The field an opened
+"+ New …" shows has a label that is not drawn; it was not open and is
 not in the table. What the label gives, though, is less than on look up:
 
 - **Below 640 the label stands above its field**, 15 tall, **as wide as
