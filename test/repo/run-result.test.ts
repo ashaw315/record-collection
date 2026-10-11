@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { readRunResult, suiteOf, summarise } from '../../scripts/run-result';
+import { playwrightScope, projectsLine, readRunResult, suiteOf, summarise } from '../../scripts/run-result';
 
 /**
  * **Three exit-code concealments in ONE session, after the rule was already
@@ -403,5 +403,57 @@ describe('the premises of suiteOf, read from the files they are about', () => {
     expect(sheet).not.toMatch(/^\s*globalSetup:/m);
     expect(sheet).not.toMatch(/^\s*globalTeardown:/m);
     expect(readFileSync('e2e/global-teardown.ts', 'utf8'), 'and the teardown is where the ledger is judged').toMatch(/\[ledger\]/);
+  });
+});
+
+/**
+ * **A project that matches no test runs nothing and reports nothing, so the
+ * summary is green about it.** The `touch` project matched
+ * `touch-tilt.spec.ts`, which went with the lit wall in September; every
+ * gate since counted a project that executed no test (found 10 Oct, by a
+ * survey of the wall and not by any run). Playwright fails a run that
+ * matches no test at all, and says nothing about one project that does.
+ *
+ * So the suite's own reporter (`e2e/project-counts.ts`) prints what each
+ * project held, and the judgement reads it, as it reads the ledger.
+ */
+describe('a project that runs no test is not a pass', () => {
+  const SUMMARY = '  12 skipped\n  731 passed (32.7m)\n[ledger] genres: none left behind by a spec\n';
+  const full = playwrightScope(['npx', 'playwright', 'test']);
+
+  it('names the empty project, whatever the counts say', () => {
+    expect(projectsLine({ chromium: 812, mobile: 177, touch: 0 }, true)).toBe('[projects] FAILED: touch matched no test (chromium 812, mobile 177, touch 0)');
+    const result = readRunResult({ output: `${SUMMARY}[projects] FAILED: touch matched no test (chromium 812, mobile 177, touch 0)\n`, exitCode: 0, suite: 'end-to-end', scope: full });
+    expect(result.ok).toBe(false);
+    expect(result.reason).toMatch(/touch matched no test/);
+    expect(summarise(result)).toMatch(/NOT OK/);
+  });
+
+  it('passes a run whose every project ran something', () => {
+    expect(projectsLine({ chromium: 812, mobile: 177 }, true)).toBe('[projects] chromium 812, mobile 177');
+    expect(readRunResult({ output: `${SUMMARY}[projects] chromium 812, mobile 177\n`, exitCode: 0, suite: 'end-to-end', scope: full }).ok).toBe(true);
+  });
+
+  /* Absent is not clean: a reporter given on the command line replaces the config's, and the count goes with it. */
+  it('fails a whole-suite run in which the projects did not report', () => {
+    const result = readRunResult({ output: SUMMARY, exitCode: 0, suite: 'end-to-end', scope: full });
+    expect(result.ok).toBe(false);
+    expect(result.reason).toMatch(/projects did not report/);
+  });
+
+  /* A step's run names files, and a file one project does not match is not an empty project. */
+  it('does not ask it of a run narrowed to files or by a pattern', () => {
+    for (const command of [['npx', 'playwright', 'test', 'e2e/shelf.spec.ts', '--project=chromium', '--reporter=line'], ['npx', 'playwright', 'test', '-g', 'the band']]) {
+      expect(playwrightScope(command), command.join(' ')).toBe('narrowed');
+      expect(readRunResult({ output: SUMMARY, exitCode: 0, suite: 'end-to-end', scope: 'narrowed' }).ok).toBe(true);
+    }
+    expect(projectsLine({ chromium: 12, mobile: 0 }, false)).toBe('[projects] chromium 12, mobile 0');
+  });
+
+  it('reads a flag’s value as its value and not as a file', () => {
+    expect(playwrightScope(['npx', 'playwright', 'test', '--workers', '2', '--trace=retain-on-failure'])).toBe('whole');
+    expect(playwrightScope(['npx', 'playwright', 'test', '--project', 'chromium'])).toBe('whole');
+    expect(playwrightScope(['npx', 'playwright', 'test', '--grep-invert', 'slow'])).toBe('narrowed');
+    expect(playwrightScope(['npm', 'test'])).toBe('narrowed');
   });
 });

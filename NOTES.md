@@ -40937,3 +40937,90 @@ OK`; the 16 specs that read an empty figure or open look up or the want
 list, both projects, `385 passed, 3 skipped, ledger clean, tree
 unchanged — OK`; typecheck and build clean, lint 0 errors and 27
 warnings. No gate.
+
+## 10 Oct, night: a save with a withdrawal and no entry; two rules that pull apart; the touch project; the reset (in the tree, not committed)
+
+**Nothing can be committed through the checked script.** Design's save
+`3b552cb` (raw, pushed; "the rail's first line at 18, a pending answer's slot
+a stated number of lines") carries, in the Table and Grid target,
+"Withdrawn within §T.6: the slot sized by its longest expected answer.",
+and brought no `WITHDRAWALS.md`. The index reads `FAIL 7`, `9 §T.6
+unentered`, `RESULT: 10 PASS, 1 FAIL`, and three repo tests fail on it.
+The entry is Design's to file. The intake and everything below wait in
+the working tree on it; so does the gate, whose unit suite is red by it.
+
+**The check the coordinator asked for contradicts one the repo has.**
+Asked: "a spec that imports a layout constant and asserts a ruled figure
+against it fails the check." `test/repo/specs-import-constants.test.ts`
+holds the opposite for the record screen: a spec that types 900, 1728,
+284 or 547 fails, because "a spec that types a declared number encodes a
+ruling rather than checking one, and it fails on the day the ruling
+changes, not the day the code breaks"; against the constant "that spec
+fails only when the RENDERING disagrees with the declaration". Both
+cannot be the rule for one figure. And by the older rule the two specs
+found on 10 Oct were not vacuous: they hold the rendering to the
+declaration, and `screen-frame.test.ts` holds the declaration to 18 and
+did fail first. What ran green against the old build was the half of the
+chain that is supposed to. **So the rule written into these notes this
+evening ("a spec states a ruled figure itself") is withdrawn as written;
+it contradicts the standing one and was written without reading it.**
+Proposed instead, not built: a check that every source constant a spec
+asserts against is pinned to a literal by a unit test, which is the link
+that would actually be missing. The two specs keep their literal 18 for
+now; 18 is not one of the governed figures.
+
+**`table-98` tightened** to the equality it means: the table is the
+window less its insets at 390 and 320. Against the old source it fails,
+"Expected: 354, Received: 350"; on the current build the spec reads
+`11 passed, ledger clean, tree unchanged — OK`.
+
+**The `touch` project is deleted, and a whole run now fails where a
+project runs nothing.** It matched `touch-tilt.spec.ts`, gone since
+8302efd, so it ran no test and every gate counted it. `e2e/project-counts.ts`
+(a reporter in the default config) prints what each project held;
+`run-result.ts` fails a run on its `FAILED` line, and fails a whole-suite
+run in which the line is absent, since a reporter named on the command
+line replaces the config's. A run narrowed to files or a pattern is only
+reported. **Staged, and the staging found a defect reading had not:** the
+first build took the projects from the suite, and Playwright leaves a
+project with no test out of the suite, so it printed `runs 1` and passed.
+The names now come from the config or from `--project`. Staged again with
+a two-project config, one matching nothing: whole, `NOT OK — a project
+ran nothing: touch matched no test (runs 1, touch 0)`; narrowed to a
+file, OK and reported; `--project=runs`, OK; both projects named, NOT OK.
+The real config lists chromium 703, capture 11, mobile 286. `three` and
+`@types/three` are uninstalled; nothing imported them; typecheck and
+build are clean. SPEC.md §10b and §12 step 13 still describe them.
+This is a change to the Playwright config and the runner: a gate is owed
+on it by CLAUDE.md §10 whatever else is.
+
+**The reset on a seed request: not settled inside the box.**
+- *Established:* Playwright's request client (1.62.1) sends every
+  `page.request` call through process-wide agents made with
+  `keepAlive: true`, and has a `maxRetries` option, default 0, that
+  retries exactly `ECONNRESET`. Next's dev server sets no keep-alive
+  timeout unless given one, so Node's default of five seconds stands.
+  Every instance in these notes is a seed POST and none is a page.
+- *The hypothesis that fits:* a pooled connection, idle since an earlier
+  test, is reused at the moment the server closes it.
+- *Not reproduced:* 21 requests on a connection left idle for 1 to 7
+  seconds, 13 of them within 100ms of 5,000, all answered 200. So the
+  hypothesis is neither shown nor ruled out; the window may be narrower
+  than the sweep, or need the machine loaded.
+- *Ruled out:* the page (never one), sign-in (never there), the step's
+  own diff each time.
+- *Not done:* `maxRetries` on the seed helpers, which would hide it
+  without showing the cause, and retries a POST.
+Artefacts: the scratchpad's `flaky-120/`.
+
+**Ruled by Adam, 10 Oct: there is no shelf view on a phone.** A record
+cannot be targeted with a finger and the hit areas would overlap. Design
+is setting the width where the shelf stops and what stands in its place.
+No further work on `shelf-narrow` or the narrow band beyond step 120.
+
+**Two known holes, logged and not fixed.** The want list's empty-figure
+tint is read in the browser only where the Acquired view happens to be
+empty, and will stop testing silently the day it fills; it needs a
+fixture that can stage it. The look-up tint test does not hold a literal:
+it reads the source record's colour from the record's own API response
+and compares; `#a25829` was the value in that run's failure message.

@@ -88,7 +88,7 @@ export default defineConfig({
    * failing half the time reads as a clean run. The list reporter prints
    * "retry #1" inline, so the cost of the retry stays in view.
    */
-  reporter: [['list'], ['html', { open: 'never' }]],
+  reporter: [['list'], ['html', { open: 'never' }], ['./e2e/project-counts.ts']],
   use: {
     baseURL,
     /*
@@ -122,7 +122,7 @@ export default defineConfig({
   },
   projects: [
     /* shelf-narrow is the mobile project's: it is about 390px and sets the viewport itself (§11.24). */
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] }, testIgnore: [/touch-tilt\.spec\.ts$/, /shelf-narrow\.spec\.ts$/] },
+    { name: 'chromium', use: { ...devices['Desktop Chrome'] }, testIgnore: [/shelf-narrow\.spec\.ts$/] },
     /*
       **The capture project: a tool, not a suite.** `e2e/capture/` regenerates
       the screenshots in `docs/` that 7a's grid is judged against. Opted into by
@@ -147,18 +147,13 @@ export default defineConfig({
       testMatch: /.*\.capture\.ts$/,
     },
     /*
-      **A touch-enabled Chromium project, scoped to the touch-tilt spec.**
-      §10b's touch drag needs a real touch stream, and the only reliable one in
-      Playwright is CDP `Input.dispatchTouchEvent` — Chromium-only, so the
-      WebKit `mobile` project cannot drive it. `hasTouch` at 390px is the phone
-      viewport the drag is about. The feel is judged on the device; this project
-      pins the gesture BOUNDARY and the hold, which are logic, not feel.
+      There was a `touch` project here, scoped to `touch-tilt.spec.ts`. That
+      spec went with the lit wall (8302efd) and the project stayed, matching
+      no file: it ran no test and every whole-suite run counted it as
+      passing. Removed 10 Oct; `e2e/project-counts.ts` now fails a whole run
+      in which any project holds no test. A touch stream is still driven
+      where a spec needs one, over CDP inside the chromium project.
     */
-    {
-      name: 'touch',
-      use: { ...devices['Desktop Chrome'], hasTouch: true, viewport: { width: 390, height: 844 } },
-      testMatch: [/touch-tilt\.spec\.ts$/],
-    },
     {
       name: 'mobile',
       use: { ...devices['iPhone 13'] },

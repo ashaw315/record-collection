@@ -92,6 +92,42 @@ export function suiteOf(command: readonly string[]): Suite {
   if (/\bvitest\b/.test(words) || /^npm\s+(?:run\s+)?test\b/.test(words)) return 'unit';
   return 'other';
 }
+/**
+ * Whether a Playwright command runs the whole suite or a part of it. A run
+ * narrowed to files or by a pattern legitimately leaves a project with
+ * nothing to run; the whole suite does not. Anything that is not a
+ * Playwright run is `narrowed`: nothing is asked of its projects.
+ */
+export type Scope = 'whole' | 'narrowed';
+const VALUE_FLAGS = new Set(['--project', '--workers', '-j', '--reporter', '--config', '-c', '--retries', '--trace', '--repeat-each', '--timeout', '--max-failures', '--output', '--shard', '--global-timeout']);
+const NARROWING = /^(?:-g|--grep|--grep-invert|--last-failed|--only-changed|--list)(?:=|$)/;
+
+export function playwrightScope(command: readonly string[]): Scope {
+  const at = command.findIndex((word, index) => word === 'test' && command[index - 1] === 'playwright');
+  if (at === -1) return 'narrowed';
+  const rest = command.slice(at + 1);
+  for (let i = 0; i < rest.length; i += 1) {
+    const word = rest[i];
+    if (NARROWING.test(word)) return 'narrowed';
+    if (VALUE_FLAGS.has(word)) { i += 1; continue; }
+    if (!word.startsWith('-')) return 'narrowed';
+  }
+  return 'whole';
+}
+
+/**
+ * The line `e2e/project-counts.ts` prints: what each project held, and a
+ * failure where the whole suite was run and one held nothing.
+ */
+export function projectsLine(counts: Readonly<Record<string, number>>, whole: boolean): string {
+  const said = Object.entries(counts).map(([name, count]) => `${name} ${count}`).join(', ');
+  const empty = Object.entries(counts).filter(([, count]) => count === 0).map(([name]) => name);
+  return whole && empty.length > 0 ? `[projects] FAILED: ${empty.join(', ')} matched no test (${said})` : `[projects] ${said}`;
+}
+
+const PROJECTS_FAILED = /^\[projects\] FAILED: (.*)$/m;
+const PROJECTS_SAID = /^\[projects\] /m;
+
 /** What no end-to-end file reads: the design folder. One folder, named exactly; nothing else is exempt. */
 const UNREAD_BY_END_TO_END = /^docs\/design\//;
 
@@ -124,6 +160,7 @@ export function readRunResult({
   expectAtLeast,
   tree,
   suite = 'other',
+  scope = 'narrowed',
 }: {
   output: string;
   exitCode: number;
@@ -141,6 +178,8 @@ export function readRunResult({
   tree?: { start: TreeState; end: TreeState };
   /** Which suite this was, as the runner launched it (`suiteOf`). Not read from the output. */
   suite?: Suite;
+  /** Whether the whole suite was launched (`playwrightScope`). Only then must every project have run something, and said so. */
+  scope?: Scope;
 }): RunResult {
   const passed = countOf(output, 'passed');
   const failed = countOf(output, 'failed') ?? 0;
@@ -187,8 +226,21 @@ export function readRunResult({
     Before the status, because the status is what this file exists not to
     need: a ledger failure is named as one, whatever the run exited with.
   */
-  if (ledgerFault !== null || treeFault !== null) {
-    return { ...base, ok: false, reason: [ledgerFault, treeFault].filter((part) => part !== null).join(', and ') };
+  /*
+    A project that matched no test executed nothing and the counts are green
+    about it. The suite's reporter says so; on the whole suite its silence
+    is a fault too, since a reporter named on the command line replaces it.
+  */
+  const emptyProject = PROJECTS_FAILED.exec(output);
+  const projectsFault =
+    emptyProject !== null
+      ? `a project ran nothing: ${emptyProject[1]}`
+      : suite === 'end-to-end' && scope === 'whole' && !PROJECTS_SAID.test(output)
+        ? 'the projects did not report — a reporter given on the command line replaces the one that counts them'
+        : null;
+
+  if (ledgerFault !== null || treeFault !== null || projectsFault !== null) {
+    return { ...base, ok: false, reason: [ledgerFault, treeFault, projectsFault].filter((part) => part !== null).join(', and ') };
   }
 
   /*
