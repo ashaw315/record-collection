@@ -1,0 +1,8578 @@
+{
+ "Want list at 390": [
+  {
+   "name": "Look up a record",
+   "kind": "a",
+   "width": 161.2,
+   "height": 44,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Suggestions",
+   "kind": "a",
+   "width": 58.6,
+   "height": 44,
+   "tall": 44,
+   "left": 9,
+   "right": 8
+  },
+  {
+   "name": "Still wanted",
+   "kind": "a",
+   "width": 72.4,
+   "height": 26.5,
+   "tall": 44,
+   "left": 9,
+   "right": 1
+  },
+  {
+   "name": "Acquired",
+   "kind": "a",
+   "width": 60.2,
+   "height": 26.5,
+   "tall": 44,
+   "left": 2,
+   "right": 8
+  },
+  {
+   "name": "Person Pitch",
+   "kind": "a",
+   "width": 101.4,
+   "height": 44,
+   "tall": 45,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit",
+   "kind": "a",
+   "width": 17.8,
+   "height": 14,
+   "tall": 44,
+   "left": 4,
+   "right": 8
+  },
+  {
+   "name": "Mark acquired",
+   "kind": "a",
+   "width": 85.6,
+   "height": 26.5,
+   "tall": 44,
+   "left": 9,
+   "right": 8
+  },
+  {
+   "name": "Delete",
+   "kind": "button",
+   "width": 30.5,
+   "height": 16.5,
+   "tall": 44,
+   "left": 9,
+   "right": 8
+  },
+  {
+   "name": "Dummy",
+   "kind": "a",
+   "width": 67.8,
+   "height": 44,
+   "tall": 45,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit",
+   "kind": "a",
+   "width": 17.8,
+   "height": 14,
+   "tall": 44,
+   "left": 4,
+   "right": 8
+  },
+  {
+   "name": "Mark acquired",
+   "kind": "a",
+   "width": 85.6,
+   "height": 26.5,
+   "tall": 44,
+   "left": 9,
+   "right": 8
+  },
+  {
+   "name": "Delete",
+   "kind": "button",
+   "width": 30.5,
+   "height": 16.5,
+   "tall": 44,
+   "left": 9,
+   "right": 8
+  },
+  {
+   "name": "Bad Girls",
+   "kind": "a",
+   "width": 75.8,
+   "height": 44,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit",
+   "kind": "a",
+   "width": 17.8,
+   "height": 14,
+   "tall": 44,
+   "left": 4,
+   "right": 8
+  },
+  {
+   "name": "Mark acquired",
+   "kind": "a",
+   "width": 85.6,
+   "height": 26.5,
+   "tall": 44,
+   "left": 9,
+   "right": 8
+  },
+  {
+   "name": "Delete",
+   "kind": "button",
+   "width": 30.5,
+   "height": 16.5,
+   "tall": 44,
+   "left": 9,
+   "right": 8
+  },
+  {
+   "name": "Separates",
+   "kind": "a",
+   "width": 84.6,
+   "height": 44,
+   "tall": 45,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit",
+   "kind": "a",
+   "width": 17.8,
+   "height": 14,
+   "tall": 44,
+   "left": 4,
+   "right": 8
+  },
+  {
+   "name": "Mark acquired",
+   "kind": "a",
+   "width": 85.6,
+   "height": 26.5,
+   "tall": 44,
+   "left": 9,
+   "right": 8
+  },
+  {
+   "name": "Delete",
+   "kind": "button",
+   "width": 30.5,
+   "height": 16.5,
+   "tall": 44,
+   "left": 9,
+   "right": 8
+  },
+  {
+   "name": "Under Color Of Official Right",
+   "kind": "a",
+   "width": 210.6,
+   "height": 44,
+   "tall": 45,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit",
+   "kind": "a",
+   "width": 17.8,
+   "height": 14,
+   "tall": 44,
+   "left": 4,
+   "right": 8
+  },
+  {
+   "name": "Mark acquired",
+   "kind": "a",
+   "width": 85.6,
+   "height": 26.5,
+   "tall": 44,
+   "left": 9,
+   "right": 8
+  },
+  {
+   "name": "Delete",
+   "kind": "button",
+   "width": 30.5,
+   "height": 16.5,
+   "tall": 44,
+   "left": 9,
+   "right": 8
+  },
+  {
+   "name": "Halcyon Digest",
+   "kind": "a",
+   "width": 118.9,
+   "height": 44,
+   "tall": 45,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit",
+   "kind": "a",
+   "width": 17.8,
+   "height": 14,
+   "tall": 44,
+   "left": 4,
+   "right": 8
+  },
+  {
+   "name": "Mark acquired",
+   "kind": "a",
+   "width": 85.6,
+   "height": 26.5,
+   "tall": 44,
+   "left": 9,
+   "right": 8
+  },
+  {
+   "name": "Delete",
+   "kind": "button",
+   "width": 30.5,
+   "height": 16.5,
+   "tall": 44,
+   "left": 9,
+   "right": 8
+  },
+  {
+   "name": "Aja",
+   "kind": "a",
+   "width": 35.3,
+   "height": 44,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit",
+   "kind": "a",
+   "width": 17.8,
+   "height": 14,
+   "tall": 44,
+   "left": 4,
+   "right": 8
+  },
+  {
+   "name": "Mark acquired",
+   "kind": "a",
+   "width": 85.6,
+   "height": 26.5,
+   "tall": 44,
+   "left": 9,
+   "right": 8
+  },
+  {
+   "name": "Delete",
+   "kind": "button",
+   "width": 30.5,
+   "height": 16.5,
+   "tall": 44,
+   "left": 9,
+   "right": 8
+  }
+ ],
+ "Want list, acquired at 390": [
+  {
+   "name": "Look up a record",
+   "kind": "a",
+   "width": 161.2,
+   "height": 44,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Suggestions",
+   "kind": "a",
+   "width": 58.6,
+   "height": 44,
+   "tall": 44,
+   "left": 9,
+   "right": 8
+  },
+  {
+   "name": "Still wanted",
+   "kind": "a",
+   "width": 72.4,
+   "height": 26.5,
+   "tall": 44,
+   "left": 9,
+   "right": 1
+  },
+  {
+   "name": "Acquired",
+   "kind": "a",
+   "width": 60.2,
+   "height": 26.5,
+   "tall": 44,
+   "left": 2,
+   "right": 8
+  }
+ ],
+ "Look up at 390": [
+  {
+   "name": "catno",
+   "kind": "input",
+   "width": 354,
+   "height": 36,
+   "tall": 57,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "artist",
+   "kind": "input",
+   "width": 354,
+   "height": 36,
+   "tall": 57,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "title",
+   "kind": "input",
+   "width": 354,
+   "height": 36,
+   "tall": 57,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "country",
+   "kind": "input",
+   "width": 354,
+   "height": 36,
+   "tall": 57,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "format",
+   "kind": "input",
+   "width": 354,
+   "height": 36,
+   "tall": 57,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "More search terms",
+   "kind": "summary",
+   "width": 100.4,
+   "height": 16.5,
+   "tall": 45,
+   "left": 9,
+   "right": 8
+  },
+  {
+   "name": "Search Discogs",
+   "kind": "button",
+   "width": 117.8,
+   "height": 44,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  }
+ ],
+ "Stats at 390": [
+  {
+   "name": "Abstract",
+   "kind": "a",
+   "width": 47.5,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Alt-Pop",
+   "kind": "a",
+   "width": 41.9,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Alternative Rock",
+   "kind": "a",
+   "width": 90.5,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Art Rock",
+   "kind": "a",
+   "width": 47.9,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Dub",
+   "kind": "a",
+   "width": 23,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Electronic5 · 5",
+   "kind": "summary",
+   "width": 354,
+   "height": 44,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Electronic",
+   "kind": "a",
+   "width": 54.7,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Experimental",
+   "kind": "a",
+   "width": 72.5,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Folk, World, & Country",
+   "kind": "a",
+   "width": 123.4,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Funk / Soul1 · 1",
+   "kind": "summary",
+   "width": 354,
+   "height": 44,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Funk / Soul",
+   "kind": "a",
+   "width": 61.4,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Gospel",
+   "kind": "a",
+   "width": 39.1,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Hip Hop1 · 1",
+   "kind": "summary",
+   "width": 354,
+   "height": 44,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Hip Hop",
+   "kind": "a",
+   "width": 45.3,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Industrial",
+   "kind": "a",
+   "width": 50.3,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Jazz3 · 4",
+   "kind": "summary",
+   "width": 354,
+   "height": 44,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Jazz",
+   "kind": "a",
+   "width": 26,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Lo-Fi",
+   "kind": "a",
+   "width": 28.7,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Math Rock",
+   "kind": "a",
+   "width": 60.1,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Pop3 · 3",
+   "kind": "summary",
+   "width": 354,
+   "height": 44,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Pop",
+   "kind": "a",
+   "width": 22,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Post-Punk",
+   "kind": "a",
+   "width": 58.2,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Rock13 · 13",
+   "kind": "summary",
+   "width": 354,
+   "height": 44,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Rock",
+   "kind": "a",
+   "width": 27.9,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Shoegaze",
+   "kind": "a",
+   "width": 56,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Epic",
+   "kind": "a",
+   "width": 23.6,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Columbia",
+   "kind": "a",
+   "width": 52.6,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Elektra",
+   "kind": "a",
+   "width": 38.1,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Matador",
+   "kind": "a",
+   "width": 47.3,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Capitol Records",
+   "kind": "a",
+   "width": 88,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Casablanca",
+   "kind": "a",
+   "width": 65.4,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Frenchkiss Records",
+   "kind": "a",
+   "width": 108.9,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "MCA Records",
+   "kind": "a",
+   "width": 77,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Mom + Pop",
+   "kind": "a",
+   "width": 64.9,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Profile Records",
+   "kind": "a",
+   "width": 83.7,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Verve Forecast",
+   "kind": "a",
+   "width": 83.6,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Verve Records",
+   "kind": "a",
+   "width": 81.2,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Warner Bros. Records",
+   "kind": "a",
+   "width": 120.6,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "XL Recordings",
+   "kind": "a",
+   "width": 80.2,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Very Friendly Records",
+   "kind": "a",
+   "width": 121.5,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Matador Records",
+   "kind": "a",
+   "width": 96.2,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Rough Trade",
+   "kind": "a",
+   "width": 71.4,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  }
+ ],
+ "Record form, editing at 390": [
+  {
+   "name": "← Believer",
+   "kind": "a",
+   "width": 54.9,
+   "height": 15,
+   "tall": 16,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "title",
+   "kind": "input",
+   "width": 354,
+   "height": 36,
+   "tall": 36,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Choose an artist999Adam HastingsAdrian UtleyAl KooperAlan ClarkAndrew GreenAndrew VanWynga",
+   "kind": "select",
+   "width": 354,
+   "height": 36,
+   "tall": 36,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "+ New artist",
+   "kind": "button",
+   "width": 62.9,
+   "height": 16,
+   "tall": 16,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "e.g. CLAY LP 3",
+   "kind": "input",
+   "width": 354,
+   "height": 36,
+   "tall": 36,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "matrixRunout",
+   "kind": "input",
+   "width": 354,
+   "height": 36,
+   "tall": 36,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Everything else",
+   "kind": "summary",
+   "width": 354,
+   "height": 20,
+   "tall": 20,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "No label4ADA&MCapitol RecordsCasablancaColumbiaDominoElektraEpicFrenchkiss RecordsGhostly ",
+   "kind": "select",
+   "width": 354,
+   "height": 36,
+   "tall": 36,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "+ New label",
+   "kind": "button",
+   "width": 60.8,
+   "height": 16,
+   "tall": 16,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "No format10\"12\" Single2xLP7\"Box SetLPPicture Disc",
+   "kind": "select",
+   "width": 354,
+   "height": 36,
+   "tall": 36,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "releaseYear",
+   "kind": "input",
+   "width": 354,
+   "height": 36,
+   "tall": 36,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Not gradedM — MintNM — Near MintVG+ — Very Good PlusVG — Very GoodG+ — Good PlusG — GoodF ",
+   "kind": "select",
+   "width": 354,
+   "height": 36,
+   "tall": 36,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Not gradedM — MintNM — Near MintVG+ — Very Good PlusVG — Very GoodG+ — Good PlusG — GoodF ",
+   "kind": "select",
+   "width": 354,
+   "height": 36,
+   "tall": 36,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "e.g. 24.50",
+   "kind": "input",
+   "width": 354,
+   "height": 36,
+   "tall": 36,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "purchaseDate",
+   "kind": "input",
+   "width": 354,
+   "height": 36,
+   "tall": 36,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "No storeMatador RecordsRough TradeVery Friendly Records",
+   "kind": "select",
+   "width": 354,
+   "height": 36,
+   "tall": 36,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "+ New store",
+   "kind": "button",
+   "width": 63,
+   "height": 16,
+   "tall": 16,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 31
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 37
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 30
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 33
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 35
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 29
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 34
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 34
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 38
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 26,
+   "left": 8,
+   "right": 35
+  },
+  {
+   "name": "+ New tag",
+   "kind": "button",
+   "width": 53.6,
+   "height": 16,
+   "tall": 16,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "e.g. UK",
+   "kind": "input",
+   "width": 354,
+   "height": 36,
+   "tall": 36,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "yearPressed",
+   "kind": "input",
+   "width": 354,
+   "height": 36,
+   "tall": 36,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "pressingPlant",
+   "kind": "input",
+   "width": 354,
+   "height": 36,
+   "tall": 36,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "e.g. 180",
+   "kind": "input",
+   "width": 354,
+   "height": 36,
+   "tall": 36,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "e.g. Black",
+   "kind": "input",
+   "width": 354,
+   "height": 36,
+   "tall": 36,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "isReissue",
+   "kind": "input",
+   "width": 16,
+   "height": 16,
+   "tall": 35,
+   "left": 0,
+   "right": 40
+  },
+  {
+   "name": "notes",
+   "kind": "textarea",
+   "width": 354,
+   "height": 94,
+   "tall": 81,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Save changes",
+   "kind": "button",
+   "width": 108.3,
+   "height": 32,
+   "tall": 32,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Cancel",
+   "kind": "a",
+   "width": 41.7,
+   "height": 20,
+   "tall": 20,
+   "left": 0,
+   "right": 0
+  }
+ ],
+ "Manage, Artists at 390": [
+  {
+   "name": "Artists",
+   "kind": "button",
+   "width": 54.3,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Genres",
+   "kind": "button",
+   "width": 58,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Labels",
+   "kind": "button",
+   "width": 54.7,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Formats",
+   "kind": "button",
+   "width": 62.5,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Stores",
+   "kind": "button",
+   "width": 54.5,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Tags",
+   "kind": "button",
+   "width": 46.8,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Show all",
+   "kind": "a",
+   "width": 35.7,
+   "height": 12,
+   "tall": 12,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "New artist name",
+   "kind": "input",
+   "width": 148.2,
+   "height": 32,
+   "tall": 32,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "New artist formed",
+   "kind": "input",
+   "width": 72,
+   "height": 32,
+   "tall": 32,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "New artist country",
+   "kind": "input",
+   "width": 104,
+   "height": 32,
+   "tall": 32,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Add",
+   "kind": "button",
+   "width": 123.8,
+   "height": 32,
+   "tall": 32,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Lineup",
+   "kind": "button",
+   "width": 59.8,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit 999",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete 999",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Lineup",
+   "kind": "button",
+   "width": 59.8,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Buddy Rich",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Buddy Rich",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Lineup",
+   "kind": "button",
+   "width": 59.8,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Darkside (22)",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Darkside (22)",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Lineup",
+   "kind": "button",
+   "width": 59.8,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Death Grips",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Death Grips",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Lineup",
+   "kind": "button",
+   "width": 59.8,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Deerhunter",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Deerhunter",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Lineup",
+   "kind": "button",
+   "width": 59.8,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Dire Straits",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Dire Straits",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Lineup",
+   "kind": "button",
+   "width": 59.8,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Discharge",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Discharge",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Lineup",
+   "kind": "button",
+   "width": 59.8,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Donna Summer",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Donna Summer",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Lineup",
+   "kind": "button",
+   "width": 59.8,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Donovan",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Donovan",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Lineup",
+   "kind": "button",
+   "width": 59.8,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Hello Mary",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Hello Mary",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Lineup",
+   "kind": "button",
+   "width": 59.8,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Jeff Beck",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Jeff Beck",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Lineup",
+   "kind": "button",
+   "width": 59.8,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit John Lennon",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete John Lennon",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Lineup",
+   "kind": "button",
+   "width": 59.8,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Luther Vandross",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Luther Vandross",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Lineup",
+   "kind": "button",
+   "width": 59.8,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit MGMT",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete MGMT",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Lineup",
+   "kind": "button",
+   "width": 59.8,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Miles Davis",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Miles Davis",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Lineup",
+   "kind": "button",
+   "width": 59.8,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Panda Bear",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Panda Bear",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Lineup",
+   "kind": "button",
+   "width": 59.8,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Pavement",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Pavement",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Lineup",
+   "kind": "button",
+   "width": 59.8,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Portishead",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Portishead",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Lineup",
+   "kind": "button",
+   "width": 59.8,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Protomartyr (2)",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Protomartyr (2)",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Lineup",
+   "kind": "button",
+   "width": 59.8,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Simon & Garfunkel",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Simon & Garfunkel",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Lineup",
+   "kind": "button",
+   "width": 59.8,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Smerz (2)",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Smerz (2)",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Lineup",
+   "kind": "button",
+   "width": 59.8,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Steely Dan",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Steely Dan",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Lineup",
+   "kind": "button",
+   "width": 59.8,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit The Blues Project",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete The Blues Project",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Lineup",
+   "kind": "button",
+   "width": 59.8,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit The Doors",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete The Doors",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  }
+ ],
+ "Manage, Genres at 390": [
+  {
+   "name": "Artists",
+   "kind": "button",
+   "width": 54.3,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Genres",
+   "kind": "button",
+   "width": 58,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Labels",
+   "kind": "button",
+   "width": 54.7,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Formats",
+   "kind": "button",
+   "width": 62.5,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Stores",
+   "kind": "button",
+   "width": 54.5,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Tags",
+   "kind": "button",
+   "width": 46.8,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "New genre name",
+   "kind": "input",
+   "width": 277,
+   "height": 32,
+   "tall": 32,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Add",
+   "kind": "button",
+   "width": 45,
+   "height": 32,
+   "tall": 32,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —Alt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic RockDis",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Abstract",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Abstract",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic RockDi",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Alt-Pop",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Alt-Pop",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAmbientAORArt RockBlack MetalBlues RockClassic RockDiscoDownte",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Alternative Rock",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Alternative Rock",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORBlack MetalBlues RockClassic RockDis",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Art Rock",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Art Rock",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Dub",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Dub",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAORArt RockBlack MetalBlues RockClassic RockDi",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Electronic",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Electronic",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAORArt RockBlack MetalBlues RockClassic RockDi",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Ambient",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Ambient",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Downtempo",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Downtempo",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Trip Hop",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Trip Hop",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Experimental",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Experimental",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic",
+   "kind": "select",
+   "width": 128,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Folk, World, & Country",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Folk, World, & Country",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Funk / Soul",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Funk / Soul",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Disco",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Disco",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Gospel",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Gospel",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Hip Hop",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Hip Hop",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Hardcore Hip-Hop",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Hardcore Hip-Hop",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Industrial",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Industrial",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Jazz",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Jazz",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Fusion",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Fusion",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Jazz-Rock",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Jazz-Rock",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Swing",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Swing",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Lo-Fi",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Lo-Fi",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Math Rock",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Math Rock",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Pop",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Pop",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Indie Pop",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Indie Pop",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Synth-pop",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Synth-pop",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Post-Punk",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Post-Punk",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientArt RockDiscoDowntempoDubElectronicExpe",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Rock",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Rock",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientArt RockBlack MetalBlues RockClassic Ro",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit AOR",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete AOR",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalClassic RockDisco",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Blues Rock",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Blues Rock",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockDiscoDo",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Classic Rock",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Classic Rock",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Folk Rock",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Folk Rock",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlues RockClassic RockDiscoD",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Heavy Metal",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Heavy Metal",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlues RockClassic RockDiscoD",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Black Metal",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Black Metal",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Indie Rock",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Indie Rock",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Pop Rock",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Pop Rock",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Psychedelic Rock",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Psychedelic Rock",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Punk",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Punk",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit UK82",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete UK82",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit US Hardcore",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete US Hardcore",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Rock & Roll",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Rock & Roll",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Shoegaze",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Shoegaze",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Suggest a hierarchy",
+   "kind": "button",
+   "width": 93.8,
+   "height": 16.5,
+   "tall": 18,
+   "left": 0,
+   "right": 0
+  }
+ ],
+ "Manage, Labels at 390": [
+  {
+   "name": "Artists",
+   "kind": "button",
+   "width": 54.3,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Genres",
+   "kind": "button",
+   "width": 58,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Labels",
+   "kind": "button",
+   "width": 54.7,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Formats",
+   "kind": "button",
+   "width": 62.5,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Stores",
+   "kind": "button",
+   "width": 54.5,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Tags",
+   "kind": "button",
+   "width": 46.8,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "New label name",
+   "kind": "input",
+   "width": 296,
+   "height": 32,
+   "tall": 32,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "New label discogs id",
+   "kind": "input",
+   "width": 104,
+   "height": 32,
+   "tall": 32,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Add",
+   "kind": "button",
+   "width": 72,
+   "height": 32,
+   "tall": 32,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit 4AD",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete 4AD",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit A&M",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete A&M",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Capitol Records",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Capitol Records",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Casablanca",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Casablanca",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Columbia",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Columbia",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Domino",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Domino",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Elektra",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Elektra",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Epic",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Epic",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Frenchkiss Records",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Frenchkiss Records",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Ghostly International",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Ghostly International",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Hardly Art",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Hardly Art",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit MCA Records",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete MCA Records",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Matador",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Matador",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Mom + Pop",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Mom + Pop",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Nice Life",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Nice Life",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Profile Records",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Profile Records",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit RCA Victor",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete RCA Victor",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit United Artists Records",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete United Artists Records",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Verve Forecast",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Verve Forecast",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Verve Records",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Verve Records",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Warner Bros. Records",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Warner Bros. Records",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit XL Recordings",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete XL Recordings",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  }
+ ],
+ "Manage, Formats at 390": [
+  {
+   "name": "Artists",
+   "kind": "button",
+   "width": 54.3,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Genres",
+   "kind": "button",
+   "width": 58,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Labels",
+   "kind": "button",
+   "width": 54.7,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Formats",
+   "kind": "button",
+   "width": 62.5,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Stores",
+   "kind": "button",
+   "width": 54.5,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Tags",
+   "kind": "button",
+   "width": 46.8,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "New format name",
+   "kind": "input",
+   "width": 424,
+   "height": 32,
+   "tall": 32,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Add",
+   "kind": "button",
+   "width": 72,
+   "height": 32,
+   "tall": 32,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit 10\"",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete 10\"",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit 12\" Single",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete 12\" Single",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit 2xLP",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete 2xLP",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit 7\"",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete 7\"",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Box Set",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Box Set",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit LP",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete LP",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Picture Disc",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Picture Disc",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  }
+ ],
+ "Manage, Stores at 390": [
+  {
+   "name": "Artists",
+   "kind": "button",
+   "width": 54.3,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Genres",
+   "kind": "button",
+   "width": 58,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Labels",
+   "kind": "button",
+   "width": 54.7,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Formats",
+   "kind": "button",
+   "width": 62.5,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Stores",
+   "kind": "button",
+   "width": 54.5,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Tags",
+   "kind": "button",
+   "width": 46.8,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "New store name",
+   "kind": "input",
+   "width": 85.7,
+   "height": 32,
+   "tall": 32,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "New store city",
+   "kind": "input",
+   "width": 120,
+   "height": 32,
+   "tall": 32,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "New store country",
+   "kind": "input",
+   "width": 88,
+   "height": 32,
+   "tall": 32,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Add",
+   "kind": "button",
+   "width": 72,
+   "height": 32,
+   "tall": 32,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Matador Records",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Matador Records",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Rough Trade",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Rough Trade",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Very Friendly Records",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Very Friendly Records",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  }
+ ],
+ "Manage, Tags at 390": [
+  {
+   "name": "Artists",
+   "kind": "button",
+   "width": 54.3,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Genres",
+   "kind": "button",
+   "width": 58,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Labels",
+   "kind": "button",
+   "width": 54.7,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Formats",
+   "kind": "button",
+   "width": 62.5,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Stores",
+   "kind": "button",
+   "width": 54.5,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Tags",
+   "kind": "button",
+   "width": 46.8,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "New tag name",
+   "kind": "input",
+   "width": 424,
+   "height": 32,
+   "tall": 32,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Add",
+   "kind": "button",
+   "width": 72,
+   "height": 32,
+   "tall": 32,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Mom",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Mom",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  }
+ ],
+ "Want list at 320": [
+  {
+   "name": "Look up a record",
+   "kind": "a",
+   "width": 161.2,
+   "height": 44,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Suggestions",
+   "kind": "a",
+   "width": 58.6,
+   "height": 44,
+   "tall": 44,
+   "left": 9,
+   "right": 8
+  },
+  {
+   "name": "Still wanted",
+   "kind": "a",
+   "width": 72.4,
+   "height": 26.5,
+   "tall": 44,
+   "left": 9,
+   "right": 1
+  },
+  {
+   "name": "Acquired",
+   "kind": "a",
+   "width": 60.2,
+   "height": 26.5,
+   "tall": 44,
+   "left": 2,
+   "right": 8
+  },
+  {
+   "name": "Person Pitch",
+   "kind": "a",
+   "width": 101.4,
+   "height": 44,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit",
+   "kind": "a",
+   "width": 17.8,
+   "height": 14,
+   "tall": 44,
+   "left": 4,
+   "right": 8
+  },
+  {
+   "name": "Mark acquired",
+   "kind": "a",
+   "width": 85.6,
+   "height": 26.5,
+   "tall": 44,
+   "left": 9,
+   "right": 8
+  },
+  {
+   "name": "Delete",
+   "kind": "button",
+   "width": 30.5,
+   "height": 16.5,
+   "tall": 44,
+   "left": 9,
+   "right": 8
+  },
+  {
+   "name": "Dummy",
+   "kind": "a",
+   "width": 67.8,
+   "height": 44,
+   "tall": 45,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit",
+   "kind": "a",
+   "width": 17.8,
+   "height": 14,
+   "tall": 44,
+   "left": 4,
+   "right": 8
+  },
+  {
+   "name": "Mark acquired",
+   "kind": "a",
+   "width": 85.6,
+   "height": 26.5,
+   "tall": 44,
+   "left": 9,
+   "right": 8
+  },
+  {
+   "name": "Delete",
+   "kind": "button",
+   "width": 30.5,
+   "height": 16.5,
+   "tall": 44,
+   "left": 9,
+   "right": 8
+  },
+  {
+   "name": "Bad Girls",
+   "kind": "a",
+   "width": 75.8,
+   "height": 44,
+   "tall": 45,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit",
+   "kind": "a",
+   "width": 17.8,
+   "height": 14,
+   "tall": 44,
+   "left": 4,
+   "right": 8
+  },
+  {
+   "name": "Mark acquired",
+   "kind": "a",
+   "width": 85.6,
+   "height": 26.5,
+   "tall": 44,
+   "left": 9,
+   "right": 8
+  },
+  {
+   "name": "Delete",
+   "kind": "button",
+   "width": 30.5,
+   "height": 16.5,
+   "tall": 44,
+   "left": 9,
+   "right": 8
+  },
+  {
+   "name": "Separates",
+   "kind": "a",
+   "width": 84.6,
+   "height": 44,
+   "tall": 45,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit",
+   "kind": "a",
+   "width": 17.8,
+   "height": 14,
+   "tall": 44,
+   "left": 4,
+   "right": 8
+  },
+  {
+   "name": "Mark acquired",
+   "kind": "a",
+   "width": 85.6,
+   "height": 26.5,
+   "tall": 44,
+   "left": 9,
+   "right": 8
+  },
+  {
+   "name": "Delete",
+   "kind": "button",
+   "width": 30.5,
+   "height": 16.5,
+   "tall": 44,
+   "left": 9,
+   "right": 8
+  },
+  {
+   "name": "Under Color Of Official Right",
+   "kind": "a",
+   "width": 210.6,
+   "height": 44,
+   "tall": 45,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit",
+   "kind": "a",
+   "width": 17.8,
+   "height": 14,
+   "tall": 44,
+   "left": 4,
+   "right": 8
+  },
+  {
+   "name": "Mark acquired",
+   "kind": "a",
+   "width": 85.6,
+   "height": 26.5,
+   "tall": 44,
+   "left": 9,
+   "right": 8
+  },
+  {
+   "name": "Delete",
+   "kind": "button",
+   "width": 30.5,
+   "height": 16.5,
+   "tall": 44,
+   "left": 9,
+   "right": 8
+  },
+  {
+   "name": "Halcyon Digest",
+   "kind": "a",
+   "width": 118.9,
+   "height": 44,
+   "tall": 45,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit",
+   "kind": "a",
+   "width": 17.8,
+   "height": 14,
+   "tall": 44,
+   "left": 4,
+   "right": 8
+  },
+  {
+   "name": "Mark acquired",
+   "kind": "a",
+   "width": 85.6,
+   "height": 26.5,
+   "tall": 44,
+   "left": 9,
+   "right": 8
+  },
+  {
+   "name": "Delete",
+   "kind": "button",
+   "width": 30.5,
+   "height": 16.5,
+   "tall": 44,
+   "left": 9,
+   "right": 8
+  },
+  {
+   "name": "Aja",
+   "kind": "a",
+   "width": 35.3,
+   "height": 44,
+   "tall": 45,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit",
+   "kind": "a",
+   "width": 17.8,
+   "height": 14,
+   "tall": 44,
+   "left": 4,
+   "right": 8
+  },
+  {
+   "name": "Mark acquired",
+   "kind": "a",
+   "width": 85.6,
+   "height": 26.5,
+   "tall": 44,
+   "left": 9,
+   "right": 8
+  },
+  {
+   "name": "Delete",
+   "kind": "button",
+   "width": 30.5,
+   "height": 16.5,
+   "tall": 44,
+   "left": 9,
+   "right": 8
+  }
+ ],
+ "Want list, acquired at 320": [
+  {
+   "name": "Look up a record",
+   "kind": "a",
+   "width": 161.2,
+   "height": 44,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Suggestions",
+   "kind": "a",
+   "width": 58.6,
+   "height": 44,
+   "tall": 44,
+   "left": 9,
+   "right": 8
+  },
+  {
+   "name": "Still wanted",
+   "kind": "a",
+   "width": 72.4,
+   "height": 26.5,
+   "tall": 44,
+   "left": 9,
+   "right": 1
+  },
+  {
+   "name": "Acquired",
+   "kind": "a",
+   "width": 60.2,
+   "height": 26.5,
+   "tall": 44,
+   "left": 2,
+   "right": 8
+  }
+ ],
+ "Look up at 320": [
+  {
+   "name": "catno",
+   "kind": "input",
+   "width": 284,
+   "height": 36,
+   "tall": 57,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "artist",
+   "kind": "input",
+   "width": 284,
+   "height": 36,
+   "tall": 57,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "title",
+   "kind": "input",
+   "width": 284,
+   "height": 36,
+   "tall": 57,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "country",
+   "kind": "input",
+   "width": 284,
+   "height": 36,
+   "tall": 57,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "format",
+   "kind": "input",
+   "width": 284,
+   "height": 36,
+   "tall": 57,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "More search terms",
+   "kind": "summary",
+   "width": 100.4,
+   "height": 16.5,
+   "tall": 45,
+   "left": 9,
+   "right": 8
+  },
+  {
+   "name": "Search Discogs",
+   "kind": "button",
+   "width": 117.8,
+   "height": 44,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  }
+ ],
+ "Stats at 320": [
+  {
+   "name": "Abstract",
+   "kind": "a",
+   "width": 47.5,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Alt-Pop",
+   "kind": "a",
+   "width": 41.9,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Alternative Rock",
+   "kind": "a",
+   "width": 90.5,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Art Rock",
+   "kind": "a",
+   "width": 47.9,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Dub",
+   "kind": "a",
+   "width": 23,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Electronic5 · 5",
+   "kind": "summary",
+   "width": 284,
+   "height": 44,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Electronic",
+   "kind": "a",
+   "width": 54.7,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Experimental",
+   "kind": "a",
+   "width": 72.5,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Folk, World, & Country",
+   "kind": "a",
+   "width": 123.4,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Funk / Soul1 · 1",
+   "kind": "summary",
+   "width": 284,
+   "height": 44,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Funk / Soul",
+   "kind": "a",
+   "width": 61.4,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Gospel",
+   "kind": "a",
+   "width": 39.1,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Hip Hop1 · 1",
+   "kind": "summary",
+   "width": 284,
+   "height": 44,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Hip Hop",
+   "kind": "a",
+   "width": 45.3,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Industrial",
+   "kind": "a",
+   "width": 50.3,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Jazz3 · 4",
+   "kind": "summary",
+   "width": 284,
+   "height": 44,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Jazz",
+   "kind": "a",
+   "width": 26,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Lo-Fi",
+   "kind": "a",
+   "width": 28.7,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Math Rock",
+   "kind": "a",
+   "width": 60.1,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Pop3 · 3",
+   "kind": "summary",
+   "width": 284,
+   "height": 44,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Pop",
+   "kind": "a",
+   "width": 22,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Post-Punk",
+   "kind": "a",
+   "width": 58.2,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Rock13 · 13",
+   "kind": "summary",
+   "width": 284,
+   "height": 44,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Rock",
+   "kind": "a",
+   "width": 27.9,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Shoegaze",
+   "kind": "a",
+   "width": 56,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Epic",
+   "kind": "a",
+   "width": 23.6,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Columbia",
+   "kind": "a",
+   "width": 52.6,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Elektra",
+   "kind": "a",
+   "width": 38.1,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Matador",
+   "kind": "a",
+   "width": 47.3,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Capitol Records",
+   "kind": "a",
+   "width": 88,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Casablanca",
+   "kind": "a",
+   "width": 65.4,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Frenchkiss Records",
+   "kind": "a",
+   "width": 108.9,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "MCA Records",
+   "kind": "a",
+   "width": 77,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Mom + Pop",
+   "kind": "a",
+   "width": 64.9,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Profile Records",
+   "kind": "a",
+   "width": 83.7,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Verve Forecast",
+   "kind": "a",
+   "width": 83.6,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Verve Records",
+   "kind": "a",
+   "width": 81.2,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Warner Bros. Records",
+   "kind": "a",
+   "width": 120.6,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "XL Recordings",
+   "kind": "a",
+   "width": 80.2,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Very Friendly Records",
+   "kind": "a",
+   "width": 121.5,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Matador Records",
+   "kind": "a",
+   "width": 96.2,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Rough Trade",
+   "kind": "a",
+   "width": 71.4,
+   "height": 16,
+   "tall": 44,
+   "left": 0,
+   "right": 0
+  }
+ ],
+ "Record form, editing at 320": [
+  {
+   "name": "← Believer",
+   "kind": "a",
+   "width": 54.9,
+   "height": 15,
+   "tall": 16,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "title",
+   "kind": "input",
+   "width": 284,
+   "height": 36,
+   "tall": 36,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Choose an artist999Adam HastingsAdrian UtleyAl KooperAlan ClarkAndrew GreenAndrew VanWynga",
+   "kind": "select",
+   "width": 284,
+   "height": 36,
+   "tall": 36,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "+ New artist",
+   "kind": "button",
+   "width": 62.9,
+   "height": 16,
+   "tall": 16,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "e.g. CLAY LP 3",
+   "kind": "input",
+   "width": 284,
+   "height": 36,
+   "tall": 36,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "matrixRunout",
+   "kind": "input",
+   "width": 284,
+   "height": 36,
+   "tall": 36,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Everything else",
+   "kind": "summary",
+   "width": 284,
+   "height": 20,
+   "tall": 20,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "No label4ADA&MCapitol RecordsCasablancaColumbiaDominoElektraEpicFrenchkiss RecordsGhostly ",
+   "kind": "select",
+   "width": 284,
+   "height": 36,
+   "tall": 36,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "+ New label",
+   "kind": "button",
+   "width": 60.8,
+   "height": 16,
+   "tall": 16,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "No format10\"12\" Single2xLP7\"Box SetLPPicture Disc",
+   "kind": "select",
+   "width": 284,
+   "height": 36,
+   "tall": 36,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "releaseYear",
+   "kind": "input",
+   "width": 284,
+   "height": 36,
+   "tall": 36,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Not gradedM — MintNM — Near MintVG+ — Very Good PlusVG — Very GoodG+ — Good PlusG — GoodF ",
+   "kind": "select",
+   "width": 284,
+   "height": 36,
+   "tall": 36,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Not gradedM — MintNM — Near MintVG+ — Very Good PlusVG — Very GoodG+ — Good PlusG — GoodF ",
+   "kind": "select",
+   "width": 284,
+   "height": 36,
+   "tall": 36,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "e.g. 24.50",
+   "kind": "input",
+   "width": 284,
+   "height": 36,
+   "tall": 36,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "purchaseDate",
+   "kind": "input",
+   "width": 284,
+   "height": 36,
+   "tall": 36,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "No storeMatador RecordsRough TradeVery Friendly Records",
+   "kind": "select",
+   "width": 284,
+   "height": 36,
+   "tall": 36,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "+ New store",
+   "kind": "button",
+   "width": 63,
+   "height": 16,
+   "tall": 16,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 31
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 37
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 30
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 33
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 35
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 29
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 34
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 34
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 38
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 27,
+   "left": 8,
+   "right": 40
+  },
+  {
+   "name": "INPUT",
+   "kind": "input",
+   "width": 1,
+   "height": 1,
+   "tall": 26,
+   "left": 8,
+   "right": 35
+  },
+  {
+   "name": "+ New tag",
+   "kind": "button",
+   "width": 53.6,
+   "height": 16,
+   "tall": 16,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "e.g. UK",
+   "kind": "input",
+   "width": 284,
+   "height": 36,
+   "tall": 36,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "yearPressed",
+   "kind": "input",
+   "width": 284,
+   "height": 36,
+   "tall": 36,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "pressingPlant",
+   "kind": "input",
+   "width": 284,
+   "height": 36,
+   "tall": 36,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "e.g. 180",
+   "kind": "input",
+   "width": 284,
+   "height": 36,
+   "tall": 36,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "e.g. Black",
+   "kind": "input",
+   "width": 284,
+   "height": 36,
+   "tall": 36,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "isReissue",
+   "kind": "input",
+   "width": 16,
+   "height": 16,
+   "tall": 35,
+   "left": 0,
+   "right": 40
+  },
+  {
+   "name": "notes",
+   "kind": "textarea",
+   "width": 284,
+   "height": 94,
+   "tall": 81,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Save changes",
+   "kind": "button",
+   "width": 108.3,
+   "height": 32,
+   "tall": 32,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Cancel",
+   "kind": "a",
+   "width": 41.7,
+   "height": 20,
+   "tall": 20,
+   "left": 0,
+   "right": 0
+  }
+ ],
+ "Manage, Artists at 320": [
+  {
+   "name": "Artists",
+   "kind": "button",
+   "width": 54.3,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Genres",
+   "kind": "button",
+   "width": 58,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Labels",
+   "kind": "button",
+   "width": 54.7,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Formats",
+   "kind": "button",
+   "width": 62.5,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Stores",
+   "kind": "button",
+   "width": 54.5,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Tags",
+   "kind": "button",
+   "width": 46.8,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Show all",
+   "kind": "a",
+   "width": 35.7,
+   "height": 12,
+   "tall": 12,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "New artist name",
+   "kind": "input",
+   "width": 148.2,
+   "height": 32,
+   "tall": 32,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "New artist formed",
+   "kind": "input",
+   "width": 72,
+   "height": 32,
+   "tall": 32,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "New artist country",
+   "kind": "input",
+   "width": 104,
+   "height": 32,
+   "tall": 32,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Add",
+   "kind": "button",
+   "width": 123.8,
+   "height": 32,
+   "tall": 32,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Lineup",
+   "kind": "button",
+   "width": 59.8,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit 999",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete 999",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Lineup",
+   "kind": "button",
+   "width": 59.8,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Buddy Rich",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Buddy Rich",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Lineup",
+   "kind": "button",
+   "width": 59.8,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Darkside (22)",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Darkside (22)",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Lineup",
+   "kind": "button",
+   "width": 59.8,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Death Grips",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Death Grips",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Lineup",
+   "kind": "button",
+   "width": 59.8,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Deerhunter",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Deerhunter",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Lineup",
+   "kind": "button",
+   "width": 59.8,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Dire Straits",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Dire Straits",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Lineup",
+   "kind": "button",
+   "width": 59.8,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Discharge",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Discharge",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Lineup",
+   "kind": "button",
+   "width": 59.8,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Donna Summer",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Donna Summer",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Lineup",
+   "kind": "button",
+   "width": 59.8,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Donovan",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Donovan",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Lineup",
+   "kind": "button",
+   "width": 59.8,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Hello Mary",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Hello Mary",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Lineup",
+   "kind": "button",
+   "width": 59.8,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Jeff Beck",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Jeff Beck",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Lineup",
+   "kind": "button",
+   "width": 59.8,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit John Lennon",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete John Lennon",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Lineup",
+   "kind": "button",
+   "width": 59.8,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Luther Vandross",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Luther Vandross",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Lineup",
+   "kind": "button",
+   "width": 59.8,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit MGMT",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete MGMT",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Lineup",
+   "kind": "button",
+   "width": 59.8,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Miles Davis",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Miles Davis",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Lineup",
+   "kind": "button",
+   "width": 59.8,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Panda Bear",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Panda Bear",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Lineup",
+   "kind": "button",
+   "width": 59.8,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Pavement",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Pavement",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Lineup",
+   "kind": "button",
+   "width": 59.8,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Portishead",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Portishead",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Lineup",
+   "kind": "button",
+   "width": 59.8,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Protomartyr (2)",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Protomartyr (2)",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Lineup",
+   "kind": "button",
+   "width": 59.8,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Simon & Garfunkel",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Simon & Garfunkel",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Lineup",
+   "kind": "button",
+   "width": 59.8,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Smerz (2)",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Smerz (2)",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Lineup",
+   "kind": "button",
+   "width": 59.8,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Steely Dan",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Steely Dan",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Lineup",
+   "kind": "button",
+   "width": 59.8,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit The Blues Project",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete The Blues Project",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Lineup",
+   "kind": "button",
+   "width": 59.8,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit The Doors",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete The Doors",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  }
+ ],
+ "Manage, Genres at 320": [
+  {
+   "name": "Artists",
+   "kind": "button",
+   "width": 54.3,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Genres",
+   "kind": "button",
+   "width": 58,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Labels",
+   "kind": "button",
+   "width": 54.7,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Formats",
+   "kind": "button",
+   "width": 62.5,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Stores",
+   "kind": "button",
+   "width": 54.5,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Tags",
+   "kind": "button",
+   "width": 46.8,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "New genre name",
+   "kind": "input",
+   "width": 207,
+   "height": 32,
+   "tall": 32,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Add",
+   "kind": "button",
+   "width": 45,
+   "height": 32,
+   "tall": 32,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —Alt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic RockDis",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Abstract",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Abstract",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic RockDi",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Alt-Pop",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Alt-Pop",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAmbientAORArt RockBlack MetalBlues RockClassic RockDiscoDownte",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Alternative Rock",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Alternative Rock",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORBlack MetalBlues RockClassic RockDis",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Art Rock",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Art Rock",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Dub",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Dub",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAORArt RockBlack MetalBlues RockClassic RockDi",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Electronic",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Electronic",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAORArt RockBlack MetalBlues RockClassic RockDi",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Ambient",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Ambient",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Downtempo",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Downtempo",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Trip Hop",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Trip Hop",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Experimental",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Experimental",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic",
+   "kind": "select",
+   "width": 128,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Folk, World, & Country",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Folk, World, & Country",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Funk / Soul",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Funk / Soul",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Disco",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Disco",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Gospel",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Gospel",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Hip Hop",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Hip Hop",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Hardcore Hip-Hop",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Hardcore Hip-Hop",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Industrial",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Industrial",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Jazz",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Jazz",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Fusion",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Fusion",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Jazz-Rock",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Jazz-Rock",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Swing",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Swing",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Lo-Fi",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Lo-Fi",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Math Rock",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Math Rock",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Pop",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Pop",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Indie Pop",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Indie Pop",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Synth-pop",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Synth-pop",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Post-Punk",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Post-Punk",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientArt RockDiscoDowntempoDubElectronicExpe",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Rock",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Rock",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientArt RockBlack MetalBlues RockClassic Ro",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit AOR",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete AOR",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalClassic RockDisco",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Blues Rock",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Blues Rock",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockDiscoDo",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Classic Rock",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Classic Rock",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Folk Rock",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Folk Rock",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlues RockClassic RockDiscoD",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Heavy Metal",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Heavy Metal",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlues RockClassic RockDiscoD",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Black Metal",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Black Metal",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Indie Rock",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Indie Rock",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Pop Rock",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Pop Rock",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Psychedelic Rock",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Psychedelic Rock",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Punk",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Punk",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit UK82",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete UK82",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit US Hardcore",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete US Hardcore",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Rock & Roll",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Rock & Roll",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "— top level —AbstractAlt-PopAlternative RockAmbientAORArt RockBlack MetalBlues RockClassic",
+   "kind": "select",
+   "width": 143,
+   "height": 36,
+   "tall": 36,
+   "left": 6,
+   "right": 0
+  },
+  {
+   "name": "Edit Shoegaze",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Shoegaze",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Suggest a hierarchy",
+   "kind": "button",
+   "width": 93.8,
+   "height": 16.5,
+   "tall": 18,
+   "left": 0,
+   "right": 0
+  }
+ ],
+ "Manage, Labels at 320": [
+  {
+   "name": "Artists",
+   "kind": "button",
+   "width": 54.3,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Genres",
+   "kind": "button",
+   "width": 58,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Labels",
+   "kind": "button",
+   "width": 54.7,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Formats",
+   "kind": "button",
+   "width": 62.5,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Stores",
+   "kind": "button",
+   "width": 54.5,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Tags",
+   "kind": "button",
+   "width": 46.8,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "New label name",
+   "kind": "input",
+   "width": 296,
+   "height": 32,
+   "tall": 32,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "New label discogs id",
+   "kind": "input",
+   "width": 104,
+   "height": 32,
+   "tall": 32,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Add",
+   "kind": "button",
+   "width": 72,
+   "height": 32,
+   "tall": 32,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit 4AD",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete 4AD",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit A&M",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete A&M",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Capitol Records",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Capitol Records",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Casablanca",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Casablanca",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Columbia",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Columbia",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Domino",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Domino",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Elektra",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Elektra",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Epic",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Epic",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Frenchkiss Records",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Frenchkiss Records",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Ghostly International",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Ghostly International",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Hardly Art",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Hardly Art",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit MCA Records",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete MCA Records",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Matador",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Matador",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Mom + Pop",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Mom + Pop",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Nice Life",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Nice Life",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Profile Records",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Profile Records",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit RCA Victor",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete RCA Victor",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit United Artists Records",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete United Artists Records",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Verve Forecast",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Verve Forecast",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Verve Records",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Verve Records",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Warner Bros. Records",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Warner Bros. Records",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit XL Recordings",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete XL Recordings",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  }
+ ],
+ "Manage, Formats at 320": [
+  {
+   "name": "Artists",
+   "kind": "button",
+   "width": 54.3,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Genres",
+   "kind": "button",
+   "width": 58,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Labels",
+   "kind": "button",
+   "width": 54.7,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Formats",
+   "kind": "button",
+   "width": 62.5,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Stores",
+   "kind": "button",
+   "width": 54.5,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Tags",
+   "kind": "button",
+   "width": 46.8,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "New format name",
+   "kind": "input",
+   "width": 424,
+   "height": 32,
+   "tall": 32,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Add",
+   "kind": "button",
+   "width": 72,
+   "height": 32,
+   "tall": 32,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit 10\"",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete 10\"",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit 12\" Single",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete 12\" Single",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit 2xLP",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete 2xLP",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit 7\"",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete 7\"",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Box Set",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Box Set",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit LP",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete LP",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Picture Disc",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Picture Disc",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  }
+ ],
+ "Manage, Stores at 320": [
+  {
+   "name": "Artists",
+   "kind": "button",
+   "width": 54.3,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Genres",
+   "kind": "button",
+   "width": 58,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Labels",
+   "kind": "button",
+   "width": 54.7,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Formats",
+   "kind": "button",
+   "width": 62.5,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Stores",
+   "kind": "button",
+   "width": 54.5,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Tags",
+   "kind": "button",
+   "width": 46.8,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "New store name",
+   "kind": "input",
+   "width": 85.7,
+   "height": 32,
+   "tall": 32,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "New store city",
+   "kind": "input",
+   "width": 120,
+   "height": 32,
+   "tall": 32,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "New store country",
+   "kind": "input",
+   "width": 88,
+   "height": 32,
+   "tall": 32,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Add",
+   "kind": "button",
+   "width": 72,
+   "height": 32,
+   "tall": 32,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Matador Records",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Matador Records",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Rough Trade",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Rough Trade",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Very Friendly Records",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Very Friendly Records",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  }
+ ],
+ "Manage, Tags at 320": [
+  {
+   "name": "Artists",
+   "kind": "button",
+   "width": 54.3,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Genres",
+   "kind": "button",
+   "width": 58,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Labels",
+   "kind": "button",
+   "width": 54.7,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Formats",
+   "kind": "button",
+   "width": 62.5,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Stores",
+   "kind": "button",
+   "width": 54.5,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Tags",
+   "kind": "button",
+   "width": 46.8,
+   "height": 32.5,
+   "tall": 34,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "New tag name",
+   "kind": "input",
+   "width": 424,
+   "height": 32,
+   "tall": 32,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Add",
+   "kind": "button",
+   "width": 72,
+   "height": 32,
+   "tall": 32,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Edit Mom",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  },
+  {
+   "name": "Delete Mom",
+   "kind": "button",
+   "width": 28,
+   "height": 28,
+   "tall": 28,
+   "left": 0,
+   "right": 0
+  }
+ ]
+}

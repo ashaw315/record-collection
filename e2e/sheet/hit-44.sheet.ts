@@ -38,7 +38,7 @@ test('controls meeting 44 to a finger on the five screens, at 390 and 320', asyn
   const editPath = `/records/${href.split('/').pop() ?? ''}/edit`;
 
   const md = ['# Controls meeting 44 to a finger, on the real collection', '', `Read-only, desktop Chromium at a phone’s widths. “Meets” is ${HIT_FLOOR} or more rows of pixels down the control’s middle on which a tap reaches it; “past ${HIT_PAST}” is a control a tap reaches from more than ${HIT_PAST} beyond its drawn edge; “off” is past the window’s edge, where nothing can be read.`, '',
-    '| screen | window | controls | meets 44 | under 44 | past 9 | off | under 44, by name and rows |', '|---|---|---|---|---|---|---|---|'];
+    '| screen | window | page height | controls | meets 44 | under 44 | past 9 | off | under 44, by name and rows |', '|---|---|---|---|---|---|---|---|---|'];
   const all: Record<string, Reach[]> = {};
   const row = async (name: string, width: number, within: string) => {
     const reach = await readReach(page, within);
@@ -48,7 +48,7 @@ test('controls meeting 44 to a finger on the five screens, at 390 and 320', asyn
     const tally = new Map<string, number>();
     for (const r of under) tally.set(`${r.name.slice(0, 24)} ${r.tall}`, (tally.get(`${r.name.slice(0, 24)} ${r.tall}`) ?? 0) + 1);
     const named = [...tally.entries()].slice(0, 12).map(([k, n]) => (n > 1 ? `${k} ×${n}` : k)).join('; ') + (tally.size > 12 ? `; and ${tally.size - 12} more kinds` : '');
-    md.push(`| ${name} | ${width} | ${reach.length} | **${reach.length - under.length}** | ${under.length} | ${reach.filter((r) => r.left > HIT_PAST || r.right > HIT_PAST).length} | ${off} | ${named} |`);
+    md.push(`| ${name} | ${width} | ${await page.evaluate(() => document.documentElement.scrollHeight)} | ${reach.length} | **${reach.length - under.length}** | ${under.length} | ${reach.filter((r) => r.left > HIT_PAST || r.right > HIT_PAST).length} | ${off} | ${named} |`);
     await page.screenshot({ path: join(OUT, `${name.toLowerCase().replace(/[^a-z]+/g, '-')}-w${width}-meets${reach.length - under.length}of${reach.length}.png`), fullPage: true });
   };
 

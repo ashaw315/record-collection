@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist, trackCreated } from './cleanup';
 import { login } from './sign-in';
+import { HIT_FLOOR, HIT_PAST, readReach } from './hit-area';
 
 /* Records and artists removed after each test — see e2e/cleanup.ts. */
 registerCleanup();
@@ -455,3 +456,39 @@ test('empty genres stay on the screen and recede', async ({ page }) => {
 
   expect(emptyColour, 'the empty row recedes').not.toBe(filledColour);
 });
+
+/*
+  Step 126, §9.3 and the handoff's hit-area rules, on stats: "the row
+  height where controls stack with no gap". A genre's row, a branch's
+  opened rows, a label's and a store's are each a link in a column of
+  links, so the row is what is 44.
+*/
+for (const width of [320, 390, 768, 1280]) {
+  /* Fails against rows of 27.5 and 33.5: the links read 16 and 17 to a finger, a branch's row 28. */
+  test(`every control on stats is 44 tall to a finger and reaches no more than 9 past itself, at ${width}`, async ({ page }) => {
+    const suffix = makeSuffix();
+    const artist = await post(page, '/api/artists', { name: `Reach-${suffix}` });
+    trackArtist(artist.id as string);
+    const parent = await post(page, '/api/genres', { name: `Punk-${suffix}` });
+    const child = await post(page, '/api/genres', { name: `UK82-${suffix}`, parentGenreId: parent.id });
+    for (const n of [1, 2]) {
+      const label = await post(page, '/api/labels', { name: `Label${n}-${suffix}` });
+      const store = await post(page, '/api/stores', { name: `Shop${n}-${suffix}` });
+      await post(page, '/api/records', { title: `Reach ${n} ${suffix}`, artistId: artist.id, genreIds: [n === 1 ? child.id : parent.id], labelId: label.id, storeId: store.id, releaseYear: 1982, purchasePrice: '20.00' });
+    }
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto(`/stats?artistId=${artist.id}`);
+    await expect(page.getByTestId('by-label')).toContainText(`Label2-${suffix}`);
+    /* The branch opened, by its figures and not its name, which is a link. */
+    await page.getByTestId(`genre-pair-${parent.id}`).click();
+    await expect(page.getByTestId(`genre-row-${child.id}`)).toBeVisible();
+    await page.evaluate(() => document.fonts.ready);
+
+    const reach = await readReach(page);
+    const names = reach.map((r) => r.name);
+    for (const name of [`UK82-${suffix}`, `Label1-${suffix}`, `Label2-${suffix}`, `Shop1-${suffix}`, `Shop2-${suffix}`]) expect(names, 'the link is on the screen to be read').toContain(name);
+    expect(reach.filter((r) => r.kind === 'summary').length, 'a branch’s row is a control too').toBeGreaterThan(0);
+    expect.soft(reach.filter((r) => r.tall < HIT_FLOOR).map((r) => `${r.kind} ${r.name.slice(0, 30)}: ${r.tall}`), `at ${width}: controls under ${HIT_FLOOR} to a finger, of ${reach.length}`).toEqual([]);
+    expect.soft(reach.filter((r) => r.kind === 'a' && (r.left > HIT_PAST || r.right > HIT_PAST)).map((r) => `${r.name}: ${r.left} left, ${r.right} right`), `at ${width}: links a tap reaches from more than ${HIT_PAST} past them`).toEqual([]);
+  });
+}

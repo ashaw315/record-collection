@@ -53,7 +53,12 @@ export function readReach(page: Page, within = 'main', except?: string): Promise
       const x = r.left + r.width / 2;
       const y = r.top + r.height / 2;
       let tall = 0;
-      for (let dy = -40; dy <= 40; dy += 1) if (reaches(x, Math.round(y) + dy)) tall += 1;
+      /*
+        From the middle itself and not the pixel nearest it: a row of exactly
+        44 that starts between two pixels holds 43 whole ones, which is what
+        a rounded middle counted (stats at 320, one engine, step 126).
+      */
+      for (let dy = -40; dy <= 40; dy += 1) if (reaches(x, y + dy)) tall += 1;
       let left = 0;
       while (left < 40 && reaches(r.left - left - 1, y)) left += 1;
       let right = 0;

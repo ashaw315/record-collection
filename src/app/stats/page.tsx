@@ -6,6 +6,7 @@ import { genrePairs } from './genre-pairs';
 import { GenreTree } from './GenreTree';
 import { estimatedValueStatement, spendStatement } from './value-statement';
 import { SCREEN_FRAME } from '@/app/screen-frame';
+import { HIT, HIT_ALONE } from '@/app/hit-area';
 
 /**
  * SPEC.md §10 `/stats`: "Total records, total spend, estimated value, breakdown
@@ -66,17 +67,23 @@ function Breakdown({
       {rows.length === 0 ? (
         <p className="text-prose text-muted-foreground">{emptyMessage}</p>
       ) : (
-        <ul className="space-y-2">
+        /*
+          §9.3, step 126: where the rows are links they stack with nothing
+          between, so the row is 44, the name and its bar in its middle,
+          and the 8 there was between rows is inside it. Decades are not
+          links and keep the pitch they had.
+        */
+        <ul className={href === undefined ? 'space-y-2' : undefined}>
           {rows.map((row) => (
-            <li key={row.id}>
+            <li key={row.id} className={href === undefined ? undefined : 'flex min-h-[44px] flex-col justify-center'}>
               <div className="flex items-baseline justify-between gap-3 text-detail">
                 {/* Linked where the collection can be filtered by it: a
                     breakdown is only useful if you can open what it counts. */}
-                <span className="min-w-0 truncate">
+                <span className="min-w-0 overflow-x-clip text-ellipsis whitespace-nowrap">
                   {href === undefined ? (
                     row.name
                   ) : (
-                    <Link href={href(row.id)} className="underline-offset-2 hover:underline">
+                    <Link href={href(row.id)} className={`${HIT} underline-offset-2 before:inset-x-0 hover:underline`}>
                       {row.name}
                     </Link>
                   )}
@@ -248,7 +255,7 @@ export default async function StatsPage({
             <Link
               href="/records/new"
               data-testid="stats-empty-action"
-              className="mt-3 inline-block text-label underline underline-offset-2"
+              className={`${HIT_ALONE} mt-3 inline-block text-label underline underline-offset-2`}
             >
               Add a record
             </Link>

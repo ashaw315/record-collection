@@ -41397,3 +41397,63 @@ chromium 159, capture 0, mobile 111`; step 123's twelve slot tests are
 among them and hold at 30 and 24. Unit under `src/app`: `1292 passed,
 tree unchanged — OK`. Typecheck and build clean; lint 0 errors, 27
 warnings.
+
+## Step 126: stats' hit areas, by the row (11 Oct)
+
+**Built.** Every link on stats stands in a column of links with nothing
+between them, so no overlay reaches 44 without taking its neighbour's:
+the handoff's "row height where controls stack with no gap".
+
+- A genre's row is 44 from 27.5 (`GenreTree.tsx`), the name and its
+  figures on one baseline in its middle. A branch's row is its summary,
+  44 with it.
+- A label's and a store's row is 44 from a pitch of 33.5 (25.5 of name
+  and bar, 8 between): the 8 is inside the row now and the name and bar
+  stand in its middle.
+- The name's hit area is the row's height over the name's own width, by
+  `HIT`. The name was cut with `truncate`, which hides both ways and
+  would have cut the hit area to the line; it is cut sideways only now.
+- The empty state's Add a record: the overlay, 9 a side.
+
+**What it costs, measured on the real collection:** the page is 508
+longer, 1839 to 2347 at 390 and 1893 to 2401 at 320 (the captures'
+heights, step 124's against this step's).
+
+**Two things here are mine and not ruled, for Design:**
+
+- **The rows are 44 at every width.** The handoff gives no width and the
+  floor is a finger's, which a tablet at 1024 has and a desktop does not.
+  One rule at every width was the smaller build and is the larger change
+  to look at on a desktop.
+- **Decades keep their pitch of 33.5.** They are not links, so nothing
+  about a finger applies, and the page now has bar lists of two pitches.
+
+**The reader counted 43 of a row of exactly 44** on one engine at 320: it
+sampled the pixel nearest the control's middle, and a row that starts
+between two pixels holds 43 whole ones. It samples from the middle
+itself now. The want list's and look up's tests were run again with it
+(24 of 24 across the three screens, both projects).
+
+**Tests, written first.** `e2e/stats.spec.ts`, at 320, 390, 768 and
+1280, on one artist's stats so the rows are this test's own: a branch
+opened, two labels, two stores. Failed first 8 of 8: links at 16 and 17,
+a branch's row at 27 and 28.
+
+**Step level.** Every spec that reads stats or the reader, by grep (10
+files), both projects: `255 passed, ledger clean, tree unchanged — OK`,
+`[projects] chromium 150, capture 0, mobile 105`. Unit under `src/app`:
+`1292 passed, tree unchanged — OK`. Lint 0 errors, 27 warnings.
+Typecheck and build clean **on the second run, and the first is a
+finding:**
+
+**`npm run typecheck` and `npm run build` failed on a file the test
+server writes.** `.next-test/dev/types/validator.ts`, generated and
+ignored, read at 10:42 with 15 lines of an older, longer copy left
+after its end ("ic extends RouteHandlerConfig…" following the closing
+brace): a shorter write over a longer one. `tsconfig.json` includes
+that folder, so both commands failed with TS1128 at its line 530,
+nothing to do with the tree. I kept a copy, deleted the file (the
+server writes it again), and both passed. Not diagnosed further: what
+wrote it twice is not known, and this is the first time it has been
+seen. If it recurs, the fix to weigh is whether typecheck should read a
+folder a running server is writing.

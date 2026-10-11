@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { flattenPairs, type GenrePairNode } from './genre-pairs';
+import { HIT } from '@/app/hit-area';
 
 /**
  * §10/A66: `/stats`' genre series is a TREE OF PAIRS, not a chart.
@@ -36,17 +37,24 @@ function Row({ node, href }: { node: GenrePairNode; href: (id: string) => string
   const empty = node.subtree === 0;
 
   return (
+    /*
+      §9.3, step 126: the rows are links in a column with nothing between
+      them, so it is the row that is 44 (the handoff's "row height where
+      controls stack with no gap"), and the name's hit area is the row's
+      height over the name's width. The name and its figures keep one
+      baseline inside it.
+    */
     <div
-      className={`flex items-baseline justify-between gap-3 py-1 text-detail${
-        empty ? ' text-muted-foreground' : ''
-      }`}
+      className={`flex min-h-[44px] items-center text-detail${empty ? ' text-muted-foreground' : ''}`}
       style={{ paddingLeft: `${node.depth * 0.875}rem` }}
       data-testid={`genre-row-${node.id}`}
     >
-      <span className="min-w-0 truncate">
+     <div className="flex w-full items-baseline justify-between gap-3">
+      {/* Cut sideways only: `truncate` hides both ways and would cut the link's hit area to the line. */}
+      <span className="min-w-0 overflow-x-clip text-ellipsis whitespace-nowrap">
         {/* Linked where the collection can be filtered by it: an account is
             only useful if you can open what it counts. */}
-        <Link href={href(node.id)} className="underline-offset-2 hover:underline">
+        <Link href={href(node.id)} className={`${HIT} underline-offset-2 before:inset-x-0 hover:underline`}>
           {node.name}
         </Link>
       </span>
@@ -64,6 +72,7 @@ function Row({ node, href }: { node: GenrePairNode; href: (id: string) => string
       >
         {node.hasBranch ? `${node.direct} · ${node.subtree}` : node.direct}
       </span>
+     </div>
     </div>
   );
 }
