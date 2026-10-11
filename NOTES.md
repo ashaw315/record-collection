@@ -40905,3 +40905,35 @@ shelf on his phone.
 So it is not a large piece of unbuilt work: the wall's own rulings are
 built, and what is open is two SPEC.md clauses the redesign left behind
 and four compositions nobody has ruled.
+
+## Step 122: the empty figures in tint (10 Oct, late)
+
+§T.6, in Design's unnumbered step; ruled since `T.6/ink-construction`
+withdrew the figures in ink alone, and built on the table and grid only.
+Look up and the want list each drew `ConstructionStill` with
+`spineColour={null}`. Now `src/app/EmptyFigure.tsx` draws it for all
+three screens from the source and its tint, so no screen can pass no
+colour; each page reads the tint with `spineColoursOf`, as the
+collection page did.
+
+**Tests.** `EmptyFigure.test.tsx`: tinted, it names its tint and draws
+fills the ink drawing does not have; with no cover it is ink; it stands
+at the clearing height; with no source it is nothing. Red first on the
+missing component. `lookup-flows.spec.ts`: the empty figure names the
+source record's own colour, read from the record itself, and is drawn
+in it. Red first on both projects: "Expected: #a25829, Received: null".
+The test database's source has a cover, so the tinted branch is the one
+that ran. **The want list's page is held more weakly:** its empty state
+cannot be staged there, so the browser test reads the tint only where
+the Acquired view is found empty, and what holds the page to the
+component is that it has no other way to draw the figure.
+
+**On the real collection** (`docs/captures/tint-122/`): the Acquired
+view's figure is 186.6 × 193.2 in `#6e636a`, Psychic's, at 1440, 390 and
+320. Look up's was not opened (a search is a live call).
+
+**Verified, step level:** unit `src/app` `1292 passed, tree unchanged —
+OK`; the 16 specs that read an empty figure or open look up or the want
+list, both projects, `385 passed, 3 skipped, ledger clean, tree
+unchanged — OK`; typecheck and build clean, lint 0 errors and 27
+warnings. No gate.

@@ -1036,6 +1036,8 @@ for (const width of [1440, 390, 320]) {
           rows: document.querySelectorAll('main ul > li').length, empty: empty !== null, emptyControls: empty?.querySelectorAll('a, button, input, select').length ?? 0,
           sentence: (empty?.querySelector('p')?.textContent ?? '').trim(), figure: svg === null ? null : { width: svg.width, height: svg.height, left: svg.left, right: svg.right },
           stills: document.querySelectorAll('[data-testid="construction-still"]').length,
+          /* Step 122: the empty figure names the source's tint, which is '' only where the source has no cover. */
+          tint: empty?.querySelector<HTMLElement>('[data-tint]')?.dataset.tint ?? null,
         };
       });
       expect(m.height, `${path}: §9.3, 44 tall`).toBeCloseTo(44, 0);
@@ -1051,6 +1053,7 @@ for (const width of [1440, 390, 320]) {
         expect(m.emptyControls, 'the empty state adds no control').toBe(0);
         expect(m.sentence).toBe(path === '/want-list' ? 'Nothing on the want list yet. Look up a record to add one.' : 'Nothing acquired yet.');
         expect(m.stills, 'one construction').toBe(1);
+        expect(m.tint, 'the figure names its tint (§T.6, step 122)').not.toBeNull();
         expect(m.figure !== null && m.figure.left >= 0 && m.figure.right <= m.window, 'the figure is inside the window').toBe(true);
       } else {
         expect(m.stills, 'a filled list has no figure').toBe(0);

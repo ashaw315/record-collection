@@ -19,6 +19,7 @@ import { shelfRecords } from '@/lib/db/queries/shelf';
 import { newestCoverUrls } from '@/lib/db/queries/images';
 import { DEFAULT_PAGE_SIZE, type Offset } from '@/lib/api/query-params';
 import { CONTENT_INSET } from './screen-frame';
+import { EmptyFigure } from './EmptyFigure';
 
 /**
  * SPEC.md §10 `/`: the collection.
@@ -229,10 +230,8 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
             */}
             <CollectionList rows={records.rows as CollectionRow[]} params={params} covers={covers} view={params.view === 'grid' ? 'grid' : 'table'} collectionTotal={collectionTotal}
               emptyFigure={
-                source === null ? null : (
-                  /* "At the clearing height and no larger": the still's box at that height and its own proportion, in the source's tint. */
-                  <div data-tint={tint ?? ''} style={{ height: source.clearing, width: source.clearing * source.aspect }}>{still}</div>
-                )
+                /* "At the clearing height and no larger", in the source's tint. */
+                <EmptyFigure source={source} tint={tint} />
               }
             />
 

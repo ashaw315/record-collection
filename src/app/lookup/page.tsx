@@ -1,8 +1,8 @@
 import { AppHeader } from '@/components/AppHeader';
 import { LookupClient } from './LookupClient';
-import { ConstructionStill } from '../records/[id]/ConstructionStill';
+import { EmptyFigure } from '../EmptyFigure';
 import { figureSource } from '../figure-source';
-import { listRecordAges } from '@/lib/db/queries/records';
+import { listRecordAges, spineColoursOf } from '@/lib/db/queries/records';
 import { SCREEN_FRAME } from '@/app/screen-frame';
 
 /**
@@ -20,6 +20,7 @@ export const metadata = { title: 'Look up a record · Record Collection' };
 export default async function LookupPage() {
   /* §T.6's one source record: "every figure in the app is drawn from one record". None where the collection is empty. */
   const source = figureSource(await listRecordAges());
+  const tint = source === null ? null : ((await spineColoursOf([source.id]))[0] ?? null);
   return (
     <>
       <AppHeader />
@@ -34,13 +35,7 @@ export default async function LookupPage() {
         </div>
 
         <LookupClient
-          emptyFigure={
-            source === null ? null : (
-              <div style={{ height: source.clearing, width: source.clearing * source.aspect }}>
-                <ConstructionStill recordId={source.id} spineColour={null} />
-              </div>
-            )
-          }
+          emptyFigure={<EmptyFigure source={source} tint={tint} />}
         />
       </main>
     </>

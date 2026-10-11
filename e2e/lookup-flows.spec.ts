@@ -1759,13 +1759,27 @@ test('a search that finds nothing shows the figure at its clearing height above 
     const svg = block.querySelector('[data-testid="construction-still"]') as SVGSVGElement;
     const s = svg.getBoundingClientRect();
     const p = (block.querySelector('p') as HTMLElement).getBoundingClientRect();
-    return { stills: document.querySelectorAll('[data-testid="construction-still"]').length, height: s.height, right: s.right, left: s.left, foot: s.bottom, sentenceTop: p.top, record: svg.getAttribute('data-record'), window: window.innerWidth, scrollWidth: document.documentElement.scrollWidth, fills: Array.from(new Set(Array.from(svg.querySelectorAll('polygon[data-face], circle')).map((el) => getComputedStyle(el).fill))) };
+    return { stills: document.querySelectorAll('[data-testid="construction-still"]').length, height: s.height, right: s.right, left: s.left, foot: s.bottom, sentenceTop: p.top, record: svg.getAttribute('data-record'), tint: block.querySelector<HTMLElement>('[data-tint]')?.dataset.tint ?? null, window: window.innerWidth, scrollWidth: document.documentElement.scrollWidth, fills: Array.from(new Set(Array.from(svg.querySelectorAll('polygon[data-face], circle')).map((el) => getComputedStyle(el).fill))) };
   });
   expect(m.stills, 'one construction on the screen').toBe(1);
   expect(m.height, 'at the clearing height and no larger').toBeCloseTo(clearing(m.record as string).height, 0);
   expect(m.sentenceTop, 'the sentence is beneath the figure').toBeGreaterThanOrEqual(m.foot - 0.5);
   expect(m.left >= 0 && m.right <= m.window && m.scrollWidth === m.window, 'inside the window, and the page no wider for it').toBe(true);
-  for (const fill of m.fills) expect(['lab(6.18075 1.20374 2.12039)', 'oklch(0.19 0.008 60)', 'lab(71.4 0.5 1.1)', 'oklch(0.74 0.004 80)'], `in ink alone: ${fill}`).toContain(fill);
+  /*
+    Step 122, §T.6: "The empty state's figure is this construction in tint",
+    on every screen with an empty state (`T.6/ink-construction` withdrew the
+    figures in ink alone). The tint is the source record's own, read here
+    from the record itself. A source with no cover has no colour and is ink
+    (§5.3). Fails against the figure drawn with no colour passed: it names
+    no tint, and is ink whatever the source is.
+  */
+  const INKS = ['lab(6.18075 1.20374 2.12039)', 'oklch(0.19 0.008 60)', 'lab(71.4 0.5 1.1)', 'oklch(0.74 0.004 80)'];
+  const own = ((await (await page.request.get(`/api/records/${m.record}`)).json()) as { spineColour: string | null }).spineColour;
+  expect(m.tint, 'the figure names the source record’s own tint').toBe(own ?? '');
+  const tinted = m.fills.filter((fill: string) => !INKS.includes(fill));
+  test.info().annotations.push({ type: 'the source', description: own === null ? 'no cover: ink' : `tint ${own}` });
+  if (own === null) expect(tinted, 'no cover, so ink').toEqual([]);
+  else expect(tinted.length, `drawn in ${own}`).toBeGreaterThan(0);
 });
 
 /*

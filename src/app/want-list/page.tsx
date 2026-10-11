@@ -1,8 +1,8 @@
 import { WantListEmpty } from './WantListEmpty';
-import { ConstructionStill } from '../records/[id]/ConstructionStill';
+import { EmptyFigure } from '../EmptyFigure';
 import { figureSource } from '../figure-source';
 import { HAIRLINE, INK, LABEL_TYPE } from '../records/[id]/grid-type';
-import { listRecordAges } from '@/lib/db/queries/records';
+import { listRecordAges, spineColoursOf } from '@/lib/db/queries/records';
 import Link from 'next/link';
 import { AppHeader } from '@/components/AppHeader';
 import { WantListRow, type WantListItem } from './WantListRow';
@@ -46,6 +46,7 @@ export default async function WantListPage({ searchParams }: PageProps<'/want-li
   const hydrated = items.filter((item): item is NonNullable<typeof item> => item !== undefined);
   /* §T.6's one source record, asked for only where the empty state will draw it. */
   const source = hydrated.length === 0 ? figureSource(await listRecordAges()) : null;
+  const tint = source === null ? null : ((await spineColoursOf([source.id]))[0] ?? null);
 
   return (
     <>
@@ -128,14 +129,7 @@ export default async function WantListPage({ searchParams }: PageProps<'/want-li
         {hydrated.length === 0 ? (
           <WantListEmpty
             acquired={showAcquired}
-            figure={
-              /* "At the clearing height and no larger", from the one source record; none where the collection is empty. */
-              source === null ? null : (
-                <div style={{ height: source.clearing, width: source.clearing * source.aspect }}>
-                  <ConstructionStill recordId={source.id} spineColour={null} />
-                </div>
-              )
-            }
+            figure={<EmptyFigure source={source} tint={tint} />}
           />
         ) : (
           <ul className="border-t border-border">
