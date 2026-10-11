@@ -2,6 +2,9 @@ import { expect, test, type Page } from '@playwright/test';
 import { CAP, FIGURE_FRACTION, FORK, RECORD_MINIMUM, SIDEBAR, contentColumn, gridColumns } from '../src/app/sidebar-layout';
 import { login } from './sign-in';
 
+/* The ruling's own figure, written here and not read from the source's constant: read from there, this passed against the old 20 as it does against 18 (run against the old build, 10 Oct). */
+const WORDMARK_INSET = 18;
+
 /**
  * Step 113, §T.1 and §T.6: Adam's wireframe. Above the fork the table and
  * the grid have a sidebar at the window's left edge, 336 wide and closed by
@@ -108,14 +111,14 @@ for (const view of VIEWS) {
     }
 
     /* Fails against no fork at all, and against a fork one pixel either way. */
-    test(`at ${FORK - 1}, one below the fork, there is no sidebar: the list is at the 20 inset, and there is no head figure, no fragment and no diagonal`, async ({ page }) => {
+    test(`at ${FORK - 1}, one below the fork, there is no sidebar: the list is at the 18 inset, and there is no head figure, no fragment and no diagonal`, async ({ page }) => {
       await open(page, FORK - 1, view);
       const r = await reading(page);
       if (r.list === null || r.search === null) throw new Error('nothing drawn');
-      expect(r.list.left).toBeCloseTo(20, 0);
-      expect(r.list.right).toBeCloseTo(r.window - 20, 0);
+      expect(r.list.left).toBeCloseTo(WORDMARK_INSET, 0);
+      expect(r.list.right).toBeCloseTo(r.window - WORDMARK_INSET, 0);
       expect(r.sideRule?.width ?? '0px', 'no rule').toBe('0px');
-      expect(r.search.left, 'search at the band’s 20').toBeCloseTo(20, 0);
+      expect(r.search.left, 'search at the band’s 18').toBeCloseTo(WORDMARK_INSET, 0);
       expect(r.bandAdd, 'Add record is the band’s').not.toBeNull();
       expect([r.headBox, r.head, r.fragment, r.add, r.chevron], 'none of the sidebar’s furniture').toEqual([null, null, null, null, null]);
       expect(await page.locator('[data-diagonal]').evaluateAll((all) => all.filter((d) => (d as HTMLElement).getClientRects().length > 0).length)).toBe(0);

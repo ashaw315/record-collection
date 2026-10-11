@@ -4,6 +4,7 @@ import { AppHeader } from '@/components/AppHeader';
 import { loadReferenceData } from '@/app/records/reference';
 import { hydrateWantListItem } from '@/lib/db/queries/want-list';
 import { WantListForm } from '../../WantListForm';
+import { ITEM_FRAME } from '@/app/screen-frame';
 
 /**
  * SPEC.md §10 `/want-list/:id/edit` — **specified in step 6 and never built.**
@@ -34,7 +35,7 @@ export default async function EditWantListItemPage({
   return (
     <>
       <AppHeader />
-      <main className="mx-auto w-full max-w-2xl px-4 py-5">
+      <main data-screen-frame="" className={`${ITEM_FRAME} py-5`}>
         <Link
           href={`/want-list/${item.id}`}
           className="text-meta text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"

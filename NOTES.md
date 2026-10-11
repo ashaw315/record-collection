@@ -40684,3 +40684,224 @@ for that; the tint on the two empty figures waits on Design's one
 sentence. **Ruled and not built:** step 118's "wherever a pending answer
 replaces a control with a status line, give the status line the
 control's height", with its test on look up on both projects.
+
+## The 103 air sheet re-run after its measure moved to a helper (10 Oct)
+
+Owed from step 119: the measure was moved into `e2e/sheet/air-measure.ts`
+and the sheet that reads through it was not run. Run since, into the
+scratchpad and not over step 103's captures: `1 passed`. Every one of the
+five screens' airs has the height the committed reading has (want list
+143, look up 65, stats 177, manage 160 and 144 at 768, the record form
+112 and 124, before the 24 margin). What differs is what has been built
+since: lefts (the screens are pinned), the 768 widths by 8 (the inset),
+the want list's width by LOOK UP A RECORD's box, and the table and grid
+at 1440 by the sidebar. That is evidence the helper reads as the inline
+measure did, not proof: the two were not run against one build. **Rule:
+a change to a helper a sheet reads through puts that sheet in the
+change's covering set, measurement step or not.**
+
+## Step 120: every content inset at the wordmark's 18 (10 Oct)
+
+§T.1, Design's save of this evening (which numbers it 119; the
+coordinator: Code's 119 stands and Design's becomes 120). "Content starts
+at the wordmark's 18 on every screen and at every width, phones
+included." One figure, `SCREEN.inset` in `src/app/screen-frame.ts`: the
+framed screens, the table's and grid's two blocks below the fork
+(`CONTENT_INSET`), and the band's side padding (`band-rules.ts`), which
+the shelf's band and the table's and grid's share. Suggestions, the want
+list's new form, an item's page and its edit form, and the not-found
+page are pinned left with the five, each at the measure it had (736,
+640, 640, 640, 1,120).
+
+**Measured before anything changed, and after** (the step 117 sheet, both
+times into the scratchpad): the content column above the fork is 1023 at
+1440 and 1920 and 637 at 1054 both times, so the sidebar takes 417 both
+times; the head figure (324.1 × 335.5; 201.8 × 208.9 at 1054) and the
+list's top (436.5; 309.9) are the same to the tenth. Nothing above the
+fork holds the inset: the sidebar's own 18 was already 18 and the content
+column's sides are the two 40s.
+
+**What moved** (`docs/captures/inset-120/`, the real collection):
+- Below the fork the list is 4 wider: 1017 at 1053, 988 at 1024, 354 at
+  390, 284 at 320. The search field is 354 at 390 and 284 at 320, and
+  reaches its 443 from a 479 window where it was 483.
+- The grid's covers: two of 165 at 390 (163) and two of 130 at 320 (128);
+  five of 184.2 at 1053 (183.4) and 178.4 at 1024 (177.6).
+- **Three cover counts move, each 4 windows sooner**: a third cover joins
+  at 564 where it was 568, a fourth at 748 (752), a fifth at 932 (936).
+  Measured either side: 563 two of 251.5, 564 three of 160; 747 three of
+  221, 748 four of 160; 931 four of 205.8, 932 five of 160. The count at
+  the fork's foot (five at 1053) and every count above the fork are as
+  they were.
+- The framed screens are at 18 with their measures kept; at 390 each is
+  354 wide where it was 350 at step 118 and 358 before it.
+- Manage's sideways scroll at 390 is 20, where it was 22 at step 118 and
+  18 before it.
+
+**Not moved, and asked:** the shelf's rail above its own fork, which is
+148 wide with 20 a side (`WallRail.tsx`). Design's step names "the shelf
+band and search", and the band is what the rail becomes below that fork;
+the rail itself is the shelf's composition, which §T.6 does not reach.
+Its first line stands 2 right of the wordmark. Sign-in is a centred box
+and is not named either.
+
+**Tests changed to the new rule, declared:** `collection-band-97`
+(the field 284, 354, and 443 from 479), `grid-99` (165 and 130; the
+changes at 564, 748, 932), `sidebar-113` (the list at 18 below the
+fork), `table-98` and `shelf-narrow` (the inset), `pinned-118` (18, the
+heading under the wordmark and not 2 right of it, and the five more
+screens). The last two were found by the covering run and not by reading:
+`710 passed, 3 failed` on the 48 specs, all three reading the old 20;
+artefacts kept in the scratchpad's `red-120/`.
+
+**The fail-first is partial, and said.** The unit test failed first
+(`0 passed, 5 failed`: "expected 20 to be 18", and the frames' classes).
+The screen specs were moved to 18 and the code changed before they were
+run, so their red against the old build was not watched; the three that
+were missed failed against the new one, which is the same fact from the
+other side for those and no evidence for the rest.
+
+## Step 121: an answer takes the height of the control it replaces (10 Oct)
+
+§T.6, in Design's step 118: "Wherever a pending answer replaces a control
+with a status line, give the status line the control's height", so
+nothing below it moves.
+
+**The audit: every place an answer takes a control's place.**
+
+| where | the control | what replaces it | built |
+|---|---|---|---|
+| look up, a result's card | Check the market, a 16.5 label in a 24 line | the market's summary or its error, 15 tall | yes: the line is 24 at the least |
+| the market panel: a want-list row, and the record page's Market section | Check the market, a 44 box | the summary or the error | yes: 44 at the least |
+
+Looked at and not this: "Identify this pressing" and "Compare pressings"
+on look up (the control stays and what it asked for opens beneath, which
+is its purpose); "Ask Claude" on a want-list item (replaced by the
+assessment, a block and not a line); Lineup in manage (the control stays
+and lines are added under it, so its row grows; the ruling's words do not
+reach it, and the movement is the same kind); form errors and the
+ownership notice (added, nothing replaced).
+
+**Where it cannot hold, and is not ruled: an answer longer than one
+line.** On look up at 390 a price with its estimates runs to two lines of
+15, so the button beneath moves down by 6 (measured: 571.1 to 577.1)
+where it used to move up by 9 for a one-line answer; that 6 was read
+before the fix and follows from 30 against 24 after it, not re-measured.
+On the want list a summary with its estimates may run past 44; not
+measured. The line is its control's height at the least, and grows with
+its words.
+
+**The record page changes by this**, through the shared panel: its
+Market section's answer is 44 at the least. That screen is closed; no
+capture of it was regenerated and no spec of it reads the line's height.
+
+**Tests:** `lookup-flows.spec.ts`, on both projects, holds the market's
+answer until the button's box is read, releases it, and reads the box
+again: with an error and with "None for sale", the button does not move.
+Red first: 510 to 501 on chromium and 571.1 to 562.1 on mobile.
+`want-list.spec.ts`: a row's error line is 44 where the control stood and
+the row keeps its height; red first at 15. `pressEvidence`'s wait stays:
+it is harmless, and the two-line answer still moves the button.
+
+## Steps 120 and 121 were built and could not be committed: two steps numbered 119 (10 Oct, night; lifted, see the entry after)
+
+Design's save `8810548` numbers its step 119, which is Code's (the air
+measurement, in Code's region). With the region applied the handoff holds
+two 119s and `check-index.mjs` reads `3 duplicate 119`, `RESULT: 10 PASS,
+1 FAIL`; without it the code-region test fails instead. So
+`scripts/commit-checked.sh` refuses any commit on this tree, as it
+should. The coordinator has ruled that Code's 119 stands and Design's
+becomes 120, and that is Design's line to change; Code does not edit it,
+and did not commit around the check. The raw save is committed and
+pushed; the intake, step 120, step 121 and these notes are in the working
+tree until a renumbered save arrives or the coordinator says how the
+intake is to be committed meanwhile.
+
+**Verified in the tree, step level, no gate:** unit `src/app`
+`1288 passed, tree unchanged — OK`; step 120's 48 specs
+`710 passed, 3 failed, 5 skipped`, then the two specs holding the three
+`18 passed, ledger clean, tree unchanged — OK`; step 121's new tests
+`6 passed`, and the four specs that touch a market line on both projects
+`123 passed, ledger clean, tree unchanged — OK`; typecheck and build
+clean, lint 0 errors and 27 warnings. Not run again after step 121: the
+48 of step 120, of which lookup-flows and want-list were in the 123.
+
+## The block lifted, and step 120's two gaps closed (10 Oct, late)
+
+**The block is gone.** Design's next save leaves its step unnumbered
+("Steps are not numbered here from now on... Code assigns its number in
+the commit that takes the drop") and the index reads `RESULT: 11 PASS`.
+120 and 121 enter the handoff through Code's region in the commit that
+takes that drop, as 119 did. An unnumbered step in the handoff does not
+trip the index.
+
+**The moved specs against the old build** (the source as it was, the
+specs as they are now, no retries): `14 failed, 101 passed`. Failing, as
+they should: `collection-band-97` at 320, 390, 478 and 479 on both views,
+`grid-99`'s covers and its three changes, and `pinned-118` at all four
+widths. **Passing against either build, which was the defect:** the
+below-the-fork test in `sidebar-113` and the band test in `shelf-narrow`
+took their figure from `SCREEN.inset`, so they read 20 from the old
+source and agreed with it. The instrument had moved with the subject.
+Both now hold the ruling's 18 written in the spec, and against the old
+build read `6 failed` ("Expected: 18, Received: 20", both projects).
+`table-98`'s test is an upper bound, "no wider than the window less its
+insets", and a table at the old 350 is under the new bound too; it cannot
+fail against the old build and is not evidence for the inset. **Rule: a
+spec states a ruled figure itself. A constant imported from the source is
+for arithmetic the spec does with it, not for the figure being tested.**
+
+**The 48, green for the first time:**
+`718 passed, 1 flaky, 5 skipped, ledger clean, tree unchanged — OK`, on
+the finished tree with step 121 in it. The flaky is `record-form:440` on
+mobile, `apiRequestContext.post: read ECONNRESET` on its first seed
+request, passed on retry: the sixth entry of that reset in these notes,
+never on a page and never diagnosed. Artefacts in the scratchpad's
+`flaky-120/`.
+
+**The 6, measured after the fix** (a temporary test, removed; the market's
+answer held and released as in the committed one). At 390 a price runs to
+two lines of 15 whether or not it has estimates ("11 for sale, cheapest
+asking $47.28. No condition guide available for this release." is two
+lines in 328), the line is 30 tall and the button goes from 571.1 to
+577.1: **6**. At 1280 both are one line, the line is 24 and the button
+does not move. So on a phone every answer that finds copies moves the
+button by 6, and only the error and "None for sale" hold.
+
+## Where the wall stands (10 Oct; a read-only survey, by grep and reading, nothing run)
+
+Asked by Adam. Made by a search agent and spot-checked on four points;
+"tested" means a test citing the section exists, not that it was run
+tonight.
+
+**Built:** every section §W.1 to §W.36 is cited in source and in at least
+one test, with a build entry in these notes: the monochrome wall and its
+geometry, the pull's phases and the pan, the rail, the far and near views
+and the arrival (in the markup, without JavaScript, and under a filter),
+keyboard access, the filter emptying seats, the narrow shelf's band with
+its hit areas, and the newest back. The band took the 18 inset today.
+
+**Ruled and not built, or not pinned:**
+- §W.37's pitch of 42 on the rail is got by construction and no test
+  holds it.
+- SPEC.md §10b's reduced motion: the stylesheet's rules for it address
+  `.record-box` and `.record-tilt`, which nothing draws any more, and no
+  handling was found in `src/app/wall`. The wall target is silent on it.
+- SPEC.md §10b's touch tilt went with the lit wall. The `touch` project
+  in the Playwright config matches `touch-tilt.spec.ts`, which does not
+  exist, so that project runs nothing; `three` is still a dependency with
+  no import; and SPEC.md §12 step 13 still describes the three.js scene.
+
+**No ruling:** the panel's title wrapping into the drawing (§W.19, "needs
+its own answer"); the landed record's corner over full shelves at two
+hundred records (§W.12's "one unruled composition"); a sideways swipe to
+the next record on touch; the rail's 20 above its fork, which Design is
+ruling as a class; and "Collection at 390 reads awkwardly", logged as a
+finding before steps 95 and 96 and never marked answered.
+
+**Not found either way:** any note that Adam has confirmed the narrow
+shelf on his phone.
+
+So it is not a large piece of unbuilt work: the wall's own rulings are
+built, and what is open is two SPEC.md clauses the redesign left behind
+and four compositions nobody has ruled.

@@ -28,5 +28,17 @@
     "before": "No step: §G.7",
     "why": "Code's own step (the five screens' air measured against the source's clearing height), asked for by the coordinator on 10 Oct; never in Design's source. Filed in the commit that takes the number, by the rule of 10 Oct. It stands in front of the line that follows the last step, since there is no 120 to stand in front of; if Design writes its own 119, one of the two is renumbered.",
     "text": "119. **Done: measured; no code changed.** **§T.6 — the five screens' air against the source's clearing height.** On the real collection, read-only (`docs/captures/air-119/`). The source is Psychic, clearing at 193.2, so its figure is 186.6 × 193.2, where §T.6 reasoned against 172.4. The air beside each heading holds it on none of the five: stats 153 tall, the want list and manage 143, the record form 100 and 88, look up 37. No heading's figure is built on those screens, so nothing is drawn short. The want list's empty figure is drawn at 186.6 × 193.2 and stands inside its column at every width, by 93.4 at 320, with its sentence in the first view. Look up's empty state needs a search and was not opened."
+  },
+  {
+    "id": "step-120",
+    "before": "No step: §G.7",
+    "why": "Design no longer numbers steps (its save of 10 Oct: \"Code assigns its number in the commit that takes the drop\"). This is the number for the first part of Design's unnumbered step, \"one inset\", entered in the commit that takes that drop.",
+    "text": "120. **Done: built.** **§T.1, §W.24 — one inset: Code's number for the first part of the unnumbered step above.** Every content inset is the wordmark's 18 at every width: the table and grid below the fork, the band and its search on the shelf, table and grid, the five screens, and suggestions, the want list's new form, an item's page and its edit form and the not-found page, pinned left at the measures they had. Measured before and after on the real collection (`docs/captures/inset-120/`): the content column above the fork is 1023 and the sidebar takes 417 both times. Below the fork the list is 4 wider, and a third, fourth and fifth cover join the grid's row at 564, 748 and 932, each 4 sooner. Manage's sideways scroll at 390 is 20. The shelf's rail above its fork is not moved; Design is ruling it. The empty figures in tint and the 44 overlay, the rest of that step, take their own numbers when built."
+  },
+  {
+    "id": "step-121",
+    "before": "No step: §G.7",
+    "why": "Code's number for the second half of step 118, built on its own on the coordinator's instruction of 10 Oct; entered in the commit that builds it.",
+    "text": "121. **Done: built.** **§T.6 — an answer takes the height of the control it replaces: Code's number for the second half of step 118.** Two places: a look-up result's Check the market (a 16.5 label in a 24 line; its summary or error is 24 at the least) and the market panel on a want-list row and the record page (a 44 box; 44 at the least). Tested on look up on both projects that Identify this pressing does not move when the market answers with an error or with none for sale. An answer longer than one line is taller than its control and still moves what is beneath; that is with Design."
   }
 ]

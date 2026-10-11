@@ -3,6 +3,9 @@ import { registerCleanup, trackArtist, trackCreated } from './cleanup';
 import { removeRecordsFor, seedRecords } from './seed';
 import { login } from './sign-in';
 
+/* The ruling's own figure, written here and not read from the source's constant: read from there, this passed against the old 20 as it does against 18 (run against the old build, 10 Oct). */
+const WORDMARK_INSET = 18;
+
 registerCleanup();
 
 /**
@@ -186,7 +189,7 @@ test.describe('with a page of fifty', () => {
       await open(page, `&artistId=${artistId}`, width);
       const m = await page.evaluate(() => ({ scroll: document.documentElement.scrollWidth, client: document.documentElement.clientWidth, table: (document.querySelector('main table') as HTMLElement).getBoundingClientRect().width, inner: Array.from(document.querySelectorAll('main *')).filter((el) => ['auto', 'scroll'].includes(getComputedStyle(el).overflowX)).length }));
       expect(m.scroll, `the page at ${width}`).toBe(m.client);
-      expect(m.table, `the table at ${width}`).toBeLessThanOrEqual(width - 40 + 0.5);
+      expect(m.table, `the table at ${width}`).toBeLessThanOrEqual(width - 2 * WORDMARK_INSET + 0.5);
       expect(m.inner, 'no scrolling box').toBe(0);
     }
   });

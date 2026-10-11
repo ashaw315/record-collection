@@ -1,3 +1,5 @@
+import { SCREEN } from '../screen-frame';
+
 /**
  * **The band's two rows, as rules under a scope (§W.24, steps 95 and 96).**
  *
@@ -11,7 +13,7 @@
  */
 export function bandRules(scope: string): string {
   const rail = `${scope}[data-testid="wall-rail"]`;
-  return `  ${rail} { flex-direction: row; align-items: flex-end; flex-wrap: wrap; gap: 18px; width: auto !important; padding: 12px 20px 16px !important; }
+  return `  ${rail} { flex-direction: row; align-items: flex-end; flex-wrap: wrap; gap: 18px; width: auto !important; padding: 12px ${SCREEN.inset}px 16px !important; }
   ${rail} form { margin-bottom: 0; flex: 1 1 100%; min-width: 0; }
   ${rail} ul { flex-direction: row; flex: none; }
   ${rail} a { margin-top: 0; white-space: nowrap; }

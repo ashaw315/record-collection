@@ -1,5 +1,6 @@
 import { AppHeader } from '@/components/AppHeader';
 import { NotFoundLine } from './NotFoundLine';
+import { MANAGE_FRAME } from '@/app/screen-frame';
 
 /**
  * §G.5 (step 75): the app's own not-found page. Next's default carried no
@@ -10,7 +11,7 @@ export default function NotFound() {
   return (
     <>
       <AppHeader />
-      <main className="mx-auto w-full max-w-[1152px] px-4 py-6">
+      <main data-screen-frame="" className={`${MANAGE_FRAME} py-6`}>
         <NotFoundLine />
       </main>
     </>

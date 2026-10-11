@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { login } from './sign-in';
+import { SCREEN } from '../src/app/screen-frame';
 
 /**
  * Step 97a, §T.1 to §T.3: the table and grid take the shelf's band and the
@@ -55,9 +56,9 @@ for (const view of VIEWS) {
       expect(buttons).toEqual([{ text: 'Search', drawn: true }, { text: 'Apply', drawn: false }]);
     });
 
-    for (const [width, field] of [[320, 280], [390, 350], [482, 442], [483, 443], [BAND_WIDE, 443]] as const) {
+    for (const [width, field] of [[320, 284], [390, 354], [478, 442], [479, 443], [BAND_WIDE, 443]] as const) {
       /* Fails against a band that is a rail when wide, and against a field given the band's whole width: 1400 at 1440. */
-      test(`at ${width} the band is two rows and the search field is ${field} wide at the 20 inset`, async ({ page }) => {
+      test(`at ${width} the band is two rows and the search field is ${field} wide at the 18 inset`, async ({ page }) => {
         await open(page, view, width);
         const m = await page.evaluate(() => {
           const box = (sel: string) => { const r = (document.querySelector(sel) as HTMLElement).getBoundingClientRect(); return { left: r.left, top: r.top, right: r.right, bottom: r.bottom, width: r.width }; };
@@ -66,11 +67,11 @@ for (const view of VIEWS) {
           return { field: box('[data-collection-band] #rail-search'), namesTop: Math.min(...names.map((r) => r.top)), nameTops: names.map((r) => Math.round(r.top)), nameLeft: names[0].left, add: add.getBoundingClientRect().toJSON() as { top: number; right: number; bottom: number }, names: names.map((r) => ({ left: r.left, right: r.right })), scroll: document.documentElement.scrollWidth, client: document.documentElement.clientWidth };
         });
         expect(m.field.width, 'the field’s width').toBeCloseTo(field, 0);
-        expect(m.field.left, 'at the left inset').toBeCloseTo(20, 0);
+        expect(m.field.left, 'at the left inset').toBeCloseTo(SCREEN.inset, 0);
         expect(m.namesTop, 'the view names are a row beneath the field').toBeGreaterThanOrEqual(m.field.bottom);
         expect(new Set(m.nameTops).size, 'the three names are one row').toBe(1);
-        expect(m.nameLeft, 'the names start at the left inset').toBeCloseTo(20, 0);
-        expect(m.add.right, 'Add record ends at the right inset').toBeCloseTo(width - 20, 0);
+        expect(m.nameLeft, 'the names start at the left inset').toBeCloseTo(SCREEN.inset, 0);
+        expect(m.add.right, 'Add record ends at the right inset').toBeCloseTo(width - SCREEN.inset, 0);
         expect(m.add.top, 'Add record is on the names’ row').toBeLessThan(m.namesTop + 20);
         expect(m.scroll, 'and the page is no wider than the window').toBe(m.client);
       });

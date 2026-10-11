@@ -4,6 +4,7 @@ import { AppHeader } from '@/components/AppHeader';
 import { hydrateWantListItem } from '@/lib/db/queries/want-list';
 import { formatCeiling, huntFacts, priorityLabel } from '../want-list-format';
 import { PressingVariants } from '../PressingVariants';
+import { ITEM_FRAME } from '@/app/screen-frame';
 
 /**
  * SPEC.md §10 — the want-list item detail view.
@@ -42,7 +43,7 @@ export default async function WantListItemPage({
   return (
     <>
       <AppHeader />
-      <main className="mx-auto w-full max-w-2xl px-4 py-5">
+      <main data-screen-frame="" className={`${ITEM_FRAME} py-5`}>
         <Link
           href="/want-list"
           className="text-meta text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"

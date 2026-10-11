@@ -5,6 +5,7 @@ import { gapAnalysisWithPrevious } from '@/lib/db/queries/gap-analysis';
 import { listGenreTree, type GenreNode } from '@/lib/db/queries/genres';
 import { isAnthropicConfigured } from '@/lib/llm/client';
 import { GapAnalysis } from './GapAnalysis';
+import { SCREEN_FRAME } from '@/app/screen-frame';
 
 /**
  * SPEC.md §10 `/suggestions`: "Relationship-based list with reasons, always
@@ -78,7 +79,7 @@ export default async function SuggestionsPage() {
   return (
     <>
       <AppHeader />
-      <main className="mx-auto w-full max-w-3xl px-4 py-5">
+      <main data-screen-frame="" className={`${SCREEN_FRAME} py-5`}>
         <Link
           href="/want-list"
           className="text-meta text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"

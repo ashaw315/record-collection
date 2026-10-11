@@ -176,7 +176,9 @@ for (const width of [390, 320]) {
         shelf: r(link('shelf')), table: r(link('table')), grid: r(link('grid')), add: r(link('add record')),
       };
     });
-    const INSET = 20;
+    /* §T.1, step 120: the wordmark's 18, where it was 20 (`W.24/search-less-20`). */
+    /* Written here and not read from the source's constant: read from there, this passed against the old 20 as it does against 18. */
+    const INSET = 18;
     /* Exactly, with no pixel of tolerance: the tolerance in the test above is what let 321 in 320 through. */
     expect(m.page, 'the page is exactly as wide as the window: no sideways scroll').toBe(m.window);
     expect(m.rail.width, 'and so is the band').toBe(m.window);

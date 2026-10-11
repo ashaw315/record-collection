@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { expect, type Page } from '@playwright/test';
 import { trackArtist } from './cleanup';
 import { NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
+import { SCREEN } from '../src/app/screen-frame';
 import { seedImage } from './seed';
 
 /**
@@ -32,7 +33,7 @@ export async function seedFixture(page: Page, name: string): Promise<Fixture> {
 export async function openScreen(page: Page, path: string, width: number) {
   await page.setViewportSize({ width, height: NO_SCROLL_HEIGHT });
   await page.goto(path);
-  await page.locator('h1, [data-testid="wall"], [data-testid="record-page-8a"]').first().waitFor({ state: 'attached', timeout: 30_000 });
+  await page.locator('h1, [data-testid="wall"], [data-testid="record-page-8a"], [data-testid="not-found-line"]').first().waitFor({ state: 'attached', timeout: 30_000 });
   await page.waitForLoadState('load');
   await page.addStyleTag({ content: 'nextjs-portal{display:none!important}' });
 }
@@ -53,14 +54,23 @@ export async function eachScreen(page: Page, f: Fixture, width: number, visit: (
   }
 }
 
-/** The five screens §T.6 names, the record form twice, each with the measure step 118 keeps for it. */
-export function fiveScreens(f: Fixture): { name: string; path: string; manage: boolean }[] {
+/**
+ * Every screen with a frame of its own, with the measure it keeps: the five
+ * §T.6 names (the record form twice), the four pages the survey left out,
+ * and the not-found page. Steps 118 and 120.
+ */
+export function framedScreens(f: Fixture): { name: string; path: string; measure: number }[] {
   return [
-    { name: 'stats', path: '/stats', manage: false },
-    { name: 'the want list', path: '/want-list', manage: false },
-    { name: 'look up', path: '/lookup', manage: false },
-    { name: 'the record form, new', path: '/records/new', manage: false },
-    { name: 'the record form, editing', path: `/records/${f.record}/edit`, manage: false },
-    { name: 'manage', path: '/manage', manage: true },
+    { name: 'stats', path: '/stats', measure: SCREEN.measure },
+    { name: 'the want list', path: '/want-list', measure: SCREEN.measure },
+    { name: 'look up', path: '/lookup', measure: SCREEN.measure },
+    { name: 'the record form, new', path: '/records/new', measure: SCREEN.measure },
+    { name: 'the record form, editing', path: `/records/${f.record}/edit`, measure: SCREEN.measure },
+    { name: 'manage', path: '/manage', measure: SCREEN.manage },
+    { name: 'suggestions', path: '/suggestions', measure: SCREEN.measure },
+    { name: 'the want list’s new form', path: '/want-list/new', measure: SCREEN.item },
+    { name: 'a want-list item', path: `/want-list/${f.want}`, measure: SCREEN.item },
+    { name: 'a want-list item, editing', path: `/want-list/${f.want}/edit`, measure: SCREEN.item },
+    { name: 'not found', path: '/no-such-screen', measure: SCREEN.manage },
   ];
 }

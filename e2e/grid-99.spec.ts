@@ -5,6 +5,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist } from './cleanup';
 import { seedImage } from './seed';
 import { login } from './sign-in';
+import { SCREEN } from '../src/app/screen-frame';
 
 registerCleanup();
 
@@ -139,17 +140,17 @@ test('under a cover the title is 13 ink and the artist an 11 label, with nothing
 });
 
 /* Fails against the built grid: one column at 390, and three at 1280 whatever the window holds. */
-test('covers are 24 apart at the 20 inset: two of 163 at 390, two of 128 at 320', async ({ page }) => {
+test('covers are 24 apart at the 18 inset: two of 165 at 390, two of 130 at 320', async ({ page }) => {
   const f = await seed(page, 3);
-  for (const [width, size] of [[390, 163], [320, 128]] as const) {
+  for (const [width, size] of [[390, 165], [320, 130]] as const) {
     await open(page, f.artistId, width);
     const c = await cells(page);
     const first = c.filter((cell) => cell.top === c[0].top);
     expect(first.length, `covers in a row at ${width}`).toBe(2);
     expect(first[0].width, `a cover at ${width}`).toBeCloseTo(size, 0);
     expect(first[0].height).toBeCloseTo(size, 0);
-    expect(first[0].left, 'the left inset').toBeCloseTo(20, 0);
-    expect(first[1].right, 'the right inset').toBeCloseTo(width - 20, 0);
+    expect(first[0].left, 'the left inset').toBeCloseTo(SCREEN.inset, 0);
+    expect(first[1].right, 'the right inset').toBeCloseTo(width - SCREEN.inset, 0);
     expect(first[1].left - first[0].right, 'the gap').toBeCloseTo(24, 0);
     expect(await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth), 'the page is no wider than the window').toBe(0);
   }
@@ -163,11 +164,11 @@ test('covers are 24 apart at the 20 inset: two of 163 at 390, two of 128 at 320'
   This ran on to six at 1120 and seven from 1304 until then
   (`T.5/grid-full-window`).
 */
-test('below the sidebar’s fork one more cover joins a row at each width where another 160 and its 24 fit, 568, 752 and 936, and there are five just below the fork', async ({ page }) => {
+test('below the sidebar’s fork one more cover joins a row at each width where another 160 and its 24 fit, 564, 748 and 932, and there are five just below the fork', async ({ page }) => {
   const f = await seed(page, 9);
-  /* n covers fit when the window less its insets holds n of 160 and n - 1 of 24: 184n + 16. */
-  const changes = [3, 4, 5].map((n) => ({ n, at: 184 * n + 16 }));
-  expect(changes.map((c) => c.at)).toEqual([568, 752, 936]);
+  /* n covers fit when the window less its insets holds n of 160 and n - 1 of 24: 184n − 24 + 36. */
+  const changes = [3, 4, 5].map((n) => ({ n, at: 184 * n - 24 + 2 * SCREEN.inset }));
+  expect(changes.map((c) => c.at)).toEqual([564, 748, 932]);
   const count = async (width: number) => {
     await page.setViewportSize({ width, height: 800 });
     await page.waitForTimeout(60);

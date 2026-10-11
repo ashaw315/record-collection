@@ -18,6 +18,7 @@ import { AddRecord } from './AddRecord';
 import { shelfRecords } from '@/lib/db/queries/shelf';
 import { newestCoverUrls } from '@/lib/db/queries/images';
 import { DEFAULT_PAGE_SIZE, type Offset } from '@/lib/api/query-params';
+import { CONTENT_INSET } from './screen-frame';
 
 /**
  * SPEC.md §10 `/`: the collection.
@@ -165,7 +166,7 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
           <aside data-collection-sidebar="">
             {/* §T.1: the shelf's band. Below the fork it is the two-row band, with Add record at its right; above, search over the view names. */}
             <CollectionBand params={params} genres={facets.genres} />
-            <div data-collection-controls="" className="px-5">
+            <div data-collection-controls="" className={CONTENT_INSET}>
               <header data-collection-heading="" className="mb-5">
                 {/*
                   §T.3: the count directly above the heading, an 11 label over
@@ -200,7 +201,7 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
             )}
           </aside>
 
-          <div data-collection-content="" className="px-5 pb-6">
+          <div data-collection-content="" className={`${CONTENT_INSET} pb-6`}>
             {/*
               The content column's head, above the fork only: ADD RECORD at
               its top right and the head figure centred in the column, "the
