@@ -41707,3 +41707,56 @@ at six seconds, the fix to put to the coordinator is the request
 client's own, not a retry: not keeping connections alive between a
 test's last request and the next test's first. Artefacts kept in the
 scratchpad (`128-cover-results`).
+
+## 11 Oct: Design's folder, the reset's fix as its own experiment, and the want list's one timeout
+
+**Design cannot read the repository.** It sees what Adam attaches, so
+every capture folder committed here was invisible to it, manage's
+included. `docs/captures/for-design/` (`e2e/sheet/for-design.sheet.ts`,
+read-only on the real collection) is the batch asked for: the want list,
+its Acquired view (empty) and stats at 390 under a coarse pointer and at
+1280 under a fine one, and manage's six sections at 390 and 320, each as
+the window shows it and as wide as the page scrolls. One pointer per
+width, the one a reader there has; each file is named by screen, width,
+pointer and page size, and `README.md` lists them.
+
+**The connection reset: fixed by taking the condition away, on the
+coordinator's override of "wait for a third".** `e2e/no-kept-connections.ts`,
+imported by `playwright.config.ts` (which every worker loads), answers
+no to Node's `Agent.prototype.keepSocketAlive`, so a connection made from
+a Playwright process closes when its response ends and no seed POST can
+ride one left idle since an earlier test. Playwright's agents are
+process-wide and not reachable to configure. **Tried and not used:**
+`extraHTTPHeaders: { connection: 'close' }` in the config's `use`.
+Measured against a server of the probe's own: it does stop the request
+client's reuse, and it also reaches both browsers, each of a page's
+loads then opening a connection of its own, which changes the thing
+under test. The browsers are separate processes and the hook does not
+reach them.
+
+Test first: `e2e/request-connections.spec.ts` posts three times to a
+server of its own that reads each request's socket. Before: `the three
+requests arrived on ports 57175, 57175, 57175`. After: three ports,
+`1 passed`. Chromium only: the client is Node's in the worker.
+
+**It is the experiment as well.** Not a retry, and `maxRetries` is still
+0: a reset that arrives now is a failure, `e2e/reset-evidence.ts` is
+kept and prints it, and one `[reset]` line from here on falsifies the
+kept-connection hypothesis. None in the step's run. Eight resets are in
+these notes; an absence over one gate is weak evidence, over several it
+is the answer.
+
+Step level: the new spec with `manage`, `want-list` and
+`collection-filters` on both projects, `129 passed, 2 skipped, ledger
+clean, tree unchanged — OK`, `[projects] chromium 66, capture 0, mobile
+65`; typecheck and build clean; lint 0 errors, 27 warnings. A config
+change, so a gate is owed and follows.
+
+**The want list's one timeout (step 127) was not the reset.** Its log
+survives (`127-diag3.log` in the scratchpad); the trace does not. The
+reporters were on in that run (`[margins]` printed) and there is no
+`[reset]` line. The test failed at `want-list.spec.ts:1141`, waiting for
+the row after `page.goto`: both seed requests had already answered, so
+the row existed and the page did not show it within 30s. Which of the
+two views it was on is not recoverable. Still not diagnosed; ruled out:
+the seed request.

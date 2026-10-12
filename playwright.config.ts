@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
+import './e2e/no-kept-connections';
 
 // 3100 rather than 3000, so an E2E run never collides with a dev server the
 // developer already has open.
