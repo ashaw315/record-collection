@@ -1004,3 +1004,88 @@ for (const pointer of POINTERS) test.describe(`manage under a ${pointer} pointer
     });
   }
 });
+
+/*
+  Step 137, Design's ruling of 12 Oct: "Manage confirms on close only while
+  SAVE is showing. One line, with DISCARD CHANGES and KEEP EDITING. A close
+  with nothing changed stays silent." Below 640, where a row is a form that
+  a second press closes. Before this a close threw the changes away without
+  a word (step 133's second default).
+*/
+const CONFIRM = '[data-manage-confirm]';
+for (const pointer of POINTERS) test.describe(`manage’s open row with changes, under a ${pointer} pointer`, () => {
+  test.use({ hasTouch: pointer === 'coarse' });
+  for (const width of [320, 390]) {
+    /* Fails against the list as built: the second press closes the form and the typed name is gone, with nothing asked. */
+    test(`closing a changed row asks once, on one line, and each answer does what it says, at ${width}`, async ({ page }) => {
+      const { names, remove } = await seedManage(page);
+      await page.setViewportSize({ width, height: 844 });
+      await page.goto('/manage');
+      await section(page, 'Stores');
+      const list = page.locator(`${LIST}:visible`);
+      const row = list.locator('[data-manage-row]').filter({ hasText: names.store });
+      const opener = row.locator('[data-manage-open]');
+      const form = row.locator('[data-manage-form]');
+      const city = form.getByLabel(`${names.store} city`, { exact: true });
+
+      /* Nothing changed: silent. */
+      await opener.click();
+      await expect(form).toBeVisible();
+      await opener.click();
+      await expect(form, 'a close with nothing changed closes').toHaveCount(0);
+      await expect(page.locator(CONFIRM), 'and asks nothing').toHaveCount(0);
+
+      /* Changed and changed back: silent. */
+      await opener.click();
+      await city.fill('York');
+      await city.fill('Leeds');
+      await opener.click();
+      await expect(form, 'a field put back as it was is not a change').toHaveCount(0);
+      await expect(page.locator(CONFIRM)).toHaveCount(0);
+
+      /* Changed: it asks, and the form stays. */
+      await opener.click();
+      await city.fill('York');
+      await opener.click();
+      const confirm = form.locator(CONFIRM);
+      await expect(confirm).toBeVisible();
+      await expect(form, 'the form is still open').toBeVisible();
+      expect(await confirm.locator('button').allTextContents().then((all) => all.map((text) => text.trim().toUpperCase()))).toEqual(['DISCARD CHANGES', 'KEEP EDITING']);
+      expect(await confirm.locator('button').evaluateAll((all) => new Set(all.map((b) => Math.round(b.getBoundingClientRect().top))).size), 'one line').toBe(1);
+      expect(await confirm.evaluate((el) => el.getBoundingClientRect().right <= innerWidth + 0.5 && document.documentElement.scrollWidth === innerWidth), 'inside the window').toBe(true);
+      const reach = await expectFloor(page, pointer, `the confirmation at ${width}`, CONFIRM);
+      if (pointer === 'coarse') expect(reach.filter((r) => r.wide < HIT_FLOOR).map((r) => `${r.name}: ${r.wide}`), 'each 44 across to a finger').toEqual([]);
+
+      /* KEEP EDITING: the question goes, the form and what was typed stay. */
+      await confirm.getByRole('button', { name: 'Keep editing' }).click();
+      await expect(page.locator(CONFIRM)).toHaveCount(0);
+      await expect(city, 'what was typed is still there').toHaveValue('York');
+
+      /* Another row, and + NEW, are closes too: asked, and not opened until answered. */
+      await list.locator('[data-manage-new]').click();
+      await expect(form.locator(CONFIRM), '+ NEW over a changed row asks').toBeVisible();
+      await expect(list.getByLabel('New store name', { exact: true }), 'and has not opened').toHaveCount(0);
+
+      /* DISCARD CHANGES: what was asked for happens, and nothing was saved. */
+      await form.locator(CONFIRM).getByRole('button', { name: 'Discard changes' }).click();
+      await expect(form, 'the row closed').toHaveCount(0);
+      await expect(list.getByLabel('New store name', { exact: true }), 'and + NEW, which was pressed, opened').toBeVisible();
+      await expect(row.locator('[data-manage-second]'), 'the row is as it was').toHaveText('Leeds · UK · Favourite');
+
+      /* + NEW with something typed is a changed form as well. */
+      await list.getByLabel('New store name', { exact: true }).fill('Half typed');
+      await list.locator('[data-manage-new]').click();
+      await expect(list.locator(CONFIRM), 'closing + NEW with a name typed asks').toBeVisible();
+      await list.locator(CONFIRM).getByRole('button', { name: 'Discard changes' }).click();
+      await expect(list.getByLabel('New store name', { exact: true })).toHaveCount(0);
+
+      /* SAVE does not ask. */
+      await opener.click();
+      await city.fill('York');
+      await form.getByRole('button', { name: `Save ${names.store}` }).click();
+      await expect(page.locator(CONFIRM), 'saving is not closing with changes').toHaveCount(0);
+      await expect(row.locator('[data-manage-second]')).toHaveText('York · UK · Favourite', { timeout: 15_000 });
+      await remove();
+    });
+  }
+});

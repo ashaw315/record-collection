@@ -130,5 +130,11 @@
     "before": "No step: §G.7",
     "why": "Code's number for Design's ruling of 12 Oct on the want list's count line, relayed by the coordinator.",
     "text": "136. **Done: built; one reading for Design.** **§T.6 — the want list: the count line has no noun.** It reads `0 acquired`, `4 acquired`, and on the other view `32 still wanted`. It read `0 records acquired` and `32 records still wanted`. **That line was built and is in committed captures** (`docs/captures/want-list-132/`, all four pictures, and `docs/captures/want-list-empty-112/`, all six), so this too withdraws something drawn. For Design: the ruling's words are about Acquired; Still wanted drops the noun by the same reason and is Code's reading. Captures on the real collection, read-only: `docs/captures/want-list-136/`."
+  },
+  {
+    "id": "step-137",
+    "before": "No step: §G.7",
+    "why": "Code's number for Design's ruling of 12 Oct on closing a changed row in manage, relayed by the coordinator; it reverses step 133's second default.",
+    "text": "137. **Done: built; three things for Design.** **§T.6 — manage: a close that would lose a change asks first.** Below 640, where a row opens as a form. With a field changed, pressing the open row, another row or + NEW leaves the form open and adds one line beneath SAVE and DELETE: DISCARD CHANGES, then KEEP EDITING, as two label-type words with no box, each 44 tall to a finger (116 and 92 wide). DISCARD CHANGES does what was pressed and saves nothing; KEEP EDITING removes the line and leaves what was typed. A close with nothing changed is silent, and a field put back as it was is not a change. SAVE does not ask. + NEW's own form asks once something is typed in it. For Design: (1) the ruling says \"only while SAVE is showing\", and in the build SAVE shows whenever a form is open, changed or not; Code read it as \"while there is something to save\" and did not make SAVE appear and disappear. (2) The line is the two controls alone, with no sentence before them. (3) Not covered: changing section, or leaving the page, with a changed form open still loses it silently; and from 640 the table's edit has its own Cancel and Escape, which discard without asking, as before. Capture on the test database (the state is reached by typing, which the read-only sheets do not do): `docs/captures/manage-confirm-137/`."
   }
 ]

@@ -26,6 +26,12 @@ import type { Row } from './ResourceTable';
  * closes it and saves nothing. The floor is built with it: a row, a field
  * with its label, SAVE and DELETE are each 44 to a coarse pointer.
  *
+ * A close that would lose something asks first (step 137, Design's ruling
+ * of 12 Oct): "One line, with DISCARD CHANGES and KEEP EDITING. A close
+ * with nothing changed stays silent." A close is the open row pressed
+ * again, another row pressed, or + NEW pressed; what was pressed waits for
+ * the answer. SAVE is not a close.
+ *
  * Genres come through the same list with a depth and a parent: indented 12
  * a level and no further than three, Under Parent as the second line, and
  * the parent's select in the open form, so no name is ever cut to make room
@@ -82,18 +88,36 @@ export function ResourceList({ resource, rows, busyId, rowError, createError, on
   const [openId, setOpenId] = useState<string | null>(null);
   const [draft, setDraft] = useState<Record<string, string>>({});
   const [parent, setParent] = useState('');
+  /* The form as it was opened, to tell a change from none: a field put back is not a change. */
+  const [opened, setOpened] = useState<{ draft: Record<string, string>; parent: string }>({ draft: {}, parent: '' });
+  /* What was pressed while the open form had changes, held until DISCARD CHANGES or KEEP EDITING. */
+  const [asked, setAsked] = useState<{ id: string; row?: Row } | null>(null);
   /* A genre is its name here; its description is not edited on this screen in the table either. */
   const fields = genres === undefined ? resource.fields : resource.fields.filter((field) => field.name === 'name');
   const second = tableFields(resource).filter((field) => field.name !== 'name');
 
-  function open(id: string, row?: Row) {
+  const changed = openId !== null && (parent !== opened.parent || fields.some((field) => (draft[field.name] ?? '') !== (opened.draft[field.name] ?? '')));
+
+  function go(id: string, row?: Row) {
+    setAsked(null);
     if (openId === id) {
       setOpenId(null);
       return;
     }
+    const nextDraft = row === undefined ? {} : Object.fromEntries(fields.map((field) => [field.name, draftOf(row, field)]));
+    const nextParent = row === undefined || genres === undefined ? '' : (genres.parentIdOf(row.id) ?? '');
     setOpenId(id);
-    setDraft(row === undefined ? {} : Object.fromEntries(fields.map((field) => [field.name, draftOf(row, field)])));
-    setParent(row === undefined || genres === undefined ? '' : (genres.parentIdOf(row.id) ?? ''));
+    setDraft(nextDraft);
+    setParent(nextParent);
+    setOpened({ draft: nextDraft, parent: nextParent });
+  }
+
+  function open(id: string, row?: Row) {
+    if (changed) {
+      setAsked({ id, row });
+      return;
+    }
+    go(id, row);
   }
 
   function form(row: Row | undefined) {
@@ -107,6 +131,7 @@ export function ResourceList({ resource, rows, busyId, rowError, createError, on
         onUpdate(row.id, draft);
         if (genres !== undefined && parent !== (genres.parentIdOf(row.id) ?? '')) genres.onMove(row.id, parent === '' ? null : parent);
       }
+      setAsked(null);
       setOpenId(null);
     };
 
@@ -192,6 +217,18 @@ export function ResourceList({ resource, rows, busyId, rowError, createError, on
             ))}
         </div>
         {seeded && <p className="text-meta text-muted-foreground">{seededMessage(name)}</p>}
+
+        {asked !== null && (
+          /* One line, and the two answers only: each says what it does. Text controls, 44 to a finger by the row's height and their own width. */
+          <div data-manage-confirm="" role="group" aria-label="Unsaved changes" className="flex items-center gap-4">
+            <button type="button" onClick={() => go(asked.id, asked.row)} className={`${LABEL_TYPE} flex items-center whitespace-nowrap pointer-coarse:min-h-[44px] pointer-coarse:min-w-[44px]`}>
+              Discard changes
+            </button>
+            <button type="button" autoFocus onClick={() => setAsked(null)} className={`${LABEL_TYPE} flex items-center whitespace-nowrap pointer-coarse:min-h-[44px] pointer-coarse:min-w-[44px]`}>
+              Keep editing
+            </button>
+          </div>
+        )}
 
         {/* §12 step 11, artists only: the lineup walk is asked for, here with the artist's other actions. */}
         {resource.key === 'artists' && row !== undefined && (

@@ -42880,3 +42880,90 @@ of 42 coarse; the want list 32 of 32 and 4 of 4): nothing moved.
 **Seen, not touched:** By store on the same screen draws "3 · $23.00",
 a count and a sum joined the way the genre pair was. It is labelled by
 its currency sign and nobody has ruled on it.
+
+## 12 Oct: step 137. Manage asks before a close that would lose a change
+
+Design's third ruling, which reverses step 133's second default (an
+open row closes on a second press, saving nothing) and the
+coordinator's earlier "don't build a confirmation until Design
+answers". In `ResourceList.tsx`, the list below 640.
+
+**What a close is, and what a change is.** A close: the open row
+pressed again, another row pressed, + NEW pressed. A change: the draft
+or the genre's parent differs from what the form opened with, so a
+field typed in and put back is none. With a change, the press is held
+and the form gains one line under SAVE and DELETE: DISCARD CHANGES
+(does what was pressed, saves nothing) and KEEP EDITING (removes the
+line, keeps what was typed; it takes the focus). SAVE never asks.
++ NEW's form asks once something is typed.
+
+**Read, not ruled, and said to Design in the handoff:**
+- "Only while SAVE is showing": SAVE shows whenever a form is open. I
+  built "while there is something to save" and did not make SAVE come
+  and go.
+- The line is the two controls, no sentence.
+- **Not covered:** a change of section or leaving the page with a
+  changed form open still loses it silently (the list unmounts; the
+  state would have to live above it). From 640 the table's Cancel and
+  Escape discard without asking, as they did.
+
+**Tests, written first:** `manage.spec.ts`, "closing a changed row
+asks once, on one line, and each answer does what it says", at 320
+and 390 under each pointer. Failed first 4 of 4 at "expect(locator)
+.toBeVisible()" on the line, after passing its two silent cases, which
+the built list already met. It holds: silent unchanged; silent when
+put back; the two names in order on one line inside the window; the
+floor under each pointer and 44 across under a coarse one; KEEP
+EDITING keeps the typed value; + NEW over a changed row asks and does
+not open until answered; DISCARD CHANGES opens what was pressed and
+the row's second line is as it was; + NEW with a name typed asks; SAVE
+does not ask and saves.
+
+**Step level.** What this step touched that every test reads: nothing
+(`ResourceList.tsx` is manage's). So the screen: the eight specs that
+name manage, by grep, whole, both projects: `219 passed, 2 skipped,
+ledger clean, tree unchanged — OK`. Typecheck and build clean; lint 0
+errors, 27 warnings. A first attempt at that run reported `0 passed …
+NOT OK — no summary line found`: zsh passed the eight file names as
+one word and Playwright found no tests. Not a red in the code; the log
+is kept in the scratchpad.
+
+**Capture, on the test database:** `docs/captures/manage-confirm-137/`
+by `e2e/capture/manage-confirm-137.capture.ts`, 320 and 390 under each
+pointer. Not the real collection: the state is reached by typing in a
+form, and the sheets press section names only. The capture run's line
+reads `1 passed, ledger clean, tree CHANGED — NOT OK`, and the change
+is the four pictures and the table it wrote, which is what it is for.
+It was run twice before commit, the second with the dev badge hidden.
+
+## 12 Oct: can a check hold "a reader that can find two names its view"? Partly, and where
+
+Three different readers went wrong in step 134 and they are not one
+case.
+
+1. **A locator that matches both copies.** Already held: Playwright
+   refuses it, loudly, when the test runs. All 22 of the experiment's
+   failures were this.
+2. **`document.querySelector` inside an `evaluate`, which takes the
+   first copy in silence.** **This can be held, at run time, without a
+   list.** Every spec signs in through `e2e/sign-in.ts` (a repo test
+   holds that), so `login` can add an init script that wraps
+   `querySelector` and throws when a selector's matches lie in BOTH
+   `[data-shelf-offered]` and `[data-shelf-fallback]`. The page knows
+   whether two views are in it; a static check does not, which is why
+   the repo test I described before would have had to be a list of
+   names and would have flagged every correct reader on `?view=table`.
+   Cost and limits: it changes the shared sign-in, so it owes a whole
+   run; it wraps a DOM method for the app's own code too, under test
+   only (an app call that spans both views would throw, and arguably
+   should); it sees `querySelector` and `querySelectorAll()[0]` only if
+   both are wrapped, and nothing that walks the DOM another way.
+3. **A reader that finds ONE element, hidden, and measures it.** The 22
+   of this afternoon. **No check holds this,** because reading a hidden
+   element is often the point (a test that something is not drawn).
+   What holds it is the reader filtering to what is drawn before
+   measuring, and the whole run that a change to the root page or a
+   stylesheet owes, which is what found it.
+
+Not built. (2) is about forty lines and one whole run, and it is a
+change to the shared sign-in, so it waits for a word.
