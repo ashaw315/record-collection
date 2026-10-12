@@ -42684,3 +42684,59 @@ spec `9 passed`; the eleven specs the change reached, on chromium,
 `test/repo`, `2767 passed, tree unchanged — OK`; typecheck and build
 clean; lint 0 errors, 27 warnings. The covering run on both projects
 is run after this commit, in the worktree.
+
+## 12 Oct: step 134's covering run was red, in two specs the step never opened
+
+The whole suites on `c857ccf`, in the worktree (not a gate; nobody
+asked for one): unit `4311 passed, 5 skipped, tree unchanged — OK`;
+Playwright `1159 passed, 22 failed, 19 skipped, ledger clean, tree
+unchanged — NOT OK`. Load 2.61 at the start and 13.43 at the end on 6
+cores; swap 9.7 of 11.0 GB at the start, 12.7 of 14.0 at the end; 41%
+and 51% free.
+
+**All 22 were SHELF among the view names where it is no longer drawn.**
+Step 134 hides it there on the table and the grid as well as on a bare
+address, and the step's eleven specs were the ones that open `/`. These
+two open `?view=table` and `?view=grid`, so the step-level grep for
+readers of the bare address did not reach them. Passing in isolation
+was evidence about the step and no more, which is what CLAUDE.md §10
+says and why the covering run is whole.
+
+*Claim changed (16 tests, by Design's ruling that the names are TABLE
+and GRID where the shelf is not offered):*
+- `collection-band-97.spec.ts`, per view: "the band's search field and
+  view names are there" asserted SHELF visible at 1024; it now asserts
+  the drawn names are Table, Grid and SHELF is hidden. "Each view name
+  and Add record is tappable over 44" listed four links; it lists
+  three, and the 44 is re-measured on those at 390 and 1024.
+- `sidebar-113.spec.ts`, per view: "at 1440 the sidebar reads, top to
+  bottom" asserted three view names; it asserts Shelf, Table, Grid
+  under a fine pointer and Table, Grid under a coarse one.
+- `collection-band-97`'s five width cases per view said "the three
+  names are one row"; they say two, and count them. Ten tests, one
+  sentence each.
+
+*Reader corrected, claim unchanged (6 tests):* `sidebar-113`'s "at
+1054 / 1440 / 1920 … its content 18 to 318 on the wordmark's left", per
+view, on the phone project. They read the first view name's left from
+the first link in the document, which was the hidden SHELF and an empty
+box at the page's corner. They read the first one drawn. These pass
+with SHELF drawn and with it hidden, so the fail-first below does not
+show them failing: the correction is to the reader, said as such.
+
+So down and across: 22 failed tests = 14 in the band spec on chromium
+(2 views × 7) + 8 in the sidebar spec on the phone project (2 views ×
+4). By kind: 2 + 2 + 10 claim-changed in the band spec, 2 claim-changed
+and 6 reader-corrected in the sidebar spec.
+
+**Fail first, staged:** with the rule that hides `[data-view-name=
+"shelf"]` taken out of `page.tsx` (restored after, tree unchanged), the
+two specs on both projects: `71 passed, 16 failed, 1 skipped … NOT OK`
+— the 14 band tests and the two sidebar order tests on the phone
+project. **Step level, with the build:** the same two specs, both
+projects, `87 passed, 1 skipped, ledger clean, tree unchanged — OK`;
+typecheck clean; lint 0 errors, 27 warnings. No source changed.
+
+**The convention check logged above would not have caught this.** These
+readers found ONE element, hidden, not two. The rule that would have:
+a reader that measures a box filters to what is drawn.

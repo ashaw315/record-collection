@@ -47,7 +47,10 @@ const reading = (page: Page) =>
       search: box(q('#rail-search')),
       searchLabel: ink(q('label[for="rail-search"]')),
       glyph: box(q('[data-search-glyph]')),
-      views: Array.from(document.querySelectorAll('[data-collection-band] ul a')).map((a) => ink(a)),
+      /* The names drawn: SHELF is in the document and hidden where the shelf is not offered (step 134), and its ink read there is an empty box at the page's corner. */
+      views: Array.from(document.querySelectorAll('[data-collection-band] ul a')).filter((a) => a.getClientRects().length > 0).map((a) => ink(a)),
+      viewNames: Array.from(document.querySelectorAll('[data-collection-band] ul a')).filter((a) => a.getClientRects().length > 0).map((a) => (a.textContent ?? '').trim()),
+      finePointer: matchMedia('(pointer: fine)').matches,
       bandAdd: box(q('[data-collection-band] nav > a')),
       count: ink(q('[data-collection-count]')),
       heading: ink(q('[data-collection-heading] h1')),
@@ -130,8 +133,9 @@ for (const view of VIEWS) {
       const r = await reading(page);
       const tops = [r.searchLabel?.top, r.search?.top, r.views[0]?.top, r.count?.top, r.heading?.top, r.sortRow?.top, r.sort?.top, r.lines[0]?.top];
       for (const [i, top] of tops.entries()) { if (top === undefined) throw new Error(`item ${i} is not drawn`); if (i > 0) expect(top, `item ${i} is below item ${i - 1}`).toBeGreaterThan(tops[i - 1] as number); }
-      expect(r.views.length).toBe(3);
-      expect(new Set(r.views.map((v) => Math.round(v?.top ?? 0))).size, 'the three view names on one row').toBe(1);
+      /* Step 134: SHELF stands first under a fine pointer, where the shelf is offered at this width, and is not drawn under a coarse one. Fails against a sidebar that draws it under both. */
+      expect(r.viewNames).toEqual(r.finePointer ? ['Shelf', 'Table', 'Grid'] : ['Table', 'Grid']);
+      expect(new Set(r.views.map((v) => Math.round(v?.top ?? 0))).size, 'the view names on one row').toBe(1);
       const row = await page.locator('[data-sort-row]').evaluate((el) => { const cs = getComputedStyle(el); return [cs.borderTopWidth, cs.borderBottomWidth, cs.borderTopStyle]; });
       expect(row, 'a hairline above Sort and one below').toEqual(['1px', '1px', 'solid']);
       expect([r.chevron?.width, r.chevron?.height], 'Sort’s chevron, a 12 square').toEqual([12, 12]);

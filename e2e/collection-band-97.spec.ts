@@ -30,6 +30,15 @@ const VIEWS = ['table', 'grid'] as const;
   head: `sidebar-113.spec.ts` reads it there.
 */
 const BAND_WIDE = 1024;
+/*
+  Step 134: the shelf is offered from 1044 under a fine pointer, and SHELF is
+  hidden among the view names wherever it is not. Every width the two-row
+  band is read at here is below that, so its names are TABLE and GRID. The
+  claim these tests held before, three names with SHELF first, changed with
+  Design's ruling; it is not a reader's correction. Where the three stand is
+  `sidebar-113.spec.ts` and `shelf-offered-134.spec.ts`.
+*/
+const NAMES = ['Table', 'Grid'];
 
 async function open(page: Page, view: (typeof VIEWS)[number], width: number, height = 900) {
   await page.setViewportSize({ width, height });
@@ -47,7 +56,9 @@ for (const view of VIEWS) {
       await open(page, view, BAND_WIDE);
       const band = page.locator('[data-collection-band]');
       await expect(band.locator('#rail-search')).toBeVisible();
-      await expect(band.getByRole('link', { name: 'Shelf', exact: true })).toBeVisible();
+      /* Fails against a band that draws SHELF below 1044: the names read Shelf, Table, Grid. */
+      expect(await band.locator('ul[aria-label="View"] a').evaluateAll((all) => all.filter((a) => a.getClientRects().length > 0).map((a) => (a.textContent ?? '').trim()))).toEqual(NAMES);
+      await expect(band.getByRole('link', { name: 'Shelf', exact: true })).toBeHidden();
       await expect(band.getByRole('link', { name: view === 'table' ? 'Table' : 'Grid', exact: true })).toHaveAttribute('aria-current', 'page');
       await expect(page.locator('#collection-search')).toHaveCount(0);
       await expect(page.locator('main [role="group"][aria-label="View"]')).toHaveCount(0);
@@ -62,14 +73,16 @@ for (const view of VIEWS) {
         await open(page, view, width);
         const m = await page.evaluate(() => {
           const box = (sel: string) => { const r = (document.querySelector(sel) as HTMLElement).getBoundingClientRect(); return { left: r.left, top: r.top, right: r.right, bottom: r.bottom, width: r.width }; };
-          const names = Array.from(document.querySelectorAll('[data-collection-band] ul[aria-label="View"] a')).map((a) => a.getBoundingClientRect());
+          /* The names drawn: SHELF is in the document and not drawn here, and a box read from it is an empty one at the page's corner. */
+          const names = Array.from(document.querySelectorAll('[data-collection-band] ul[aria-label="View"] a')).filter((a) => a.getClientRects().length > 0).map((a) => a.getBoundingClientRect());
           const add = Array.from(document.querySelectorAll('[data-collection-band] a')).find((a) => (a.textContent ?? '').trim() === 'Add record') as HTMLElement;
           return { field: box('[data-collection-band] #rail-search'), namesTop: Math.min(...names.map((r) => r.top)), nameTops: names.map((r) => Math.round(r.top)), nameLeft: names[0].left, add: add.getBoundingClientRect().toJSON() as { top: number; right: number; bottom: number }, names: names.map((r) => ({ left: r.left, right: r.right })), scroll: document.documentElement.scrollWidth, client: document.documentElement.clientWidth };
         });
         expect(m.field.width, 'the field’s width').toBeCloseTo(field, 0);
         expect(m.field.left, 'at the left inset').toBeCloseTo(SCREEN.inset, 0);
         expect(m.namesTop, 'the view names are a row beneath the field').toBeGreaterThanOrEqual(m.field.bottom);
-        expect(new Set(m.nameTops).size, 'the three names are one row').toBe(1);
+        expect(m.nameTops.length, 'two names are drawn').toBe(NAMES.length);
+        expect(new Set(m.nameTops).size, 'the two names are one row').toBe(1);
         expect(m.nameLeft, 'the names start at the left inset').toBeCloseTo(SCREEN.inset, 0);
         expect(m.add.right, 'Add record ends at the right inset').toBeCloseTo(width - SCREEN.inset, 0);
         expect(m.add.top, 'Add record is on the names’ row').toBeLessThan(m.namesTop + 20);
@@ -132,11 +145,11 @@ for (const view of VIEWS) {
       });
     }
 
-    /* Fails against a band whose links have only their drawn boxes: 11 tall. Read by what a tap at each point reaches. */
+    /* Fails against a band whose links have only their drawn boxes: 11 tall. Read by what a tap at each point reaches. Re-measured at step 134 with SHELF gone from the row. */
     test(`each view name and Add record is tappable over 44, at 390 and at ${BAND_WIDE}`, async ({ page }) => {
       for (const width of [390, BAND_WIDE]) {
         await open(page, view, width);
-        const reach = await page.evaluate(() => Array.from(document.querySelectorAll<HTMLElement>('[data-collection-band] ul[aria-label="View"] a, [data-collection-band] nav > a')).map((a) => {
+        const reach = await page.evaluate(() => Array.from(document.querySelectorAll<HTMLElement>('[data-collection-band] ul[aria-label="View"] a, [data-collection-band] nav > a')).filter((a) => a.getClientRects().length > 0).map((a) => {
           const r = a.getBoundingClientRect();
           const x = r.left + r.width / 2;
           const mid = r.top + r.height / 2;
@@ -144,7 +157,7 @@ for (const view of VIEWS) {
           for (let y = Math.round(mid - 30); y <= Math.round(mid + 30); y += 1) { const at = document.elementFromPoint(x, y); if (at !== null && (at === a || a.contains(at))) hit += 1; }
           return { name: (a.textContent ?? '').trim(), hit };
         }));
-        expect(reach.map((r) => r.name), `at ${width}`).toEqual(['Shelf', 'Table', 'Grid', 'Add record']);
+        expect(reach.map((r) => r.name), `at ${width}`).toEqual([...NAMES, 'Add record']);
         for (const r of reach) expect(r.hit, `${r.name} at ${width}: rows of pixels a tap reaches`).toBeGreaterThanOrEqual(44);
       }
     });
