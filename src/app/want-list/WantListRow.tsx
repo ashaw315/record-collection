@@ -22,6 +22,7 @@ import {
 } from './want-list-format';
 import { MarketPanel } from '@/app/market/MarketPanel';
 import { HIT, HIT_ALONE } from '@/app/hit-area';
+import { LABEL } from '@/app/records/[id]/grid-type';
 
 /**
  * One want-list row (SPEC.md §10: "Sorted by priority. Each row shows target
@@ -75,7 +76,14 @@ export function WantListRow({ item }: { item: WantListItem }) {
 
   return (
     <li className="border-b border-border py-3 last:border-0">
-      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+      {/*
+        The want list's pass (step 132): "On a phone the want list's row is a
+        title line, an artist line, and one actions line beneath them in a
+        fixed order: priority, MARK ACQUIRED, DELETE." Stacked below 640, so
+        the row is one shape whether its title is short or long; from 640
+        the actions stand at the row's right, as they did.
+      */}
+      <div className="sm:flex sm:items-baseline sm:justify-between sm:gap-x-3">
         <div className="min-w-0">
           {/*
             Clickable through to the detail view, where `target_pressing` and
@@ -92,10 +100,10 @@ export function WantListRow({ item }: { item: WantListItem }) {
               (measured at 320: 34 of 44). 13 above and below a line box of 19.5,
               which 12 left half a pixel short. Padding above and below an inline
               link moves no line, and being positioned puts it over the
-              type beneath. 9 past its start and 4, half the 8, toward Edit.
+              type beneath. 9 past its start and 17, half the 34, toward Edit.
               Under a coarse pointer only, as every hit area is (step 127).
             */
-            className="relative font-medium underline-offset-2 hover:underline pointer-coarse:-ml-[9px] pointer-coarse:-mr-[4px] pointer-coarse:py-[13px] pointer-coarse:pl-[9px] pointer-coarse:pr-[4px]"
+            className="relative font-medium underline-offset-2 hover:underline pointer-coarse:-ml-[9px] pointer-coarse:-mr-[17px] pointer-coarse:py-[13px] pointer-coarse:pl-[9px] pointer-coarse:pr-[17px]"
           >
             {item.title}
           </Link>
@@ -109,26 +117,30 @@ export function WantListRow({ item }: { item: WantListItem }) {
           <Link
             href={`/want-list/${item.id}/edit`}
             data-testid={`want-list-row-edit-${item.id}`}
-            className={`${HIT} ml-2 text-label text-muted-foreground underline underline-offset-2 before:-left-[4px] before:-right-[9px]`}
+            /* Across (step 132): Edit is 19 wide and has 9 past its end, so it needs 17 toward the title to be 44 by the reading: under a coarse pointer the 8 between them grows to 34, half each. */
+            className={`${HIT} ml-2 text-label text-muted-foreground underline underline-offset-2 before:-left-[17px] before:-right-[9px] pointer-coarse:ml-[34px]`}
           >
             Edit
           </Link>
-          <p className="text-detail text-muted-foreground">
+          <p data-want-artist="" className="text-detail text-muted-foreground">
             {item.artist.name}
             {item.label !== null && ` · ${item.label.name}`}
           </p>
         </div>
 
-        <div className="flex shrink-0 items-center gap-2">
+        <div data-want-actions="" className="mt-3 flex shrink-0 items-center gap-[18px] sm:mt-0">
           {/* Named, not numbered: §4.2 makes 1 the highest and a bare digit
-              cannot tell the reader which end is the top. */}
-          <span className="rounded-xs border border-border px-1.5 py-0.5 text-meta text-muted-foreground">
+              cannot tell the reader which end is the top. A label, with no
+              box: nothing listens on it, and "a box means a control by
+              §9.3". */}
+          <span data-want-priority="" className={LABEL}>
             {priorityLabel(item.priority)}
           </span>
 
           {item.isAcquired ? (
             <>
-              <span className="rounded-xs border border-border bg-accent px-1.5 py-0.5 text-detail">
+              {/* A label as priority is, by the same rule: no box and no fill. */}
+              <span data-want-acquired="" className={LABEL}>
                 Acquired
               </span>
               {item.acquiredRecordId !== null && (
@@ -156,29 +168,18 @@ export function WantListRow({ item }: { item: WantListItem }) {
           )}
 
           {/*
-            **Set apart from the primary action, not hidden.** On a 390px row
-            the priority chip, "Mark acquired" and this sat adjacent with Delete
-            hard against the right edge — a destructive control under the thumb,
-            a few pixels from the one you actually want.
-
-            §7.3 already requires a confirmation naming what is lost, so the
-            risk was never an unrecoverable delete; it was the mis-tap, and the
-            interruption of confirming something you did not mean to press. The
-            separator and the leading margin make it a deliberate reach while
-            leaving it exactly as reachable as before — hiding it behind a menu
-            would trade a small annoyance for a hunt.
+            §7.3 requires a confirmation naming what is lost, so the risk of
+            Delete beside the primary action was the mis-tap. It was set
+            apart by a | and a margin; the pass: "The | before Delete goes;
+            the gap separates."
           */}
-          <span aria-hidden className="ml-1 hidden h-3 w-px bg-border sm:block" />
-          {/* The room is the span's, so the button is its word and its hit area is measured from the word. */}
-          <span className="ml-auto flex pl-3 sm:ml-1 sm:pl-0">
-            <button
-              type="button"
-              onClick={() => setConfirming(true)}
-              className={`${HIT_ALONE} text-label text-muted-foreground underline underline-offset-2 hover:text-destructive`}
-            >
-              Delete
-            </button>
-          </span>
+          <button
+            type="button"
+            onClick={() => setConfirming(true)}
+            className={`${HIT_ALONE} text-label text-muted-foreground underline underline-offset-2 hover:text-destructive`}
+          >
+            Delete
+          </button>
         </div>
       </div>
 
@@ -196,7 +197,8 @@ export function WantListRow({ item }: { item: WantListItem }) {
       )}
 
       {item.bestDigNotes !== null && item.bestDigNotes !== '' && (
-        <p className="mt-1 text-detail">
+        /* The pass: "held to two lines, ending in an ellipsis, with its whole text on the item's page." */
+        <p className="mt-1 line-clamp-2 text-detail">
           <span className="text-muted-foreground">{BEST_DIG_LABEL}: </span>
           {item.bestDigNotes}
         </p>

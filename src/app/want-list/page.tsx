@@ -11,7 +11,7 @@ import { hydrateWantListItem } from '@/lib/db/queries/want-list';
 import type { Offset } from '@/lib/api/query-params';
 import { cn } from '@/lib/utils';
 import { SCREEN_FRAME } from '@/app/screen-frame';
-import { HIT } from '@/app/hit-area';
+import { HIT_ALONE } from '@/app/hit-area';
 
 /**
  * SPEC.md §10 `/want-list`.
@@ -57,7 +57,8 @@ export default async function WantListPage({ searchParams }: PageProps<'/want-li
         <header className="mb-4 flex flex-wrap items-start justify-between gap-4">
           <div>
             <h1 className="font-heading text-headline font-semibold tracking-tight">
-              {showAcquired ? 'Acquired' : 'Want list'}
+              {/* The pass (step 132): "The heading stays Want list in both views, because the nav and the view name already say Acquired." */}
+              Want list
             </h1>
             <p className="mt-0.5 text-lede text-muted-foreground">
               {total === 1 ? '1 record' : `${total} records`}
@@ -114,23 +115,26 @@ export default async function WantListPage({ searchParams }: PageProps<'/want-li
           IS the acquisition history, and a screen that dropped them would lose
           the half of the record that says what the hunt was for.
         */}
-        <nav aria-label="View" className="mb-4 flex gap-1">
+        <nav aria-label="View" className="mb-4 flex gap-[18px]">
           {[
             { label: 'Still wanted', href: '/want-list', active: !showAcquired },
             { label: 'Acquired', href: '/want-list?acquired=true', active: showAcquired },
-          ].map((tab, index) => (
+          ].map((tab) => (
             <Link
               key={tab.href}
               href={tab.href}
               aria-current={tab.active ? 'page' : undefined}
+              /*
+                The pass (step 132): "view names, set as SHELF, TABLE and
+                GRID are, 11 mono uppercase with the current one underlined
+                and no box. Built, each carries a box and an underline, two
+                marks for one state." The underline is §3's mark for a
+                choice, 2px and 7 below. Each reaches 9, half the 18 between
+                the two and the figure past an end with no neighbour.
+              */
               className={cn(
-                /* Inside the 1px border: 10 reaches 9 past, and 3 reaches 2, half the 4 between the two. */
-                `${HIT} rounded-xs border px-2 py-1 text-label transition-colors`,
-                index === 0 ? 'before:-left-[10px] before:-right-[3px]' : 'before:-left-[3px] before:-right-[10px]',
-                tab.active
-                  /* §T.6: no fill. The current one takes §3's mark for a choice, the 2px underline 7 below, as a chosen filter does. */
-                  ? 'border-foreground text-foreground underline decoration-2 underline-offset-[7px]'
-                  : 'border-border hover:bg-accent',
+                `${HIT_ALONE} ${LABEL_TYPE}`,
+                tab.active ? `${INK} underline decoration-2 underline-offset-[7px]` : `text-[oklch(0.44_0.008_70)] hover:underline`,
               )}
             >
               {tab.label}

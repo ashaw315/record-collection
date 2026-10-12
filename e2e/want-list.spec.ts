@@ -1144,12 +1144,15 @@ for (const pointer of POINTERS) test.describe(`the want list under a ${pointer} 
       const names = reach.map((r) => r.name);
       for (const name of ['Look up a record', 'Suggestions', 'Still wanted', 'Acquired', mine, ...expected]) expect(names, `${path}: the control is on the screen to be read`).toContain(name);
       /* An overlay and not a bigger box: what is drawn is the size it was, under either pointer. Suggestions alone is a row under a coarse one, the handoff's case of controls stacked with no gap, and the title's own box holds its padding. */
-      for (const [name, drawn] of [['Edit', 14], ['Delete', 16.5], ['Still wanted', 26.5], ['Acquired', 26.5], ['Mark acquired', 26.5], ['View record', 16.5], ['Suggestions', pointer === 'coarse' ? 44 : 16.5]] as const) {
+      for (const [name, drawn] of [['Edit', 14], ['Delete', 16.5], ['Still wanted', 16.5], ['Acquired', 16.5], ['Mark acquired', 26.5], ['View record', 16.5], ['Suggestions', pointer === 'coarse' ? 44 : 16.5]] as const) {
         for (const r of reach.filter((each) => each.name === name)) expect.soft(Math.abs(r.height - drawn), `${path}: ${name} is drawn ${drawn} tall, and was ${r.height}`).toBeLessThanOrEqual(1);
       }
       if (pointer === 'coarse') {
         expect.soft(underFloor(reach).map((r) => `${r.name}: ${r.tall}`), `${path} at ${width}: controls under ${HIT_FLOOR} to a finger, of ${reach.length}`).toEqual([]);
-        expect.soft(reach.filter((r) => r.left > HIT_PAST || r.right > HIT_PAST).map((r) => `${r.name}: ${r.left} left, ${r.right} right`), `${path} at ${width}: controls a tap reaches from more than ${HIT_PAST} past them`).toEqual([]);
+        /* 9 past an end with no neighbour; toward a neighbour, half the gap. Edit is 19 wide and stands 34 from its title, so it reaches 17 toward it (step 132). */
+        expect.soft(reach.filter((r) => r.left > (r.name === 'Edit' ? 17 : HIT_PAST) || r.right > HIT_PAST).map((r) => `${r.name}: ${r.left} left, ${r.right} right`), `${path} at ${width}: controls a tap reaches from more than ${HIT_PAST} past them`).toEqual([]);
+        /* Step 132, Design: "Controls side by side on one line meet the floor across as they do down." Fails against Edit, 19 wide with 4 and 9 either side. */
+        expect.soft(reach.filter((r) => r.wide < HIT_FLOOR).map((r) => `${r.name}: ${r.wide}`), `${path} at ${width}: controls under ${HIT_FLOOR} across to a finger`).toEqual([]);
       } else {
         expect.soft(reachingPastItself(reach), `${path} at ${width}: controls a mouse reaches from outside their drawn box`).toEqual([]);
         expect.soft(reach.filter((r) => r.tall >= HIT_FLOOR && r.height < HIT_FLOOR).map((r) => `${r.name}: ${r.tall}`), `${path} at ${width}: controls 44 tall under a mouse that were not drawn so`).toEqual([]);
@@ -1213,3 +1216,70 @@ for (const pointer of POINTERS) test.describe(`the want list’s forms and an it
   });
  }
 });
+
+/*
+  Step 132, the want list's pass (§T.6). "On a phone the want list's row is
+  a title line, an artist line, and one actions line beneath them in a fixed
+  order: priority, MARK ACQUIRED, DELETE." From 640 the actions stand at the
+  row's right, as built. Still wanted and Acquired are view names, the
+  current one underlined and no box; the heading stays Want list in both
+  views; priority is not pressable and has no box; the | is gone; best dig
+  is held to two lines.
+*/
+for (const width of [320, 390, 768, 1280]) {
+  /* Fails against the row as built: actions beside a short title and beneath a long one, the view names boxed, the heading Acquired, priority in a box, the |, and best dig at its whole length. */
+  test(`the want list’s row is one shape down the list, its view names are names and its heading stays Want list, at ${width}`, async ({ page }) => {
+    const suffix = makeSuffix();
+    const artist = await post(page, '/api/artists', { name: `Pass-${suffix}` });
+    trackArtist(artist.id as string);
+    const short = `Pass ${suffix}`;
+    const long = `Pass A Title Long Enough To Take A Second Line On A Phone ${suffix}`;
+    const notes = Array.from({ length: 10 }, (_, i) => `Line ${i + 1} of a note as long as a Discogs notes block, which buried the list.`).join(' ');
+    await post(page, '/api/want-list', { title: short, artistId: artist.id, priority: 2, bestDigNotes: notes });
+    await post(page, '/api/want-list', { title: long, artistId: artist.id, priority: 4 });
+    const got = await post(page, '/api/want-list', { title: `Pass Got ${suffix}`, artistId: artist.id });
+    expect((await page.request.post(`/api/want-list/${got.id}/acquire`, { data: { title: `Pass Got ${suffix}`, artistId: artist.id }, failOnStatusCode: false })).status()).toBe(201);
+
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto('/want-list');
+    await page.getByRole('listitem').filter({ hasText: short }).first().waitFor();
+    await page.evaluate(() => document.fonts.ready);
+    await expect(page.locator('main h1')).toHaveText('Want list');
+
+    const names = await page.evaluate(() => Array.from(document.querySelectorAll('nav[aria-label="View"] a')).map((a) => { const cs = getComputedStyle(a); return { name: (a.textContent ?? '').trim(), border: cs.borderTopWidth, underlined: cs.textDecorationLine.includes('underline'), upper: cs.textTransform, family: cs.fontFamily.toLowerCase().includes('mono'), current: a.getAttribute('aria-current') === 'page' }; }));
+    expect(names.map((n) => n.name)).toEqual(['Still wanted', 'Acquired']);
+    for (const n of names) {
+      expect.soft(n.border, `${n.name}: a view name has no box`).toBe('0px');
+      expect.soft([n.upper, n.family], `${n.name}: set as the shelf’s view names are, mono and uppercase`).toEqual(['uppercase', true]);
+      expect.soft(n.underlined, `${n.name}: only the current one is underlined`).toBe(n.current);
+    }
+
+    for (const title of [short, long]) {
+      const m = await page.getByRole('listitem').filter({ hasText: title }).first().evaluate((li) => {
+        const box = (el: Element | null) => { if (el === null) throw new Error('a part of the row is missing'); const b = el.getBoundingClientRect(); return { left: b.left, right: b.right, top: b.top, bottom: b.bottom, mid: b.top + b.height / 2 }; };
+        const priority = li.querySelector('[data-want-priority]');
+        const mark = Array.from(li.querySelectorAll('a')).find((a) => (a.textContent ?? '').trim() === 'Mark acquired') ?? null;
+        const del = Array.from(li.querySelectorAll('button')).find((b) => (b.textContent ?? '').trim() === 'Delete') ?? null;
+        const dig = Array.from(li.querySelectorAll('p')).find((p) => (p.textContent ?? '').includes('Line 1 of a note')) ?? null;
+        return { row: box(li), title: box(li.querySelector('[data-testid="want-list-detail-link"]')), artist: box(li.querySelector('[data-want-artist]')), priority: box(priority), priorityBorder: priority === null ? '' : getComputedStyle(priority).borderTopWidth, mark: box(mark), del: box(del), bars: li.querySelectorAll('span[aria-hidden]').length, dig: dig === null ? null : { height: dig.getBoundingClientRect().height, line: parseFloat(getComputedStyle(dig).lineHeight) } };
+      });
+      expect.soft(m.priorityBorder, `${title}: priority is a label and has no box`).toBe('0px');
+      expect.soft(m.bars, `${title}: no | before Delete`).toBe(0);
+      expect.soft(m.priority.left < m.mark.left && m.mark.left < m.del.left, `${title}: priority, then Mark acquired, then Delete`).toBe(true);
+      expect.soft(Math.abs(m.priority.mid - m.mark.mid) < 8 && Math.abs(m.del.mid - m.mark.mid) < 8, `${title}: the three are on one line`).toBe(true);
+      if (width < 640) expect.soft(m.mark.top, `${title} at ${width}: the actions line is beneath the artist’s line`).toBeGreaterThanOrEqual(m.artist.bottom - 1);
+      else {
+        expect.soft(m.mark.top, `${title} at ${width}: the actions stand beside the title, above the artist’s line’s foot`).toBeLessThan(m.artist.bottom);
+        expect.soft(m.row.right - m.del.right, `${title} at ${width}: and at the row’s right`).toBeLessThan(12);
+      }
+      if (m.dig !== null) expect.soft(m.dig.height, `${title}: best dig is held to two lines`).toBeLessThanOrEqual(m.dig.line * 2 + 1);
+    }
+
+    await page.goto('/want-list?acquired=true');
+    await page.getByRole('listitem').filter({ hasText: `Pass Got ${suffix}` }).waitFor();
+    await expect(page.locator('main h1'), 'the heading stays Want list on the Acquired view').toHaveText('Want list');
+    const mark = await page.getByRole('listitem').filter({ hasText: `Pass Got ${suffix}` }).locator('[data-want-acquired]').evaluate((el) => [getComputedStyle(el).borderTopWidth, getComputedStyle(el).backgroundColor, getComputedStyle(document.body).backgroundColor]);
+    expect.soft(mark[0], 'Acquired on a row is a label and has no box').toBe('0px');
+    expect.soft(mark[1] === 'rgba(0, 0, 0, 0)' || mark[1] === mark[2], 'and no fill').toBe(true);
+  });
+}

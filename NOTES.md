@@ -42116,3 +42116,48 @@ Step level: the seven specs that open stats, by grep, both projects:
 `83 passed, ledger clean, tree unchanged — OK`, `[projects] chromium
 64, capture 0, mobile 19`. Unit under `src/app/stats`: `29 passed`.
 Typecheck and build clean; lint 0 errors, 27 warnings. No gate.
+
+## Step 132: the want list's pass (12 Oct)
+
+Design's unnumbered step, built as ruled: the row's three lines below
+640, the view names, the heading, priority unboxed, the | gone, best
+dig at two lines (`WantListRow.tsx`, `want-list/page.tsx`).
+
+**Reported, as the step asks.** Priority is not pressable: a `span`,
+nothing listening. It loses its box and is a label (11 mono uppercase,
+the label colour). **Beyond the ruling by its own rule:** the Acquired
+mark on an acquired row was a filled box and is not a control either;
+it is the same label now.
+
+**Across, held on this screen, the first.** The pointer test now holds
+`wide` at 44 for every control under a coarse pointer. One gap grew:
+Edit is 19 wide with 9 past its end, so it needs 17 toward the title
+and stands 34 from it, from 8, half each. The test's "no more than 9
+past" allows Edit its 17 toward a neighbour and says why; the pass
+sheet's "past 9" column counts those seven Edits and is not a defect.
+At 320 the three actions fit their line and priority stays on it.
+
+**Tests replaced by the ruling, said plainly:** the pointer test held
+the view names drawn 26.5 (their boxes); it holds 16.5 now, their
+line. I first wrote 14, the rail's figure, and the build measured
+16.5. No other existing test needed changing.
+
+Test first: the shape test (four widths) and the pointer test's new
+lines, 24 of 24 failing against the row as built. With the build,
+`want-list.spec.ts` on both projects without retries: `84 passed`.
+
+Re-counted on the real collection, coarse (`docs/captures/
+want-list-132/`): 32 of 32 and 4 of 4 at 320, 390 and 768; 0 under 44
+across. The list is 1116 long at 390, from 1210: the actions line adds
+a line a row and the long best-dig notes give back more.
+
+**Left as built, for Design to say:** the count line ("7 records still
+wanted", "0 records acquired"; the target's "the count reads 0
+acquired" may mean without "records"); Edit beside the title, which
+the actions line's order does not name.
+
+Step level: the 14 specs that name the want list, by grep, both
+projects: `348 passed, ledger clean, tree unchanged — OK`, `[projects]
+chromium 207, capture 0, mobile 141`. Unit under `src/app`: `1292
+passed`. Typecheck and build clean; lint 0 errors, 27 warnings. No
+`[reset]` line. No gate.
