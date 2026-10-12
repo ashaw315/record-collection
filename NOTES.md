@@ -42981,3 +42981,18 @@ would have refused; 13.5 of 15.0 and 53% at the end. Narrowest margin:
 walks six sections and their open forms in one test; not looked into.
 Step 137 (`5fd4fdc`) is after this commit and is not in this run; it
 touched nothing every test reads and ran its screen.
+
+## 12 Oct: what a step's covering run owes (the coordinator's rule)
+
+A screen pass owes that screen's specs on both projects and nothing
+more. A whole-suite run is owed only when a step touches a file every
+test reads: the shared sign-in, a stylesheet, the seed, the root page.
+**Before any run longer than its own screen, name the files every test
+reads that the step touched.** None: run the screen. Cannot name them:
+that is the answer too, and the whole run is owed. A red line is still
+a red unless diagnosed.
+
+Applied twice already. `6616548` touched `ShelfAddress.tsx`, on the
+root page: whole run, on `9c73d1e`. Step 137 touched
+`ResourceList.tsx`, manage's alone: the eight specs naming manage.
+A gate is still Adam's word only; a whole covering run is not one.
