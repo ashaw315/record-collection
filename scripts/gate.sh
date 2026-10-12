@@ -20,9 +20,16 @@
 # It refuses to start on a busy machine. A gate begun at a load of 77 on six
 # cores took an hour and its wall clock was a fact about the machine. The
 # one-minute load is read first and the run is refused above six times the
-# physical cores, or while the machine is swapping more than a thousand pages
-# a second, which load does not see. Load, swap and free memory at the start
+# physical cores, or while the machine is swapping more than 25,000 pages a
+# second, which load does not see. Load, swap and free memory at the start
 # and at the end are printed with the result.
+#
+# The 25,000 is measured, thinly (12 Oct, NOTES): one nine-test spec run
+# twelve times here, 23.7 to 25.0s where the machine swapped 8,000 to 23,000
+# pages a second during the run, 25.6 to 32.2s from 32,500 to 56,000, and 66s
+# with a failure at 147,000. So it is set under the lowest rate a run was
+# slower at, by a fifth. It was 1,000, a round number: two full runs started
+# at 434 and 976 and were not slowed.
 #
 # `.env.local` is NOT copied here: the production credential does not travel.
 # The three tests that read it skip on GATE_WORKTREE=1, which only this
@@ -51,7 +58,7 @@ swap_rate() { local a b; a="$(swap_pages)"; /bin/sleep 5; b="$(swap_pages)"; ech
 memory() { echo "swap $(sysctl -n vm.swapusage | awk '{print $6 " of " $3}' | tr -d 'M' | awk '{printf "%.1f of %.1f GB", $1 / 1024, $3 / 1024}'), $(memory_pressure | awk -F': ' '/free percentage/ {print $2}') free, $1 pages a second swapped"; }
 CORES="$(sysctl -n hw.physicalcpu)"
 MAX_LOAD="${GATE_MAX_LOAD:-$((CORES * 6))}"
-MAX_SWAP_RATE="${GATE_MAX_SWAP_RATE:-1000}"
+MAX_SWAP_RATE="${GATE_MAX_SWAP_RATE:-25000}"
 LOAD_START="$(load)"
 RATE_START="$(swap_rate)"
 MEMORY_START="$(memory "$RATE_START")"

@@ -42751,3 +42751,68 @@ seen and not acted on: the swap rate at the start read 976 pages a
 second against a refusal at 1000, so the run was let through by 24;
 and `lookup-flows.spec.ts:1831` on chromium finished with 17% of its
 30s left (24.8s), the narrowest margin in the run.
+
+## 12 Oct: the swap threshold, measured; a flaky in step 134's own test; `lookup-flows:1831`
+
+**The swap threshold is 25,000 pages a second, from 1,000.** 1,000 was
+a round number and a full run had started at 976. Measured: one spec
+(`shelf-offered-134`, nine tests, chromium) twelve times back to back
+in the worktree on the gate's database and port, swap pages sampled
+every 5s beside it (4K pages).
+
+| swap during the run, pages/s | runs | Playwright's time |
+|---|---|---|
+| 8,300 to 22,700 | 5 | 23.7 to 25.0s |
+| 32,500 to 56,200 | 6 | 25.6 to 32.2s |
+| 146,800 | 1 | 66.0s, and one test failed and passed on retry |
+
+So time starts climbing somewhere between 23,000 and 32,500 and the
+limit is under the lower end of the slow band by a fifth. **What this
+is not.** Twelve runs of one spec, on whatever the machine happened to
+be doing: I did not make it swap. Load rose with it (3 to 24 across
+the twelve), so swap and load are not separated; r = 0.95 between
+swap rate and time is mostly the one run at 146,800 (0.77 without it).
+And the guard reads 5s BEFORE a run where these are rates DURING one,
+which include the run's own. A 5s reading swings: single samples ran
+from 2,156 to 256,222, median 23,848. The two full runs that were not
+slowed started at 434 and 976. The honest size of it: 25,000 catches a
+machine already where runs were seen slower, and lets through the
+noise that 1,000 sat inside.
+
+**The measurement ran its twelve without copying the seventh's
+artefacts,** so the failure's trace was overwritten by the eighth. The
+rule (copy a failure's artefacts before running anything again) was
+not built into the scratch loop. What is left is the log's error text.
+
+**The flaky: `shelf-offered-134.spec.ts:96`, once in thirteen runs.**
+"the view is cleared from the address": expected `/`, still
+`/?view=shelf` after 5s, in the run at 146,800. `ShelfAddress`
+corrected the address with `router.replace`, which asks the server for
+`/` again, both views, before the address changes. So the address
+stayed wrong for as long as a second render took, and a stalled server
+held it past the wait. **That is a reading of the code and the one
+error line; with the trace gone I cannot show which leg was slow.**
+What was changed is the leg that need not exist: the address is now
+replaced in the history (`history.replaceState`) and nothing is
+fetched, because `/?view=shelf` and `/` carry the same two views. The
+test holds it: no request for `/` with `_rsc` after the page loads.
+Failed first ("the collection was not fetched a second time", one
+fetch seen), passes with the change. The wait was not raised. If it is
+seen again the cause is hydration under load and not this.
+
+**`lookup-flows.spec.ts:1831`, 24.8s of 30s: a stall, not the test's
+work.** The test is one loop of eleven answers and each runs on both
+passes of a run. In the two full runs, 47 of its 48 timings are 4.8 to
+10.4s. The 48th is the 24.8, "the credential refused", and the test on
+the other worker at that moment (`lookup-flows:788`, ordinarily about
+6s) took 19.2s. Two workers, both about 14 to 18s over, at once, in
+neighbouring lines of the log: the server or the machine stopped, and
+the test waited on it. The test has no fixed wait to turn into a
+read: its waits are on elements. Which thing stopped is not
+recoverable; a pass keeps no trace. **The timeout is left at 30s and
+not set from 24.8,** which would be setting it from a stall. The
+figure that describes the test is 10.4s, its slowest ordinary run, a
+third of its budget. Ten other tests in that run passed over 15s the
+same way (`images-row-56:93` 27.6, `record-navigation:292` 24.6); what
+would name the cause is a trace kept for any pass over half its
+budget, which the config does not do and nobody has asked for.

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { shelfOfferedQuery } from './wall/view-fork';
 
 /**
@@ -14,9 +14,14 @@ import { shelfOfferedQuery } from './wall/view-fork';
  *
  * A bare `/` is not touched: it means the view this window gets, and that
  * is what lets widening bring the shelf back with nothing stored.
+ *
+ * The address is replaced in the history and the page is not asked for
+ * again. An address that asks for the shelf and one that names no view
+ * carry the same two views, so there is nothing to fetch; through the
+ * router this was a second render of both, and the address stayed wrong
+ * for as long as the server took over it.
  */
 export function ShelfAddress() {
-  const router = useRouter();
   const pathname = usePathname();
   const search = useSearchParams();
 
@@ -28,12 +33,12 @@ export function ShelfAddress() {
       const rest = new URLSearchParams(search.toString());
       rest.delete('view');
       const query = rest.toString();
-      router.replace(query === '' ? pathname : `${pathname}?${query}`, { scroll: false });
+      window.history.replaceState(null, '', query === '' ? pathname : `${pathname}?${query}`);
     };
     correct();
     offered.addEventListener('change', correct);
     return () => offered.removeEventListener('change', correct);
-  }, [pathname, router, search]);
+  }, [pathname, search]);
 
   return null;
 }
