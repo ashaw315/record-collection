@@ -42740,3 +42740,14 @@ typecheck clean; lint 0 errors, 27 warnings. No source changed.
 **The convention check logged above would not have caught this.** These
 readers found ONE element, hidden, not two. The rule that would have:
 a reader that measures a box filters to what is drawn.
+
+**Step 134 covered, on `da8eafa`.** The whole suites in the worktree,
+both projects, not a gate: unit `4311 passed, 5 skipped, tree unchanged
+— OK`; Playwright `1181 passed, 19 skipped, ledger clean, tree
+unchanged — OK` (1.1h; chromium 810, capture 14, mobile 376). Load 4.02
+at the start and 12.85 at the end on 6 cores; swap 10.9 of 12.0 GB and
+48% free at the start, 12.4 of 14.0 and 49% at the end. Two things
+seen and not acted on: the swap rate at the start read 976 pages a
+second against a refusal at 1000, so the run was let through by 24;
+and `lookup-flows.spec.ts:1831` on chromium finished with 17% of its
+30s left (24.8s), the narrowest margin in the run.
