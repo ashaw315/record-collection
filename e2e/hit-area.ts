@@ -112,7 +112,8 @@ export async function readReach(page: Page, within = 'main', except?: string): P
         a tap reaches is measured from that and not from a box of 1 or 16
         inside it (the record form, step 129).
       */
-      const drawn = (el.tagName === 'INPUT' ? el.closest('label') : null) ?? el;
+      /* A select inside its own label likewise: manage's Under and its select are one label, and the word is the select's to a pointer (step 133). */
+      const drawn = (el.tagName === 'INPUT' || el.tagName === 'SELECT' ? el.closest('label') : null) ?? el;
       const r = drawn.getBoundingClientRect();
       const reaches = (x: number, y: number) => {
         const at = document.elementFromPoint(x, y);

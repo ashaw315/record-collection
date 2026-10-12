@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { LineupAction } from './LineupAction';
+import { LABEL } from '@/app/records/[id]/grid-type';
 
 import { seededMessage } from '@/lib/api/messages';
 import { tableFields, type FieldSpec, type ResourceSpec } from './resources';
@@ -19,7 +20,7 @@ import { tableFields, type FieldSpec, type ResourceSpec } from './resources';
  * this table.
  */
 const TOUCH_TARGET =
-  "relative after:absolute after:left-1/2 after:top-1/2 after:size-11 after:-translate-x-1/2 after:-translate-y-1/2 after:content-[''] pointer-coarse:after:block after:hidden";
+  "relative after:absolute after:left-1/2 after:top-1/2 after:h-11 after:w-[46px] after:-translate-x-1/2 after:-translate-y-1/2 after:content-[''] pointer-coarse:after:block after:hidden";
 
 /**
  * The one table every flat resource renders through. Rows edit in place — these
@@ -76,8 +77,9 @@ export function ResourceTable({
     <div className="w-full">
       {/* Horizontal scroll rather than hiding columns: on a phone the catalog
           number and year are exactly what you came to check. */}
-      <div className="-mx-4 overflow-x-auto sm:mx-0">
-        <table className="w-full min-w-[34rem] border-collapse text-detail">
+      {/* Manage's pass (step 133): "From 640 the tables stay, held inside the column, with the name column taking the slack so no name truncates." No minimum width and no sideways scroll; below 640 this table is not shown at all. */}
+      <div>
+        <table className="w-full border-collapse text-detail">
           <thead>
             <tr className="border-b border-border text-left">
               {fields.map((field) => (
@@ -115,7 +117,7 @@ export function ResourceTable({
                           setNewRow({});
                         }
                       }}
-                      className={cn('h-8', field.mono === true && 'font-mono')}
+                      className={cn('h-8 pointer-coarse:h-[44px]', field.mono === true && 'font-mono')}
                     />
                   )}
                 </td>
@@ -127,7 +129,7 @@ export function ResourceTable({
                     onCreate(newRow);
                     setNewRow({});
                   }}
-                  className="h-8 w-full"
+                  className="h-8 w-full pointer-coarse:h-[44px]"
                 >
                   <Plus aria-hidden="true" />
                   Add
@@ -167,7 +169,8 @@ export function ResourceTable({
                     <td
                       key={field.name}
                       className={cn(
-                        'px-3 py-1.5 align-middle',
+                        /* A row is 44 under a coarse pointer, so each row's controls have their 44 without taking a neighbour row's. */
+                        'px-3 py-1.5 align-middle pointer-coarse:h-[44px]',
                         field.mono === true && 'font-mono text-detail tabular-nums',
                       )}
                     >
@@ -185,13 +188,14 @@ export function ResourceTable({
                             }
                             if (event.key === 'Escape') setEditingId(null);
                           }}
-                          className={cn('h-8', field.mono === true && 'font-mono')}
+                          className={cn('h-8 pointer-coarse:h-[44px]', field.mono === true && 'font-mono')}
                         />
                       ) : (
                         <span className={displayValue(row, field) === '' ? 'text-muted-foreground' : ''}>
                           {displayValue(row, field) === '' ? '—' : displayValue(row, field)}
                           {field.name === 'name' && isSeeded && (
-                            <span className="ml-2 rounded-xs border border-border px-1 py-0.5 text-meta tracking-wide text-muted-foreground uppercase">
+                            /* Manage's pass: "BUILT IN is a label ... without a box, because it is not a control." */
+                            <span data-built-in="" className={`ml-2 ${LABEL}`}>
                               Built in
                             </span>
                           )}
@@ -201,7 +205,8 @@ export function ResourceTable({
                   ))}
 
                   <td className="px-3 py-1.5">
-                    <div className="flex items-start justify-end gap-1">
+                    {/* Across (step 132's rule): an icon of 28 has its 8 either side, so the gap between two is 18 under a coarse pointer, 9 each, and the overlay is 46 wide: 44 read 43 by the pixel. */}
+                    <div className="flex items-start justify-end gap-1 pointer-coarse:items-center pointer-coarse:gap-[18px]">
                       {/*
                         §12 step 11: artists only. A lineup is band membership,
                         which no other resource here has — and the walk is ~32

@@ -3,6 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { HIT_ALONE } from '@/app/hit-area';
 import type { ArtistSearchHit } from '@/lib/musicbrainz/search-artist';
 
 /**
@@ -141,6 +142,7 @@ export function LineupAction({ artistId, artistName }: { artistId: string; artis
         disabled={walking}
         onClick={() => void walk()}
         aria-label={`Fetch lineup for ${artistName}`}
+        className={HIT_ALONE}
       >
         Lineup
       </Button>

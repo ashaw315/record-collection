@@ -42231,3 +42231,68 @@ changes, `whole-page`, the stylesheet's rail rule):
 This is what covers step 130, whose assembled green did not hold (the
 entry above). The record form, the want list and stats have no code
 owed under the floor down; across is open on the cases listed above.
+
+## Step 133: manage's pass, the list and its floor together (12 Oct)
+
+Design's unnumbered step. `ResourceList.tsx` is new and carries all six
+sections below 640, genres included (a depth and a parent passed in);
+`ManageClient.tsx` renders it beside the table and the stylesheet shows
+one (`sm:hidden` / `hidden sm:block`), so the first paint is right on a
+phone with nothing measured. `ResourceTable.tsx` and `GenreTree.tsx`
+keep the table from 640: no minimum width, no sideways scroll, and
+their floor under a coarse pointer (rows of 44, new-row fields and Add
+44, the parent select 44, the icons' overlays 46 wide with 18 between,
+where 44 read 43 by the pixel).
+
+**Built to five defaults, declared; Design is ruling them.** Lineup in
+the artist's open form. An open row closes on a second press, saving
+nothing. Suggest a hierarchy, the duplicate review and Show all where
+they stood. Favourite a checkbox. Every field of a resource in its
+open form, notes, address and website with them (the table's edit
+draft already carried them and showed no field for them).
+
+**The count, on the real collection, coarse** (`docs/captures/
+manage-133/`, at rest): 32, 50, 29, 14, 10 and 8 controls in the six
+sections at 320 and 390, and 83, 135, 53, 22, 16 and 10 at 768; all 44
+down, none under 44 across, **none past the window's edge**. Before:
+124 under 44 on the fixtures and controls past the edge in five
+sections. Open rows and + NEW's form are read on the test database
+(the sheet presses only section names), under each pointer at 320 and
+390: 44 down and across.
+
+**The reader, changed once:** a select inside its own label is read as
+the label, as a box is (manage's Under and its select from 640). The
+check that it is a correction: with it in place the coarse tests still
+failed 16 of 16 against manage as built. A reader change, so by the
+rule of 12 Oct a gate is owed.
+
+**Tests.** New: the list test at 320 and 390 and the pointer test at
+four widths. Against manage as built: 20 of 20 failed, then, with the
+reader corrected, the four fine tests from 640 passed and the rest
+failed, which is the baseline. With the build: 20 of 20.
+
+**The nine existing tests the list broke on the mobile project, in two
+lists, as the coordinator asked.**
+- *Claim changed (1):* "moves a genre under another with the select".
+  Below 640 the select is a field of the open form and the move is
+  made on SAVE; the test saves, opens the row again and reads the
+  stored value. From 640 choosing is still the move.
+- *Driving only (8):* creates, renames and deletes a tag inline;
+  explains a refused delete with a count; shows a seeded format as
+  disabled; the move select never offers a descendant; the lineup
+  picker; the lineup walk's progress; the artist list's default; the
+  delete confirmation's controls. Each goes through `entry`,
+  `openEntry`, `addEntry`, `pressDelete` and `shownSection`, which read
+  whichever of list and table is shown. No assertion was removed or
+  loosened; `entry` matches a whole name where the table's row matched
+  a substring, which is tighter.
+My first rewrite script aborted before writing and the run after it
+tested the unchanged spec (16 failures, as before); noticed from the
+traceback, redone statement by statement, and the count of edits
+checked before the next run.
+
+Step level: 17 specs by grep (every reader of `hit-area.ts`, every
+spec that opens manage), both projects: `574 passed, 2 skipped, ledger
+clean, tree unchanged — OK`, `[projects] chromium 322, capture 0,
+mobile 254`. Unit under `src`: `2319 passed`. Typecheck and build
+clean; lint 0 errors, 27 warnings. No `[reset]` line. No gate yet.

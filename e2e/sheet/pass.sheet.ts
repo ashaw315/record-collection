@@ -51,9 +51,11 @@ test(`the ${SCREEN} pass: its count under a coarse pointer and its pictures`, as
       const sections = SCREEN === 'manage' ? await page.locator('nav[aria-label="Resource"] button').allTextContents() : [''];
       for (const [index, section] of sections.entries()) {
         if (SCREEN === 'manage') { await page.locator('nav[aria-label="Resource"] button').nth(index).click(); await page.waitForTimeout(400); }
-        const reach = await readReach(page);
+        /* Manage has no main of its own; its frame is the screen. */
+        const within = SCREEN === 'manage' ? '[data-screen-frame]' : 'main';
+        const reach = await readReach(page, within);
         const under = underFloor(reach);
-        const m = await page.evaluate(() => ({ height: document.documentElement.scrollHeight, past: Array.from(document.querySelectorAll<HTMLElement>('main a, main button, main input:not([type=hidden]), main select, main textarea')).filter((el) => el.getClientRects().length > 0 && el.getBoundingClientRect().right > innerWidth + 0.5).length }));
+        const m = await page.evaluate((root) => ({ height: document.documentElement.scrollHeight, past: Array.from(document.querySelector(root)?.querySelectorAll<HTMLElement>('a, button, input:not([type=hidden]), select, textarea') ?? []).filter((el) => el.getClientRects().length > 0 && el.getBoundingClientRect().right > innerWidth + 0.5).length }), within);
         const name = `${slug}${section === '' ? '' : `-${section.trim().toLowerCase().replace(/[^a-z]+/g, '-')}`}`;
         const file = `${name}-w${width}-${pointer}-pointer-h${m.height}-meets${reach.length - under.length}of${reach.length}.png`;
         const taken = (pictured as readonly number[]).includes(width);

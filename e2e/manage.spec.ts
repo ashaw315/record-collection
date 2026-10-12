@@ -2,7 +2,7 @@ import { expect, test, type APIRequestContext, type Page } from '@playwright/tes
 import { registerCleanup, trackArtist, trackGenre, trackGenreNamed } from './cleanup';
 import { seedMatchCandidate } from './seed';
 import { login } from './sign-in';
-import { POINTERS, expectDialogControls } from './hit-area';
+import { HIT_FLOOR, POINTERS, expectDialogControls, expectFloor } from './hit-area';
 
 /* Records and artists removed after each test — see e2e/cleanup.ts. */
 registerCleanup();
@@ -19,7 +19,52 @@ registerCleanup();
 
 /** The row's own name cell, not the <option> copies inside every move select. */
 function genreRow(page: Page, name: string) {
+  if (narrow(page)) return entry(page, name);
   return page.getByRole('listitem').filter({ has: page.getByRole('button', { name: `Edit ${name}` }) });
+}
+
+/*
+  **Driving, by width** (manage's pass, step 133). Below 640 a section is a
+  list whose rows open in place; from 640 it is the table it was. Both are
+  in the page and the stylesheet shows one, so every helper reads the one
+  that is shown, and each test keeps its claim on either.
+*/
+const MANAGE_LIST = '[data-manage-list]:visible';
+const MANAGE_TABLE = '[data-manage-table]:visible';
+function narrow(page: Page): boolean {
+  return (page.viewportSize()?.width ?? 1280) < 640;
+}
+/** The section as shown: fields are found inside it, because the one not shown carries the same labels. */
+function shownSection(page: Page) {
+  return page.locator(narrow(page) ? MANAGE_LIST : MANAGE_TABLE);
+}
+/** An entry's row by its whole name: "LP" is not "2xLP", and a genre's name is also in the line beneath its child's. */
+function entry(page: Page, name: string) {
+  if (!narrow(page)) return page.getByRole('row').filter({ hasText: name });
+  const whole = new RegExp(`^\\s*${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*(Built in)?\\s*$`, 'i');
+  return page.locator(`${MANAGE_LIST} [data-manage-row]`).filter({ has: page.locator('[data-manage-name]', { hasText: whole }) });
+}
+/** Below 640 an entry's controls are in its open form; from 640 they are on its row and there is nothing to open. */
+async function openEntry(page: Page, name: string) {
+  if (!narrow(page)) return;
+  const opener = entry(page, name).locator('[data-manage-open]');
+  if ((await opener.getAttribute('aria-expanded')) !== 'true') await opener.click();
+  await expect(entry(page, name).locator('[data-manage-form]')).toBeVisible();
+}
+async function addEntry(page: Page, singular: string, name: string) {
+  if (narrow(page)) {
+    const fresh = page.locator(`${MANAGE_LIST} [data-manage-new]`);
+    if ((await fresh.getAttribute('aria-expanded')) !== 'true') await fresh.click();
+    await shownSection(page).getByLabel(`New ${singular} name`, { exact: true }).fill(name);
+    await shownSection(page).getByRole('button', { name: `Save new ${singular}` }).click();
+    return;
+  }
+  await shownSection(page).getByLabel(`New ${singular} name`, { exact: true }).fill(name);
+  await shownSection(page).getByRole('button', { name: 'Add' }).click();
+}
+async function pressDelete(page: Page, name: string) {
+  await openEntry(page, name);
+  await shownSection(page).getByRole('button', { name: `Delete ${name}`, exact: true }).click();
 }
 
 async function openResource(page: Page, label: string, search = '') {
@@ -70,22 +115,22 @@ test('creates, renames and deletes a tag inline', async ({ page }) => {
 
   await openResource(page, 'Tags');
 
-  await page.getByLabel('New tag name').fill(name);
-  await page.getByRole('button', { name: 'Add' }).click();
-  await expect(page.getByRole('cell', { name, exact: true })).toBeVisible({ timeout: 15_000 });
+  await addEntry(page, 'tag', name);
+  await expect(entry(page, name)).toBeVisible({ timeout: 15_000 });
 
   // Edit happens in place — no navigation.
-  await page.getByRole('button', { name: `Edit ${name}` }).click();
-  const field = page.getByLabel(`${name} name`);
+  if (narrow(page)) await openEntry(page, name);
+  else await page.getByRole('button', { name: `Edit ${name}`, exact: true }).click();
+  const field = shownSection(page).getByLabel(`${name} name`, { exact: true });
   await field.fill(renamed);
   await field.press('Enter');
-  await expect(page.getByRole('cell', { name: renamed, exact: true })).toBeVisible({
+  await expect(entry(page, renamed)).toBeVisible({
     timeout: 15_000,
   });
 
-  await page.getByRole('button', { name: `Delete ${renamed}` }).click();
+  await pressDelete(page, renamed);
   await page.getByTestId('confirm-delete').click();
-  await expect(page.getByRole('cell', { name: renamed, exact: true })).toBeHidden({
+  await expect(entry(page, renamed)).toBeHidden({
     timeout: 15_000,
   });
 });
@@ -121,7 +166,7 @@ test('explains a refused delete with a count, not a code', async ({ page }) => {
   expect(record.status()).toBe(201);
 
   await openResource(page, 'Tags');
-  await page.getByRole('button', { name: `Delete ${tagName}` }).click();
+  await pressDelete(page, tagName);
   await page.getByTestId('confirm-delete').click();
 
   // Scoped to the row's own alert: the create row above also renders one, so a
@@ -135,12 +180,13 @@ test('explains a refused delete with a count, not a code', async ({ page }) => {
 test('shows a seeded format as disabled rather than a button that errors', async ({ page }) => {
   await openResource(page, 'Formats');
 
-  const del = page.getByRole('button', { name: 'Delete LP' });
+  await openEntry(page, 'LP');
+  const del = shownSection(page).getByRole('button', { name: 'Delete LP', exact: true });
   await expect(del).toHaveAttribute('aria-disabled', 'true');
 
   // The row says so too, so the reason survives without hovering — which a
   // touch device cannot do.
-  await expect(page.getByRole('cell', { name: /LP/ }).first()).toContainText('Built in');
+  await expect(narrow(page) ? entry(page, 'LP') : page.getByRole('cell', { name: /LP/ }).first()).toContainText('Built in');
 });
 
 /**
@@ -195,20 +241,19 @@ test('moves a genre under another with the select, on touch and pointer alike', 
   await openResource(page, 'Genres');
 
   for (const name of [decoy, parent]) {
-    await page.getByLabel('New genre name').fill(name);
-    await page.getByRole('button', { name: 'Add' }).click();
+    await addEntry(page, 'genre', name);
     await expect(genreRow(page, name)).toBeVisible({ timeout: 15_000 });
   }
 
-  await page.getByLabel('New genre name').fill(child);
-  await page.getByRole('button', { name: 'Add' }).click();
+  await addEntry(page, 'genre', child);
   await expect(genreRow(page, child)).toBeVisible({ timeout: 15_000 });
 
   /**
    * The parent's id, read from the option the select offers, so the assertion
    * below can name WHICH parent rather than merely "some non-empty value".
    */
-  const childSelect = page.getByRole('combobox', { name: `Move ${child} under` });
+  await openEntry(page, child);
+  const childSelect = shownSection(page).getByRole('combobox', { name: `Move ${child} under` });
   const parentId = await childSelect
     .getByRole('option', { name: parent, exact: true })
     .getAttribute('value');
@@ -217,6 +262,12 @@ test('moves a genre under another with the select, on touch and pointer alike', 
   // A native select, so this is the same interaction on every device — there is
   // no drag path and therefore no untested fallback.
   await childSelect.selectOption({ label: parent });
+  /* Below 640 the select is a field of the open form and the move is made on SAVE; from 640 choosing is the move. The row is then opened again, so the value read is the stored one. */
+  if (narrow(page)) {
+    await shownSection(page).getByRole('button', { name: `Save ${child}`, exact: true }).click();
+    await expect(genreRow(page, child)).toHaveAttribute('aria-level', '2', { timeout: 15_000 });
+    await openEntry(page, child);
+  }
 
   /**
    * **`toHaveValue(parentId)`, not `toHaveValue(/.+/)`.**
@@ -263,18 +314,24 @@ test('the move select never offers a genre its own descendant', async ({ page, r
 
   await openResource(page, 'Genres');
 
-  await page.getByLabel('New genre name').fill(parent);
-  await page.getByRole('button', { name: 'Add' }).click();
-  await page.getByLabel('New genre name').fill(child);
-  await page.getByRole('button', { name: 'Add' }).click();
+  await addEntry(page, 'genre', parent);
+  await expect(genreRow(page, parent)).toBeVisible({ timeout: 15_000 });
+  await addEntry(page, 'genre', child);
 
-  await page.getByRole('combobox', { name: `Move ${child} under` }).selectOption({ label: parent });
+  await expect(genreRow(page, child)).toBeVisible({ timeout: 15_000 });
+  await openEntry(page, child);
+  await shownSection(page).getByRole('combobox', { name: `Move ${child} under` }).selectOption({ label: parent });
+  if (narrow(page)) {
+    await shownSection(page).getByRole('button', { name: `Save ${child}`, exact: true }).click();
+    await expect(genreRow(page, child)).toHaveAttribute('aria-level', '2', { timeout: 15_000 });
+  }
 
   // The parent's own select must not list its child: offering the move only to
   // have the API reject it is worse than not offering it.
   // The parent row must exist before its select can be read.
   await expect(genreRow(page, parent)).toBeVisible({ timeout: 15_000 });
-  const parentSelect = page.getByRole('combobox', { name: `Move ${parent} under` });
+  await openEntry(page, parent);
+  const parentSelect = shownSection(page).getByRole('combobox', { name: `Move ${parent} under` });
   await expect(parentSelect.getByRole('option', { name: child })).toHaveCount(0);
 
   await cleanupGenres(request, [child, parent]);
@@ -492,9 +549,10 @@ test('the lineup picker shows enough to choose between same-named artists', asyn
   // the toggled view is where this flow actually lives.
   await openResource(page, 'Artists', '?artists=all');
 
-  const row = page.getByRole('row').filter({ hasText: name });
+  const row = entry(page, name);
   await expect(row).toHaveCount(1, { timeout: 15_000 });
 
+  await openEntry(page, name);
   await row.getByRole('button', { name: /lineup/i }).click();
 
   const picker = page.getByTestId('lineup-picker');
@@ -548,8 +606,9 @@ test('a lineup walk reports what it is doing, not just that it is busy', async (
   // the /manage default now lists only what you collect.
   await openResource(page, 'Artists', '?artists=all');
 
-  const row = page.getByRole('row').filter({ hasText: name });
+  const row = entry(page, name);
   await expect(row).toHaveCount(1, { timeout: 15_000 });
+  await openEntry(page, name);
   await row.getByRole('button', { name: /lineup/i }).click();
 
   const progress = page.getByTestId('lineup-progress');
@@ -593,11 +652,10 @@ test('the artist list defaults to what you collect, and says what it is hiding',
   await page.goto('/manage');
   await openResource(page, 'Artists');
 
-  const rows = page.getByRole('row');
-  await expect(rows.filter({ hasText: collected }), 'the one with a record').toHaveCount(1, {
+  await expect(entry(page, collected), 'the one with a record').toHaveCount(1, {
     timeout: 15_000,
   });
-  await expect(rows.filter({ hasText: sideman }), 'the imported sideman is hidden').toHaveCount(0);
+  await expect(entry(page, sideman), 'the imported sideman is hidden').toHaveCount(0);
 
   // The hidden population is NAMED, not silently dropped.
   const summary = page.getByTestId('artist-count-summary');
@@ -608,7 +666,7 @@ test('the artist list defaults to what you collect, and says what it is hiding',
   // differently.
   await page.getByRole('link', { name: /show all/i }).click();
 
-  await expect(rows.filter({ hasText: sideman }), 'and reachable on request').toHaveCount(1, {
+  await expect(entry(page, sideman), 'and reachable on request').toHaveCount(1, {
     timeout: 15_000,
   });
 });
@@ -787,14 +845,162 @@ for (const pointer of POINTERS) test.describe(`manage’s delete confirmation un
       const name = unique('e2e-reach');
       await page.setViewportSize({ width, height: 844 });
       await openResource(page, 'Tags');
-      await page.getByLabel('New tag name').fill(name);
-      await page.getByRole('button', { name: 'Add' }).click();
-      await expect(page.getByRole('cell', { name, exact: true })).toBeVisible({ timeout: 15_000 });
-      await page.getByRole('button', { name: `Delete ${name}` }).click();
+      await addEntry(page, 'tag', name);
+      await expect(entry(page, name)).toBeVisible({ timeout: 15_000 });
+      await pressDelete(page, name);
       await expectDialogControls(page, pointer, `manage’s delete at ${width}`);
       /* The tag is this test's own; the confirmation removes it. */
       await page.getByTestId('confirm-delete').click();
-      await expect(page.getByRole('cell', { name, exact: true })).toBeHidden({ timeout: 15_000 });
+      await expect(entry(page, name)).toBeHidden({ timeout: 15_000 });
+    });
+  }
+});
+
+/*
+  Step 133, manage's pass (§T.6). "Below 640, each manage section is a list,
+  not a table: one row per entry, its name in full on the first line and its
+  other fields on a second line in the label colour, and pressing the row
+  opens it in place as a form." One open at a time; + NEW at the list's
+  head; genres indented 12 a level, capped at three; the section names wrap
+  and are 44 a line under a coarse pointer; BUILT IN is a label; rows start
+  at the 18. From 640 the tables stay inside the column. The success
+  condition: no control past the window's edge.
+*/
+const LIST = '[data-manage-list]';
+const SECTIONS = ['Artists', 'Genres', 'Labels', 'Formats', 'Stores', 'Tags'] as const;
+
+/** One of everything, with names long enough to have been cut in the table at 320, and a genre chain five deep. */
+async function seedManage(page: Page) {
+  const tag = `${Date.now().toString(36)}${Math.floor(Math.random() * 1e4)}`;
+  const post = async (path: string, data: unknown) => {
+    const response = await page.request.post(path, { data, failOnStatusCode: false });
+    expect(response.status(), `${path} ${JSON.stringify(data)}`).toBe(201);
+    return ((await response.json()) as { id: string }).id;
+  };
+  const names = { artist: `A Band With A Name As Long As Any ${tag}`, label: `A Label With A Long Name ${tag}`, store: `A Shop With A Long Name ${tag}`, tag: `a-tag-with-a-long-name-${tag}`, genres: [0, 1, 2, 3, 4].map((depth) => `Depth ${depth} genre with a long name ${tag}`) };
+  const artist = await post('/api/artists', { name: names.artist, formedYear: 1977, originCountry: 'UK' });
+  trackArtist(artist);
+  /* The artists' section lists what is collected: a record makes this one collected. */
+  await post('/api/records', { title: `Manage Pass ${tag}`, artistId: artist });
+  /* A Discogs id is unique among labels, and tests run side by side. */
+  const discogsId = 800_000_000 + Math.floor(Math.random() * 90_000_000);
+  const label = await post('/api/labels', { name: names.label, discogsLabelId: discogsId });
+  const store = await post('/api/stores', { name: names.store, city: 'Leeds', country: 'UK', isFavorite: true });
+  const tagId = await post('/api/tags', { name: names.tag });
+  let parent: string | null = null;
+  for (const name of names.genres) {
+    trackGenreNamed(name);
+    parent = await post('/api/genres', parent === null ? { name } : { name, parentGenreId: parent });
+  }
+  return { names, discogsId, remove: async () => { for (const path of [`/api/labels/${label}`, `/api/stores/${store}`, `/api/tags/${tagId}`]) await page.request.delete(path, { failOnStatusCode: false }); } };
+}
+
+async function section(page: Page, label: string) {
+  await page.getByRole('navigation', { name: 'Resource' }).getByRole('button', { name: label, exact: true }).click();
+  await expect(page.getByRole('region', { name: label })).toBeVisible();
+}
+
+for (const width of [320, 390]) {
+  /* Fails against the tables: no list, names cut, and controls past the window's edge in five of the six sections. */
+  test(`below 640 each manage section is a list with every name in full and no control past the window’s edge, at ${width}`, async ({ page }) => {
+    const { names, discogsId, remove } = await seedManage(page);
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto('/manage');
+    const second: Record<string, [string, string]> = { Artists: [names.artist, '1977 · UK'], Labels: [names.label, String(discogsId)], Stores: [names.store, 'Leeds · UK · Favourite'], Tags: [names.tag, ''], Genres: [names.genres[1] ?? '', `Under ${names.genres[0]}`] };
+    for (const label of SECTIONS) {
+      await section(page, label);
+      const list = page.locator(`${LIST}:visible`);
+      await expect(list, `${label}: a list, not a table`).toHaveCount(1);
+      await expect(page.locator('[data-manage-table]:visible'), `${label}: no table below 640`).toHaveCount(0);
+      const m = await page.evaluate(() => {
+        const controls = Array.from(document.querySelectorAll<HTMLElement>('[data-screen-frame] a, [data-screen-frame] button, [data-screen-frame] input, [data-screen-frame] select, [data-screen-frame] textarea')).filter((el) => el.getClientRects().length > 0 && el.checkVisibility());
+        const rows = Array.from(document.querySelectorAll<HTMLElement>('[data-manage-list] [data-manage-row]')).filter((el) => el.getClientRects().length > 0);
+        return { past: controls.filter((el) => el.getBoundingClientRect().right > innerWidth + 0.5).map((el) => (el.textContent ?? '').trim() || el.getAttribute('aria-label')), page: document.documentElement.scrollWidth, window: innerWidth, lefts: [...new Set(rows.map((row) => Math.round(row.getBoundingClientRect().left)))], cut: rows.filter((row) => { const name = row.querySelector('[data-manage-name]') as HTMLElement; return name.scrollWidth > name.clientWidth + 1; }).length, rows: rows.length };
+      });
+      expect.soft(m.past, `${label} at ${width}: controls past the window’s edge`).toEqual([]);
+      expect.soft(m.page, `${label} at ${width}: the page is the window’s width`).toBe(m.window);
+      expect.soft(m.rows, `${label}: the precondition, there are rows`).toBeGreaterThan(0);
+      expect.soft(m.lefts, `${label} at ${width}: rows start at the 18`).toEqual([18]);
+      expect.soft(m.cut, `${label} at ${width}: names cut short`).toBe(0);
+      const mine = second[label];
+      if (mine !== undefined) {
+        /* By its name's own line: a genre's name is also in the second line of the genre beneath it. */
+        const row = list.locator('[data-manage-row]').filter({ has: page.locator('[data-manage-name]', { hasText: mine[0] }) });
+        await expect(row.locator('[data-manage-name]'), `${label}: the name in full`).toContainText(mine[0]);
+        if (mine[1] === '') await expect(row.locator('[data-manage-second]'), `${label}: a row with no other field has no second line`).toHaveCount(0);
+        else await expect(row.locator('[data-manage-second]'), `${label}: its other fields on a second line, the empty ones left out`).toHaveText(mine[1]);
+      }
+    }
+
+    /* Genres: 12 a level, capped at three. */
+    await section(page, 'Genres');
+    const indents: number[] = [];
+    for (const name of names.genres) indents.push(await page.locator(`${LIST}:visible [data-manage-name]`).filter({ hasText: name }).first().evaluate((el) => Math.round(el.getBoundingClientRect().left)));
+    expect(indents.map((left) => left - (indents[0] ?? 0)), 'a genre is indented 12 a level and no further than three').toEqual([0, 12, 24, 36, 36]);
+
+    /* Formats: BUILT IN is a label after the name, not a box. */
+    await section(page, 'Formats');
+    const built = page.locator(`${LIST}:visible [data-manage-row]`).filter({ hasText: 'LP' }).first().locator('[data-built-in]');
+    await expect(built).toHaveText(/built in/i);
+    expect(await built.evaluate((el) => getComputedStyle(el).borderTopWidth), 'BUILT IN has no box').toBe('0px');
+
+    /* Open in place, one at a time, and + NEW at the head. */
+    await section(page, 'Stores');
+    const list = page.locator(`${LIST}:visible`);
+    const row = list.locator('[data-manage-row]').filter({ hasText: names.store });
+    await row.locator('[data-manage-open]').click();
+    const form = row.locator('[data-manage-form]');
+    await expect(form).toBeVisible();
+    for (const field of ['name', 'city', 'country']) await expect(form.getByLabel(`${names.store} ${field}`, { exact: true })).toBeVisible();
+    await expect(form.getByRole('button', { name: `Save ${names.store}` })).toBeVisible();
+    await expect(form.getByRole('button', { name: `Delete ${names.store}` })).toBeVisible();
+    const widths = await form.evaluate((el) => { const field = el.querySelector('input:not([type=checkbox])') as HTMLElement; return [Math.round(field.getBoundingClientRect().width), Math.round(el.getBoundingClientRect().width)]; });
+    expect(widths[0], 'a field in the open form is the form’s width').toBe(widths[1]);
+    await expect(list.locator('[data-manage-new]'), '+ NEW is at the list’s head').toHaveText(/\+ new store/i);
+    expect(await list.evaluate((el) => (el.firstElementChild as HTMLElement).querySelector('[data-manage-new]') !== null), 'and is the list’s first row').toBe(true);
+    await list.locator('[data-manage-new]').click();
+    await expect(list.getByLabel('New store name', { exact: true })).toBeVisible();
+    await expect(form, 'one open at a time: opening + NEW closed the row').toHaveCount(0);
+    await row.locator('[data-manage-open]').click();
+    await expect(list.getByLabel('New store name', { exact: true }), 'and opening the row closed + NEW').toHaveCount(0);
+    await row.locator('[data-manage-open]').click();
+    await expect(row.locator('[data-manage-form]'), 'pressing the open row closes it, saving nothing').toHaveCount(0);
+    await remove();
+  });
+}
+
+for (const pointer of POINTERS) test.describe(`manage under a ${pointer} pointer`, () => {
+  test.use({ hasTouch: pointer === 'coarse' });
+  for (const width of [320, 390, 768, 1280]) {
+    /* Coarse fails against section names of 32.5, new-row fields of 32, Edit and Delete of 28 and selects of 36. Fine holds what a mouse had from 640 and the list's drawn sizes below it. */
+    test(pointer === 'coarse' ? `every control on manage is 44 tall and 44 across to a finger, rows and open forms, at ${width}` : `under a mouse no control on manage reaches past itself, at ${width}`, async ({ page }) => {
+      const { names, remove } = await seedManage(page);
+      await page.setViewportSize({ width, height: 844 });
+      await page.goto('/manage');
+      const mine: Record<string, string> = { Artists: names.artist, Genres: names.genres[1] ?? '', Labels: names.label, Formats: 'LP', Stores: names.store, Tags: names.tag };
+      for (const label of SECTIONS) {
+        await section(page, label);
+        await page.evaluate(() => document.fonts.ready);
+        const rest = await expectFloor(page, pointer, `${label} at ${width}, at rest`, '[data-screen-frame]');
+        if (pointer === 'coarse') expect.soft(rest.filter((r) => r.wide < HIT_FLOOR).map((r) => `${r.name.slice(0, 30)}: ${r.wide}`), `${label} at ${width}, at rest: controls under ${HIT_FLOOR} across to a finger`).toEqual([]);
+        if (width >= 640) continue;
+        /* The open form and + NEW's form, the list's two other states. */
+        const list = page.locator(`${LIST}:visible`);
+        await list.locator('[data-manage-row]').filter({ has: page.locator('[data-manage-name]', { hasText: mine[label] ?? '' }) }).first().locator('[data-manage-open]').click();
+        await expect(list.locator('[data-manage-form]')).toBeVisible();
+        const open = await expectFloor(page, pointer, `${label} at ${width}, a row open`, '[data-screen-frame]');
+        if (pointer === 'coarse') expect.soft(open.filter((r) => r.wide < HIT_FLOOR).map((r) => `${r.name.slice(0, 30)}: ${r.wide}`), `${label} at ${width}, a row open: controls under ${HIT_FLOOR} across to a finger`).toEqual([]);
+        await list.locator('[data-manage-new]').click();
+        const fresh = await expectFloor(page, pointer, `${label} at ${width}, + NEW open`, '[data-screen-frame]');
+        if (pointer === 'coarse') expect.soft(fresh.filter((r) => r.wide < HIT_FLOOR).map((r) => `${r.name.slice(0, 30)}: ${r.wide}`), `${label} at ${width}, + NEW open: controls under ${HIT_FLOOR} across to a finger`).toEqual([]);
+      }
+      /* The section names: no box, and under a coarse pointer each line of them 44. */
+      const namesRow = await page.evaluate(() => Array.from(document.querySelectorAll<HTMLElement>('nav[aria-label="Resource"] button')).map((button) => ({ border: getComputedStyle(button).borderTopWidth, top: Math.round(button.getBoundingClientRect().top), height: button.getBoundingClientRect().height, right: button.getBoundingClientRect().right })));
+      expect.soft(namesRow.filter((n) => n.border !== '0px').length, `at ${width}: section names with a box`).toBe(0);
+      expect.soft(namesRow.filter((n) => n.right > width + 0.5).length, `at ${width}: section names past the window’s edge`).toBe(0);
+      if (pointer === 'coarse') expect.soft(namesRow.filter((n) => n.height < HIT_FLOOR).length, `at ${width}: section names under 44 a line`).toBe(0);
+      if (width === 320) expect.soft(new Set(namesRow.map((n) => n.top)).size, 'at 320 the six section names take two lines').toBe(2);
+      await remove();
     });
   }
 });

@@ -22,10 +22,13 @@ import {
 } from '@/lib/api/messages';
 import { RESOURCES, type ResourceSpec } from './resources';
 import { ResourceTable, type Row } from './ResourceTable';
+import { ResourceList } from './ResourceList';
+import { HIT_ALONE } from '@/app/hit-area';
+import { LABEL_TYPE } from '@/app/records/[id]/grid-type';
 import { GenreTree } from './GenreTree';
 import { ParentProposal } from './ParentProposal';
 import type { Evidence, ProposedPairing } from './parent-proposal';
-import { nameOf, type GenreRow } from './genre-tree';
+import { buildTree, flattenTree, nameOf, validParents, type GenreRow } from './genre-tree';
 import { MANAGE_FRAME } from '@/app/screen-frame';
 
 /**
@@ -261,8 +264,38 @@ function ResourcePanel({ resource, rows }: { resource: ResourceSpec; rows: Row[]
         aria-busy={refreshing || creating}
         className="min-w-0 flex-1"
       >
+        {/*
+          Manage's pass (step 133): below 640 every section is a list, from
+          640 the table it was. Both are rendered and the stylesheet shows
+          one, so the first paint is the right one on a phone with nothing
+          to measure.
+        */}
+        <div className="sm:hidden">
+          <ResourceList
+            resource={resource}
+            rows={resource.hierarchical === true ? flattenTree(buildTree(rows as GenreRow[])) : rows}
+            busyId={busyId}
+            rowError={rowError}
+            createError={createError}
+            onCreate={(values) => void create(values)}
+            onUpdate={(id, values) => void update(id, values)}
+            onDelete={(row) => setPendingDelete({ row, resource })}
+            genres={
+              resource.hierarchical === true
+                ? {
+                    depthOf: (id) => flattenTree(buildTree(rows as GenreRow[])).find((node) => node.id === id)?.depth ?? 0,
+                    parentIdOf: (id) => (rows as GenreRow[]).find((row) => row.id === id)?.parentGenreId ?? null,
+                    parentNameOf: (id) => nameOf(rows as GenreRow[], (rows as GenreRow[]).find((row) => row.id === id)?.parentGenreId ?? null),
+                    parentsOf: (id) => validParents(rows as GenreRow[], id),
+                    onMove: (id, parentGenreId) => void move(id, parentGenreId),
+                  }
+                : undefined
+            }
+          />
+        </div>
         {resource.hierarchical === true ? (
           <>
+          <div data-manage-table="" className="hidden sm:block">
           <GenreTree
             rows={rows as GenreRow[]}
             busyId={busyId}
@@ -273,6 +306,7 @@ function ResourcePanel({ resource, rows }: { resource: ResourceSpec; rows: Row[]
             onMove={(id, parentGenreId) => void move(id, parentGenreId)}
             onDelete={(row) => setPendingDelete({ row: row as Row, resource })}
           />
+          </div>
 
             {/*
               §12c (A44). **The button is separate from the tree and says what
@@ -285,7 +319,7 @@ function ResourcePanel({ resource, rows }: { resource: ResourceSpec; rows: Row[]
                 data-testid="propose-parents"
                 disabled={proposing}
                 onClick={() => void proposeParents()}
-                className="text-label underline underline-offset-2 disabled:text-muted-foreground"
+                className={`${HIT_ALONE} text-label underline underline-offset-2 disabled:text-muted-foreground`}
               >
                 {proposing ? 'Thinking…' : 'Suggest a hierarchy'}
               </button>
@@ -338,16 +372,18 @@ function ResourcePanel({ resource, rows }: { resource: ResourceSpec; rows: Row[]
             </div>
           </>
         ) : (
-          <ResourceTable
-            resource={resource}
-            rows={rows}
-            busyId={busyId}
-            rowError={rowError}
-            createError={createError}
-            onCreate={(values) => void create(values)}
-            onUpdate={(id, values) => void update(id, values)}
-            onDelete={(row) => setPendingDelete({ row, resource })}
-          />
+          <div data-manage-table="" className="hidden sm:block">
+            <ResourceTable
+              resource={resource}
+              rows={rows}
+              busyId={busyId}
+              rowError={rowError}
+              createError={createError}
+              onCreate={(values) => void create(values)}
+              onUpdate={(id, values) => void update(id, values)}
+              onDelete={(row) => setPendingDelete({ row, resource })}
+            />
+          </div>
         )}
       </section>
 
@@ -400,7 +436,13 @@ export function ManageClient({
         {/* Sidebar on desktop, horizontally scrolling rail on mobile — the same
             list, not a separate mobile navigation. */}
         <nav aria-label="Resource" className="md:w-44 md:shrink-0">
-          <ul className="-mx-4 flex gap-1 overflow-x-auto px-4 md:mx-0 md:flex-col md:overflow-visible md:px-0">
+          {/*
+            Manage's pass: "The section names are view names ... and they
+            wrap onto a second line rather than run off the edge, each line
+            44 under a coarse pointer. At 320 the six do not fit one line."
+            No box; the current one keeps §3's 2px underline.
+          */}
+          <ul className="flex flex-wrap gap-x-[18px] md:flex-col">
             {RESOURCES.map((entry) => (
               <li key={entry.key} className="shrink-0">
                 <button
@@ -408,11 +450,11 @@ export function ManageClient({
                   aria-current={entry.key === activeKey ? 'page' : undefined}
                   onClick={() => setActiveKey(entry.key)}
                   className={cn(
-                    'w-full rounded-xs px-3 py-2 text-left text-label whitespace-nowrap transition-colors',
+                    `${HIT_ALONE} flex w-full items-center py-2 text-left whitespace-nowrap ${LABEL_TYPE} pointer-coarse:min-h-[44px] pointer-coarse:py-0`,
                     entry.key === activeKey
                       /* §T.6: no fill. The current section takes §3's mark for a choice, the 2px underline 7 below. */
                       ? 'text-foreground underline decoration-2 underline-offset-[7px]'
-                      : 'hover:bg-accent',
+                      : 'text-[oklch(0.44_0.008_70)] hover:underline',
                   )}
                 >
                   {entry.label}
@@ -453,7 +495,7 @@ function ArtistCountSummary({ counts }: { counts: ArtistCounts }) {
       {counts.showingAll ? (
         <>
           Showing all {counts.shown} artists.{' '}
-          <Link href="/manage" className="underline underline-offset-2">
+          <Link href="/manage" className={`${HIT_ALONE} underline underline-offset-2`}>
             Show only what you collect
           </Link>
         </>
@@ -461,7 +503,7 @@ function ArtistCountSummary({ counts }: { counts: ArtistCounts }) {
         <>
           {counts.shown} artist{counts.shown === 1 ? '' : 's'} ·{' '}
           {counts.hidden} more from lineup imports.{' '}
-          <Link href="/manage?artists=all" className="underline underline-offset-2">
+          <Link href="/manage?artists=all" className={`${HIT_ALONE} underline underline-offset-2`}>
             Show all
           </Link>
         </>

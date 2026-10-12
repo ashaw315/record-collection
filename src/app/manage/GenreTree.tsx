@@ -26,7 +26,7 @@ import {
  */
 
 const TOUCH_TARGET =
-  "relative after:absolute after:left-1/2 after:top-1/2 after:size-11 after:-translate-x-1/2 after:-translate-y-1/2 after:content-[''] pointer-coarse:after:block after:hidden";
+  "relative after:absolute after:left-1/2 after:top-1/2 after:h-11 after:w-[46px] after:-translate-x-1/2 after:-translate-y-1/2 after:content-[''] pointer-coarse:after:block after:hidden";
 
 type Props = {
   rows: GenreRow[];
@@ -69,11 +69,11 @@ export function GenreTree({
               setNewName('');
             }
           }}
-          className="h-8 max-w-xs"
+          className="h-8 max-w-xs pointer-coarse:h-[44px]"
         />
         <Button
           size="sm"
-          className="h-8"
+          className="h-8 pointer-coarse:h-[44px]"
           onClick={() => {
             if (newName.trim() === '') return;
             onCreate({ name: newName });
@@ -105,7 +105,7 @@ export function GenreTree({
                 className="border-b border-border last:border-0"
               >
                 <div
-                  className="flex flex-wrap items-center gap-2 px-3 py-1.5 hover:bg-accent/60"
+                  className="flex flex-wrap items-center gap-2 px-3 py-1.5 hover:bg-accent/60 pointer-coarse:min-h-[44px] pointer-coarse:py-0"
                   // Indent scales with depth but is capped, so a deep tree
                   // still fits a 390px viewport.
                   style={{ paddingLeft: `${Math.min(node.depth, 6) * 1.1 + 0.75}rem` }}
@@ -128,7 +128,7 @@ export function GenreTree({
                         }
                         if (event.key === 'Escape') setEditingId(null);
                       }}
-                      className="h-8 max-w-[14rem]"
+                      className="h-8 max-w-[14rem] pointer-coarse:h-[44px]"
                     />
                   ) : (
                     <span className="min-w-0 flex-1 truncate text-detail">{node.name}</span>
@@ -152,7 +152,7 @@ export function GenreTree({
                       onChange={(event) =>
                         onMove(node.id, event.target.value === '' ? null : event.target.value)
                       }
-                      className="h-9 min-w-[8rem] rounded-xs border border-input bg-background px-2 text-label focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none"
+                      className="h-9 min-w-[8rem] rounded-xs border border-input bg-background px-2 text-label focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none pointer-coarse:h-[44px]"
                     >
                       <option value="">— top level —</option>
                       {parents.map((parent) => (
@@ -163,7 +163,7 @@ export function GenreTree({
                     </select>
                   </label>
 
-                  <div className="flex gap-1">
+                  <div className="flex gap-1 pointer-coarse:gap-[18px]">
                     <Button
                       size="icon-sm"
                       variant="ghost"
