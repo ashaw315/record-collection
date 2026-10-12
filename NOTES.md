@@ -42967,3 +42967,17 @@ case.
 
 Not built. (2) is about forty lines and one whole run, and it is a
 change to the shared sign-in, so it waits for a word.
+
+**The address change covered, on `9c73d1e`.** Owed because
+`ShelfAddress.tsx` is on the root page, which every test lands on.
+The whole suites in the worktree, both projects, not a gate: unit
+`4312 passed, 5 skipped, tree unchanged — OK`; Playwright `1183
+passed, 19 skipped, ledger clean, tree unchanged — OK` (58.0m;
+chromium 811, capture 14, mobile 377), no flaky. Load 3.34 at the
+start and 19.29 at the end on 6 cores; swap 11.7 of 13.0 GB and 52%
+free at the start, 5,521 pages a second, which the old limit of 1,000
+would have refused; 13.5 of 15.0 and 53% at the end. Narrowest margin:
+`manage.spec.ts:976` on the phone project at 1280, 19.9s of 30s. It
+walks six sections and their open forms in one test; not looked into.
+Step 137 (`5fd4fdc`) is after this commit and is not in this run; it
+touched nothing every test reads and ran its screen.
