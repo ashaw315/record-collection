@@ -42326,3 +42326,41 @@ stand. The next gate is run at four in the worktree, and its wall
 clock, flaky count and `[reset]` lines are reported beside the
 two-worker figures (48.6 and 48.9 minutes, no flaky, no reset). If
 four is worse on flakes, two stays.
+
+## 12 Oct: the four-worker gate on e9f0bda. Two stays, and the worktree is short two things
+
+**Run:** `scripts/gate.sh HEAD 4`, in the worktree. Not green, and not a
+gate for step 133, which still owes one.
+
+| | two workers (6691013) | four workers (e9f0bda) |
+|---|---|---|
+| Playwright wall clock | 48.6 min | 1.5 h |
+| summary | `1161 passed, 19 skipped, ledger clean, tree unchanged — OK` | `1139 passed, 26 failed, 16 flaky, 19 skipped, ledger clean, tree unchanged — NOT OK — 26 failed` |
+| flaky | 0 | 16 |
+| `[reset]` | 0 | 0 |
+| tests over their 30s | none reported | 10 listed, worst 41.4s |
+
+**Four is worse on every figure, so two stays.** 90 lines of "Test
+timeout exceeded" in the log; the failures are clicks, navigations and
+API calls that never came back in 30s, spread over 14 spec files on
+both projects, not one place. One server and one database serve all the
+workers, and four of them starve it. Not checked: what else the machine
+was doing (the note of the load at line 31017 above applies; the script
+does not stamp the load).
+
+**To watch at two:** manage's new pointer tests (`manage.spec.ts:976`)
+were eight of the 26 and five of the ten slowest. They walk six
+sections each. They passed at step level on two workers; their margin
+there was not read.
+
+**The unit half failed in the worktree for two setup reasons, neither
+the code:** `4285 passed, 6 failed, 25 skipped, tree unchanged — NOT OK
+— 6 failed`.
+- Four in `src/app/type-scale.test.ts` read the CSS `npm run build`
+  produces, and a fresh worktree has none. `gate.sh` does not build.
+- Two in `test/repo/dev-targets-neon.test.ts` read `.env.local`, which
+  is not copied. So the line above, "nothing in either suite is meant
+  to need it", was wrong.
+Neither is worked round. Until both are ruled on, a worktree gate
+cannot be green on its unit half, and the gate step 133 owes is run in
+the working tree at two workers as before.
