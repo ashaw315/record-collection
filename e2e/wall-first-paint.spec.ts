@@ -95,7 +95,8 @@ test('above the fork the first paint is the NEAR view and never changes to settl
 
 test('below the fork the first paint is the FAR view and never changes to settle (§W.24)', async ({ page }) => {
   await login(page);
-  await page.setViewportSize({ width: 390, height: 844 });
+  /* Step 134: the shelf is offered from 1044, and the near view from 1274. Below the fork is now between them; it was 390. */
+  await page.setViewportSize({ width: 1100, height: 844 });
   const artistId = await seed(page, 17);
   await page.addInitScript(PROBE);
   await page.goto(`/?artistId=${artistId}`);
@@ -108,7 +109,8 @@ test('below the fork the first paint is the FAR view and never changes to settle
 test('the fork is decided without measuring: no script at all still paints the right view either side of it', async ({ browser, page: signedIn }) => {
   await login(signedIn);
   const state = await signedIn.context().storageState();
-  for (const [width, expected] of [[1440, 'near'], [390, 'far']] as const) {
+  /* The far side was read at 390, where step 134 offers no shelf; 1100 is below the fork and offered. */
+  for (const [width, expected] of [[1440, 'near'], [1100, 'far']] as const) {
     const context = await browser.newContext({ javaScriptEnabled: false, viewport: { width, height: 844 }, storageState: state });
     const page = await context.newPage();
     try {

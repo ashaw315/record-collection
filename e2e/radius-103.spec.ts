@@ -54,7 +54,8 @@ test.describe('§T.6’s premise: every ruled surface is already square', () => 
   for (const width of [390, GRID_FORK]) {
     test(`at ${width}: the shelf near and far, the table and the grid with a filter open, and the header’s menu`, async ({ page }) => {
       await open(page, '/', width);
-      await expectSquare(page, 'the shelf as it opens');
+      /* Step 134: at 390 a bare / draws the grid; the shelf is drawn from 1044 under a fine pointer. */
+      await expectSquare(page, width === GRID_FORK ? 'the shelf as it opens' : 'the collection as a narrow window opens it, on the grid');
       if (width === GRID_FORK) {
         await page.getByTestId('wall-zoom-out').click();
         await page.locator('[data-wall="overview"]').waitFor();

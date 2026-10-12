@@ -122,8 +122,7 @@ export default defineConfig({
     screenshot: 'only-on-failure',
   },
   projects: [
-    /* shelf-narrow is the mobile project's: it is about 390px and sets the viewport itself (§11.24). */
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] }, testIgnore: [/shelf-narrow\.spec\.ts$/] },
+    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
     /*
       **The capture project: a tool, not a suite.** `e2e/capture/` regenerates
       the screenshots in `docs/` that 7a's grid is judged against. Opted into by
@@ -198,10 +197,8 @@ export default defineConfig({
        *                  chromium and its assertions would not run at all
        *                  without this entry
        *     manage     — "the resource rail is reachable on a narrow viewport"
-       *     shelf-narrow — 8a §11.24: the narrow shelf is the far view. Added
-       *                  because NO mobile project ran the shelf specs, so the
-       *                  view had no narrow form and nothing asserted that it
-       *                  did — neither half of the gap could report the other.
+       *     shelf-narrow was here until step 134: under a coarse pointer the shelf
+       *                  is not offered, so on this project it had no subject.
        *
        * `graph.spec.ts` was listed here until step 15 unit 2 and the FILE NO
        * LONGER EXISTS — §8 retired the screen and the spec went with it, while
@@ -243,7 +240,6 @@ export default defineConfig({
         /lookup-flows\.spec\.ts$/,
         /nav-mobile\.spec\.ts$/,
         /manage\.spec\.ts$/,
-        /shelf-narrow\.spec\.ts$/,
         /record-form\.spec\.ts$/,
         /discogs-prefill\.spec\.ts$/,
         /want-list\.spec\.ts$/,

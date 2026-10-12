@@ -27,12 +27,14 @@ test.beforeEach(async ({ page }) => login(page));
 
 for (const [view, path] of VIEWS) {
   /* Step 113: above the sidebar's fork the table's and the grid's band is the sidebar's head, so its two-row height is read below it. The shelf's is its own at any width. */
-  for (const width of [390, view === 'shelf' ? 1440 : 1024]) {
+  /* Step 134: the shelf is not offered at 390, so its rail is read at 1440 alone. Its 390 case went with its subject. */
+  for (const width of view === 'shelf' ? [1440] : [390, 1024]) {
     /* Fails against the 34 field, and on the shelf against the link drawn in the label colour. */
     test(`${view} at ${width}: the search field is 44 tall and Add record is ink by one colour class`, async ({ page }) => {
       await page.setViewportSize({ width, height: 844 });
       await page.goto(path);
-      const rail = page.getByTestId('wall-rail');
+      /* A bare / carries the grid's band too (step 134): the view is named. */
+      const rail = page.locator(view === 'shelf' ? '[data-shelf-offered]' : '[data-collection-band]').getByTestId('wall-rail');
       await expect(rail.locator('#rail-search')).toBeVisible({ timeout: 30_000 });
       const m = await rail.evaluate((el) => {
         const field = el.querySelector('#rail-search') as HTMLElement;

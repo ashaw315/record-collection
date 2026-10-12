@@ -58,6 +58,7 @@ export function WallRail({
   params,
   genres = [],
   searchGlyph = false,
+  idPrefix = '',
 }: {
   params: CollectionParams;
   genres?: readonly FilterOption[];
@@ -68,6 +69,13 @@ export function WallRail({
    * reached by that ruling and keeps a field with no control.
    */
   searchGlyph?: boolean;
+  /**
+   * Step 134: a bare `/` carries the shelf and the grid, and a media query
+   * shows one. Both have this rail, so the copy that stands in for the
+   * shelf takes a prefix: an id twice in a document sends a label to the
+   * first field of that name, which here is the hidden one.
+   */
+  idPrefix?: string;
 }) {
   const hidden = new URLSearchParams(
     toQueryString({
@@ -93,12 +101,12 @@ export function WallRail({
         {[...hidden.entries()].map(([key, value]) => (
           <input key={key} type="hidden" name={key} value={value} />
         ))}
-        <label htmlFor="rail-search" className={`block ${LABEL}`}>
+        <label htmlFor={`${idPrefix}rail-search`} className={`block ${LABEL}`}>
           Search
         </label>
         <div data-search-box="" className="relative">
           <input
-            id="rail-search"
+            id={`${idPrefix}rail-search`}
             name="q"
             type="search"
             defaultValue={params.filters.q ?? ""}
@@ -123,7 +131,7 @@ export function WallRail({
                 below its name. It was placed by a negative margin from the same foot and drew across the label (found 9 Oct).
               */}
               <div className="relative mt-[18px]">
-                <label htmlFor="rail-genre" className={`block ${LABEL}`}>
+                <label htmlFor={`${idPrefix}rail-genre`} className={`block ${LABEL}`}>
                   Genre
                 </label>
                 {params.filters.genreId !== undefined && (
@@ -146,7 +154,7 @@ export function WallRail({
               {/* §W.36: out of flow like the view's — GENRE and SORT sit above the switcher, so a set filter in flow would move the control you choose the view with. */}
               {/* The count follows §7.1's rollup, as the chips' does: "Punk 12" is what choosing it returns. */}
               <RailSelect
-                id="rail-genre"
+                id={`${idPrefix}rail-genre`}
                 name="genreId"
                 defaultValue={params.filters.genreId ?? ""}
                 className={`${FIELD} font-mono text-label`}
@@ -161,11 +169,11 @@ export function WallRail({
             </>
           )}
 
-          <label htmlFor="rail-sort" className={`mt-[18px] block ${LABEL}`}>
+          <label htmlFor={`${idPrefix}rail-sort`} className={`mt-[18px] block ${LABEL}`}>
             Sort
           </label>
           <RailSelect
-            id="rail-sort"
+            id={`${idPrefix}rail-sort`}
             name="sort"
             defaultValue={sortValue}
             className={`${FIELD} font-mono text-label`}
@@ -193,7 +201,7 @@ export function WallRail({
           const current = params.view === mode;
           const href = `/${toQueryString({ ...params, view: mode, page: 1 }) === "" ? "" : `?${toQueryString({ ...params, view: mode, page: 1 })}`}`;
           return (
-            <li key={mode} className="relative">
+            <li key={mode} data-view-name={mode} className="relative">
               <Link
                 href={href}
                 aria-current={current ? "page" : undefined}

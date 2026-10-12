@@ -23,11 +23,11 @@ import { bandForkRules } from './sidebar-layout';
  * sidebar, search over the view names at the sidebar's own width, and the
  * measure and that fork are `sidebar-layout.ts`'s.
  */
-export function CollectionBand({ params, genres }: { params: CollectionParams; genres: readonly FilterOption[] }) {
+export function CollectionBand({ params, genres, idPrefix }: { params: CollectionParams; genres: readonly FilterOption[]; idPrefix?: string }) {
   return (
     <div data-collection-band="">
       <style>{`${bandRules('[data-collection-band] ')}${bandForkRules()}`}</style>
-      <WallRail params={params} genres={genres} searchGlyph />
+      <WallRail params={params} genres={genres} searchGlyph idPrefix={idPrefix} />
     </div>
   );
 }

@@ -10,6 +10,8 @@ import { WallUrlState } from './WallUrlState';
 import { wallSeats, wallSummaries } from './wall/producer';
 import { CollectionPagination } from './CollectionPagination';
 import { parseCollectionParams } from './collection-params';
+import { ShelfAddress } from './ShelfAddress';
+import { shelfOfferedQuery } from './wall/view-fork';
 import { listRecords, listRecordAges, recordFacets, countAllRecords, spineColoursOf } from '@/lib/db/queries/records';
 import { ConstructionStill } from './records/[id]/ConstructionStill';
 import { figureSource } from './figure-source';
@@ -108,7 +110,15 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
     (step 103d): chosen from the whole collection, so no filter, order or
     page moves it. The shelf is not reached by §T.6 and does not pay for it.
   */
-  const source = shelf === null ? figureSource(await listRecordAges()) : null;
+  /*
+    Step 134: where the address names no view the grid is carried beside the
+    shelf, for the window that is not offered one. It is the grid as
+    `?view=grid` would give it, so its own links name it, and from here on
+    the heading figure and the covers are fetched for the shelf's address
+    too: the page no longer knows which of the two will be seen.
+  */
+  const gridParams = shelf === null ? params : { ...params, view: 'grid' as const };
+  const source = figureSource(await listRecordAges());
   /*
     Step 113, from Adam's wireframe: "The figure is the source record's
     construction in that record's tint... The tint is the source record's,
@@ -124,12 +134,30 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
     the records on this page only, and only by the grid, so the table and
     the shelf do not pay for it and the records endpoint keeps its shape.
   */
-  const covers = params.view === 'grid' ? Object.fromEntries(await newestCoverUrls(records.rows.map((row) => row.id))) : {};
+  const covers = gridParams.view === 'grid' ? Object.fromEntries(await newestCoverUrls(records.rows.map((row) => row.id))) : {};
 
   return (
     <>
       <AppHeader />
 
+      {/*
+        Step 134, §W.24: "The shelf is offered only where the window is 1044
+        or wider and the primary pointer is fine; under a coarse pointer at
+        any width, the Collection opens on the grid." Neither the width nor
+        the pointer is the server's to know, and both are a media query's.
+        So an address that names no view carries the shelf AND the grid, and
+        the window shows one: the first paint is right, scripting off is
+        right, Back is right, and widening brings the shelf back, with
+        nothing stored. An address that names the grid or the table carries
+        that view alone. SHELF leaves the view names by the same query.
+        `main >` is for weight: the sidebar's own rules give the grid's root
+        a display from 1044 up, later in the document, and won at 1440.
+      */}
+      <style data-shelf-offer="">{`@media ${shelfOfferedQuery()} { main > [data-shelf-fallback] { display: none; } }
+@media not all and ${shelfOfferedQuery()} { [data-shelf-offered], [data-view-name="shelf"] { display: none; } }`}</style>
+      <ShelfAddress />
+
+      <main>
       {shelf !== null ? (
         /*
           §W.13: the header band is withdrawn on the shelf view. The wall
@@ -139,7 +167,7 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
           Collection and count were the duplicate, and they are the instance
           that goes.
         */
-        <main>
+        <div data-shelf-offered="">
           <WallUrlState
             params={params}
             seats={wallSeats(shelf)}
@@ -151,9 +179,9 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
             }
             rail={<WallRail params={params} genres={facets.genres} />}
           />
-        </main>
-      ) : (
-        <main data-collection-views="">
+        </div>
+      ) : null}
+        <div data-collection-views="" data-shelf-fallback={shelf !== null ? '' : undefined}>
           {/*
             Step 113, §T.1: above the fork "the table and grid have a sidebar
             336 wide, closed by a full-height 1px rule, and a content column
@@ -166,7 +194,7 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
           <style>{sidebarRules(figure)}</style>
           <aside data-collection-sidebar="">
             {/* §T.1: the shelf's band. Below the fork it is the two-row band, with Add record at its right; above, search over the view names. */}
-            <CollectionBand params={params} genres={facets.genres} />
+            <CollectionBand params={gridParams} genres={facets.genres} idPrefix={shelf !== null ? 'grid-' : undefined} />
             <div data-collection-controls="" className={CONTENT_INSET}>
               <header data-collection-heading="" className="mb-5">
                 {/*
@@ -178,13 +206,13 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
                   {collectionCountLabel({
                     matched: records.total,
                     total: collectionTotal,
-                    filtered: activeFilterCount(params) > 0,
+                    filtered: activeFilterCount(gridParams) > 0,
                   })}
                 </p>
                 <h1 className="font-heading text-headline font-semibold tracking-tight">Collection</h1>
               </header>
 
-              <CollectionFilters params={params} undatedCount={records.undatedCount} options={facets} />
+              <CollectionFilters params={gridParams} undatedCount={records.undatedCount} options={facets} />
             </div>
             {/*
               §T.6: "The second figure is a fragment of the same construction
@@ -228,17 +256,17 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
               shelf is its SIBLING rather than a third case inside it — so the
               branch above is what proves `view` is not 'shelf' here.
             */}
-            <CollectionList rows={records.rows as CollectionRow[]} params={params} covers={covers} view={params.view === 'grid' ? 'grid' : 'table'} collectionTotal={collectionTotal}
+            <CollectionList rows={records.rows as CollectionRow[]} params={gridParams} covers={covers} view={gridParams.view === 'grid' ? 'grid' : 'table'} collectionTotal={collectionTotal}
               emptyFigure={
                 /* "At the clearing height and no larger", in the source's tint. */
                 <EmptyFigure source={source} tint={tint} />
               }
             />
 
-            <CollectionPagination params={params} total={records.total} rows={records.rows.length} pageSize={PAGE_SIZE} />
+            <CollectionPagination params={gridParams} total={records.total} rows={records.rows.length} pageSize={PAGE_SIZE} />
           </div>
-        </main>
-      )}
+        </div>
+      </main>
     </>
   );
 }

@@ -131,7 +131,6 @@ const GOVERNED = [
   'e2e/sheet/header.sheet.ts',
   'e2e/sheet/nav-menu-cover.sheet.ts',
   'e2e/sheet/nav-menu.sheet.ts',
-  'e2e/shelf-narrow.spec.ts',
   'e2e/shelf.spec.ts',
   'e2e/identity-band-23.spec.ts',
   'e2e/identity-extremes.spec.ts',

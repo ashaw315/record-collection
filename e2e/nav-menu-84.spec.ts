@@ -75,61 +75,14 @@ async function pixelAt(page: Page, x: number, y: number): Promise<number[]> {
 }
 const near = (a: number[], b: number[], tol = 3) => a.every((v, i) => Math.abs(v - b[i]) <= tol);
 
-/** What the wall and the page measure, for comparing closed with open. */
-const wallState = (page: Page) =>
-  page.evaluate(() => {
-    const region = document.querySelector('[data-region="far"]') as HTMLElement;
-    const seats = Array.from(document.querySelectorAll('[data-wall="overview"] a[data-far-seat]')).map((a) => a.getBoundingClientRect());
-    const r = region.getBoundingClientRect();
-    return {
-      header: Math.round((document.querySelector('[data-app-nav]') as HTMLElement).getBoundingClientRect().height),
-      variable: document.documentElement.style.getPropertyValue('--app-nav-height'),
-      page: document.documentElement.scrollHeight,
-      regionTop: Math.round(r.top * 10) / 10,
-      regionHeight: Math.round(r.height),
-      seats: seats.length,
-      seatW: seats.length ? Math.round(seats[0].width * 10) / 10 : null,
-      seatH: seats.length ? Math.round(seats[0].height * 10) / 10 : null,
-      seatX: seats.length ? seats[0].left + seats[0].width / 2 : null,
-      seatY: seats.length ? seats[0].top + seats[0].height / 2 : null,
-    };
-  });
-
 test.beforeEach(async ({ page }) => login(page));
 
 test.describe('§G.8: the panel covers, and nothing beneath it moves', () => {
-  /* Fails against the pushed menu: the header grew to 273, the far region shrank from 791 to 571 and the seats from 81.9 x 133.8 to 53.7 x 87.7. */
-  test('on Collection at 390 by 844: the header, the wall’s region, the page’s length and the seats are the same open as closed', async ({ page }) => {
-    await open(page, '/', 390);
-    await page.locator('[data-wall="overview"]').waitFor({ timeout: 30_000 });
-    await page.waitForTimeout(1200);
-    const closed = await wallState(page);
-    /* The preconditions: the figures this step's ruling quotes are the ones on the page. */
-    expect(closed.header, 'closed: the header is 53').toBe(53);
-    expect(closed.page, 'closed: the page is 981 long').toBe(981);
-    expect(closed.regionHeight, 'closed: the far region is 791 tall').toBe(791);
-    /*
-      The page's 981 and the region's 791 do not depend on how many records
-      the wall holds; a seat's size does, because the overview fits every
-      seat into the region. The test database is shared, and in a run with
-      other specs the wall held more than the seeded seventeen. So the seat's
-      81.9 by 133.8 is asserted when the wall is those seventeen, and the
-      claim that matters -- the same open as closed -- is asserted always.
-    */
-    expect(closed.seats, 'closed: there are seats to compare').toBeGreaterThan(0);
-    test.info().annotations.push({ type: 'wall', description: `${closed.seats} seats, each ${closed.seatW} by ${closed.seatH}` });
-    if (closed.seats === 17) expect([closed.seatW, closed.seatH], 'closed, on the seeded seventeen: a seat is 81.9 by 133.8').toEqual([81.9, 133.8]);
-    await control(page).click();
-    await isOpen(page);
-    await page.waitForTimeout(800);
-    const opened = await wallState(page);
-    expect(opened.header, 'the header’s height does not change').toBe(closed.header);
-    expect(opened.variable, 'so the variable the wall reads does not either').toBe(closed.variable);
-    expect(opened.page, 'the page does not grow').toBe(closed.page);
-    expect(opened.regionTop, 'the wall’s region does not move').toBe(closed.regionTop);
-    expect(opened.regionHeight, 'or resize').toBe(closed.regionHeight);
-    expect([opened.seatW, opened.seatH], 'and the seats beneath the panel are the size they were').toEqual([closed.seatW, closed.seatH]);
-  });
+  /*
+    Step 134: "on Collection at 390 by 844: the header, the wall's region, the page's length and the seats are the
+    same open as closed" stood here. At 390 the Collection is the grid now and there is no wall under the panel, so
+    the test went with its subject. The want list, a record and the 240-tall window still hold the panel below.
+  */
 
   /* Fails against the pushed menu, which had no panel: the list sat in the header and the wall showed beneath it. */
   test('the panel is opaque paper from the header’s rule to the viewport’s bottom, full width, with the 53 row above it', async ({ page }) => {
@@ -195,101 +148,10 @@ test.describe('§G.8: the panel covers, and nothing beneath it moves', () => {
 });
 
 test.describe('§G.8: the panel is above the wall, asserted on the wall', () => {
-  /* Fails against a panel that is only later in the page: the wall's transformed layers paint and take taps over it. And against the pushed menu, where the seats stay in view. */
-  test('at 390 on Collection, a tap on the panel’s paper over a seat lands on the panel, and the pixel there is paper', async ({ page }) => {
-    await open(page, '/', 390);
-    await page.locator('[data-wall="overview"]').waitFor({ timeout: 30_000 });
-    await page.waitForTimeout(1200);
-    const closed = await wallState(page);
-    expect(closed.seats, 'there are seats to cover').toBeGreaterThan(0);
-    /*
-      Points chosen by testing them, closed. The seats overlap on the
-      isometric shelf, so a seat's box is mostly its neighbours and its
-      centre is not reliably painted by anything; a point counts only if a
-      tap there lands on a seat. Below 300 so each is on the panel's open
-      paper, beneath where the list will be.
-    */
-    const points = await page.evaluate(() => {
-      const found: { x: number; y: number }[] = [];
-      for (const a of Array.from(document.querySelectorAll('[data-wall="overview"] a[data-far-seat]'))) {
-        const r = a.getBoundingClientRect();
-        for (let i = 1; i < 6 && found.length < 12; i += 1) {
-          const x = r.left + (r.width * i) / 6;
-          const y = r.top + (r.height * i) / 6;
-          if (y < 300 || y > window.innerHeight - 10 || x < 10 || x > window.innerWidth - 10) continue;
-          if (document.elementFromPoint(x, y)?.closest('a[data-far-seat]')) { found.push({ x, y }); break; }
-        }
-      }
-      return found;
-    });
-    expect(points.length, 'closed, there are points that land on a seat, below where the list will be').toBeGreaterThan(5);
-    /*
-      **The precondition, so this cannot pass about nothing.** Staged with
-      the panel's z-index removed, the seat assertions below still passed:
-      the seats sit in no stacking layer, so a fixed panel covers them raised
-      or not. That is true only while the wall at this width is the overview
-      and its seats have no positioned or transformed ancestor. If the wall
-      gains a layered view below 584 -- a different default, a moved
-      breakpoint -- this fails, and a person looks, instead of the test going
-      on passing.
-    */
-    const wall = await page.evaluate(() => {
-      const layered = (el: Element) => {
-        const cs = getComputedStyle(el);
-        return cs.position !== 'static' || cs.transform !== 'none' || cs.opacity !== '1' || cs.filter !== 'none' || cs.willChange !== 'auto' || cs.isolation === 'isolate';
-      };
-      const seats = Array.from(document.querySelectorAll('[data-wall="overview"] a[data-far-seat]'));
-      const offenders = new Set<string>();
-      for (const seat of seats) {
-        for (let el: Element | null = seat; el !== null && el !== document.body; el = el.parentElement) {
-          if (layered(el)) offenders.add(`${el.tagName.toLowerCase()}[${el.getAttribute('data-wall') ?? el.getAttribute('data-region') ?? el.getAttribute('data-testid') ?? ''}]`);
-        }
-      }
-      return { overview: document.querySelectorAll('[data-wall="overview"]').length, labelled: document.querySelectorAll('[data-wall="labelled"]').length, layeredAncestors: [...offenders] };
-    });
-    expect(wall.overview, 'the wall at this width is the overview').toBe(1);
-    expect(wall.labelled, 'and not the labelled wall, whose transforms make layers').toBe(0);
-    expect(wall.layeredAncestors, 'no seat sits in a positioned or transformed layer').toEqual([]);
-    /*
-      The part of this page that CAN outrank an un-raised panel: positioned
-      elements later in the page than the header -- the rail's rows and the
-      view switcher's marks. Staged without the z-index, these take the tap.
-    */
-    const positioned = await page.evaluate(() => {
-      const header = document.querySelector('[data-app-nav]') as HTMLElement;
-      const out: { x: number; y: number; what: string }[] = [];
-      for (const el of Array.from(document.body.querySelectorAll('*'))) {
-        if (!(el instanceof HTMLElement) || header.contains(el)) continue;
-        if (getComputedStyle(el).position === 'static') continue;
-        const r = el.getBoundingClientRect();
-        if (r.width < 4 || r.height < 4) continue;
-        const x = r.left + r.width / 2, y = r.top + r.height / 2;
-        if (y < 60 || y > window.innerHeight - 4 || x < 4 || x > window.innerWidth - 4) continue;
-        const hit = document.elementFromPoint(x, y);
-        if (hit !== null && (hit === el || el.contains(hit))) out.push({ x, y, what: `${el.tagName.toLowerCase()}.${(el.className || '').toString().split(' ')[0]}` });
-      }
-      return out;
-    });
-    expect(positioned.length, 'closed, there are positioned elements under where the panel will be that take a tap').toBeGreaterThan(0);
-    const seatPixel = await pixelAt(page, points[0].x, points[0].y);
-    await control(page).click();
-    await isOpen(page);
-    await page.waitForTimeout(600);
-    const paper = await paperRgb(page);
-    const hits = await page.evaluate((ps) => ps.map((p) => { const el = document.elementFromPoint(p.x, p.y); return { onPanel: el?.closest('[data-menu-panel]') !== null, onSeat: el?.closest('a[data-far-seat]') !== null }; }), points);
-    for (const [i, h] of hits.entries()) {
-      expect(h.onPanel, `point ${i}: a tap lands on the panel`).toBe(true);
-      expect(h.onSeat, `point ${i}: and not on a seat`).toBe(false);
-    }
-    for (const [i, p] of points.slice(0, 6).entries()) {
-      const px = await pixelAt(page, p.x, p.y);
-      expect(near(px, paper), `point ${i}: the pixel is the panel's paper, ${px} against ${paper}`).toBe(true);
-    }
-    const overPositioned = await page.evaluate((ps) => ps.map((p) => ({ what: p.what, onPanel: document.elementFromPoint(p.x, p.y)?.closest('[data-menu-panel]') !== null })), positioned);
-    for (const h of overPositioned) expect(h.onPanel, `a tap where ${h.what} is lands on the panel`).toBe(true);
-    /* The control for the pixel read: closed, that point was not paper, so "paper" open is the panel and not an empty seat. */
-    expect(near(seatPixel, paper), `closed, the first point was a seat's colour, not paper: ${seatPixel}`).toBe(false);
-  });
+  /*
+    Step 134: "at 390 on Collection, a tap on the panel's paper over a seat lands on the panel" stood here. No seat
+    is drawn at 390 now. The record's cover, below, is the case that ever outranked an un-raised panel.
+  */
 });
 
 test.describe('§G.8: the panel is above positioned content, asserted where there is some', () => {

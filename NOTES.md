@@ -42557,3 +42557,130 @@ Questions that decide the build, with the default Code would take:
 **The experiment of this afternoon ran in the working tree against an
 uncommitted change, for an hour.** That is what the worktree is for.
 Next time the change is applied there. Not repeated.
+
+## 12 Oct: step 134. The shelf where it is offered; the grid where it is not
+
+**Design's two unnumbered steps, "no shelf below the fork" and "the
+shelf for a fine pointer only", as one (the coordinator).** One could
+not be built without the other: the second says "by the same silent
+fallback", which is the first's.
+
+**Two mechanisms, each with one job (the coordinator, 12 Oct).**
+- **What is drawn is a media query's.** An address that names no view
+  carries the shelf AND the grid, and `(min-width: 1044px) and
+  (pointer: fine)` shows one (`page.tsx`, `shelfOfferedQuery` in
+  `wall/view-fork.ts`). So the first paint is right, scripting off is
+  right, a bare `/` stays `/`, and widening brings the shelf back.
+  SHELF leaves the view names by the same query.
+- **The address records an explicit choice.** `?view=grid` and
+  `?view=table` are honoured anywhere and carry that view alone.
+  `?view=shelf` arriving where the shelf is not offered has the view
+  cleared by replacement (`ShelfAddress.tsx`), never a push. With
+  scripting off that address stays stale over a grid: the right
+  failure.
+- **Nothing is stored.** Design's "a stored preference is kept" names
+  a thing the build never had; an entry is owed and is Design's.
+- **Widening restores the shelf on a bare address** and keeps the grid
+  on `?view=grid`. That reverses the default taken earlier today
+  ("widening stays on the grid"), whose reason the media query removed.
+  It is the coordinator's reading, relayed to Design.
+
+**The ruling's 1044 is not the built fork, and Design should know.**
+`nearViewMinWidth()` is 1274: §W.26 moved the near view's fork to the
+landing and §14's "the fork returns to the fixture" was never built.
+So there are two figures: the shelf is OFFERED from 1044
+(`shelfOfferedMinWidth()`, derived from the fixture as §W.24 derived
+it) and the NEAR view starts at 1274. From 1044 to 1273 the shelf that
+is offered is the far view with the rail as a band, as it was before
+this step. Design's steps speak of "the shelf's fork, §W.24's 1044" as
+if it were one.
+
+**What the experiment found, and what it did not.** The whole
+Playwright suite against a first cut of the CSS fork, in the working
+tree: `1160 passed, 22 failed, 1 flaky, 19 skipped, ledger clean, tree
+unchanged — NOT OK — 22 failed`. All 22 failed loudly, 15 because
+their subject was a shelf at 390 or under a finger, 7 because a reader
+found two rails. It also found a real defect: both views had
+`rail-search`, `rail-genre` and `rail-sort`, so a label in the grid
+named the hidden shelf's field. The grid a bare `/` carries now takes
+a prefix (`grid-rail-search`), and a test holds that no id is in the
+document twice. The flaky one was `lookup-flows.spec.ts:1742` on the
+phone project, not looked into.
+- **No timing is taken from that run.** The machine was swapping
+  throughout and this morning's was not known to be. What both views
+  cost the server is not measured: the page now runs the shelf's query,
+  the grid's page of fifty, the heading figure and the covers for every
+  address that names no view. Measuring it means timing one request
+  each way, back to back, on a quiet machine; not done.
+- **A second defect, caught by the step's own test with scripting off
+  at 1440:** the sidebar's rules give the grid's root a display from
+  1044 up, later in the document and of the same weight, so both views
+  were drawn. The rule is `main > [data-shelf-fallback]` for weight.
+
+**Tests that went, and why. No assertion was loosened.**
+
+*Went with their subject (the shelf below 1044 or under a finger no
+longer exists to test): 12 cases.*
+- `shelf-narrow.spec.ts`, all 7 cases of its 5 tests, and the file: the
+  far view in one column at 390 and a tap opening the record; widening
+  past the fork; the no-script first paint at 390; search on its own
+  row at 390 and 320; the band's links to a finger at 390 and 320. It
+  ran on the phone project only, which is coarse.
+- `wall-arrival-104.spec.ts:254`, the empty-shelf sentence at 390
+  (corrected this morning). Below 1044 a filter matching nothing is
+  the grid's to say; `collection-filters.spec.ts` and
+  `empty-figure-103e.spec.ts` hold that.
+- `band-100.spec.ts`, the shelf at 390 (its 1440 case stays).
+- `nav-menu-84.spec.ts`, two: the wall unmoved under the panel at 390,
+  and a tap over a seat landing on the panel.
+- `wall-panel.spec.ts`, the two coarse cases at 1280 and 1440.
+
+*Lost nothing but were re-pointed (driving only): 9.*
+- Named the shelf's view, because a bare `/` now has two rails:
+  `shelf.spec.ts` (four tests), `band-100` shelf at 1440,
+  `rail-set-bar.spec.ts`, `wall-panel` fine at 1280 and 1440.
+- Moved from 390 to 1100, where the far view still stands:
+  `wall-first-paint.spec.ts:96` and the far half of `:108`, and the far
+  half of this morning's unmeasured-state test in `wall-arrival-104`.
+  So the 390 unmeasured case is withdrawn and the state is held at
+  1100 and 1440.
+
+*Renamed in their own messages, claim unchanged: 2.* `colour-103` and
+`radius-103` open `/` at 390 and read what is drawn; that is the grid
+now, and their messages say so.
+
+*Checked and untouched:* `wall-route.spec.ts` is all at 1440.
+
+**Left open by this, each one said and not acted on.**
+- **Nothing tests the panel over the Collection at 390 now.** The two
+  tests that did were about a wall. The grid's covers under the open
+  menu are not held.
+- **The band between 1044 and 1273 has less under it.** The narrow
+  band's layout was tested at 390 and 320 only, on the phone project.
+  It still draws from 1044 to 1273 and only the far view's first paint
+  and the offering are tested there.
+- **Dead now:** the rail's coarse rules in `globals.css` (step 130) and
+  whatever in the narrow band's rules only a window under 1044
+  reached. Not removed: Design's "remove the far view's narrow route
+  and the shelf's 390 pin" assumed 1044 was the fork, and it is not.
+- **A phone still downloads and hydrates the shelf it never draws**, and
+  a desktop the grid. Hidden, not absent.
+- **The convention "a reader that can find two names its view" is held
+  by Playwright for locators and by nothing for `document.querySelector`
+  inside an `evaluate`,** which takes the first match in silence. All
+  22 failures were loud because they went through locators. A check is
+  possible for the silent case: a repo test listing the selectors that
+  exist in both views (the rail, its view names, its bars and rules)
+  and failing any spec that hands one to `querySelector` without
+  `[data-shelf-offered]` or `[data-shelf-fallback]` in the same
+  selector. It would be a list of names, so it holds what is on the
+  list and no more. Not built; nobody asked.
+
+**Step level.** Fail first: 11 of 11 new tests failed against the page
+as built, then the precondition on the fork failed (1274, not 1044),
+which is how the two figures were found. With the build: the step's
+spec `9 passed`; the eleven specs the change reached, on chromium,
+`81 passed, ledger clean, tree unchanged — OK`; unit under `src` and
+`test/repo`, `2767 passed, tree unchanged — OK`; typecheck and build
+clean; lint 0 errors, 27 warnings. The covering run on both projects
+is run after this commit, in the worktree.

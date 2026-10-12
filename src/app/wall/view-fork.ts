@@ -44,6 +44,25 @@ export function nearViewMinWidth(): number {
   return Math.ceil(RAIL_WIDTH + FACTS_WIDTH + Math.max(fixtureWidth(), landingWidth()) + LANDING_PAD);
 }
 
+/**
+ * **The width from which the shelf is offered (§W.24, step 134): 1044.**
+ *
+ * "The shelf is offered only where the window is 1044 or wider and the
+ * primary pointer is fine." That is §W.24's own figure, the rail, the facts
+ * column and one shelf of twenty, and it is NOT the near view's fork above:
+ * §W.26 moved that to the landing's 1274 and left this where it was. From
+ * 1044 to 1273 the shelf that is offered is the far view. Derived, like the
+ * other, so the fixture moving moves it.
+ */
+export function shelfOfferedMinWidth(): number {
+  return Math.ceil(RAIL_WIDTH + FACTS_WIDTH + fixtureWidth() + LANDING_PAD);
+}
+
+/** What CSS and the script both ask: is this a window the shelf is offered in. */
+export function shelfOfferedQuery(): string {
+  return `(min-width: ${shelfOfferedMinWidth()}px) and (pointer: fine)`;
+}
+
 /** The viewport's width in px, against the fork. */
 export function isFarView(viewportPx: number): boolean {
   return viewportPx < nearViewMinWidth();

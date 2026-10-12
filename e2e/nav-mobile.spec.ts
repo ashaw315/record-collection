@@ -113,6 +113,21 @@ for (const width of [MOBILE_WIDTH, 320]) {
   });
 }
 
+/*
+  Step 134, §W.24: "under a coarse pointer at any width, the Collection opens on the grid." Fails against a
+  Collection that opens on the shelf: on a phone the nav's first item led to the far view of a wall.
+*/
+test('the menu’s Collection item lands on the grid, at /, with no shelf drawn', async ({ page }) => {
+  await page.setViewportSize({ width: MOBILE_WIDTH, height: 844 });
+  await page.goto('/want-list');
+  await page.locator('[data-menu-control]').click();
+  await page.locator('[data-menu-list]').getByRole('link', { name: 'Collection', exact: true }).click();
+  await expect(page).toHaveURL('/');
+  await expect(page.locator('[data-collection-grid]')).toBeVisible();
+  await expect(page.locator('[data-shelf-offered]'), 'the shelf is in the document, and not drawn').toBeHidden();
+  await expect(page.locator('[data-shelf-offered]')).toHaveCount(1);
+});
+
 /**
  * The original defect, a horizontal scroll hiding the tail, asserted on the
  * header's row rather than the nav: below 584 the nav's links are not in the

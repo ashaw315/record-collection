@@ -250,23 +250,15 @@ test('where nothing matches, the wall arrives as unfiltered and the shelf says s
   expect((await read(page, f.ids)).scroll, 'and the wall is at the unfiltered arrival').toEqual(whole.scroll);
 });
 
-/* Fails against a sentence drawn only in the near view: a phone's shelf is the far view (§W.24) and would show an emptied object and nothing else. */
-test('at 390, where the shelf is the far view, the sentence and CLEAR FILTERS are there too', async ({ page }) => {
-  const f = await seed(page);
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto(`/?genreId=${f.genreId}&q=zzzz-no-such-record-104`);
-  await expect(page.locator('[data-wall="overview"]')).toBeVisible({ timeout: 30_000 });
-  /*
-    Read in the far view by name. Until the window is measured both views are in the document and CSS shows one
-    (§W.26), so the block is there twice, and a reader that names neither view fails on finding two: that was this
-    test's one flaky run at the gate of 12 Oct, and the next test holds the state it met.
-  */
-  await expect(page.locator('[data-region="far"] [data-shelf-empty] [data-shelf-empty-sentence]')).toBeVisible();
-  await expect(page.locator('[data-region="far"] [data-shelf-empty] [data-shelf-empty-clear]')).toBeVisible();
-});
+/*
+  Step 134: "at 390, where the shelf is the far view, the sentence and CLEAR FILTERS are there too" stood here. The
+  shelf is not offered at 390 now, so the test went with its subject. Below 1044 a filter matching nothing is the
+  grid's to say, and `collection-filters.spec.ts` and `empty-figure-103e.spec.ts` hold what it says.
+*/
 
 /* Fails against a block both views draw before the window is measured: the sentence would be read twice over, by eye or by a screen reader. */
-for (const [width, shown] of [[390, 'far'], [1440, 'near']] as const) {
+/* The far side is read at 1100: offered (step 134) and below the near view's fork. It was 390. */
+for (const [width, shown] of [[1100, 'far'], [1440, 'near']] as const) {
   test(`before the window is measured the block is in both views and drawn in one, the ${shown} view at ${width}`, async ({ page, browser }) => {
     const f = await seed(page);
     const unmeasured = await browser.newContext({ javaScriptEnabled: false, viewport: { width, height: 844 }, storageState: await page.context().storageState() });

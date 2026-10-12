@@ -22,7 +22,8 @@ test('a set genre’s bar is under the GENRE label, as far below it as the curre
   const unset = await tops();
   const id = await page.locator('#rail-genre option').nth(1).getAttribute('value');
   await page.goto(`/?genreId=${id}`);
-  await page.locator('[data-set-bar]').waitFor({ timeout: 30_000 });
+  /* The grid a bare / carries has a bar of its own (step 134): the shelf's is named. */
+  await page.locator('[data-shelf-offered] [data-set-bar]').waitFor({ timeout: 30_000 });
 
   const m = await page.evaluate(() => {
     const text = (el: Element) => { const range = document.createRange(); range.selectNodeContents(el); const b = range.getBoundingClientRect(); return { top: b.top, bottom: b.bottom, left: b.left }; };

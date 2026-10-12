@@ -231,7 +231,8 @@ test.describe('§T.6: no control draws oxblood when focused, on any screen', () 
       /* Step 114: "test that no screen draws the red". The grey is the record page's to keep ("its asides keep 0.48"), so it is not read here. */
       const oxblood = ['oxblood', 'destructive red'];
       await openScreen(page, '/', width);
-      await expectNoneFocused(page, 'the shelf', oxblood);
+      /* Step 134: at 390 a bare / draws the grid; the shelf is drawn from 1044 under a fine pointer. */
+      await expectNoneFocused(page, width === GRID_FORK ? 'the shelf' : 'the collection as a narrow window opens it, on the grid', oxblood);
       if (width === GRID_FORK) {
         await page.getByTestId('wall-zoom-out').click();
         await page.locator('[data-wall="overview"]').waitFor();

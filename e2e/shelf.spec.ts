@@ -243,11 +243,11 @@ test('the shelf view has no header band: the wall starts under the nav, and the 
   /* No heading, no band: the facts column's COLLECTION and count are the identity (§W.9). */
   await expect(page.getByRole('heading', { level: 1, name: 'Collection' })).toHaveCount(0);
   await expect(page.getByTestId('shelf-controls-toggle')).toHaveCount(0);
-  const rail = page.getByTestId('wall-rail');
+  const rail = page.locator('[data-shelf-offered]').getByTestId('wall-rail');
   await expect(rail).toBeVisible();
   const geometry = await page.evaluate(() => {
     const box = (q: string) => document.querySelector(q)?.getBoundingClientRect();
-    return { nav: box('[data-app-nav]'), wall: box('[data-testid="wall"]'), rail: box('[data-testid="wall-rail"]'), facts: box('[data-region="facts"]'), region: box('[data-region="wall"]') };
+    return { nav: box('[data-app-nav]'), wall: box('[data-testid="wall"]'), rail: box('[data-shelf-offered] [data-testid="wall-rail"]'), facts: box('[data-region="facts"]'), region: box('[data-region="wall"]') };
   });
   expect(geometry.nav && geometry.wall && geometry.rail && geometry.facts && geometry.region).toBeTruthy();
   if (!geometry.nav || !geometry.wall || !geometry.rail || !geometry.facts || !geometry.region) return;
@@ -261,7 +261,7 @@ test('the shelf view has no header band: the wall starts under the nav, and the 
     wordmark.
   */
   const inside = await page.evaluate(() => {
-    const rail = document.querySelector('[data-testid="wall-rail"]') as HTMLElement;
+    const rail = document.querySelector('[data-shelf-offered] [data-testid="wall-rail"]') as HTMLElement;
     const style = getComputedStyle(rail);
     const lines = Array.from(rail.querySelectorAll<HTMLElement>('label[for="rail-search"], #rail-search, ul[aria-label="View"] a, [data-rail-rule]')).map((el) => ({ what: el.getAttribute('for') ?? el.id ?? el.textContent ?? '', left: el.getBoundingClientRect().left, right: el.getBoundingClientRect().right }));
     return { left: rail.getBoundingClientRect().left, right: rail.getBoundingClientRect().right, padding: [style.paddingLeft, style.paddingRight], wordmark: (document.querySelector('[data-wordmark]') as HTMLElement).getBoundingClientRect().left, label: (rail.querySelector('label[for="rail-search"]') as HTMLElement).getBoundingClientRect().left, field: (rail.querySelector('#rail-search') as HTMLElement).getBoundingClientRect(), rule: rail.querySelector('[data-rail-rule]')?.getBoundingClientRect() ?? null, lines };
@@ -304,7 +304,7 @@ test('search from the rail narrows the wall, and the count says so', async ({ pa
   await page.goto(`/?artistId=${artistId}`);
   await expect(page.getByTestId('wall')).toBeAttached({ timeout: 30_000 });
   await expect(page.getByTestId('wall-count')).toHaveText('3');
-  const search = page.getByTestId('wall-rail').getByLabel('Search');
+  const search = page.locator('[data-shelf-offered]').getByTestId('wall-rail').getByLabel('Search');
   await search.fill(titles[0]);
   await search.press('Enter');
   await expect(page).toHaveURL(/q=Wired/);
@@ -374,7 +374,7 @@ test('the rail’s sort reorders the wall itself (§W.24)', async ({ page }) => 
   await page.goto(`/?artistId=${artistId}`);
   await expect(page.locator('[data-wall="labelled"]')).toBeVisible({ timeout: 30_000 });
   await page.locator('select[data-hydrated="true"]').first().waitFor({ timeout: 15_000 });
-  await page.getByTestId('wall-rail').getByLabel('Sort').selectOption('releaseYear:asc');
+  await page.locator('[data-shelf-offered]').getByTestId('wall-rail').getByLabel('Sort').selectOption('releaseYear:asc');
   await expect(page).toHaveURL(/sort=releaseYear/, { timeout: 15_000 });
   await expect(page.locator('[data-wall="labelled"]')).toBeVisible({ timeout: 20_000 });
   await page.waitForTimeout(700);
@@ -397,7 +397,7 @@ test('genre and sort from the rail narrow and order the wall without leaving it 
   await page.goto(`/?artistId=${artistId}`);
   await expect(page.getByTestId('wall')).toBeAttached({ timeout: 30_000 });
   await expect(page.getByTestId('wall-count')).toHaveText('3');
-  const rail = page.getByTestId('wall-rail');
+  const rail = page.locator('[data-shelf-offered]').getByTestId('wall-rail');
   const fields = await rail.evaluate((el) => Array.from(el.querySelectorAll('form label')).map((n) => n.textContent?.trim()));
   expect(fields, 'SEARCH, then GENRE and SORT beneath it').toEqual(['Search', 'Genre', 'Sort']);
   /* Choosing a genre is the submit: the artist scope rides along as a hidden input. The selects submit only once hydrated. */
@@ -557,7 +557,7 @@ test('a filter empties seats rather than re-seating them, and the emptied seats 
 test('the rail’s view list reaches the table and comes back to the shelf', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByTestId('wall')).toBeAttached({ timeout: 30_000 });
-  await page.getByTestId('wall-rail').getByRole('link', { name: 'Table' }).click();
+  await page.locator('[data-shelf-offered]').getByTestId('wall-rail').getByRole('link', { name: 'Table' }).click();
   await expect(page).toHaveURL(/view=table/);
   await expect(page.getByTestId('wall')).toHaveCount(0);
   /* §T.1 (step 97a): the table's band is the shelf's, so the way back is the same list. */

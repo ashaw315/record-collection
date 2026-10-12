@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FACTS_WIDTH, RAIL_WIDTH, fixtureWidth, isFarView, landingWidth, nearViewMinWidth } from './view-fork';
+import { FACTS_WIDTH, RAIL_WIDTH, fixtureWidth, isFarView, landingWidth, nearViewMinWidth, shelfOfferedMinWidth } from './view-fork';
 import { ARROW_LANE, LANDED_SIZE, LANDING_PAD } from './landing';
 import { PER_SHELF, unitPieces } from './unit';
 
@@ -40,5 +40,13 @@ describe('the fork between the near view and the far view (§W.24)', () => {
     expect(isFarView(nearViewMinWidth() - 1)).toBe(true);
     expect(isFarView(nearViewMinWidth())).toBe(false);
     expect(isFarView(1280)).toBe(false);
+  });
+});
+
+describe('the width from which the shelf is offered (§W.24, step 134)', () => {
+  it('is the rail, the facts column and one shelf of twenty with the region’s pad: §W.24’s 1044, below the near view’s fork', () => {
+    expect(shelfOfferedMinWidth()).toBe(Math.ceil(RAIL_WIDTH + FACTS_WIDTH + fixtureWidth() + LANDING_PAD));
+    expect(shelfOfferedMinWidth()).toBe(1044);
+    expect(shelfOfferedMinWidth()).toBeLessThan(nearViewMinWidth());
   });
 });
