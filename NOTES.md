@@ -42460,3 +42460,70 @@ Step level: `wall-arrival-104.spec.ts` on chromium (it is not in the
 phone project), `7 passed, ledger clean, tree unchanged — OK`. Run in
 the working tree while the gate script's try-out was running in its
 worktree on its own database.
+
+## 12 Oct: the gate script tried on 703fc8e. Not a gate
+
+`GATE_ONLY="e2e/stats.spec.ts e2e/want-list.spec.ts" scripts/gate.sh`,
+in the worktree, on `record_collection_gate` and port 3101.
+- `NOT A GATE: Playwright ran only e2e/stats.spec.ts e2e/want-list.spec.ts`
+- load: 3.39 at the start, 22.31 at the end, on 6 cores
+- unit: `4311 passed, 5 skipped, tree unchanged — OK`. That is the
+  working tree's 4314 and 2, less the three that read `.env.local`.
+- Playwright: `122 passed, ledger clean, tree unchanged — OK`, chromium
+  61 and mobile 61.
+- Staged with `GATE_MAX_LOAD=0`: refused, nothing run, the five busiest
+  processes named.
+- **Two runs at once, which is what the database was for:** while the
+  worktree ran its unit half the working tree ran two specs on the
+  ordinary database, `43 passed, ledger clean, tree unchanged — OK`,
+  and a third run later during its Playwright half, `7 passed`. Neither
+  was refused and neither ledger moved.
+
+**To know about the threshold.** The load ended at 22 with the suite at
+two workers and one small run beside it, and 12 Oct's green gate sat at
+about 20 throughout. So 24 is not far above what the suite and a busy
+desktop make between them: a gate started while a long run is going in
+the working tree may be refused. That is the refusal working; start the
+gate first.
+
+## 12 Oct: Design's shelf for a fine pointer only. Sized, not started
+
+Stopped at the plan (CLAUDE.md §1.2: more than eight files, and more
+than one judgement). What reading the code found:
+
+- **It cannot be built without the step above it in the handoff.** "No
+  shelf below the fork" is also unnumbered and has not been ordered,
+  and this step says "by the same silent fallback" and tests a fine
+  pointer at 1043. The fallback does not exist yet. So the order for
+  one is an order for the offering half of both.
+- **The shared sign-in changes.** `e2e/sign-in.ts` ends on
+  `toHaveURL('/')`. Under a coarse pointer `/` becomes `/?view=grid` a
+  moment after it arrives, so every test on the phone project (382)
+  signs in through a helper whose last line races the replacement.
+- **Tests whose claim is withdrawn, not rewritten:** the five in
+  `shelf-narrow.spec.ts`, the 390 case in `wall-arrival-104.spec.ts`
+  (corrected today), and the 390 shelf cases in `colour-103`,
+  `radius-103`, `nav-menu-84`, `wall-first-paint` and `wall-route`,
+  not yet counted one by one.
+- **Neither the width nor the pointer is known to the server.** So the
+  fallback is the client's. Proposed: the shelf's root is hidden by a
+  media query where it is not offered, so no shelf is drawn and then
+  taken away, and a small client component replaces the address with
+  the grid's.
+
+Questions that decide the build, with the default Code would take:
+1. "Keeping the preference": there is no stored preference. The view
+   is in the address and nowhere else, and a bare `/` means the shelf.
+   Default: nothing is stored; a bare `/` opens the grid where the
+   shelf is not offered.
+2. "Resizing across 1044 changes view": narrowing can replace the
+   address with the grid's. Widening again finds `?view=grid` in the
+   address and nothing saying the shelf was wanted. Default: narrowing
+   moves to the grid; widening stays on the grid.
+3. With scripting off the client cannot replace anything. Default: the
+   narrow shelf stays for that case only, shown by a `noscript` rule,
+   which means the narrow shelf's code is not removed in this step.
+4. SHELF among the view names where the shelf is not offered: hidden
+   by the same media query, in the rail and the band. The band's hit
+   areas reach halfway to a neighbour, so TABLE's changes with SHELF
+   gone; re-measured in the step.
