@@ -42161,3 +42161,54 @@ projects: `348 passed, ledger clean, tree unchanged — OK`, `[projects]
 chromium 207, capture 0, mobile 141`. Unit under `src/app`: `1292
 passed`. Typecheck and build clean; lint 0 errors, 27 warnings. No
 `[reset]` line. No gate.
+
+## 12 Oct: two corrections from the coordinator, and the count split into down and across
+
+**A stylesheet change can never satisfy the two-run rule.** Step 130's
+green was assembled from three runs on the argument that only the
+mobile project and `wall-panel`'s touch tests read the rule moved into
+`globals.css`. That argument was wrong in kind: a stylesheet is read by
+every page on both projects, so the Chromium half of the first run was
+taken against different source than what was committed, and "nothing
+else reads it" cannot be shown for a file everything loads. **When a
+stylesheet moves, the covering set is both projects, whole, again.**
+The same holds for anything every page loads: the layout, the header,
+the fonts, the Tailwind config. Step 130 is covered by the gate that
+follows this entry and by nothing before it.
+
+**The count is two measurements and is stated as two.** "Nothing under
+44 outside manage" was true down and was written as if it were true
+across. `docs/captures/floor-count-4/` has both columns for every
+screen (the test database: seventeen records, six genres; the kinds are
+the app's, the counts the fixtures').
+
+*Under 44 down:* 124 at 390 and at 1280, all manage.
+
+*Under 44 across:* 67 at 390 and 55 at 1280. Outside manage:
+- the collection's table at 390: two column heads, Year (31) and Paid
+  (42);
+- the header at 1280: Stats (40);
+- the shelf at 1280: all 17 records, 14 or 15;
+- a record's page: Pop (28) and Rock (34), with the 3 each side they
+  were given between genres in step 130;
+- the record form: the chip Pop (41), with its 2 each side;
+- stats: Pop (22) and Rock (28), a name alone on its row with nothing
+  either side.
+Manage: its rows' Edit (31) and Delete (36).
+
+The coordinator's arithmetic (9 either side, so 26 of drawn width is
+enough) is what the rule would give; the figures above are what is
+built, where a name between neighbours has half a gap of 6 or 4 and a
+name on a stats row has none. So Rock is short as built on both
+screens and would pass with 9 either side; Pop would not. On the real
+collection stats has nine such names. Design is ruling the class.
+
+**Ratified, per the coordinator:** the Reissue overlay as built (Design
+withdrew the square, `T.6/reissue-square`); priority and the Acquired
+mark as labels; the record form's three drawn changes.
+
+**Design's save `f68a65d`:** the shelf is for a fine pointer only;
+under a coarse pointer at any width the Collection opens on the grid.
+Unnumbered, not ordered yet. It removes the 17 records and the rail's
+four from the coarse count when built, and makes step 130's rail rule
+unreachable.

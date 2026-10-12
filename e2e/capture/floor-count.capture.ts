@@ -129,20 +129,36 @@ test('every control under 44 under a coarse pointer, by screen, at 390 and 1280'
   }
   await context.close();
 
-  const md = ['# Every control under 44 under a coarse pointer, by screen', '', `The test database (seventeen records), desktop Chromium with touch on, at 390 and 1280. “Under 44” is a control whose own box is under ${HIT_FLOOR} tall and that a tap reaches over fewer than ${HIT_FLOOR} rows of pixels down its middle. The header is its own row and is left out of each screen’s. The counts are the fixtures’; the kinds are the app’s. Not here: the shared dialog (step 128, 3 of 3), look up’s results (step 125: five controls a card, held), the shelf’s records themselves, which are drawn on a canvas and are not controls a reader of the page can find, and the pages under /wall/probe, which are tools.`, ''];
+  /*
+    Two measurements, stated apart (the coordinator, 12 Oct): under 44 DOWN,
+    the rows of pixels a tap has down a control's middle, and under 44
+    ACROSS, the pixels it has across it. "Nothing under 44" was true of the
+    first and was being read as both.
+  */
+  const across = (reach: Reach[]) => reach.filter((r) => r.wide < HIT_FLOOR);
+  const acrossKinds = (reach: Reach[]) => {
+    const tally = new Map<string, number>();
+    for (const r of reach) { const key = `${r.kind} “${r.name.replace(/\s+/g, ' ').replace(/[a-z0-9]{10,}$/i, '…').slice(0, 22)}” ${r.wide}`; tally.set(key, (tally.get(key) ?? 0) + 1); }
+    const all = [...tally.entries()].sort((a, b) => b[1] - a[1]);
+    return all.slice(0, 8).map(([key, n]) => (n > 1 ? `${key} ×${n}` : key)).join('; ') + (all.length > 8 ? `; and ${all.length - 8} more kinds` : '');
+  };
+  const md = ['# Every control under 44 under a coarse pointer, by screen: down, and across', '', `The test database (seventeen records), desktop Chromium with touch on, at 390 and 1280. “Under 44 down” is a control whose own box is under ${HIT_FLOOR} tall and that a tap reaches over fewer than ${HIT_FLOOR} rows of pixels down its middle. “Under 44 across” is one a tap reaches over fewer than ${HIT_FLOOR} pixels across its middle, its drawn width and whatever reaches it from either side. The header is its own row and is left out of each screen’s. The counts are the fixtures’; the kinds are the app’s. Not here: the shared dialog (step 128, 3 of 3 down), look up’s results (step 125: five controls a card, held) and the pages under /wall/probe, which are tools.`, ''];
   for (const width of [390, 1280]) {
-    md.push(`## At ${width}`, '', '| screen | controls | meets 44 | under 44 | under 44, by kind and the rows a tap has |', '|---|---|---|---|---|');
+    md.push(`## At ${width}`, '', '| screen | controls | under 44 down | under 44 across | down: by kind and the rows a tap has | across: by kind and the pixels a tap has |', '|---|---|---|---|---|---|');
     let controls = 0;
     let short = 0;
+    let narrow = 0;
     for (const row of rows.filter((each) => each.width === width)) {
-      if (row.reach === null) { md.push(`| ${row.screen} | would not open | | | ${row.why ?? ''} |`); continue; }
+      if (row.reach === null) { md.push(`| ${row.screen} | would not open | | | ${row.why ?? ''} | |`); continue; }
       const under = underFloor(row.reach);
+      const thin = across(row.reach);
       controls += row.reach.length;
       short += under.length;
-      md.push(`| ${row.screen} | ${row.reach.length} | ${row.reach.length - under.length} | **${under.length}** | ${kinds(under)} |`);
+      narrow += thin.length;
+      md.push(`| ${row.screen} | ${row.reach.length} | **${under.length}** | **${thin.length}** | ${kinds(under)} | ${acrossKinds(thin)} |`);
     }
-    md.push(`| **All, at ${width}** | ${controls} | ${controls - short} | **${short}** | |`, '');
+    md.push(`| **All, at ${width}** | ${controls} | **${short}** | **${narrow}** | | |`, '');
   }
   writeFileSync(join(OUT, 'floor-count.md'), `${md.join('\n')}\n`);
-  writeFileSync(join(OUT, 'floor-count.json'), JSON.stringify(rows.map((row) => ({ screen: row.screen, width: row.width, why: row.why, under: row.reach === null ? null : underFloor(row.reach).map((r) => ({ name: r.name, kind: r.kind, height: r.height, tall: r.tall })), controls: row.reach?.length ?? null })), null, 1));
+  writeFileSync(join(OUT, 'floor-count.json'), JSON.stringify(rows.map((row) => ({ screen: row.screen, width: row.width, why: row.why, under: row.reach === null ? null : underFloor(row.reach).map((r) => ({ name: r.name, kind: r.kind, height: r.height, tall: r.tall })), across: row.reach === null ? null : row.reach.filter((r) => r.wide < HIT_FLOOR).map((r) => ({ name: r.name, kind: r.kind, width: r.width, wide: r.wide })), controls: row.reach?.length ?? null })), null, 1));
 });
