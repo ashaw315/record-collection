@@ -42296,3 +42296,33 @@ spec that opens manage), both projects: `574 passed, 2 skipped, ledger
 clean, tree unchanged — OK`, `[projects] chromium 322, capture 0,
 mobile 254`. Unit under `src`: `2319 passed`. Typecheck and build
 clean; lint 0 errors, 27 warnings. No `[reset]` line. No gate yet.
+
+## 12 Oct: how a gate runs from now, and when one is owed
+
+**A gate runs in a worktree of its own: `scripts/gate.sh [commit]
+[workers]`.** The fifty minutes in which nothing could be edited were
+the cost of "tree unchanged" being a fact about the tree the run was
+in. The script keeps a second checkout beside this one
+(`../record-collection-gate`), pins it at the commit, installs its own
+dependencies when the lockfile has changed, and runs the unit suite and
+then Playwright there through `run-tests.ts`, logging beside the
+worktree and not in it. The working tree is free to edit meanwhile.
+- **Not freed: running tests.** Both checkouts use
+  `record_collection_test` on 5433 and `test/helpers/db.ts` refuses a
+  second runner. That would take a second database and a second port,
+  a change to shared infrastructure nobody has asked for.
+- `.env.test` is committed, so the worktree has it. `.env.local` is
+  not copied; nothing in either suite is meant to need it.
+
+**When a gate is owed (the coordinator, 12 Oct; the drift to one every
+four steps was not Adam's policy).** When something GLOBAL moves: a
+stylesheet, the Playwright config, the runner, a shared component, a
+reader change; or when Adam asks. A step that touches one screen and
+runs its derived covering set on both projects does not owe one.
+Owed now: step 133 changed the reader.
+
+**Workers, as an experiment and not a setting.** The config's two
+stand. The next gate is run at four in the worktree, and its wall
+clock, flaky count and `[reset]` lines are reported beside the
+two-worker figures (48.6 and 48.9 minutes, no flaky, no reset). If
+four is worse on flakes, two stays.
