@@ -6,6 +6,7 @@ import { listGenreTree, type GenreNode } from '@/lib/db/queries/genres';
 import { isAnthropicConfigured } from '@/lib/llm/client';
 import { GapAnalysis } from './GapAnalysis';
 import { SCREEN_FRAME } from '@/app/screen-frame';
+import { HIT_ALONE } from '@/app/hit-area';
 
 /**
  * SPEC.md §10 `/suggestions`: "Relationship-based list with reasons, always
@@ -82,7 +83,7 @@ export default async function SuggestionsPage() {
       <main data-screen-frame="" className={`${SCREEN_FRAME} py-5`}>
         <Link
           href="/want-list"
-          className="text-meta text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+          className={`${HIT_ALONE} text-meta text-muted-foreground underline-offset-2 hover:text-foreground hover:underline`}
         >
           ← Want list
         </Link>
@@ -132,7 +133,7 @@ export default async function SuggestionsPage() {
             */}
             <p className="mt-1 text-muted-foreground">
               Suggestions come from band line-ups imported from MusicBrainz — use{' '}
-              <Link href="/manage" className="underline underline-offset-2">
+              <Link href="/manage" className={`${HIT_ALONE} underline underline-offset-2`}>
                 Manage
               </Link>{' '}
               to import a band&rsquo;s line-up. Influence edges also count toward
@@ -150,7 +151,7 @@ export default async function SuggestionsPage() {
                   <h2 className="font-medium">{row.artistName}</h2>
                   <Link
                     href={`/want-list/new?artistId=${row.artistId}`}
-                    className="shrink-0 text-label underline underline-offset-2 hover:text-foreground"
+                    className={`${HIT_ALONE} shrink-0 text-label underline underline-offset-2 hover:text-foreground`}
                   >
                     Add to want list
                   </Link>

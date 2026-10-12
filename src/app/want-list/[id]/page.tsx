@@ -5,6 +5,7 @@ import { hydrateWantListItem } from '@/lib/db/queries/want-list';
 import { formatCeiling, huntFacts, priorityLabel } from '../want-list-format';
 import { PressingVariants } from '../PressingVariants';
 import { ITEM_FRAME } from '@/app/screen-frame';
+import { HIT_ALONE } from '@/app/hit-area';
 
 /**
  * SPEC.md §10 — the want-list item detail view.
@@ -46,7 +47,7 @@ export default async function WantListItemPage({
       <main data-screen-frame="" className={`${ITEM_FRAME} py-5`}>
         <Link
           href="/want-list"
-          className="text-meta text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+          className={`${HIT_ALONE} text-meta text-muted-foreground underline-offset-2 hover:text-foreground hover:underline`}
         >
           ← Want list
         </Link>
@@ -153,7 +154,7 @@ export default async function WantListItemPage({
           <Link
             href={`/want-list/${item.id}/edit`}
             data-testid="want-list-edit"
-            className="rounded-xs border border-border px-3 py-1.5 text-label"
+            className={`${HIT_ALONE} rounded-xs border border-border px-3 py-1.5 text-label`}
           >
             Edit
           </Link>

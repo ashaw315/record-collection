@@ -4,6 +4,7 @@ import { registerCleanup, trackArtist } from './cleanup';
 import { seedRecords } from './seed';
 import { contrastRatio } from '../src/lib/colour/record-colour';
 import { login } from './sign-in';
+import { POINTERS, expectFloor } from './hit-area';
 
 /**
  * What the gesture arrives at (8a §W.7): the panel, flat on paper, right of
@@ -148,4 +149,37 @@ test('the panel’s values are READABLE against the paper they sit on', async ({
   for (const colour of colours.texts) {
     expect(contrastRatio(colour, colours.ground), `${colour} on ${colours.ground}`).toBeGreaterThanOrEqual(4.5);
   }
+});
+
+/*
+  Step 130: the floor on the shelf's rail and a pulled record's controls,
+  for a tablet or a touchscreen, which is coarse above the shelf's fork. The
+  three view names are 14 at a pitch of 42 and Add record 16.5; the panel's
+  Open the full record 19.5. The records themselves are not held here: they
+  are 14 across to a finger and wait on a ruling (NOTES, 11 Oct).
+*/
+for (const pointer of POINTERS) test.describe(`the shelf’s rail and a pulled record under a ${pointer} pointer`, () => {
+ test.use({ hasTouch: pointer === 'coarse' });
+ for (const width of [1280, 1440]) {
+  test(pointer === 'coarse' ? `every control on the rail and the pulled record is 44 tall to a finger, at ${width}` : `under a mouse every control on the rail and the pulled record is its drawn size, at ${width}`, async ({ page }) => {
+    const artistId = await seed(page, 12);
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto(`/?artistId=${artistId}`);
+    await expect(page.getByTestId('wall')).toBeAttached({ timeout: 30_000 });
+    await page.evaluate(() => document.fonts.ready);
+    const rail = await expectFloor(page, pointer, `the rail at ${width}`, '[data-testid="wall-rail"]', 'button.sr-only');
+    for (const name of ['Shelf', 'Table', 'Grid', 'Add record']) expect(rail.map((r) => r.name), 'the precondition: the rail’s links are read').toContain(name);
+    for (const name of ['Shelf', 'Table', 'Grid']) expect.soft(rail.find((r) => r.name === name)?.height, `at ${width}: ${name} is drawn 14 tall`).toBe(14);
+    const pitch = await page.evaluate(() => { const tops = Array.from(document.querySelectorAll('[data-testid="wall-rail"] ul a')).map((a) => a.getBoundingClientRect().top); return [(tops[1] ?? 0) - (tops[0] ?? 0), (tops[2] ?? 0) - (tops[1] ?? 0)]; });
+    expect.soft(pitch, `at ${width}: the view names are ${pointer === 'coarse' ? 44 : 42} apart`).toEqual(pointer === 'coarse' ? [44, 44] : [42, 42]);
+
+    await page.locator('[data-seat] [data-spine]').first().click();
+    const chrome = page.getByTestId('record-chrome');
+    await expect(chrome.getByTestId('record-panel')).toHaveAttribute('data-expanded', 'true', { timeout: 15_000 });
+    await expect(chrome.getByTestId('action-turn')).toBeVisible();
+    await page.waitForTimeout(600);
+    const pulled = await expectFloor(page, pointer, `the pulled record at ${width}`, '[data-testid="record-chrome"]');
+    expect.soft(pulled.find((r) => r.name.startsWith('Open the full record'))?.height, `at ${width}: Open the full record is drawn 19.5 tall`).toBe(19.5);
+  });
+ }
 });

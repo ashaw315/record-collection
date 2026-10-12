@@ -4,7 +4,7 @@ import { seedDiscogsCacheAs } from './seed';
 import { sql } from 'drizzle-orm';
 import { getTestDb } from '../test/helpers/db';
 import { login } from './sign-in';
-import { HIT_FLOOR, HIT_PAST, POINTERS, expectDialogControls, pointerIs, reachingPastItself, readReach, underFloor } from './hit-area';
+import { HIT_FLOOR, HIT_PAST, POINTERS, expectDialogControls, expectFloor, pointerIs, reachingPastItself, readReach, underFloor } from './hit-area';
 
 /* Records and artists removed after each test — see e2e/cleanup.ts. */
 registerCleanup();
@@ -1162,6 +1162,54 @@ for (const pointer of POINTERS) test.describe(`the want list under a ${pointer} 
     /* Step 128: the confirmation a row's Delete opens, the shared dialog's three controls. Coarse fails against buttons of 32 and a cross of 28. */
     await page.getByRole('listitem').filter({ hasText: `Reach Got ${suffix}` }).getByRole('button', { name: 'Delete' }).click();
     await expectDialogControls(page, pointer, `the want list’s delete at ${width}`);
+  });
+ }
+});
+
+/*
+  Step 130, the floor on the screens outside the five: a new item's form, an
+  item's page and its edit form. The count of 11 Oct found the way back
+  (13), the submit (32), Cancel (16) and Edit (31) under 44 on them, and
+  from 640 each field at 36 beside its label. The fields follow the record
+  form's ruling as written: below 640 the label is the field's width with
+  nothing between them, from 640 the field is 44.
+*/
+for (const pointer of POINTERS) test.describe(`the want list’s forms and an item’s page under a ${pointer} pointer`, () => {
+ test.use({ hasTouch: pointer === 'coarse' });
+ for (const width of [320, 390, 768, 1280]) {
+  test(pointer === 'coarse' ? `every control on them is 44 tall to a finger, at ${width}` : `under a mouse every control on them is its drawn size, at ${width}`, async ({ page }) => {
+    const suffix = makeSuffix();
+    const artist = await post(page, '/api/artists', { name: `Forms-${suffix}` });
+    trackArtist(artist.id as string);
+    const item = await post(page, '/api/want-list', { title: `Forms Wanted ${suffix}`, artistId: artist.id });
+    await page.setViewportSize({ width, height: 844 });
+    for (const [where, path] of [['a new item’s form', '/want-list/new'], ['an item’s page', `/want-list/${item.id}`], ['an item’s edit form', `/want-list/${item.id}/edit`]] as const) {
+      await page.goto(path);
+      await page.locator('main h1').waitFor();
+      if (path !== `/want-list/${item.id}`) await page.locator('[data-testid="want-list-form"]').waitFor();
+      await page.evaluate(() => document.fonts.ready);
+      const reach = await expectFloor(page, pointer, `${where} at ${width}`);
+      if (path === `/want-list/${item.id}`) {
+        expect.soft(reach.find((r) => r.name === 'Edit')?.height, `${where} at ${width}: Edit is drawn as it was`).toBeCloseTo(30.5, 0);
+        continue;
+      }
+      const fields = await page.evaluate(() => Array.from(document.querySelectorAll<HTMLLabelElement>('[data-testid="want-list-form"] label[for]')).filter((label) => !label.classList.contains('sr-only')).map((label) => {
+        const field = document.getElementById(label.htmlFor) as HTMLElement;
+        return { id: label.htmlFor, kind: field.tagName, height: field.getBoundingClientRect().height, width: field.getBoundingClientRect().width, labelWidth: label.getBoundingClientRect().width, strip: field.getBoundingClientRect().top - label.getBoundingClientRect().bottom };
+      }));
+      expect(fields.length, `${where}: the precondition, its labelled fields are found`).toBeGreaterThanOrEqual(5);
+      for (const field of fields.filter((each) => each.kind !== 'TEXTAREA')) {
+        const tall = pointer === 'coarse' && width >= 640 ? 44 : 36;
+        expect.soft(field.height, `${where} at ${width}: ${field.id} is drawn ${tall} tall`).toBe(tall);
+        if (pointer === 'coarse' && width < 640) {
+          expect.soft(Math.abs(field.labelWidth - field.width), `${where} at ${width}: ${field.id}’s label is its field’s width`).toBeLessThanOrEqual(0.5);
+          expect.soft(Math.abs(field.strip), `${where} at ${width}: nothing between ${field.id}’s label and the field (${field.strip})`).toBeLessThanOrEqual(0.5);
+        }
+        if (pointer === 'fine' && width < 640) expect.soft(field.strip, `${where} at ${width}: ${field.id} stands 4 below its label, as it did`).toBeCloseTo(4, 0);
+      }
+      const submit = reach.find((r) => r.name === 'Add to want list' || r.name === 'Save changes');
+      expect.soft(submit?.height, `${where} at ${width}: the submit is ${pointer === 'coarse' ? '44 in the box' : '32, as it was'}`).toBe(pointer === 'coarse' ? 44 : 32);
+    }
   });
  }
 });

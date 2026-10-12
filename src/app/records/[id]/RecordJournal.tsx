@@ -282,7 +282,7 @@ export function RecordJournal({
             id="entry-date"
             type="date"
             value={entryDate}
-            className="w-full bg-transparent font-mono"
+            className="w-full bg-transparent font-mono pointer-coarse:h-[44px]!"
             style={{
               height: FIELD_HEIGHT,
               boxSizing: 'border-box',

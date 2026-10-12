@@ -173,7 +173,7 @@ export function ImageGallery({
             button rather than the input, because the input's box is the
             browser's and cannot be sized reliably.
           */
-          className={`${LABEL} file:mr-[10px] file:border file:border-dashed file:bg-transparent file:px-[10px] file:py-[8px] file:text-[11px] file:uppercase`}
+          className={`${LABEL} file:mr-[10px] file:border file:border-dashed file:bg-transparent file:px-[10px] file:py-[8px] file:text-[11px] file:uppercase pointer-coarse:h-[44px]!`}
           style={{ height: FIELD_HEIGHT }}
         />
 

@@ -22,6 +22,7 @@ import { PAPER_CSS } from '@/lib/colour/paper';
 import { recordLadder } from '@/lib/colour/record-ladder';
 import { pullFill } from '@/app/wall/pull-colour';
 import { TITLE_MEASURE } from './title-steps';
+import { HIT_ALONE } from '@/app/hit-area';
 
 /**
  * 8a assembled — three fixed bands at 1440 × 900, no scroll.
@@ -1157,7 +1158,7 @@ export function RecordPage8a({ record, writingConfigured = false }: { record: Pa
                 · {earlierCoversClause(record.earlierCovers)} ·{' '}
               </span>
             )}
-            <a href="#images" className="underline underline-offset-2">
+            <a href="#images" className={`${HIT_ALONE} underline underline-offset-2`}>
               Manage →
             </a>
           </div>

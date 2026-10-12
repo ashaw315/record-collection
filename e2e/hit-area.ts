@@ -26,6 +26,15 @@ export type Reach = {
   /** Pixels past the drawn box's left and right edges on which a tap still reaches it. */
   left: number;
   right: number;
+  /**
+   * Pixels across its middle on which a tap reaches the control: the drawn
+   * width on its first line and what reaches it from either side. Design,
+   * 11 Oct: "Controls side by side on one line meet the floor across as
+   * they do down." Read for every control and held to nothing by itself:
+   * a box as wide as its column is wide enough, and a slanted solid on the
+   * shelf is 142 by its box and 14 by this.
+   */
+  wide: number;
   /** What a tap landed on instead, on the rows of the 44 about the control's middle that did not reach it: so a short reading says what took the rows. */
   lostTo: string[];
 };
@@ -152,8 +161,11 @@ export async function readReach(page: Page, within = 'main', except?: string): P
       while (left < 40 && reaches(first.left - left - 1, y)) left += 1;
       let right = 0;
       while (right < 40 && reaches(first.right + right + 1, y)) right += 1;
+      /* Across the middle, pixel by pixel between the two reaches; counted to 44 and no further, which is all the floor asks. */
+      let wide = 0;
+      for (let at = Math.floor(first.left) - left; at <= Math.ceil(first.right) + right && wide < 44; at += 1) if (reaches(at + 0.25, y)) wide += 1;
       const name = ((drawn.textContent ?? '').trim() || el.getAttribute('aria-label') || (el as HTMLInputElement).placeholder || el.id || el.tagName).slice(0, 90);
-      out.push({ name, kind: el.tagName.toLowerCase(), width: Math.round(r.width * 10) / 10, height: Math.round(r.height * 10) / 10, tall, left, right, lostTo: [...lostTo] });
+      out.push({ name, kind: el.tagName.toLowerCase(), width: Math.round(r.width * 10) / 10, height: Math.round(r.height * 10) / 10, tall, left, right, wide, lostTo: [...lostTo] });
     }
     return out;
   }, [within, except ?? null] as const);
@@ -186,4 +198,34 @@ export async function expectDialogControls(page: Page, pointer: Pointer, where: 
     expect.soft(reachingPastItself(reach), `${where}: controls a mouse reaches from outside their drawn box`).toEqual([]);
     for (const r of reach) expect.soft(r.height, `${where}: ${r.name} is drawn as it was under a mouse`).toBe(DIALOG_DRAWN[r.name as keyof typeof DIALOG_DRAWN]);
   }
+}
+
+/**
+ * A screen's controls held to the floor under the pointer the page has.
+ * Coarse: every one is 44 to a finger and reaches no more than 9 past
+ * itself. Fine: every one is its drawn size and reaches no further. Returns
+ * the reading, so a test can hold what is drawn as well.
+ */
+export async function expectFloor(page: Page, pointer: Pointer, where: string, within = 'main', except?: string): Promise<Reach[]> {
+  expect(await pointerIs(page), 'the precondition: the page has the pointer this test is named for').toBe(pointer);
+  const reach = await readReach(page, within, except);
+  expect(reach.length, `${where}: there are controls to read`).toBeGreaterThan(0);
+  if (pointer === 'coarse') {
+    expect.soft(underFloor(reach).map((r) => `${r.name}: ${r.tall}`), `${where}: controls under ${HIT_FLOOR} to a finger, of ${reach.length}`).toEqual([]);
+    expect.soft(reach.filter((r) => r.left > HIT_PAST || r.right > HIT_PAST).map((r) => `${r.name}: ${r.left} left, ${r.right} right`), `${where}: controls a tap reaches from more than ${HIT_PAST} past them`).toEqual([]);
+  } else {
+    /*
+      A field is left out of the two readings of height, and held from side
+      to side only. Its own label is its target under any pointer and always
+      was, so a field with its label over its middle reads taller than it is
+      drawn before anything is built: 54 for a field of 36 on the want
+      list's form, 57 for the rail's search (measured on the unbuilt
+      screens, step 130). What a field is DRAWN is held by each test.
+    */
+    const field = (r: Reach) => r.kind === 'input' || r.kind === 'select' || r.kind === 'textarea';
+    expect.soft(reachingPastItself(reach.filter((r) => !field(r))), `${where}: controls a mouse reaches from outside their drawn box`).toEqual([]);
+    expect.soft(reach.filter((r) => field(r) && (r.left > 1 || r.right > 1)).map((r) => `${r.name}: ${r.left} left, ${r.right} right`), `${where}: fields a mouse reaches from past their sides`).toEqual([]);
+    expect.soft(reach.filter((r) => !field(r) && r.tall >= HIT_FLOOR && r.height < HIT_FLOOR).map((r) => `${r.name}: ${r.tall}`), `${where}: controls 44 tall under a mouse that were not drawn so`).toEqual([]);
+  }
+  return reach;
 }

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { askedLine } from './asked-line';
+import { HIT_ALONE } from '@/app/hit-area';
 
 /**
  * SPEC.md §10's "Separate 'Ask Claude for gap analysis' button for §9.2".
@@ -342,7 +343,7 @@ export function GapAnalysis({
                     ) : (
                       <Link
                         href={`/want-list/new?artist=${encodeURIComponent(suggestion.artist)}&title=${encodeURIComponent(suggestion.title)}`}
-                        className="shrink-0 text-label underline underline-offset-2"
+                        className={`${HIT_ALONE} shrink-0 text-label underline underline-offset-2`}
                       >
                         Add to want list
                       </Link>

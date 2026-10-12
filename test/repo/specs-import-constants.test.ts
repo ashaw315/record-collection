@@ -116,6 +116,7 @@ const GOVERNED = [
   'e2e/sheet/form-fields.sheet.ts',
   'e2e/sheet/form-129.sheet.ts',
   'e2e/capture/floor-count.capture.ts',
+  'e2e/capture/floor-130.capture.ts',
   /* Step 103d's air: the record form's edit state, reached by a record's id. */
   'e2e/sheet/air-103.sheet.ts',
   /*

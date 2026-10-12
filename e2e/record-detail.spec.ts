@@ -2,7 +2,8 @@ import { expect, test, type Page } from '@playwright/test';
 import { NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
 import { registerCleanup, trackArtist, trackCreated } from './cleanup';
 import { login } from './sign-in';
-import { POINTERS, expectDialogControls } from './hit-area';
+import { readSeventeen } from './seventeen';
+import { POINTERS, expectDialogControls, expectFloor } from './hit-area';
 
 /* Records and artists removed after each test — see e2e/cleanup.ts. */
 registerCleanup();
@@ -815,4 +816,40 @@ for (const pointer of POINTERS) test.describe(`a record’s delete confirmation 
       await expectDialogControls(page, pointer, `a record’s delete at ${width}`);
     });
   }
+});
+
+/*
+  Step 130: the floor on a record's page, a closed screen. Its genre links
+  (16) and Manage → (14) by overlay, nothing drawn differently. The image
+  file field and the journal's date field are 34 and their labels are not
+  drawn, so no label makes up the difference: under a coarse pointer each is
+  44 in the box, the one drawn change, captured for Design.
+*/
+for (const pointer of POINTERS) test.describe(`a record’s page under a ${pointer} pointer`, () => {
+ test.use({ hasTouch: pointer === 'coarse' });
+ for (const width of [320, 390, 768, 1280]) {
+  test(pointer === 'coarse' ? `every control on a record’s page is 44 tall to a finger, at ${width}` : `under a mouse every control on a record’s page is its drawn size, at ${width}`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto(`/records/${readSeventeen()[0]?.id ?? ''}`);
+    await page.locator('#image-file').waitFor({ state: 'attached' });
+    await page.evaluate(() => document.fonts.ready);
+    /*
+      **Held where the genres take a second line, and named.** They are
+      words in a run, not a row of controls: at 320 the six take two lines
+      a line apart, so 44 each is a taller run on a closed screen, and
+      across, Pop is 22 wide (NOTES, step 130). On one line each has its 14
+      above and below and is read here; on two the run is left out for
+      Design's ruling, and the test says which case it read.
+    */
+    const lines = await page.evaluate(() => new Set(Array.from(document.querySelectorAll('[data-field="genres"] a')).map((a) => Math.round(a.getBoundingClientRect().top))).size);
+    expect(lines, 'the precondition: the genres are on the page').toBeGreaterThan(0);
+    expect(lines > 1, `at ${width}: the genres take ${lines} line(s); two only at 320`).toBe(width === 320);
+    const reach = await expectFloor(page, pointer, `a record at ${width}`, 'main', lines > 1 && pointer === 'coarse' ? '[data-field="genres"]' : undefined);
+    const small = lines > 1 && pointer === 'coarse' ? ['Manage →'] : ['Manage →', 'Rock', 'Pop'];
+    for (const name of small) expect(reach.map((r) => r.name), 'the precondition: the page’s small links are read').toContain(name);
+    for (const name of small) expect.soft(reach.find((r) => r.name === name)?.height, `at ${width}: ${name} is drawn as it was`).toBeLessThanOrEqual(16.5);
+    const fields = await page.evaluate(() => ['image-file', 'entry-date'].map((id) => (document.getElementById(id) as HTMLElement).getBoundingClientRect().height));
+    expect.soft(fields, `at ${width}: the image file field and the journal’s date field are ${pointer === 'coarse' ? '44 in the box' : '34, as they were'}`).toEqual(pointer === 'coarse' ? [44, 44] : [34, 34]);
+  });
+ }
 });

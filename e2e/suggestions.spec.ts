@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist } from './cleanup';
 import { login } from './sign-in';
+import { POINTERS, expectFloor } from './hit-area';
 
 /* Records and artists removed after each test — see e2e/cleanup.ts. */
 registerCleanup();
@@ -197,4 +198,23 @@ test('a gap-analysis prefill matches an artist the collection already has', asyn
    */
   await expect(page.getByLabel('Artist')).toHaveValue(artist.id);
   await expect(page.getByTestId('unmatched-artist')).toHaveCount(0);
+});
+
+/* Step 130: the floor on suggestions, read with its seeded suggestion on it. The way back, Manage in its sentence, and each Add to want list. */
+for (const pointer of POINTERS) test.describe(`suggestions under a ${pointer} pointer`, () => {
+ test.use({ hasTouch: pointer === 'coarse' });
+ for (const width of [320, 390, 768, 1280]) {
+  test(pointer === 'coarse' ? `every control on suggestions is 44 tall to a finger, at ${width}` : `under a mouse every control on suggestions is its drawn size, at ${width}`, async ({ page }) => {
+    await login(page);
+    const suffix = `s130${Date.now().toString(36)}${Math.floor(Math.random() * 1e4)}`;
+    await seedASuggestion(page, suffix);
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto('/suggestions');
+    await page.locator('main h1').waitFor();
+    await page.evaluate(() => document.fonts.ready);
+    const reach = await expectFloor(page, pointer, `suggestions at ${width}`);
+    expect(reach.map((r) => r.name), 'the precondition: the way back is read').toContain('← Want list');
+    expect(reach.some((r) => r.name === 'Add to want list'), 'the precondition: a suggestion’s Add to want list is read').toBe(true);
+  });
+ }
 });

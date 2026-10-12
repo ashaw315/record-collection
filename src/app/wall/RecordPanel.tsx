@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { RecordSummary } from './summary';
 import { HAIRLINE, INK, LABEL, LABEL_INK } from '../records/[id]/grid-type';
+import { HIT_ALONE } from '@/app/hit-area';
 
 /**
  * **The pulled record's facts, in the record screen's order (§W.19).**
@@ -97,7 +98,7 @@ export function RecordPanel({
       )}
 
       {/* Leaves this surface, so it sits above the two verbs rather than among them (§3, §W.19). */}
-      <Link href={summary.href} data-testid="panel-detail-link" className={`mt-[18px] inline-block text-prose underline ${INK}`}>
+      <Link href={summary.href} data-testid="panel-detail-link" className={`${HIT_ALONE} mt-[18px] inline-block text-prose underline ${INK}`}>
         Open the full record — journal, prices, images
       </Link>
 

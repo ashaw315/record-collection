@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { FORM_SECTIONS, buildWantListBody, type WantListFormValues } from './want-list-form';
 import { InlineCreate } from '@/app/records/InlineCreate';
+import { HIT } from '@/app/hit-area';
 
 /**
  * SPEC.md §10's want-list form — `/want-list/new`.
@@ -202,7 +203,7 @@ export function WantListForm({
       )}
 
       <div className="flex items-center gap-3 border-t border-border pt-4">
-        <Button type="submit" disabled={saving}>
+        <Button type="submit" disabled={saving} className="pointer-coarse:h-[44px]">
           {/*
             **The label states what the button DOES.** It read "Add to want
             list" unconditionally, which was invisible while the form only ever
@@ -215,7 +216,7 @@ export function WantListForm({
         <button
           type="button"
           onClick={() => router.push('/want-list')}
-          className="text-label text-muted-foreground underline underline-offset-2"
+          className={`${HIT} text-label text-muted-foreground underline underline-offset-2 before:-left-[6px] before:-right-[9px]`}
         >
           Cancel
         </button>
@@ -247,12 +248,13 @@ function Field({
   const describedBy = error === undefined ? undefined : `${field}-error`;
 
   return (
-    <div className="grid gap-1 sm:grid-cols-[10rem_1fr] sm:items-baseline sm:gap-3">
-      <label htmlFor={field} className="text-label text-muted-foreground uppercase">
+    /* §T.6, as the record form: under a coarse pointer the 4 beneath a label is the label's below 640, so label and field are one target; from 640 the field is 44. */
+    <div className="grid gap-1 sm:grid-cols-[10rem_1fr] sm:items-baseline sm:gap-3 pointer-coarse:max-sm:gap-0">
+      <label htmlFor={field} className="text-label text-muted-foreground uppercase pointer-coarse:max-sm:pb-1">
         {label}
       </label>
 
-      <div className="space-y-1">
+      <div className="space-y-1 pointer-coarse:sm:[&_input]:h-[44px] pointer-coarse:sm:[&_select]:h-[44px]">
         {field === 'artistId' || field === 'labelId' ? (
           <select
             id={field}

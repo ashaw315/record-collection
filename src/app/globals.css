@@ -625,6 +625,24 @@
     inset 0 0 0 2px var(--background),
     inset 0 0 0 4px var(--foreground);
 }
+/*
+  §T.6, step 130: the shelf's rail under a coarse pointer, for a tablet or a
+  touchscreen. The band has had this overlay since step 96 (band-rules.ts);
+  the rail, where the three view names stand one over another, had none.
+  The names were 42 apart, which gave each 42 to a finger: they are 44
+  apart here, the one drawn change. `row-gap`, so the band below the fork,
+  where the names are side by side, keeps its 18 across. Not Tailwind's
+  overlay classes on the links: the band's rule places its overlay with
+  `transform` and the classes with `translate`, and both applied moved it
+  off the link (shelf-narrow, four failures).
+*/
+@media (pointer: coarse) {
+  [data-composition] [data-testid='wall-rail'] ul { row-gap: 20px; }
+  [data-composition] [data-testid='wall-rail'] a { position: relative; }
+  [data-composition] [data-testid='wall-rail'] a::before { content: ''; position: absolute; left: -9px; right: -9px; top: 50%; height: 44px; transform: translateY(-50%); }
+  [data-composition] [data-testid='wall-rail'] li > span { pointer-events: none; }
+}
+
 [data-collection-band] [data-testid='wall-rail'] a:focus-visible {
   box-shadow: none;
 }

@@ -9,6 +9,7 @@ import { loadDiscogsPrefill } from '@/app/records/discogs-prefill';
 import { toDiscogsId } from '@/lib/discogs/fields';
 import type { WantListFormValues } from '../want-list-form';
 import { ITEM_FRAME } from '@/app/screen-frame';
+import { HIT_ALONE } from '@/app/hit-area';
 
 /**
  * SPEC.md §10 `/want-list/new` — "Form for a wanted record, mirroring the
@@ -145,7 +146,7 @@ export default async function NewWantListItemPage({
       <main data-screen-frame="" className={`${ITEM_FRAME} py-5`}>
         <Link
           href="/want-list"
-          className="text-meta text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+          className={`${HIT_ALONE} text-meta text-muted-foreground underline-offset-2 hover:text-foreground hover:underline`}
         >
           ← Want list
         </Link>

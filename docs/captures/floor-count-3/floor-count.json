@@ -1,0 +1,1820 @@
+[
+ {
+  "screen": "Sign in",
+  "width": 390,
+  "under": [],
+  "controls": 2
+ },
+ {
+  "screen": "Sign in",
+  "width": 1280,
+  "under": [],
+  "controls": 2
+ },
+ {
+  "screen": "The header",
+  "width": 390,
+  "under": [],
+  "controls": 2
+ },
+ {
+  "screen": "The header, its menu open",
+  "width": 390,
+  "under": [],
+  "controls": 7
+ },
+ {
+  "screen": "Collection, table",
+  "width": 390,
+  "under": [],
+  "controls": 30
+ },
+ {
+  "screen": "Collection, table, a filter open",
+  "width": 390,
+  "under": [],
+  "controls": 36
+ },
+ {
+  "screen": "Collection, grid",
+  "width": 390,
+  "under": [],
+  "controls": 27
+ },
+ {
+  "screen": "Wall overview",
+  "width": 390,
+  "under": [],
+  "controls": 0
+ },
+ {
+  "screen": "A record",
+  "width": 390,
+  "under": [],
+  "controls": 14
+ },
+ {
+  "screen": "A record, its sleeve open",
+  "width": 390,
+  "under": [],
+  "controls": 2
+ },
+ {
+  "screen": "Record form, new, at rest",
+  "width": 390,
+  "under": [],
+  "controls": 9
+ },
+ {
+  "screen": "Record form, editing",
+  "width": 390,
+  "under": [],
+  "controls": 33
+ },
+ {
+  "screen": "Look up, at rest",
+  "width": 390,
+  "under": [],
+  "controls": 7
+ },
+ {
+  "screen": "Want list",
+  "width": 390,
+  "under": [],
+  "controls": 8
+ },
+ {
+  "screen": "Want list, acquired",
+  "width": 390,
+  "under": [],
+  "controls": 8
+ },
+ {
+  "screen": "Want list, a new item’s form",
+  "width": 390,
+  "under": [],
+  "controls": 12
+ },
+ {
+  "screen": "Want list, an item",
+  "width": 390,
+  "under": [],
+  "controls": 2
+ },
+ {
+  "screen": "Want list, an item’s edit form",
+  "width": 390,
+  "under": [],
+  "controls": 12
+ },
+ {
+  "screen": "Suggestions",
+  "width": 390,
+  "under": [],
+  "controls": 2
+ },
+ {
+  "screen": "Stats",
+  "width": 390,
+  "under": [],
+  "controls": 7
+ },
+ {
+  "screen": "Manage, Artists",
+  "width": 390,
+  "under": [
+   {
+    "name": "Artists",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "Genres",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "Labels",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "Formats",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "Stores",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "Tags",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "New artist name",
+    "kind": "input",
+    "height": 32,
+    "tall": 33
+   },
+   {
+    "name": "New artist formed",
+    "kind": "input",
+    "height": 32,
+    "tall": 33
+   },
+   {
+    "name": "New artist country",
+    "kind": "input",
+    "height": 32,
+    "tall": 33
+   },
+   {
+    "name": "Add",
+    "kind": "button",
+    "height": 32,
+    "tall": 33
+   },
+   {
+    "name": "Lineup",
+    "kind": "button",
+    "height": 28,
+    "tall": 29
+   },
+   {
+    "name": "Edit Buddy Rich",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Delete Buddy Rich",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Lineup",
+    "kind": "button",
+    "height": 28,
+    "tall": 29
+   },
+   {
+    "name": "Edit Darkside (22)",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Delete Darkside (22)",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Lineup",
+    "kind": "button",
+    "height": 28,
+    "tall": 29
+   },
+   {
+    "name": "Edit Death Grips",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Delete Death Grips",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Lineup",
+    "kind": "button",
+    "height": 28,
+    "tall": 29
+   },
+   {
+    "name": "Edit Dire Straits",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Delete Dire Straits",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Lineup",
+    "kind": "button",
+    "height": 28,
+    "tall": 29
+   },
+   {
+    "name": "Edit Discharge",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Delete Discharge",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Lineup",
+    "kind": "button",
+    "height": 28,
+    "tall": 29
+   },
+   {
+    "name": "Edit Donna Summer",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Delete Donna Summer",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Lineup",
+    "kind": "button",
+    "height": 28,
+    "tall": 29
+   },
+   {
+    "name": "Edit Donovan",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Delete Donovan",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Lineup",
+    "kind": "button",
+    "height": 28,
+    "tall": 29
+   },
+   {
+    "name": "Edit Floor fcmv4oawzb",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Delete Floor fcmv4oawzb",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Lineup",
+    "kind": "button",
+    "height": 28,
+    "tall": 29
+   },
+   {
+    "name": "Edit Jeff Beck",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Delete Jeff Beck",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Lineup",
+    "kind": "button",
+    "height": 28,
+    "tall": 29
+   },
+   {
+    "name": "Edit John Lennon",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Delete John Lennon",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Lineup",
+    "kind": "button",
+    "height": 28,
+    "tall": 29
+   },
+   {
+    "name": "Edit Luther Vandross",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Delete Luther Vandross",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Lineup",
+    "kind": "button",
+    "height": 28,
+    "tall": 29
+   },
+   {
+    "name": "Edit MGMT",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Delete MGMT",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Lineup",
+    "kind": "button",
+    "height": 28,
+    "tall": 29
+   },
+   {
+    "name": "Edit Miles Davis",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Delete Miles Davis",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Lineup",
+    "kind": "button",
+    "height": 28,
+    "tall": 29
+   },
+   {
+    "name": "Edit Simon & Garfunkel",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Delete Simon & Garfunkel",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Lineup",
+    "kind": "button",
+    "height": 28,
+    "tall": 29
+   },
+   {
+    "name": "Edit Smerz (2)",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Delete Smerz (2)",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Lineup",
+    "kind": "button",
+    "height": 28,
+    "tall": 29
+   },
+   {
+    "name": "Edit Steely Dan",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Delete Steely Dan",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Lineup",
+    "kind": "button",
+    "height": 28,
+    "tall": 29
+   },
+   {
+    "name": "Edit The Blues Project",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Delete The Blues Project",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Lineup",
+    "kind": "button",
+    "height": 28,
+    "tall": 29
+   }
+  ],
+  "controls": 64
+ },
+ {
+  "screen": "Manage, Genres",
+  "width": 390,
+  "under": [
+   {
+    "name": "Artists",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "Genres",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "Labels",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "Formats",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "Stores",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "Tags",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "New genre name",
+    "kind": "input",
+    "height": 32,
+    "tall": 33
+   },
+   {
+    "name": "Add",
+    "kind": "button",
+    "height": 32,
+    "tall": 33
+   },
+   {
+    "name": "— top level —Indie PopIndie RockPopPsychedelic RockRock",
+    "kind": "select",
+    "height": 36,
+    "tall": 37
+   },
+   {
+    "name": "— top level —ElectronicIndie RockPopPsychedelic RockRock",
+    "kind": "select",
+    "height": 36,
+    "tall": 37
+   },
+   {
+    "name": "— top level —ElectronicIndie PopPopPsychedelic RockRock",
+    "kind": "select",
+    "height": 36,
+    "tall": 37
+   },
+   {
+    "name": "— top level —ElectronicIndie PopIndie RockPsychedelic RockRock",
+    "kind": "select",
+    "height": 36,
+    "tall": 37
+   },
+   {
+    "name": "— top level —ElectronicIndie PopIndie RockPopRock",
+    "kind": "select",
+    "height": 36,
+    "tall": 37
+   },
+   {
+    "name": "— top level —ElectronicIndie PopIndie RockPopPsychedelic Rock",
+    "kind": "select",
+    "height": 36,
+    "tall": 37
+   },
+   {
+    "name": "Suggest a hierarchy",
+    "kind": "button",
+    "height": 16.5,
+    "tall": 17
+   }
+  ],
+  "controls": 27
+ },
+ {
+  "screen": "Manage, Labels",
+  "width": 390,
+  "under": [
+   {
+    "name": "Artists",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "Genres",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "Labels",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "Formats",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "Stores",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "Tags",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "New label name",
+    "kind": "input",
+    "height": 32,
+    "tall": 33
+   },
+   {
+    "name": "New label discogs id",
+    "kind": "input",
+    "height": 32,
+    "tall": 33
+   },
+   {
+    "name": "Add",
+    "kind": "button",
+    "height": 32,
+    "tall": 33
+   }
+  ],
+  "controls": 11
+ },
+ {
+  "screen": "Manage, Formats",
+  "width": 390,
+  "under": [
+   {
+    "name": "Artists",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "Genres",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "Labels",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "Formats",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "Stores",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "Tags",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "New format name",
+    "kind": "input",
+    "height": 32,
+    "tall": 33
+   },
+   {
+    "name": "Add",
+    "kind": "button",
+    "height": 32,
+    "tall": 33
+   },
+   {
+    "name": "Edit 10\"",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Delete 10\"",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Edit 12\" Single",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Delete 12\" Single",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Edit 2xLP",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Delete 2xLP",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Edit 7\"",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Delete 7\"",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Edit Box Set",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Delete Box Set",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Edit LP",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Delete LP",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   }
+  ],
+  "controls": 22
+ },
+ {
+  "screen": "Manage, Stores",
+  "width": 390,
+  "under": [
+   {
+    "name": "Artists",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "Genres",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "Labels",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "Formats",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "Stores",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "Tags",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "New store name",
+    "kind": "input",
+    "height": 32,
+    "tall": 33
+   },
+   {
+    "name": "New store city",
+    "kind": "input",
+    "height": 32,
+    "tall": 33
+   },
+   {
+    "name": "New store country",
+    "kind": "input",
+    "height": 32,
+    "tall": 33
+   },
+   {
+    "name": "Add",
+    "kind": "button",
+    "height": 32,
+    "tall": 33
+   }
+  ],
+  "controls": 10
+ },
+ {
+  "screen": "Manage, Tags",
+  "width": 390,
+  "under": [
+   {
+    "name": "Artists",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "Genres",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "Labels",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "Formats",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "Stores",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "Tags",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "New tag name",
+    "kind": "input",
+    "height": 32,
+    "tall": 33
+   },
+   {
+    "name": "Add",
+    "kind": "button",
+    "height": 32,
+    "tall": 33
+   }
+  ],
+  "controls": 8
+ },
+ {
+  "screen": "Not found",
+  "width": 390,
+  "under": [],
+  "controls": 0
+ },
+ {
+  "screen": "The header",
+  "width": 1280,
+  "under": [],
+  "controls": 6
+ },
+ {
+  "screen": "Collection, table",
+  "width": 1280,
+  "under": [],
+  "controls": 30
+ },
+ {
+  "screen": "Collection, table, a filter open",
+  "width": 1280,
+  "under": [],
+  "controls": 36
+ },
+ {
+  "screen": "Collection, grid",
+  "width": 1280,
+  "under": [],
+  "controls": 27
+ },
+ {
+  "screen": "Collection, shelf",
+  "width": 1280,
+  "under": [],
+  "controls": 26
+ },
+ {
+  "screen": "Collection, shelf, a record pulled: its panel and controls",
+  "width": 1280,
+  "under": [],
+  "controls": 3
+ },
+ {
+  "screen": "Wall overview",
+  "width": 1280,
+  "under": [],
+  "controls": 0
+ },
+ {
+  "screen": "A record",
+  "width": 1280,
+  "under": [],
+  "controls": 14
+ },
+ {
+  "screen": "A record, its sleeve open",
+  "width": 1280,
+  "under": [],
+  "controls": 2
+ },
+ {
+  "screen": "Record form, new, at rest",
+  "width": 1280,
+  "under": [],
+  "controls": 9
+ },
+ {
+  "screen": "Record form, editing",
+  "width": 1280,
+  "under": [],
+  "controls": 33
+ },
+ {
+  "screen": "Look up, at rest",
+  "width": 1280,
+  "under": [],
+  "controls": 7
+ },
+ {
+  "screen": "Want list",
+  "width": 1280,
+  "under": [],
+  "controls": 8
+ },
+ {
+  "screen": "Want list, acquired",
+  "width": 1280,
+  "under": [],
+  "controls": 8
+ },
+ {
+  "screen": "Want list, a new item’s form",
+  "width": 1280,
+  "under": [],
+  "controls": 12
+ },
+ {
+  "screen": "Want list, an item",
+  "width": 1280,
+  "under": [],
+  "controls": 2
+ },
+ {
+  "screen": "Want list, an item’s edit form",
+  "width": 1280,
+  "under": [],
+  "controls": 12
+ },
+ {
+  "screen": "Suggestions",
+  "width": 1280,
+  "under": [],
+  "controls": 2
+ },
+ {
+  "screen": "Stats",
+  "width": 1280,
+  "under": [],
+  "controls": 7
+ },
+ {
+  "screen": "Manage, Artists",
+  "width": 1280,
+  "under": [
+   {
+    "name": "Artists",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "Genres",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "Labels",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "Formats",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "Stores",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "Tags",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "New artist name",
+    "kind": "input",
+    "height": 32,
+    "tall": 33
+   },
+   {
+    "name": "New artist formed",
+    "kind": "input",
+    "height": 32,
+    "tall": 33
+   },
+   {
+    "name": "New artist country",
+    "kind": "input",
+    "height": 32,
+    "tall": 33
+   },
+   {
+    "name": "Add",
+    "kind": "button",
+    "height": 32,
+    "tall": 33
+   },
+   {
+    "name": "Lineup",
+    "kind": "button",
+    "height": 28,
+    "tall": 29
+   },
+   {
+    "name": "Edit Buddy Rich",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Delete Buddy Rich",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Lineup",
+    "kind": "button",
+    "height": 28,
+    "tall": 29
+   },
+   {
+    "name": "Edit Darkside (22)",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Delete Darkside (22)",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Lineup",
+    "kind": "button",
+    "height": 28,
+    "tall": 29
+   },
+   {
+    "name": "Edit Death Grips",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Delete Death Grips",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Lineup",
+    "kind": "button",
+    "height": 28,
+    "tall": 29
+   },
+   {
+    "name": "Edit Dire Straits",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Delete Dire Straits",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Lineup",
+    "kind": "button",
+    "height": 28,
+    "tall": 29
+   },
+   {
+    "name": "Edit Discharge",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Delete Discharge",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Lineup",
+    "kind": "button",
+    "height": 28,
+    "tall": 29
+   },
+   {
+    "name": "Edit Donna Summer",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Delete Donna Summer",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Lineup",
+    "kind": "button",
+    "height": 28,
+    "tall": 29
+   },
+   {
+    "name": "Edit Donovan",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Delete Donovan",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Lineup",
+    "kind": "button",
+    "height": 28,
+    "tall": 29
+   },
+   {
+    "name": "Edit Floor fcmv4oawzb",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Delete Floor fcmv4oawzb",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Lineup",
+    "kind": "button",
+    "height": 28,
+    "tall": 29
+   },
+   {
+    "name": "Edit Jeff Beck",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Delete Jeff Beck",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Lineup",
+    "kind": "button",
+    "height": 28,
+    "tall": 29
+   },
+   {
+    "name": "Edit John Lennon",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Delete John Lennon",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Lineup",
+    "kind": "button",
+    "height": 28,
+    "tall": 29
+   },
+   {
+    "name": "Edit Luther Vandross",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Delete Luther Vandross",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Lineup",
+    "kind": "button",
+    "height": 28,
+    "tall": 29
+   },
+   {
+    "name": "Edit MGMT",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Delete MGMT",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Lineup",
+    "kind": "button",
+    "height": 28,
+    "tall": 29
+   },
+   {
+    "name": "Edit Miles Davis",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Delete Miles Davis",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Lineup",
+    "kind": "button",
+    "height": 28,
+    "tall": 29
+   },
+   {
+    "name": "Edit Simon & Garfunkel",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Delete Simon & Garfunkel",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Lineup",
+    "kind": "button",
+    "height": 28,
+    "tall": 29
+   },
+   {
+    "name": "Edit Smerz (2)",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Delete Smerz (2)",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Lineup",
+    "kind": "button",
+    "height": 28,
+    "tall": 29
+   },
+   {
+    "name": "Edit Steely Dan",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Delete Steely Dan",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Lineup",
+    "kind": "button",
+    "height": 28,
+    "tall": 29
+   },
+   {
+    "name": "Edit The Blues Project",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Delete The Blues Project",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Lineup",
+    "kind": "button",
+    "height": 28,
+    "tall": 29
+   }
+  ],
+  "controls": 64
+ },
+ {
+  "screen": "Manage, Genres",
+  "width": 1280,
+  "under": [
+   {
+    "name": "Artists",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "Genres",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "Labels",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "Formats",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "Stores",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "Tags",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "New genre name",
+    "kind": "input",
+    "height": 32,
+    "tall": 33
+   },
+   {
+    "name": "Add",
+    "kind": "button",
+    "height": 32,
+    "tall": 33
+   },
+   {
+    "name": "— top level —Indie PopIndie RockPopPsychedelic RockRock",
+    "kind": "select",
+    "height": 36,
+    "tall": 37
+   },
+   {
+    "name": "— top level —ElectronicIndie RockPopPsychedelic RockRock",
+    "kind": "select",
+    "height": 36,
+    "tall": 37
+   },
+   {
+    "name": "— top level —ElectronicIndie PopPopPsychedelic RockRock",
+    "kind": "select",
+    "height": 36,
+    "tall": 37
+   },
+   {
+    "name": "— top level —ElectronicIndie PopIndie RockPsychedelic RockRock",
+    "kind": "select",
+    "height": 36,
+    "tall": 37
+   },
+   {
+    "name": "— top level —ElectronicIndie PopIndie RockPopRock",
+    "kind": "select",
+    "height": 36,
+    "tall": 37
+   },
+   {
+    "name": "— top level —ElectronicIndie PopIndie RockPopPsychedelic Rock",
+    "kind": "select",
+    "height": 36,
+    "tall": 37
+   },
+   {
+    "name": "Suggest a hierarchy",
+    "kind": "button",
+    "height": 16.5,
+    "tall": 17
+   }
+  ],
+  "controls": 27
+ },
+ {
+  "screen": "Manage, Labels",
+  "width": 1280,
+  "under": [
+   {
+    "name": "Artists",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "Genres",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "Labels",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "Formats",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "Stores",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "Tags",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "New label name",
+    "kind": "input",
+    "height": 32,
+    "tall": 33
+   },
+   {
+    "name": "New label discogs id",
+    "kind": "input",
+    "height": 32,
+    "tall": 33
+   },
+   {
+    "name": "Add",
+    "kind": "button",
+    "height": 32,
+    "tall": 33
+   }
+  ],
+  "controls": 11
+ },
+ {
+  "screen": "Manage, Formats",
+  "width": 1280,
+  "under": [
+   {
+    "name": "Artists",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "Genres",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "Labels",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "Formats",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "Stores",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "Tags",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "New format name",
+    "kind": "input",
+    "height": 32,
+    "tall": 33
+   },
+   {
+    "name": "Add",
+    "kind": "button",
+    "height": 32,
+    "tall": 33
+   },
+   {
+    "name": "Edit 10\"",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Delete 10\"",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Edit 12\" Single",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Delete 12\" Single",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Edit 2xLP",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Delete 2xLP",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Edit 7\"",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Delete 7\"",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Edit Box Set",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Delete Box Set",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Edit LP",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   },
+   {
+    "name": "Delete LP",
+    "kind": "button",
+    "height": 28,
+    "tall": 41
+   }
+  ],
+  "controls": 22
+ },
+ {
+  "screen": "Manage, Stores",
+  "width": 1280,
+  "under": [
+   {
+    "name": "Artists",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "Genres",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "Labels",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "Formats",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "Stores",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "Tags",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "New store name",
+    "kind": "input",
+    "height": 32,
+    "tall": 33
+   },
+   {
+    "name": "New store city",
+    "kind": "input",
+    "height": 32,
+    "tall": 33
+   },
+   {
+    "name": "New store country",
+    "kind": "input",
+    "height": 32,
+    "tall": 33
+   },
+   {
+    "name": "Add",
+    "kind": "button",
+    "height": 32,
+    "tall": 33
+   }
+  ],
+  "controls": 10
+ },
+ {
+  "screen": "Manage, Tags",
+  "width": 1280,
+  "under": [
+   {
+    "name": "Artists",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "Genres",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "Labels",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "Formats",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "Stores",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "Tags",
+    "kind": "button",
+    "height": 32.5,
+    "tall": 33
+   },
+   {
+    "name": "New tag name",
+    "kind": "input",
+    "height": 32,
+    "tall": 33
+   },
+   {
+    "name": "Add",
+    "kind": "button",
+    "height": 32,
+    "tall": 33
+   }
+  ],
+  "controls": 8
+ },
+ {
+  "screen": "Not found",
+  "width": 1280,
+  "under": [],
+  "controls": 0
+ }
+]

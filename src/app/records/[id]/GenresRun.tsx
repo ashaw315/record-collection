@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { HIT, HIT_ALONE } from '@/app/hit-area';
 import { useLayoutEffect, useRef, useState } from 'react';
 import { contentHeight, genresRun, shouldCollapse, type Genre } from './genres-run';
 
@@ -138,7 +139,7 @@ export function GenresRun({
             */
             <>
               {' · '}
-              <Link href={editHref} className="underline underline-offset-2">
+              <Link href={editHref} className={`${HIT_ALONE} underline underline-offset-2`}>
                 <span data-field="genre-count">{run.hidden}</span>
                 {run.hidden === 1 ? ' genre' : ' genres'}
               </Link>
@@ -151,7 +152,7 @@ export function GenresRun({
           {run.shown.map((genre, index) => (
             <span key={genre.id}>
               {index > 0 && ', '}
-              <Link href={`/?genreId=${genre.id}`} className="underline-offset-2 hover:underline">
+              <Link href={`/?genreId=${genre.id}`} className={`${HIT} underline-offset-2 before:-left-[3px] before:-right-[3px] hover:underline`}>
                 {genre.name}
               </Link>
             </span>
@@ -161,7 +162,7 @@ export function GenresRun({
       {formatLine === null && run.hidden > 0 && (
         /* No format line to append to: the count stands where the run stood. */
         <div className="text-prose">
-          <Link href={editHref} className="underline underline-offset-2">
+          <Link href={editHref} className={`${HIT_ALONE} underline underline-offset-2`}>
             <span data-field="genre-count">{run.hidden}</span>
             {run.hidden === 1 ? ' genre' : ' genres'}
           </Link>

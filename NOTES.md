@@ -42015,3 +42015,75 @@ could not target on his phone. Not fixed, by instruction.
   two sub-genres is one). A genre with nothing beneath it shows one
   number. "5 · 5" is five of its own and nothing more beneath; "3 · 4"
   is three of its own and one more in a genre beneath it.
+
+## Step 130: the floor on the screens outside the five (12 Oct)
+
+Ordered by the coordinator after the whole-app count: the remaining 19
+(390) and 36 (1280) outside manage, as one step, no new ruling needed.
+After it the count finds nothing under 44 outside manage, which has 124
+at both widths (`docs/captures/floor-count-3/`).
+
+**Built.** Overlays, drawing nothing: the way back on the want list's
+two forms, an item's page and suggestions; Cancel; an item's Edit;
+suggestions' Manage and each Add to want list; the rail's Add record;
+the panel's Open the full record; a record's genre links and Manage →.
+The want list's forms take the record form's field ruling as written.
+
+**Drawn changes under a coarse pointer, captured for Design**
+(`docs/captures/floor-130/`, `e2e/capture/floor-130.capture.ts`, each
+beside the fine pointer's):
+- A record's page, a closed screen: the image file field and the
+  journal's date field are 44 from 34, **at every width and not only
+  from 640**. Their labels are `sr-only`, so below 640 no label makes up
+  the difference as the field ruling assumes.
+- The shelf's rail: the three view names 44 apart, from 42. At 42 the
+  halfway rule gave each 42.
+- The want list's forms: fields 44 from 640 and the submit 44, the
+  record form's ruling.
+
+**Held, and named in the test:** a record's genres where they take a
+second line (320 on the fixtures). They are words in a run, a text line
+apart; 44 each is a taller run on a closed screen whose About cell is
+fitted by measurement (`GenresRun.tsx`). On one line they meet the
+floor by overlay. The test asserts which case it read and leaves the
+run out at 320 under a coarse pointer.
+
+**Across, measured and held to nothing yet.** The reader now reads
+`wide`, the pixels across a control's middle that reach it. On a
+record's page Pop is 22 wide and Rock 28 with 6 between genres; Design's
+"gap grows until it is not" would need about 22 between them, which
+re-wraps the run. For Design.
+
+**The rail, built twice.** First with the overlay classes on the rail's
+links and a wider gap on its list: the covering run failed four times
+in `shelf-narrow` on mobile. The band below the fork already places its
+own overlay on those links with `transform`, the classes place theirs
+with `translate`, and both applied moved it off the link; and the gap
+class widened the band's 18 across. Now `WallRail.tsx` is untouched and
+`globals.css` has the shelf's rail's rule under `(pointer: coarse)`,
+with `row-gap` so only the stacked names move. Also from the band's
+rule: the current view's mark passes taps through.
+
+**The reader.** `wide` added; `expectFloor` is the shared assertion.
+Under a fine pointer a field is held from side to side only: its label
+is its target under any pointer, so a field with its label over its
+middle read 54 for a drawn 36 on the unbuilt form.
+
+**Tests.** In `want-list`, `suggestions`, `record-detail` and
+`wall-panel`, under each pointer. Against the unbuilt screens: 26 of 26
+coarse failed, 26 of 26 fine passed (after the fine baseline above was
+corrected). With the build: 104 of 104 over two repeats.
+
+**Step level, a green assembled from three runs, by the rule of 11
+Oct.** (1) 86 spec files by grep, both projects: `967 passed, 4 failed,
+1 skipped`, the four all `shelf-narrow` on mobile. (2) What changed
+after it: `WallRail.tsx` back to HEAD, and one rule in `globals.css`
+that applies only inside `[data-composition]` under a coarse pointer.
+What reads that: anything showing the shelf under a coarse pointer,
+which is the mobile project and `wall-panel`'s touch tests on Chromium;
+no other Chromium test has a coarse pointer on the shelf. (3) So the
+rail's five specs on both projects, `50 passed`, and then the whole
+mobile project over the same 86 files: `295 passed, 1 skipped, ledger
+clean, tree unchanged — OK`, `[projects] mobile 296`. Unit under `src`:
+`2319 passed`. Typecheck and build clean; lint 0 errors, 27 warnings.
+No `[reset]` line in any of them. No gate.
