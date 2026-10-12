@@ -42527,3 +42527,33 @@ Questions that decide the build, with the default Code would take:
    by the same media query, in the rail and the band. The band's hit
    areas reach halfway to a neighbour, so TABLE's changes with SHELF
    gone; re-measured in the step.
+
+## 12 Oct: the gate's refusal reads swap as well as load; the load limit is 36
+
+- **Load: six times the cores, 36 here** (the coordinator; four times
+  was 24, and two workers with ordinary work beside them reach 22).
+  The limit is there to catch 77.
+- **Swap: refused above 1,000 pages a second**, swapped in or out,
+  sampled over five seconds before anything starts. Load does not see
+  swapping. During the afternoon's slow run the machine was at a load of
+  16 with 12.7 of 13.3 GB of swap in use.
+- Printed at the start and the end with the result, and in a refusal:
+  load, swap in use, the free percentage `memory_pressure` gives, and
+  the swap rate; a refusal also names the five busiest and the five
+  largest processes.
+- **Where 1,000 comes from, and what it does today.** One afternoon's
+  readings on this machine, nothing more. With no test running and the
+  load at 4 to 6, four samples read 2,300, 2,600, 11,000 and 35,000 a
+  second. So as set a gate is refused on this machine in the state it
+  is in now, and stays refused until memory is freed. That is the check
+  doing what was asked. If it turns out a healthy day here also sits
+  above 1,000, the figure is wrong and is one variable
+  (`GATE_MAX_SWAP_RATE`).
+- **Not used to refuse: the free percentage.** It read 56 to 64 while
+  the machine was plainly short, so it is printed and not judged.
+- Staged: refused on swap as the machine stands; refused on load with
+  `GATE_MAX_LOAD=0`.
+
+**The experiment of this afternoon ran in the working tree against an
+uncommitted change, for an hour.** That is what the worktree is for.
+Next time the change is applied there. Not repeated.

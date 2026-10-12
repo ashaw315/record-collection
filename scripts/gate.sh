@@ -19,9 +19,10 @@
 #
 # It refuses to start on a busy machine. A gate begun at a load of 77 on six
 # cores took an hour and its wall clock was a fact about the machine. The
-# one-minute load is read first and the run is refused above four times the
-# physical cores; the load at the start and at the end is printed with the
-# result.
+# one-minute load is read first and the run is refused above six times the
+# physical cores, or while the machine is swapping more than a thousand pages
+# a second, which load does not see. Load, swap and free memory at the start
+# and at the end are printed with the result.
 #
 # `.env.local` is NOT copied here: the production credential does not travel.
 # The three tests that read it skip on GATE_WORKTREE=1, which only this
@@ -43,13 +44,29 @@ WORKERS="${2:-}"
 GATE="${GATE_DIR:-$ROOT-gate}"
 
 load() { sysctl -n vm.loadavg | awk '{print $2}'; }
+swap_pages() { vm_stat | awk '/Swapins/ { i = $2 } /Swapouts/ { o = $2 } END { printf "%d", i + o }'; }
+# Pages swapped in or out per second, over five seconds. Load does not see this: a machine at a load of 16 that is
+# swapping is in worse shape for a run than one at 30 that is computing.
+swap_rate() { local a b; a="$(swap_pages)"; /bin/sleep 5; b="$(swap_pages)"; echo $(( (b - a) / 5 )); }
+memory() { echo "swap $(sysctl -n vm.swapusage | awk '{print $6 " of " $3}' | tr -d 'M' | awk '{printf "%.1f of %.1f GB", $1 / 1024, $3 / 1024}'), $(memory_pressure | awk -F': ' '/free percentage/ {print $2}') free, $1 pages a second swapped"; }
 CORES="$(sysctl -n hw.physicalcpu)"
-MAX_LOAD="${GATE_MAX_LOAD:-$((CORES * 4))}"
+MAX_LOAD="${GATE_MAX_LOAD:-$((CORES * 6))}"
+MAX_SWAP_RATE="${GATE_MAX_SWAP_RATE:-1000}"
 LOAD_START="$(load)"
+RATE_START="$(swap_rate)"
+MEMORY_START="$(memory "$RATE_START")"
+REFUSED=""
 if awk -v l="$LOAD_START" -v m="$MAX_LOAD" 'BEGIN { exit !(l > m) }'; then
-  echo "gate: refused. The one-minute load is $LOAD_START on $CORES cores, above $MAX_LOAD. Nothing run." >&2
-  echo "gate: the busiest processes:" >&2
+  REFUSED="the one-minute load is $LOAD_START on $CORES cores, above $MAX_LOAD"
+elif [ "$RATE_START" -gt "$MAX_SWAP_RATE" ]; then
+  REFUSED="the machine is swapping, $RATE_START pages a second, above $MAX_SWAP_RATE"
+fi
+if [ -n "$REFUSED" ]; then
+  echo "gate: refused: $REFUSED. Nothing run." >&2
+  echo "gate: load $LOAD_START on $CORES cores; $MEMORY_START" >&2
+  echo "gate: the busiest processes, then the largest:" >&2
   ps -Ao pcpu,comm -r | sed -n 2,6p >&2
+  ps -Ao rss,comm -m | sed -n 2,6p | awk '{ printf "%5.1f GB %s\n", $1 / 1048576, $2 }' >&2
   exit 1
 fi
 
@@ -100,6 +117,8 @@ cp -R test-results "$LOGS/$COMMIT-test-results" 2>/dev/null
 if [ -n "${GATE_ONLY:-}" ]; then echo "NOT A GATE: Playwright ran only $GATE_ONLY"; fi
 echo "gate on $COMMIT${WORKERS:+, $WORKERS workers}, in $GATE"
 echo "load:       $LOAD_START at the start, $(load) at the end, on $CORES cores"
+echo "memory:     at the start, $MEMORY_START"
+echo "            at the end,   $(memory "$(swap_rate)")"
 echo "unit:       $(tail -1 "$UNIT")"
 echo "playwright: $(tail -1 "$E2E")"
 LC_ALL=C grep -h "\[projects\]\|\[reset\]\|SLEPT\| passed (\| flaky" "$E2E" | cut -c1-200
