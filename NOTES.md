@@ -42307,27 +42307,53 @@ in. The script keeps a second checkout beside this one
 dependencies when the lockfile has changed, and runs the unit suite and
 then Playwright there through `run-tests.ts`, logging beside the
 worktree and not in it. The working tree is free to edit meanwhile.
-- **Not freed: running tests.** Both checkouts use
-  `record_collection_test` on 5433 and `test/helpers/db.ts` refuses a
-  second runner. That would take a second database and a second port,
-  a change to shared infrastructure nobody has asked for.
-- `.env.test` is committed, so the worktree has it. `.env.local` is
-  not copied; nothing in either suite is meant to need it.
+- **Running tests is freed too (703fc8e).** The gate has a database of
+  its own, `record_collection_gate` in the same local Postgres on 5433,
+  and a server port of its own, 3101. `test/helpers/db.ts` refuses a
+  second runner on ONE database, so it has nothing to refuse. The
+  proxy test (`neon-transactions.test.ts`) had the working tree's
+  database written out by name and now takes the run's own.
+- **It builds first.** `type-scale.test.ts` reads the CSS a build
+  produces and a fresh checkout has none.
+- **`.env.local` is not copied: the production credential does not
+  travel.** The three tests in `dev-targets-neon.test.ts` that read it
+  skip on `GATE_WORKTREE=1`, which only `gate.sh` sets. Not on the file
+  being absent: without the marker a missing `.env.local` still fails,
+  here and anywhere. Not "known failures" either: a gate that is
+  expected not to be green cannot show a real red.
+- **It refuses a busy machine.** The one-minute load is read first and
+  the run is refused above four times the physical cores (24 here),
+  naming the busiest processes. The load at the start and at the end
+  is printed with the result and goes in the report. Both of 12 Oct's
+  long runs would have been stopped.
+- `GATE_ONLY="e2e/x.spec.ts"` runs only those files, for trying the
+  script. Its output says NOT A GATE.
 
-**When a gate is owed (the coordinator, 12 Oct; the drift to one every
-four steps was not Adam's policy).** When something GLOBAL moves: a
-stylesheet, the Playwright config, the runner, a shared component, a
-reader change; or when Adam asks. A step that touches one screen and
-runs its derived covering set on both projects does not owe one.
-Owed now: step 133 changed the reader.
+**A gate runs on Adam's word only (the coordinator, 12 Oct, replacing
+the rule that stood here for half a day).** Nothing automatically owes
+one. The list of global triggers that was here (a stylesheet, the
+Playwright config, the runner, a shared component, a reader change) is
+struck: reader changes happen nearly every step, so "gate less" had
+become "gate always".
+- A reader change, a stylesheet move or a shared component gets **the
+  specs that read through it, on both projects, whole**. The set is
+  derived by grep as before. That is what catches a change of that
+  shape.
+- The full suites run when Adam asks, or before he ships.
+- The two-run rule above still stands: a stylesheet's covering set is
+  both projects, whole, and that is a covering run and not a gate.
 
-**Workers, as an experiment and not a setting.** The config's two
-stand. The next gate is run at four in the worktree, and its wall
-clock, flaky count and `[reset]` lines are reported beside the
-two-worker figures (48.6 and 48.9 minutes, no flaky, no reset). If
-four is worse on flakes, two stays.
+**Workers: two, and four is UNMEASURED.** See the next entry.
 
 ## 12 Oct: the four-worker gate on e9f0bda. Two stays, and the worktree is short two things
+
+**Corrected the same day: this run is VOID, not a result against four
+workers.** The gate that followed it began at a fifteen-minute load of
+77 on six cores, and what the machine was doing during this run was
+never checked. So it measured a saturated machine. Four workers is
+unmeasured; "four is worse on every figure" below is withdrawn. Two
+stays because it is what the config's own measurements chose. Not to
+be rerun.
 
 **Run:** `scripts/gate.sh HEAD 4`, in the worktree. Not green, and not a
 gate for step 133, which still owes one.
@@ -42392,3 +42418,45 @@ caused by step 133 as far as the diff says (it touches nothing under
 `src/app/wall/`). Artefacts were copied out of `test-results/` before
 anything else ran; they are in the session scratchpad and not in the
 repo.
+
+## 12 Oct: CI is dropped, and why, so it is not reopened
+
+The suite is portable in principle: the database and its proxy are
+Docker services, `.env.test` is committed, no test makes a live call.
+It is not worth building. Many specs assert geometry to half a pixel,
+tuned on macOS browsers; on a Linux runner text renders differently
+and the result would be a wall of failures that are facts about the
+runner. A macOS runner avoids that and costs more, and a standard
+hosted runner has far fewer cores than the 49 minutes here assume.
+Decided by the coordinator on Code's assessment; no trial run.
+
+## 12 Oct: the doubled "Nothing in the collection matches." is the reader's, not a double render
+
+**One was drawn and one was hidden.** Until the window is measured,
+`WallStage.tsx` puts both views in the document and CSS shows one
+(§W.26, the comment above its last return). Each view mounts
+`ShelfEmpty` (lines 298 and 388), so for that moment the block is in the
+document twice and on screen once. `wall-arrival-104.spec.ts:254`
+waited for the overview and then read
+`[data-shelf-empty] [data-shelf-empty-sentence]`, naming neither view.
+Read before the measurement it finds two, and Playwright does not retry
+a locator that matches two: it fails at once. On a slow machine the
+measurement comes later, which is why it showed at the gate that began
+at a load of 77 and at the void four-worker run, and nowhere else.
+
+**The test was changed, and the claim was not.** It now reads the block
+in `[data-region="far"]`, which is what its name says ("where the shelf
+is the far view"). That is tighter than before, not looser.
+
+**The state it met is now held by a test of its own**, with scripting
+off so nothing is ever measured, at 390 and 1440: the block is in the
+document twice, and exactly one is drawn, in the view that width shows.
+Both passed the first time they ran, because the behaviour was already
+there; they were written to stage the diagnosis, not to drive a build.
+The line they would fail against is the media query on each view's
+root in `WallStage.tsx`: drop either and both blocks are drawn.
+
+Step level: `wall-arrival-104.spec.ts` on chromium (it is not in the
+phone project), `7 passed, ledger clean, tree unchanged — OK`. Run in
+the working tree while the gate script's try-out was running in its
+worktree on its own database.

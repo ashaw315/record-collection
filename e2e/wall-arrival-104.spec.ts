@@ -256,6 +256,26 @@ test('at 390, where the shelf is the far view, the sentence and CLEAR FILTERS ar
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto(`/?genreId=${f.genreId}&q=zzzz-no-such-record-104`);
   await expect(page.locator('[data-wall="overview"]')).toBeVisible({ timeout: 30_000 });
-  await expect(page.locator('[data-shelf-empty] [data-shelf-empty-sentence]')).toBeVisible();
-  await expect(page.locator('[data-shelf-empty] [data-shelf-empty-clear]')).toBeVisible();
+  /*
+    Read in the far view by name. Until the window is measured both views are in the document and CSS shows one
+    (§W.26), so the block is there twice, and a reader that names neither view fails on finding two: that was this
+    test's one flaky run at the gate of 12 Oct, and the next test holds the state it met.
+  */
+  await expect(page.locator('[data-region="far"] [data-shelf-empty] [data-shelf-empty-sentence]')).toBeVisible();
+  await expect(page.locator('[data-region="far"] [data-shelf-empty] [data-shelf-empty-clear]')).toBeVisible();
 });
+
+/* Fails against a block both views draw before the window is measured: the sentence would be read twice over, by eye or by a screen reader. */
+for (const [width, shown] of [[390, 'far'], [1440, 'near']] as const) {
+  test(`before the window is measured the block is in both views and drawn in one, the ${shown} view at ${width}`, async ({ page, browser }) => {
+    const f = await seed(page);
+    const unmeasured = await browser.newContext({ javaScriptEnabled: false, viewport: { width, height: 844 }, storageState: await page.context().storageState() });
+    const still = await unmeasured.newPage();
+    await still.goto(`/?genreId=${f.genreId}&q=zzzz-no-such-record-104`);
+    const blocks = still.locator('[data-shelf-empty]');
+    await expect(blocks, 'the precondition: with no script nothing is measured, and both views hold it').toHaveCount(2);
+    const drawn = await blocks.evaluateAll((els) => els.filter((el) => (el as HTMLElement).getClientRects().length > 0).map((el) => el.closest('[data-region="far"], [data-region="near"]')?.getAttribute('data-region')));
+    expect(drawn, 'one is drawn, in the view this width shows').toEqual([shown]);
+    await unmeasured.close();
+  });
+}
