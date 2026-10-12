@@ -41760,3 +41760,21 @@ the row after `page.goto`: both seed requests had already answered, so
 the row existed and the page did not show it within 30s. Which of the
 two views it was on is not recoverable. Still not diagnosed; ruled out:
 the seed request.
+
+## 11 Oct, evening: the gate on 36447aa, both halves green in one pass
+
+Gate, full suites, on `36447aa` (steps 124 to 128, the reset reporter
+and the config's `no-kept-connections` import):
+
+- Unit, `npm test`: `4308 passed, 2 skipped, tree unchanged — OK`.
+- Playwright, both projects, no file argument: `1085 passed, 17 skipped,
+  ledger clean, tree unchanged — OK`, `[projects] chromium 754, capture
+  12, mobile 336`, 48.9 minutes. No flaky, no retry, no sleep.
+- **No `[reset]` line**: the first whole run with no kept connection.
+  One run; the earlier resets came at about one in two gates, so this
+  is consistent with the fix and does not yet show it.
+- Thinnest margin: `wall-route.spec.ts:167` on chromium, 15.2s of 30s,
+  49% left.
+
+The want list and stats have no more code owed under the floor and are
+covered by this gate.
