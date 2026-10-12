@@ -96,7 +96,15 @@ export async function readReach(page: Page, within = 'main', except?: string): P
       el.scrollIntoView({ block: 'center', inline: 'nearest' });
       /* Centring a control can leave the page scrolled to a fraction of a pixel; the reading is taken from a whole one. */
       window.scrollTo(window.scrollX, Math.round(window.scrollY));
-      const r = el.getBoundingClientRect();
+      /*
+        A box inside its own label (a chip, whose box is not drawn at all,
+        or a checkbox with its words) is drawn as the label: the chip or
+        the box and its words are the thing a finger aims at, and how far
+        a tap reaches is measured from that and not from a box of 1 or 16
+        inside it (the record form, step 129).
+      */
+      const drawn = (el.tagName === 'INPUT' ? el.closest('label') : null) ?? el;
+      const r = drawn.getBoundingClientRect();
       const reaches = (x: number, y: number) => {
         const at = document.elementFromPoint(x, y);
         if (at === null) return false;
@@ -112,7 +120,10 @@ export async function readReach(page: Page, within = 'main', except?: string): P
         last word, and the title read 43 for the rows Edit's own hit area
         took (step 127). For a control on one line this is its own box.
       */
-      const first = el.getClientRects()[0] ?? r;
+      /* The whole first line: a link can be several boxes on one line (an arrow in another font and then its words, the record form's way back, Chromium), and its first box alone is not the link. */
+      const boxes = Array.from(drawn.getClientRects());
+      const line = boxes.filter((each) => Math.abs(each.top - (boxes[0]?.top ?? 0)) < 1);
+      const first = line.length === 0 ? r : new DOMRect(Math.min(...line.map((each) => each.left)), Math.min(...line.map((each) => each.top)), Math.max(...line.map((each) => each.right)) - Math.min(...line.map((each) => each.left)), Math.max(...line.map((each) => each.bottom)) - Math.min(...line.map((each) => each.top)));
       const x = first.left + first.width / 2;
       const y = first.top + first.height / 2;
       let tall = 0;
@@ -141,7 +152,7 @@ export async function readReach(page: Page, within = 'main', except?: string): P
       while (left < 40 && reaches(first.left - left - 1, y)) left += 1;
       let right = 0;
       while (right < 40 && reaches(first.right + right + 1, y)) right += 1;
-      const name = ((el.textContent ?? '').trim() || el.getAttribute('aria-label') || (el as HTMLInputElement).placeholder || el.id || el.tagName).slice(0, 90);
+      const name = ((drawn.textContent ?? '').trim() || el.getAttribute('aria-label') || (el as HTMLInputElement).placeholder || el.id || el.tagName).slice(0, 90);
       out.push({ name, kind: el.tagName.toLowerCase(), width: Math.round(r.width * 10) / 10, height: Math.round(r.height * 10) / 10, tall, left, right, lostTo: [...lostTo] });
     }
     return out;

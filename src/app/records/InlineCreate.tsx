@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { HIT_ALONE } from '@/app/hit-area';
 import { duplicateMessage, resolveCreated } from './inline-create';
 import type { Option } from './RecordForm';
 
@@ -101,7 +102,8 @@ export function InlineCreate({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="mt-1 text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
+        /* §T.6: under a coarse pointer it stands 14 below the field, the half of 44 its 16 lacks, so its hit area ends where the field's begins. */
+        className={`${HIT_ALONE} mt-1 text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground pointer-coarse:mt-[14px]`}
       >
         + New {noun}
       </button>
@@ -119,7 +121,7 @@ export function InlineCreate({
           value={name}
           onChange={(event) => setName(event.target.value)}
           placeholder={`New ${noun} name`}
-          className="h-8 text-sm"
+          className="h-8 text-sm pointer-coarse:h-[44px]"
           onKeyDown={(event) => {
             /**
              * Enter creates, and must NOT submit the record form — the user is
@@ -133,14 +135,14 @@ export function InlineCreate({
             if (event.key === 'Escape') setOpen(false);
           }}
         />
-        <Button type="button" size="sm" className="h-8 shrink-0" disabled={busy} onClick={() => void create()}>
+        <Button type="button" size="sm" className="h-8 shrink-0 pointer-coarse:h-[44px]" disabled={busy} onClick={() => void create()}>
           {busy ? 'Adding…' : 'Add'}
         </Button>
         <Button
           type="button"
           size="sm"
           variant="outline"
-          className="h-8 shrink-0"
+          className="h-8 shrink-0 pointer-coarse:h-[44px]"
           onClick={() => {
             setOpen(false);
             setError(undefined);

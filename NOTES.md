@@ -41778,3 +41778,70 @@ and the config's `no-kept-connections` import):
 
 The want list and stats have no more code owed under the floor and are
 covered by this gate.
+
+## Step 129: the record form's hit areas, fields, chips and checkbox together (11 Oct, night)
+
+Design's amended field ruling (save `607829d`): under a coarse pointer,
+below 640 the label takes the field's width with the strip inside its
+box; from 640 the field is 44. Chips keep 26 with lines 18 apart; the
+Reissue box by overlay. Built in `RecordForm.tsx`, `InlineCreate.tsx`
+and the two pages' way back, all behind `pointer-coarse:`.
+
+**The count, as a formula:** N of N where N is 27 plus one per genre
+and tag. On the real collection on 11 Oct, with 43: 70 of 70 under a
+coarse pointer at 320, 390 and 768, and 1 of 70 under a fine one, as
+before (`docs/captures/form-129/`, `e2e/sheet/form-129.sheet.ts`). The
+27: the 19 fields, four + New, the way back, Everything else, Save and
+Cancel. The test asserts the formula and not a figure.
+
+**What is drawn differently under a coarse pointer** (nothing is under a
+fine one):
+- From 640 a field is 44, from 36, and its label 4 lower with it.
+- The chips' lines are 18 apart, from 4, and the cloud's last line has
+  9 beneath it. Genres' cloud: 554, 422 and 246 tall at 320, 390 and
+  768, from 386, 296 and 176.
+- **Beyond the ruling, by the general rule and for Design to see:**
+  each + New stands 14 below its field, from 4 (its 16 needs 14 either
+  side, and 4 gave it 2 before it took the field's rows); Save is 44 in
+  the box, from 32; an opened + New's field and two buttons are 44,
+  from 32.
+- The page: 2770 to 2958 at 390 (188), 2876 to 3106 at 320 (230), 2034
+  to 2306 at 768 (272).
+
+Below 640 nothing moves but the chips and + New: a field stands 40
+below its row's top under either pointer, and its label's words 18.
+**On WebKit the words are 18.2 as a word in a line and 18.7 as a
+block**, half a pixel that no whole padding removes; the test holds
+them within 1 and says so. The first build (a block of 24 with its own
+line) had them 2 higher on both engines; the sheet's column caught it
+and the test now holds it.
+
+**The reader, changed twice, both for this form.** A box inside its own
+label (a chip, whose box is not drawn; the Reissue box and its words)
+is read as the label: reach was being measured from a box of 1 or 16
+inside the thing a finger aims at. And a control is read on its whole
+first line: the way back is two boxes on one line in Chromium (the
+arrow, then the words) and its first box alone read 40 past its right.
+A helper change, so the five other specs reading through it were in the
+covering run.
+
+**Tests.** `record-form.spec.ts`, one test under each pointer at 320,
+390, 768 and 1280 on both engines. Against the unbuilt form: 8 of 8
+coarse failed, 8 of 8 fine passed (after three of my baseline figures
+were corrected to what the unbuilt form measured: 40, not 35, from the
+row's top; WebKit's line gap of 3.9; the way back's two boxes). With
+the build: 32 of 32 over two repeats. **The fine tests, staged:** with
+`pointer-coarse:` stripped from the two components, 8 of 8 failed.
+
+**Step level.** 18 spec files by grep (every reader of `hit-area.ts`
+and every spec that opens the form), both projects: `544 passed, 2
+failed, 1 skipped` — the 2 were the words assertion, added just before
+that run and not run alone first, failing on WebKit by the 0.7 above;
+no source changed after it. Then `record-form.spec.ts` on both
+projects: `50 passed, ledger clean, tree unchanged — OK`. Unit under
+`src`: `2319 passed, tree unchanged — OK`. Typecheck and build clean;
+lint 0 errors, 27 warnings. No `[reset]` line in either run. No gate.
+
+**Not done, and not ruled:** the want list's own forms (new item, edit
+item) and suggestions are not among the five screens and were not
+touched.

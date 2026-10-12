@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist, trackCreated } from './cleanup';
 import { login } from './sign-in';
+import { HIT_FLOOR, HIT_PAST, POINTERS, pointerIs, reachingPastItself, readReach, underFloor } from './hit-area';
 
 /* Records and artists removed after each test — see e2e/cleanup.ts. */
 registerCleanup();
@@ -594,4 +595,102 @@ test('a valid pressing year saves, confirming only the reporting was wrong', asy
 
   await expect(page).toHaveURL(/\/records\/[0-9a-f-]{36}$/, { timeout: 15_000 });
   await expect(page.getByText('1999')).toBeVisible();
+});
+
+/*
+  Step 129, §T.6 and §9.3: the record form's hit areas, under each pointer.
+  "Under a coarse pointer, below 640 make each field's label the field's
+  width with the 7 strip inside the label's box, so one continuous target;
+  from 640 make the field 44 tall"; the chips' "vertical gap is 4, so grow
+  it to 18 and keep the chips at 26"; the Reissue box by overlay, nothing
+  drawn differently. Under a fine pointer every control keeps its drawn
+  size. Read on a record's edit form, where "Everything else" is open.
+
+  The count is not a figure: N of N where N is 27 plus one per genre and
+  tag, and the genres and tags are whatever the database holds.
+*/
+const FORM_FIELDS = ['title', 'artistId', 'catalogNumber', 'matrixRunout', 'labelId', 'formatId', 'releaseYear', 'conditionMedia', 'conditionSleeve', 'purchasePrice', 'purchaseDate', 'storeId', 'countryPressed', 'yearPressed', 'pressingPlant', 'vinylWeightGrams', 'colorVariant', 'isReissue', 'notes'] as const;
+/** The form's controls that are not a genre's or a tag's chip: the 19 fields, four + New, the way back, Everything else, Save and Cancel. */
+const FORM_CONTROLS = 27;
+const LABEL_ABOVE_BELOW = 640;
+
+for (const pointer of POINTERS) test.describe(`the record form under a ${pointer} pointer`, () => {
+ test.use({ hasTouch: pointer === 'coarse' });
+ for (const width of [320, 390, 768, 1280]) {
+  /* Coarse fails against fields of 36 with a strip of 7 under a label a word wide, chips 4 apart, a box of 16 and links of 15 to 20. Fine fails against a build that gives a mouse any of it. */
+  test(pointer === 'coarse' ? `every control on the record form is 44 tall to a finger and reaches no more than 9 past itself, at ${width}` : `under a mouse every control on the record form is its drawn size and reaches no further, at ${width}`, async ({ page }) => {
+    expect(await pointerIs(page), 'the precondition: the page has the pointer this test is named for').toBe(pointer);
+    const suffix = makeSuffix();
+    const artist = await post(page, '/api/artists', { name: `FormReach-${suffix}` });
+    trackArtist(artist.id as string);
+    const genres: string[] = [];
+    for (let i = 0; i < 14; i += 1) genres.push((await post(page, '/api/genres', { name: `Chip ${i} ${suffix}` })).id as string);
+    const record = await post(page, '/api/records', { title: `Form Reach ${suffix}`, artistId: artist.id, genreIds: [genres[0]] });
+
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto(`/records/${record.id}/edit`);
+    await formReady(page);
+    await page.evaluate(() => document.fonts.ready);
+
+    const reach = await readReach(page);
+    const drawn = await page.evaluate((ids) => {
+      const box = (el: Element | Range) => el.getBoundingClientRect();
+      const chips = Array.from(document.querySelectorAll('main fieldset label')).filter((label) => label.querySelector('input.sr-only') !== null);
+      const groups = Array.from(new Set(chips.map((chip) => chip.closest('fieldset')))).map((fieldset) => {
+        const tops = Array.from(new Set(chips.filter((chip) => chip.closest('fieldset') === fieldset).map((chip) => Math.round(box(chip).top * 10) / 10))).sort((a, b) => a - b);
+        return tops.slice(1).map((top, index) => Math.round((top - (tops[index] ?? 0) - 26) * 10) / 10);
+      });
+      const fields = ids.map((id) => {
+        const field = document.getElementById(id) as HTMLElement;
+        const label = document.querySelector(`label[for="${id}"]`) as HTMLElement;
+        const words = document.createRange();
+        words.selectNodeContents(label);
+        return { id, words: box(words).top - box(label.parentElement as HTMLElement).top, height: box(field).height, width: box(field).width, labelWidth: box(label).width, strip: box(field).top - box(label).bottom, fromRow: box(field).top - box(label.parentElement as HTMLElement).top };
+      });
+      const reissue = (document.getElementById('isReissue') as HTMLElement).closest('label') as HTMLElement;
+      return { chips: chips.length, chipHeights: Array.from(new Set(chips.map((chip) => Math.round(box(chip).height * 10) / 10))), lineGaps: Array.from(new Set(groups.flat())), lines: Math.max(...groups.map((gaps) => gaps.length + 1)), fields, pastReissue: document.elementFromPoint(Math.min(box(reissue).right + 30, innerWidth - 20), box(reissue).top + box(reissue).height / 2)?.closest('label') === reissue };
+    }, [...FORM_FIELDS]);
+
+    expect(drawn.chips, 'the precondition: there are chips to read').toBeGreaterThanOrEqual(14);
+    expect(drawn.lines, 'the precondition: the chips take more than one line, so there is a gap between lines').toBeGreaterThan(1);
+    expect(reach.length, `N is ${FORM_CONTROLS} plus one per genre and tag (${drawn.chips} here)`).toBe(FORM_CONTROLS + drawn.chips);
+
+    /* Drawn the same under either pointer: a chip is 26 and the box 16; the overlay draws nothing. */
+    expect.soft(drawn.chipHeights, `at ${width}: every chip is drawn 26 tall`).toEqual([26]);
+    const box = reach.find((r) => r.name === 'This is a reissue');
+    expect.soft(box?.height, `at ${width}: the Reissue box and its words are drawn 20 tall`).toBe(20);
+    const above = width < LABEL_ABOVE_BELOW;
+    for (const field of drawn.fields.filter((each) => each.id !== 'isReissue' && each.id !== 'notes')) {
+      expect.soft(field.height, `at ${width}: ${field.id} is drawn ${!above && pointer === 'coarse' ? 44 : 36} tall`).toBe(!above && pointer === 'coarse' ? 44 : 36);
+      /* Below 640 a field stands where it stood under either pointer: 40 below its row’s top, the row’s 12, the label’s line of 24 and the 4 beneath it. */
+      if (above) expect.soft(field.fromRow, `at ${width}: ${field.id} stands 40 below its row’s top`).toBeCloseTo(40, 0);
+      /* And its label's words within a pixel of 18 below it, where they stood. Measured, step 129: exactly 18 under both pointers on Chromium; on WebKit 18.2 as a word in a line and 18.7 as a block with 6 above it, half a pixel no whole padding removes. A block of 24 with its own line had let them rise 2. */
+      if (above) expect.soft(Math.abs(field.words - 18), `at ${width}: ${field.id}’s label’s words stand within 1 of 18 below its row’s top (${field.words})`).toBeLessThan(1);
+    }
+
+    if (pointer === 'coarse') {
+      expect.soft(underFloor(reach).map((r) => `${r.name}: ${r.tall}`), `at ${width}: controls under ${HIT_FLOOR} to a finger, of ${reach.length}`).toEqual([]);
+      expect.soft(reach.filter((r) => r.left > HIT_PAST || r.right > HIT_PAST).map((r) => `${r.name}: ${r.left} left, ${r.right} right`), `at ${width}: controls a tap reaches from more than ${HIT_PAST} past them`).toEqual([]);
+      expect.soft(drawn.lineGaps.filter((gap) => Math.abs(gap - 18) > 0.5), `at ${width}: the chips’ lines are 18 apart (${drawn.lineGaps.join(', ')})`).toEqual([]);
+      expect.soft(drawn.pastReissue, `at ${width}: the paper past the Reissue box’s words is not its target`).toBe(false);
+      /* The Reissue field is a box of 16 in the middle of its own words' label of 20: the label above it is not its width, and the 2 between them is that second label's, which goes to the box too. */
+      if (above) for (const field of drawn.fields) {
+        expect.soft(Math.abs(field.labelWidth - field.width), `at ${width}: ${field.id}’s label is its field’s width (${field.labelWidth} against ${field.width})`).toBeLessThanOrEqual(field.id === 'isReissue' ? Number.POSITIVE_INFINITY : 0.5);
+        expect.soft(Math.abs(field.strip), `at ${width}: nothing between ${field.id}’s label and the field (${field.strip})`).toBeLessThanOrEqual(field.id === 'isReissue' ? 2.5 : 0.5);
+      }
+    } else {
+      expect.soft(reachingPastItself(reach), `at ${width}: controls a mouse reaches from outside their drawn box`).toEqual([]);
+      expect.soft(reach.filter((r) => r.tall >= HIT_FLOOR && r.height < HIT_FLOOR).map((r) => `${r.name}: ${r.tall}`), `at ${width}: controls 44 tall under a mouse that were not drawn so`).toEqual([]);
+      expect.soft(drawn.lineGaps.filter((gap) => Math.abs(gap - 4) > 0.5), `at ${width}: the chips’ lines are 4 apart, as they were (${drawn.lineGaps.join(', ')})`).toEqual([]);
+      for (const [name, height] of [['Save changes', 32], ['Cancel', 20], ['Everything else', 20], ['+ New artist', 16], ['+ New tag', 16]] as const) expect.soft(reach.find((r) => r.name === name)?.height, `at ${width}: ${name} is drawn ${height} tall, as it was`).toBe(height);
+    }
+
+    /* A + New, opened: a field with no drawn label and two buttons, which are boxes and are 44 in the box under a finger. */
+    await page.getByRole('button', { name: '+ New artist' }).click();
+    const opened = (await readReach(page)).filter((r) => r.name === 'New artist name' || r.name === 'Add' || (r.name === 'Cancel' && r.kind === 'button'));
+    expect(opened.map((r) => r.name).sort(), 'the precondition: the opened + New has its field and two buttons').toEqual(['Add', 'Cancel', 'New artist name']);
+    if (pointer === 'coarse') expect.soft(opened.filter((r) => r.height < HIT_FLOOR).map((r) => `${r.name}: ${r.height}`), `at ${width}: the opened + New’s controls under ${HIT_FLOOR} in the box`).toEqual([]);
+    else expect.soft(opened.map((r) => r.height), `at ${width}: the opened + New’s controls are 32 tall, as they were`).toEqual([32, 32, 32]);
+  });
+ }
 });

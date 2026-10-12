@@ -6,6 +6,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import { HIT } from '@/app/hit-area';
 import { parseApiError, fallbackMessage } from '@/lib/api/messages';
 import { CONDITION_GRADES } from '@/lib/records/fields';
 import { conditionLabel } from './record-detail-format';
@@ -68,8 +69,15 @@ function Row({
   /** Supporting detail rendered BELOW the hint — never between field and hint. */
   after?: ReactNode;
 }) {
+  /*
+    §T.6, under a coarse pointer. Below 640 the label is the field's width
+    and the strip beneath it is inside its box, so label, strip and field
+    are one target; its 6 above and below are what the line it stood in
+    gave it, so its words and the field stand where they stood. From 640 the field itself is 44, and the label
+    beside it comes down 4 with the field's middle.
+  */
   const labelClass =
-    'text-xs tracking-wide text-muted-foreground uppercase sm:w-40 sm:shrink-0 sm:pt-2';
+    'text-xs tracking-wide text-muted-foreground uppercase sm:w-40 sm:shrink-0 sm:pt-2 pointer-coarse:max-sm:block pointer-coarse:max-sm:py-[6px] pointer-coarse:sm:pt-3';
 
   return (
     <div className="border-b border-border py-3 last:border-0 sm:flex sm:gap-4">
@@ -80,7 +88,7 @@ function Row({
           {label}
         </label>
       )}
-      <div className="mt-1 min-w-0 flex-1 sm:mt-0">
+      <div className="mt-1 min-w-0 flex-1 sm:mt-0 pointer-coarse:max-sm:mt-0 pointer-coarse:sm:[&_input:not([type=checkbox])]:h-[44px] pointer-coarse:sm:[&_select]:h-[44px]">
         {children}
         {hint !== undefined && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
         {/*
@@ -146,9 +154,10 @@ function CheckboxGroup({
   }
 
   return (
-    <fieldset>
+    /* §T.6: under a coarse pointer the lines are 18 apart, so a chip of 26 has its 9 above and below; the last line's 9 is the fieldset's. */
+    <fieldset className="pointer-coarse:pb-[9px]">
       <legend className="sr-only">{legend}</legend>
-      <div className="flex flex-wrap gap-1">
+      <div className="flex flex-wrap gap-1 pointer-coarse:gap-y-[18px]">
         {options.map((option) => {
           const active = selected.includes(option.id);
           return (
@@ -156,6 +165,8 @@ function CheckboxGroup({
               key={option.id}
               className={cn(
                 'cursor-pointer rounded-xs border px-2 py-1 text-xs transition-colors',
+                /* Half the 4 to the chip beside it. */
+                `${HIT} before:-left-[2px] before:-right-[2px]`,
                 /* §T.6: no fill. A chosen one takes §3's mark for a choice, the 2px underline 7 below. */
                 active ? 'border-foreground text-foreground underline decoration-2 underline-offset-[7px]' : 'border-border hover:bg-accent',
               )}
@@ -662,7 +673,7 @@ export function RecordForm({
         fields inside remain submittable and focusable exactly as before.
       */}
       <details open={recordId !== undefined} className="mt-4 pt-1">
-        <summary className="cursor-pointer font-heading text-sm font-semibold tracking-tight">
+        <summary className={`${HIT} cursor-pointer font-heading text-sm font-semibold tracking-tight before:inset-x-0`}>
           Everything else
         </summary>
         <p className="mt-1 mb-2 text-xs text-muted-foreground">
@@ -891,7 +902,8 @@ export function RecordForm({
           </Row>
 
           <Row label="Reissue" htmlFor="isReissue">
-            <label className="flex items-center gap-2 text-sm">
+            {/* §T.6: the box by overlay, nothing drawn differently; under a coarse pointer the label is the box and its words and not the paper past them. */}
+            <label className={`${HIT} flex items-center gap-2 text-sm before:inset-x-0 pointer-coarse:w-fit`}>
               <input
                 id="isReissue"
                 type="checkbox"
@@ -930,7 +942,7 @@ export function RecordForm({
       </details>
 
       <div className="mt-4 flex items-center gap-2">
-        <Button type="submit" disabled={saving}>
+        <Button type="submit" disabled={saving} className="pointer-coarse:h-[44px]">
           {saving
             ? 'Saving…'
             : recordId !== undefined
@@ -941,7 +953,7 @@ export function RecordForm({
         </Button>
         <Link
           href={recordId === undefined ? '/' : `/records/${recordId}`}
-          className="text-sm text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+          className={`${HIT} text-sm text-muted-foreground underline-offset-2 before:-left-[4px] before:-right-[9px] hover:text-foreground hover:underline`}
         >
           Cancel
         </Link>

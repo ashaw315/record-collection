@@ -9,6 +9,7 @@ import { isUuid } from '@/lib/api/errors';
 import { toDiscogsId } from '@/lib/discogs/fields';
 import { loadDiscogsPrefill } from '../discogs-prefill';
 import { SCREEN_FRAME } from '@/app/screen-frame';
+import { HIT_ALONE } from '@/app/hit-area';
 
 /**
  * SPEC.md §10 `/records/new`: "Form prefilled from a lookup result, or blank
@@ -85,7 +86,7 @@ export default async function NewRecordPage({ searchParams }: PageProps<'/record
       <main data-screen-frame="" className={`${SCREEN_FRAME} py-6`}>
         <Link
           href="/"
-          className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+          className={`${HIT_ALONE} text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline`}
         >
           ← Collection
         </Link>
