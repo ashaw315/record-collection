@@ -41885,3 +41885,56 @@ ledger clean, tree unchanged — OK`. Step level.
 words**, centred on the box top to bottom; it is not a square of 44
 about the box, which would reach 14 past the field's left edge where
 the rule gives 9. For Design to say if a square was meant.
+
+## The whole app's count under a coarse pointer: what is left of the floor (11 Oct, night)
+
+The coordinator: the ruling is a rule about the app, and the five
+screens were a work split, so count everything once. `e2e/capture/
+floor-count.capture.ts` (CAPTURE=1, the capture project, the test
+database) reads every route and each state it knows how to open, with
+touch on, at 390 and 1280; `docs/captures/floor-count/floor-count.md`
+and `.json`. **The counts are the fixtures' (seventeen records, six
+genres); the kinds of control are the app's.** A measurement, no code
+changed: 362 controls at 390, 143 under 44; 414 at 1280, 164 under.
+
+**Nothing under 44:** sign in; the header and its open menu; the
+collection's table, grid and an open filter; the sleeve; the record
+form, new and editing; look up at rest; the want list, both views;
+stats; the shared dialog (step 128).
+
+**What is left, by screen (390 unless said):**
+- **Manage, 124 of the 143** (130 of 164 at 1280). Six section names at
+  32.5 on every section; each new-row field and Add at 32; a row's
+  Edit and Delete at 28 (a tap has 41), Lineup at 28 (29); a genre's
+  parent select at 36; Suggest a hierarchy at 16.5. Held behind
+  Design's phone layout.
+- **A record's page, 9**: each genre link at 16 (six here, one per
+  genre), Manage → at 14, the image file field and the journal's date
+  field at 34. A closed screen.
+- **The want list's forms**: new item and edit item, 3 each (the way
+  back 13, the submit 32, Cancel 16); 9 each at 1280, where its six
+  fields are 36 beside their labels. The record form's ruling would
+  cover them as written.
+- **A want-list item's page, 2**: the way back, and Edit at 31.
+- **Suggestions, 2**: the way back and Manage. Read with no
+  suggestions on it.
+- **The shelf, at 1280 on a touchscreen, 4**: the three view names at
+  14 and Add record at 16.5; **and its panel, 1**: Open the full
+  record, 19.5.
+- **Look up's result card**: five a card, held (step 125); not opened
+  here.
+
+**Not counted, and why.** The shelf's records are drawn on a canvas and
+are not controls a reader of the page can find. States this tool does
+not open: a record's journal entry and image controls beyond what the
+page shows at rest; suggestions with results; a want-list row's market
+panel beyond the list; manage's opened Edit and Lineup; the form's
+opened + New (tested in step 129). The pages under `/wall/probe` are
+tools. The wall's overview and the not-found page have no control
+outside the header.
+
+**Two things the count needed.** The sleeve is read on its own: while
+it is open the page beneath read 0 rows for every control, which is the
+sleeve covering them and not nine defects. The no-JavaScript Apply
+beside the sort is `sr-only` and is left out by name: not drawn, so not
+a finger's.

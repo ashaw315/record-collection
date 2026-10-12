@@ -115,6 +115,7 @@ const GOVERNED = [
   /* The form's chips and labels, measured for Design: the same form, the same way in. */
   'e2e/sheet/form-fields.sheet.ts',
   'e2e/sheet/form-129.sheet.ts',
+  'e2e/capture/floor-count.capture.ts',
   /* Step 103d's air: the record form's edit state, reached by a record's id. */
   'e2e/sheet/air-103.sheet.ts',
   /*
