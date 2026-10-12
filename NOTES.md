@@ -42364,3 +42364,31 @@ the code:** `4285 passed, 6 failed, 25 skipped, tree unchanged — NOT OK
 Neither is worked round. Until both are ruled on, a worktree gate
 cannot be green on its unit half, and the gate step 133 owes is run in
 the working tree at two workers as before.
+
+## 12 Oct: the gate on 9449010 (step 133's, owed for the reader change). Green, one flaky
+
+**Gate: full suites, both projects, in the working tree at two workers.**
+- Unit: `4314 passed, 2 skipped, tree unchanged — OK`.
+- Playwright: `1180 passed, 1 flaky, 19 skipped, ledger clean, tree
+  unchanged — OK`. `[projects] chromium 804, capture 14, mobile 382`.
+  1.0 h against the usual 49 minutes; the load average was 77 over the
+  fifteen minutes before it started and about 20 when it ended, on six
+  cores, so the machine was busy with something else throughout. No
+  `[reset]`.
+- Nearest its limit: 22.5s of 30s (`sidebar-113.spec.ts:369` on the
+  phone project). Manage's new pointer tests are not among the ten
+  nearest, so the worry in the entry above did not hold at two workers.
+
+**The flaky one is not a timeout, and is logged rather than fixed.**
+`wall-arrival-104.spec.ts:254` on chromium, "at 390, where the shelf is
+the far view, the sentence and CLEAR FILTERS are there too": on the
+first attempt `[data-shelf-empty] [data-shelf-empty-sentence]` resolved
+to TWO elements, both "Nothing in the collection matches.", and passed
+on retry. The same test was one of the 26 failures at four workers. So
+for a moment the page holds the empty-shelf message twice. Whether both
+were drawn or one was hidden was not looked into; the page's
+accessibility snapshot at the failure lists the paragraph once. Not
+caused by step 133 as far as the diff says (it touches nothing under
+`src/app/wall/`). Artefacts were copied out of `test-results/` before
+anything else ran; they are in the session scratchpad and not in the
+repo.
