@@ -35,8 +35,22 @@ function loadEnvFile(path: string): DriverEnv {
   };
 }
 
+/**
+ * A gate runs in a worktree of its own (`scripts/gate.sh`), and `.env.local`
+ * is not copied there: the production credential does not travel. So the three
+ * tests that read the file have nothing to read, and they SKIP — on the marker
+ * `gate.sh` sets, and on nothing else.
+ *
+ * Not on the file being absent. Skipping then would stop guarding the day
+ * `.env.local` vanishes from the working tree, which is a guard that passes
+ * because the real thing is not there. Without the marker a missing file is
+ * still a failure, here and anywhere.
+ */
+const GATE_WORKTREE = process.env.GATE_WORKTREE === '1';
+const readsEnvLocal = it.skipIf(GATE_WORKTREE);
+
 describe('the default dev server targets Neon, not the test database', () => {
-  it('.env.local does not define TEST_DATABASE_URL', () => {
+  readsEnvLocal('.env.local does not define TEST_DATABASE_URL', () => {
     /**
      * Asserted against the FILE, not just the resolved outcome, because that is
      * where the regression would be reintroduced — someone adding the variable
@@ -52,13 +66,13 @@ describe('the default dev server targets Neon, not the test database', () => {
     expect(assignment, 'TEST_DATABASE_URL must live in .env.test only').toBeUndefined();
   });
 
-  it('resolves to the neon driver with the dev environment', () => {
+  readsEnvLocal('resolves to the neon driver with the dev environment', () => {
     const selected = resolveDriver(loadEnvFile('.env.local'));
 
     expect(selected.driver).toBe('neon');
   });
 
-  it('resolves to a host that is not localhost', () => {
+  readsEnvLocal('resolves to a host that is not localhost', () => {
     // The property that actually matters: whatever the driver is called, the
     // dev server must not be writing to the disposable container.
     const { connectionString } = resolveDriver(loadEnvFile('.env.local'));

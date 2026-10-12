@@ -56,8 +56,17 @@ const remote = isNeonTestBranchConfigured(branchUrl);
  * the host is the SERVICE name rather than localhost — the address travels to
  * the proxy and is resolved there.
  */
-const LOCAL_URL =
-  'postgres://postgres:postgres@postgres:5432/record_collection_test?sslmode=disable';
+/**
+ * The DATABASE is the one this run was pointed at. A gate in its worktree runs
+ * on a database of its own (`scripts/gate.sh`), and a name written out here
+ * sent its probe rows into the working tree's database while a second run was
+ * reading it.
+ */
+const LOCAL_DATABASE =
+  process.env.TEST_DATABASE_URL === undefined || process.env.TEST_DATABASE_URL === ''
+    ? 'record_collection_test'
+    : new URL(process.env.TEST_DATABASE_URL).pathname.slice(1);
+const LOCAL_URL = `postgres://postgres:postgres@postgres:5432/${LOCAL_DATABASE}?sslmode=disable`;
 
 /** Always configured: the proxy is the default, a branch the exception. */
 const configured = true;
