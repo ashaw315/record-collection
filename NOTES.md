@@ -42212,3 +42212,22 @@ under a coarse pointer at any width the Collection opens on the grid.
 Unnumbered, not ordered yet. It removes the 17 records and the rail's
 four from the coarse count when built, and makes step 130's rail rule
 unreachable.
+
+## 12 Oct: the gate on 6691013, both halves green in one pass
+
+Gate, full suites, on `6691013` (steps 129 to 132, the reader's
+changes, `whole-page`, the stylesheet's rail rule):
+
+- Unit, `npm test`: `4314 passed, 2 skipped, tree unchanged — OK`.
+- Playwright, both projects, no file argument: `1161 passed, 19
+  skipped, ledger clean, tree unchanged — OK`, `[projects] chromium 794,
+  capture 14, mobile 372`, 48.6 minutes. No flaky, no retry, no sleep.
+- **No `[reset]` line: the second whole run with no kept connection.**
+  Two clean gates and every step-level run between them; the earlier
+  rate was about one gate in two.
+- Thinnest margin: `wall-route.spec.ts:218` on chromium, 13.6s of 30s,
+  55% left.
+
+This is what covers step 130, whose assembled green did not hold (the
+entry above). The record form, the want list and stats have no code
+owed under the floor down; across is open on the cases listed above.
