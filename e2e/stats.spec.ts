@@ -476,10 +476,11 @@ for (const pointer of POINTERS) test.describe(`stats under a ${pointer} pointer`
     trackArtist(artist.id as string);
     const parent = await post(page, '/api/genres', { name: `Punk-${suffix}` });
     const child = await post(page, '/api/genres', { name: `UK82-${suffix}`, parentGenreId: parent.id });
+    /* Two decades as well as two labels and two stores, so each of the three bar lists has a pitch to read. */
     for (const n of [1, 2]) {
       const label = await post(page, '/api/labels', { name: `Label${n}-${suffix}` });
       const store = await post(page, '/api/stores', { name: `Shop${n}-${suffix}` });
-      await post(page, '/api/records', { title: `Reach ${n} ${suffix}`, artistId: artist.id, genreIds: [n === 1 ? child.id : parent.id], labelId: label.id, storeId: store.id, releaseYear: 1982, purchasePrice: '20.00' });
+      await post(page, '/api/records', { title: `Reach ${n} ${suffix}`, artistId: artist.id, genreIds: [n === 1 ? child.id : parent.id], labelId: label.id, storeId: store.id, releaseYear: 1972 + n * 10, purchasePrice: '20.00' });
     }
     await page.setViewportSize({ width, height: 844 });
     await page.goto(`/stats?artistId=${artist.id}`);
@@ -504,10 +505,14 @@ for (const pointer of POINTERS) test.describe(`stats under a ${pointer} pointer`
       const items = Array.from(document.querySelectorAll('[data-testid="by-label"] li'));
       const a = items.find((li) => (li.textContent ?? '').includes(first ?? ''));
       const b = items.find((li) => (li.textContent ?? '').includes(second ?? ''));
-      return { genre: row, pitch: a === undefined || b === undefined ? null : Math.abs(b.getBoundingClientRect().top - a.getBoundingClientRect().top) };
+      const decades = Array.from(document.querySelectorAll('[data-testid="by-decade"] li')).map((li) => li.getBoundingClientRect().top);
+      return { genre: row, pitch: a === undefined || b === undefined ? null : Math.abs(b.getBoundingClientRect().top - a.getBoundingClientRect().top), decades: decades.slice(1).map((top, index) => Math.round((top - (decades[index] ?? 0)) * 10) / 10) };
     }, [child.id as string, `Label1-${suffix}`, `Label2-${suffix}`]);
     expect.soft(drawn.genre, `at ${width}: a genre’s row under a ${pointer} pointer`).toBeCloseTo(ROWS[pointer].genre, 0);
     expect.soft(drawn.pitch, `at ${width}: from one label’s row to the next under a ${pointer} pointer`).toBeCloseTo(ROWS[pointer].pitch, 0);
+    /* Stats' pass, step 131: "Stats' three bar lists, decade, label and store, share one row pitch, 44 under a coarse pointer and the drawn size under a fine one." Coarse fails against decades left at 33.5 beside rows of 44. */
+    expect(drawn.decades.length, 'the precondition: there are two decades, so there is a pitch to read').toBeGreaterThan(0);
+    expect.soft(drawn.decades.filter((pitch) => Math.abs(pitch - ROWS[pointer].pitch) > 0.5), `at ${width}: from one decade’s row to the next under a ${pointer} pointer is ${ROWS[pointer].pitch} (${drawn.decades.join(', ')})`).toEqual([]);
   });
  }
 });

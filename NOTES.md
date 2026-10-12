@@ -42087,3 +42087,32 @@ mobile project over the same 86 files: `295 passed, 1 skipped, ledger
 clean, tree unchanged — OK`, `[projects] mobile 296`. Unit under `src`:
 `2319 passed`. Typecheck and build clean; lint 0 errors, 27 warnings.
 No `[reset]` line in any of them. No gate.
+
+## Step 131: stats' pass (12 Oct)
+
+Design's unnumbered step. **Built:** the decades take the pitch the
+label and store lists have, 44 under a coarse pointer and 33.5 under a
+fine one (`stats/page.tsx`: the list's coarse classes no longer wait on
+the rows being links). **Nothing to remove:** the blank paper was the
+capture's (the entry of 11 Oct, late). **The pair:** reported there.
+
+Test first: the stats test now seeds two decades and reads the pitch
+between them. Against the old source 8 of 8 coarse failed (`33.5`) and
+8 of 8 fine passed; the first attempt had one decade and failed its own
+precondition under both pointers, which is what the precondition is
+for. With the build, `stats.spec.ts` on both projects: `38 passed`.
+
+Re-counted on the real collection, coarse (`docs/captures/stats-131/`,
+`e2e/sheet/pass.sheet.ts`, the sheet all three passes use): 42 of 42 at
+320, 390 and 768; the page 2462, 2408 and 2388 long, from 2401, 2347
+and 2328. Pictures at 390 coarse and 1280 fine.
+
+**Across, read and not held:** 9 of the 42 are under 44 across their
+middle. A genre's link is as wide as its name and alone on its row, so
+"Dub" is its 25 or so and no neighbour's gap can grow. For Design: the
+row's width, or 9 past each end.
+
+Step level: the seven specs that open stats, by grep, both projects:
+`83 passed, ledger clean, tree unchanged — OK`, `[projects] chromium
+64, capture 0, mobile 19`. Unit under `src/app/stats`: `29 passed`.
+Typecheck and build clean; lint 0 errors, 27 warnings. No gate.

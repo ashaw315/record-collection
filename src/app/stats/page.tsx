@@ -70,13 +70,15 @@ function Breakdown({
         /*
           §9.3, step 126: where the rows are links they stack with nothing
           between, so the row is 44, the name and its bar in its middle,
-          and the 8 there was between rows is inside it. Decades are not
-          links and keep the pitch they had. Where the pointer is coarse
-          (step 127): with a mouse every list has the pitch it had.
+          and the 8 there was between rows is inside it. Where the pointer
+          is coarse (step 127): with a mouse every list has the pitch it
+          had. Decades are not links and take the same pitch (stats' pass,
+          step 131): "Stats' three bar lists, decade, label and store,
+          share one row pitch."
         */
-        <ul className={href === undefined ? 'space-y-2' : 'space-y-2 pointer-coarse:space-y-0'}>
+        <ul className="space-y-2 pointer-coarse:space-y-0">
           {rows.map((row) => (
-            <li key={row.id} className={href === undefined ? undefined : `pointer-coarse:flex pointer-coarse:min-h-[44px] pointer-coarse:flex-col pointer-coarse:justify-center ${ROW_CUTS}`}>
+            <li key={row.id} className={`pointer-coarse:flex pointer-coarse:min-h-[44px] pointer-coarse:flex-col pointer-coarse:justify-center ${ROW_CUTS}`}>
               <div className="flex items-baseline justify-between gap-3 text-detail">
                 {/* Linked where the collection can be filtered by it: a
                     breakdown is only useful if you can open what it counts. */}
