@@ -2,6 +2,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test, type Page } from '@playwright/test';
 import { pointerIs } from '../hit-area';
+import { wholePage } from '../whole-page';
 import { login } from './login';
 
 /**
@@ -44,7 +45,7 @@ test('the want list, stats and manage, one pointer per width', async ({ browser 
         await settle(page);
         const height = await page.evaluate(() => document.documentElement.scrollHeight);
         const file = `${slug}-w${width}-${pointer}-pointer-h${height}.png`;
-        await page.screenshot({ path: join(OUT, file), fullPage: true });
+        await wholePage(page, join(OUT, file));
         md.push(`| ${file} | ${name} | ${width} | ${pointer} | ${height} tall |`);
       }
       if (pointer === 'fine') continue;
@@ -61,7 +62,7 @@ test('the want list, stats and manage, one pointer per width', async ({ browser 
         await page.screenshot({ path: join(OUT, `${slug}-first-view.png`) });
         /* The whole page at the width it scrolls to, so nothing is cut at the window's edge. */
         await page.setViewportSize({ width: Math.max(width, scrolls), height: 844 });
-        await page.screenshot({ path: join(OUT, `${slug}-whole.png`), fullPage: true });
+        await wholePage(page, join(OUT, `${slug}-whole.png`));
         await page.setViewportSize({ width, height: 844 });
         md.push(`| ${slug}-first-view.png | Manage, ${name}: what the window shows | ${width} | ${pointer} | scrolls to ${scrolls} wide |`);
         md.push(`| ${slug}-whole.png | Manage, ${name}: the whole page, as wide as it scrolls | ${width} | ${pointer} | scrolls to ${scrolls} wide |`);

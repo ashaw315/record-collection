@@ -41938,3 +41938,80 @@ it is open the page beneath read 0 rows for every control, which is the
 sleeve covering them and not nine defects. The no-JavaScript Apply
 beside the sort is `sr-only` and is left out by name: not drawn, so not
 a finger's.
+
+## 11 Oct, late: the blank paper was the camera; the count reconciled; the shelf's records are 14 across to a finger
+
+**Stats' blank paper is not in the page. Every full-page capture taken
+under a coarse pointer was drawn under a fine one.** Chromium's
+`fullPage` screenshot drops the touch emulation while it draws and
+leaves it dropped until the next navigation. Measured on stats at 390
+with touch on: coarse and 957 tall at rest; the same after a window
+screenshot, after a resize, and after a window screenshot of a window
+as tall as the page; **fine and 844 tall after a full-page
+screenshot**, still fine after a resize, coarse again after a
+navigation. So the picture is the fine pointer's drawing on a sheet the
+coarse page's length: on the real collection, content to about 1,839
+on a sheet of 2,347, the 508 the floor added, blank. The coordinator's
+arithmetic (508 against Design's 557) was the right trail; it ends at
+the capture and not in the layout. No overlay is in flow: the page
+under a coarse pointer has its rows at 44 and ends where its content
+does (`mainBottom` 957 against `scrollHeight` 957).
+
+- **Wrong pictures, all committed and left as they are:** the coarse
+  files in `hit-44-127/`, `for-design/` (the want list, its Acquired
+  view and stats at 390; manage has nothing scoped by pointer and is
+  unaffected) and `form-129/`. **Their numbers were read before the
+  screenshot each time and stand**; the file names' heights are right
+  and the drawings are not what the names say. `dialog-128/` is window
+  screenshots and is right.
+- **Retaken:** `docs/captures/for-design-2/` and `form-129-b/`, by
+  `e2e/whole-page.ts`: the window made as tall as the page, a window
+  screenshot, and the pointer read before and after, stopping if it
+  changed. Stats at 390 coarse now shows rows of 44 to the foot of By
+  store and no blank.
+- **The check:** `test/repo/coarse-captures.test.ts` fails any file
+  under `e2e/` that turns touch on and screenshots with `fullPage`.
+  Failed first, naming the three sheets.
+- **For Design:** the stats pass's clause "trace the blank paper below
+  By store ... and remove it" has nothing to remove. Its want-list and
+  stats pictures at 390 were the fine drawing; the retaken folder is
+  the one to rule from.
+
+**The count's 1280 total, reconciled: 160, not 164.** The row for the
+shelf with a record pulled read the whole page, so it counted the
+shelf's four a second time. It now reads the pulled record's own
+controls (3, 1 under). `docs/captures/floor-count-2/`: 362 controls
+and 143 under at 390; 388 and 160 at 1280. The 390 figures were right.
+
+**The shelf's records: I was wrong that they are on a canvas, and the
+hole is in what the reader measures.** A shelf record is an SVG link
+(`WallLabelled.tsx`, `a[data-seat]`), so the reader finds all
+seventeen, and it passed them: each one's box is about 142 by 232, the
+box round a slanted solid, and the floor as read is a height. **Across
+its middle a tap reaches a record over 14 or 15 pixels** (59 for the
+last on a shelf, which nothing stands in front of), measured at 1280,
+1440 and 1920 with touch on, the same at each. So the count's "22 of
+26 meet" on the shelf includes seventeen records that are 14 wide to a
+finger. This is the tablet case: above 1044, coarse, the shelf Adam
+could not target on his phone. Not fixed, by instruction.
+- *What it takes to measure:* nothing new in kind. The reader already
+  reads left and right reach from a control's edge; a reading ACROSS a
+  control's middle (the count of pixels on which a tap reaches it, as
+  it counts rows down) gives 14 here, and Design's new rule ("controls
+  side by side on one line meet the floor across as they do down") is
+  what it would be held to. No control on any other screen has been
+  read across either.
+- *Not read:* the shelf at 1100 on the test database showed no record
+  to read in ten seconds; not looked into.
+
+**Two reports Design asked for.**
+- *Is the want list's priority pressable?* No. It is a `span` with a
+  border (`WantListRow.tsx`), not a link or a button, and nothing
+  listens on it. By the pass's ruling it loses its box.
+- *What do the two numbers in a genre's pair count?* The first is the
+  records that carry that genre itself; the second is the distinct
+  records that carry it or any genre beneath it, counted once each
+  (`GenreTree.tsx`, `records.ts`: ids and not counts, so a record in
+  two sub-genres is one). A genre with nothing beneath it shows one
+  number. "5 · 5" is five of its own and nothing more beneath; "3 · 4"
+  is three of its own and one more in a genre beneath it.

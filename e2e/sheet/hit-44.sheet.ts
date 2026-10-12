@@ -2,6 +2,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test, type Page } from '@playwright/test';
 import { HIT_FLOOR, HIT_PAST, pointerIs, readReach, underFloor, type Reach } from '../hit-area';
+import { wholePage } from '../whole-page';
 import { login } from './login';
 
 /**
@@ -57,7 +58,7 @@ test('controls meeting 44 on the five screens, under each pointer, at 390 and 32
       const named = [...tally.entries()].slice(0, 8).map(([k, n]) => (n > 1 ? `${k} ×${n}` : k)).join('; ') + (tally.size > 8 ? `; and ${tally.size - 8} more kinds` : '');
       const height = await page.evaluate(() => document.documentElement.scrollHeight);
       md.push(`| ${pointer} | ${name} | ${width} | ${height} | ${reach.length} | **${reach.length - under.length}** | ${under.length} | ${reach.filter((r) => r.left > HIT_PAST || r.right > HIT_PAST).length} | ${off} | ${named} |`);
-      await page.screenshot({ path: join(OUT, `${name.toLowerCase().replace(/[^a-z]+/g, '-')}-w${width}-${pointer}-h${height}-meets${reach.length - under.length}of${reach.length}.png`), fullPage: true });
+      await wholePage(page, join(OUT, `${name.toLowerCase().replace(/[^a-z]+/g, '-')}-w${width}-${pointer}-h${height}-meets${reach.length - under.length}of${reach.length}.png`));
     };
 
     for (const width of [390, 320, 1280]) {

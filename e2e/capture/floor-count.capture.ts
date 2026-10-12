@@ -97,7 +97,8 @@ test('every control under 44 under a coarse pointer, by screen, at 390 and 1280'
     ['Collection, table, a filter open', async () => { await page.goto('/?view=table'); await settle(page); await page.locator('[data-filter-trigger]').first().click(); await page.waitForTimeout(500); }, BODY, [390, 1280]],
     ['Collection, grid', go('/?view=grid'), BODY, [390, 1280]],
     ['Collection, shelf', go('/?view=shelf'), BODY, [1280]],
-    ['Collection, shelf, a record pulled and its panel', async () => { await page.goto('/?view=shelf'); await settle(page); await page.locator('[data-seat] [data-spine]').first().click(); await page.getByTestId('record-panel').waitFor({ timeout: 15_000 }); await page.waitForTimeout(1_500); }, BODY, [1280]],
+    /* The pulled record's own controls alone: read with the page, this row counted the shelf's four a second time and the first total at 1280 was 164 for 160. */
+    ['Collection, shelf, a record pulled: its panel and controls', async () => { await page.goto('/?view=shelf'); await settle(page); await page.locator('[data-seat] [data-spine]').first().click(); await page.getByTestId('record-panel').waitFor({ timeout: 15_000 }); await page.waitForTimeout(1_500); }, '[data-testid="record-chrome"]', [1280]],
     ['Wall overview', go('/wall/overview'), BODY, [390, 1280]],
     ['A record', go(`/records/${record}`), BODY, [390, 1280]],
     /* The sleeve covers the page, so it alone is read: the page's controls beneath it are not a finger's while it is open. */

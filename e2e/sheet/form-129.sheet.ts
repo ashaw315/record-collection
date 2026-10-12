@@ -2,6 +2,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { test } from '@playwright/test';
 import { HIT_FLOOR, HIT_PAST, pointerIs, readReach, underFloor } from '../hit-area';
+import { wholePage } from '../whole-page';
 import { login } from './login';
 
 /**
@@ -54,7 +55,7 @@ test('the record form’s fields, chips and count, under each pointer, at 320, 3
         const read = byOrder[index];
         (hits[id] ??= {})[`${pointer} ${width}`] = read === undefined ? '?' : `${Math.max(read.tall, 0)}${read.tall >= 80 ? '+' : ''} (drawn ${drawn})`;
       });
-      await page.screenshot({ path: join(OUT, `record-form-edit-w${width}-${pointer}-pointer-h${m.height}-meets${reach.length - under.length}of${reach.length}.png`), fullPage: true });
+      await wholePage(page, join(OUT, `record-form-edit-w${width}-${pointer}-pointer-h${m.height}-meets${reach.length - under.length}of${reach.length}.png`));
     }
     await context.close();
   }
