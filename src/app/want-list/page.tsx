@@ -12,6 +12,7 @@ import type { Offset } from '@/lib/api/query-params';
 import { cn } from '@/lib/utils';
 import { SCREEN_FRAME } from '@/app/screen-frame';
 import { HIT_ALONE } from '@/app/hit-area';
+import { wantListCountLine } from './want-list-format';
 
 /**
  * SPEC.md §10 `/want-list`.
@@ -60,9 +61,8 @@ export default async function WantListPage({ searchParams }: PageProps<'/want-li
               {/* The pass (step 132): "The heading stays Want list in both views, because the nav and the view name already say Acquired." */}
               Want list
             </h1>
-            <p className="mt-0.5 text-lede text-muted-foreground">
-              {total === 1 ? '1 record' : `${total} records`}
-              {showAcquired ? ' acquired' : ' still wanted'}
+            <p data-want-list-count="" className="mt-0.5 text-lede text-muted-foreground">
+              {wantListCountLine(total, showAcquired)}
             </p>
           </div>
 

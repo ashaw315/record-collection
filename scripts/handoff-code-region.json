@@ -118,5 +118,17 @@
     "before": "No step: §G.7",
     "why": "Code's number for Design's two unnumbered steps \"no shelf below the fork\" and \"the shelf for a fine pointer only\", taken as one by the coordinator's ruling and entered in the commit that builds them.",
     "text": "134. **Done: built; three things for Design.** **§W.24 — the shelf where it is offered: Code's number for the two unnumbered steps above, as one.** The shelf is offered where the window is 1044 or wider and the primary pointer is fine. An address that names no view carries the shelf and the grid, and a media query shows one: so a bare `/` draws the grid below 1044 and under a coarse pointer at any width, the address stays `/`, widening brings the shelf back, and scripting off draws the same. SHELF leaves the view names by the same query, leaving TABLE and GRID, each 44 to a finger. `?view=grid` and `?view=table` are honoured anywhere and carry that view alone. `?view=shelf` arriving where the shelf is not offered draws the grid and has the view cleared from the address by replacement, never a push; where it is offered it stands. Nothing is stored. For Design: (1) \"a stored preference\" names a thing the build never had; the view lives in the address and nowhere else. (2) Widening restores the shelf on a bare address, which is the coordinator's reading and not the ruling's words. (3) The ruling's 1044 is not the built fork: §W.26 moved the near view's fork to the landing's 1274, so from 1044 to 1273 the shelf that is offered is the far view, as it was before this step. Not done: the far view's narrow route and the band's narrow rules are still in the code, because 1044 to 1273 still uses them; the rail's coarse rules in the stylesheet are reached by nothing now. Captures on the real collection, read-only: `docs/captures/shelf-134/`."
+  },
+  {
+    "id": "step-135",
+    "before": "No step: §G.7",
+    "why": "Code's number for Design's ruling of 12 Oct on stats' genre figures, relayed by the coordinator; it arrived as a ruling and not as a numbered step.",
+    "text": "135. **Done: built.** **§T.6 — stats: a genre row shows one number.** The distinct records carrying the genre or anything beneath it; a record carrying both a genre and one beneath it counts once. It was two numbers on a row with a branch, the genre's own and its branch's, and one on a row without. **That pair was built and is in a committed capture** (`docs/captures/stats-131/`, both pictures, e.g. Rock and Jazz), so this withdraws something drawn and is not a draft's fix; the pair came from SPEC.md's amendment A66, whose text still describes it. Rows with a branch still open. Captures on the real collection, read-only: `docs/captures/stats-135/`."
+  },
+  {
+    "id": "step-136",
+    "before": "No step: §G.7",
+    "why": "Code's number for Design's ruling of 12 Oct on the want list's count line, relayed by the coordinator.",
+    "text": "136. **Done: built; one reading for Design.** **§T.6 — the want list: the count line has no noun.** It reads `0 acquired`, `4 acquired`, and on the other view `32 still wanted`. It read `0 records acquired` and `32 records still wanted`. **That line was built and is in committed captures** (`docs/captures/want-list-132/`, all four pictures, and `docs/captures/want-list-empty-112/`, all six), so this too withdraws something drawn. For Design: the ruling's words are about Acquired; Still wanted drops the noun by the same reason and is Code's reading. Captures on the real collection, read-only: `docs/captures/want-list-136/`."
   }
 ]

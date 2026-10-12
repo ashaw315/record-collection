@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { flattenPairs, genrePairs, type GenreCount } from './genre-pairs';
+import { flattenPairs, genreFigure, genrePairs, type GenreCount } from './genre-pairs';
 
 /**
  * A66's cases, taken from the real collection rather than invented:
@@ -45,11 +45,13 @@ const RECORDS = new Map<string, ReadonlySet<string>>([
 
 const tree = () => genrePairs(ROWS, RECORDS);
 
-/** What a row puts on screen: a pair where a branch exists, one number where not. */
-const render = (name: string) => {
-  const node = find(name);
-  return node.hasBranch ? `${node.direct} · ${node.subtree}` : String(node.direct);
-};
+/**
+ * What a row puts on screen. It was a pair where a branch exists (A66); by
+ * Design's ruling of 12 Oct it is one number, "the distinct records carrying
+ * the genre or anything beneath it", so the rendering claims below changed
+ * with the ruling. The data's claims, `direct` and `subtree`, did not.
+ */
+const render = (name: string) => String(genreFigure(find(name)));
 const find = (name: string) => {
   const node = flattenPairs(tree()).find((row) => row.name === name);
   if (node === undefined) throw new Error(`${name} is not in the tree`);
@@ -121,11 +123,16 @@ describe('the cases the pair exists to distinguish', () => {
    * `Black Metal 0` share a FORMAT and differ in value, which is the fourth
    * case: one number is right for both, and the value is the information.
    */
-  it('renders the four cases as four different things', () => {
-    const rendered = [render('Jazz'), render('Rock'), render('Dub'), render('Black Metal')];
+  it('renders each row as one number: the distinct records under the genre or anything beneath it', () => {
+    const rendered = [render('Jazz'), render('Rock'), render('Punk'), render('Dub'), render('Black Metal')];
 
-    expect(rendered).toEqual(['3 · 4', '10 · 10', '1', '0']);
-    expect(new Set(rendered).size, 'four cases, four renderings').toBe(4);
+    /*
+      Fails against the pair ('3 · 4', '10 · 10', '0 · 1'), against `direct`
+      alone (Jazz 3, Punk 0) and against a sum of the two (Jazz 6: j1 and j2
+      carry both Jazz and Fusion and count once; Rock 11: r1 carries Rock and
+      UK82).
+    */
+    expect(rendered).toEqual(['4', '10', '1', '1', '0']);
   });
 
   /**
@@ -155,7 +162,7 @@ describe('the cases the pair exists to distinguish', () => {
       The point of the case: this is NOT `Black Metal 0`. Same numbers, different
       format, because one was walked and the other had nothing to walk.
     */
-    expect(`${shell.direct} · ${shell.subtree}`).toBe('0 · 0');
+    expect(String(genreFigure(shell)), 'the ruling of 12 Oct: one number, with or without a branch').toBe('0');
     expect(render('Black Metal'), 'the childless zero renders one number').toBe('0');
   });
 });

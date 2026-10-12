@@ -8,6 +8,7 @@ import {
   priorityLabel,
   huntFacts,
   targetPressingSummary,
+  wantListCountLine,
 } from './want-list-format';
 
 /**
@@ -313,5 +314,21 @@ describe('what the hunt section shows', () => {
     });
 
     expect(JSON.stringify(facts)).not.toContain('40.00');
+  });
+});
+
+describe('the count line under the heading', () => {
+  /*
+    Design's ruling of 12 Oct: the count line drops "records", because "the
+    view name already says what's being counted". Fails against the line as
+    built: "0 records acquired", "1 record still wanted".
+  */
+  it('is the number and the view, with no noun between them', () => {
+    expect(wantListCountLine(0, true)).toBe('0 acquired');
+    expect(wantListCountLine(1, true)).toBe('1 acquired');
+    expect(wantListCountLine(4, true)).toBe('4 acquired');
+    expect(wantListCountLine(0, false)).toBe('0 still wanted');
+    expect(wantListCountLine(1, false)).toBe('1 still wanted');
+    expect(wantListCountLine(32, false)).toBe('32 still wanted');
   });
 });

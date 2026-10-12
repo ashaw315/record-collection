@@ -166,6 +166,19 @@ export function genrePairs(
   return shape(roots, 0, new Set());
 }
 
+/**
+ * The one number a row shows: "the distinct records carrying the genre or
+ * anything beneath it" (Design, 12 Oct). "That's what a reader means by 'how
+ * many Jazz records'. Two unlabelled numbers read as one number repeated."
+ *
+ * This withdraws A66's pair as what is DRAWN. `direct` is still computed and
+ * is no longer shown; a record carrying both Jazz and Bebop is in Jazz's set
+ * once, which is `subtree`'s own rule.
+ */
+export function genreFigure(node: Pick<GenrePairNode, 'subtree'>): number {
+  return node.subtree;
+}
+
 /** Depth-first flattening, for rendering the tree as a list of rows. */
 export function flattenPairs(nodes: GenrePairNode[]): GenrePairNode[] {
   return nodes.flatMap((node) => [node, ...flattenPairs(node.children)]);

@@ -1,9 +1,12 @@
 import Link from 'next/link';
-import { flattenPairs, type GenrePairNode } from './genre-pairs';
+import { flattenPairs, genreFigure, type GenrePairNode } from './genre-pairs';
 import { HIT_ROW, ROW_CUTS } from '@/app/hit-area';
 
 /**
- * §10/A66: `/stats`' genre series is a TREE OF PAIRS, not a chart.
+ * §10/A66: `/stats`' genre series is a tree, not a chart. A66 drew a pair
+ * of numbers on each row with a branch; Design's ruling of 12 Oct makes it
+ * one number (`genreFigure`), and what follows about two numbers is the
+ * reasoning for a component of its own, which still holds for a tree.
  *
  * **A distinct component rather than a `Breakdown` variant**, and the cost
  * decided it rather than the amendment agreeing. `Breakdown` is called four
@@ -61,17 +64,15 @@ function Row({ node, href }: { node: GenrePairNode; href: (id: string) => string
       </span>
 
       {/*
-        **The pair, where a branch exists to walk.** `Rock 10 · 10`'s second
-        number is a receipt — the branch was walked and added nothing — while
-        `Dub 1` has no branch, so a second number would describe a set that does
-        not exist. **The absence of the second figure IS the distinction**, so a
-        childless row carries no other mark.
+        One number (Design, 12 Oct), where A66 drew a pair on a row with a
+        branch: "Two unlabelled numbers read as one number repeated." The
+        test id keeps its name; four specs find the figure by it.
       */}
       <span
         data-testid={`genre-pair-${node.id}`}
         className="shrink-0 font-mono tabular-nums"
       >
-        {node.hasBranch ? `${node.direct} · ${node.subtree}` : node.direct}
+        {genreFigure(node)}
       </span>
      </div>
     </div>
@@ -111,15 +112,9 @@ export function GenreTree({
       <h2 className="mb-2 font-heading text-title font-semibold tracking-tight">By genre</h2>
 
       {/*
-        **The collapse is a default VIEW STATE, not a different format.** The
-        pair is the format at every depth; collapsing to top level is what pays
-        the row cost, and a collapsed parent's subtree count states what is
-        underneath without expanding it.
-
-        Eleven of seventeen rendering as single numbers is the design working
-        rather than diluting: a flat breakdown is the pair collapsed, same row
-        grammar. A device appearing on all seventeen rows would be wallpaper —
-        a mark whose value never varies — and here the value IS the information.
+        Collapsed to the top level by default. A collapsed parent's number
+        already counts what is beneath it, so nothing is hidden by the
+        collapse but the rows themselves.
       */}
       {nodes.map((node) => (
         <Branch key={node.id} node={node} href={href} />

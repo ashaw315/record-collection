@@ -318,7 +318,7 @@ test('a stocked collection keeps its per-section absence sentences', async ({ pa
  *
  * Scoped with `?artistId=` so the tree counts only this fixture's records.
  */
-test('the genre tree renders the pair where a branch exists, one number where not', async ({
+test('the genre tree renders one number a row: the distinct records under the genre or anything beneath it', async ({
   page,
 }) => {
   const suffix = makeSuffix();
@@ -360,11 +360,14 @@ test('the genre tree renders the pair where a branch exists, one number where no
     **The collapsed view carries the argument.** Rock's pair is the receipt and
     Dub's single number is the collapse, and both are visible without a click.
   */
-  await expect(page.getByTestId(`genre-pair-${rock.id}`), 'the receipt').toHaveText('1 · 1');
-  await expect(
-    page.getByTestId(`genre-pair-${dub.id}`),
-    'no branch, so no second figure',
-  ).toHaveText('1');
+  /*
+    Design's ruling of 12 Oct: one number, "the distinct records carrying the
+    genre or anything beneath it". These three read '1 · 1', '1' and '0 · 1'
+    as a pair; the claim changed with the ruling. Rock's record carries Rock
+    and UK82 beneath it and is one record, not two.
+  */
+  await expect(page.getByTestId(`genre-pair-${rock.id}`), 'one record, carried twice in the branch, counted once').toHaveText('1');
+  await expect(page.getByTestId(`genre-pair-${dub.id}`), 'no branch').toHaveText('1');
 
   /*
     **Punk and Black Metal are reachable only through expansion**, which is why
@@ -376,8 +379,8 @@ test('the genre tree renders the pair where a branch exists, one number where no
 
   await expect(
     page.getByTestId(`genre-pair-${punk.id}`),
-    'nothing of its own, something below',
-  ).toHaveText('0 · 1');
+    'nothing of its own, one record beneath it',
+  ).toHaveText('1');
 
   await page.getByTestId(`genre-branch-${metal.id}`).locator('summary').first().click();
   const black = page.getByTestId(/^genre-pair-/).filter({ hasText: /^0$/ });
@@ -389,7 +392,12 @@ test('the genre tree renders the pair where a branch exists, one number where no
  * different numbers. This is the discriminating assertion at the screen layer:
  * `genre-pairs.test.ts` makes the same claim about the data.
  */
-test('a zero that was walked and a zero with nothing to walk look different', async ({ page }) => {
+/*
+  Claim reversed by Design's ruling of 12 Oct. This held that a walked zero
+  ('0 · 0') and a childless zero ('0') render differently; with one number a
+  row they render the same, and that is now what it holds.
+*/
+test('a genre holding nothing reads 0, with a branch beneath it or without', async ({ page }) => {
   const suffix = makeSuffix();
   const artist = await post(page, '/api/artists', { name: `Zeros-${suffix}` });
   trackArtist(artist.id as string);
@@ -417,11 +425,11 @@ test('a zero that was walked and a zero with nothing to walk look different', as
 
   await expect(
     page.getByTestId(`genre-pair-${shell.id}`),
-    'the branch was walked and found nothing',
-  ).toHaveText('0 · 0');
+    'a branch with nothing in it',
+  ).toHaveText('0');
   await expect(
     page.getByTestId(`genre-pair-${lone.id}`),
-    'nothing to walk, so one number',
+    'no branch',
   ).toHaveText('0');
 });
 

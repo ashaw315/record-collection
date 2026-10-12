@@ -1283,3 +1283,11 @@ for (const width of [320, 390, 768, 1280]) {
     expect.soft(mark[1] === 'rgba(0, 0, 0, 0)' || mark[1] === mark[2], 'and no fill').toBe(true);
   });
 }
+
+/* Design's ruling of 12 Oct: "The view name already says what's being counted." Fails against "N records acquired" and "N records still wanted". */
+test('the count line under the heading is the number and the view, with no "records"', async ({ page }) => {
+  for (const [path, line] of [['/want-list', /^\d+ still wanted$/], ['/want-list?acquired=true', /^\d+ acquired$/]] as const) {
+    await page.goto(path);
+    await expect(page.locator('main [data-want-list-count]')).toHaveText(line);
+  }
+});

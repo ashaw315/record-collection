@@ -42816,3 +42816,67 @@ third of its budget. Ten other tests in that run passed over 15s the
 same way (`images-row-56:93` 27.6, `record-navigation:292` 24.6); what
 would name the cause is a trace kept for any pass over half its
 budget, which the config does not do and nobody has asked for.
+
+## 12 Oct: steps 135 and 136. Two of Design's three rulings, which had not reached Code
+
+They arrived in the coordinator's message of this afternoon and were
+in no earlier message and not in the handoff. Numbered by Code.
+
+**135, stats: a genre row shows one number,** "the distinct records
+carrying the genre or anything beneath it". `genreFigure` in
+`genre-pairs.ts` returns the subtree's count, which was already a set
+and so already distinct; the row draws it. `direct` is still computed
+and no longer shown. Rows with a branch still open.
+
+**136, the want list: the count line has no noun.** `wantListCountLine`
+in `want-list-format.ts`: "0 acquired", "32 still wanted". Still wanted
+is my reading: the ruling's example is Acquired, and its reason ("the
+view name already says what's being counted") is true of both.
+
+**Both were built and both are in committed captures, so these are
+withdrawals of something drawn and not fixes to a draft.** The pair:
+`docs/captures/stats-131/`, both pictures. "N records acquired" and
+"N records still wanted": `docs/captures/want-list-132/`, all four,
+and `docs/captures/want-list-empty-112/`, all six ("0 records
+acquired", "0 records still wanted"). No capture's text and no test
+asserted the count line's words; the pair was asserted in
+`genre-pairs.test.ts` and `stats.spec.ts`. The entries are Design's
+to write.
+
+**This contradicts SPEC.md as written and I built it anyway, on the
+ruling.** A66 (SPEC §10, "a tree of pairs") is the amendment that
+made the pair, with its argument that one number collapses three
+states. SPEC.md still says so. Not edited: said here and in the
+handoff for whoever amends it.
+
+**Tests whose claim changed (5), by the ruling:**
+- `genre-pairs.test.ts`: "renders the four cases as four different
+  things" ('3 · 4', '10 · 10', '1', '0') is now "renders each row as
+  one number" ('4', '10', '1', '1', '0'), and names what it fails
+  against: the pair, `direct` alone, and a sum (Jazz 6, Rock 11). The
+  walked-zero case reads '0'. The data's tests on `direct` and
+  `subtree` are untouched.
+- `stats.spec.ts`: the tree test read '1 · 1', '1', '0 · 1' and reads
+  '1', '1', '1'; "a zero that was walked and a zero with nothing to
+  walk look different" is REVERSED, now "a genre holding nothing reads
+  0, with a branch beneath it or without".
+New: the count line's unit test and one in `want-list.spec.ts`.
+
+**Fail first.** Unit: `genreFigure` and `wantListCountLine` absent.
+Browser, chromium: `3 passed, 4 failed … NOT OK` — "Received: 1 · 1",
+"Received: 0 · 0", "0 records still wanted" (the fourth is the
+address test in the entry above). **Step level, with the build:**
+`src/app/stats` and `src/app/want-list`, `102 passed, tree unchanged —
+OK`; `stats.spec.ts`, `want-list.spec.ts` and `shelf-offered-134`
+whole on both projects, `133 passed, ledger clean, tree unchanged —
+OK`. By grep no other spec reads the genre figure. Typecheck and
+build clean; lint 0 errors, 27 warnings.
+
+**Captured on the real collection, read-only:**
+`docs/captures/stats-135/` and `docs/captures/want-list-136/`. Page
+heights and floor counts are what they were (stats 1820 and 2408, 42
+of 42 coarse; the want list 32 of 32 and 4 of 4): nothing moved.
+
+**Seen, not touched:** By store on the same screen draws "3 · $23.00",
+a count and a sum joined the way the genre pair was. It is labelled by
+its currency sign and nobody has ruled on it.

@@ -13,6 +13,14 @@ import { formatMoney } from '@/lib/money';
  * which is worse than obviously broken.
  */
 
+/**
+ * The line under the heading. No noun: "The view name already says what's
+ * being counted" (Design, 12 Oct). It read "0 records acquired".
+ */
+export function wantListCountLine(total: number, acquired: boolean): string {
+  return `${total} ${acquired ? 'acquired' : 'still wanted'}`;
+}
+
 /** About the PRESSING. Never about price, deals, value or worth. */
 export const BEST_DIG_LABEL = 'Best dig — the pressing to hunt for';
 
