@@ -41845,3 +41845,43 @@ lint 0 errors, 27 warnings. No `[reset]` line in either run. No gate.
 **Not done, and not ruled:** the want list's own forms (new item, edit
 item) and suggestions are not among the five screens and were not
 touched.
+
+## Step 129, after the report: two rules written down, and the Reissue box pressed (11 Oct, night)
+
+**A green assembled from two runs holds only when you can name exactly
+what changed between them and show that nothing in the files you are
+not re-running reads it.** Step 129's covering set was that: the 18-file
+run left 17 files green and failed twice in `record-form.spec.ts`; the
+one change after it was an assertion's tolerance inside that spec; no
+other file reads that spec; the spec was then run alone, 50 of 50. That
+is what separates it from "I reran the bit that failed", and where the
+change cannot be named or something else reads it, the whole set runs
+again.
+
+**The reader's two changes are corrections and not relaxations, and the
+fail-first is what shows it.** A box read as its own label, and a link
+read on its whole first line, were both made inside the step that needed
+them, which invites the question whether the reader now passes
+everything. It does not: against the unbuilt form, with both rules
+already in the reader, 8 of 8 coarse tests failed, on fields of 37,
+chips of 27, links of 16 to 21 and + New of 17. The instrument still
+reads short where the thing is short.
+
+**The Reissue box, pressed** (Design's save `7762857`: "a 44 overlay
+centred on its box, testing that a tap anywhere in it toggles the
+box"). The overlay was built in step 129; the test is new. Under a
+coarse pointer a tap at the overlay's top row, its middle and its
+bottom row (21 either side of the box's middle) each toggles the box,
+at 320, 390, 768 and 1280 on both engines. Staged against the label
+with its overlay taken off: all 8 coarse tests failed on the presses at
+21 above and below. Under a mouse, 21 below is paper at every width and
+21 above is paper from 640. **My first expectation for the mouse was
+wrong and the unbuilt behaviour corrected it:** below 640 the row's own
+"Reissue" label stands 9 above the box and a press on it has always
+gone to the box. `record-form.spec.ts` on both projects: `50 passed,
+ledger clean, tree unchanged — OK`. Step level.
+
+**As built, the overlay is 44 tall and as wide as the box and its
+words**, centred on the box top to bottom; it is not a square of 44
+about the box, which would reach 14 past the field's left edge where
+the rule gives 9. For Design to say if a square was meant.

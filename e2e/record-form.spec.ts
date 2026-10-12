@@ -685,6 +685,27 @@ for (const pointer of POINTERS) test.describe(`the record form under a ${pointer
       for (const [name, height] of [['Save changes', 32], ['Cancel', 20], ['Everything else', 20], ['+ New artist', 16], ['+ New tag', 16]] as const) expect.soft(reach.find((r) => r.name === name)?.height, `at ${width}: ${name} is drawn ${height} tall, as it was`).toBe(height);
     }
 
+    /*
+      Design, 11 Oct: "give the Reissue checkbox a 44 overlay centred on its
+      box, testing that a tap anywhere in it toggles the box." Pressed at the
+      overlay's top row, its middle and its bottom row, 21 either side of the
+      box's middle. Under a mouse there is no overlay: 21 below the box's
+      middle is paper and a press there changes nothing, and so is 21 above
+      it from 640. Below 640 the row's own label stands there, 9 above the
+      box, and a press on it went to the box before any of this.
+    */
+    const reissue = page.locator('#isReissue');
+    await reissue.scrollIntoViewIfNeeded();
+    for (const dy of [-21, 0, 21]) {
+      const at = await reissue.boundingBox();
+      if (at === null) throw new Error('no Reissue box');
+      const before = await reissue.isChecked();
+      if (pointer === 'coarse') await page.touchscreen.tap(at.x + at.width / 2, at.y + at.height / 2 + dy);
+      else await page.mouse.click(at.x + at.width / 2, at.y + at.height / 2 + dy);
+      const toggles = pointer === 'coarse' || dy === 0 || (dy < 0 && above);
+      expect.soft(await reissue.isChecked(), `at ${width}: a press ${dy} from the Reissue box’s middle ${toggles ? 'toggles it' : 'leaves it'}`).toBe(toggles ? !before : before);
+    }
+
     /* A + New, opened: a field with no drawn label and two buttons, which are boxes and are 44 in the box under a finger. */
     await page.getByRole('button', { name: '+ New artist' }).click();
     const opened = (await readReach(page)).filter((r) => r.name === 'New artist name' || r.name === 'Add' || (r.name === 'Cancel' && r.kind === 'button'));
