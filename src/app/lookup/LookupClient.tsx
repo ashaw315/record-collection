@@ -861,11 +861,15 @@ function ResultCard({
                   : 'Hide pressing details'}
             </button>
 
-            {evidenceError !== undefined && (
-              <p role="status" data-testid="evidence-error" className="text-meta text-muted-foreground">
-                {evidenceError}
-              </p>
-            )}
+            {/*
+              The reserved slot (step 140, Design, 12 Oct): a failure "that replaces or follows a control takes a
+              reserved slot of stated lines". One line, on every card before anything is asked, so a failed
+              Identify no longer makes its card 15 taller and moves the cards beneath. Cut to the line, with the
+              whole of it as its title. The cost is the market slot's, again: 15 a card on a list of results.
+            */}
+            <p role="status" data-testid="evidence-error" title={evidenceError} className="line-clamp-1 min-h-[1lh] text-meta text-muted-foreground">
+              {evidenceError ?? null}
+            </p>
           </div>
 
           {versionsError !== undefined && (

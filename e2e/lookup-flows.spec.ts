@@ -1941,3 +1941,28 @@ for (const pointer of POINTERS) test.describe(`look up under a ${pointer} pointe
   });
  }
 });
+
+/*
+  Step 140, the reserved slot (Design, 12 Oct): "look up’s failed Identify takes the slot its ruling already
+  reserves, so its card no longer grows 15." Fails against a failure line that is not on the card until it fails.
+*/
+for (const width of [390, 1280]) {
+  test(`a failed "Identify this pressing" leaves its card the height it was, at ${width}`, async ({ page }) => {
+    await stubLookup(page, { results: [collisionRow(10405725), collisionRow(4878030)] });
+    await page.route('**/api/discogs/market/**', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ numForSale: 11, lowestPrice: { value: 47.28, currency: 'USD' }, conditions: [], range: null, currency: 'USD' }) }));
+    await page.route('**/api/discogs/release/*', (route) => route.fulfill({ status: 502, contentType: 'application/json', body: JSON.stringify({ error: { message: 'Discogs could not be reached.', code: 'UPSTREAM_ERROR' } }) }));
+    await login(page);
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto('/lookup');
+    await formReady(page);
+    await page.getByLabel('Artist').fill('Discharge');
+    await page.getByRole('button', { name: 'Search Discogs' }).click();
+    const cards = page.getByTestId('result-card');
+    await expect(cards).toHaveCount(2);
+    const read = () => cards.evaluateAll((all) => all.map((card) => { const box = card.getBoundingClientRect(); return [Math.round(box.top * 10) / 10, Math.round(box.height * 10) / 10]; }));
+    const before = await read();
+    await cards.first().getByTestId('expand-evidence').click();
+    await expect(cards.first().getByTestId('evidence-error')).toHaveText('Discogs could not be reached.');
+    expect(await read(), 'both cards, where they stood and as tall, after the first one’s Identify failed').toEqual(before);
+  });
+}

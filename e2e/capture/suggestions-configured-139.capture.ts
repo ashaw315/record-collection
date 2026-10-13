@@ -41,7 +41,9 @@ import { wholePage } from '../whole-page';
  *
  * The placeholder is not a credential and could not be used as one.
  */
-const OUT = join('docs', 'captures', 'suggestions-configured-139');
+/* `SUGGESTIONS_OUT` names the folder, so a later step takes the same five states into a folder of its own: `suggestions-configured-139` is step 139's, before the pass; `suggestions-140` is after it. */
+const NAME = process.env.SUGGESTIONS_OUT ?? 'suggestions-configured-139';
+const OUT = join('docs', 'captures', NAME);
 const WINDOWS = [{ width: 390, pointer: 'coarse' as const }, { width: 1280, pointer: 'fine' as const }];
 const PLACEHOLDER = 'not-a-key-capture-only';
 const LISTENER = 'http://127.0.0.1:39139';
@@ -64,7 +66,7 @@ test('/suggestions with Ask Claude offered: empty, the list, idle, thinking, fai
     were gone, and whether the new ten matched them could no longer be shown. A folder that exists is left alone
     unless the run says, by name, that replacing it is meant.
   */
-  if (existsSync(join(OUT, 'suggestions-configured-139.md')) && process.env.CAPTURE_REPLACE !== '1') throw new Error(`${OUT} already holds a capture. It is not replaced unless CAPTURE_REPLACE=1 says so; a capture that has been handed on is retaken into a folder of its own`);
+  if (existsSync(join(OUT, `${NAME}.md`)) && process.env.CAPTURE_REPLACE !== '1') throw new Error(`${OUT} already holds a capture. It is not replaced unless CAPTURE_REPLACE=1 says so; a capture that has been handed on is retaken into a folder of its own`);
   test.setTimeout(600_000);
   mkdirSync(OUT, { recursive: true });
 
@@ -193,7 +195,7 @@ test('/suggestions with Ask Claude offered: empty, the list, idle, thinking, fai
       `**Not what it rests on:** the server’s own guard (\`assertNoLiveCall\`) and a listener at \`${LISTENER}\` given to it as the model’s address stood behind the stub. The listener counted the one request sent to prove it counts and then received ${arrived.length}. That nought shows nothing by itself: no request reached the server, so it would be nought whatever address the server held, and that the server held this one was not read back.`, '',
       missed.length === 0 ? 'Every state above was reached.' : `**${missed.length} not reached:** ${missed.join('; ')}`,
     );
-    writeFileSync(join(OUT, 'suggestions-configured-139.md'), `${md.join('\n')}\n`);
+    writeFileSync(join(OUT, `${NAME}.md`), `${md.join('\n')}\n`);
   }
   expect(arrived, 'requests that reached the model’s address').toEqual([]);
   expect(seen.length, 'every request to the route was answered by the stub').toBe(answered);

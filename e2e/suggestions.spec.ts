@@ -212,9 +212,31 @@ for (const pointer of POINTERS) test.describe(`suggestions under a ${pointer} po
     await page.goto('/suggestions');
     await page.locator('main h1').waitFor();
     await page.evaluate(() => document.fonts.ready);
-    const reach = await expectFloor(page, pointer, `suggestions at ${width}`);
+    /*
+      Step 140 changed this test's claim for one control, by Design's ruling: "Add to want list stays a link, its
+      row its target where it stands alone." It was held to 9 past itself with every other control; under a coarse
+      pointer it is now reached along its whole row, so it is read apart (`ROW`), and the 9 stands for the rest.
+    */
+    const ROW = 'main ul > li';
+    const reach = await expectFloor(page, pointer, `suggestions at ${width}`, 'main', ROW);
     expect(reach.map((r) => r.name), 'the precondition: the way back is read').toContain('← Want list');
-    expect(reach.some((r) => r.name === 'Add to want list'), 'the precondition: a suggestion’s Add to want list is read').toBe(true);
+    const rows = await page.evaluate((selector) => Array.from(document.querySelectorAll(selector)).map((row) => {
+      const link = row.querySelector('a');
+      const box = row.getBoundingClientRect();
+      const y = box.top + box.height / 2;
+      let reached = 0;
+      for (let x = Math.ceil(box.left); x < Math.floor(box.right); x += 1) { const at = document.elementFromPoint(x + 0.25, y); if (at !== null && link !== null && (at === link || link.contains(at))) reached += 1; }
+      return { name: (link?.textContent ?? '').trim(), reached, row: Math.floor(box.right) - Math.ceil(box.left), tall: Math.round(box.height), link: Math.round(link?.getBoundingClientRect().width ?? 0) };
+    }), ROW);
+    expect(rows.some((row) => row.name === 'Add to want list'), 'the precondition: a suggestion’s Add to want list is read').toBe(true);
+    for (const row of rows.filter((each) => each.name === 'Add to want list')) {
+      if (pointer === 'coarse') {
+        expect.soft(row.reached, `at ${width}: Add to want list is reached along its whole row`).toBe(row.row);
+        expect.soft(row.tall, `at ${width}: and the row is 44 or more`).toBeGreaterThanOrEqual(44);
+      } else {
+        expect.soft(row.reached, `at ${width}: under a mouse it is reached over itself and no further`).toBeLessThanOrEqual(row.link + 1);
+      }
+    }
   });
  }
 });

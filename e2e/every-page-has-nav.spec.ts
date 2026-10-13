@@ -130,8 +130,15 @@ test('the route list has not fallen behind the app', async () => {
     exemption with no removal condition is indistinguishable from a permanent
     one, and reads as a free slot to whoever finds it next.
   */
+  /*
+    `/suggestions/probe` (step 140) is a harness too: Ask Claude's panel drawn configured, so a browser test can
+    press it where the test environment's real screen does not draw it. It 404s in production. REMOVAL CONDITION:
+    it goes when the panel can be driven on `/suggestions` itself in a test, that is, when the test environment
+    is given a way to draw it; the route, this line and its `notFound()` guard come out together.
+  */
   const EXEMPT = [
     join('app', 'login'),
+    join('app', 'suggestions', 'probe'),
     join('app', 'wall', 'probe'),
     join('app', 'wall', 'overview'),
     join('app', 'wall', 'probe', 'bands'),

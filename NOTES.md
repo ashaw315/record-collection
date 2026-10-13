@@ -43784,3 +43784,91 @@ apart, 44 each) and 1280 fine (side by side, 8 apart, 32 each); the
 want list's form at 1280 (the label's first line 12 below its box's
 top). Taken twice before commit: the first had the dev badge on the
 sign-in pictures.
+
+## 13 Oct, 00:10: step 140. The reserved slot, and suggestions' pass
+
+Design's unnumbered step from the fourth drop. No entries owed.
+
+**Built.**
+- `GapAnalysis.tsx`: a section between two hairlines. Below 640 the
+  heading and sentence are its width and the select and ASK CLAUDE
+  are a row beneath; from 640 they stand beside. Both controls are
+  §9.3's (11 mono uppercase, square, 44 in the box under a coarse
+  pointer). The button is sized by its longer label, which stands in
+  it unseen with the showing label over it, so THINKING… is the width
+  ASK CLAUDE was. The failure has a slot of one line under the
+  controls from the start (`min-h-[1lh]`, cut to a line, the whole as
+  its title). The answer's records are rows with a hairline between.
+- `suggestions/page.tsx`: the list and the empty state are rows, one
+  hairline between each; the panel's lower hairline is the list's
+  upper one (the first build had both, 24 apart, seen in its capture).
+  Add to want list takes its row as its target under a coarse pointer
+  (`ROW_TARGET`, `HIT_WHOLE_ROW`, step 138's).
+- `LookupClient.tsx`: a failed Identify has a slot of one line under
+  its control on every card.
+
+**The panel could not be tested where it is drawn.** `/suggestions`
+draws it only with a model key and the test environment has none, on
+purpose. So there is a harness page, `/suggestions/probe`, which draws
+the panel configured with nothing behind it and a paragraph beneath to
+stand for the list; it answers not-found in production, as the wall's
+probes do, and is named in `every-page-has-nav`'s exemptions with its
+removal condition. A test answers the route in the page; a press not
+answered there reaches a server with no key, which refuses before any
+call. **Nobody asked for a harness by name.** Design asked for a test
+that nothing moves, and this is the only way I found to make one that
+presses the real component in a browser.
+
+**Tests, first** (`e2e/suggestions-140.spec.ts`, under each pointer;
+`lookup-flows.spec.ts`): nothing moves when ASK CLAUDE reads THINKING…
+or fails, at 390 and 1280 (the select, the button and what follows,
+place and size); the two controls' type and corners, and 44 under a
+coarse pointer; stacked at 390 and 639, beside at 640 and 1280, the
+sentence three lines or fewer at 390; the panel's four borders; no
+box that is not a control, one hairline between rows and one above
+the first, and under a coarse pointer a tap on a row's left reaching
+its link; a failed Identify leaves both cards where and as tall as
+they were, at 390 and 1280. Failed first 16 of 16; pass 16 of 16.
+**Claim changed (1):** `suggestions.spec.ts:207`, under a coarse
+pointer, held Add to want list to 9 past itself with every other
+control; it now holds it reached along its whole row, and the 9 for
+the rest.
+
+**The covering run, and three reds, each diagnosed.** The eight specs
+naming suggestions or look up, both projects: `275 passed, 9 failed,
+1 flaky … NOT OK`.
+1. Eight: `suggestions.spec.ts:207`, the claim above. The ruling
+   changed it; the test now says so.
+2. One: `every-page-has-nav` counts the app's pages and had 12 for 13.
+   The harness, exempted with its reason.
+3. **The flaky is a real crash, and not this step's.**
+   `want-list.spec.ts:1119` on the phone project at 1280 waited 30s
+   for its own row on a page that had thrown: "undefined is not an
+   object (evaluating 'item.artist.name')", `WantListRow.tsx:126`,
+   under Next's own "This page couldn't load". `hydrateWantListItem`
+   reads the item and then its artist in two queries. Another test's
+   cleanup deleted that artist (and its items) between them, so one
+   item came back with no artist and the row threw, taking the whole
+   list down for a reader who had nothing to do with it. Passed on the
+   retry, when no cleanup landed in the gap. **Not fixed: out of this
+   step.** The fix is one line in the query (no artist, no item, as a
+   missing item already is) and a test that deletes between the two
+   reads. A single reader cannot hit it; two tabs could. It is also
+   the first sighting here of the screen the next step replaces: a
+   thrown page with no header and no way back.
+With the tests changed: both suggestions specs and the nav spec, both
+projects, `52 passed`, then `40 passed` after the hairlines were
+halved. The other five specs passed in the first run and nothing they
+read has changed since. Unit under the two screens and `test/repo`,
+`582 passed`. Typecheck and build clean; lint 0 errors, 27 warnings;
+the hover check passes on the new build.
+Two wrong guesses on one assertion before I read its values: the
+stylesheet's `divide` draws the line UNDER every row but the last,
+not over every row but the first.
+
+**Captures:** `docs/captures/suggestions-140/`, the five states at 390
+coarse and 1280 fine, by the same capture as step 139's with its
+folder named (`SUGGESTIONS_OUT`). Six requests seen, six answered in
+the browser. Taken twice before commit, the second after the doubled
+hairlines went. `suggestions-configured-139` is the screen before the
+pass and is not touched.

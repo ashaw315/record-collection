@@ -6,7 +6,7 @@ import { listGenreTree, type GenreNode } from '@/lib/db/queries/genres';
 import { isAnthropicConfigured } from '@/lib/llm/client';
 import { GapAnalysis } from './GapAnalysis';
 import { SCREEN_FRAME } from '@/app/screen-frame';
-import { HIT_ALONE } from '@/app/hit-area';
+import { HIT_ALONE, HIT_WHOLE_ROW, ROW_TARGET } from '@/app/hit-area';
 
 /**
  * SPEC.md §10 `/suggestions`: "Relationship-based list with reasons, always
@@ -97,7 +97,8 @@ export default async function SuggestionsPage() {
           recorded, or a shared line-up.
         </p>
 
-        <div className="mb-6">
+        {/* No gap beneath: the panel's lower hairline is the list's upper one, so there is one line between them and not two 24 apart. */}
+        <div>
           <GapAnalysis
             last={lastGapAnalysis}
             previous={previousGapAnalysis}
@@ -117,7 +118,8 @@ export default async function SuggestionsPage() {
            * because "no suggestions" with no explanation is indistinguishable
            * from a broken screen.
            */
-          <div className="rounded-md border border-border bg-muted/30 p-4 text-prose">
+          /* Step 140: "Nothing to suggest yet." is a row between hairlines, not a box. */
+          <div className="py-4 text-prose">
             <p className="font-medium">Nothing to suggest yet.</p>
             {/*
               **A48: this used to name a path that does not exist.** It read
@@ -141,17 +143,21 @@ export default async function SuggestionsPage() {
             </p>
           </div>
         ) : (
-          <ul className="space-y-3">
+          /*
+            Suggestions' pass (step 140): "the suggestions ... become rows separated by hairlines, as a table's
+            are", and "Add to want list stays a link, its row its target where it stands alone."
+          */
+          <ul className="divide-y divide-border">
             {rows.map((row) => (
               <li
                 key={row.artistId}
-                className="rounded-md border border-border p-4"
+                className={`py-4 ${ROW_TARGET}`}
               >
                 <div className="flex items-baseline justify-between gap-4">
                   <h2 className="font-medium">{row.artistName}</h2>
                   <Link
                     href={`/want-list/new?artistId=${row.artistId}`}
-                    className={`${HIT_ALONE} shrink-0 text-label underline underline-offset-2 hover:text-foreground`}
+                    className={`${HIT_WHOLE_ROW} shrink-0 text-label underline underline-offset-2 hover:text-foreground`}
                   >
                     Add to want list
                   </Link>

@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { askedLine } from './asked-line';
-import { HIT_ALONE } from '@/app/hit-area';
+import { HIT_WHOLE_ROW, ROW_TARGET } from '@/app/hit-area';
+import { LABEL_TYPE } from '@/app/records/[id]/grid-type';
 
 /**
  * SPEC.md §10's "Separate 'Ask Claude for gap analysis' button for §9.2".
@@ -214,16 +215,23 @@ export function GapAnalysis({
      * deployment task.
      */
     return (
-      <p className="rounded-md border border-border bg-muted/30 p-3 text-prose text-muted-foreground">
+      /* Step 140: "No boxes except controls." A sentence between two hairlines, as the panel it stands for is. */
+      <p className="border-y border-border py-4 text-prose text-muted-foreground">
         Gap analysis is not configured on this deployment.
       </p>
     );
   }
 
   return (
-    <div className="rounded-md border border-border p-4">
-      <div className="flex items-baseline justify-between gap-4">
-        <div>
+    /*
+      Suggestions' pass (step 140, Design, 12 Oct). "The panel becomes a section between two hairlines": no box,
+      because "a box inside a box said control twice and meant neither". "Below 640 the Ask Claude panel stacks:
+      its heading and sentence full width, then the scope select and ASK CLAUDE on one row beneath them" — beside
+      the controls they were a column about 90 wide and ran to eleven lines at 390.
+    */
+    <section data-ask-panel="" className="border-y border-border py-4">
+      <div className="sm:flex sm:items-start sm:justify-between sm:gap-4">
+        <div data-ask-words="">
           <h2 className="font-medium">Ask Claude for a gap analysis</h2>
           <p className="mt-0.5 text-prose text-muted-foreground">
             Sends a summary of your collection — artists, genres, labels and want list. Never
@@ -235,41 +243,59 @@ export function GapAnalysis({
           question narrowed rather than a different feature — and `/suggestions`
           is where gaps are asked about, while `/manage` is where the vocabulary
           is changed.
-        */}
-        {genres.length > 0 && (
-          <select
-            aria-label="Scope"
-            data-testid="gap-scope"
-            value={scope}
-            onChange={(event) => {
-              void selectScope(event.target.value);
-            }}
-            className="h-9 shrink-0 rounded-xs border border-border bg-background px-2 text-label"
-          >
-            <option value="">Whole collection</option>
-            {genres.map((genre) => (
-              <option key={genre.id} value={genre.id}>
-                {genre.name}
-              </option>
-            ))}
-          </select>
-        )}
 
-        <button
-          type="button"
-          onClick={ask}
-          disabled={state.phase === 'loading'}
-          className="shrink-0 rounded-xs border border-border px-3 py-1.5 text-label transition-colors hover:bg-muted disabled:opacity-60"
-        >
-          {state.phase === 'loading' ? 'Thinking…' : 'Ask Claude'}
-        </button>
+          "The controls take §9.3's type: ASK CLAUDE and the scope select set 11 mono uppercase, 44 under a coarse
+          pointer." Square, with a hairline, as every §9.3 control is.
+        */}
+        <div className="mt-3 flex items-center gap-2 sm:mt-0 sm:shrink-0">
+          {genres.length > 0 && (
+            <select
+              aria-label="Scope"
+              data-testid="gap-scope"
+              value={scope}
+              onChange={(event) => {
+                void selectScope(event.target.value);
+              }}
+              className={`${LABEL_TYPE} h-9 min-w-0 shrink border border-border bg-background px-2 pointer-coarse:h-[44px]`}
+            >
+              <option value="">Whole collection</option>
+              {genres.map((genre) => (
+                <option key={genre.id} value={genre.id}>
+                  {genre.name}
+                </option>
+              ))}
+            </select>
+          )}
+
+          {/*
+            The reserved slot: "a control whose label changes keeps its drawn size." THINKING… is narrower than ASK
+            CLAUDE and moved the select beside it by 4. The button is sized by the longer label, which stands in
+            it unseen, and the label that is showing is set over it.
+          */}
+          <button
+            type="button"
+            onClick={ask}
+            data-ask-button=""
+            disabled={state.phase === 'loading'}
+            className={`${LABEL_TYPE} grid h-9 shrink-0 items-center border border-border px-3 text-center transition-colors hover:bg-muted disabled:text-muted-foreground pointer-coarse:h-[44px]`}
+          >
+            <span aria-hidden="true" className="invisible col-start-1 row-start-1">
+              Ask Claude
+            </span>
+            <span className="col-start-1 row-start-1">{state.phase === 'loading' ? 'Thinking…' : 'Ask Claude'}</span>
+          </button>
+        </div>
       </div>
 
-      {state.phase === 'error' && (
-        <p role="status" className="mt-3 text-prose text-destructive">
-          {state.message}
-        </p>
-      )}
+      {/*
+        The failure's slot, one line, there before anything is asked: "a status or error that replaces or follows
+        a control takes a reserved slot of stated lines." A failure arriving moved the list beneath by 31. One
+        line: a longer sentence is cut to it, with the whole of it as the line's title. An answer is not held to
+        a slot: "An answer the reader asked for is content, not status: it may grow and push what follows."
+      */}
+      <p role="status" data-ask-failure="" title={state.phase === 'error' ? state.message : undefined} className="mt-2 line-clamp-1 min-h-[1lh] text-prose text-destructive">
+        {state.phase === 'error' ? state.message : null}
+      </p>
 
       {state.phase === 'done' && (
         <div className="mt-4">
@@ -300,11 +326,12 @@ export function GapAnalysis({
           {state.suggestions.length === 0 ? (
             <p className="text-prose">No gaps suggested for this collection.</p>
           ) : (
-            <ul className="space-y-3">
+            /* "The suggestions, the answer's records and Nothing to suggest yet. become rows separated by hairlines, as a table's are." */
+            <ul className="divide-y divide-border border-t border-border">
               {state.suggestions.map((suggestion) => (
                 <li
                   key={`${suggestion.artist}-${suggestion.title}`}
-                  className="rounded-xs border border-border p-3"
+                  className={`py-3 ${ROW_TARGET}`}
                 >
                   <div className="flex items-baseline justify-between gap-4">
                     {/*
@@ -343,7 +370,7 @@ export function GapAnalysis({
                     ) : (
                       <Link
                         href={`/want-list/new?artist=${encodeURIComponent(suggestion.artist)}&title=${encodeURIComponent(suggestion.title)}`}
-                        className={`${HIT_ALONE} shrink-0 text-label underline underline-offset-2`}
+                        className={`${HIT_WHOLE_ROW} shrink-0 text-label underline underline-offset-2`}
                       >
                         Add to want list
                       </Link>
@@ -440,6 +467,6 @@ export function GapAnalysis({
           )}
         </div>
       )}
-    </div>
+    </section>
   );
 }

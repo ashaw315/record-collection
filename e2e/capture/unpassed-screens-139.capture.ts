@@ -345,7 +345,7 @@ const STATES: State[] = [
     await search(page);
     await expect(page.getByTestId('check-market')).toHaveCount(0, { timeout: 15_000 });
     await page.getByTestId('expand-evidence').click();
-    await expect(page.getByTestId('evidence-error')).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByTestId('evidence-error')).toHaveText(/\S/, { timeout: 15_000 });
   } },
 ];
 
