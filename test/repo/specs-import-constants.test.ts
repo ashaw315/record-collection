@@ -37,6 +37,8 @@ const GOVERNED = [
   'e2e/colour-distribution.spec.ts',
   'e2e/capture/page8a.capture.ts',
   'e2e/capture/unpassed-screens-139.capture.ts',
+  /* The focusables count (13 Oct) opens a record's page and its edit form to count their controls; it types nothing. */
+  'e2e/capture/focusables-count.capture.ts',
   /*
     Added by the enumeration check below rather than by hand — it found four
     specs driving the record screen that the list had missed, which is what a
