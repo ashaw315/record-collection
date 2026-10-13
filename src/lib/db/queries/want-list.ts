@@ -206,6 +206,15 @@ export async function hydrateWantListItem(
     .from(artists)
     .where(eq(artists.id, item.artistId))
     .limit(1);
+  /**
+   * The artist is NOT NULL on the row, so at rest it is always here; but the
+   * item and its artist are two reads, and a delete can land between them
+   * (seen 13 Oct: another spec's cleanup took the artist and its items, and
+   * the want list threw on `item.artist.name`, every row down for one). No
+   * artist, no item, as a missing item already is: the reader sees one row
+   * fewer, not a dead page.
+   */
+  if (artist === undefined) return undefined;
 
   const label =
     item.labelId === null
