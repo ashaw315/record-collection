@@ -44573,3 +44573,37 @@ my report and not from the pictures: "the 25-result page height is
 measured from the retaken build, not from either set", and nothing in
 it reads the retaken cards' titles at 390 or the 44 count on the taller
 card. Adam attaches `for-design/part-3-lookup/`.
+
+## 13 Oct, 16:10: two "broken sentences" that are whole on disk; the glyphs, from the build
+
+**The coordinator read two corrupted paragraphs in the parts 1 to 3
+drop: "A result has two actions, one answer slot and two" stopping
+mid-phrase, and a line reading only "page." with its sentence gone.
+Neither is in the file.** The target has "A result has two actions, one
+answer slot and two disclosures, each in a band of its own." whole
+(line 58), and the only "page." is the end of "Part 2 sets it below
+Manage's heading, because above the heading it stands before the page
+has said what the page is.", which stands whole in the target and in
+`docs/intake/4700939-added.md` (committed, `abe9f7d`). No paragraph in
+either design file ends without terminal punctuation except the titles,
+and none is one word. So the breakage was in the copy the coordinator
+read, not in the drop, and the report-versus-file check reads the
+other way this once: the message was damaged, the file is not. The
+sentence-integrity assertion asked for was not built: staged against
+this drop it would refuse nothing, and the probe that costed it found
+only false positives to tune around (the five targets' title lines,
+"Read in this order to learn what the page is:", and the settled
+file's 104 label paragraphs). Offered as a report-only assertion if
+still wanted; the intake files on disk are the copy to review from.
+
+**The glyphs, read from the build.** The search field's glyph
+(`WallRail.tsx:115`) is a drawn SVG, a circle and a line at 18 with a
+1px stroke, inside a 44 submit button; it is not a character. The
+dialog's × is lucide's `XIcon`, an SVG (`ui/dialog.tsx:87`). Manage's
+row icons are lucide's `Pencil`, `Trash2`, `Check`, `Plus` and `X`
+(`ResourceTable.tsx:4`, `GenreTree.tsx:4`). So every pictogram in the
+app outside §T.1's + and − is a drawn icon, none a glyph of the face.
+
+**Not started, as ordered:** the in-flight counting wrapper for cleanup
+(with the next harness-touching step); the hierarchy's ACCEPT and
+REJECT and the market slot's two sizings (with Design); the card.
