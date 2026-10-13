@@ -139,6 +139,8 @@ test('the route list has not fallen behind the app', async () => {
   const EXEMPT = [
     join('app', 'login'),
     join('app', 'suggestions', 'probe'),
+    /* `/error-probe` (step 142): a page that throws on purpose so the error screen can be reached. 404s in production. It goes, with this line and its guard, if a real page ever fails on demand in a test. */
+    join('app', 'error-probe'),
     join('app', 'wall', 'probe'),
     join('app', 'wall', 'overview'),
     join('app', 'wall', 'probe', 'bands'),

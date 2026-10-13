@@ -160,5 +160,11 @@
     "before": "No step: §G.7",
     "why": "Code's number for the first half of Design's unnumbered step of 12 Oct, \"branch rows and the error screen\"; the error screen is step 142.",
     "text": "141. **Done: built; one cost for Design.** **§T.6 — a genre row with a branch: the disclosure has the row's right 44, the name the rest.** On stats under a coarse pointer. Counted both ways on the real collection (`docs/captures/stats-141/`): all 42 controls 44 down, and the names under 44 across are none, from 3; so with step 138 the class is closed, 9 to 0. With a mouse nothing changes: the name is its own width and the rest of the row opens the branch. For Design, the cost: on a phone a press on the MIDDLE of a branch's row used to open the branch and now goes to the collection, filtered by that genre; only the right 44, where the figure stands, opens it, and nothing is drawn there to say so. One of Code's own tests pressed the middle and went to the collection."
+  },
+  {
+    "id": "step-142",
+    "before": "No step: §G.7",
+    "why": "Code's number for the second half of Design's unnumbered step of 12 Oct, \"branch rows and the error screen\".",
+    "text": "142. **Done: built; three things for Design.** **§T.6 — the error screen.** A page that fails draws the app's header, the 40 heading Something went wrong., one sentence in the label colour (This page could not load.), and two §9.3 controls on one line, TRY AGAIN and COLLECTION, each 44 tall; no figure and no ornament; the heading names no route. It is one boundary at the app's root, so it is the screen for every route. If the header or the layout is what failed, a second file draws the same body on paper with no header. TRY AGAIN draws the page again and recovers it once what failed it has gone; COLLECTION is a full load of `/`. For Design: (1) the sentence and the second control's word are Code's: \"This page could not load.\" and \"Collection\". (2) The bare fallback cannot be reached from a browser without the layout itself failing, so its capture is a stand-in that draws the same body with no header. (3) The failure itself is not shown to the reader. Captures on the test database, on a page that throws on purpose: `docs/captures/error-screen-142/`, 390 coarse and 1280 fine."
   }
 ]

@@ -43931,3 +43931,61 @@ is cleared from time to time) and the first re-count failed for want
 of a session. Rewritten as it was: a session for twenty minutes from
 the app's own function, written to a file, printed nowhere, deleted
 after the sheet.
+
+## 13 Oct, 02:00: step 142. The error screen, and the `querySelector` wrapper with it
+
+**The error screen** (Design, the drop of 21:37). `src/app/error.tsx`,
+the app's one boundary, at its root, so it is every route's:
+`AppHeader`, then `ErrorBody`. `src/app/global-error.tsx`, for a
+failure of the layout or the header: its own document, stylesheet and
+faces, and `ErrorBody` bare. `ErrorBody.tsx`: the 40 heading, one
+sentence in the label colour, TRY AGAIN and COLLECTION as §9.3
+controls. The way back is a plain anchor, a full load, because what
+drew this may be what failed. The error is not shown: the server has
+it, and CLAUDE.md §6 keeps traces out of responses.
+
+**A page that fails on purpose:** `/error-probe`, not-found in
+production, named in `every-page-has-nav`'s exemptions. It throws
+while a cookie says so, so TRY AGAIN can be shown to recover; with
+`?bare=1` it draws the fallback's body with no header, standing in
+for `global-error.tsx`, which a browser cannot reach.
+
+**Tests, first.** `ErrorBody.test.tsx`: the body's parts and no more,
+no route named, and that there is exactly one `error.tsx`, at the
+root, with `global-error.tsx` beside it (failed: none existed).
+`e2e/error-screen-142.spec.ts`, under each pointer at 320, 390 and
+1280: the header, the heading at 40 in ink at the 18, one sentence in
+the label colour, the two controls' type, border, corners, 44 and
+order, no figure, the page no wider than the window, the floor; TRY
+AGAIN recovers and COLLECTION goes home; the bare body. Failed first
+8 of 10 against an app with no error file (the heading never came:
+Next's own page drew), the two bare cases passing since the probe
+drew them; pass 10 of 10.
+
+**The wrapper** (`e2e/sign-in.ts`, `nameYourView`): in every page a
+spec opens, `querySelector` throws when its selector matches in both
+`[data-shelf-offered]` and `[data-shelf-fallback]`. Held for
+`Document`, `Element` and `DocumentFragment`. `querySelectorAll` is
+left alone, and with it Playwright's own engine. Staged
+(`e2e/name-your-view-142.spec.ts`): a bare reader on `/` is refused by
+name; one that names its view is answered; `?view=grid` is not
+touched. Against a helper that does not wrap, the first of the three
+failed ("Received promise resolved instead of rejected"); restored.
+What it does not hold is written above it: the hidden single element,
+`querySelectorAll`, any other walk.
+
+**Step level:** the error spec, `10 passed`; the wrapper's spec with
+`every-page-has-nav`, `shelf.spec.ts` and `shelf-offered-134`,
+chromium, `37 passed`. `test/repo`, the error body and the hover
+check, `464 passed`. Typecheck and build clean (the build lists
+`/error-probe`, and a grep for "error" in its output finds that and
+nothing else); lint 0 errors, 27 warnings.
+
+**Files every test reads that this step and step 139 touched:**
+`e2e/sign-in.ts` (the wrapper), `src/app/login/page.tsx` (139's inset
+and slot), and `src/app/error.tsx` and `global-error.tsx`, which sit
+over every route. So one whole run, on this commit, in the worktree.
+Its result is the entry after this.
+
+**Captures:** `docs/captures/error-screen-142/`, the screen and the
+bare stand-in at 390 coarse and 1280 fine.
