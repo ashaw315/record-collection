@@ -22,6 +22,7 @@ const HELPER = 'e2e/sign-in.ts';
 const EXEMPT: Record<string, string> = {
   [HELPER]: 'the helper',
   'e2e/auth.spec.ts': 'the sign-in form is its subject: a wrong password, a session that survives a reload, typing before hydration',
+  'e2e/capture/unpassed-screens-139.capture.ts': 'the sign-in screen is two of its subjects: signing in with the answer held, and a refusal. Both are answered by a stub in the page and reach no sign-in route; it signs in for everything else through the helper',
   'e2e/sheet/login.ts': 'the sheets sign in to the real collection, by a minted session or its own password, and then probe that the server cannot write',
 };
 

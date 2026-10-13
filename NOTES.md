@@ -43665,3 +43665,66 @@ With both: `457 passed, tree unchanged — OK`, and the intake is
 
 Six raw drops stand unpushed behind it and go up with it: `68b33ce`,
 `e2379a1`, `2ed4043`, `704fee9`, `1c68c04`, and the intake.
+
+## 12 Oct, 23:00: plain names in the captures, the paler row, and a hover check
+
+**The fixtures are named plainly, and 25 of the 50 proposed pictures
+were retaken for it.** Both captures stamped every name they made with
+the time, as specs must. A capture runs alone on a database truncated
+at its start and need not. `make` in `unpassed-screens-139.capture.ts`
+now makes GBH, "City Baby Attacked by Rats", "Leather, Bristles, Studs
+and Acne", Jumbo Records, Chaos UK and The Varukers; the suggestions
+capture makes GBH and three candidates. Cleanup is by the record's
+exact title and the ids made.
+- **The proposed hierarchy invents nothing now.** It pairs the seed's
+  own genres (Psychedelic Rock and Indie Rock under Rock, Indie Pop
+  under Pop) with records the seed holds. My first plain names were
+  short ones of my own (UK82 under Punk), and that picture showed no
+  wrap at all: a made-up short name hides a wrap as surely as a
+  stamped one makes it. With the reader's names, "Psychedelic Rock"
+  and its evidence wrap at 390 and the other two do not. So Design's
+  sentence about that line stands for one pairing in three, not all.
+  The record form's genre chips are the seed's alone for the same
+  reason (no genre is made).
+- Which: 12 states in the first folder (23 pictures, of which 19 are
+  proposed) and the suggestions folder's ten (six proposed changed;
+  its two empty-state pictures came out byte for byte the same, which
+  is also the first comparison there has been of one run of a capture
+  against another). The untouched 25 show no fixture: not-found,
+  login, the empty want-list form, the record form as it opens, all of
+  look up.
+- Every replaced picture is kept, in `with-fixture-suffix/` in each
+  folder. Tables: `retaken-plain-names.md`,
+  `retaken-plain-names-genres.md`. The folders are committed with this
+  entry and are not rewritten after it.
+
+**The paler "Psychedelic Rock" row was the pointer, and I misread the
+retake.** I wrote that it stood paler "in the original and the retake
+alike". Measured, pixel by pixel down the rows at one column: the
+ORIGINAL has that row at 236,234,230 against 231,230,227 for the
+others; the RETAKE has every row at 231,230,227. So it was the row's
+hover (`hover:bg-accent/60` on a genre's row), drawn because the
+window is made taller for the picture and the resting pointer then
+fell on that row: the "unknown" in the pointer table. The retake had
+already cleared it and I reported, by eye from a scaled picture, that
+it had not. Nothing in the build marks that row. The narrower select
+on the fixture's own row was the stamp too: a genre's select lists
+every genre but itself, so the row whose own name was the longest had
+the shortest list.
+
+**Hover held by a check:** `src/app/hover-gated.test.ts`. It reads the
+built stylesheet and `globals.css` and fails on any `:hover` rule not
+inside `@media (hover: hover)`. Its reader is tested on text written
+in the test (a bare rule found, a gated one passed, a condition nested
+INSIDE a rule reported as ungated, so an unknown shape fails loudly),
+and it requires the build to have hover rules, so nought ungated means
+something. Staged: `.staged-bare:hover` appended to `globals.css`
+failed it by name; restored. No build is a failure, not a pass.
+
+**For Design, about the suggestions pictures:** the ten it ruled from
+were replaced (twice: the re-run, then plain names). What changed in
+them is the names in the list and nothing else; the two with no name
+in them are byte-identical across runs. Its pass rules stacking below
+640, hairlines for boxes, §9.3 type on the controls and what stays;
+none of that turns on a name. A one-line confirmation, per the
+coordinator.

@@ -36,6 +36,7 @@ const GOVERNED = [
   'e2e/page8a-marks.spec.ts',
   'e2e/colour-distribution.spec.ts',
   'e2e/capture/page8a.capture.ts',
+  'e2e/capture/unpassed-screens-139.capture.ts',
   /*
     Added by the enumeration check below rather than by hand — it found four
     specs driving the record screen that the list had missed, which is what a
