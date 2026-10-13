@@ -952,8 +952,11 @@ for (const width of [320, 390]) {
     const form = row.locator('[data-manage-form]');
     await expect(form).toBeVisible();
     for (const field of ['name', 'city', 'country']) await expect(form.getByLabel(`${names.store} ${field}`, { exact: true })).toBeVisible();
-    await expect(form.getByRole('button', { name: `Save ${names.store}` })).toBeVisible();
+    /* Design's drop of 12 Oct, manage's open form (2): "The form shows SAVE only once something has changed." This held SAVE visible in a form just opened; the claim changed with the ruling. */
+    await expect(form.getByRole('button', { name: `Save ${names.store}` }), 'nothing changed, so no SAVE').toHaveCount(0);
     await expect(form.getByRole('button', { name: `Delete ${names.store}` })).toBeVisible();
+    /* (5): "Notes, address and website join the open form, after the fields the second line shows, in that order." Fails against the declaration's order, which put State / region, Address and Website before Notes. */
+    expect(await form.locator('label').evaluateAll((all) => all.map((label) => (label.textContent ?? '').trim()))).toEqual(['Name', 'City', 'Country', 'Favourite', 'Notes', 'Address', 'Website', 'State / region']);
     const widths = await form.evaluate((el) => { const field = el.querySelector('input:not([type=checkbox])') as HTMLElement; return [Math.round(field.getBoundingClientRect().width), Math.round(el.getBoundingClientRect().width)]; });
     expect(widths[0], 'a field in the open form is the form’s width').toBe(widths[1]);
     await expect(list.locator('[data-manage-new]'), '+ NEW is at the list’s head').toHaveText(/\+ new store/i);
@@ -1043,9 +1046,27 @@ for (const pointer of POINTERS) test.describe(`manage’s open row with changes,
       await expect(form, 'a field put back as it was is not a change').toHaveCount(0);
       await expect(page.locator(CONFIRM)).toHaveCount(0);
 
-      /* Changed: it asks, and the form stays. */
+      /* SAVE is there only while something has changed (the drop of 12 Oct): fails against a form that shows it from the moment it opens. */
+      await opener.click();
+      const save = form.getByRole('button', { name: `Save ${names.store}` });
+      await expect(save, 'a form just opened has no SAVE').toHaveCount(0);
+      await city.fill('York');
+      await expect(save, 'a change brings it').toBeVisible();
+      await city.fill('Leeds');
+      await expect(save, 'and putting the field back takes it away').toHaveCount(0);
+
+      /* Escape is a close: silent with nothing changed. Fails against a form Escape does nothing to. */
+      await city.press('Escape');
+      await expect(form, 'Escape closes an unchanged form').toHaveCount(0);
+      await expect(page.locator(CONFIRM)).toHaveCount(0);
+
+      /* Changed: Escape asks, as the row pressed again does, and the form stays. */
       await opener.click();
       await city.fill('York');
+      await city.press('Escape');
+      await expect(form.locator(CONFIRM), 'Escape over a change asks').toBeVisible();
+      await form.locator(CONFIRM).getByRole('button', { name: 'Keep editing' }).click();
+      await expect(city).toHaveValue('York');
       await opener.click();
       const confirm = form.locator(CONFIRM);
       await expect(confirm).toBeVisible();
@@ -1073,7 +1094,9 @@ for (const pointer of POINTERS) test.describe(`manage’s open row with changes,
       await expect(row.locator('[data-manage-second]'), 'the row is as it was').toHaveText('Leeds · UK · Favourite');
 
       /* + NEW with something typed is a changed form as well. */
+      await expect(list.getByRole('button', { name: 'Save new store' }), '+ NEW’s form has no SAVE until something is typed').toHaveCount(0);
       await list.getByLabel('New store name', { exact: true }).fill('Half typed');
+      await expect(list.getByRole('button', { name: 'Save new store' })).toBeVisible();
       await list.locator('[data-manage-new]').click();
       await expect(list.locator(CONFIRM), 'closing + NEW with a name typed asks').toBeVisible();
       await list.locator(CONFIRM).getByRole('button', { name: 'Discard changes' }).click();

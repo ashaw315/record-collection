@@ -43059,3 +43059,58 @@ against 12.85 and 13.43 for the two before. **So: a covering run in
 the working tree roughly halves the speed of a whole run in the
 worktree while both are going, and margins read from the whole run
 are then facts about the pair.** No timeout touched.
+
+## 12 Oct: Design's drop on Table and Grid, and step 137 rebuilt to it
+
+The drop (`20ee06c`, committed raw; intake: code region 23 present,
+withdrawals unchanged at 198) carries the rulings the coordinator had
+relayed, in Design's own words, and they differ from the relay in one
+place that matters: **"The form shows SAVE only once something has
+changed."** I had asked exactly that as a question in the handoff and
+built the other reading. Rebuilt:
+
+- **SAVE is in the form only while something has changed.** So "while
+  SAVE is showing" and "something changed" are one condition, as the
+  ruling meant. Enter in an unchanged form does nothing.
+- **Escape is a close** ("pressed again, when another row opens, or on
+  Escape"): silent unchanged, asks when changed. Escape while the
+  question shows answers KEEP EDITING — mine, said to Design.
+- **Field order** ((5): "Notes, address and website ... after the
+  fields the second line shows, in that order"): `formFields` in
+  `resources.ts`. A store's State / region and an artist's Discogs ID
+  are not in the list and go last — mine, said to Design. The table
+  from 640 keeps the declaration's order.
+
+**Design calls this a draft fix: "no drop has been built against it
+beyond Code's defaults".** Two facts for whoever decides the entries.
+The second default (a close discards silently) was built at step 133
+and is in `docs/captures/manage-133/` only as rows at rest, so nothing
+there shows it. But SAVE-in-every-open-form was built and captured:
+`manage-133`'s open-form pictures if any, and certainly
+`docs/captures/manage-confirm-137/`, all four. The entries are
+Design's.
+
+**Tests.** Claim changed (1): the list test held SAVE visible in a
+form just opened; it holds it absent. New in step 137's test: SAVE
+absent on opening, present on a change, absent when put back; Escape
+silent unchanged and asking when changed; + NEW with no SAVE until a
+name is typed. New: the list test reads the open form's labels in
+order; `test/repo/manage-resources.test.ts` holds `formFields` for
+stores, artists and labels and that it drops and repeats nothing.
+Failed first: unit 2 of 2 (`formFields` absent); browser 6 of 6 ("a
+form just opened has no SAVE", "nothing changed, so no SAVE").
+
+**Step level.** Every-test files touched: none. The eight specs naming
+manage, whole, both projects: `219 passed, 2 skipped, ledger clean,
+tree unchanged — OK`. Typecheck and build clean; lint 0 errors, 27
+warnings. **Captures, test database:** `docs/captures/manage-save-137b/`,
+each window just opened (SAVE not shown) and changed and asked. The
+capture file's folder was changed and `manage-confirm-137` is not
+regenerated.
+
+**Also in the drop, and not built yet:** "Where a control is alone on
+its row, the row is its target" (stats' genre names; next, step 138).
+Ratified from step 130 with nothing to build: the record page's two
+fields at 44, the rail's view names 44 apart, the box off the Acquired
+mark; the record page's genres wrapping at 320 "stay held". Withdrawn
+by Design: the blank paper below By store as a defect.

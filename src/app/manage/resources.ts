@@ -117,6 +117,20 @@ export function resourceByKey(key: string): ResourceSpec | undefined {
   return RESOURCES.find((resource) => resource.key === key);
 }
 
+/**
+ * An open form's fields below 640, in order (Design, 12 Oct): the name and
+ * the fields the row's second line shows, then "notes, address and website
+ * ... in that order", then whatever is left. The table from 640 keeps the
+ * declaration's order.
+ */
+const AFTER_SECOND_LINE = ['notes', 'address', 'website'];
+export function formFields(resource: ResourceSpec): FieldSpec[] {
+  const shown = resource.fields.filter((field) => field.inTable === true);
+  const next = AFTER_SECOND_LINE.flatMap((name) => resource.fields.filter((field) => field.name === name && field.inTable !== true));
+  const rest = resource.fields.filter((field) => !shown.includes(field) && !next.includes(field));
+  return [...shown, ...next, ...rest];
+}
+
 export function tableFields(resource: ResourceSpec): FieldSpec[] {
   return resource.fields.filter((field) => field.inTable === true);
 }

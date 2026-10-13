@@ -7,7 +7,7 @@ import { HIT } from '@/app/hit-area';
 import { LABEL, LABEL_TYPE } from '@/app/records/[id]/grid-type';
 import { seededMessage } from '@/lib/api/messages';
 import { LineupAction } from './LineupAction';
-import { tableFields, type FieldSpec, type ResourceSpec } from './resources';
+import { formFields, tableFields, type FieldSpec, type ResourceSpec } from './resources';
 import type { Row } from './ResourceTable';
 
 /**
@@ -31,6 +31,12 @@ import type { Row } from './ResourceTable';
  * with nothing changed stays silent." A close is the open row pressed
  * again, another row pressed, or + NEW pressed; what was pressed waits for
  * the answer. SAVE is not a close.
+ *
+ * The drop of 12 Oct, manage's open form (2): "The form shows SAVE only
+ * once something has changed", so SAVE showing is exactly the case that
+ * asks; and Escape is a close like the others. Escape while the question
+ * is showing answers it KEEP EDITING: it dismisses the question, not the
+ * form.
  *
  * Genres come through the same list with a depth and a parent: indented 12
  * a level and no further than three, Under Parent as the second line, and
@@ -93,7 +99,7 @@ export function ResourceList({ resource, rows, busyId, rowError, createError, on
   /* What was pressed while the open form had changes, held until DISCARD CHANGES or KEEP EDITING. */
   const [asked, setAsked] = useState<{ id: string; row?: Row } | null>(null);
   /* A genre is its name here; its description is not edited on this screen in the table either. */
-  const fields = genres === undefined ? resource.fields : resource.fields.filter((field) => field.name === 'name');
+  const fields = genres === undefined ? formFields(resource) : resource.fields.filter((field) => field.name === 'name');
   const second = tableFields(resource).filter((field) => field.name !== 'name');
 
   const changed = openId !== null && (parent !== opened.parent || fields.some((field) => (draft[field.name] ?? '') !== (opened.draft[field.name] ?? '')));
@@ -141,7 +147,14 @@ export function ResourceList({ resource, rows, busyId, rowError, createError, on
         className="space-y-3 pb-4"
         onSubmit={(event) => {
           event.preventDefault();
-          save();
+          /* Enter in a field with nothing changed has nothing to save, and there is no SAVE to have pressed. */
+          if (changed) save();
+        }}
+        onKeyDown={(event) => {
+          if (event.key !== 'Escape') return;
+          event.stopPropagation();
+          if (asked !== null) setAsked(null);
+          else open(row?.id ?? NEW, row);
         }}
       >
         {fields.map((field) => {
@@ -201,9 +214,11 @@ export function ResourceList({ resource, rows, busyId, rowError, createError, on
         )}
 
         <div className="flex items-center gap-2 pt-1">
-          <Button type="submit" aria-label={row === undefined ? `Save new ${resource.singular}` : `Save ${name}`} disabled={row !== undefined && busyId === row.id} className={ACTION}>
-            Save
-          </Button>
+          {changed && (
+            <Button type="submit" aria-label={row === undefined ? `Save new ${resource.singular}` : `Save ${name}`} disabled={row !== undefined && busyId === row.id} className={ACTION}>
+              Save
+            </Button>
+          )}
           {row !== undefined &&
             (seeded ? (
               /* A seeded row's Delete is shown refused, with its reason beside it: an action that always errors would be a lie, and there is no hover on a phone to explain it. */
