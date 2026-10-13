@@ -44728,3 +44728,60 @@ list rather than a footnote with one example; the grid's cover cells
 and the wall's records are the obvious candidates. The ring waits on
 Design for §W.30's run edge, §T.4's "inside the row", and §3's 2px
 reservation naming one place once 2px is everywhere focus is.
+
+## 13 Oct, 18:10: the ring's scope owes an entry, by the file's own test; the wall's focusable controls listed; the plain commit, a standing exception
+
+**An entry is owed on scoping the ring to "outside the wall's drawn
+composition".** Across every committed drop, by sentence: the 13:52
+drop (`33e5a0c`) carried, in the target, "Every focusable control in the
+app shows §M.6's ring when it has keyboard focus, and nothing else: the
+shared components' grey ring and the browser's default outline are
+defects wherever they appear", and in the handoff "Apply §M.6's ring to
+every focusable control on every route…"; the 15:01 drop (`1cb8dbe`)
+carried both again with "outside ring, 2px ink offset 2". Neither names
+the wall or its composition; both were taken in. The only earlier
+sentences were scoped to "these screens" (the table and grid, `6865658`).
+So the unscoped wording was in force by two drops, and a scope that
+excludes the wall withdraws it for the wall's composition: an entry,
+not a draft fix. The tool's fifth call on an entry, and the first it was
+not asked about beforehand.
+
+**The wall's focusable controls, listed, with a side for each**
+(`docs/captures/wall-focusables/wall-focusables.md`, by
+`e2e/capture/wall-focusables.capture.ts`, 1440 × 900, the shelf offered,
+as the page opens and after the count's zoom-out). As it opens, 32: the
+header's six links; the rail's eight (the search field, the genre and
+sort selects, a 1 × 1 Apply, which is the form's hidden submit for Enter,
+SHELF, TABLE, GRID and Add record); the count's zoom-out ("Show the
+whole collection"); and the seventeen spines, each a link inside
+`data-wall=labelled`. In the overview, 16: the same fifteen and one run,
+an SVG `g` with a tabindex, "17 records — zoom to this shelf", inside
+`data-run=0`. Where I would draw the line, with the reason:
+- *Outside the composition (the outside ring):* the header's six, which
+  are not in the wall at all; the rail's eight, which are the page's
+  chrome (`wall-route.spec.ts`'s own reading: "the rail is the page's
+  chrome and the run is its content"); and the count's zoom-out, which
+  is a control about the view, drawn in the count's row above the
+  fixture, not a thing on the shelf.
+- *Inside the composition (its own marks, §W.33 and §W.30):* the
+  seventeen spines, whose focus §W.33 rules as the sink plus an ink
+  mark on the top face; and the run, whose focus §W.30 rules as the
+  sink plus a 2px ink rule along its front edge, and which is an SVG
+  group that a CSS outline would not draw as a box in any case.
+- *Not read:* a pulled record's panel and cover, which are a state this
+  reading did not open; the set bar is not focusable.
+Design confirms or corrects; the scope is then these sets.
+
+**The plain commit, a standing exception, written down.** A new index
+assertion enters through an unchecked commit, because assertion 0
+reads `scripts/ASSERTIONS-spec.md` as modified until the commit that
+changes it exists, so the checked script refuses. Twice today the spec
+and the script went in together that way (`3130bb9`, `20d319f`). The
+cheap closure, the rule from here: **the spec change is committed
+plainly and alone, named as such, and the script that implements it
+goes through the checked path in the next commit**, so the one thing
+the unchecked door admits is prose about the check, and the check
+itself is checked. Assertion 0 tolerating an uncommitted spec that
+arrives with its own test would need the script to know which test,
+and is not cheap. The other plain commits stay as they were: a Design
+drop as it arrived, and a capture changed on purpose.
