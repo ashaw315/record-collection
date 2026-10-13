@@ -44851,3 +44851,46 @@ own.
 with two rows missing and a stray word in the header, as the two
 sentences did earlier. Tables small, prose complete, and the file on
 disk is the record.
+
+## 13 Oct, 19:20: part 1 does not break the shared sign-in; the ring and part 1 batched; the gate not owed
+
+**How `e2e/sign-in.ts` finds the button:** `getByRole('button', { name:
+'Sign in' })`, and the field by `getByLabel('Password')`, neither with
+`exact`. Playwright's default name match is case-insensitive and by
+substring, staged in a browser with `setContent`: markup `SIGN IN` and
+markup `Sign in` under `text-transform: uppercase` both match `name:
+'Sign in'` (2 of 2 forms), and `getByLabel('Password')` matches a
+`PASSWORD` label the same way. Only an `exact: true` read breaks on a
+markup change (0 of 1), and the helper has none. The app's convention
+for §4.1's label and §9.3's control is the CSS class `uppercase` on
+sentence-case markup (`WantListForm.tsx:258`, `want-list/[id]/page.tsx:78`),
+and CSS leaves the accessible name as it is (exact `'Sign in'` still 1
+under the class, exact `'SIGN IN'` 0), so part 1 built to the convention
+changes no text a test reads at all. Global setup and `seventeen.ts`
+sign in through `/api/auth/login`, not the form.
+
+**What else of part 1's three screens a shared helper reads:** nothing
+by text. `screens-103.ts` opens the want-list item page and its forms
+by path for four specs (`colour-103`, `headings-103`, `pinned-118`,
+`radius-103`), which measure the frame and the heading, so part 1's
+heading weight and wrapped leading are read by those at step level.
+`hit-area.ts` reads the dialog's Cancel, Close and Delete by
+`textContent`, which CSS does not change, and the dialog is not in part
+1. So part 1 owes no whole run by the shared-helper rule; its covering
+set is login's and the want list's specs plus those four.
+
+**Batched anyway, by the overlap:** the ring replaces login's own
+`focus-visible:ring-[3px]` at `login/page.tsx:97` and the shared
+`ui/button` and `ui/input` classes; part 1 restyles that field and that
+button. Built back to back, one gate for both. The Apply attribute
+stays inside the ring step.
+
+**The gate is not owed.** The last gate ran on `0d78df5` (ended 13:07:
+unit 4327 passed, Playwright 1232 passed, both projects). Of the
+commits since, none touched `test/helpers/`, a config, the driver or a
+migration, and no screen closed. `e2e/cleanup.ts` is on the list by
+name and changed by a comment only (`ae5eb48`), so the letter trips and
+the behaviour did not. The one `src` change, the error boundary's
+rethrow under a dev-only cookie and `ErrorBody`'s required `retry`
+(`d8b0390`), is step-covered (the error spec, typecheck, build). A gate
+before the ring is assurance; the ring's own gate follows soon after.
