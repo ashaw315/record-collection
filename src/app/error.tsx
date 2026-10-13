@@ -24,7 +24,16 @@ import { SCREEN_FRAME } from './screen-frame';
  * The error itself is not shown: the server has logged it with its digest,
  * and "No stack traces in responses" (CLAUDE.md §6) holds for a screen too.
  */
-export default function ErrorScreen({ retry }: { error: Error & { digest?: string }; retry: () => void }) {
+export default function ErrorScreen({ error, retry }: { error: Error & { digest?: string }; retry: () => void }) {
+  /*
+    The one way to `global-error.tsx` from a browser (13 Oct): an error
+    component that throws reaches the boundary above it, and above this one
+    is the bare fallback. Next draws that file in development since 15.2, so
+    a test and a capture can read the real file rather than a stand-in. Only
+    while the probe's second cookie says so, and not in a production build:
+    NODE_ENV is inlined into the client bundle, so this branch is not in it.
+  */
+  if (process.env.NODE_ENV !== 'production' && typeof document !== 'undefined' && document.cookie.split('; ').includes('error-probe-global=1')) throw error;
   return (
     <>
       <AppHeader />

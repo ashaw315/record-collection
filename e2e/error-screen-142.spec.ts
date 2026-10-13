@@ -71,13 +71,29 @@ for (const pointer of POINTERS) test.describe(`the error screen under a ${pointe
     await expect(page).toHaveURL(/\/(\?.*)?$/, { timeout: 30_000 });
   });
 
-  /* The fallback for a failure of the header itself: the same body on paper, with no header. Read on the probe's stand-in; `global-error.tsx` draws this body and cannot be reached from a browser. */
-  test('the bare fallback is the same heading, sentence and controls with no header', async ({ page }) => {
+  /*
+    The fallback for a failure of the header itself: the same body on paper, with no header. Read on
+    `global-error.tsx` ITSELF, not a stand-in: Next draws it in development since 15.2, and an error component that
+    throws reaches the boundary above it, so `error.tsx` rethrows under a second cookie in a branch not built for
+    production. Fails against an `error.tsx` with no such branch: the probe's failure draws the header.
+  */
+  test('the bare fallback, global-error.tsx itself, is the same heading, sentence and controls with no header, and TRY AGAIN recovers from it', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto('/error-probe?bare=1');
+    const origin = new URL(page.url()).origin;
+    await page.context().addCookies([{ name: 'error-probe', value: 'throw', url: origin }, { name: 'error-probe-global', value: '1', url: origin }]);
+    await page.goto('/error-probe');
+    await expect(page.locator('[data-global-error]'), 'the document global-error.tsx draws').toBeVisible({ timeout: 30_000 });
+    /* The dev overlay opens its own dialog over a failure of the layout and takes the pointer; it is not the screen. */
+    await page.addStyleTag({ content: 'nextjs-portal{display:none!important}' });
     await expect(page.getByRole('heading', { level: 1, name: 'Something went wrong.' })).toBeVisible();
     await expect(page.locator('[data-app-nav]')).toHaveCount(0);
     await expect(page.locator('main').getByRole('link', { name: 'Collection' })).toHaveAttribute('href', '/');
     await expect(page.locator('main p')).toHaveCount(1);
+    await expect(page.locator('main').getByRole('button', { name: 'Try again' })).toBeVisible();
+
+    await page.context().clearCookies({ name: 'error-probe' });
+    await page.context().clearCookies({ name: 'error-probe-global' });
+    await page.locator('main').getByRole('button', { name: 'Try again' }).click();
+    await expect(page.locator('[data-error-probe-recovered]'), 'TRY AGAIN draws the page once what failed it has gone').toBeVisible({ timeout: 30_000 });
   });
 });

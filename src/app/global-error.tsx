@@ -22,7 +22,7 @@ export default function GlobalError({ retry }: { error: Error & { digest?: strin
   return (
     <html lang="en" className={`${sans.variable} ${mono.variable} h-full antialiased`}>
       <body className="flex min-h-full flex-col bg-background text-foreground">
-        <main data-screen-frame="" className={`${SCREEN_FRAME} py-6`}>
+        <main data-screen-frame="" data-global-error="" className={`${SCREEN_FRAME} py-6`}>
           <ErrorBody retry={retry} />
         </main>
       </body>

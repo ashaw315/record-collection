@@ -32,10 +32,13 @@ test('the error screen under the header, and its bare fallback, at 390 coarse an
     const page = await context.newPage();
     await login(page);
     expect(await pointerIs(page)).toBe(pointer);
-    for (const [slug, what, path, cookie] of [['error-screen', 'a page that failed, under the app’s header (`error.tsx`)', '/error-probe', true], ['error-bare-fallback', 'the bare fallback’s body with no header: the probe’s stand-in for `global-error.tsx`', '/error-probe?bare=1', false]] as const) {
-      if (cookie) await context.addCookies([{ name: 'error-probe', value: 'throw', url: new URL(page.url()).origin }]);
-      else await context.clearCookies({ name: 'error-probe' });
-      await page.goto(path);
+    /* The bare fallback is `global-error.tsx` itself: the probe's failure under a second cookie, which `error.tsx` rethrows in development (13 Oct, after the probe's stand-in). */
+    for (const [slug, what, global] of [['error-screen', 'a page that failed, under the app’s header (`error.tsx`)', false], ['error-bare-fallback', 'the bare fallback, `global-error.tsx` itself: the same body with no header, its own document', true]] as const) {
+      const origin = new URL(page.url()).origin;
+      await context.clearCookies({ name: 'error-probe-global' });
+      await context.addCookies([{ name: 'error-probe', value: 'throw', url: origin }, ...(global ? [{ name: 'error-probe-global', value: '1', url: origin }] : [])]);
+      await page.goto('/error-probe');
+      if (global) await page.locator('[data-global-error]').waitFor();
       await page.getByRole('heading', { level: 1, name: 'Something went wrong.' }).waitFor();
       await page.addStyleTag({ content: 'nextjs-portal{display:none!important}' });
       await page.evaluate(() => document.fonts.ready);
