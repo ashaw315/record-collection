@@ -530,6 +530,9 @@ Its rows are in the governs table above, one per section; this section does not 
 - **Unnumbered, for Code to number — §T.6: a lone control's row is its target.** Where a control is alone on its row, make the whole row the hit area. Test Pop on the record page and stats' short genre names at 390 under a coarse pointer.
    > Where a control is alone on its row, the row is its target: a press anywhere along the row acts as a press on the control.
 
+- **Unnumbered, for Code to number — §T.6: branch rows and the error screen.** On a genre row with a branch, give the disclosure the row's right 44 and the name the rest; re-count stats under a coarse pointer, and the result must be zero names under 44. Add an error screen for every route and a global fallback: the 40 heading Something went wrong., one sentence, TRY AGAIN and a way back to the Collection, under the app's header where it renders. Capture it at 390 coarse and 1280 fine.
+   > A page that fails draws the app’s header and nav, the 40 heading Something went wrong., one sentence in the label colour saying the page could not load, and two §9.3 controls: TRY AGAIN, and the way back to the Collection.
+
 No step: §G.7. It rules nothing. Hover and focus wait on Code's second pass, the breakpoint is settled and recorded in §G.8, and the eyebrow repetition is an observation, not a ruling.
 
 **The record-detail screen is closed at 7983d4d, on 1 October 2026,** by Adam’s pass over the 119 captures, which found nothing that changes what a reader understands about a record. Steps run 0 to 71; steps 72 and 73 follow the close and change values, not structure. This is the baseline the record modal builds against: its marks, its type ladder and its colour system.
