@@ -44814,3 +44814,40 @@ the field still submits; the form still has a default button). The only
 spec that reads it (`collection-band-97.spec.ts:67`) reads which
 buttons exist and whether they are drawn, not focus, and is unchanged.
 Not built: Design is ruling it, and this is the answer it needed first.
+
+## 13 Oct, 19:05: the 18:49 drop taken in; the panel's three given the chrome reason
+
+**The 18:49 drop** (raw `c11c661`; the listing is
+`docs/intake/c11c661-added.md`, 26 added, 3 reworded, 1 removed). Read
+against what the coordinator said: the three entries Code said were owed
+are filed, `W.31/two-px-list`, `T.4/focus-inside-row` and
+`T.6/ring-every-control`; §T.6's rule is scoped "outside the wall's
+drawn composition"; the rail's hidden Apply "is not a stop for Tab", and
+the ring step's handoff sentence now carries it; the pulled-state read it
+asks for is done (`a7bba19`). The one sentence removed outright is the
+handoff's own count of the index's ids, replaced by one that points at
+the RESULT line, which is the fix for the count going stale and not a
+ruling lost. **The hole stands:** the drop scopes the spine's §W.33 mark
+to "as the shelf opens", and the pulled state leaves sixteen spines
+focusable under none of the four treatments; Design is rewording it to
+the control rather than the state, and the wall's part of the ring is
+not built until that lands. The index: 12 PASS.
+
+**The panel's three, restated** (`wall-focusables.md`, the capture's
+text): outside the composition because the panel is the pull's chrome
+rather than a run or a record. The earlier reason, that they are boxed
+with room around them, was a clipping reason: it says a ring would show,
+not which side of the line the control is on, and in the file it would
+have let the next boxed control drawn inside the composition argue its
+way out. The sentence now says the side is decided by what a control is
+part of.
+
+**The clipping count's likeliest second instance** is the grid's cover
+cells, unread; the pulled cover is not focusable, so the wall is not
+one. It rides the ring step's Tab walk, per control, and no run of its
+own.
+
+**Transit damage recurs:** the three-state table reached the coordinator
+with two rows missing and a stray word in the header, as the two
+sentences did earlier. Tables small, prose complete, and the file on
+disk is the record.
