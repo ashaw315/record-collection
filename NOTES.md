@@ -44390,3 +44390,82 @@ take them.**
 under `test/repo`; typecheck and build clean; lint 0 errors, 27
 warnings. The gate above covers `0d78df5`; everything after it is
 step-covered only.
+
+## 13 Oct, 14:40: the parts 1 to 3 drop taken in and read against what was said; the 24 gap's entry call verified; the swap datapoint; cleanup racing in-flight work
+
+**The drop** (`4700939` raw; intake `4ea8ef9`: 28 blocks restored,
+withdrawals derived to 204 with two new entries, `T.6/login-18-every-width`
+and `T.6/review-stays-put`; the index `11 PASS`). `export-diff` lists 130
+sentences added (19 in the handoff, 109 in the target, 2 in
+WITHDRAWALS) and nothing removed or reworded but Code's region. **Read
+against what the coordinator relayed of Design's message**, every relayed
+ruling has its sentences: the 24 gap generalised with "measure each
+pair's drawn height first"; stats' count column and 44 disclosure column
+with the re-count expected 0; login's centred 384 from 420 up and its
+entry filed; the review's entry filed; the card's fill (none,
+deliberately), the 320 stacking (COMPARE above IDENTIFY) and the glyph
+collision resolved (no + on the adds; IN COLLECTION and ON WANT LIST);
+the artist prefix as the stub's; the focus ring as a defect against
+§M.6 on login. **In the file and not in any relay I have:** not-found
+redrawn (the 40 heading Not found., the address sentence, a COLLECTION
+control); manage's row actions as LINEUP, EDIT and DELETE words, the
+opened row's name at its top, LINEUP in the action row at 390, the
+picker's rows and the walk's slot, the add rows untinted; the record
+form's + and − disclosures and Pressing details' hairline; the item
+page's wrapped-title leading; Gatefold unitalicised on the format line;
+the versions table's columns and inset; Searched as a line; SEARCHING…
+at SEARCH DISCOGS's width; the review moved below Manage's heading.
+Whether Design's message named those is the coordinator's to say; the
+tool says they are there. Nothing relayed is missing from the file.
+**The unnumbered steps now in the handoff, for Code to number when
+ordered:** slots of two lines and names in their case (the 11:40 drop);
+part 1's passes; part 2's passes; look up's result card (held); login at
+1280 and the proposed hierarchy; the 24 gap and stats' disclosure
+column. None begun.
+
+**The entry call on the 24 gap, verified with the tool rather than
+asserted.** Across every committed version of the target and the
+handoff before this drop (40 drop commits), no sentence pairs "side by
+side" with 24 or "one group" with 24; the only 24 ruled for a pair was
+the dialog's, stacked ("Stacked, the dialog's Cancel and destructive
+verb stand 24 apart"). The generalised sentence first appears in this
+drop, which itself says "an earlier draft of this sentence said side by
+side only, and no drop carried it". So Design's call stands: no entry
+owed, and the three pairs at 8 are new rulings, not corrections. The
+same check on the market slot's "no drop had carried the measure": no
+committed version before this drop has a sentence pairing the market
+with its slot and a measure; the slot's height was ruled by step 121's
+"an answer takes the height of the control it replaces". Also stands.
+
+**The swap datapoint, beside the pick** (the gate's 25,000, a
+conservative pick from a confounded sample; `scripts/gate.sh` carries
+it now too): the gate on `0d78df5` started at 12 pages a second and
+ended at 49,082, and passed clean in 68 minutes with no test failing
+once, the tightest margin 48 percent. A rate well inside the band the
+sample called slower neither slowed a run nor failed one. The number is
+not changed: the guard reads at a run's start, and starts read low.
+
+**Cleanup racing in-flight work, the third sighting, and what a
+structural fix would be.** The shared `afterEach` (`e2e/cleanup.ts`)
+deletes a test's tracked rows by SQL the moment its body ends, whether
+the body finished or was cut off. Two shapes:
+1. *A test's own request still in flight when its cleanup runs* (the
+   400 at 320): available and cheap. The hook can take `testInfo` and,
+   where the body timed out, dispose the page's request context before
+   deleting (`page.request.dispose()`), so a pending request is aborted
+   and the artifact says so, rather than landing on rows that are gone
+   and reading as the product refusing a good request. About ten lines
+   in `registerCleanup`, staged with a test that times out mid-POST.
+   It changes the artifact's honesty, not the verdict: the test had
+   already failed by its timeout.
+2. *Another worker's page mid-read while this worker's cleanup deletes*
+   (the want-list crash): not reachable by waiting. A worker cannot see
+   another worker's reads, and cleanup already deletes only its own
+   rows; the page that threw was listing everything in the shared
+   database. The fixes are the read tolerating the gap (done, `d6bfd7c`)
+   or data isolation per worker (a database each, seeded each), which
+   is a day and a different harness, not a hook. So this shape stays
+   something to recognise: a page that reads shared rows in several
+   statements, with no transaction, can see another worker's delete
+   between them, and should tolerate it as the want list now does.
+Not built; the answer first, as asked.

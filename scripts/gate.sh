@@ -34,6 +34,13 @@
 # 25,000 says only: well under the one rate known to hurt, and well over the
 # 434 to 5,521 that three full runs started at without being slowed. It was
 # 1,000, a round number that sat inside that ordinary range.
+#
+# A datapoint beside the pick (13 Oct): the gate on 0d78df5 started at 12
+# pages a second and ended at 49,082, and passed clean in 68 minutes with no
+# test failing once (1232 passed; the tightest margin 48 percent). So a rate
+# well inside the band the sample called slower did not slow a run or fail
+# one. The number is not changed: the guard reads at a run's start, and
+# starts read low.
 set -uo pipefail
 
 ROOT="$(git rev-parse --show-toplevel)"
