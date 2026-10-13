@@ -44785,3 +44785,32 @@ itself is checked. Assertion 0 tolerating an uncommitted spec that
 arrives with its own test would need the script to know which test,
 and is not cheap. The other plain commits stay as they were: a Design
 drop as it arrived, and a capture changed on purpose.
+
+## 13 Oct, 18:40: the pulled state read; the hidden Apply need not be focusable
+
+**The wall's list is three states** (`docs/captures/wall-focusables/wall-focusables.md`,
+the capture extended): as the shelf opens, 32; the overview, 16; a
+record pulled, 34, which adds the panel's three (the link to the full
+record, TURN OVER, PUT BACK, inside `record-chrome`) and takes the pulled
+spine out, so sixteen spines stand. The spines are focusable as it opens
+and not in the overview; the run only in the overview; so "the set of
+controls" is three sets. My sides are in the file: the header, the rail,
+the zoom-out and the panel's three outside the composition (the outside
+ring); the spines (§W.33) and the run (§W.30) inside it; the set bar and
+the pulled cover not focusable at all. Design confirms control by
+control; nothing built to either reading.
+
+**The rail's hidden Apply need not be focusable.** It is
+`<button type="submit" class="sr-only">`, the no-JavaScript path for
+the selects (`RailSelect` submits on change with JavaScript;
+`WallRail.tsx:190`). Enter in the search field submits by implicit
+submission, which clicks the form's default button whatever its
+tabindex, so `tabIndex={-1}` keeps Enter working and takes the button
+out of the Tab order; a screen reader's user would then reach it only
+by Enter in the field, which is the route the sighted keyboard user has
+today, since the button is invisible to them. Cost: one attribute and
+one test (Tab from the search field lands on the genre select; Enter in
+the field still submits; the form still has a default button). The only
+spec that reads it (`collection-band-97.spec.ts:67`) reads which
+buttons exist and whether they are drawn, not focus, and is unchanged.
+Not built: Design is ruling it, and this is the answer it needed first.

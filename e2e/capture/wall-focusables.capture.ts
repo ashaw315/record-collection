@@ -28,7 +28,7 @@ test('list the focusable controls in the wall’s view with where each stands', 
   expect(await page.locator('[data-shelf-offered]').evaluate((el) => getComputedStyle(el).display), 'the shelf is the drawn view at 1440').not.toBe('none');
 
   const read = () => page.evaluate(() => {
-    const MARKS = ['data-app-nav', 'data-collection-band', 'data-testid', 'data-wall', 'data-run', 'data-spine', 'data-record', 'data-set-bar', 'data-shelf-offered', 'data-shelf-fallback', 'data-collection-views'];
+    const MARKS = ['data-app-nav', 'data-collection-band', 'data-testid', 'data-wall', 'data-run', 'data-spine', 'data-record', 'data-pulled', 'data-seat', 'data-set-bar', 'data-shelf-offered', 'data-shelf-fallback', 'data-collection-views'];
     const place = (el: HTMLElement) => {
       const out: string[] = [];
       for (let n: HTMLElement | null = el; n !== null; n = n.parentElement) {
@@ -53,6 +53,13 @@ test('list the focusable controls in the wall’s view with where each stands', 
   await page.getByTestId('wall-zoom-out').click();
   await page.locator('[data-wall="overview"]').waitFor({ timeout: 30_000 });
   const overview = await read();
+  /* The pulled state (the wall's main interaction): a spine pulled from the labelled wall, which the route opens on. */
+  await page.goto('/');
+  await page.locator('[data-shelf-offered] [data-wall="labelled"]').waitFor({ timeout: 30_000 });
+  await page.locator('a[data-seat] [data-spine]').first().click();
+  await page.getByTestId('record-chrome').waitFor({ timeout: 30_000 });
+  await page.locator('[data-pulled]').waitFor({ timeout: 30_000 });
+  const pulled = await read();
   const table = (list: typeof rows) => list.map((row, index) => `| ${index + 1} | ${row.tag} | ${row.name.replace(/\|/g, '/')} | ${row.place.replace(/\|/g, '/') || '(none)'} | ${row.box} |`);
 
   mkdirSync(OUT, { recursive: true });
@@ -76,6 +83,24 @@ test('list the focusable controls in the wall’s view with where each stands', 
       ...table(overview),
       '',
       `${overview.length} focusable controls in the overview.`,
+      '',
+      '## A record pulled, from the labelled wall',
+      '',
+      '| # | element | text or label | stands in | drawn box |',
+      '|---|---|---|---|---|',
+      ...table(pulled),
+      '',
+      `${pulled.length} focusable controls with a record pulled.`,
+      '',
+      '## Three states, not one set',
+      '',
+      'The spines are focusable as the shelf opens and not in the overview; the run is focusable in the overview and not as the shelf opens; the pulled state adds the pulled record’s own controls and takes the pulled spine out. A scope written as one set of controls is three sets, one a state.',
+      '',
+      '## Where Code would draw the line, for Design to confirm or correct',
+      '',
+      '- **Outside the composition, the outside ring:** the header’s six links, which are not in the wall; the rail’s eight (the search field, the genre and sort selects, the hidden Apply, SHELF, TABLE, GRID, Add record), which are the page’s chrome; the count’s zoom-out, a control about the view in the count’s row above the fixture; and, pulled, the panel’s three (the link to the full record, TURN OVER, PUT BACK), which are the pulled record’s chrome, boxed with room around them as §M.6 describes the modal’s own controls.',
+      '- **Inside the composition, its own marks:** the spines, whose focus §W.33 rules (the sink plus an ink mark on the top face), as the shelf opens and the sixteen left standing when one is pulled; and the run in the overview, whose focus §W.30 rules (the sink plus a 2px ink rule along its front edge), an SVG group that a CSS outline would not box in any case.',
+      '- **Not focusable, so not in the question:** the set bar, and the pulled cover itself (its faces are turned by TURN OVER, not by focusing the cover).',
       '',
     ].join('\n'),
   );
