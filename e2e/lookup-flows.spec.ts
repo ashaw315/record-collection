@@ -1422,12 +1422,12 @@ const COLLISION_B = JSON.parse(
   readFileSync('test/fixtures/discogs/release-collision-clay-lp-3-b.json', 'utf8'),
 ) as Record<string, unknown>;
 
-/** Both members as the SEARCH returns them: identical on every displayed column. */
+/** Both members as the SEARCH returns them, normalised (the artist split off the combined title; the first stub left it in, which the product cannot draw): identical on every displayed column. */
 const collisionRow = (discogsId: number) => ({
   discogsId,
   type: 'release',
   masterId: MASTER,
-  title: `Discharge - ${TITLE}`,
+  title: TITLE,
   artist: 'Discharge',
   thumbUrl: null,
   year: 1984,

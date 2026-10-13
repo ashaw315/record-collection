@@ -44247,3 +44247,146 @@ artist is on every row where Discogs gave one (null only where the
 combined title had no " - ", and then the title is the whole string).
 Not changed: the card is held. The stub and the thirteen look-up
 pictures are to be corrected and retaken when the card's pass is taken.
+
+## 13 Oct, 14:00: the gate clean; the bare fallback from its own file; the row samples shared; the hairline check; three retakes; three reads
+
+**Gate on `0d78df5`, from the file on disk**
+(`../record-collection-gate-logs/0d78df5-gate.txt`, started 11:59, ended
+13:07): unit `4327 passed, 5 skipped, tree unchanged — OK`; Playwright
+`1232 passed, 24 skipped, ledger clean, tree unchanged — OK`, chromium
+849, mobile 388, no ✘ line at all. The two readers passed and none of
+last night's six retry-passers recurred. Load 9.86 at the start and
+14.47 at the end; swap 12 pages a second at the start and 49,082 at the
+end, which is above the guard's 25,000 and says the machine was being
+pushed by the run's own end, not that the run was slowed (the margins
+line is 48 percent at worst). **Main no longer carries the two known
+failures.**
+
+**Item 7: the bare fallback is read and pictured from `global-error.tsx`
+itself.** `error.tsx` rethrows while a second cookie
+(`error-probe-global=1`) says so, in a branch not built for production
+(NODE_ENV is inlined into the client bundle); `global-error.tsx` marks
+its `main` `data-global-error`; the probe's `?bare=1` stand-in is gone
+and `ErrorBody`'s retry is required. Test first, the bare case in
+`error-screen-142.spec.ts` rewritten to reach the real file and to
+recover from it: failed against the old `error.tsx` on both pointers
+(no `[data-global-error]` in the document); then failed once more on
+the click, because Next's dev overlay opens its own dialog over a
+failure of the layout and took the pointer: hidden as the other cases
+hide it; then `10 passed` (chromium carries this spec). **The retaken
+bare pictures are byte-identical to the stand-in's**, both windows
+(`error-screen-142/with-stand-in/` keeps them anyway): so Design's
+ruling "from a drawing" was from the real file, pixel for pixel, and
+is no longer provisional on that account. The table says the real file.
+
+**Item 6: `e2e/row-samples.ts`.** `rowSamples(top, height = 44)`: top
++ 0, 1, … height − 1, nothing added; the measurement moved onto it;
+held by `test/repo/row-samples.test.ts` (3, failed first for want of
+the module). `stats.spec.ts`'s branch-row test takes the samples as
+data into its `evaluate`; its `down()` helper, which still added a
+quarter and whose `rows` nothing asserted, is gone. `stats.spec.ts`
+both projects: `38 passed`. `readReach`'s own quarter is unchanged and
+still noted.
+
+**Item 5: the doubled-hairline check**, last as ordered.
+`e2e/hairlines.ts` reads every drawn 1px top or bottom border and `hr`
+in the body, and names every pair overlapping in x with nothing drawn
+between them at any distance (content: glyph runs, replaced elements
+and controls, boxes with a background or shadow, and bordered boxes).
+What it does not see, as told to the coordinator and in the file: a
+rule drawn as a background, a shadow, a gradient or SVG; a border over
+1px; the shared line of a collapsed table (top borders inside one are
+left out); anything hidden or in a shadow root. `hairlines.spec.ts`:
+four staged cases on set pages (24 apart found, a word between not; a
+touching pair found, an `hr` between makes two neighbours; a painted
+box and a bordered box are content, a transparent border and a hidden
+rule are not lines; a collapsed table finds nothing), and the sweep:
+eight routes at 390 and 1280 plus the menu open at 390, each against
+`hairlines-record.json`, which fails on a pair not recorded and on a
+recorded pair gone. Two defects in the reading found by the staged
+cases: `rgb(0, 0, 0)`'s blue read as an alpha of 0, and a control's
+four edges read as rules (the record form's every input). **The
+retrospective list is one pair:** on `/records/new` at both widths, the
+last field row's bottom rule (`RecordForm.tsx:83`, `border-b` on each
+row) and the Everything-else fieldset's top rule (`:830`, `border-t`)
+stand 21 apart over the form's width with nothing between. Recorded,
+not sent as a verdict; it is for the record form's pass. Chromium `21
+passed`; the mobile project does not carry this spec.
+
+**Three retakes, each original set aside first.**
+- Look up, the stub corrected (`unpassed-screens-139.capture.ts:42` and
+  `lookup-flows.spec.ts:1430`, `title: TITLE`): the ten states,
+  `CAPTURE_ONLY`, table `retaken-stub-prefix.md`, originals in
+  `with-stub-prefix/`. Measured against them: the form and searching
+  pictures are identical; the two no-title 1280 pictures that changed
+  (`nothing-found`, `search-failed`) differ in 87 pixels on one row,
+  the resting pointer's underline on the button, now gone; the seven
+  title-bearing states differ where the cards are. **The cards are
+  also taller than Design's pictures by step 140's reserved line under
+  Identify this pressing, which those predate:** at 1280 the three
+  cards grow 45 for it while the titles lose nothing (one line each
+  already), and at 390 the two titles' lost lines and the three slots
+  nearly cancel (1136 to 1133). `lookup-flows.spec.ts`, both projects:
+  `110 passed`.
+- Login at rest at 1280 (`CAPTURE_ONLY=login-form CAPTURE_WIDTHS=1280`,
+  table `retaken-login-1280.md`, original in `with-inset-16/`): the
+  block of 384 centred, the diff against the old picture within x 445
+  to 834.
+- The error screen's four, above.
+The for-design copies: part 3 refreshed from the retake, and
+`for-design/login-1280/` holds the one picture with its manifest.
+**The retaken pictures are committed alone and plainly, by the rule of
+the capture edited on purpose (above, 11 Oct): `captures-unchanged`
+reads them red until they are committed, so the checked script cannot
+take them.**
+
+**Three reads for the coordinator.**
+1. *The three 24-gap pairs, drawn height and hit area, from the build
+   and the tests that hold them.* Hit areas reach past a drawn box only
+   under a coarse pointer and only where a control carries one (step
+   127); none of these six carries one (no `before:` overlay, no
+   `HIT`). Error screen: both controls `h-[44px]` under either pointer,
+   the box is the hit area, 44 (`error-screen-142.spec.ts` holds the
+   44 at 320, 390 and 1280 under both pointers), 8 apart. Suggestions'
+   select and ASK CLAUDE: `h-9` (36) under a fine pointer,
+   `pointer-coarse:h-[44px]` under a coarse one, the box the hit area
+   (`suggestions-140.spec.ts` holds the 44 to a finger), 8 apart. The
+   dialog at 1280: 32 drawn under a fine pointer, 8 apart, the box the
+   hit area; under a coarse pointer 44, stacked 24 apart. So under a
+   coarse pointer all three pairs are 44 drawn with nothing reaching
+   into the gap, as the dialog's measured case was, and a 24 between
+   them is a gap to the finger as well as the eye. Nothing goes back to
+   Design on this score.
+2. *The stats column:* noted for the build. When the count takes a
+   column of its own with a 44 disclosure column at every row's right,
+   names under 44 across at 390 under a coarse pointer are re-counted
+   and reported; anything but 0 stops the step. The old answer is not
+   assumed.
+3. *The focus ring is per place, in three classes.* §M.6's ring
+   (`focus-visible:outline-2 outline-offset-2 outline-foreground`) is
+   written inline in five components (the error body, the collection
+   list's control, the shelf's empty control, the sleeve modal, the
+   want list page's control) and once as a rule scoped to the
+   collection screen and the wall rail (`globals.css:619, 646`). The
+   shared `ui/button` and `ui/input` carry shadcn's ring instead, 3px
+   of `--ring` at half strength, the thick grey Design saw: every form
+   built on them (the record form's 16, the want-list forms, manage's
+   tables, look up's two) and login's field, which copies that class
+   inline, and `GenreTree`. And raw `input`, `select`, `textarea` and
+   `button` elements with no ring class at all draw the browser's
+   default: about 52 in 16 files (`AboutCell` 7, `LookupClient` 6,
+   `RecordForm` 5, `CollectionFilters` 5 which the scoped rule
+   covers, `WallRail` 4, `RecordJournal` 4, `WantListForm` 4,
+   `PressingAssessment` 3, and 2 or 1 each in `RecordPanel`,
+   `WallStage`, `ImageGallery`, `GapAnalysis`, `ManageClient`,
+   `RailSelect`, `InlineCreate`, `WantListRow`, `DeleteRecord`). So
+   login is one instance; the class is every control outside the
+   collection screen and those five components. Counted by reading,
+   not by a run.
+
+**Step level**, for what this entry built: the error spec `10 passed`;
+`stats.spec.ts` `38 passed`; `hairlines.spec.ts` `21 passed`;
+`lookup-flows.spec.ts` `110 passed`; `row-samples` and `export-diff`
+under `test/repo`; typecheck and build clean; lint 0 errors, 27
+warnings. The gate above covers `0d78df5`; everything after it is
+step-covered only.
