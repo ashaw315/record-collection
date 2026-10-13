@@ -171,7 +171,7 @@ const STATES: State[] = [
     await expect(page.locator('#password-error')).toBeVisible();
   } },
 
-  { screen: '/suggestions', slug: 'suggestions-list', state: 'the list; Ask Claude’s panel as the test environment has it, not configured', arrange: async (page, made) => { await page.goto('/suggestions'); await expect(page.getByRole('listitem').filter({ hasText: 'Anti-Cimex' }).first()).toBeVisible(); } },
+  { screen: '/suggestions', slug: 'suggestions-list', state: 'the list; Ask Claude’s panel as the test environment has it, not configured', arrange: async (page) => { await page.goto('/suggestions'); await expect(page.getByRole('listitem').filter({ hasText: 'Anti-Cimex' }).first()).toBeVisible(); } },
   { screen: '/suggestions', slug: 'suggestions-ask-thinking', state: 'Ask Claude, thinking (the answer held)', arrange: async (page) => {
     const hold = held();
     await page.route('**/api/suggestions/ai**', async (route) => { if (route.request().method() !== 'POST') return route.fallback(); await hold.wait; await route.fulfill(json({ data: { suggestions: [], dropped: 0 } })); });
