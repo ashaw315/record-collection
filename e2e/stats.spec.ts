@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist, trackCreated } from './cleanup';
 import { login } from './sign-in';
-import { HIT_FLOOR, HIT_PAST, POINTERS, pointerIs, reachingPastItself, readReach, underFloor } from './hit-area';
+import { HIT_FLOOR, POINTERS, pointerIs, reachingPastItself, readReach, underFloor } from './hit-area';
 
 /* Records and artists removed after each test — see e2e/cleanup.ts. */
 registerCleanup();
@@ -374,15 +374,16 @@ test('the genre tree renders one number a row: the distinct records under the ge
     expansion is not optional: two of the cases the pair exists for do not
     render in the collapsed view at all.
   */
-  await page.getByTestId(`genre-branch-${rock.id}`).locator('summary').first().click();
-  await page.getByTestId(`genre-branch-${punk.id}`).locator('summary').first().click();
+  /* A branch is opened by its figure, at the row's right: under a coarse pointer that 44 is the disclosure's and the rest of the row is the name's (step 141), so a press on the row's middle, which this used, goes to the collection. Driving only; what is read after is unchanged. */
+  await page.getByTestId(`genre-pair-${rock.id}`).click();
+  await page.getByTestId(`genre-pair-${punk.id}`).click();
 
   await expect(
     page.getByTestId(`genre-pair-${punk.id}`),
     'nothing of its own, one record beneath it',
   ).toHaveText('1');
 
-  await page.getByTestId(`genre-branch-${metal.id}`).locator('summary').first().click();
+  await page.getByTestId(`genre-pair-${metal.id}`).click();
   const black = page.getByTestId(/^genre-pair-/).filter({ hasText: /^0$/ });
   await expect(black.first(), 'childless at depth 2 renders one number').toBeVisible();
 });
@@ -536,10 +537,42 @@ for (const pointer of POINTERS) test.describe(`stats under a ${pointer} pointer`
         return out;
       }, [child.id as string]);
       for (const row of rows) expect.soft(row.across, `at ${width}: ${row.what}’s row, places along its middle a tap does not reach its link (${row.wide} of ${row.row} do)`).toEqual([]);
-      const branch = reach.filter((r) => r.kind === 'a' && r.name === `Punk-${suffix}`);
-      expect(branch.length, 'the precondition: the branch’s name is read').toBe(1);
-      expect.soft(branch.filter((r) => r.left > HIT_PAST || r.right > HIT_PAST).map((r) => `${r.name}: ${r.left} left, ${r.right} right`), `at ${width}: a branch’s name is not its row: the row opens the branch`).toEqual([]);
-      expect.soft(reach.filter((r) => r.kind === 'a' && r.wide < HIT_FLOOR && r.name !== `Punk-${suffix}`).map((r) => `${r.name}: ${r.wide}`), `at ${width}: links alone on their rows under ${HIT_FLOOR} across`).toEqual([]);
+      /*
+        Step 141, Design, 12 Oct: "Where a row carries two controls, a name and the disclosure that opens its
+        branch, the disclosure takes the row's right 44 and the name takes the rest of the row, so each meets the
+        floor by its share of the row." This held a branch's name to 9 past itself, which left a short one under
+        44 across (three on the real collection); the claim changed with the ruling. Counted both ways, down and
+        across. Fails against a name reached over its own width only.
+      */
+      const shares = await page.evaluate(([genre]) => {
+        const row = document.querySelector(`[data-testid="genre-row-${genre}"]`) as HTMLElement;
+        row.scrollIntoView({ block: 'center' });
+        const link = row.querySelector('a') as HTMLElement;
+        const summary = row.closest('summary');
+        const box = row.getBoundingClientRect();
+        const whose = (x: number, y: number) => { const at = document.elementFromPoint(x, y); if (at === null) return 'nothing'; if (at === link || link.contains(at)) return 'name'; if (summary !== null && summary.contains(at)) return 'disclosure'; const other = (at.closest('[data-testid^="genre-row-"]') ?? at).getBoundingClientRect(); return `${at.tagName.toLowerCase()} "${(at.textContent ?? '').trim().slice(0, 12)}", whose row is ${other.top} to ${other.bottom} where this row is ${box.top} to ${box.bottom}, sampled at ${y}`; };
+        const y = box.top + box.height / 2;
+        /*
+          Down the row: 44 samples, one a pixel, from the row's own top with nothing added. Measured (13 Oct, by a
+          probe since removed): the browser reads a point as the one-pixel square below and right of it. With a
+          boundary at 637.5, a point at 636.5 reached this row and one at 636.75 the row beneath; with one at 444,
+          a point at 443.25 reached the row beneath. So a sample a quarter above a row's foot is the next row's,
+          whatever the build does, and three samplings of this test read 43 of 44 for that reason. Samples at
+          top + 0, 1, … 43 are squares that tile a row of 44 exactly, on a whole pixel or a half.
+        */
+        const across: string[] = [];
+        for (let x = Math.ceil(box.left); x < Math.floor(box.right); x += 1) across.push(whose(x + 0.25, y));
+        const down = (x: number) => { let rows = 0; for (let dy = Math.ceil(box.top); dy < Math.floor(box.bottom); dy += 1) if (whose(x, dy + 0.25) !== 'nothing') rows += 1; return rows; };
+        const split = across.length - 44;
+        return { width: across.length, name: across.slice(0, split).filter((each) => each !== 'name').length, disclosure: across.slice(split).filter((each) => each !== 'disclosure').length, nameTall: Array.from({ length: 44 }, (_, dy) => whose(box.left + 20, box.top + dy)).map((each, dy) => (each === 'name' ? '' : `${each} at ${dy} of 44`)).filter((each) => each !== ''), disclosureTall: Array.from({ length: 44 }, (_, dy) => whose(box.right - 22, box.top + dy)).map((each, dy) => (each === 'disclosure' ? '' : `${each} at ${dy} of 44`)).filter((each) => each !== ''), height: Math.floor(box.height), rows: down(box.left + 20) };
+      }, [parent.id as string]);
+      expect(shares.width, `at ${width}: the precondition: the branch’s row is wider than two shares`).toBeGreaterThan(88);
+      expect.soft(shares.name, `at ${width}: places in the row’s left share (all but its right 44) that do not reach the name`).toBe(0);
+      expect.soft(shares.disclosure, `at ${width}: places in the row’s right 44 that do not reach the disclosure`).toBe(0);
+      expect.soft(shares.height, `at ${width}: the row is 44 or more down`).toBeGreaterThanOrEqual(HIT_FLOOR);
+      expect.soft(shares.nameTall, `at ${width}: rows of the name’s share, top to bottom, that reach something else`).toEqual([]);
+      expect.soft(shares.disclosureTall, `at ${width}: rows of the disclosure’s share, top to bottom, that reach something else`).toEqual([]);
+      expect.soft(reach.filter((r) => r.kind === 'a' && r.wide < HIT_FLOOR).map((r) => `${r.name}: ${r.wide}`), `at ${width}: names under ${HIT_FLOOR} across: none, with or without a branch`).toEqual([]);
     } else {
       expect.soft(reachingPastItself(reach.filter((r) => r.kind === 'a')), `at ${width}: links a mouse reaches from outside their drawn box`).toEqual([]);
     }

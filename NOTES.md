@@ -43872,3 +43872,62 @@ folder named (`SUGGESTIONS_OUT`). Six requests seen, six answered in
 the browser. Taken twice before commit, the second after the doubled
 hairlines went. `suggestions-configured-139` is the screen before the
 pass and is not touched.
+
+## 13 Oct, 01:10: step 141. A branch's row: the disclosure has the right 44, the name the rest
+
+From the drop of 21:37: "Where a row carries two controls, a name and
+the disclosure that opens its branch, the disclosure takes the row's
+right 44 and the name takes the rest of the row, so each meets the
+floor by its share of the row." `HIT_ROW_LESS_44` in `hit-area.ts`;
+`GenreTree.tsx` gives it to a name whose genre has a branch. Coarse
+only.
+
+**Counted in both dimensions, as asked.** On the real collection,
+read-only (`docs/captures/stats-141/`): 42 controls, 42 of them 44
+down at 320, 390 and 768; under 44 across, 0, from 3 after step 138
+and 9 before it. The sheet's "past 9" column reads 36: the row
+targets, 30 from step 138 and these six shares. In the test: every
+place along a branch's row's middle but its right 44 reaches the
+name; every place in the right 44 reaches the disclosure; and each
+share is the row's 44 down.
+
+**The cost, said to Design.** On a phone, the middle of a branch's row
+used to open the branch. It now goes to the collection filtered by
+that genre, and only the right 44 opens the branch, with nothing drawn
+there but the figure. Found by `stats.spec.ts:321` on the phone
+project, which opened branches by pressing the row's middle and
+landed on the collection, both attempts. Its driving is corrected (it
+presses the figure, as the floor test always did); what it reads is
+unchanged.
+
+**The browser reads a point as the pixel square below and right of
+it.** Three samplings of the new test read "43 of 44" down a row
+before I measured instead of guessing: sampling from the row's
+rounded top, then about its middle with a quarter added, then from a
+whole-pixel scroll. A probe settled it: with a boundary at 637.5 a
+point at 636.5 reached the upper row and 636.75 the lower; with one
+at 444, a point at 443.25 reached the lower. So a sample a quarter
+above a row's foot belongs to the next row whatever is built, where
+that row has something positioned across its width, which since step
+138 a row with no branch has. The test samples at the row's top plus
+0, 1 … 43: squares that tile 44 exactly. The probe is deleted; the
+measurement is in the test's comment and here. **Not chased:**
+`readReach` adds a quarter the same way and counts 44 by a different
+route (from the control's middle, to 40 either side, floor by
+`tall < 44 AND height < 44`), so it has not misread; but its "tall"
+for a row directly above a whole-row target may now be one short and
+masked by the row's drawn height. Logged, not touched.
+
+**Step level.** Every-test files touched: none. The six specs that
+open stats, both projects: `79 passed, ledger clean, tree unchanged —
+OK`; `stats.spec.ts` again after an unused import went, `38 passed`.
+Unit under stats, the hover check and `test/repo`: `490 passed`.
+Typecheck and build clean; lint 0 errors, 27 warnings. Failed first:
+4 of 4 coarse on "places in the row's left share … that do not reach
+the name".
+
+The sheet's token script had gone from the scratchpad (the temp folder
+is cleared from time to time) and the first re-count failed for want
+of a session. Rewritten as it was: a session for twenty minutes from
+the app's own function, written to a file, printed nowhere, deleted
+after the sheet.

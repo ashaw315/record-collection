@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { flattenPairs, genreFigure, type GenrePairNode } from './genre-pairs';
-import { HIT_ROW, HIT_WHOLE_ROW, ROW_CUTS, ROW_TARGET } from '@/app/hit-area';
+import { HIT_ROW_LESS_44, HIT_WHOLE_ROW, ROW_CUTS, ROW_TARGET } from '@/app/hit-area';
 
 /**
  * §10/A66: `/stats`' genre series is a tree, not a chart. A66 drew a pair
@@ -49,7 +49,7 @@ function Row({ node, href }: { node: GenrePairNode; href: (id: string) => string
       mouse the row is the 27.5 it was.
     */
     <div
-      className={`flex items-center py-1 text-detail pointer-coarse:min-h-[44px] pointer-coarse:py-0 ${ROW_CUTS}${node.hasBranch ? '' : ` ${ROW_TARGET}`}${empty ? ' text-muted-foreground' : ''}`}
+      className={`flex items-center py-1 text-detail pointer-coarse:min-h-[44px] pointer-coarse:py-0 ${ROW_CUTS} ${ROW_TARGET}${empty ? ' text-muted-foreground' : ''}`}
       style={{ paddingLeft: `${node.depth * 0.875}rem` }}
       data-testid={`genre-row-${node.id}`}
     >
@@ -58,8 +58,8 @@ function Row({ node, href }: { node: GenrePairNode; href: (id: string) => string
       <span className="min-w-0 overflow-x-clip text-ellipsis whitespace-nowrap">
         {/* Linked where the collection can be filtered by it: an account is
             only useful if you can open what it counts. */}
-        {/* Step 138: with no branch the name is alone on its row and the row is its target; with one, the row opens the branch and the name is reached over itself. */}
-        <Link href={href(node.id)} className={`${node.hasBranch ? HIT_ROW : HIT_WHOLE_ROW} underline-offset-2 hover:underline`}>
+        {/* Step 138: with no branch the name is alone on its row and the row is its target. Step 141: with one, the row's right 44 opens the branch and the name has the rest. Under a coarse pointer; with a mouse the name is its own width and the rest of the row opens the branch. */}
+        <Link href={href(node.id)} className={`${node.hasBranch ? HIT_ROW_LESS_44 : HIT_WHOLE_ROW} underline-offset-2 hover:underline`}>
           {node.name}
         </Link>
       </span>

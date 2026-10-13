@@ -49,10 +49,18 @@ export const ROW_CUTS = 'pointer-coarse:overflow-y-clip';
  * needs nothing drawn differently." The row takes `ROW_TARGET` and the link
  * `HIT_WHOLE_ROW`: the link is not positioned, so its overlay is placed
  * against the row and is the row's box. Coarse only, as every overlay is.
- * Not for a row with a second control in it: a branch's row on stats opens
- * the branch, and its name keeps `HIT_ROW`.
+ * Not for a row with a second control in it: that is `HIT_ROW_LESS_44`.
  */
 export const ROW_TARGET = 'relative';
 export const HIT_WHOLE_ROW = "before:absolute before:inset-0 before:hidden before:content-[''] pointer-coarse:before:block";
+/**
+ * For a name on a row that carries a second control at its right (step 141,
+ * Design, 12 Oct): "the disclosure takes the row's right 44 and the name
+ * takes the rest of the row, so each meets the floor by its share of the
+ * row." The name's overlay is the row less its right 44; what is under that
+ * 44 is the row's own control (on stats, the `summary` that opens a branch).
+ * The row takes `ROW_TARGET`. Coarse only.
+ */
+export const HIT_ROW_LESS_44 = "before:absolute before:inset-y-0 before:left-0 before:right-[44px] before:hidden before:content-[''] pointer-coarse:before:block";
 /** No neighbour on either side: 9 past the thing. */
 export const HIT_ALONE = `${HIT} before:-left-[9px] before:-right-[9px]`;
