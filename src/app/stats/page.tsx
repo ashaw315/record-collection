@@ -6,7 +6,7 @@ import { genrePairs } from './genre-pairs';
 import { GenreTree } from './GenreTree';
 import { estimatedValueStatement, spendStatement } from './value-statement';
 import { SCREEN_FRAME } from '@/app/screen-frame';
-import { HIT_ALONE, HIT_ROW, ROW_CUTS } from '@/app/hit-area';
+import { HIT_ALONE, HIT_WHOLE_ROW, ROW_CUTS, ROW_TARGET } from '@/app/hit-area';
 
 /**
  * SPEC.md §10 `/stats`: "Total records, total spend, estimated value, breakdown
@@ -78,7 +78,7 @@ function Breakdown({
         */
         <ul className="space-y-2 pointer-coarse:space-y-0">
           {rows.map((row) => (
-            <li key={row.id} className={`pointer-coarse:flex pointer-coarse:min-h-[44px] pointer-coarse:flex-col pointer-coarse:justify-center ${ROW_CUTS}`}>
+            <li key={row.id} className={`pointer-coarse:flex pointer-coarse:min-h-[44px] pointer-coarse:flex-col pointer-coarse:justify-center ${ROW_CUTS} ${ROW_TARGET}`}>
               <div className="flex items-baseline justify-between gap-3 text-detail">
                 {/* Linked where the collection can be filtered by it: a
                     breakdown is only useful if you can open what it counts. */}
@@ -86,7 +86,7 @@ function Breakdown({
                   {href === undefined ? (
                     row.name
                   ) : (
-                    <Link href={href(row.id)} className={`${HIT_ROW} underline-offset-2 hover:underline`}>
+                    <Link href={href(row.id)} className={`${HIT_WHOLE_ROW} underline-offset-2 hover:underline`}>
                       {row.name}
                     </Link>
                   )}

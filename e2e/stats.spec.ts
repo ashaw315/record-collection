@@ -477,7 +477,7 @@ for (const pointer of POINTERS) test.describe(`stats under a ${pointer} pointer`
  test.use({ hasTouch: pointer === 'coarse' });
  for (const width of [320, 390, 768, 1280]) {
   /* Coarse fails against rows of 27.5 and 33.5: the links read 16 and 17 to a finger, a branch's row 28. Fine fails against step 126's build, whose rows were 44 under a mouse too. */
-  test(pointer === 'coarse' ? `every control on stats is 44 tall to a finger and reaches no more than 9 past itself, at ${width}` : `under a mouse stats’ rows are the height they were and no link reaches past its name, at ${width}`, async ({ page }) => {
+  test(pointer === 'coarse' ? `every control on stats is 44 tall to a finger, a link alone on its row is reached along the whole row, and a branch’s name no more than 9 past itself, at ${width}` : `under a mouse stats’ rows are the height they were and no link reaches past its name, at ${width}`, async ({ page }) => {
     expect(await pointerIs(page), 'the precondition: the page has the pointer this test is named for').toBe(pointer);
     const suffix = makeSuffix();
     const artist = await post(page, '/api/artists', { name: `Reach-${suffix}` });
@@ -504,7 +504,42 @@ for (const pointer of POINTERS) test.describe(`stats under a ${pointer} pointer`
     expect(reach.filter((r) => r.kind === 'summary').length, 'a branch’s row is a control too').toBeGreaterThan(0);
     if (pointer === 'coarse') {
       expect.soft(underFloor(reach).map((r) => `${r.kind} ${r.name.slice(0, 30)}: ${r.tall}, lost to ${r.lostTo.join('; ')}`), `at ${width}: controls under ${HIT_FLOOR} to a finger, of ${reach.length}`).toEqual([]);
-      expect.soft(reach.filter((r) => r.kind === 'a' && (r.left > HIT_PAST || r.right > HIT_PAST)).map((r) => `${r.name}: ${r.left} left, ${r.right} right`), `at ${width}: links a tap reaches from more than ${HIT_PAST} past them`).toEqual([]);
+      /*
+        Step 138, Design's drop of 12 Oct: "Where a control is alone on its
+        row, the row is its target: a press anywhere along the row acts as
+        a press on the control." A genre with no branch, a label and a
+        store are each a link alone on its row. This held every link to 9
+        past its name; for those the claim changed with the ruling, and
+        the 9 stands for a branch's name, whose row is the branch's own
+        control. Fails against a link reached over its name only: "UK82"
+        is about 40 across and a tap on its figure reaches nothing.
+      */
+      const rows = await page.evaluate(([genre]) => {
+        const read = (row: Element | null, what: string) => {
+          if (row === null) return { what, across: ['no row'], wide: 0 };
+          const link = row.querySelector('a');
+          const box = row.getBoundingClientRect();
+          const y = box.top + box.height / 2;
+          const across: string[] = [];
+          let wide = 0;
+          for (let x = Math.ceil(box.left); x < Math.floor(box.right); x += 1) {
+            const at = document.elementFromPoint(x + 0.25, y);
+            if (at !== null && link !== null && (at === link || link.contains(at))) wide += 1;
+            else if (across.length < 3) across.push(`${Math.round(x - box.left)} of ${Math.round(box.width)}: ${at === null ? 'nothing' : at.tagName.toLowerCase()}`);
+          }
+          return { what, across, wide, row: Math.floor(box.right) - Math.ceil(box.left) };
+        };
+        const li = (testId: string) => document.querySelector(`[data-testid="${testId}"] li`);
+        document.querySelector(`[data-testid="genre-row-${genre}"]`)?.scrollIntoView({ block: 'center' });
+        const out = [read(document.querySelector(`[data-testid="genre-row-${genre}"]`), 'a genre with no branch')];
+        for (const [testId, what] of [['by-label', 'a label'], ['by-store', 'a store']] as const) { li(testId)?.scrollIntoView({ block: 'center' }); out.push(read(li(testId), what)); }
+        return out;
+      }, [child.id as string]);
+      for (const row of rows) expect.soft(row.across, `at ${width}: ${row.what}’s row, places along its middle a tap does not reach its link (${row.wide} of ${row.row} do)`).toEqual([]);
+      const branch = reach.filter((r) => r.kind === 'a' && r.name === `Punk-${suffix}`);
+      expect(branch.length, 'the precondition: the branch’s name is read').toBe(1);
+      expect.soft(branch.filter((r) => r.left > HIT_PAST || r.right > HIT_PAST).map((r) => `${r.name}: ${r.left} left, ${r.right} right`), `at ${width}: a branch’s name is not its row: the row opens the branch`).toEqual([]);
+      expect.soft(reach.filter((r) => r.kind === 'a' && r.wide < HIT_FLOOR && r.name !== `Punk-${suffix}`).map((r) => `${r.name}: ${r.wide}`), `at ${width}: links alone on their rows under ${HIT_FLOOR} across`).toEqual([]);
     } else {
       expect.soft(reachingPastItself(reach.filter((r) => r.kind === 'a')), `at ${width}: links a mouse reaches from outside their drawn box`).toEqual([]);
     }

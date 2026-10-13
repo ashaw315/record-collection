@@ -42,5 +42,17 @@ export const HIT = "relative before:absolute before:top-1/2 before:h-[44px] befo
  */
 export const HIT_ROW = "relative before:absolute before:inset-x-0 before:top-1/2 before:hidden before:h-[88px] before:-translate-y-1/2 before:content-[''] pointer-coarse:before:block";
 export const ROW_CUTS = 'pointer-coarse:overflow-y-clip';
+/**
+ * For a link ALONE on its row (step 138, Design, 12 Oct): "Where a control
+ * is alone on its row, the row is its target: a press anywhere along the
+ * row acts as a press on the control. That is what a list row does, it
+ * needs nothing drawn differently." The row takes `ROW_TARGET` and the link
+ * `HIT_WHOLE_ROW`: the link is not positioned, so its overlay is placed
+ * against the row and is the row's box. Coarse only, as every overlay is.
+ * Not for a row with a second control in it: a branch's row on stats opens
+ * the branch, and its name keeps `HIT_ROW`.
+ */
+export const ROW_TARGET = 'relative';
+export const HIT_WHOLE_ROW = "before:absolute before:inset-0 before:hidden before:content-[''] pointer-coarse:before:block";
 /** No neighbour on either side: 9 past the thing. */
 export const HIT_ALONE = `${HIT} before:-left-[9px] before:-right-[9px]`;

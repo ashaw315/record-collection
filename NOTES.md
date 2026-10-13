@@ -43086,8 +43086,8 @@ beyond Code's defaults".** Two facts for whoever decides the entries.
 The second default (a close discards silently) was built at step 133
 and is in `docs/captures/manage-133/` only as rows at rest, so nothing
 there shows it. But SAVE-in-every-open-form was built and captured:
-`manage-133`'s open-form pictures if any, and certainly
-`docs/captures/manage-confirm-137/`, all four. The entries are
+`docs/captures/manage-confirm-137/`, all four (`manage-133` has no
+picture of an open form). The entries are
 Design's.
 
 **Tests.** Claim changed (1): the list test held SAVE visible in a
@@ -43114,3 +43114,54 @@ Ratified from step 130 with nothing to build: the record page's two
 fields at 44, the rail's view names 44 apart, the box off the Acquired
 mark; the record page's genres wrapping at 320 "stay held". Withdrawn
 by Design: the blank paper below By store as a defect.
+
+## 12 Oct: step 138. On stats, a link alone on its row is reached along the whole row
+
+From the drop: "Where a control is alone on its row, the row is its
+target: a press anywhere along the row acts as a press on the control.
+That is what a list row does, it needs nothing drawn differently, and
+it closes the class: Pop at 22 and stats' short genre names are alone
+on their rows."
+
+**Built:** `ROW_TARGET` and `HIT_WHOLE_ROW` in `src/app/hit-area.ts`.
+The link is not positioned, so its overlay is placed against the row
+and is the row's box. Coarse only. On stats: a genre with no branch
+(`GenreTree.tsx`), a label and a store (`page.tsx`). Decades are not
+links.
+
+**It does not close the class, and that is the finding.** A genre WITH
+a branch is not alone on its row: the row is the branch's own control
+(a `summary`) and the name is a link to the collection. Its name keeps
+`HIT_ROW`, reached over itself. On the real collection the names under
+44 across went 9 to 3, and the 3 are branch names. Said to Design in
+the handoff with the two ways out.
+
+**Tests.** Claim changed (the coarse half of one test, four widths):
+"every control on stats ... reaches no more than 9 past itself" held
+every link to 9 past its name. It now holds, for a genre with no
+branch, a label and a store, that every pixel along the row's middle
+reaches the link; for the branch's name, the 9 as before; and no link
+alone on its row under 44 across. Failed first 4 of 4 coarse ("a
+genre with no branch's row ... 120 of 284 do"), the four fine cases
+passing before and after. With the build, chromium: `8 passed`.
+
+**Step level.** Every-test files touched: none (`hit-area.ts` gained
+two exports and nothing that used it changed but stats). The six specs
+that open stats, by grep, whole, both projects: `79 passed, ledger
+clean, tree unchanged — OK`. Typecheck and build clean; lint 0 errors,
+27 warnings.
+
+**Captured on the real collection, read-only:**
+`docs/captures/stats-138/`. Against `stats-135`: 42 of 42 at 320, 390
+and 768 as before; page heights the same; under 44 across 9 to 3;
+"past 9" 0 to 30, the row targets, which the sheet's column was built
+to flag before this ruling and now over-reports. **Seen and not
+explained:** under a mouse the sheet reads Abstract, Alternative Rock
+and Dub 18 tall where it read 17, and Alt-Pop and Art Rock 17 as
+before. The link lost `relative`; the page is the same height and the
+fine tests, which hold a link to its drawn box, pass.
+
+Finished after the coordinator's audit request arrived, which said to
+run nothing longer than a typecheck: this step was built and its
+covering run already back, so it was captured (18s) and committed
+rather than left in the tree under an audit.
