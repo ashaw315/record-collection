@@ -102,6 +102,20 @@ mkdir -p "$LOGS"
 UNIT="$LOGS/$COMMIT-unit.log"
 E2E="$LOGS/$COMMIT-e2e${WORKERS:+-w$WORKERS}.log"
 
+# The gate's own report, written at the start and finished at the end, so it
+# outlives the session that launched it. On 13 Oct the gate on 88a0e7e was cut
+# off with its session 74 tests short: the suites' logs were on disk, and what
+# the gate had read around them (load, memory, swap) had gone to a stdout
+# nobody saw. A report with a start and no "ended" line is a run cut off.
+REPORT="$LOGS/$COMMIT-gate${WORKERS:+-w$WORKERS}.txt"
+{
+  echo "gate on $COMMIT${WORKERS:+, $WORKERS workers}, in $GATE, started $(date '+%d %b %H:%M')"
+  echo "load:       $LOAD_START at the start, on $CORES cores"
+  echo "memory:     at the start, $MEMORY_START"
+  echo "logs:       $UNIT"
+  echo "            $E2E"
+} > "$REPORT"
+
 # `src/app/type-scale.test.ts` reads the CSS a build produces, and a fresh checkout has none.
 # The build is not given the test database: it is to build as a deploy would, and reads none.
 env -u TEST_DATABASE_URL -u DATABASE_URL npm run build > "$LOGS/$COMMIT-build.log" 2>&1 || { echo "gate: npm run build failed in $GATE; see $LOGS/$COMMIT-build.log" >&2; exit 1; }
@@ -112,12 +126,17 @@ npx tsx scripts/run-tests.ts npm test > "$UNIT" 2>&1
 npx tsx scripts/run-tests.ts npx playwright test ${WORKERS:+--workers=$WORKERS} ${GATE_ONLY:-} > "$E2E" 2>&1
 cp -R test-results "$LOGS/$COMMIT-test-results" 2>/dev/null
 
-if [ -n "${GATE_ONLY:-}" ]; then echo "NOT A GATE: Playwright ran only $GATE_ONLY"; fi
-echo "gate on $COMMIT${WORKERS:+, $WORKERS workers}, in $GATE"
-echo "load:       $LOAD_START at the start, $(load) at the end, on $CORES cores"
-echo "memory:     at the start, $MEMORY_START"
-echo "            at the end,   $(memory "$(swap_rate)")"
-echo "unit:       $(tail -1 "$UNIT")"
-echo "playwright: $(tail -1 "$E2E")"
-LC_ALL=C grep -h "\[projects\]\|\[reset\]\|SLEPT\| passed (\| flaky" "$E2E" | cut -c1-200
-LC_ALL=C grep -h "\[margins\]" "$E2E" | sed -n 2p | cut -c1-200
+report() {
+  if [ -n "${GATE_ONLY:-}" ]; then echo "NOT A GATE: Playwright ran only $GATE_ONLY"; fi
+  echo "gate on $COMMIT${WORKERS:+, $WORKERS workers}, in $GATE, ended $(date '+%d %b %H:%M')"
+  echo "load:       $LOAD_START at the start, $(load) at the end, on $CORES cores"
+  echo "memory:     at the start, $MEMORY_START"
+  echo "            at the end,   $(memory "$(swap_rate)")"
+  echo "unit:       $(tail -1 "$UNIT")"
+  echo "playwright: $(tail -1 "$E2E")"
+  LC_ALL=C grep -h "\[projects\]\|\[reset\]\|SLEPT\| passed (\| flaky" "$E2E" | cut -c1-200
+  LC_ALL=C grep -h "\[margins\]" "$E2E" | sed -n 2p | cut -c1-200
+  # The tests that failed at least once, by line: a flake's artifacts are kept beside the log and this names them.
+  LC_ALL=C grep -h "^  ✘" "$E2E" | cut -c1-200
+}
+report | tee -a "$REPORT"

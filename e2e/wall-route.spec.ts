@@ -274,9 +274,13 @@ test('the run is reachable by keyboard after the rail, and Enter zooms to that s
   await page.getByTestId('wall-zoom-out').click();
   await expect(page.locator('[data-wall="overview"]')).toBeVisible();
 
-  /* From the document's start: focusing an element and tabbing resumes from it, which is not the reader's first Tab. */
+  /*
+    From the document's start: focusing an element and tabbing resumes from it, which is not the reader's first Tab.
+    The header's first link is the document's first stop (the order above), and it is named rather than found by
+    "any control": that selector matches in the shelf's view and the grid's too, and the wrapper (step 142) refuses it.
+  */
   await page.evaluate(() => {
-    const first = document.querySelector('a, button, input, select') as HTMLElement | null;
+    const first = document.querySelector('header[data-app-nav] a') as HTMLElement | null;
     first?.focus();
     first?.blur();
   });

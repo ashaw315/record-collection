@@ -43989,3 +43989,203 @@ Its result is the entry after this.
 
 **Captures:** `docs/captures/error-screen-142/`, the screen and the
 bare stand-in at 390 coarse and 1280 fine.
+
+## 13 Oct, 10:30: the want-list crash fixed; the whole run on `88a0e7e` read from what it left; the coordinator's four questions
+
+**The coordinator's order of 13 Oct: the paler row, the crash, the rename,
+the questions.** The first and third were already done in `bb23a34` (the
+entry of 12 Oct, 23:00): the fixtures are named plainly, the 25 affected
+pictures are retaken in place with the replaced ones under
+`with-fixture-suffix/`, and the paler row was measured and explained
+there. Said again below with the measurement repeated on what is on disk,
+since Design is still waiting on both.
+
+**The want-list crash** (`hydrateWantListItem`, `queries/want-list.ts`):
+one line after the artist read, `if (artist === undefined) return
+undefined`. No artist, no item, as a missing item already is; the list
+page already drops an undefined item, and the detail, edit and
+pressing-assessment readers already answer not-found for one. **Test
+first:** `test/integration/queries/hydrate-want-list-item-missing-artist.test.ts`.
+`want_list.artist_id` is NOT NULL with NO ACTION, so no orphan exists at
+rest and the state is only in the gap between the two reads; the test
+stages it at rest by deleting the artist inside one transaction with
+`SET LOCAL session_replication_role = replica`, asserts the orphan is
+there and the artist is not, and expects `undefined`. Failed first
+against the unguarded return (the row came back with `artist`
+undefined); passes with the line. Why `[artist]` compiled as `Named`:
+`tsconfig` has no `noUncheckedIndexedAccess`, so a destructured first
+element is never `undefined` to the compiler. That flag would have named
+this family at build time; turning it on is a sweep of its own, not done.
+**Step level:** the seven integration files that read the want-list
+query layer, `95 passed`; `want-list.spec.ts`, both projects, `88
+passed` (the ledger reporting discogs_cache 0 to 20 and pressings 1 to
+33, as it records; genres none left behind); typecheck and build clean;
+lint 0 errors, 27 warnings. Not committed: left for Adam with the fix.
+
+**The whole run owed by steps 139 and 142, in the gate worktree on
+`88a0e7e`, has no summary line.** The session ended before it was read;
+what survives is `test-results/` there, written 01:15 to 01:53, both
+projects. Read from the artifacts, which is not a count:
+- **Two failed on both attempts, and both are step 142's wrapper
+  refusing a reader in a file the step never opened:** `rail-set-bar.spec.ts:21`
+  (`querySelector('ul[aria-label="View"]')` on `/` at 1440) and
+  `wall-route.spec.ts:279` (`querySelector('a, button, input, select')`,
+  the first focusable, on the wall). Both selectors match in the shelf's
+  view and the grid's, which is exactly what the wrapper was built to
+  make loud. The product is not wrong; the two readers must name their
+  view. **Not fixed: not in the order.** This is §10's case, a contract
+  change breaking tests that encoded the old one, found at the gate.
+- Six failed once with no retry artifact, so passed on the retry:
+  `lookup-flows` twice and `sidebar-113` twice on mobile (the sign-in's
+  `goto` past 30s in `beforeEach`), `sidebar-113` once on chromium (the
+  filters' hydration past 30s), and `suggestions.spec.ts` at 320 on
+  mobile (the test past 30s, then its `POST /api/records` answered 400).
+  Load shapes, with the one 400 not understood.
+No line says whether the run ended or was stopped. A run with no summary
+is not a pass (§9), and this one is not.
+
+**(a) 52 then 40.** No test went. `--list` on the three specs today:
+chromium 39, mobile 13, 52; on the two suggestions specs alone: chromium
+27, mobile 13, 40; the nav spec alone is 12, chromium only. So the
+second run was the two suggestions specs without the nav spec, which the
+entry did not say. The nav spec on the committed source, run now:
+`12 passed`.
+
+**(b) Doubled hairlines, a check.** It can be held, with one correction
+to the shape: the suggestions pair was not adjacent, it was two rules 24
+apart with nothing drawn between them (the panel's lower and the list's
+upper, seen in the first capture), and the nav's G.8 pair was touching.
+The check that holds both is "two hairlines overlapping in x with no
+content between them", at any distance: read every element in `main`
+with a 1px top or bottom border (and `hr`), take each line's y and
+x-range, sort, and for each pair that are neighbours in y and overlap in
+x, look for any text run or replaced element or control whose box lies
+strictly between them in the overlap; none means a doubled rule. Cost:
+one helper of about 80 lines in `e2e/`, staged on `page.setContent` with
+a pair that has a word between and a pair that has not; one test per
+screen in `layout-sweep.spec.ts`'s loop, one `evaluate` each; and a
+first sweep that will name every pair standing today, each to be a
+defect or a declared exception. Half a day with the sweep. What it does
+not see: a rule drawn as a background or a shadow, SVG, and a hidden
+copy's borders (filtered by `getClientRects`).
+
+**(c) The bare fallback's capture is from the build, not a drawing;
+and it can come from `global-error.tsx` itself, which I said it could
+not.** The picture is `/error-probe?bare=1`: the probe page renders the
+build's `ErrorBody` in a `main` with no header, inside the app's own
+layout. What stands in is the document around the body, which
+`global-error.tsx` supplies for itself (its own `html`, `body`, faces
+and stylesheet). The claim that a browser cannot reach that file was
+wrong: Next's reference for `error.js` lists "v15.2.0: also display
+global-error in development", and this app is on 16.3.0. The way to it
+is the one the same page gives: an error component that throws reaches
+the boundary above it, and above the root `error.tsx` is
+`global-error.tsx`. So `error.tsx` can rethrow under a cookie
+(`error-probe=global`) in a branch that is not built in production, and
+the capture is then the real file. An hour: the branch, a case in
+`error-screen-142.spec.ts`, the picture retaken. Not staged here; from
+the documentation, not from a run. Until built, Design rules the bare
+fallback from the body alone, and the document is held by nothing.
+
+**(d) The probes in production.** Each 404s by one line,
+`if (process.env.NODE_ENV === 'production') notFound()`. The repo test
+`src-imports-stay-in-src.test.ts` holds that line, but only for the
+directories `.vercelignore` names under `src/`, which is `src/app/wall/probe`
+alone. So `/error-probe`, `/suggestions/probe` and `/wall/overview` are
+held by the line being there and by nothing that reads it; the nav spec
+exempts them and says "404s in production" in a comment. Each ships in
+the production build as a route that answers not-found. The fix is two
+lines in `.vercelignore` (the three directories), after which the
+existing test holds their guard too and Vercel does not build them. Not
+done: a question was asked.
+
+**The paler row, measured again on what is on disk.** Only one version
+of the hierarchy picture is committed (plain names, `bb23a34`); the copy
+under `with-fixture-suffix/` is the pointer-moved retake it replaced.
+Down x=30 both are 231,230,227 in every row; the first run's picture
+(the one with the paler row, 236,234,230 by the 23:00 measurement) no
+longer exists on disk. The row's hover is `hover:bg-accent/60` on
+`GenreTree.tsx:108`, inside `@media (hover: hover)` by the hover check,
+so it cannot occur on a phone at all.
+
+## 13 Oct, 12:10: the gate's logs were there; two readers name their view; the gate reports to a file; three harnesses out of the upload; the 11:40 drop taken in; the flag counted
+
+**The run on `88a0e7e` was not lost, it was cut off, and its logs say
+so.** `scripts/gate.sh` has written the suites' output beside the
+worktree since 12 Oct (`../record-collection-gate-logs/`). For
+`88a0e7e`: the unit log ends `4326 passed, 5 skipped, tree unchanged —
+OK`; the e2e log is `Running 1256 tests using 2 workers` and stops at
+test 1182 at 01:52, with no summary because none was reached. What the
+morning's entry read from the artifacts was right about the two
+failures and wrong to call the summary lost: it never existed. The
+log's nine ✘ lines: `rail-set-bar.spec.ts:17` and `wall-route.spec.ts:256`
+on chromium, both attempts, step 142's wrapper refusing a bare selector
+in each; `sidebar-113` once on chromium and twice on mobile,
+`lookup-flows` twice on mobile, each passed on the retry. The
+suggestions test at 320 on mobile has no line: it was in flight when the
+run was cut, and its artifact is from then. **Its 400 is an answer and
+not load, and it is the test's own:** the body ran past 30s (the first
+error in its context), the timeout tore the test down and its cleanup
+deleted the artist it had made, and the body's still-pending
+`POST /api/records` was then answered `400 "No artist with that id
+exists"` (`api/records/route.ts:173`). The timeout is load; the 400 is
+its consequence, written down because a 400 read alone looks like the
+product refusing a good request.
+
+**The two readers name their view** (`rail-set-bar.spec.ts`: the band's
+view list, its current link, the set bar and the current bar, all under
+`[data-shelf-offered]`, which the test already waits on;
+`wall-route.spec.ts`: the header's first link by name, which is the
+document's first stop, in place of "any control", which matched in both
+views). Both specs, both projects: `9 passed`. The product was not
+touched.
+
+**The gate writes its own report as it goes:** `$COMMIT-gate.txt`
+beside the logs, the start block (commit, start time, load, memory,
+swap, the two log paths) before the build, and the end block (end time,
+load and memory again, the two summary lines, the project counts, the
+margins line, and now every ✘ line, so a flake is named beside its kept
+artifacts) appended when the run ends. A report with a start and no
+"ended" is a run cut off. Verified so far by `bash -n` and by the start
+block of the gate launched on this commit; the end block is verified
+when that gate lands, and this entry says so rather than claiming it.
+What would have kept last night's run alive is launching the gate
+detached from the session (`nohup … &`), which this one is.
+
+**`/error-probe`, `/suggestions/probe` and `/wall/overview` are out of
+the upload** (`.vercelignore`, three lines beside `src/app/wall/probe`).
+`test/repo/src-imports-stay-in-src.test.ts` reads that file for what to
+check, so it now holds the `notFound()` guard in all four directories
+and that nothing deployed imports from them: `4 passed`, first time,
+which is the configuration carve-out (the guards were there; what was
+missing was anything reading them). Vercel no longer builds the three.
+
+**A drop at 11:40, taken in.** Committed raw (`f6ff959`, the handoff
+and the Table and Grid target, the two repo tests named red in the
+message by the rule of 10 Oct); intake: 28 blocks restored, withdrawals
+unchanged at 202, the index `11 PASS`, `export-diff` reporting only
+Code's region gone. What it rules: Code's error-screen strings are
+adopted; the bare fallback is ruled from the build only if a dev probe
+can render it, provisional until then; **a reserved slot is two lines
+at 390 and below and one above, nothing cut or behind a hover, every
+slot message checked at 320 and 1280 and rewritten where it does not
+fit; a name inside a control keeps its own case.** And an unnumbered
+step for Code to number, carrying those four and "render the bare
+fallback from a dev probe if possible, and say if not". It is step 143
+when built; not begun.
+
+**`noUncheckedIndexedAccess`, counted and not turned on.** `tsc` with
+the flag: **2296 errors in 274 files.** By place: `test` 1190 (1175 in
+`test/integration`), `src` 570 in 107 files (231 in 60 files that are
+not tests; 339 in its 47 test files), `e2e` 518 in 76 files, `scripts`
+9, `docs` 9. By kind: TS18048 "x is possibly undefined" 1190 and TS2532
+"object is possibly undefined" 813, which together are 87 percent and
+are one shape, an indexed or destructured read used as defined; TS2345
+163 and TS2322 111 are the same value passed or assigned onward; 19
+others. The product's own share is the 231 in 60 files, led by
+`records/[id]/region-rows.ts` 29, `records/[id]/ink.ts` 21,
+`wall/gesture.ts` 20, `queries/merge-artists.ts` 16, `WallLive.tsx` 14.
+Each site is a guard or a `??`, mechanical but each a judgement about
+what the absent case means; the tests' 1700 are mostly `rows[0].id`
+after an insert, where a `!`-free helper would close hundreds at once.
+A reading, not a plan.

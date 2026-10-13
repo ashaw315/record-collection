@@ -18,7 +18,7 @@ test('a set genre’s bar is under the GENRE label, as far below it as the curre
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');
   await page.locator('#rail-genre').waitFor({ timeout: 30_000 });
-  const tops = () => page.evaluate(() => ['label[for="rail-genre"]', '#rail-genre', '#rail-sort', 'ul[aria-label="View"]'].map((q) => Math.round(((document.querySelector(q) as HTMLElement | null)?.getBoundingClientRect().top ?? -1) * 10) / 10));
+  const tops = () => page.evaluate(() => ['label[for="rail-genre"]', '#rail-genre', '#rail-sort', '[data-shelf-offered] ul[aria-label="View"]'].map((q) => Math.round(((document.querySelector(q) as HTMLElement | null)?.getBoundingClientRect().top ?? -1) * 10) / 10));
   const unset = await tops();
   const id = await page.locator('#rail-genre option').nth(1).getAttribute('value');
   await page.goto(`/?genreId=${id}`);
@@ -32,8 +32,8 @@ test('a set genre’s bar is under the GENRE label, as far below it as the curre
     /* The label's own type, not the bar inside it. */
     const labelText = Array.from(label.childNodes).find((n) => n.nodeType === Node.TEXT_NODE) as Text;
     const range = document.createRange(); range.selectNodeContents(labelText); const lt = range.getBoundingClientRect();
-    const current = Array.from(document.querySelectorAll('ul[aria-label="View"] a')).find((a) => a.getAttribute('aria-current') === 'page') as HTMLElement;
-    return { label: { top: lt.top, bottom: lt.bottom, left: lt.left }, bar: box(document.querySelector('[data-set-bar]') as HTMLElement), view: text(current), viewBar: box(document.querySelector('[data-current-bar]') as HTMLElement) };
+    const current = Array.from(document.querySelectorAll('[data-shelf-offered] ul[aria-label="View"] a')).find((a) => a.getAttribute('aria-current') === 'page') as HTMLElement;
+    return { label: { top: lt.top, bottom: lt.bottom, left: lt.left }, bar: box(document.querySelector('[data-shelf-offered] [data-set-bar]') as HTMLElement), view: text(current), viewBar: box(document.querySelector('[data-shelf-offered] [data-current-bar]') as HTMLElement) };
   });
   expect(m.bar.top, `under the label’s type (${m.label.top} to ${m.label.bottom}), not across it`).toBeGreaterThanOrEqual(m.label.bottom);
   expect(m.bar.top - m.label.bottom, 'as far below it as the current view’s bar is below its name').toBeCloseTo(m.viewBar.top - m.view.bottom, 0);

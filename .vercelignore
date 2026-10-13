@@ -26,7 +26,15 @@ test
 # not built there either -- the first production build since the wall
 # failed on their imports from test/, which this file keeps out.
 # test/repo/src-imports-stay-in-src.test.ts holds the two together.
+#
+# The three below are harnesses too (steps 134, 140 and 142): the wall at two
+# sizes, Ask Claude's panel drawn configured, and a page that throws on
+# demand. Each 404s in production by its own line, and until 13 Oct that line
+# was held by nothing, because the test reads this file for what to check.
 src/app/wall/probe
+src/app/wall/overview
+src/app/suggestions/probe
+src/app/error-probe
 
 # Working documents: build history and review notes, not build input.
 docs
