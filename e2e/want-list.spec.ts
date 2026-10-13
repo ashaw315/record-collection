@@ -1291,3 +1291,22 @@ test('the count line under the heading is the number and the view, with no "reco
     await expect(page.locator('main [data-want-list-count]')).toHaveText(line);
   }
 });
+
+/* Step 139, Design, 12 Oct: "A field’s label stands at its head, by the field ruling, so the want-list form’s Best dig label at the foot of its box at 1280 is a defect." Fails against the label on the box’s LAST line, 60 or so below its top. */
+test('at 1280 every label on the want-list form stands at its field’s head, Best dig’s on its box’s first line', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 900 });
+  await page.goto('/want-list/new');
+  await formReady(page);
+  const heads = await page.evaluate(() => Array.from(document.querySelectorAll<HTMLLabelElement>('form label[for]')).map((label) => {
+    const field = document.getElementById(label.htmlFor);
+    if (field === null) return { label: (label.textContent ?? '').trim(), offset: null };
+    const range = document.createRange(); range.selectNodeContents(label);
+    const first = range.getClientRects()[0];
+    /* The label's first line against the field's first line of type: its top padding and a line of its own type down from its top. */
+    const style = getComputedStyle(field);
+    const line = field.getBoundingClientRect().top + parseFloat(style.borderTopWidth) + parseFloat(style.paddingTop) + (field.tagName === 'TEXTAREA' ? parseFloat(style.lineHeight) / 2 : (field.getBoundingClientRect().height - parseFloat(style.borderTopWidth) * 2 - parseFloat(style.paddingTop) * 2) / 2);
+    return { label: (label.textContent ?? '').trim(), offset: first === undefined ? null : Math.round(first.top + first.height / 2 - line) };
+  }));
+  expect(heads.length, 'the precondition: the form has labelled fields').toBeGreaterThan(4);
+  expect(heads.filter((head) => head.offset === null || Math.abs(head.offset) > 6).map((head) => `${head.label}: ${head.offset}`), 'labels whose first line is not beside their field’s first line').toEqual([]);
+});

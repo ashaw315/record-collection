@@ -193,3 +193,41 @@ test('accepts the cron endpoint from any caller presenting the secret', async ({
     'the secret must be admitted — 401 means middleware rejected it',
   ).toBe(405);
 });
+
+/*
+  Step 139, Design, 12 Oct: "Login is a screen, so the content inset reaches it: its content starts at the 18 at
+  every width. The 16 at 390 is a defect against a ruling in force." Fails against the 16 it was built at.
+*/
+for (const width of [320, 390]) {
+  test(`the sign-in screen’s content starts at the 18 and ends 18 short of the window, at ${width}`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto('/login');
+    await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
+    const boxes = await page.evaluate(() => ['h1', '#password', 'form button'].map((selector) => { const box = (document.querySelector(selector) as HTMLElement).getBoundingClientRect(); return { selector, left: box.left, right: box.right }; }));
+    for (const box of boxes) expect.soft(box.left, `${box.selector} starts at the 18`).toBe(18);
+    for (const box of boxes.slice(1)) expect.soft(box.right, `${box.selector} ends 18 short of the window`).toBe(width - 18);
+  });
+}
+
+/*
+  The reserved slot (Design, 12 Oct): "Nothing the app does on its own moves what a reader may be about to press ...
+  a status or error that replaces or follows a control takes a reserved slot of stated lines." The refusal stands
+  between the field and Sign in, and the block is centred in the window, so a line that appears moved everything:
+  the heading and the field up 18, the button down. Fails against a sentence that is not there until it is refused.
+*/
+for (const width of [390, 1280]) {
+  test(`a refused password moves nothing on the sign-in screen, at ${width}`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto('/login');
+    await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 15_000 });
+    const tops = () => page.evaluate(() => ['h1', '#password', 'form button'].map((selector) => Math.round((document.querySelector(selector) as HTMLElement).getBoundingClientRect().top * 10) / 10));
+    const before = await tops();
+    await page.getByLabel('Password').pressSequentially('definitely-the-wrong-password');
+    await page.getByRole('button', { name: 'Sign in' }).click();
+    await expect(page.locator('#password-error')).toContainText(/incorrect password/i);
+    await expect(page.getByRole('button', { name: 'Sign in' })).toBeEnabled();
+    expect(await tops(), 'the heading, the field and the button, before and after').toEqual(before);
+    const slot = await page.evaluate(() => { const error = (document.querySelector('#password-error') as HTMLElement).getBoundingClientRect(); const field = (document.querySelector('#password') as HTMLElement).getBoundingClientRect(); const button = (document.querySelector('form button') as HTMLElement).getBoundingClientRect(); return { below: error.top >= field.bottom, above: error.bottom <= button.top }; });
+    expect(slot, 'the sentence stands in its slot, under the field and over the button').toEqual({ below: true, above: true });
+  });
+}

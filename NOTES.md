@@ -43728,3 +43728,59 @@ in them are byte-identical across runs. Its pass rules stacking below
 640, hairlines for boxes, §9.3 type on the controls and what stays;
 none of that turns on a name. A one-line confirmation, per the
 coordinator.
+
+## 12 Oct, 23:20: step 139. Login at the 18, Best dig's label at its head, the dialog in one order
+
+Design's unnumbered step, numbered here. No entries are owed: each was
+a ruling in force that the build did not follow.
+
+**Built.**
+- **Login** (`login/page.tsx`): its inset is 18, from 16. And its
+  refusal has a reserved slot, one line (`min-h-[1lh]`) between the
+  field and Sign in, on the page before anything is refused. The block
+  is centred in the window, so the line arriving had moved the heading
+  and field up and the button down. The coordinator made this
+  conditional on Design confirming; the rule Design then wrote into
+  the target "reaches every screen" in its own words, so I built it
+  and say so. One line only: a longer refusal still grows it.
+- **Best dig's label** (`WantListForm.tsx`): a row whose field is a
+  box of several lines starts at the top, with the label set down 11
+  to the box's first line of type. The cause was the shared baseline,
+  which for such a box is its LAST line.
+- **The dialog** (`components/ui/dialog.tsx`): the footer's column is
+  no longer reversed below 640, so the page's order (Cancel, then the
+  destructive verb) is the drawn order at every width; stacked, 24
+  apart. The 24 is from the drop after this step's; built here because
+  it is one line in the same footer.
+
+**Tests, first.** `auth.spec.ts`: content at the 18 at 320 and 390
+(failed 12 of 12 assertions on 16 and its far side); a refusal moves
+nothing, at 390 and 1280 (failed: the three tops changed).
+`want-list.spec.ts`: every label on the form beside its field's first
+line at 1280 (failed on Best dig alone, 63 off). `e2e/hit-area.ts`,
+`expectDialogControls`, which all three screens' dialog tests read:
+Cancel then Delete in the page's order; stacked below 640 with Cancel
+above and 24 between; side by side from it (failed at 320 and 390 on
+both: "stacked, Cancel above", "24 apart").
+**A reader corrected because of this step:** `colour-103.spec.ts`
+waited for the refusal's line to exist before reading the screen's
+colours. The line's slot now always exists, so the wait would have
+passed before any refusal and the test would have read the wrong
+state in silence. It waits for the line's words. The first capture's
+sign-in state had the same wait and the same correction.
+
+**Step level.** The ten specs that read sign-in, the dialog or the
+want list's forms, by grep, whole, both projects: `356 passed, ledger
+clean, tree unchanged — OK`. Typecheck and build clean; lint 0 errors,
+27 warnings; `test/repo` and the hover check, `461 passed`.
+**A whole run is owed and not yet taken:** `login/page.tsx` is the
+shared sign-in screen, which every test passes through. It is taken
+once, at the end of this queue, with the error screen's.
+
+**Captures, test database:** `docs/captures/three-fixes-139/`. Login
+at rest and refused at 390 coarse (heading, field, button at 285, 420,
+515 in both); the dialog at 390 coarse (Cancel then Delete, stacked 24
+apart, 44 each) and 1280 fine (side by side, 8 apart, 32 each); the
+want list's form at 1280 (the label's first line 12 below its box's
+top). Taken twice before commit: the first had the dev badge on the
+sign-in pictures.

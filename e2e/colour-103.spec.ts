@@ -367,7 +367,8 @@ test.describe('§T.6: "It reaches login too, for colour as for radius"', () => {
     await page.locator('#password').pressSequentially('not-the-password');
     /* The form's submit, by its type: this is a refusal and not a sign-in, and the repo's check keeps the button's name to the sign-in helper. */
     await page.locator('form button[type=submit]').click();
-    await page.locator('#password-error').waitFor({ timeout: 15_000 });
+    /* The line's slot is on the page before anything is refused (step 139), so its presence no longer says a refusal arrived: its words do. */
+    await expect(page.locator('#password-error')).toHaveText(/\S/, { timeout: 15_000 });
     await expectNone(page, 'sign-in, refused');
     const m = await page.locator('form button[type=submit]').evaluate((b) => { const cs = getComputedStyle(b); return { fill: cs.backgroundColor, border: cs.borderTopWidth, radius: cs.borderTopLeftRadius }; });
     expect(m, 'its button is §9.3’s unfilled box').toEqual({ fill: 'rgba(0, 0, 0, 0)', border: '1px', radius: '0px' });

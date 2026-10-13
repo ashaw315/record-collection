@@ -74,7 +74,8 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-dvh items-center justify-center px-4">
+    /* Step 139: "Login is a screen, so the content inset reaches it: its content starts at the 18 at every width." It was 16. */
+    <main className="flex min-h-dvh items-center justify-center px-[18px]">
       <div className="w-full max-w-sm">
         <h1 className="mb-1 text-headline font-semibold tracking-tight">Record Collection</h1>
         <p className="mb-6 text-lede text-muted-foreground">Enter the password to continue.</p>
@@ -96,11 +97,14 @@ export default function LoginPage() {
             className="mb-4 h-11 w-full rounded-md border border-input bg-background px-3 text-typed shadow-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
           />
 
-          {error !== null && (
-            <p id="password-error" role="alert" className="mb-4 text-prose text-destructive">
-              {error}
-            </p>
-          )}
+          {/*
+            The refusal's slot, one line, there before anything is refused (the reserved slot, Design, 12 Oct):
+            "a status or error that replaces or follows a control takes a reserved slot of stated lines." The
+            block is centred in the window, so a line arriving here moved the heading, the field and the button.
+          */}
+          <p id="password-error" role="alert" className="mb-4 min-h-[1lh] text-prose text-destructive">
+            {error}
+          </p>
 
           {/* Disabled only while a request is in flight. Gating on an empty
               field would depend on React state that some browsers do not

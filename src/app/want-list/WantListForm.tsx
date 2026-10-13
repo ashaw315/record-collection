@@ -249,8 +249,13 @@ function Field({
 
   return (
     /* §T.6, as the record form: under a coarse pointer the 4 beneath a label is the label's below 640, so label and field are one target; from 640 the field is 44. */
-    <div className="grid gap-1 sm:grid-cols-[10rem_1fr] sm:items-baseline sm:gap-3 pointer-coarse:max-sm:gap-0">
-      <label htmlFor={field} className="text-label text-muted-foreground uppercase pointer-coarse:max-sm:pb-1">
+    /*
+      Step 139: "A field's label stands at its head." Beside a box of several lines the shared baseline is the
+      box's LAST line, which set Best dig's label at its foot from 640. That row starts at the top, and the
+      label is set down to the box's first line of type.
+    */
+    <div className={`grid gap-1 sm:grid-cols-[10rem_1fr] sm:gap-3 pointer-coarse:max-sm:gap-0 ${field === 'bestDigNotes' ? 'sm:items-start' : 'sm:items-baseline'}`}>
+      <label htmlFor={field} className={`text-label text-muted-foreground uppercase pointer-coarse:max-sm:pb-1${field === 'bestDigNotes' ? ' sm:pt-[11px]' : ''}`}>
         {label}
       </label>
 

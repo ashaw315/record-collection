@@ -168,7 +168,7 @@ const STATES: State[] = [
     await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 30_000 });
     await page.getByLabel('Password').pressSequentially('not-the-password');
     await page.getByRole('button', { name: 'Sign in' }).click();
-    await expect(page.locator('#password-error')).toBeVisible();
+    await expect(page.locator('#password-error')).toHaveText(/\S/);
   } },
 
   { screen: '/suggestions', slug: 'suggestions-list', state: 'the list; Ask Claude’s panel as the test environment has it, not configured', arrange: async (page) => { await page.goto('/suggestions'); await expect(page.getByRole('listitem').filter({ hasText: 'Anti-Cimex' }).first()).toBeVisible(); } },

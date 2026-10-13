@@ -190,6 +190,23 @@ export async function expectDialogControls(page: Page, pointer: Pointer, where: 
   await page.locator(DIALOG).evaluate((el) => Promise.all(el.getAnimations().map((animation) => animation.finished)));
   const reach = await readReach(page, DIALOG);
   expect(reach.map((r) => r.name).sort(), `${where}: the dialog’s controls`).toEqual(['Cancel', 'Close', 'Delete']);
+  /*
+    Step 139, Design, 12 Oct: "A confirmation dialog sets its controls in one order at every width: Cancel first
+    and the destructive verb last, side by side left to right and stacked top to bottom"; and stacked, "Cancel and
+    the destructive verb stand 24 apart". Held here because all three screens that open the dialog read it through
+    this. Fails against the footer as built: below 640 it was laid out reversed, Delete above Cancel, 8 apart.
+  */
+  const placed = await page.locator(`${DIALOG} [data-slot="dialog-footer"] button`).evaluateAll((all) => all.map((button) => { const box = button.getBoundingClientRect(); return { name: (button.textContent ?? '').trim(), left: Math.round(box.left), top: Math.round(box.top), right: Math.round(box.right), bottom: Math.round(box.bottom) }; }));
+  expect(placed.map((button) => button.name), `${where}: Cancel first, the destructive verb last, in the page’s order`).toEqual(['Cancel', 'Delete']);
+  const [cancel, destructive] = placed;
+  if (cancel === undefined || destructive === undefined) throw new Error(`${where}: the dialog’s two buttons are not there`);
+  if ((page.viewportSize()?.width ?? 1280) < 640) {
+    expect.soft(destructive.top, `${where}: stacked, Cancel above the destructive verb`).toBeGreaterThan(cancel.bottom - 1);
+    expect.soft(destructive.top - cancel.bottom, `${where}: stacked 24 apart`).toBe(24);
+  } else {
+    expect.soft(destructive.left, `${where}: side by side, Cancel to the left`).toBeGreaterThan(cancel.right - 1);
+    expect.soft(destructive.top, `${where}: on one line`).toBe(cancel.top);
+  }
   if (pointer === 'coarse') {
     expect.soft(underFloor(reach).map((r) => `${r.name}: ${r.tall}`), `${where}: controls under ${HIT_FLOOR} to a finger`).toEqual([]);
     expect.soft(reach.filter((r) => r.left > HIT_PAST || r.right > HIT_PAST).map((r) => `${r.name}: ${r.left} left, ${r.right} right`), `${where}: controls a tap reaches from more than ${HIT_PAST} past them`).toEqual([]);

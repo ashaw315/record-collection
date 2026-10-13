@@ -116,8 +116,14 @@ function DialogFooter({
     <div
       data-slot="dialog-footer"
       className={cn(
-        /* §9.3, step 128: the footer's buttons are boxes, so they are 44 in the box where the pointer is coarse. On a phone they stack 8 apart, where no overlay would reach. */
-        "-mx-4 -mb-4 flex flex-col-reverse gap-2 rounded-b-xl border-t bg-muted/50 p-4 sm:flex-row sm:justify-end pointer-coarse:[&>button]:h-[44px]",
+        /*
+          §9.3, step 128: the footer's buttons are boxes, so they are 44 in the box where the pointer is coarse.
+          Step 139 (Design, 12 Oct): one order at every width, "Cancel first and the destructive verb last, side
+          by side left to right and stacked top to bottom", so the column is no longer reversed; and stacked they
+          stand 24 apart, §G.3's gap, "so a thumb landing low reaches neither by sliding off the other". No
+          overlay reaches into that 24: each button is its own box.
+        */
+        "-mx-4 -mb-4 flex flex-col gap-6 rounded-b-xl border-t bg-muted/50 p-4 sm:flex-row sm:justify-end sm:gap-2 pointer-coarse:[&>button]:h-[44px]",
         className
       )}
       {...props}
