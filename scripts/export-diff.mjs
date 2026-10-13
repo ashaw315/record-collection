@@ -34,9 +34,19 @@ export function sentencesOf(source) {
     .replace(/&([a-z]+);/gi, (whole, name) => ENTITIES[name.toLowerCase()] ?? whole)
     /* A blank line is Markdown's block end. The handoff's quoted rulings end without a full stop, so without this a quote swallows the paragraph after it. */
     .replace(/\n[ \t]*\n/g, ' ␞ ')
+    /*
+      Markdown's markup is not text (13 Oct, the review surface): a quote line or a bullet starting a line is a
+      block of its own, its marker gone, and bold's `**` is stripped, because a `**` between a stop and the next
+      capital stopped the split there and a lead read as one sentence with what followed it.
+    */
+    .replace(/\n[ \t]*(?:>|[-*])[ \t]+/g, ' ␞ ')
+    .replace(/^[ \t]*(?:>|[-*])[ \t]+/, '')
+    .replace(/\*\*/g, '')
     .replace(/\s+/g, ' ');
   const out = [];
-  for (const block of text.split('␞')) {
+  for (const raw of text.split('␞')) {
+    /* A bullet or quote after a blank line keeps its marker to here, where the block starts. */
+    const block = raw.replace(/^\s*(?:>|[-*])\s+/, '');
     /* A sentence ends at . ! or ? followed by a space and a capital or a quote; "126.5", "§W.24" and "e.g. two" do not end one. */
     let number = '';
     for (const part of block.split(/(?<=[.!?][”"’)]?)\s+(?=[A-Z“"‘(§*`\[])/)) {

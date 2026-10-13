@@ -25,6 +25,30 @@ describe('sentencesOf', () => {
   });
 });
 
+/*
+  The splitter is the review surface (the coordinator, 13 Oct), so what it joins or cuts at markup is what gets
+  reviewed wrong. A target's tags are stripped before splitting; a handoff's Markdown was not: a bold lead's `**`
+  stood between a stop and the next capital, so the lead and the sentence after it read as one, and a quote line
+  (`> …`) or a bullet (`- …`) on the line after a stop joined the sentence before it. Fails against the splitter that
+  read markup as text.
+*/
+describe('sentencesOf, on Markdown', () => {
+  it('splits a bold lead from the sentence after it, with the markup gone', () => {
+    expect(sentencesOf('- **Step one.** Do this.')).toEqual(['Step one.', 'Do this.']);
+    expect(sentencesOf('**Done: built.** **§T.6 — the slot.** One sentence.')).toEqual(['Done: built.', '§T.6 — the slot.', 'One sentence.']);
+  });
+
+  it('reads a quote line and a bullet line as their own sentences, with their markers gone', () => {
+    expect(sentencesOf('Recapture each at 390.\n   > On the want list the labels take §4.1’s type.')).toEqual(['Recapture each at 390.', 'On the want list the labels take §4.1’s type.']);
+    expect(sentencesOf('One ruled.\n- Two ruled.\n- Three ruled.')).toEqual(['One ruled.', 'Two ruled.', 'Three ruled.']);
+  });
+
+  it('does not cut a sentence at a tag or at inline emphasis inside it', () => {
+    expect(sentencesOf('<p>The <strong>page</strong> has said what the page is. It was built.</p>')).toEqual(['The page has said what the page is.', 'It was built.']);
+    expect(sentencesOf('A result has **two** actions, one slot and two disclosures, each in a band of its own.')).toEqual(['A result has two actions, one slot and two disclosures, each in a band of its own.']);
+  });
+});
+
 describe('diffProse', () => {
   const before = 'The sizes are taken once. The gatefold’s spread is never recomputed while the modal is open. The sleeve is centred. Focus returns to the cover.';
 
@@ -89,7 +113,7 @@ describe('addedBySection', () => {
     const after = '## Build order\n\n- **Step one.** Do this. And that.\n\n- **Step two.** Do more.\n\n## Notes\n\nA note.\n';
     expect(addedBySection(before, after)).toEqual([
       { section: 'Build order › Step one.', added: ['And that.'] },
-      { section: 'Build order › Step two.', added: ['- **Step two.** Do more.'] },
+      { section: 'Build order › Step two.', added: ['Step two.', 'Do more.'] },
     ]);
   });
 });
@@ -124,12 +148,12 @@ describe('against this repository’s own history', () => {
     const before = '96. Build the band.\n\n> Every link has a hit area 44 tall\n\nNo step: §G.7. It rules nothing.\n';
     const after = '96. Build the band.\n\n> Every link has a hit area 44 tall\n\n99. Build the grid.\n\n> Under each cover, the title is set in 13 ink\n\nNo step: §G.7. It rules nothing.\n';
     expect(sentencesOf(after)).toContain('No step: §G.7.');
-    expect(diffProse(before, after)).toEqual({ removed: [], reworded: [], added: ['99. Build the grid.', '> Under each cover, the title is set in 13 ink'] });
+    expect(diffProse(before, after)).toEqual({ removed: [], reworded: [], added: ['99. Build the grid.', 'Under each cover, the title is set in 13 ink'] });
   });
 
   it('keeps a step number with its own step, not on the end of the paragraph before', () => {
     const sentences = sentencesOf('Report the baselines.\n\n> Each meets its neighbours halfway.\n\n97. Build the table.\n');
-    expect(sentences).toContain('> Each meets its neighbours halfway.');
+    expect(sentences).toContain('Each meets its neighbours halfway.');
     expect(sentences).toContain('97. Build the table.');
   });
 });
