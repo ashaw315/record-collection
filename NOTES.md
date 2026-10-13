@@ -43263,3 +43263,405 @@ exhaustively.
 Nothing fixed. The commit check (the unit suite's repo tests) ran to
 commit this entry, which is longer than a typecheck and is the only
 way NOTES is committed here.
+
+## 12 Oct, late: a drop that fails the index; SAVE put back; every unpassed screen captured. NOTHING HERE IS COMMITTED YET
+
+**The drop `68b33ce` (raw, committed, not pushed) fails the index
+check and I cannot commit past it.** `RESULT: 8 PASS, 3 FAIL` (6, 7,
+8a), and the unit suite with it (`451 passed, 3 failed`), so
+`commit-checked.sh` refuses every commit, the intake's included. The
+cause is in Design's file and is not mine to edit:
+
+- `Table and Grid - build target.dc.html` begins `<!D`, then three
+  paragraphs (the want list's pass, stats' pass, manage's pass), then
+  `OCTYPE html>`. The three passes were spliced into the file's third
+  byte, in front of the doctype and outside every section.
+- It has been so since `049036f` (11 Oct 22:39), four drops. Nothing
+  noticed, because no withdrawal quoted those paragraphs until this
+  drop: its four new entries (`T.6/blank-paper-defect`,
+  `T.6/count-names-records`, `T.6/genre-pair`,
+  `T.6/save-when-changed`) each quote a sentence that is in the file
+  and not in §T.6, so the check reports `quote-missing` and
+  `matches-none`, correctly.
+- **What fixes it:** Design re-exports with the three passes inside
+  §T.6. The check is right and is not to be loosened.
+- Standing in the tree, uncommitted: the intake (Code's 24 lines back
+  in the handoff, WITHDRAWALS' comment at 202) and everything below.
+
+**SAVE is back in every open form** (the coordinator's item 1;
+Design's `T.6/save-when-changed`: "a control that comes and goes moves
+what stands beside it, against the reserved-slot rule").
+`ResourceList.tsx`: SAVE always drawn, the question only when
+something changed. Kept from `8da8d48`: Escape as a close, the field
+order. Tests: the list test holds SAVE visible on opening again; step
+137's test now holds that SAVE and DELETE stand in the same place
+through a change and its undoing, which is the ruling's reason, and
+that + NEW has its SAVE before anything is typed. Failed first 6 of 6
+against the rebuilt form. Step level, every-test files touched: none;
+the eight specs naming manage, both projects: `219 passed, 2 skipped,
+ledger clean, tree unchanged — OK`. Typecheck and build clean; lint 0
+errors, 27 warnings. (A first run reported nothing: I had declared
+`remove` twice in the test and the file did not compile. Log kept.)
+
+**Every screen with no pass, one folder:**
+`docs/captures/unpassed-screens-139/`, 67 pictures and a table, by
+`e2e/capture/unpassed-screens-139.capture.ts`, at 390 coarse and 1280
+fine. 34 states of eleven screens: not-found (3), login (3),
+suggestions (1 of 4), the want list's two forms and item page, the
+record form (new, new with Everything else open, edit), manage (the
+duplicate review and its merge question, the proposed hierarchy, the
+lineup picker, walk and result, a store's row open, and a changed row
+asked), the shared dialog from each of its three screens, and look up
+(ten: form, searching, failed, nothing found, three cards, market
+answered and refused, the version table, pressing evidence and its
+failure).
+
+- **On the test database with stubbed answers, not the real
+  collection.** These states are reached by typing, pressing or a
+  search. The data is fixtures'.
+- **Not captured, three states twice: Ask Claude thinking, failed and
+  answered.** With no model key the panel reads "Gap analysis is not
+  configured on this deployment." and offers nothing to press. That is
+  the gate that keeps a spec from the model and I did not work round
+  it. What it would take: the capture's server started with a
+  placeholder key, the model's answers stubbed in the browser as the
+  proposed hierarchy's are; or the real collection's sheet with the
+  same stub. Either is a decision about a guard and is Adam's.
+- **Not captured: suggestions with nothing to suggest** (the shared
+  test database always has some), and a changed row asked at 1280
+  (not a state there).
+- The capture took four runs. The first stood twenty minutes on a
+  held request with no time limit on an action; the second, with a
+  limit a state, showed the two real faults (the sign-in alert's
+  selector, Ask Claude absent); the third a fixture whose name
+  ("Lineup") matched every button on its row. Both stopped runs were
+  mine and were killed; the next run's setup truncates, and its ledger
+  was clean. A held request is released and every action is limited
+  now, and each state prints as it is taken.
+
+**Sign-out, checked** (item 6). Nothing under `src` calls
+`/api/auth/logout`: no control, no link, no form. What tests it:
+`e2e/auth.spec.ts:40`, "keeps the session across a reload, then
+clears it on logout", which signs in through the form and then calls
+the route itself with `page.request.post`, and `routes.test.ts`, which
+lists the path among those needing a session. So the test covers the
+ROUTE (the cookie is cleared, `/` then redirects to `/login`) and its
+name claims no more than that. It is a passing test of a path no
+reader can reach: the route works and nothing leads to it.
+
+**Can an in-app navigation be made to wait?** (item 4, asked before
+building; nothing built.)
+- **Closing the row, another row, Escape:** built.
+- **Changing section:** available and cheap. The section is state in
+  `ManageClient`; the changed flag has to live there and not in the
+  list.
+- **A link pressed in the app** (the header, the menu, any `Link`):
+  available. Next 16.3's `Link` has `onNavigate`, whose event can be
+  cancelled; or one listener on the document while a form is changed.
+  The flag has to be readable from the header, so it leaves manage
+  for a small provider in the layout. Moderate: it touches the header,
+  which every screen draws, and so owes a whole run.
+- **Reload, closing the tab, leaving the app:** `beforeunload`,
+  cheap, the browser's own words. **But not on an iPhone:** iOS Safari
+  does not show that prompt, and the list form is the phone's layout.
+- **The browser's Back and Forward to another screen of the app: NOT
+  available.** The app router has no way to block or cancel a history
+  navigation, and `popstate` cannot be cancelled. It can only be
+  imitated by pushing an extra history entry and pushing it back,
+  which changes the address before asking and breaks Back for the
+  rest of the visit. That is the approximation the coordinator said
+  not to build.
+- **So the set as ruled cannot be made complete.** Back, and reload
+  on a phone, would still lose a change in silence, and by Design's
+  own sentence a guard that covers some exits "is a trap". For Design:
+  rule it knowing those two holes, or keep the guard to the row's own
+  exits and say so.
+
+**A second drop while halted, `e2379a1` (raw, not pushed), and the
+target is still malformed** (`<!D`, the passes, `OCTYPE`): the index
+still reads `8 PASS, 3 FAIL` on the same four entries. I ran the
+region script on the new handoff before committing it raw, saw it,
+took my 24 lines back out, committed it as it arrived, then ran the
+intake. The drop rules two builds for Code to number, neither started:
+on a genre row with a branch, "the disclosure takes the row's right 44
+and the name takes the rest of the row", re-counted to zero names
+under 44; and an error screen for every route with a bare fallback
+(the 40 heading "Something went wrong.", one sentence, TRY AGAIN and
+the way back to the Collection). The error screen is on every route,
+so it owes a whole run, and is the step to take the `querySelector`
+wrapper with. Held with the rest until the re-export.
+
+**The trim of the 67 is a list beside them:**
+`docs/captures/unpassed-screens-139/PROPOSED-TRIM.md`, 67 to 42 in
+three parts (14, 15, 13), each row with its reason; nothing deleted.
+Seen in the pictures while reading them, not touched: login's inset
+at 390 is 16 where every other screen is 18; at 1280 the want list's
+form sets "Best dig" at the foot of its box and not its head; at 1280
+a lineup walk's progress line is set in a cell about 60 wide, on three
+lines; the dialog's two buttons change order between 390 and 1280.
+
+## 12 Oct, late: the trim revised, suggestions taken again, and four things seen and not touched
+
+Still nothing committed: the target is still malformed and the index
+still reads `8 PASS, 3 FAIL`.
+
+**The trim, revised** (`docs/captures/unpassed-screens-139/
+PROPOSED-TRIM.md`): 77 pictures held across two folders, 50 proposed,
+in four parts (12, 17, 13 and 8).
+- The eleven first proposed out unopened are opened. None changed its
+  answer; what each showed is in the list. One had been listed by
+  mistake (it was opened, and is kept).
+- The record's edit form is back, both windows.
+- The two `/suggestions` pictures in the first folder are withdrawn
+  from the set, not captioned: their panel reads "not configured",
+  which no reader sees. They stay on disk.
+
+**Suggestions with Ask Claude offered:**
+`docs/captures/suggestions-configured-139/`, ten pictures by
+`e2e/capture/suggestions-configured-139.capture.ts`: nothing to
+suggest, the list, thinking, failed, answered, each at 390 coarse and
+1280 fine.
+- **Nothing to suggest was reached without contriving it.** The seed
+  holds no influence and no shared lineup, so a fresh run's list is
+  empty until the capture makes its three. My earlier note said the
+  shared database always has some: that was true of a run that had
+  already made its fixture, and wrong as a statement about the seed.
+- **The placeholder, on Adam's word:** the server was started with
+  `ANTHROPIC_API_KEY=not-a-key-capture-only`. The file refuses to
+  start with any other value (staged: run without it, it stops and
+  says so).
+- **No request to the model, recorded in the folder's table.** In the
+  browser: six requests to `/api/suggestions/ai`, six answered by the
+  stub. At the model's address: the server's only address for the
+  model was a listener the capture started on this machine; it was
+  first sent one request to show it counts, and then received 0. The
+  server's own guard (`assertNoLiveCall`) stands between the two and
+  was not reached. One inference, said in the table: that the server
+  held the listener's address is not read back from the server; it
+  travelled in the same environment as the key, and the key arrived.
+- The mouse is moved off the button before each picture here. In the
+  first folder it was not, and three 1280 pictures show a button's
+  hover (`login-refused`, `lookup-search-failed`,
+  `lookup-nothing-found`). All three are proposed out or already
+  ruled; the first folder is not retaken.
+
+**Seen and not touched, with where each went.** None fixed; each is
+with Design through the coordinator.
+1. **Login's inset at 390 is 16; every other screen is 18.** Sent as a
+   question about a ruling in force: either login breaks "18 on every
+   screen at every width", or that ruling's scope is narrower than its
+   words. Not to be fixed on the coordinator's word.
+2. **At 1280 the want list's form sets "Best dig" at the foot of its
+   box,** where every other label stands at its field's head. Sent as
+   a probable defect for Design to confirm. In both the new and the
+   edit form.
+3. **At 1280 a lineup walk's progress line is set in a cell about 60
+   wide, on three lines.** Sent as a probable defect.
+4. **The dialog's two buttons change order:** Delete above Cancel at
+   390, Cancel then Delete at 1280. Nothing rules it. Sent to be ruled
+   before the dialog's pass.
+Seen since, the same kind, not yet sent: at 390 Ask Claude's heading
+and sentence are a column about 90 wide and run to eleven lines beside
+the select and button; "Thinking…" is narrower than "Ask Claude" and
+moves the select 4; a failure or an answer inside the panel moves the
+list beneath it (31 for the sentence). On look up, a failed "Identify
+this pressing" makes its card 15 taller.
+
+**When the halt clears, in this order:** the intake and everything
+standing; then the two builds the drop rules, numbered. The branch
+rows are to be counted to the 44 floor in BOTH dimensions (the
+coordinator, 12 Oct). The error screen is on every route and owes a
+whole run, taken once with the `querySelector` wrapper.
+
+## 12 Oct, late: the resting pointer, the model evidence put on the half that holds, and a third drop
+
+**A third drop while halted, `2ed4043` (raw, not pushed); the target
+is still malformed and the index still `8 PASS, 3 FAIL`.** It rules
+one unnumbered step of three fixes, none owing an entry (each is a
+build that did not follow a ruling in force): login's content at the
+18 at 390 and 320; the want list's Best dig label at its field's head
+at 1280; every confirmation dialog's controls "Cancel first and the
+destructive verb last, side by side left to right and stacked top to
+bottom"; with captures of login at 390 coarse and the dialog at 390
+coarse and 1280 fine. To be numbered and built when the halt clears.
+The dialog is read by three screens and not by every test: it owes
+those screens' specs. Left for their passes by Design: the lineup
+walk's wrapping line, and not-found's sentence.
+
+**The resting pointer.** The first capture never moved the mouse off
+what it last pressed. Under a fine pointer the next picture carries
+that control's hover, and the page is reused from state to state, so a
+picture can carry the hover of a press made two states earlier. Read
+from the script, for the sixteen proposed 1280 pictures (the pointer's
+place is wherever the last press left it; no run):
+
+| picture at 1280 | last press before it | resting on |
+|---|---|---|
+| not-found-dead-want-list-item | Sign in, at sign-in (640, 520) | nothing: the page is one line at its top |
+| login-form | none: a fresh window | nothing |
+| want-list-item | Sign in, still | nothing: blank below Edit |
+| dialog-from-record-page | Delete record, in the header | the dialog's own backdrop |
+| lookup-form | a store's Delete in manage, far right | nothing: right of the column |
+| want-list-new | Sign in, still | **the Priority select** (190 to 658 across, 487 to 523 down) |
+| record-new-everything-else-open | the Everything else line | **that line** |
+| record-edit | the same press, the state before | **on or just above the Everything else line**: not sure |
+| manage-duplicate-review-merge-asked | Same artist | **Same artist** |
+| manage-proposed-hierarchy | Suggest a hierarchy, scrolled into view | **unknown**: the window is made taller for the picture and the pointer's place then falls on something else |
+| manage-lineup-picker | Lineup | **Lineup** (its pale box was the hover) |
+| manage-lineup-walking | Lineup | **Lineup**, disabled |
+| manage-stores-row-open | Edit | **the tick that takes Edit's place** (its pale box was the hover) |
+| lookup-result-cards | Search Discogs | **on or just under Identify this pressing**: not sure |
+| lookup-version-table | Compare pressings | **Hide pressings**, which takes its place |
+| lookup-pressing-evidence | Identify this pressing | **Hide pressing details**, which takes its place |
+
+Five clean, eleven dirty or not sure. **Only the eleven were retaken**
+(`CAPTURE_ONLY`, `CAPTURE_WIDTHS=1280`), with the pointer moved to the
+header's corner before each picture, which the capture now does
+always. Their table is `retaken-pointer-clear.md`; the originals are
+in `with-resting-pointer/` beside them. Looked at after: the tick's
+pale box is gone, so that was the hover; "Hide pressings" is as grey
+as it was, so that is its own colour and the pointer had changed
+nothing there. The reading was right to treat "resting on" as dirty
+without being able to say what a hover draws.
+
+The 390 pictures: the pointer there is coarse, and two pairs show no
+hover drawn at 390 where 1280 drew one (the sign-in button after a
+refusal; Lineup after a walk). Not checked rule by rule.
+
+**The model evidence, restated on the half that holds.** The
+coordinator's point: the stub answered every POST in the browser, so
+the server was never asked, so the listener's nought would be nought
+whatever address the server held. It did not test what it looked like
+it tested. The question that closes it is whether `/suggestions` has
+any server-side path to the model, and it has not:
+- the page's render calls `suggestions`, `suggestionCount`,
+  `gapAnalysisWithPrevious`, `listGenreTree` and
+  `isAnthropicConfigured`: three database modules (their imports are
+  the database's and nothing else) and one read of the environment;
+- the model client is called in one place under this screen,
+  `route.ts:141`, inside the POST of `/api/suggestions/ai`; the same
+  route's GET reads the database;
+- only the browser starts that POST, when Ask Claude is pressed.
+So the stub's six of six is the whole of it, and the listener is
+unnecessary. The capture keeps it as a belt and its table now says, in
+those words, that the count rests on the path and the stub and that
+the listener's nought "shows nothing by itself". Re-run so the record
+beside the pictures says so: ten pictures, six seen, six answered.
+
+**Seen and not touched, by the rule each breaks** (the coordinator: a
+finding is three instances of one rule, not four observations).
+- *A control or block that changes size and moves what stands beside
+  or below it* — the reserved-slot rule Design named for SAVE, if it
+  is general: "Thinking…" narrower than "Ask Claude", moving the
+  select 4; a failure or an answer inside Ask Claude's panel moving
+  the list (31 for the sentence); a failed "Identify this pressing"
+  making its card 15 taller; and, the same rule again, a refused
+  password moving the whole sign-in block up 18, since the block is
+  centred. Four instances. With Design as one question.
+- *Its own defect:* Ask Claude's heading and sentence in a column
+  about 90 wide at 390, eleven lines. With the suggestions pass.
+
+## 12 Oct, late: four reads, and a capture I replaced after it had been ruled from
+
+A fourth drop while halted, `704fee9` (raw, not pushed); the target is
+still malformed and the index still `8 PASS, 3 FAIL`. It states the
+reserved slot as a rule ("Nothing the app does on its own moves what a
+reader may be about to press: a control whose label changes keeps its
+drawn size, and a status or error that replaces or follows a control
+takes a reserved slot of stated lines"; an answer the reader asked for
+is content and may push), stands stacked dialog buttons 24 apart, and
+gives suggestions its pass. One unnumbered step for Code, not started.
+
+**The strings after the artists' names are the capture's, and no
+reader sees them.** `mv6149hs9267` and its like are a suffix the
+capture puts on every fixture it makes ("Anti-Cimex" + a stamp of the
+time and a random number), so that two runs on one database never
+make the same name; every spec here does the same. The page prints an
+artist's name as it is stored and adds nothing. On the real
+collection the names are the ones Adam entered or Discogs gave. The
+same suffix is on the record form's genre chips, manage's rows and
+the want list's item in the other folder, for the same reason.
+**It is a fault in the captures all the same:** a picture for a design
+pass should not carry a string a reader never sees. A capture's
+fixtures can be named plainly, since the capture project runs alone
+on a database truncated at its start. Not done; said.
+
+**Hover is gated, all of it.** The built stylesheet holds 16 hover
+rules and every one is inside `@media (hover: hover)`; none is a bare
+`:hover`, and `globals.css` writes none by hand. It is Tailwind's
+doing: version 4 puts every `hover:` class behind that condition. No
+script sets a hover outside the wall's own pointer code. So on a
+phone a tap leaves nothing looking hovered, and there is no defect
+there to fix. For the captures: under the emulated coarse pointer no
+hover rule applies at all, so the 390 pictures cannot carry one
+wherever the pointer rested, and "two pairs showed none" was the
+rule and not luck. One limit: this is the stylesheet's condition; I
+have not put a real phone on it.
+
+**The dialog's two buttons at 390 are 44 drawn, with no overlay.** The
+footer gives its buttons a height of 44 in the box where the pointer
+is coarse (`pointer-coarse:[&>button]:h-[44px]`, step 128, whose
+comment says why: "they stack 8 apart, where no overlay would
+reach"). Each is the dialog's inner width. So a button's hit area is
+its box, 44, and nothing reaches into the gap: stood 24 apart, all 24
+is dead, and Design's mitigation works as it reasons. The only
+overlay in the dialog is the cross's 44 square. Built today they are
+8 apart and in the other order (the footer is laid out reversed below
+640, which is the whole of why Delete stands first there). Read from
+the build and from step 128's test, which holds 44 to a finger and no
+more than 9 past the sides; not measured afresh.
+
+**I replaced the suggestions pictures after Design had ruled from
+them, and cannot show the new ten match.** The capture ran three
+times on 12 Oct: once, once more to make the listener prove it
+counts, and once to correct the table's wording. Each run cleared the
+folder first. Design's quoted suffix (`mv6149hs9267`) is the second
+run's, so Design ruled from the second run's pictures and the third
+run's are what is on disk.
+- What differs for certain: the suffix on every fixture's name, in
+  the eight pictures that show the list. The two of the empty state
+  show no fixture.
+- What I can say about the rest: between the second run and the third
+  only a comment and the table's sentences changed in the script;
+  nothing that arranges or takes a picture. That is a statement about
+  the script, from my own edits. It is not a comparison of pictures,
+  because the second run's no longer exist.
+- **The rule this breaks is one already here** (committed captures
+  are never rewritten), which I read as "committed" and should have
+  read as "handed on". Now a mechanism: both captures refuse to
+  replace a folder that exists unless `CAPTURE_REPLACE=1` is given.
+  Staged: both refused, and the ten pictures' checksum was the same
+  before and after.
+
+**The eleven retakes, all opened** (three before, eight now). What the
+pointer had been drawing: the pale box on manage's tick, and the pale
+box on Lineup in the picker. Nothing else differs but the suffix. Seen
+in the proposed hierarchy, in the original and the retake alike, so
+not the pointer: the row "Psychedelic Rock" stands on a paler ground
+than its neighbours, and the fixture's row beneath it has a narrower
+select. Not looked into.
+
+**For the three-fix step, if Design confirms** (the coordinator):
+login's refused-password line takes a reserved slot, so the centred
+block stops moving up 18. The rule now in the target covers it.
+
+## 12 Oct, 22:30: the halt cleared
+
+Design repaired the target (`1c68c04`, raw): it begins `<!DOCTYPE
+html>` and the three passes are inside §T.6. Run before anything was
+taken, as asked: the index, `RESULT: 11 PASS, 0 FAIL`. **The commit
+check then failed anyway, `454 passed, 2 failed`, and on my file, not
+Design's:** `e2e/capture/unpassed-screens-139.capture.ts` presses Sign
+in itself (its two sign-in states) and opens a record's page without
+being on the governed list. Both checks were right. It is named in
+`sign-in.test.ts`'s exemptions with its reason (the two presses are
+answered by a stub and reach no sign-in route; it signs in for
+everything else through the helper) and added to `GOVERNED`, where it
+types no declared constant. So one repair did fix one cause, and a
+second cause was waiting behind it that the first had hidden: the
+check had been failing on the index for the whole life of that file.
+With both: `457 passed, tree unchanged — OK`, and the intake is
+`3071ff5`.
+
+Six raw drops stand unpushed behind it and go up with it: `68b33ce`,
+`e2379a1`, `2ed4043`, `704fee9`, `1c68c04`, and the intake.

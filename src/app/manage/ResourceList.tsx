@@ -32,11 +32,14 @@ import type { Row } from './ResourceTable';
  * again, another row pressed, or + NEW pressed; what was pressed waits for
  * the answer. SAVE is not a close.
  *
- * The drop of 12 Oct, manage's open form (2): "The form shows SAVE only
- * once something has changed", so SAVE showing is exactly the case that
- * asks; and Escape is a close like the others. Escape while the question
- * is showing answers it KEEP EDITING: it dismisses the question, not the
- * form.
+ * SAVE is in every open form, changed or not, and the question is asked
+ * only when there is something to save. A drop of 12 Oct said "the form
+ * shows SAVE only once something has changed" and that was built for one
+ * commit (8da8d48); Design withdrew it (`T.6/save-when-changed`): "a
+ * control that comes and goes moves what stands beside it, against the
+ * reserved-slot rule." Escape is a close like the others. Escape while the
+ * question is showing answers it KEEP EDITING: it dismisses the question,
+ * not the form.
  *
  * Genres come through the same list with a depth and a parent: indented 12
  * a level and no further than three, Under Parent as the second line, and
@@ -147,8 +150,7 @@ export function ResourceList({ resource, rows, busyId, rowError, createError, on
         className="space-y-3 pb-4"
         onSubmit={(event) => {
           event.preventDefault();
-          /* Enter in a field with nothing changed has nothing to save, and there is no SAVE to have pressed. */
-          if (changed) save();
+          save();
         }}
         onKeyDown={(event) => {
           if (event.key !== 'Escape') return;
@@ -214,11 +216,9 @@ export function ResourceList({ resource, rows, busyId, rowError, createError, on
         )}
 
         <div className="flex items-center gap-2 pt-1">
-          {changed && (
-            <Button type="submit" aria-label={row === undefined ? `Save new ${resource.singular}` : `Save ${name}`} disabled={row !== undefined && busyId === row.id} className={ACTION}>
-              Save
-            </Button>
-          )}
+          <Button type="submit" aria-label={row === undefined ? `Save new ${resource.singular}` : `Save ${name}`} disabled={row !== undefined && busyId === row.id} className={ACTION}>
+            Save
+          </Button>
           {row !== undefined &&
             (seeded ? (
               /* A seeded row's Delete is shown refused, with its reason beside it: an action that always errors would be a lie, and there is no hover on a phone to explain it. */

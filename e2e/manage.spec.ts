@@ -952,8 +952,8 @@ for (const width of [320, 390]) {
     const form = row.locator('[data-manage-form]');
     await expect(form).toBeVisible();
     for (const field of ['name', 'city', 'country']) await expect(form.getByLabel(`${names.store} ${field}`, { exact: true })).toBeVisible();
-    /* Design's drop of 12 Oct, manage's open form (2): "The form shows SAVE only once something has changed." This held SAVE visible in a form just opened; the claim changed with the ruling. */
-    await expect(form.getByRole('button', { name: `Save ${names.store}` }), 'nothing changed, so no SAVE').toHaveCount(0);
+    /* SAVE is in every open form, changed or not. The drop of 12 Oct said "only once something has changed" and this held it absent for one commit (8da8d48); Design then ruled for the build before it (`T.6/save-when-changed`): "a control that appears and disappears moves what stands beside it, which breaks the reserved-slot rule." Fails against a form with no SAVE until a field changes. */
+    await expect(form.getByRole('button', { name: `Save ${names.store}` }), 'SAVE is there from the moment the form opens').toBeVisible();
     await expect(form.getByRole('button', { name: `Delete ${names.store}` })).toBeVisible();
     /* (5): "Notes, address and website join the open form, after the fields the second line shows, in that order." Fails against the declaration's order, which put State / region, Address and Website before Notes. */
     expect(await form.locator('label').evaluateAll((all) => all.map((label) => (label.textContent ?? '').trim()))).toEqual(['Name', 'City', 'Country', 'Favourite', 'Notes', 'Address', 'Website', 'State / region']);
@@ -1046,14 +1046,18 @@ for (const pointer of POINTERS) test.describe(`manage’s open row with changes,
       await expect(form, 'a field put back as it was is not a change').toHaveCount(0);
       await expect(page.locator(CONFIRM)).toHaveCount(0);
 
-      /* SAVE is there only while something has changed (the drop of 12 Oct): fails against a form that shows it from the moment it opens. */
+      /* SAVE stands where it stands whatever is typed (`T.6/save-when-changed`): nothing beside it moves. Fails against a SAVE that comes and goes with the change, which moved DELETE by its width. */
       await opener.click();
       const save = form.getByRole('button', { name: `Save ${names.store}` });
-      await expect(save, 'a form just opened has no SAVE').toHaveCount(0);
+      const del = form.getByRole('button', { name: `Delete ${names.store}` });
+      const place = async () => [await save.boundingBox(), await del.boundingBox()].map((box) => (box === null ? null : [Math.round(box.x), Math.round(box.y)]));
+      await expect(save, 'SAVE is in a form just opened').toBeVisible();
+      const opened = await place();
+      expect(opened.every((box) => box !== null), 'SAVE and DELETE are both in a form just opened').toBe(true);
       await city.fill('York');
-      await expect(save, 'a change brings it').toBeVisible();
+      expect(await place(), 'a change moves neither').toEqual(opened);
       await city.fill('Leeds');
-      await expect(save, 'and putting the field back takes it away').toHaveCount(0);
+      expect(await place(), 'nor does putting it back').toEqual(opened);
 
       /* Escape is a close: silent with nothing changed. Fails against a form Escape does nothing to. */
       await city.press('Escape');
@@ -1094,9 +1098,8 @@ for (const pointer of POINTERS) test.describe(`manage’s open row with changes,
       await expect(row.locator('[data-manage-second]'), 'the row is as it was').toHaveText('Leeds · UK · Favourite');
 
       /* + NEW with something typed is a changed form as well. */
-      await expect(list.getByRole('button', { name: 'Save new store' }), '+ NEW’s form has no SAVE until something is typed').toHaveCount(0);
+      await expect(list.getByRole('button', { name: 'Save new store' }), '+ NEW’s form has its SAVE before anything is typed').toBeVisible();
       await list.getByLabel('New store name', { exact: true }).fill('Half typed');
-      await expect(list.getByRole('button', { name: 'Save new store' })).toBeVisible();
       await list.locator('[data-manage-new]').click();
       await expect(list.locator(CONFIRM), 'closing + NEW with a name typed asks').toBeVisible();
       await list.locator(CONFIRM).getByRole('button', { name: 'Discard changes' }).click();
