@@ -2,6 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist, trackCreated } from './cleanup';
 import { login } from './sign-in';
 import { HIT_FLOOR, POINTERS, pointerIs, reachingPastItself, readReach, underFloor } from './hit-area';
+import { rowSamples } from './row-samples';
 
 /* Records and artists removed after each test — see e2e/cleanup.ts. */
 registerCleanup();
@@ -544,7 +545,7 @@ for (const pointer of POINTERS) test.describe(`stats under a ${pointer} pointer`
         44 across (three on the real collection); the claim changed with the ruling. Counted both ways, down and
         across. Fails against a name reached over its own width only.
       */
-      const shares = await page.evaluate(([genre]) => {
+      const shares = await page.evaluate(([genre, samples]) => {
         const row = document.querySelector(`[data-testid="genre-row-${genre}"]`) as HTMLElement;
         row.scrollIntoView({ block: 'center' });
         const link = row.querySelector('a') as HTMLElement;
@@ -552,20 +553,13 @@ for (const pointer of POINTERS) test.describe(`stats under a ${pointer} pointer`
         const box = row.getBoundingClientRect();
         const whose = (x: number, y: number) => { const at = document.elementFromPoint(x, y); if (at === null) return 'nothing'; if (at === link || link.contains(at)) return 'name'; if (summary !== null && summary.contains(at)) return 'disclosure'; const other = (at.closest('[data-testid^="genre-row-"]') ?? at).getBoundingClientRect(); return `${at.tagName.toLowerCase()} "${(at.textContent ?? '').trim().slice(0, 12)}", whose row is ${other.top} to ${other.bottom} where this row is ${box.top} to ${box.bottom}, sampled at ${y}`; };
         const y = box.top + box.height / 2;
-        /*
-          Down the row: 44 samples, one a pixel, from the row's own top with nothing added. Measured (13 Oct, by a
-          probe since removed): the browser reads a point as the one-pixel square below and right of it. With a
-          boundary at 637.5, a point at 636.5 reached this row and one at 636.75 the row beneath; with one at 444,
-          a point at 443.25 reached the row beneath. So a sample a quarter above a row's foot is the next row's,
-          whatever the build does, and three samplings of this test read 43 of 44 for that reason. Samples at
-          top + 0, 1, … 43 are squares that tile a row of 44 exactly, on a whole pixel or a half.
-        */
+        /* Down the row: the 44 samples are `rowSamples`', from the row's own top with nothing added (the measurement is on that helper; a quarter added here read 43 of 44 three times). */
         const across: string[] = [];
         for (let x = Math.ceil(box.left); x < Math.floor(box.right); x += 1) across.push(whose(x + 0.25, y));
-        const down = (x: number) => { let rows = 0; for (let dy = Math.ceil(box.top); dy < Math.floor(box.bottom); dy += 1) if (whose(x, dy + 0.25) !== 'nothing') rows += 1; return rows; };
         const split = across.length - 44;
-        return { width: across.length, name: across.slice(0, split).filter((each) => each !== 'name').length, disclosure: across.slice(split).filter((each) => each !== 'disclosure').length, nameTall: Array.from({ length: 44 }, (_, dy) => whose(box.left + 20, box.top + dy)).map((each, dy) => (each === 'name' ? '' : `${each} at ${dy} of 44`)).filter((each) => each !== ''), disclosureTall: Array.from({ length: 44 }, (_, dy) => whose(box.right - 22, box.top + dy)).map((each, dy) => (each === 'disclosure' ? '' : `${each} at ${dy} of 44`)).filter((each) => each !== ''), height: Math.floor(box.height), rows: down(box.left + 20) };
-      }, [parent.id as string]);
+        const tall = (x: number, own: string) => samples.map((dy) => whose(x, box.top + dy)).map((each, dy) => (each === own ? '' : `${each} at ${dy} of ${samples.length}`)).filter((each) => each !== '');
+        return { width: across.length, name: across.slice(0, split).filter((each) => each !== 'name').length, disclosure: across.slice(split).filter((each) => each !== 'disclosure').length, nameTall: tall(box.left + 20, 'name'), disclosureTall: tall(box.right - 22, 'disclosure'), height: Math.floor(box.height) };
+      }, [parent.id as string, rowSamples(0)] as const);
       expect(shares.width, `at ${width}: the precondition: the branch’s row is wider than two shares`).toBeGreaterThan(88);
       expect.soft(shares.name, `at ${width}: places in the row’s left share (all but its right 44) that do not reach the name`).toBe(0);
       expect.soft(shares.disclosure, `at ${width}: places in the row’s right 44 that do not reach the disclosure`).toBe(0);
