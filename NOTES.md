@@ -44607,3 +44607,95 @@ app outside §T.1's + and − is a drawn icon, none a glyph of the face.
 **Not started, as ordered:** the in-flight counting wrapper for cleanup
 (with the next harness-touching step); the hierarchy's ACCEPT and
 REJECT and the market slot's two sizings (with Design); the card.
+
+## 13 Oct, 17:00: the splitter corrected and the listings re-emitted; index assertion 11; the 14:31 drop; the ring's scoping sentences; manage's icons
+
+**The splitter cut nothing; it joined.** Checked before anything was
+changed: the two "broken" sentences are whole in the file and in the
+splitter's output, and a probe over every target for fragments (no
+terminal stop, or a lowercase start) finds only headings and titles. What
+the splitter did wrong was in Markdown, and it was joining, not cutting:
+a bold lead's `**` stood between a stop and the next capital, so a step's
+lead and the sentence after it read as one; and a quote line (`> …`) or
+a bullet (`- …`) on the line after a stop joined the sentence before it.
+The invisible kind the coordinator feared, two sentences read as one.
+Fixed (test first, three cases): bold markers stripped, quote and bullet
+lines their own blocks with their markers gone; tags were already
+stripped before splitting, so the targets were never affected. **The two
+listings re-emitted and diffed:** the target's 109 sentences are
+unchanged; in the handoff and WITHDRAWALS every change is a split, with
+no sentence lost, reworded or newly found: the six unnumbered steps'
+leads stand apart from their first sentences, each "Recapture at 390
+coarse and 1280 fine" stands apart from the quote after it, and each
+withdrawal entry's id, text and quote are three sentences. One
+attribution artefact: identical sentences are attributed to the first
+block holding one in file order, so the 11:40 "Recapture…" sentence is
+listed under step 132's older lead. Nothing the coordinator reviewed
+was wrong in another way.
+
+**Index assertion 11, every withdrawal entry under its own target's
+heading** (`misplacedEntries` in `withdrawals.mjs`, the spec's 11,
+report-only with `--strict-headings`, the file being Design's to move).
+Test first (`withdrawals-headings.test.ts`): staged entries under wrong
+headings named with line, heading and the heading they belong under;
+and against the file as the 14:31 drop brought it (`b371ca5`), the ten
+by name: `G.3/header-screen-measure`, `W.24/search-less-20`,
+`W.24/narrow-far-view`, `W.24/three-view-names`, `W.24/shelf-pin-390`,
+`W.24/band-far-view-reason`, `W.29/route-opens-far`,
+`W.24/shelf-every-pointer`, `W.33/ring-shelf-only` and
+`M.6/ring-this-file`, all under "The table and grid". The run prints
+them; `12 PASS` with the report. The spec and script were committed
+plainly (`3130bb9`), the one case: assertion 0 reads the spec as
+modified until the commit exists. The handoff's own "ten assertions,
+numbered 0 to 9" sentence (line 663) is Design's text and still says
+ten.
+
+**The 14:31 drop** (`b371ca5` raw; this entry's commit is its intake:
+the comment derived to 206): §W.33 and §M.6 carry their withdrawal
+sentences for the two ring entries, which are also in WITHDRAWALS, both
+under the table and grid's heading (two of the ten). Nothing else in
+it. The integrity assertion the coordinator asked for and then
+withdrew is not built.
+
+**The ring's scoping sentences, every target searched** (sentences
+naming a ring, an outline or a focus treatment, read with their
+sections). Beyond §W.33 (the spine's focus: the sink plus an ink mark
+on the top face) and §M.6 (the 2px outside ring; the two-band ring
+inside the cover's square, "on the page's trigger"), these scope or
+place a focus treatment:
+- **§W.30**, the run: "Focus is the hover's sink and count plus a 2px
+  ink rule along the run's front edge, and the addition is the point",
+  with §3's two-weight argument ("A focus ring at any other weight
+  would be the second tier §3 forbids"; "2px reserved for §3's non-type
+  marks — §W.30's focus edge"). A focus treatment of its own, scoped to
+  the wall's run, not §M.6's ring.
+- **§T.4**, the table: "keyboard focus is §M.6's ring, drawn inside the
+  row because the table clips nothing outside it." A placement of the
+  ring, scoped to the table's rows.
+- **§T.6, step 113's sentence**: "§M.6's ring governs every focusable
+  control on these screens, the sidebar's lines, glyphs and containers
+  included." Scoped to the table and grid; subsumed by the app-wide
+  sentence, not contradicted.
+- **§M.7**: "§M.6's two-band ring is on the page's trigger, and the
+  cover that travels does not carry it." The ring's absence during the
+  travel.
+- **§G.7**: "Hover and keyboard focus are not ruled" for the nav, and
+  §M.6's "This rule is scoped to this file and does not settle §G.7"
+  (its lead), with the 14:31 drop adding "It still does not settle
+  §G.7's hover."
+- §M.1 and §W.33's "the app's oxblood focus ring goes, on the shelf
+  only" point at §M.6 and §W.32 and scope nothing new.
+So the second check finds one treatment beyond the two entries, §W.30's
+run edge, which the app-wide rule either replaces (an entry) or leaves
+as the run's own mark (a scope Design must state); and two placements
+(§T.4 inside the row, §M.6 inside the cover's square) the rule must
+carry or withdraw.
+
+**Manage's lucide icons, listed for the pass** (`ResourceTable.tsx`:
+`Check`, `Pencil`, `Plus`, `Trash2`, `X`; `GenreTree.tsx`: `Pencil`,
+`Trash2`). Part 2 rules the row actions as words (LINEUP, EDIT, DELETE),
+which replaces the pencil and the bin; the tick and the cross on an
+open row are its SAVE and CANCEL, ruled as words by the same pass; the
+plus is "+ New", which §T.1's + replaces as a glyph of the face. Which
+of the five go and which stay is confirmed when the pass is built, as
+asked; none is changed now.
