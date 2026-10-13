@@ -98,6 +98,56 @@ export function diffProse(before, after) {
   return { removed, reworded, added: arrived };
 }
 
+/**
+ * A file as blocks, each under the heading and the bold lead above it. A
+ * heading is a target's uppercase-styled paragraph or a Markdown `#` line; a
+ * lead is a block that opens with `<strong>` or `**`. A block with neither
+ * inherits the lead before it.
+ */
+function blocksOf(source) {
+  const isHtml = /<p\b/i.test(source);
+  const raw = isHtml ? source.split(/(?<=<\/p>)/i) : source.split(/\n[ \t]*\n/);
+  const out = [];
+  let heading = '';
+  let lead = '';
+  for (const block of raw) {
+    const text = block.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+    if (text === '') continue;
+    const headingMatch = isHtml ? /<p[^>]*text-transform:\s*uppercase[^>]*>([\s\S]*?)<\/p>/i.exec(block) : /^\s*#{1,6}\s+(.+)$/m.exec(block);
+    if (headingMatch !== null) { heading = headingMatch[1].replace(/<[^>]*>/g, '').trim(); lead = ''; continue; }
+    const leadMatch = isHtml ? /^\s*<p[^>]*>\s*<strong>([\s\S]*?)<\/strong>/i.exec(block) : /^\s*(?:-\s*)?\*\*(.+?)\*\*/.exec(block);
+    if (leadMatch !== null) lead = leadMatch[1].replace(/<[^>]*>/g, '').trim();
+    out.push({ section: [heading, lead].filter((part) => part !== '').join(' › '), block });
+  }
+  return out;
+}
+
+/**
+ * The review surface for a drop (13 Oct): what `after` says that `before`
+ * did not, grouped under the heading and lead each sentence stands beneath,
+ * in file order. A section with nothing added is left out. The sentences
+ * are `diffProse`'s `added`, so a rewording is not among them.
+ */
+export function addedBySection(before, after) {
+  const pending = new Map();
+  for (const sentence of diffProse(before, after).added) pending.set(sentence, (pending.get(sentence) ?? 0) + 1);
+  const out = [];
+  for (const { section, block } of blocksOf(after)) {
+    const here = [];
+    for (const sentence of sentencesOf(block)) {
+      const n = pending.get(sentence) ?? 0;
+      if (n === 0) continue;
+      here.push(sentence);
+      if (n === 1) pending.delete(sentence); else pending.set(sentence, n - 1);
+    }
+    if (here.length === 0) continue;
+    const last = out[out.length - 1];
+    if (last !== undefined && last.section === section) last.added.push(...here);
+    else out.push({ section, added: here });
+  }
+  return out;
+}
+
 /** The numbers of the build order's steps, in the order they stand. */
 export function stepsOf(markdown) {
   return [...markdown.matchAll(/^(\d{1,3})\. /gm)].map((m) => Number(m[1]));
@@ -127,8 +177,16 @@ function main(argv) {
     console.log(`\n${file}: ${removed.length} removed, ${reworded.length} reworded, ${added.length} added${lostSteps.length ? `, steps gone: ${lostSteps.join(', ')}` : ''}`);
     for (const sentence of removed) console.log(`  REMOVED  ${sentence}`);
     for (const pair of reworded) console.log(`  was      ${pair.was}\n  now      ${pair.now}`);
-    /* Read against Design's message: a sentence here that the message does not claim, or a claim with no sentence here, is the report-versus-file defect. */
-    for (const sentence of added) console.log(`  ADDED    ${sentence}`);
+    /*
+      Read against Design's message: a sentence here that the message does not
+      claim, or a claim with no sentence here, is the report-versus-file
+      defect. Grouped under the heading and lead each stands beneath, which is
+      the review surface the intake report carries in full (13 Oct).
+    */
+    for (const group of addedBySection(before, after)) {
+      console.log(`  [${group.section || 'no heading'}]`);
+      for (const sentence of group.added) console.log(`  ADDED    ${sentence}`);
+    }
     outright += removed.length + lostSteps.length;
     arrivals += added.length;
   }

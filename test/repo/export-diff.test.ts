@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import { describe, expect, it } from 'vitest';
-import { diffProse, sentencesOf, stepsOf } from '../../scripts/export-diff.mjs';
+import { addedBySection, diffProse, sentencesOf, stepsOf } from '../../scripts/export-diff.mjs';
 
 /**
  * **What an export took away (8 Oct).** Design's exports replace the
@@ -66,6 +66,31 @@ describe('diffProse', () => {
     expect(d.added).toEqual(['A reserved slot is two lines at 390 and below.']);
     expect(d.reworded).toEqual([{ was: 'The sizes are taken once.', now: 'The sizes are taken once, when the modal opens.' }]);
     expect(diffProse(before, before).added).toEqual([]);
+  });
+});
+
+/*
+  The review surface (the coordinator, 13 Oct): a drop's added sentences, grouped under the heading or the bold lead
+  above each, so what was ruled is read in full rather than through a summary. Fails against the flat `added` list,
+  which says what arrived and not where.
+*/
+describe('addedBySection', () => {
+  it('groups a target’s added sentences under the heading and the bold lead above each, in file order', () => {
+    const before = '<p style="text-transform:uppercase">T.6 · Ornament</p><p><strong>Part 1.</strong> One ruled. Two ruled.</p>';
+    const after = '<p style="text-transform:uppercase">T.6 · Ornament</p><p><strong>Part 1.</strong> One ruled. Two ruled. Three arrives.</p><p><strong>Part 2.</strong> Four arrives. Five arrives.</p>';
+    expect(addedBySection(before, after)).toEqual([
+      { section: 'T.6 · Ornament › Part 1.', added: ['Three arrives.'] },
+      { section: 'T.6 · Ornament › Part 2.', added: ['Part 2.', 'Four arrives.', 'Five arrives.'] },
+    ]);
+  });
+
+  it('reads a Markdown handoff’s headings and bold bullet leads as sections, and lists nothing for a section with no arrival', () => {
+    const before = '## Build order\n\n- **Step one.** Do this.\n\n## Notes\n\nA note.\n';
+    const after = '## Build order\n\n- **Step one.** Do this. And that.\n\n- **Step two.** Do more.\n\n## Notes\n\nA note.\n';
+    expect(addedBySection(before, after)).toEqual([
+      { section: 'Build order › Step one.', added: ['And that.'] },
+      { section: 'Build order › Step two.', added: ['- **Step two.** Do more.'] },
+    ]);
   });
 });
 
