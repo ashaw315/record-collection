@@ -590,19 +590,18 @@ const WITHDRAWAL_PREFIX =
   heading a bullet sat under, so an entry under the wrong target's heading
   passed every assertion. Ten had: seven W.24, one W.29, one G.3 and the
   day's two ring entries, all under the table and grid's. An id's prefix
-  decides its heading. REPORT-ONLY by default, as 9 is: the file is
-  Design's and is moved by Design; --strict-headings fails the run on them.
-  10 stays NOT BUILT, so this is 11.
+  decides its heading. FATAL, since the 15:01 drop moved the ten (it was
+  report-only for the hours the file was Design's to move; a check that
+  names a real drift and lets it through is one people learn to scroll
+  past). 10 stays NOT BUILT, so this is 11.
 */
 {
-  const strict = process.argv.includes('--strict-headings');
   const before = failures.length;
   const misplaced = misplacedEntries(src.D).map((entry) => `11 ${entry.id} line ${entry.line} under "${entry.under}", belongs under "${entry.belongs}"`);
   const entries = parseBullets(src.D).length;
-  console.log(`     11: ${misplaced.length} of ${entries} entries under another target's heading${strict ? '' : ' (report only; --strict-headings to fail on them)'}`);
-  for (const line of misplaced) console.log(line);
-  if (strict) for (const line of misplaced) fail(line);
-  report(11, strict ? failures.length === before : true);
+  console.log(`     11: ${misplaced.length} of ${entries} entries under another target's heading`);
+  for (const line of misplaced) fail(line);
+  report(11, failures.length === before);
 }
 
 for (const line of failures) console.log(line);

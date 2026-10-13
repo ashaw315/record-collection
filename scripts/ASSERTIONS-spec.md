@@ -129,7 +129,7 @@ Eleven are built and numbered 0 to 9 and 11. Assertion 8 has two parts, so the s
 
 11. **Every withdrawal entry sits under its own target's heading.** `D` groups its bullets under `# Withdrawals` (the main list, numeric ids), `## The wall` (`W.`), `## The nav` (`G.`), `## The modal` (`M.`) and `## The table and grid` (`T.`). For every bullet, the id's prefix decides the heading it belongs under; a bullet under any other heading is an offender, named with its line, the heading it is under and the one it belongs under.
    Fail: `11 ID line N under "heading", belongs under "heading"`.
-   **Report-only by default:** the script lists the offenders and passes; it fails on them only with `--strict-headings`, as 9 does with its flag. The file is Design's and the moves are Design's; the count is the evidence.
+   **Fatal.** It was report-only for the hours between its first run, which named ten, and the 15:01 drop that moved them, because the file is Design's to move; from that drop it fails the run, since a check that names a real drift and lets it through is one people learn to scroll past.
    **Why (13 Oct):** the file's own text said the headings were for people, that the index read the bullets and no check read which heading a bullet sat under, so an entry under the wrong target's heading passed every assertion. Ten had drifted under the table and grid's heading: seven `W.24/*`, one `W.29/*`, one `G.3/*`, and the day's two ring entries `W.33/ring-shelf-only` and `M.6/ring-this-file`. Held by `test/repo/withdrawals-headings.test.ts` against the file as it stood at `07f6c76`.
 
 ## Assertion 10 — NOT BUILT
