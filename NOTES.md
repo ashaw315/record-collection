@@ -44469,3 +44469,107 @@ the body finished or was cut off. Two shapes:
    statements, with no transaction, can see another worker's delete
    between them, and should tolerate it as the want list now does.
 Not built; the answer first, as asked.
+
+## 13 Oct, 15:30: the drop's sentences as the review surface; Design's label question verified; the ring check costed; the cleanup fix that is not available; the 13:52 save
+
+**The intake report now carries a drop's added sentences in full,
+grouped by section** (the coordinator: summaries reach about a tenth of
+what is ruled). `export-diff.mjs` gained `addedBySection` (test first,
+two cases: a target's uppercase headings with bold leads, and a Markdown
+handoff's `#` headings with bold bullet leads), and the CLI prints
+`ADDED` under `[heading › lead]` lines. Each intake writes
+`docs/intake/<raw-commit>-added.md`: `4700939-added.md` (130
+sentences: 19 in the handoff under four unnumbered steps, 109 in the
+target under Manage's pass, the error screen, parts 1, 2 and 3, the
+entries and the built results, 2 in WITHDRAWALS) and `33e5a0c-added.md`
+(the 13:52 save, below). Of the sentences I had named as in no relay,
+the coordinator confirms not-found's heading and control, manage's row
+actions as words and the record form's + and − WERE in Design's
+messages; the opened row's name at its top, the picker's rows, the
+walk's slot, the item page's wrapped-title leading, Gatefold
+unitalicised, the versions table's inset and Searched as a line were in
+neither and are now reviewed from the file.
+
+**Design's question, verified across every committed version before the
+parts 1 to 3 drop** (the handoff, the five targets and WITHDRAWALS, 40
+drop commits): none carried `IN COLLECTION`, `+ COLLECTION` or `ADD TO
+COLLECTION`, nor `Add to collection` in Design's text. So no entry is
+owed on the adds' labels, and Design's call stands verified. The 13:52
+save rewords them again, to I OWN THIS and I WANT THIS; nothing was
+built from any of the three.
+
+**The focus-ring check, costed before anything is built**
+(`docs/captures/focus-ring-count/focusables.md`, by
+`e2e/capture/focusables-count.capture.ts`, read-only on the test
+database, a record and an item made for the dynamic routes): **13
+routes; 208 focusable elements at 390 and 295 at 1280**, manage the
+largest (27 and 70), login the smallest (2). The check as Design states
+it, "focus every focusable element on every route and assert the ring",
+is a Tab walk from the document's start on each route at each width,
+reading the focused element's outline each stop and comparing the set
+walked with the set counted (a control the walk skips is a finding of
+its own): about 500 stops a run, two to three minutes a project. It is
+its own spec in the shape of `hairlines.spec.ts`, not the layout sweep,
+which is the record page's. The build is one rule: §M.6's ring on
+`:focus-visible` app-wide in `globals.css`, the scoped collection rule
+folded into it, shadcn's ring removed from `ui/button` and `ui/input`
+and from login's and the genre tree's inline copies, the five inline
+rings made redundant and removed; the 52 raw controls take it from the
+rule with no file touched. It owes the whole run, because the two
+shared components are under every form. **Estimate: the build half a
+day, the check half a day, the gate an hour: a day with the run, and
+the largest of the seven steps.** My preference on order: the ring
+before the form passes, as the coordinator proposes, because a day is
+not large against restyling every form twice, and the ring's gate
+carries whatever else owes a run.
+
+**The cleanup fix the coordinator ordered is not available by the
+route proposed, and the staging says why.** `cleanup-in-flight.spec.ts`
+fires a request to the probe (which now answers after six seconds while
+the cookie `error-probe=sleep` says so), disposes the request client,
+and reads what the request became: **answered 200**. On Playwright
+1.62 `dispose()` discards stored responses and leaves a request in
+flight to complete, so a hook that disposes before deleting changes
+nothing. The hook's disposal was written, staged, found inert and
+removed; the test is kept, named for the fact the decision rests on, so
+a later Playwright that does interrupt is noticed. Also learned: a body
+that returns with an un-awaited request has it interrupted by the
+runner itself ("Test ended") before any hook runs, so the race can only
+be staged with a timed-out body, and `test.fail` does not accept
+`timedOut` as the failure it expects. What would work: counting the
+client's in-flight calls (a `beforeEach` that wraps the context's
+`get`, `post`, `patch`, `put`, `delete` and `fetch` to count, and an
+`afterEach` that waits, bounded, for the count to reach zero before
+deleting), about 25 lines in `registerCleanup`, which makes the
+artifact carry the request's true answer rather than one from after the
+deletes. Not built: the order was for the disposal, and this is a
+different mechanism. Until then the shape is recognised in the hook's
+own comment: a 400 after a timeout is the hook's doing.
+
+**The 13:52 save** (`33e5a0c` raw, intake `07f6c76`; the file lists 21
+added, 2 reworded, 4 removed): a new unnumbered step, **one focus ring
+for the app**, carrying the rule ("every focusable control shows §M.6's
+ring with keyboard focus and nothing else; the shared components' grey
+ring and the browser's default are defects wherever they appear"), the
+check, login's outline moved out of part 1's step, and **the record
+form's doubled rule: the fieldset's top rule goes and the last row's
+rule closes the group**, which answers the hairline check's one
+recorded pair. The adds reworded to I OWN THIS and I WANT THIS, own
+first, with the earlier wording named as a state not an action. The
+bare fallback is final for 390 and 1280 "because the real global-error
+file rendered byte-identical to the stand-in", and its provisional
+sentences are removed. Login at 1280 is recorded as built as ruled.
+Look up's held figures add the reserved line under IDENTIFY THIS
+PRESSING. Nothing relayed is missing from the file; everything in the
+file is listed in the intake file. The steps for Code to number are
+now seven: slots and case; part 1; part 2; the card (held); login at
+1280 and the hierarchy; the 24 gap and stats' column; the ring.
+`specs-import-constants.test.ts` gained the count capture among the
+governed specs, committed with the intake because the check was red
+without it.
+
+**Part-3-lookup's re-check is still owed.** The save takes the 45 from
+my report and not from the pictures: "the 25-result page height is
+measured from the retaken build, not from either set", and nothing in
+it reads the retaken cards' titles at 390 or the 44 count on the taller
+card. Adam attaches `for-design/part-3-lookup/`.
