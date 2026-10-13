@@ -1,0 +1,5 @@
+{
+  "_": "The pairs of hairlines with nothing drawn between them that stood when the check was built (13 Oct). A key is route@width; a pair is `above → below` with no coordinates. A pair here is recorded, not accepted: it is for a verdict when its screen is passed. hairlines.spec.ts fails on a pair not here and on one here that has gone.",
+  "/records/new@390": ["div bottom → fieldset top"],
+  "/records/new@1280": ["div bottom → fieldset top"]
+}
