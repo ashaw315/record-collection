@@ -158,6 +158,19 @@ const PROTECTED_RECORDS = `{${readSeventeen().map((r) => r.id).join(',')}}`;
 
 export function registerCleanup(): void {
   test.afterEach(async () => {
+    /*
+      **Not held: a request the body left pending when its timeout cut it
+      off** (13 Oct, the third sighting of cleanup racing in-flight work: a
+      suggestions test ran past its 30s, this hook deleted the artist it had
+      made, and the body's still-pending `POST /api/records` was then
+      answered `400 No artist with that id exists`, an artifact that read as
+      the product refusing a good request). Disposing the request client
+      here was tried and does not interrupt a request in flight
+      (`cleanup-in-flight.spec.ts` holds that fact on Playwright 1.62), so
+      the deletes cannot be put after such a request's answer by that
+      route. Recognise the shape: a 400 after a timeout is this hook's
+      doing, not the product's.
+    */
     const db = getTestDb();
 
     for (const recordId of trackedRecords.splice(0)) {

@@ -20,7 +20,10 @@ export const dynamic = 'force-dynamic';
 
 export default async function ErrorProbePage() {
   if (process.env.NODE_ENV === 'production') notFound();
-  if ((await cookies()).get('error-probe')?.value === 'throw') throw new Error('the error probe, throwing as asked');
+  const asked = (await cookies()).get('error-probe')?.value;
+  if (asked === 'throw') throw new Error('the error probe, throwing as asked');
+  /* `sleep`: the page answers after six seconds, so a request can be in flight while something else happens (`cleanup-in-flight.spec.ts`). */
+  if (asked === 'sleep') await new Promise((resolve) => setTimeout(resolve, 6_000));
   return (
     <>
       <AppHeader />
