@@ -44699,3 +44699,32 @@ open row are its SAVE and CANCEL, ruled as words by the same pass; the
 plus is "+ New", which §T.1's + replaces as a glyph of the face. Which
 of the five go and which stay is confirmed when the pass is built, as
 asked; none is changed now.
+
+## 13 Oct, 17:40: the 15:01 drop; assertion 11 fatal; the listings are the review copy; the ring step's clipping count
+
+**The listings are reviewed from the files, not from a paste.** The two
+"broken" sentences were transit damage between my report and the
+coordinator's reading; the coordinator now reads `docs/intake/*-added.md`
+as Adam attaches them. Every intake writes one; the report names its
+path and its counts and pastes nothing. The known distortion to read
+them with: identical sentences list under the first block holding one in
+file order (a "Recapture…" under step 132's older lead).
+
+**The 15:01 drop** (`1cb8dbe` raw; intake in this entry's commit):
+Design moved the ten entries under their own headings, and the index's
+11 names none: `0 of 206`. So **assertion 11 is fatal** from `20d319f`
+(plain, the one case; the spec says why and when). The drop also
+reworded the ring step and its rulings (`docs/intake/1cb8dbe-added.md`,
+20 sentences: the handoff's ring step, §M.6's scope lead, and §T.6's
+"Focus, once for the app" and part 2): the exception for a clipped
+control, which takes §M.6's inside ring, with the record page's cover
+as its one named instance.
+
+**For the ring step, when it is ordered** (the coordinator): the Tab
+walk reports, for each focusable control, whether its container clips
+its box (`overflow` other than visible on an ancestor whose box the
+control's outline would leave), so the clipped exception becomes a
+list rather than a footnote with one example; the grid's cover cells
+and the wall's records are the obvious candidates. The ring waits on
+Design for §W.30's run edge, §T.4's "inside the row", and §3's 2px
+reservation naming one place once 2px is everywhere focus is.
