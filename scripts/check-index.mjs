@@ -13,7 +13,7 @@
  */
 import { readFileSync, existsSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
-import { parseBullets, serialize, shippedComment, unenteredWithdrawals, withdrawalSentencesIn } from './withdrawals.mjs';
+import { misplacedEntries, parseBullets, serialize, shippedComment, unenteredWithdrawals, withdrawalSentencesIn } from './withdrawals.mjs';
 import { doneStepsAbsent, isDone, parseSteps, stepSequence } from './build-order.mjs';
 import {
   collapse,
@@ -47,7 +47,7 @@ const FILES = {
   stack trace: to someone skimming for FAIL, a clean run. An id with no
   result is now named as one, and the last line counts all three.
 */
-const IDS = ['0', '1', '2', '3', '4', '5', '6', '7', '8a', '8b', '9'];
+const IDS = ['0', '1', '2', '3', '4', '5', '6', '7', '8a', '8b', '9', '11'];
 const results = new Map();
 function stop(reason) {
   console.log(`RUN STOPPED: ${reason}`);
@@ -581,6 +581,28 @@ const WITHDRAWAL_PREFIX =
   for (const line of unentered) console.log(line);
   if (strict) for (const line of unentered) fail(line);
   report(9, strict ? failures.length === before : true);
+}
+
+/*
+  11 -- every entry sits under its own target's heading (13 Oct). D groups
+  its bullets under headings by target, and its own text said the headings
+  were for people: the index read the bullets and nothing read which
+  heading a bullet sat under, so an entry under the wrong target's heading
+  passed every assertion. Ten had: seven W.24, one W.29, one G.3 and the
+  day's two ring entries, all under the table and grid's. An id's prefix
+  decides its heading. REPORT-ONLY by default, as 9 is: the file is
+  Design's and is moved by Design; --strict-headings fails the run on them.
+  10 stays NOT BUILT, so this is 11.
+*/
+{
+  const strict = process.argv.includes('--strict-headings');
+  const before = failures.length;
+  const misplaced = misplacedEntries(src.D).map((entry) => `11 ${entry.id} line ${entry.line} under "${entry.under}", belongs under "${entry.belongs}"`);
+  const entries = parseBullets(src.D).length;
+  console.log(`     11: ${misplaced.length} of ${entries} entries under another target's heading${strict ? '' : ' (report only; --strict-headings to fail on them)'}`);
+  for (const line of misplaced) console.log(line);
+  if (strict) for (const line of misplaced) fail(line);
+  report(11, strict ? failures.length === before : true);
 }
 
 for (const line of failures) console.log(line);

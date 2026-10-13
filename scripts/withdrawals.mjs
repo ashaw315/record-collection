@@ -111,3 +111,29 @@ export function unenteredWithdrawals(sentences, entries) {
   const quotes = new Set(entries.map((e) => collapseText(e.quote)));
   return sentences.map(collapseText).filter((s) => !quotes.has(s));
 }
+
+/**
+ * The entries whose id prefix disagrees with the heading they sit under
+ * (13 Oct). The file groups its bullets under "The wall", "The nav", "The
+ * modal" and "The table and grid", with the numeric ids in the main list at
+ * the top, and its own text said the headings were for people and no check
+ * read them: ten entries had drifted under the table and grid's heading.
+ * `W.` is the wall, `G.` the nav, `M.` the modal, `T.` the table and grid,
+ * and a numeric id the main list. Each misplaced entry is named with its
+ * line, the heading it is under and the one it belongs under.
+ */
+export function misplacedEntries(markdown) {
+  const HEADING_OF = { W: '## The wall', G: '## The nav', M: '## The modal', T: '## The table and grid', n: '# Withdrawals' };
+  const out = [];
+  let under = '';
+  markdown.split('\n').forEach((line, index) => {
+    if (/^#{1,2} /.test(line)) { under = line.trim(); return; }
+    const entry = /^- \*\*`([^`]+)`\*\*/.exec(line);
+    if (entry === null) return;
+    const id = entry[1];
+    const prefix = /^([A-Z])\./.exec(id)?.[1] ?? 'n';
+    const belongs = HEADING_OF[prefix];
+    if (belongs !== undefined && belongs !== under) out.push({ id, line: index + 1, under, belongs });
+  });
+  return out;
+}

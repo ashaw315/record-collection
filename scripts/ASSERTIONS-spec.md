@@ -71,7 +71,7 @@ Test cases, all of which the grammar must yield unchanged: `31/whole` (a colon a
 
 ## The ten assertions, 0 to 9, and one not built
 
-Ten are built and numbered 0 to 9. Assertion 8 has two parts, so the script reports eleven ids: 0, 1, 2, 3, 4, 5, 6, 7, 8a, 8b, 9. Assertion 10 is specified below and is NOT BUILT; the script does not run it. Each built assertion prints `PASS n` or `FAIL n` followed by one line per offender, then the script exits non-zero if any failed.
+Eleven are built and numbered 0 to 9 and 11. Assertion 8 has two parts, so the script reports twelve ids: 0, 1, 2, 3, 4, 5, 6, 7, 8a, 8b, 9, 11. Assertion 10 is specified below and is NOT BUILT; the script does not run it. Each built assertion prints `PASS n` or `FAIL n` followed by one line per offender, then the script exits non-zero if any failed.
 
 **Every id gets a line, and the last line counts them.** If the run stops before an id (an input missing, a parse refused), the script prints `RUN STOPPED: reason`, then `ABSENT n` for every id it did not reach, and exits non-zero. Every run ends `RESULT: p PASS, f FAIL, a ABSENT of 11`, with ` -- INCOMPLETE` when `a` is not zero. **Why (2 Oct):** the withdrawal parser threw after 5, and the run ended in five PASS lines and a stack trace; to a reader skimming for FAIL, 6 to 9 looked clean. An id with no result is neither a pass nor a failure, and is named as what it is.
 
@@ -126,6 +126,11 @@ Ten are built and numbered 0 to 9. Assertion 8 has two parts, so the script repo
    Fail: `9 §SEC unentered "sentence"`.
    **Report-only by default:** the script lists the offenders and passes; it fails on them only with `--strict-reverse`. A run with offenders is therefore green unless the flag is given, and the offender lines are the result.
    **Why (1 Oct):** 6 checks every entry's quote is in its section, which is one direction only. A sentence in withdrawal form with no entry passed every assertion, which is how §28 and §33 each carried a withdrawal narrowing the Price history solo with nothing filed.
+
+11. **Every withdrawal entry sits under its own target's heading.** `D` groups its bullets under `# Withdrawals` (the main list, numeric ids), `## The wall` (`W.`), `## The nav` (`G.`), `## The modal` (`M.`) and `## The table and grid` (`T.`). For every bullet, the id's prefix decides the heading it belongs under; a bullet under any other heading is an offender, named with its line, the heading it is under and the one it belongs under.
+   Fail: `11 ID line N under "heading", belongs under "heading"`.
+   **Report-only by default:** the script lists the offenders and passes; it fails on them only with `--strict-headings`, as 9 does with its flag. The file is Design's and the moves are Design's; the count is the evidence.
+   **Why (13 Oct):** the file's own text said the headings were for people, that the index read the bullets and no check read which heading a bullet sat under, so an entry under the wrong target's heading passed every assertion. Ten had drifted under the table and grid's heading: seven `W.24/*`, one `W.29/*`, one `G.3/*`, and the day's two ring entries `W.33/ring-shelf-only` and `M.6/ring-this-file`. Held by `test/repo/withdrawals-headings.test.ts` against the file as it stood at `07f6c76`.
 
 ## Assertion 10 — NOT BUILT
 
