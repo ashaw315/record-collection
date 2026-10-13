@@ -24,25 +24,16 @@
 # second, which load does not see. Load, swap and free memory at the start
 # and at the end are printed with the result.
 #
-# The 25,000 is measured, thinly (12 Oct, NOTES): one nine-test spec run
-# twelve times here, 23.7 to 25.0s where the machine swapped 8,000 to 23,000
-# pages a second during the run, 25.6 to 32.2s from 32,500 to 56,000, and 66s
-# with a failure at 147,000. So it is set under the lowest rate a run was
-# slower at, by a fifth. It was 1,000, a round number: two full runs started
-# at 434 and 976 and were not slowed.
-#
-# `.env.local` is NOT copied here: the production credential does not travel.
-# The three tests that read it skip on GATE_WORKTREE=1, which only this
-# script sets (`test/repo/dev-targets-neon.test.ts`).
-#
-# The worktree is a sibling directory, made once and moved to the commit on
-# each run. Its dependencies are installed there (`npm ci`) when the lockfile
-# differs from the one last installed: a symlinked node_modules is outside
-# the project's root, which the dev server's bundler does not accept.
-#
-# `workers` is passed to Playwright where given; the config's own number
-# stands otherwise. Logs go to a folder beside the worktree, named by commit,
-# and the two judged summary lines are printed at the end.
+# The 25,000 is a conservative pick from a confounded sample, not a measured
+# boundary (12 Oct, NOTES; `scripts/measure-swap.sh`). One nine-test spec,
+# twelve runs, on whatever the machine was doing: swap was not induced, and
+# load rose with it, so the two are not separated. The times rise smoothly
+# with the swap rate (25.0s at 22,700, 25.6s at 32,500) and show no step. The
+# only clear degradation is one run at 146,800: 66s, with a failure. And this
+# guard reads five seconds BEFORE a run, where those are rates DURING one. So
+# 25,000 says only: well under the one rate known to hurt, and well over the
+# 434 to 5,521 that three full runs started at without being slowed. It was
+# 1,000, a round number that sat inside that ordinary range.
 set -uo pipefail
 
 ROOT="$(git rev-parse --show-toplevel)"

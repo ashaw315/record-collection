@@ -42752,7 +42752,7 @@ second against a refusal at 1000, so the run was let through by 24;
 and `lookup-flows.spec.ts:1831` on chromium finished with 17% of its
 30s left (24.8s), the narrowest margin in the run.
 
-## 12 Oct: the swap threshold, measured; a flaky in step 134's own test; `lookup-flows:1831`
+## 12 Oct: the swap threshold, picked from a thin sample (corrected below); a flaky in step 134's own test; `lookup-flows:1831`
 
 **The swap threshold is 25,000 pages a second, from 1,000.** 1,000 was
 a round number and a full run had started at 976. Measured: one spec
@@ -42996,3 +42996,66 @@ Applied twice already. `6616548` touched `ShelfAddress.tsx`, on the
 root page: whole run, on `9c73d1e`. Step 137 touched
 `ResourceList.tsx`, manage's alone: the eight specs naming manage.
 A gate is still Adam's word only; a whole covering run is not one.
+
+## 12 Oct: four corrections after the coordinator's read
+
+**The swap limit's provenance, corrected. 25,000 is a conservative
+pick from a confounded sample. It is not a measured boundary.** The
+entry above tabled three bands and said time "starts climbing
+somewhere between 23,000 and 32,500". The bands are where twelve
+samples happened to fall and nothing more: 22,700 gave 25.0s and
+32,500 gave 25.6s, a smooth rise with no step in it. What the sample
+supports:
+- the ONLY clear degradation is one run, at 146,800 pages a second:
+  66s against about 25, with a failure;
+- swap was not induced: it is whatever the machine was doing;
+- load rose with swap (3 to 24), so the two are not separated, and
+  the slowdown may be load's;
+- the guard reads five seconds BEFORE a run and these are rates
+  DURING one, which include the run's own.
+So 25,000 says only that it is far under the one rate known to hurt
+and over the 434, 976 and 5,521 that three whole runs started at
+without being slowed. `scripts/gate.sh` says the same in its head now.
+Not moved; nobody asked.
+
+**The measuring loop is a script and copies first:**
+`scripts/measure-swap.sh <out-dir> [spec] [times]`. A run that is not
+a clean pass has its `test-results` copied before the next starts.
+Staged both ways: a run that reported nothing was copied; and an
+output folder inside the tree was refused — AFTER being created, the
+first time, which reading the script had not shown. It refuses before
+`mkdir` now, staged again.
+
+**The address flaky's diagnosis is a diagnosis** (the coordinator's
+word, recorded so the entry above is not read as weaker than it is):
+the mechanism was asserted, "no second fetch of `/`", and that
+assertion failed before the change and passes after. That tests the
+hypothesis, which a rerun going green does not and a trace would not
+have.
+
+**SPEC.md's A66 is amended to the one number.** SPEC is Code's to
+keep; I had flagged the contradiction and left it. The head of the
+note now states what is drawn and Design's reason, says what one
+number gives up (Rock with an empty branch and Dub with none differ
+only in whether the row opens; Punk 0 · 1 reads 1), and marks the rest
+as A66 as first written: the record of what was built, not what is
+drawn.
+
+**`manage.spec.ts:976` at 19.9s: my own runs beside it, read from the
+logs, no new run.** Its sixteen cases in the three whole runs:
+chromium 4.8 to 7.3s in all three. The phone project 7.4 to 13.0s in
+the first two (coarse at 768 and 1280 the slowest, 11.9 to 13.0), and
+15.0 to 19.9s for ALL EIGHT in the third. So not its band and not a
+momentary stall either. Every phone-project spec in that run, in
+order, against the run before: auth to `lookup-flows` 0.50 to 0.88 of
+their earlier time; then `manage` 1.98, `record-detail` 1.68,
+`record-form` 1.65, `sidebar-113` 1.60, `stats` 1.58, `want-list`
+1.45, to the end. A sustained slowdown from `manage.spec.ts` on, and
+that is when step 137's runs were going in the working tree: its
+fail-first, its 221-test covering run on both projects, the capture
+twice and a commit check. Two databases and two ports keep the runs
+correct; they do not keep them fast. Load at that run's end was 19.29
+against 12.85 and 13.43 for the two before. **So: a covering run in
+the working tree roughly halves the speed of a whole run in the
+worktree while both are going, and margins read from the whole run
+are then facts about the pair.** No timeout touched.

@@ -1334,11 +1334,40 @@ Responsive throughout — **desktop and mobile are equal priorities**, not deskt
 | Want list | `/want-list` | Sorted by priority. Each row shows target pressing and best-dig notes. "Mark acquired" action opens the record form prefilled. |
 | Suggestions | `/suggestions` | Relationship-based list with reasons, always present. Separate "Ask Claude for gap analysis" button for §9.2. Add-to-want-list on each. |
 | Stores | `/stores` | **SPEC'D, NOT BUILT (A69, 2026-09-10).** List with favorite toggle; each store shows records acquired there and total spend. No route exists — `src/app/stores` is absent and nothing links to it. Recorded here rather than left to be inferred: the type-scale conversion covered every built screen and skipped this one because there is nothing to convert, and its absence from that work is not an omission. Store data itself is live — `record_stores` is written, and §10's record detail and `/stats`' by-store breakdown both read it. |
-| Stats | `/stats` | Total records, total spend, estimated value, breakdown charts by genre/decade/store/label. **Genre is a tree, not a bar chart** — see the note below the table (A66). |
+| Stats | `/stats` | Total records, total spend, estimated value, breakdown charts by genre/decade/store/label. **Genre is a tree, not a bar chart**, one number a row — see the note below the table (A66, amended at step 135). |
 | Manage | `/manage` | CRUD for genres (incl. hierarchy editor), labels, formats, tags, artists, influences. **Not pressings** — see below. |
 
-**`/stats`' genre series renders as a tree of pairs (A66, 2026-09-09).** *(Amended
-2026-09-11, when the component was built.)* Genre counts render as a pair, direct
+**`/stats`' genre series renders as a tree, one number a row (A66, 2026-09-09;
+amended 2026-10-12, step 135).** Each genre's row shows **the distinct records
+carrying the genre or anything beneath it**. A record carrying both a genre and
+one beneath it counts once under the parent: the figure is the size of a set,
+not a sum of the rows under it. A row with a branch still opens to show what
+is beneath it, and every genre still appears, the empty ones muted.
+
+*Why it changed.* Design's ruling of 12 Oct 2026: that number is "what a reader
+means by 'how many Jazz records'", and "two unlabelled numbers read as one
+number repeated". A66 as first written drew a PAIR on any row with a branch,
+the genre's own count and its branch's (`Jazz 3 · 4`), and that was built and
+shipped from 2026-09-11 until step 135. The genre's own count is still computed
+(`direct` in `genre-pairs.ts`) and is drawn nowhere.
+
+*What the one number gives up, said plainly, because the paragraphs below argue
+for the pair and were right about what it distinguished.* `Rock 10` with a
+branch that adds nothing and `Dub 1` with no branch now differ only in whether
+the row opens. A parent holding nothing of its own (`Punk 0 · 1`) reads `1`,
+as a genre holding one record itself does. And the objection recorded below to
+subtree-only still stands as a fact about `/`'s filters: a parent's figure
+contains its children's, so the rows do not sum to the collection. The ruling
+accepts those for a figure a reader can read without being told what it is.
+
+**Everything from here to "The shelf has no route of its own" is A66 as it
+stood before step 135: the reasoning for the pair, kept as the record of what
+was built and why, and NOT a description of what is drawn now.** Where it says
+a row "renders" two numbers, read "rendered". Still current in it: the tree
+rather than a bar chart, every genre appearing, the collapse to the top level
+as a default view, and the last paragraph on `/`'s filter row.
+
+*As first written:* Genre counts render as a pair, direct
 and subtree — **wherever a branch exists to walk.** A row with no children renders
 one number, at any depth: a second figure there would assert a walk that never
 happened.
