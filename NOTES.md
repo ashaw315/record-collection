@@ -44894,3 +44894,32 @@ the behaviour did not. The one `src` change, the error boundary's
 rethrow under a dev-only cookie and `ErrorBody`'s required `retry`
 (`d8b0390`), is step-covered (the error spec, typecheck, build). A gate
 before the ring is assurance; the ring's own gate follows soon after.
+
+## 13 Oct, 19:35: the Apply lands before the walk counts; a change that cannot alter behaviour does not owe the run
+
+**Inside the ring step, the order is fixed:** the rail's hidden Apply
+takes `tabIndex={-1}` first, with its test, and the Tab walk's count
+runs after it. Design's sets are written at 31, 15 and 33, which assume
+the Apply has left the tab order; the sheet (`wall-focusables.md`)
+reads 32, 16 and 34 because as built the rail still has eight. A walk
+counted before the attribute would compare 32 against 31 and the day
+would go on a sentence, not a build. Design marks the three figures as
+expected until the walk pins them, as `G.8/control-slot-454` was.
+
+**The covering-run rule, with its exemption** (the coordinator, 13 Oct;
+the rule is CLAUDE.md §10's gate list, which names files: cleanup,
+seeding, fixtures, `test/helpers/`, the configs, the driver, migrations).
+A change to a gate-listed file that cannot alter behaviour, a comment, a
+renamed local, a reordered import, is named in the step's report and
+does not owe the run. The naming is the whole safeguard: named and
+wrong, it is visible; unnamed, the exemption is a loophole. First
+instance: `e2e/cleanup.ts` at `ae5eb48`, a comment recording that
+disposing the request client is inert, named in the 19:20 entry above,
+no run owed. CLAUDE.md §10 is unchanged; the sentence is here.
+
+**The queue, confirmed at 19:30:** the 24 gap; stats' disclosure column
+with the names-under-44 re-count; the ring, with the Apply attribute
+and the clipping count in its walk; part 1 back to back with the ring,
+one gate for both; part 2; login at 1280 and the hierarchy; the result
+card, held on the retaken pictures. Nothing waits on Design for the
+wall's focus.
