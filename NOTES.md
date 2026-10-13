@@ -44189,3 +44189,61 @@ Each site is a guard or a `??`, mechanical but each a judgement about
 what the absent case means; the tests' 1700 are mostly `rows[0].id`
 after an insert, where a `!`-free helper would close hundreds at once.
 A reading, not a plan.
+
+## 13 Oct, 12:40: the drop read against the message; login at 1280; the folders since 139; the artist prefix was the capture's
+
+**The report-versus-file check, held from here** (the coordinator, 13
+Oct: Design's own check confirms that what it is about to report is in
+the file, and cannot see a ruling in the file it did not report, or one
+reported that is not there). `scripts/export-diff.mjs` now lists what a
+drop ADDED beside what it removed and reworded: `diffProse` returns
+`added` (the arrivals left after rewordings are paired), the CLI prints
+each as `ADDED` and counts them in its last line. Test first in
+`export-diff.test.ts` (failed: `added` undefined); three whole-shape
+assertions in that file gained `added: []`, and one gained the two
+sentences its own `after` adds, which the old shape could not say. **On
+every intake, the ADDED list is read against Design's message, and the
+report names any sentence the message did not claim and any claim with
+no sentence.** For the 11:40 drop: 12 added (4 in the handoff, 8 in the
+target), listed in the entry above by content; Design's message for it
+is with the coordinator, not here, so that comparison is the
+coordinator's for this one.
+
+**Login at 1280 is a centred block, not content at the 18.**
+`login/page.tsx:78`: `main` is `flex min-h-dvh items-center
+justify-center px-[18px]`, the block `w-full max-w-sm` (384). The 18 is
+padding, and bites only below 420, where the block would meet the
+edges; from there up the block is centred and its content starts at
+(window − 384) / 2, 448 at 1280. So the morning's "at the 18 at every
+width" is true of the padding and not of what is seen, and part 1's "18
+at 390, centred at 1280" is what is built. A wording matter for Design,
+not a build change. Nothing changed.
+
+**Capture folders from 139 on, for attaching:** `three-fixes-139` (5:
+login at rest and refused at 390 coarse; the dialog from a want-list
+row at 390 coarse and 1280 fine; the want-list edit form at 1280 fine);
+`unpassed-screens-139` (67, parts 1 to 3 of the trim, copied under
+`for-design/`); `suggestions-configured-139` (10, part 4);
+`suggestions-140` (10: nothing to suggest, the list at rest, Ask
+thinking, failed and answered, each at 390 coarse and 1280 fine, after
+the pass); `stats-141` (2: stats at 390 coarse and 1280 fine, the
+real collection read-only, with the 44 count sheet); `error-screen-142`
+(4: the error screen under the header and the bare fallback, at 390
+coarse and 1280 fine; the bare two are the probe's stand-in until item
+7 lands). The want-list fix, the readers, the gate and the ignore file
+produced no captures: nothing drawn changed.
+
+**The artist prefix on the result card is the capture's, not the
+build's.** The search normaliser splits Discogs' combined title on its
+first " - " (`normalize-search.ts:151`) and the card draws the title on
+one line and the artist beneath it in the detail colour
+(`LookupClient.tsx:723`); the product never shows "Discharge - Hear
+Nothing" over "Discharge". The two cards that do in
+`lookup-result-cards` are `unpassed-screens-139.capture.ts:42`, whose
+search stub hand-writes normalised results with `title: 'Discharge -
+…'` and `artist: 'Discharge'`, a shape the normaliser cannot produce.
+So part 3's "drop the artist prefix" asks for what is built, and the
+artist is on every row where Discogs gave one (null only where the
+combined title had no " - ", and then the title is the whole string).
+Not changed: the card is held. The stub and the thirteen look-up
+pictures are to be corrected and retaken when the card's pass is taken.

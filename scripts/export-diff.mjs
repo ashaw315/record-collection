@@ -88,7 +88,14 @@ export function diffProse(before, after) {
     if (best >= 0 && score >= 0.5) reworded.push({ was: sentence, now: arrived.splice(best, 1)[0] });
     else removed.push(sentence);
   }
-  return { removed, reworded };
+  /*
+    What is left of `arrived` after the rewordings are paired is what the
+    drop ADDED: the other direction (13 Oct). Design's own check confirms
+    that what it is about to report is in the file; it cannot see a ruling
+    in the file it did not report, or one reported that is not there. The
+    added list is read against Design's message on every intake.
+  */
+  return { removed, reworded, added: arrived };
 }
 
 /** The numbers of the build order's steps, in the order they stand. */
@@ -106,6 +113,7 @@ function main(argv) {
   const strict = argv.includes('--strict');
   const at = (rev, path) => { try { return execFileSync('git', ['show', `${rev}:${path}`], { encoding: 'utf8', maxBuffer: 256 * 1024 * 1024, stdio: ['ignore', 'pipe', 'ignore'] }); } catch { return null; } };
   let outright = 0;
+  let arrivals = 0;
   for (const file of FILES) {
     const path = `${DESIGN}/${file}`;
     const before = at(from, path);
@@ -113,15 +121,18 @@ function main(argv) {
     if (before === null && after === null) continue;
     if (before === null) { console.log(`\n${file}: new since ${from}; nothing to have been removed.`); continue; }
     if (after === null) { console.log(`\n${file}: GONE. It is in ${from} and not in ${to ?? 'the working tree'}.`); outright += 1; continue; }
-    const { removed, reworded } = diffProse(before, after);
+    const { removed, reworded, added } = diffProse(before, after);
     const lostSteps = file.startsWith('HANDOFF') ? stepsOf(before).filter((n) => !stepsOf(after).includes(n)) : [];
-    if (removed.length === 0 && reworded.length === 0 && lostSteps.length === 0) continue;
-    console.log(`\n${file}: ${removed.length} removed, ${reworded.length} reworded${lostSteps.length ? `, steps gone: ${lostSteps.join(', ')}` : ''}`);
+    if (removed.length === 0 && reworded.length === 0 && added.length === 0 && lostSteps.length === 0) continue;
+    console.log(`\n${file}: ${removed.length} removed, ${reworded.length} reworded, ${added.length} added${lostSteps.length ? `, steps gone: ${lostSteps.join(', ')}` : ''}`);
     for (const sentence of removed) console.log(`  REMOVED  ${sentence}`);
     for (const pair of reworded) console.log(`  was      ${pair.was}\n  now      ${pair.now}`);
+    /* Read against Design's message: a sentence here that the message does not claim, or a claim with no sentence here, is the report-versus-file defect. */
+    for (const sentence of added) console.log(`  ADDED    ${sentence}`);
     outright += removed.length + lostSteps.length;
+    arrivals += added.length;
   }
-  console.log(`\n${outright === 0 ? 'Nothing was removed outright.' : `${outright} removed outright (sentences and steps).`} Compared ${to ?? 'the working tree'} with ${from}.`);
+  console.log(`\n${outright === 0 ? 'Nothing was removed outright.' : `${outright} removed outright (sentences and steps).`} ${arrivals} sentence${arrivals === 1 ? '' : 's'} added, to be read against what Design said the drop holds. Compared ${to ?? 'the working tree'} with ${from}.`);
   return strict && outright > 0 ? 1 : 0;
 }
 

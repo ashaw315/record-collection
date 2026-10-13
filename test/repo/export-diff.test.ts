@@ -46,12 +46,26 @@ describe('diffProse', () => {
 
   it('says nothing where sentences only moved, or the markup around them changed', () => {
     const moved = 'Focus returns to the cover. The sleeve is centred. The gatefold’s spread is never recomputed while the modal is open. The sizes are taken once.';
-    expect(diffProse(before, moved)).toEqual({ removed: [], reworded: [] });
-    expect(diffProse('<p>One thing is ruled.</p>', '<div><span>One thing</span> is ruled.</div>')).toEqual({ removed: [], reworded: [] });
+    expect(diffProse(before, moved)).toEqual({ removed: [], reworded: [], added: [] });
+    expect(diffProse('<p>One thing is ruled.</p>', '<div><span>One thing</span> is ruled.</div>')).toEqual({ removed: [], reworded: [], added: [] });
   });
 
   it('counts a sentence that appeared twice and now appears once as removed once', () => {
     expect(diffProse('It is ruled here. It is ruled here.', 'It is ruled here.').removed).toEqual(['It is ruled here.']);
+  });
+
+  /*
+    The other direction (the coordinator, 13 Oct): Design's own check confirms what it is about to report is in the
+    file, and cannot see a ruling in the file it did not report, or one reported that is not there. What a drop ADDS
+    is listed so the file can be read against Design's message on intake. A reworded sentence is not an addition.
+    Fails against a diff that reports removals only, which is what this script was.
+  */
+  it('names a sentence that arrived, and does not count a rewording as one', () => {
+    const after = 'The sizes are taken once, when the modal opens. The gatefold’s spread is never recomputed while the modal is open. The sleeve is centred. Focus returns to the cover. A reserved slot is two lines at 390 and below.';
+    const d = diffProse(before, after);
+    expect(d.added).toEqual(['A reserved slot is two lines at 390 and below.']);
+    expect(d.reworded).toEqual([{ was: 'The sizes are taken once.', now: 'The sizes are taken once, when the modal opens.' }]);
+    expect(diffProse(before, before).added).toEqual([]);
   });
 });
 
@@ -85,7 +99,7 @@ describe('against this repository’s own history', () => {
     const before = '96. Build the band.\n\n> Every link has a hit area 44 tall\n\nNo step: §G.7. It rules nothing.\n';
     const after = '96. Build the band.\n\n> Every link has a hit area 44 tall\n\n99. Build the grid.\n\n> Under each cover, the title is set in 13 ink\n\nNo step: §G.7. It rules nothing.\n';
     expect(sentencesOf(after)).toContain('No step: §G.7.');
-    expect(diffProse(before, after)).toEqual({ removed: [], reworded: [] });
+    expect(diffProse(before, after)).toEqual({ removed: [], reworded: [], added: ['99. Build the grid.', '> Under each cover, the title is set in 13 ink'] });
   });
 
   it('keeps a step number with its own step, not on the end of the paragraph before', () => {
