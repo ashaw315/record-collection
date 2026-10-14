@@ -129,10 +129,11 @@ test('the Tab walk through the wall in its three states stops 31, 15 and 33 time
   ring, the browser's default on the raw controls, the five inline rings
   and the collection views' inside ring read as "something else".
 */
-test('§M.6’s ring, once for the app: on every route each Tab stop draws the outside ring, the clipped cases the inside ring, the held names are stats’ and nothing else is held', async ({ page, context, browser }) => {
+/* "Add a check that focuses each focusable element on each route at 390 and 1280 and asserts the ring": those two, and 1440, the wall sheet's window. */
+for (const width of [390, 1280, 1440]) test(`§M.6’s ring, once for the app, at ${width}: on every route each Tab stop draws the outside ring, the clipped cases the inside ring, the held names are stats’ and nothing else is held`, async ({ page, context, browser }) => {
   test.setTimeout(900_000);
   await login(page);
-  await page.setViewportSize(WALL);
+  await page.setViewportSize({ width, height: WALL.height });
   const bad: string[] = [];
   const held: string[] = [];
   const inner: string[] = [];
@@ -158,7 +159,7 @@ test('§M.6’s ring, once for the app: on every route each Tab stop draws the o
     read(route.name, await walkTab(page));
   }
   await errorScreen(page, context, async (p) => read('the error screen', await walkTab(p)));
-  const out = await browser.newContext({ viewport: WALL });
+  const out = await browser.newContext({ viewport: { width, height: WALL.height } });
   const loginPage = await out.newPage();
   await loginPage.goto('/login');
   await settled(loginPage);

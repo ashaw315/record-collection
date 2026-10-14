@@ -51,3 +51,13 @@ export const INK = 'text-[oklch(0.19_0.008_60)]';
  * on either side of it and must not be applied to a new edge without one.
  */
 export const HAIRLINE = 'border-[oklch(0.19_0.008_60)]';
+/**
+ * §9.3's control, boxed: the label type in ink, a 1px square hairline box,
+ * no fill, 44 tall, 18 of padding a side, underlined under a pointer. As
+ * the error screen, the collection's and the shelf's empty controls, the
+ * sleeve modal and the want list's LOOK UP A RECORD draw it (each with
+ * its own copy of this string, which part 1 did not fold; step 145). A
+ * §9.3 control as a label is the same type with no box.
+ */
+export const CONTROL_BOX = `${LABEL_TYPE} ${INK} box-border inline-flex h-[44px] items-center justify-center border ${HAIRLINE} px-[18px] decoration-1 underline-offset-[3px] hover:underline`;
+export const CONTROL_LABEL = `${LABEL_TYPE} ${INK} inline-flex h-[44px] items-center decoration-1 underline-offset-[3px] hover:underline`;

@@ -2,11 +2,10 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
+import { CONTROL_BOX, CONTROL_LABEL, LABEL } from '@/app/records/[id]/grid-type';
 import { Input } from '@/components/ui/input';
 import { FORM_SECTIONS, buildWantListBody, type WantListFormValues } from './want-list-form';
 import { InlineCreate } from '@/app/records/InlineCreate';
-import { HIT } from '@/app/hit-area';
 
 /**
  * SPEC.md §10's want-list form — `/want-list/new`.
@@ -121,7 +120,8 @@ export function WantListForm({
       {FORM_SECTIONS.map((section) => (
         <section key={section.key} data-testid={`section-${section.key}`} className="space-y-2">
           <div>
-            <h2 className="font-heading text-title font-semibold tracking-tight">
+            {/* Step 145 (§T.6, part 1): "field and section labels take §4.1's label type". */}
+            <h2 className={LABEL}>
               {section.heading}
             </h2>
             {section.hint !== undefined && (
@@ -202,8 +202,9 @@ export function WantListForm({
         </p>
       )}
 
-      <div className="flex items-center gap-3 border-t border-border pt-4">
-        <Button type="submit" disabled={saving} className="pointer-coarse:h-[44px]">
+      {/* Step 145 (§T.6, part 1): "SAVE CHANGES and ADD TO WANT LIST as §9.3 boxes; and CANCEL as a §9.3 label beside them, 24 clear", §G.3's gap. */}
+      <div className="flex items-center gap-6 border-t border-border pt-4">
+        <button type="submit" disabled={saving} className={`${CONTROL_BOX} disabled:opacity-50`}>
           {/*
             **The label states what the button DOES.** It read "Add to want
             list" unconditionally, which was invisible while the form only ever
@@ -212,11 +213,11 @@ export function WantListForm({
             suggest a second row is about to appear.
           */}
           {saving ? 'Saving…' : itemId === undefined ? 'Add to want list' : 'Save changes'}
-        </Button>
+        </button>
         <button
           type="button"
           onClick={() => router.push('/want-list')}
-          className={`${HIT} text-label text-muted-foreground underline underline-offset-2 before:-left-[6px] before:-right-[9px]`}
+          className={CONTROL_LABEL}
         >
           Cancel
         </button>
@@ -255,7 +256,8 @@ function Field({
       label is set down to the box's first line of type.
     */
     <div className={`grid gap-1 sm:grid-cols-[10rem_1fr] sm:gap-3 pointer-coarse:max-sm:gap-0 ${field === 'bestDigNotes' ? 'sm:items-start' : 'sm:items-baseline'}`}>
-      <label htmlFor={field} className={`text-label text-muted-foreground uppercase pointer-coarse:max-sm:pb-1${field === 'bestDigNotes' ? ' sm:pt-[11px]' : ''}`}>
+      {/* Step 145 (§T.6, part 1): the field's label in §4.1's type. */}
+      <label htmlFor={field} className={`${LABEL} pointer-coarse:max-sm:pb-1${field === 'bestDigNotes' ? ' sm:pt-[11px]' : ''}`}>
         {label}
       </label>
 

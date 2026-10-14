@@ -45252,3 +45252,123 @@ gate is after part 1, as agreed.
 with the fix costed above; §W.23's sequence against the page's order.
 **Part 2 note:** manage's plus, cross and tick, and the chevron, are to
 be drawn from `disclosure-mark.tsx`, which grows to hold §T.1's glyphs.
+
+## 14 Oct, 13:48: the 14 Oct drop taken in; step 145, part 1's passes; four answers for Design
+
+**Step zero found a drop** (raw `faaaf76`, intake `cdafcfa`, the listing
+`docs/intake/faaaf76-added.md`: 15 added, 2 reworded, 4 removed in the
+target, 1 reworded in the handoff; Code's 29 blocks restored; the index
+12 PASS). Read against the coordinator's relay, every ruling has its
+sentences: the pulled set as 33 plus the arrows drawn, 34 for a first or
+last record and 35 for one in the middle; the 14 clipped stops named in
+three places with stats' names waiting on the costing; the filter rows'
+inside ring kept, "whether two bands read right on text" reopened; Tab to
+follow the page's order on every screen, no control with a positive tab
+index, "unless Code finds a ruling that requires the spine sequence";
+"arrow keys still move between spines within the run, as §W rules the
+keyboard". Nothing relayed is missing from the file.
+
+**Built, step 145 (part 1's passes).** On the want list's item page and
+its new and edit forms: field and section labels in §4.1's type (THE
+HUNT, WHAT YOU ARE WILLING TO PAY, THE PRESSING YOU ARE HUNTING, the dt
+labels, the forms' four section headings and every field label); EDIT,
+SAVE CHANGES and ADD TO WANT LIST as §9.3 boxes and CANCEL as a §9.3
+label beside them, 24 clear; one heading weight with the Collection's on
+the item page, the new form and the edit form; the item page's title at
+the record page title's leading, 0.94, so a wrapped title at 390 sets
+its lines close. Login: the 40 heading at the Collection's weight, a 13
+sentence in the label colour, PASSWORD as a §4.1 label, SIGN IN a §9.3
+box the column's width; the 18 at 390, the centred 384 at 1280 and the
+refusal's slot were already built. Not-found: the error screen's frame,
+the 40 heading Not found., the address sentence in the label colour, and
+COLLECTION as a §9.3 box, a full load of `/`. **The §9.3 box is now a
+constant** (`CONTROL_BOX`, with `CONTROL_LABEL` beside it, in
+`grid-type.ts` where the label type lives), drawn by the four new
+places. The five older copies of the same string (the error screen, the
+collection's and the shelf's empty controls, the sleeve modal, the want
+list's LOOK UP A RECORD) are not folded: the rule-stated-five-times shape,
+named rather than fixed outside the unit. The box is 44 at every pointer,
+as those five are; the want-list spec's two claims that the submit was 32
+under a mouse and EDIT 30.5 changed with the ruling, declared in the
+spec. Out of part 1's sentence and left as they were: the forms' inline
++ NEW ARTIST and + NEW LABEL (sentence-case underlined links, the record
+form's shared component) and the forms' grey section rules, both part
+2's.
+
+**Tests first** (`e2e/part1-145.spec.ts`, 390 coarse and 1280 fine):
+read from computed style, the type, the box, the label control, the
+heading weight, the title's leading, CANCEL's 24 by `gapBetween`, each
+label's line against its field's first line at 1280 (a field's text
+centred in its box, a textarea's at its top), login's 18 and 448, the
+not-found page's parts. Fail first on chromium: 10 of 10 failed, the
+labels sans, the boxes 32, Cancel 12 from the box, the title's leading
+60px, not-found without a heading. Two locators were mine to fix: CANCEL
+was found as the form's first plain button (+ NEW ARTIST), and at 390
+the header's navigation stands behind MENU. With the build: 10 passed on
+chromium; then with the specs that read these screens or sign in through
+them (`want-list`, `not-found-75`, `auth`, `every-page-has-nav`,
+`colour-103`, `ring-144`, `error-screen-142`, `lookup-flows`,
+`suggestions-140`) on chromium and mobile: **333 passed**, the whole log
+kept. `e2e/sign-in.ts` is unbroken: `getByLabel('Password')` and the
+button's name are case-insensitive and CSS uppercase leaves the
+accessible name alone, as part 1's check found. Captures:
+`docs/captures/part1-145/`, the five pages at 390 coarse and 1280 fine
+with a title that wraps.
+
+**The ring step, after the drop.** Its sentence asks for the ring check
+"at 390 and 1280"; the rule test now runs at 390, 1280 and 1440, and the
+shared routes tolerate a window below the fork (the wall attached but
+hidden, no spine to pull). Still in the ring's bullet and not built, each
+for Design or the coordinator to place: the spines' positive tab index
+(below), the record form's doubled rule and manage's marks, which part 2
+also carries.
+
+**Three entry questions, checked by `git log -S` on docs/design:**
+"about 52 raw controls" was carried in the 13:52 drop (`33e5a0c`), so a
+correction to 74 in 29 owes an entry; "16 files" was never in a drop, no
+entry; "14 clipped stops in three places" arrived in today's drop
+(`faaaf76`), a committed sentence now, and its count is the test
+database's: 7 stats names there, 42 on the real collection, and the
+filter panel's rows are the genre count, so a real-collection figure is
+not 49 by derivation and was not measured (the survey makes fixtures and
+cannot run on the read-only sheet); "32, 16 and 34" and "33 with a record
+pulled" were carried in the 20:23 drop (`6891972`), entries owed, which
+Design is filing.
+
+**The DOM reorder for the spines, costed.** Each spine is one `<a>`
+holding its painted faces (§W.8: the anchor is the record), emitted in
+the painter's order because SVG paints in document order and has no
+z-index; CSS cannot reorder SVG siblings, so the paint does not survive
+a DOM reorder. Separating them means a paint layer in the painter's
+order and an anchor layer in seat order with transparent faces, with
+hover and focus mirrored onto the painted faces by script: about 60 to
+80 lines, a second DOM copy of every face, and the parallel list §W.8
+argued against. Not cheap. What is cheap and keeps both orders: one
+Tab stop for the wall, a roving tab index (the first seat 0, the rest
+−1) with the arrow keys moving focus seat to seat, about 30 lines in
+`WallLive`, which already listens for the arrows. That would also make
+Design's arrow-key sentence true; today the arrows move the PULL to the
+adjacent record and do nothing to focus on the shelf (`WallLive.tsx`
+459). **§W rules no arrow keys and no within-run movement:** the only
+keyboard sentences are §W.23's explicit tab sequence in seat order and
+§W.30's run after the rail. So the clause is new, a build rather than a
+carry-over, as Design asked to be told; and §W.23's sequence IS a ruling
+that requires the spines' order, the thing Design's new sentence says to
+remove unless one is found. The roving index satisfies both.
+
+**Verification, step level:** above; `test/repo`, the want-list and login
+units `558 passed`; typecheck 0; lint 0 errors; build clean. Gate-listed
+files touched: none. The gate, for the ring and part 1 together, is next.
+
+**One more of the family, in the ring's walk at 390** (added before the
+commit): a read of the wall's first seat for a seeded record stalled for
+the test's whole budget. Below the fork the labelled wall is in the
+server's document and removed once the client takes over, so the
+locator resolved during load and the action retried on a detached
+element until time ran out, twice over, 15 minutes each. The fixture
+now takes a record from the API, the pulled route is decided by the
+window's width (`shelfOfferedMinWidth`), and the walker's wait for a
+control's animations is bounded at a second, since a looping animation
+never finishes. The rule test at 390 then reads every route in 40
+seconds. `test-results/` is cleared by each run, so a timed-out run's
+trace must be read before the next run, which cost one re-run.

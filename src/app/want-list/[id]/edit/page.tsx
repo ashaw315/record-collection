@@ -44,7 +44,8 @@ export default async function EditWantListItemPage({
           ← {item.title}
         </Link>
 
-        <h1 className="mt-3 text-headline font-medium">Edit want-list item</h1>
+        {/* Step 145 (§T.6, part 1): one heading weight with the Collection's. */}
+        <h1 className="mt-3 font-heading text-headline font-semibold tracking-tight">Edit want-list item</h1>
 
         <div className="mt-4">
           <WantListForm

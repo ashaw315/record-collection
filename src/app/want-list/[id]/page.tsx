@@ -6,6 +6,7 @@ import { formatCeiling, huntFacts, priorityLabel } from '../want-list-format';
 import { PressingVariants } from '../PressingVariants';
 import { ITEM_FRAME } from '@/app/screen-frame';
 import { HIT_ALONE } from '@/app/hit-area';
+import { CONTROL_BOX, LABEL } from '@/app/records/[id]/grid-type';
 
 /**
  * SPEC.md §10 — the want-list item detail view.
@@ -53,7 +54,8 @@ export default async function WantListItemPage({
         </Link>
 
         <header className="mt-3">
-          <h1 className="text-headline font-medium">{item.title}</h1>
+          {/* Step 145 (§T.6, part 1): one heading weight with the Collection's, and "a wrapped 40 heading takes the leading of the record page's title", 0.94 (`IdentityCell.tsx`). */}
+          <h1 className="font-heading text-headline leading-[0.94] font-semibold tracking-tight">{item.title}</h1>
           <p className="text-detail text-muted-foreground">{item.artist?.name ?? 'Unknown artist'}</p>
           <p className="mt-1 text-meta text-muted-foreground">
             Priority: {priorityLabel(item.priority)}
@@ -75,13 +77,14 @@ export default async function WantListItemPage({
         */}
         {hunt.length > 0 && (
           <section data-testid="hunt" className="mt-5 border-t border-border pt-3">
-            <h2 className="text-label font-medium tracking-wide text-muted-foreground uppercase">
+            {/* Step 145 (§T.6, part 1): "field and section labels take §4.1's label type". */}
+            <h2 className={LABEL}>
               The hunt
             </h2>
             <dl className="mt-2 space-y-2">
               {hunt.map((fact) => (
                 <div key={fact.label}>
-                  <dt className="text-label text-muted-foreground">{fact.label}</dt>
+                  <dt className={LABEL}>{fact.label}</dt>
                   <dd className="text-detail whitespace-pre-wrap">{fact.value}</dd>
                 </div>
               ))}
@@ -98,7 +101,7 @@ export default async function WantListItemPage({
         */}
         {ceiling !== undefined && (
           <section data-testid="ceiling" className="mt-5 border-t border-border pt-3">
-            <h2 className="text-label font-medium tracking-wide text-muted-foreground uppercase">
+            <h2 className={LABEL}>
               What you are willing to pay
             </h2>
             <p className="mt-2 font-mono text-detail">{ceiling}</p>
@@ -150,11 +153,12 @@ export default async function WantListItemPage({
           what the versions table does and does not answer.
         */}
 
-        <div className="mt-6 flex gap-2">
+        {/* Step 145 (§T.6, part 1): "EDIT ... as §9.3 boxes". A boxed control meets the floor by its box, so no overlay. */}
+        <div className="mt-6 flex gap-6">
           <Link
             href={`/want-list/${item.id}/edit`}
             data-testid="want-list-edit"
-            className={`${HIT_ALONE} rounded-xs border border-border px-3 py-1.5 text-label`}
+            className={CONTROL_BOX}
           >
             Edit
           </Link>

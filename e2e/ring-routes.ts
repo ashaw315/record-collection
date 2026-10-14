@@ -1,5 +1,6 @@
 import { expect, type BrowserContext, type Page } from '@playwright/test';
 import { trackArtist, trackCreated } from './cleanup';
+import { shelfOfferedMinWidth } from '../src/app/wall/view-fork';
 
 /** A route the ring reaches, and what to do on it before the walk (open a filter, pull a record). */
 export type RingRoute = { name: string; path: string; before?: (page: Page) => Promise<void> };
@@ -24,15 +25,24 @@ export async function ringRoutes(page: Page): Promise<RingRoute[]> {
   const artist = await post('/api/artists', { name: `Discharge ${suffix}` });
   trackArtist(artist);
   const item = await post('/api/want-list', { title: `Why ${suffix}`, artistId: artist });
-  await page.goto('/');
-  await page.locator('[data-shelf-offered] [data-wall="labelled"]').waitFor({ timeout: 30_000 });
-  const recordHref = await page.locator('a[data-seat]').first().getAttribute('href');
-  const recordId = (recordHref ?? '').replace(/^\/records\//, '').replace(/[?#].*$/, '');
-  expect(recordId, 'a record of the seed, from the wall’s first seat').not.toBe('');
-  const shelf = async (p: Page) => { await p.locator('[data-shelf-offered] [data-wall="labelled"]').waitFor({ timeout: 30_000 }); };
+  /*
+    A seeded record, from the API and not from the wall: below the fork the wall is in the server's document and
+    gone once the client takes over, and a read taken from it retried until the test's budget ran out (14 Oct).
+  */
+  const listed = await page.request.get('/api/records?pageSize=1');
+  expect(listed.status(), '/api/records').toBe(200);
+  const recordId = ((await listed.json()) as { data: Array<{ id: string }> }).data[0]?.id ?? '';
+  expect(recordId, 'a record of the seed').not.toBe('');
+  /*
+    The shelf is offered from 1044 up (§W.24, `view-fork.ts`); below it the collection opens as the band and
+    there is no spine to pull, so the pulled route is the shelf's own at that width. Decided by the window, not by
+    waiting on the wall: a wait on the hidden wall at 390 held a walk for its whole budget (14 Oct).
+  */
+  const offered = (p: Page) => (p.viewportSize()?.width ?? 1280) >= shelfOfferedMinWidth();
+  const shelf = async (p: Page) => { if (offered(p)) await p.locator('[data-shelf-offered] [data-wall="labelled"]').waitFor({ timeout: 30_000 }); else await p.locator('main').first().waitFor({ timeout: 30_000 }); };
   return [
     { name: 'the collection, shelf', path: '/', before: shelf },
-    { name: 'the collection, shelf, a record pulled', path: '/', before: async (p) => { await shelf(p); await p.locator('a[data-seat] [data-spine]').first().click(); await p.getByTestId('record-chrome').waitFor({ timeout: 30_000 }); await p.locator('[data-pulled]').waitFor({ timeout: 30_000 }); await p.locator('[data-testid="nav-next"], [data-testid="nav-previous"]').first().waitFor({ timeout: 30_000 }); } },
+    { name: 'the collection, shelf, a record pulled', path: '/', before: async (p) => { await shelf(p); if (!offered(p)) return; await p.locator('a[data-seat] [data-spine]').first().click(); await p.getByTestId('record-chrome').waitFor({ timeout: 30_000 }); await p.locator('[data-pulled]').waitFor({ timeout: 30_000 }); await p.locator('[data-testid="nav-next"], [data-testid="nav-previous"]').first().waitFor({ timeout: 30_000 }); } },
     { name: 'the collection, table view, with GENRE open', path: '/?view=table', before: async (p) => { await p.locator('[data-filter="genreId"] [data-filter-trigger]').click(); await p.locator('[data-filter-panel]').waitFor(); } },
     { name: 'the collection, grid view', path: '/?view=grid' },
     { name: 'stats', path: '/stats' },

@@ -10,7 +10,8 @@ import { usePathname } from 'next/navigation';
 export function NotFoundLine() {
   const pathname = usePathname();
   return (
-    <p data-testid="not-found-line" className="text-prose">
+    /* Step 145: the sentence in the label colour, under the heading, as the error screen's. */
+    <p data-testid="not-found-line" className="mt-1 text-prose text-[oklch(0.44_0.008_70)]">
       Nothing was found at <span className="font-mono">{pathname}</span>.
     </p>
   );

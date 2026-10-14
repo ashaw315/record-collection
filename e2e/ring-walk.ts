@@ -107,7 +107,8 @@ export async function walkTab(page: Page, limit = 400): Promise<Stop[]> {
     await page.evaluate(async () => {
       /* Two frames first: the focus moved, and the style that answers it (`:focus-visible`, a transition's start) is a frame behind; a date field read "none" on its first stop otherwise. */
       await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-      await Promise.all((document.activeElement?.getAnimations({ subtree: true }) ?? []).map((animation) => animation.finished.catch(() => undefined)));
+      /* Bounded: an animation that loops never finishes, and a walk at 390 waited on one for its whole budget (14 Oct). A second covers any transition the app has. */
+      await Promise.all((document.activeElement?.getAnimations({ subtree: true }) ?? []).map((animation) => Promise.race([animation.finished.catch(() => undefined), new Promise((resolve) => setTimeout(resolve, 1000))])));
     });
     const stop = await page.evaluate((): Stop | 'end' => {
       const el = document.activeElement as HTMLElement | null;

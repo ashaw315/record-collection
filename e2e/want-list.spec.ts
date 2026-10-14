@@ -1193,7 +1193,8 @@ for (const pointer of POINTERS) test.describe(`the want list’s forms and an it
       await page.evaluate(() => document.fonts.ready);
       const reach = await expectFloor(page, pointer, `${where} at ${width}`);
       if (path === `/want-list/${item.id}`) {
-        expect.soft(reach.find((r) => r.name === 'Edit')?.height, `${where} at ${width}: Edit is drawn as it was`).toBeCloseTo(30.5, 0);
+        /* Step 145 (part 1): EDIT is a §9.3 box, 44 tall at every pointer as the app's other boxes are; it was drawn 30.5. The claim changed with the ruling. */
+        expect.soft(reach.find((r) => r.name === 'Edit')?.height, `${where} at ${width}: EDIT is a §9.3 box, 44`).toBe(44);
         continue;
       }
       const fields = await page.evaluate(() => Array.from(document.querySelectorAll<HTMLLabelElement>('[data-testid="want-list-form"] label[for]')).filter((label) => !label.classList.contains('sr-only')).map((label) => {
@@ -1210,8 +1211,9 @@ for (const pointer of POINTERS) test.describe(`the want list’s forms and an it
         }
         if (pointer === 'fine' && width < 640) expect.soft(field.strip, `${where} at ${width}: ${field.id} stands 4 below its label, as it did`).toBeCloseTo(4, 0);
       }
+      /* Step 145 (part 1): the submit is a §9.3 box, 44 tall at every pointer; it was 32 under a mouse. The claim changed with the ruling. */
       const submit = reach.find((r) => r.name === 'Add to want list' || r.name === 'Save changes');
-      expect.soft(submit?.height, `${where} at ${width}: the submit is ${pointer === 'coarse' ? '44 in the box' : '32, as it was'}`).toBe(pointer === 'coarse' ? 44 : 32);
+      expect.soft(submit?.height, `${where} at ${width}: the submit is a §9.3 box, 44`).toBe(44);
     }
   });
  }

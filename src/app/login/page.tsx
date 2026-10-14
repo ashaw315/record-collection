@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
+import { CONTROL_BOX, LABEL } from '@/app/records/[id]/grid-type';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -77,11 +77,12 @@ export default function LoginPage() {
     /* Step 139: "Login is a screen, so the content inset reaches it: its content starts at the 18 at every width." It was 16. */
     <main className="flex min-h-dvh items-center justify-center px-[18px]">
       <div className="w-full max-w-sm">
-        <h1 className="mb-1 text-headline font-semibold tracking-tight">Record Collection</h1>
-        <p className="mb-6 text-lede text-muted-foreground">Enter the password to continue.</p>
+        {/* Step 145 (§T.6, part 1): "Login's heading, sentence and controls take the type above": the 40 heading at the Collection's weight, a 13 sentence in the label colour, §4.1's label, a §9.3 box. */}
+        <h1 className="mb-1 font-heading text-headline font-semibold tracking-tight">Record Collection</h1>
+        <p className="mb-6 text-prose text-[oklch(0.44_0.008_70)]">Enter the password to continue.</p>
 
         <form ref={formRef} onSubmit={onSubmit} noValidate>
-          <label htmlFor="password" className="mb-2 block text-label font-medium">
+          <label htmlFor="password" className={`mb-2 block ${LABEL}`}>
             Password
           </label>
           <input
@@ -109,9 +110,9 @@ export default function LoginPage() {
           {/* Disabled only while a request is in flight. Gating on an empty
               field would depend on React state that some browsers do not
               update from programmatic input, and the server validates anyway. */}
-          <Button type="submit" disabled={pending} className="h-11 w-full">
+          <button type="submit" disabled={pending} className={`${CONTROL_BOX} w-full disabled:opacity-50`}>
             {pending ? 'Signing in…' : 'Sign in'}
-          </Button>
+          </button>
         </form>
       </div>
     </main>

@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { pressingVariantPanel, type HeldPressing } from './pressing-variants';
+import { LABEL } from '@/app/records/[id]/grid-type';
 
 /**
  * SPEC.md §12b (A55, 2026-09-08) — what the app HOLDS about the pressing being
@@ -55,7 +56,8 @@ export function PressingVariants({ pressing }: { pressing: HeldPressing | null }
 
   return (
     <section className="mt-6 border-t border-border pt-4">
-      <h2 className="font-heading text-title font-semibold tracking-tight">
+      {/* Step 145 (§T.6, part 1): a section label takes §4.1's label type. */}
+      <h2 className={LABEL}>
         The pressing you are hunting
       </h2>
 
