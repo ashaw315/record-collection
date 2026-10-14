@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { flattenPairs, genreFigure, type GenrePairNode } from './genre-pairs';
-import { HIT_ROW_LESS_44, HIT_WHOLE_ROW, ROW_CUTS, ROW_TARGET } from '@/app/hit-area';
+import { HIT_ROW_LESS_44, ROW_CUTS, ROW_TARGET } from '@/app/hit-area';
+import { DisclosureMark } from '@/app/disclosure-mark';
 
 /**
  * §10/A66: `/stats`' genre series is a tree, not a chart. A66 drew a pair
@@ -53,13 +54,13 @@ function Row({ node, href }: { node: GenrePairNode; href: (id: string) => string
       style={{ paddingLeft: `${node.depth * 0.875}rem` }}
       data-testid={`genre-row-${node.id}`}
     >
-     <div className="flex w-full items-baseline justify-between gap-3">
+     <div className="flex w-full items-baseline gap-3">
       {/* Cut sideways only: `truncate` hides both ways and would cut the link's hit area to the line. */}
-      <span className="min-w-0 overflow-x-clip text-ellipsis whitespace-nowrap">
+      <span className="min-w-0 flex-1 overflow-x-clip text-ellipsis whitespace-nowrap">
         {/* Linked where the collection can be filtered by it: an account is
             only useful if you can open what it counts. */}
-        {/* Step 138: with no branch the name is alone on its row and the row is its target. Step 141: with one, the row's right 44 opens the branch and the name has the rest. Under a coarse pointer; with a mouse the name is its own width and the rest of the row opens the branch. */}
-        <Link href={href(node.id)} className={`${node.hasBranch ? HIT_ROW_LESS_44 : HIT_WHOLE_ROW} underline-offset-2 hover:underline`}>
+        {/* Step 143 (Design, 13 Oct): "The name's target is the row less the disclosure column, with the count inside it, because the count is not a control and pressing it means the name", on every row. Step 141 had that for a row with a branch and step 138 the whole row for one without; now the right 44 is the column's on both, the branch's control or empty. Under a coarse pointer; with a mouse the name is its own width. */}
+        <Link href={href(node.id)} className={`${HIT_ROW_LESS_44} underline-offset-2 hover:underline`}>
           {node.name}
         </Link>
       </span>
@@ -69,11 +70,24 @@ function Row({ node, href }: { node: GenrePairNode; href: (id: string) => string
         branch: "Two unlabelled numbers read as one number repeated." The
         test id keeps its name; four specs find the figure by it.
       */}
+      {/* Step 143 (Design, 13 Oct): "the count is a column of its own, right-aligned", beside the disclosure column. */}
       <span
         data-testid={`genre-pair-${node.id}`}
-        className="shrink-0 font-mono tabular-nums"
+        className="shrink-0 text-right font-mono tabular-nums"
       >
         {genreFigure(node)}
+      </span>
+      {/*
+        Step 143 (Design, 13 Oct): "every row keeps a 44 disclosure column at
+        its right; a row with a branch draws §T.1's + there, and a row without
+        one leaves it empty. The disclosure column keeps every row's count in
+        one line whether or not it branches." The − while open is the mark's
+        own, from the `details` the row stands in (`group`). Drawn at every
+        pointer: it is a column, not a hit area; what is a hit area is the
+        `summary` under it on a branch's row, and nothing on a row without one.
+      */}
+      <span data-disclosure="" className="flex w-[44px] shrink-0 items-center justify-center self-center">
+        {node.hasBranch && <DisclosureMark open="details" />}
       </span>
      </div>
     </div>
@@ -84,7 +98,7 @@ function Branch({ node, href }: { node: GenrePairNode; href: (id: string) => str
   if (!node.hasBranch) return <Row node={node} href={href} />;
 
   return (
-    <details data-testid={`genre-branch-${node.id}`}>
+    <details data-testid={`genre-branch-${node.id}`} className="group">
       <summary className="cursor-pointer list-none marker:content-['']">
         <Row node={node} href={href} />
       </summary>

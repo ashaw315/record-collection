@@ -8,6 +8,17 @@ import { rowSamples } from './row-samples';
 registerCleanup();
 
 /**
+ * A branch opens by its disclosure column, the row's right 44 (step 143,
+ * Design, 13 Oct): the name is a link, and the count beside the column is
+ * inside the name's target under a coarse pointer, so a press on the figure
+ * goes to the collection. Driving only.
+ */
+const disclosure = (page: Page, genreId: string) => page.getByTestId(`genre-row-${genreId}`).locator('[data-disclosure]');
+async function openBranch(page: Page, genreId: string) {
+  await disclosure(page, genreId).click();
+}
+
+/**
  * SPEC.md §10 `/stats`: "Total records, total spend, estimated value, breakdown
  * charts by genre/decade/store/label."
  *
@@ -375,16 +386,16 @@ test('the genre tree renders one number a row: the distinct records under the ge
     expansion is not optional: two of the cases the pair exists for do not
     render in the collapsed view at all.
   */
-  /* A branch is opened by its figure, at the row's right: under a coarse pointer that 44 is the disclosure's and the rest of the row is the name's (step 141), so a press on the row's middle, which this used, goes to the collection. Driving only; what is read after is unchanged. */
-  await page.getByTestId(`genre-pair-${rock.id}`).click();
-  await page.getByTestId(`genre-pair-${punk.id}`).click();
+  /* A branch is opened by its disclosure column (step 143): the figure beside it is inside the name's target under a coarse pointer, so a press on it, which this used, goes to the collection. Driving only; what is read after is unchanged. */
+  await openBranch(page, rock.id as string);
+  await openBranch(page, punk.id as string);
 
   await expect(
     page.getByTestId(`genre-pair-${punk.id}`),
     'nothing of its own, one record beneath it',
   ).toHaveText('1');
 
-  await page.getByTestId(`genre-pair-${metal.id}`).click();
+  await openBranch(page, metal.id as string);
   const black = page.getByTestId(/^genre-pair-/).filter({ hasText: /^0$/ });
   await expect(black.first(), 'childless at depth 2 renders one number').toBeVisible();
 });
@@ -479,7 +490,7 @@ for (const pointer of POINTERS) test.describe(`stats under a ${pointer} pointer`
  test.use({ hasTouch: pointer === 'coarse' });
  for (const width of [320, 390, 768, 1280]) {
   /* Coarse fails against rows of 27.5 and 33.5: the links read 16 and 17 to a finger, a branch's row 28. Fine fails against step 126's build, whose rows were 44 under a mouse too. */
-  test(pointer === 'coarse' ? `every control on stats is 44 tall to a finger, a link alone on its row is reached along the whole row, and a branch’s name no more than 9 past itself, at ${width}` : `under a mouse stats’ rows are the height they were and no link reaches past its name, at ${width}`, async ({ page }) => {
+  test(pointer === 'coarse' ? `every control on stats is 44 tall to a finger, a label or a store alone on its row is reached along the whole row, a genre’s name along its row less the disclosure column, and every genre row keeps that column at its right, at ${width}` : `under a mouse stats’ rows are the height they were, no link reaches past its name, and every genre row keeps a disclosure column at its right, at ${width}`, async ({ page }) => {
     expect(await pointerIs(page), 'the precondition: the page has the pointer this test is named for').toBe(pointer);
     const suffix = makeSuffix();
     const artist = await post(page, '/api/artists', { name: `Reach-${suffix}` });
@@ -495,8 +506,8 @@ for (const pointer of POINTERS) test.describe(`stats under a ${pointer} pointer`
     await page.setViewportSize({ width, height: 844 });
     await page.goto(`/stats?artistId=${artist.id}`);
     await expect(page.getByTestId('by-label')).toContainText(`Label2-${suffix}`);
-    /* The branch opened, by its figures and not its name, which is a link. */
-    await page.getByTestId(`genre-pair-${parent.id}`).click();
+    /* The branch opened by its disclosure column: not its name, which is a link, nor its figure, which is inside the name's target under a coarse pointer (step 143). */
+    await openBranch(page, parent.id as string);
     await expect(page.getByTestId(`genre-row-${child.id}`)).toBeVisible();
     await page.evaluate(() => document.fonts.ready);
 
@@ -504,6 +515,55 @@ for (const pointer of POINTERS) test.describe(`stats under a ${pointer} pointer`
     const names = reach.map((r) => r.name);
     for (const name of [`UK82-${suffix}`, `Label1-${suffix}`, `Label2-${suffix}`, `Shop1-${suffix}`, `Shop2-${suffix}`]) expect(names, 'the link is on the screen to be read').toContain(name);
     expect(reach.filter((r) => r.kind === 'summary').length, 'a branch’s row is a control too').toBeGreaterThan(0);
+    /*
+      Step 143, Design, 13 Oct: "On stats' genre list the count is a column of its own, right-aligned, and every
+      row keeps a 44 disclosure column at its right; a row with a branch draws §T.1's + there, and a row without
+      one leaves it empty", and §T.1's + "becomes a − while it is open". Read on the parent, open, and on its child,
+      which has no branch, under both pointers: the column is drawn, not a hit area. Fails against the build
+      before it, whose rows had no column and whose branch rows drew no mark.
+    */
+    const column = await page.evaluate(([parentId, childId]) => {
+      const read = (genre: string) => {
+        const row = document.querySelector(`[data-testid="genre-row-${genre}"]`);
+        const col = row?.querySelector<HTMLElement>('[data-disclosure]') ?? null;
+        const figure = row?.querySelector<HTMLElement>(`[data-testid="genre-pair-${genre}"]`) ?? null;
+        if (row === null || row === undefined || col === null || figure === null) return null;
+        const r = row.getBoundingClientRect();
+        const c = col.getBoundingClientRect();
+        const f = figure.getBoundingClientRect();
+        const mark = col.querySelector('svg');
+        const m = mark?.getBoundingClientRect();
+        const down = mark?.querySelector<SVGElement>('[data-mark-line="down"]') ?? null;
+        return {
+          wide: Math.round(c.width * 10) / 10,
+          fromRight: Math.round((r.right - c.right) * 10) / 10,
+          offMiddle: Math.round((c.top + c.height / 2 - (r.top + r.height / 2)) * 10) / 10,
+          figureRight: Math.round(f.right * 10) / 10,
+          figureInside: f.right <= c.left + 0.5,
+          text: (col.textContent ?? '').trim(),
+          mark: mark === null || mark === undefined || m === undefined ? null : { size: `${Math.round(m.width)}×${Math.round(m.height)}`, offCentre: Math.round((m.left - c.left - (c.width - m.width) / 2) * 10) / 10, down: down === null ? null : down.getClientRects().length > 0 },
+        };
+      };
+      return { parent: read(parentId), child: read(childId) };
+    }, [parent.id as string, child.id as string]);
+    expect(column.parent, `at ${width}: the branch’s row has a disclosure column`).not.toBeNull();
+    expect(column.child, `at ${width}: a row without a branch has a disclosure column too`).not.toBeNull();
+    for (const [what, col] of [['the branch’s', column.parent], ['the childless', column.child]] as const) {
+      expect.soft(col?.wide, `at ${width}: ${what} row’s column is 44 wide`).toBe(44);
+      expect.soft(col?.fromRight, `at ${width}: ${what} row’s column stands at the row’s right`).toBe(0);
+      expect.soft(Math.abs(col?.offMiddle ?? 99), `at ${width}: ${what} row’s column is centred on the row`).toBeLessThanOrEqual(1);
+      expect.soft(col?.figureInside, `at ${width}: ${what} row’s count stands beside the column, to its left`).toBe(true);
+    }
+    expect.soft(column.parent?.figureRight, `at ${width}: the counts share a right edge, a column of their own`).toBe(column.child?.figureRight);
+    expect.soft(column.parent?.mark, `at ${width}: the branch’s row draws the mark, 12 square, centred in the column, − while open`).toEqual({ size: '12×12', offCentre: 0, down: false });
+    expect.soft(column.child?.mark, `at ${width}: a row without a branch leaves the column empty`).toBeNull();
+    expect.soft(column.child?.text, `at ${width}: nothing is written in the empty column`).toBe('');
+    /* Closed by its column, the + is back; opened again for the reads below. */
+    await disclosure(page, parent.id as string).click();
+    await expect(page.getByTestId(`genre-row-${child.id}`)).toBeHidden();
+    expect.soft(await disclosure(page, parent.id as string).locator('[data-mark-line="down"]').evaluate((el) => el.getClientRects().length > 0), `at ${width}: + while closed`).toBe(true);
+    await openBranch(page, parent.id as string);
+    await expect(page.getByTestId(`genre-row-${child.id}`)).toBeVisible();
     if (pointer === 'coarse') {
       expect.soft(underFloor(reach).map((r) => `${r.kind} ${r.name.slice(0, 30)}: ${r.tall}, lost to ${r.lostTo.join('; ')}`), `at ${width}: controls under ${HIT_FLOOR} to a finger, of ${reach.length}`).toEqual([]);
       /*
@@ -515,29 +575,42 @@ for (const pointer of POINTERS) test.describe(`stats under a ${pointer} pointer`
         the 9 stands for a branch's name, whose row is the branch's own
         control. Fails against a link reached over its name only: "UK82"
         is about 40 across and a tap on its figure reaches nothing.
+
+        Step 143 (Design, 13 Oct) takes a genre's row out of that: "The
+        name's target is the row less the disclosure column, with the
+        count inside it", on every genre row, branch or not, and the
+        column of a row without a branch is empty, so nothing there is
+        the name's. A label's and a store's row is still the whole row.
+        Fails against the whole-row target the genre had from step 138.
       */
       const rows = await page.evaluate(([genre]) => {
-        const read = (row: Element | null, what: string) => {
-          if (row === null) return { what, across: ['no row'], wide: 0 };
+        const read = (row: Element | null, what: string, less: number) => {
+          if (row === null) return { what, across: ['no row'], wide: 0, row: 0, column: 0 };
           const link = row.querySelector('a');
           const box = row.getBoundingClientRect();
           const y = box.top + box.height / 2;
+          /* What a tap at x along the middle reaches: the link (`hit`), or whatever else is there. */
+          const probe = (x: number) => { const at = document.elementFromPoint(x + 0.25, y); return { hit: at !== null && link !== null && (at === link || link.contains(at)), at }; };
           const across: string[] = [];
           let wide = 0;
-          for (let x = Math.ceil(box.left); x < Math.floor(box.right); x += 1) {
-            const at = document.elementFromPoint(x + 0.25, y);
-            if (at !== null && link !== null && (at === link || link.contains(at))) wide += 1;
+          for (let x = Math.ceil(box.left); x < Math.floor(box.right) - less; x += 1) {
+            const { hit, at } = probe(x);
+            if (hit) wide += 1;
             else if (across.length < 3) across.push(`${Math.round(x - box.left)} of ${Math.round(box.width)}: ${at === null ? 'nothing' : at.tagName.toLowerCase()}`);
           }
-          return { what, across, wide, row: Math.floor(box.right) - Math.ceil(box.left) };
+          /* The right `less`: the disclosure column, which the name's target stops short of. */
+          let column = 0;
+          for (let x = Math.floor(box.right) - less; x < Math.floor(box.right); x += 1) if (probe(x).hit) column += 1;
+          return { what, across, wide, row: Math.floor(box.right) - Math.ceil(box.left) - less, column };
         };
         const li = (testId: string) => document.querySelector(`[data-testid="${testId}"] li`);
         document.querySelector(`[data-testid="genre-row-${genre}"]`)?.scrollIntoView({ block: 'center' });
-        const out = [read(document.querySelector(`[data-testid="genre-row-${genre}"]`), 'a genre with no branch')];
-        for (const [testId, what] of [['by-label', 'a label'], ['by-store', 'a store']] as const) { li(testId)?.scrollIntoView({ block: 'center' }); out.push(read(li(testId), what)); }
+        const out = [read(document.querySelector(`[data-testid="genre-row-${genre}"]`), 'a genre with no branch', 44)];
+        for (const [testId, what] of [['by-label', 'a label'], ['by-store', 'a store']] as const) { li(testId)?.scrollIntoView({ block: 'center' }); out.push(read(li(testId), what, 0)); }
         return out;
       }, [child.id as string]);
       for (const row of rows) expect.soft(row.across, `at ${width}: ${row.what}’s row, places along its middle a tap does not reach its link (${row.wide} of ${row.row} do)`).toEqual([]);
+      expect.soft(rows[0]?.column, `at ${width}: places in a childless genre’s empty column that reach its name`).toBe(0);
       /*
         Step 141, Design, 12 Oct: "Where a row carries two controls, a name and the disclosure that opens its
         branch, the disclosure takes the row's right 44 and the name takes the rest of the row, so each meets the

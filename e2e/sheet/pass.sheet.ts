@@ -12,8 +12,8 @@ import { login } from './login';
  * manage) and `SHEET_OUT` the folder, one a pass.
  *
  * The count under a coarse pointer at 320, 390 and 768; the pictures at
- * 390 under a coarse pointer and 1280 under a fine one (manage also at 320
- * coarse), each named by its count. Whole pages by `wholePage`: a
+ * 390 under a coarse pointer and 1280 under a fine one (manage and stats
+ * also at 320 coarse), each named by its count. Whole pages by `wholePage`: a
  * full-page screenshot draws the fine pointer's page.
  *
  * Read-only. Only manage's section names are pressed.
@@ -39,7 +39,8 @@ test(`the ${SCREEN} pass: its count under a coarse pointer and its pictures`, as
   if (screens === undefined) throw new Error(`SHEET_SCREEN is to be one of ${Object.keys(SCREENS).join(', ')}`);
   mkdirSync(OUT, { recursive: true });
   const md = [`# The ${SCREEN} pass, on the real collection`, '', `Read-only, desktop Chromium, touch on for the coarse pointer. “Meets” is a control ${HIT_FLOOR} tall to a finger; “past 9” one a tap reaches from more than ${HIT_PAST} beyond it; “under 44 across” one a tap reaches over fewer than ${HIT_FLOOR} pixels across its middle, read and not yet held; “past the edge” one whose box ends beyond the window.`, '', '| screen | window | pointer | page height | controls | meets 44 | under 44 | past 9 | under 44 across | past the edge | picture |', '|---|---|---|---|---|---|---|---|---|---|---|'];
-  for (const [pointer, widths, pictured] of [['coarse', [320, 390, 768], SCREEN === 'manage' ? [320, 390] : [390]], ['fine', [1280], [1280]]] as const) {
+  /* Stats at 320 as well, since step 143 asked for it: "recapture stats and the error screen at 320 and 390 coarse and 1280 fine". */
+  for (const [pointer, widths, pictured] of [['coarse', [320, 390, 768], SCREEN === 'manage' || SCREEN === 'stats' ? [320, 390] : [390]], ['fine', [1280], [1280]]] as const) {
     const context = await browser.newContext({ hasTouch: pointer === 'coarse', viewport: { width: 1280, height: 844 } });
     const page = await context.newPage();
     await login(page);
@@ -60,7 +61,7 @@ test(`the ${SCREEN} pass: its count under a coarse pointer and its pictures`, as
         const file = `${name}-w${width}-${pointer}-pointer-h${m.height}-meets${reach.length - under.length}of${reach.length}.png`;
         const taken = (pictured as readonly number[]).includes(width);
         if (taken) await wholePage(page, join(OUT, file));
-        md.push(`| ${name} | ${width} | ${pointer} | ${m.height} | ${reach.length} | **${reach.length - under.length}** | ${under.length}${under.length === 0 ? '' : `: ${[...new Set(under.map((r) => `${r.name.slice(0, 20)} ${r.tall}`))].slice(0, 6).join('; ')}`} | ${reach.filter((r) => r.left > HIT_PAST || r.right > HIT_PAST).length} | ${reach.filter((r) => r.wide < HIT_FLOOR).length} | ${m.past} | ${taken ? file : ''} |`);
+        md.push(`| ${name} | ${width} | ${pointer} | ${m.height} | ${reach.length} | **${reach.length - under.length}** | ${under.length}${under.length === 0 ? '' : `: ${[...new Set(under.map((r) => `${r.name.slice(0, 20)} ${r.tall}`))].slice(0, 6).join('; ')}`} | ${reach.filter((r) => r.left > HIT_PAST || r.right > HIT_PAST).length} | ${reach.filter((r) => r.wide < HIT_FLOOR).length}${reach.filter((r) => r.wide < HIT_FLOOR).length === 0 ? '' : `: ${[...new Set(reach.filter((r) => r.wide < HIT_FLOOR).map((r) => `${r.name.slice(0, 20)} ${r.wide}`))].slice(0, 8).join('; ')}`} | ${m.past} | ${taken ? file : ''} |`);
       }
     }
     await context.close();

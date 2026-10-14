@@ -13,6 +13,7 @@ import {
   withFacet,
   type CollectionParams,
 } from './collection-params';
+import { DisclosureMark } from '@/app/disclosure-mark';
 
 /**
  * The collection screen's controls (SPEC.md §10: "Filterable, sortable
@@ -45,13 +46,9 @@ const FLOOR = 132;
  * §T.3: "+ closed and − open, at the line's right", and "the + and − ...
  * are 1px ink strokes in a 12 square, the system's hairline weight."
  */
+/* §T.1's mark, shared with stats' branch rows since step 143 (`disclosure-mark.tsx`); the attribute is what the sidebar's specs read. */
 function FilterMark({ open }: { open: boolean }) {
-  return (
-    <svg data-filter-mark={open ? 'minus' : 'plus'} aria-hidden="true" width="12" height="12" viewBox="0 0 12 12" shapeRendering="crispEdges" className="shrink-0 fill-none stroke-[oklch(0.19_0.008_60)] stroke-1">
-      <line x1="0" y1="6" x2="12" y2="6" />
-      {!open && <line x1="6" y1="0" x2="6" y2="12" />}
-    </svg>
-  );
+  return <DisclosureMark open={open} data-filter-mark={open ? 'minus' : 'plus'} />;
 }
 
 const FILTER_GROUPS = [

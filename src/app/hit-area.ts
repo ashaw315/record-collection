@@ -54,11 +54,13 @@ export const ROW_CUTS = 'pointer-coarse:overflow-y-clip';
 export const ROW_TARGET = 'relative';
 export const HIT_WHOLE_ROW = "before:absolute before:inset-0 before:hidden before:content-[''] pointer-coarse:before:block";
 /**
- * For a name on a row that carries a second control at its right (step 141,
+ * For a name on a row whose right 44 is a disclosure column (step 141,
  * Design, 12 Oct): "the disclosure takes the row's right 44 and the name
  * takes the rest of the row, so each meets the floor by its share of the
  * row." The name's overlay is the row less its right 44; what is under that
- * 44 is the row's own control (on stats, the `summary` that opens a branch).
+ * 44 is the row's own control (on stats, the `summary` that opens a branch)
+ * or, since step 143, the empty column every genre row keeps: "the name's
+ * target is the row less the disclosure column, with the count inside it".
  * The row takes `ROW_TARGET`. Coarse only.
  */
 export const HIT_ROW_LESS_44 = "before:absolute before:inset-y-0 before:left-0 before:right-[44px] before:hidden before:content-[''] pointer-coarse:before:block";

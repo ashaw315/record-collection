@@ -44977,3 +44977,72 @@ handoff sentence now says the walk "fails if the Apply is still reached".
 The one sentence removed outright, "It is written here once Code has
 read the pulled state, and not before", is replaced by the sets it
 promised. The index: 12 PASS.
+
+## 14 Oct, 10:16: step 143, unit two: stats' disclosure column and the re-count
+
+**Step zero, the untaken-drop check** (the coordinator, 14 Oct: twice a
+drop landed unmentioned, once found by looking and once as two red tests
+at a step's checked commit). Before a line of this unit: `git status
+docs/design` clean and `export-diff` against HEAD reporting nothing added
+or removed. A unit built with an untaken drop in the tree has a green that
+is partly a fact about something else present; the check is now the first
+thing in every unit, and it costs a status read.
+
+**Built.** On stats' genre list every row keeps a 44 disclosure column at
+its right; a row with a branch draws §T.1's + there, − while the branch is
+open, and a row without one leaves it empty; the count is a column of its
+own, right-aligned beside the disclosure column; and the name's target is
+the row less the column, count inside it, on every genre row. The + is the
+sidebar's mark, moved to `src/app/disclosure-mark.tsx` and drawn from
+there by `CollectionFilters` (its `data-filter-mark` kept, which the
+sidebar's specs read) and by `GenreTree`, where a `<details>` row draws it
+with the down stroke under `group-open:hidden`, so the server component
+draws the mark without knowing the state. `HIT_ROW_LESS_44` is now on
+every genre row: step 138's whole-row target for a childless genre gave
+way to the ruling, and labels and stores keep the whole row.
+
+**Tests first** (`stats.spec.ts`). Branches are now opened by the column:
+the figure beside it is inside the name's target under a coarse pointer,
+so a press on it goes to the collection, and the spec's own driving
+changed in four places. Under both pointers at 320, 390, 768 and 1280: the
+column 44 wide at the row's right and centred on the row, on a branch's
+row and a childless one; their counts sharing a right edge left of the
+column; the mark 12 square and centred in the column, its down stroke
+hidden while open and back when closed by the column; the childless row's
+column empty. Under a coarse pointer: the childless genre's name reached
+at every place along the row less its right 44, and at no place in that
+44. Fail first on chromium: `9 failed, 10 passed`, every failure the
+opening click waiting on a column that did not exist. Built in two stages
+so the target claim failed on its own: with the column drawn and the
+overlay as it was, the 390 coarse test failed on "places in a childless
+genre's empty column that reach its name: Expected 0, Received 44"; with
+the overlay changed, `stats.spec.ts` with `filter-container-113` and
+`sidebar-113` (the two that read the mark) on chromium and mobile:
+`137 passed, 3 skipped`, the skips the sidebar specs' WebKit ones as before.
+
+**The claim that changed**, said rather than slipped: the coarse test's
+name promised a link alone on its row reached along the whole row, and a
+childless genre's was; it now promises that for a label or a store, and a
+genre's name along its row less the column. Changed with the ruling, as
+step 141's was.
+
+**The re-count on the real collection** (`docs/captures/stats-143/`;
+`pass.sheet.ts` now pictures stats at 320 as well and names the controls
+under 44 across): under a coarse pointer at 320, 390 and 768, 42 of 42
+meet 44 and **names under 44 across: 0**, so the step goes on and nothing
+here is Design's to fix. The column takes 44 off every row and the short
+names still have the rest: Pop at 22 reaches 40 to its right at the least.
+Under a fine pointer at 1280 the same nine names as before are under 44
+across at their drawn width (Alt-Pop 42, Dub 23, Gospel 39, Jazz 26,
+Lo-Fi 29, Pop 22, Rock 28, Epic 24), out of scope by the pointer rule.
+Page heights unchanged: 2462, 2408 and 2388 coarse, 1820 fine. The error
+screen's recapture is unit one's, at `gap-143/`. Two `Failed query:
+delete from "artist_influences"` lines in the sheet's server log are the
+write probe (`e2e/sheet/write-probe.ts`) refused by the read-only
+connection: the guard, working.
+
+**Step level:** `stats.spec.ts`, `filter-container-113.spec.ts` and
+`sidebar-113.spec.ts` on chromium and mobile, `137 passed, 3 skipped`;
+`test/repo` `481 passed`; typecheck 0; lint 0 errors, 27 warnings; build
+clean. Gate-listed files touched: none (`pass.sheet.ts` is a capture
+tool). No entry owed: "No entries are owed from these sets."
