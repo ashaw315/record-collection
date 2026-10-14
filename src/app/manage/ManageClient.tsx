@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
+import { CONTROL_BOX } from '@/app/records/[id]/grid-type';
 import {
   Dialog,
   DialogClose,
@@ -396,14 +396,16 @@ function ResourcePanel({ resource, rows }: { resource: ResourceSpec; rows: Row[]
             {String(pendingDelete?.row.name ?? 'This row')} will be removed. This cannot be undone.
           </DialogDescription>
           <DialogFooter>
-            <DialogClose render={<Button variant="outline">Cancel</Button>} />
-            <Button
-              variant="destructive"
+            {/* §T.6 part 2 (Design, 14 Oct): "Cancel's grey fill goes, and CANCEL and the verb are §9.3 boxes"; the verb ink, "as §24's Delete record is". */}
+            <DialogClose render={<button type="button" className={CONTROL_BOX}>Cancel</button>} />
+            <button
+              type="button"
+              className={`${CONTROL_BOX} disabled:opacity-50`}
               onClick={() => void confirmDelete()}
               data-testid="confirm-delete"
             >
               Delete
-            </Button>
+            </button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

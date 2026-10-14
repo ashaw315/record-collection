@@ -6,6 +6,7 @@ import { Dialog as DialogPrimitive } from "@base-ui/react/dialog"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { XIcon } from "lucide-react"
+import { HAIRLINE } from "@/app/records/[id]/grid-type"
 
 function Dialog({ ...props }: DialogPrimitive.Root.Props) {
   return <DialogPrimitive.Root data-slot="dialog" {...props} />
@@ -31,7 +32,8 @@ function DialogOverlay({
     <DialogPrimitive.Backdrop
       data-slot="dialog-overlay"
       className={cn(
-        "fixed inset-0 isolate z-50 bg-black/10 duration-100 supports-backdrop-filter:backdrop-blur-xs data-open:animate-in data-open:fade-in-0 data-closed:animate-out data-closed:fade-out-0",
+        /* §T.6 part 2 (Design, 14 Oct): "the blurred, dimmed page behind it is a defect against §M.1's no dimming". The backdrop stays for the press outside; it draws nothing. */
+        "fixed inset-0 isolate z-50",
         className
       )}
       {...props}
@@ -60,7 +62,8 @@ function DialogContent({
       <DialogPrimitive.Popup
         data-slot="dialog-content"
         className={cn(
-          "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl bg-popover p-4 text-sm text-popover-foreground ring-1 ring-foreground/10 duration-100 outline-none sm:max-w-sm data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
+          /* §T.6 part 2: "opaque paper in a 1px ink box over the page". */
+          `fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 border ${HAIRLINE} bg-background p-4 text-sm text-foreground duration-100 outline-none sm:max-w-sm data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95`,
           className
         )}
         {...props}
@@ -123,8 +126,10 @@ function DialogFooter({
           stand 24 apart, §G.3's gap, "so a thumb landing low reaches neither by sliding off the other". No
           overlay reaches into that 24: each button is its own box. Step 143 (Design, 13 Oct): the 24 side by side
           as well, "controls in one group stand 24 apart, §G.3's gap, side by side or stacked"; it was 8 from 640.
+          §T.6 part 2 (Design, 14 Oct): the tinted band under the buttons and its rule go; the buttons are §9.3 boxes,
+          44 at every pointer, set by each screen that opens the dialog.
         */
-        "-mx-4 -mb-4 flex flex-col gap-6 rounded-b-xl border-t bg-muted/50 p-4 sm:flex-row sm:justify-end pointer-coarse:[&>button]:h-[44px]",
+        "flex flex-col gap-6 sm:flex-row sm:justify-end",
         className
       )}
       {...props}

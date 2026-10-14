@@ -105,6 +105,10 @@ const GOVERNED = [
   'e2e/radius-103.spec.ts',
   'e2e/colour-103.spec.ts',
   'e2e/screens-103.ts',
+  /* §T.6 part 2 (step 146): the dialog is read on a record's delete, the record form on a record's edit. */
+  'e2e/dialog-146.spec.ts',
+  'e2e/capture/dialog-146.capture.ts',
+  'e2e/form-146.spec.ts',
   'e2e/sheet/cover-boxes.sheet.ts',
   'e2e/sheet/record-modal.sheet.ts',
   'e2e/sheet/record-modal-92.sheet.ts',

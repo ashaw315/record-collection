@@ -45563,3 +45563,82 @@ the handoff block, NOTES.
 **Not built, as instructed:** the spines' roving index waits on Design
 picking the arrows' reading; the record form's doubled rule and manage's
 marks are part 2's.
+
+## 14 Oct, 21:10: part 2 go; the night drop taken in; two checks; a property of inline blocks; the dialog unit
+
+**Step zero found the night drop** (raw `d09bfdd`, intake `c45cf78`,
+index 12 PASS, WITHDRAWALS re-derived with `T.6/clipped-14`). It rules
+the spines as the third reading, one Tab stop with a roving index, the
+arrows moving focus seat to seat in §W.23's order and nothing else, Enter
+pulling the focused record, the pull by the panel's buttons and §W.9's
+arrows; the ring's bullet now says "stop the arrows moving the pull" and
+"test that an arrow with a record pulled moves focus, not the pull". The
+two sentences the coordinator said Design was removing are gone,
+confirmed by grep on the file as committed: no "real collection makes
+49", no "about 52 in 16".
+
+**The two checks.** (1) "focus moves with the pull": no drop carried
+that wording, but the evening drop (`6db7f1f`, 18:55) carried the first
+reading as a ruling ("with a record pulled, focus and the pull move
+together, so a pulled record is the focused one"), and the night drop
+replaced it. One entry follows, not two; the night drop's "An earlier
+draft said it did, and no drop carried it" is wrong by one drop, as "as
+§W rules the keyboard" was (carried in `faaaf76`). (2) The 49 and the 52
+in 16: gone, above.
+
+**A property, for the defect family: an inline block's baseline is its
+bottom edge once its overflow is anything but visible, except `clip`.**
+CSS 2.1's rule: the baseline of an inline-block is its last line box's
+unless it has no in-flow line boxes or its overflow is not visible, in
+which case it is the bottom margin edge. `overflow: clip` (CSS Overflow
+3) is not a scroll container and keeps the text's baseline. So a link,
+a chip or a name turned into an inline block with `overflow: hidden` or
+`truncate` lifts off its neighbours' baseline by its descent plus the
+line's slack, 8px at stats' 14/21 line, and nothing in the markup says
+why. The costing of stats' names missed it; the four-variant probe
+caught it. The rule for a clip on an inline element: `overflow-x-clip`
+or `overflow-clip`, never `overflow-hidden` or Tailwind's `truncate`,
+and a test that reads the text's bottom against its neighbour's.
+
+**Part 2 in four units,** so no unit asks a reviewer to check more than
+one decision: the dialog (one component, three screens); the record
+form; manage's rows and add rows (`ResourceTable`, `GenreTree`,
+`ResourceList`, `LineupAction`); manage's duplicate review
+(`MatchReview`, its place in `ManageClient`). Each with its captures at
+390 coarse and 1280 fine, committed alone first. The step is numbered
+146. The spines' roving index is the ring step's, not part 2's, built
+after.
+
+**The dialog, built.** `dialog.tsx`: the backdrop draws nothing (it
+stays for the press outside); the popup is `bg-background` in a 1px
+`HAIRLINE` border, no ring, square by the radius token; the footer loses
+its muted fill, top rule, negative margins and coarse-pointer height.
+The three screens that open it (`DeleteRecord`, `WantListRow`,
+`ManageClient`) set CANCEL and DELETE as `CONTROL_BOX` buttons in that
+order; the verb is ink, not a red fill, "as §24's Delete record is"; the
+shadcn Button leaves all three files. `expectDialogControls`'s drawn
+sizes under a mouse change with the ruling: Cancel and Delete 44 (were
+32), Close 28 as it was. `e2e/type-read.ts` holds the §4.1/§9.3 readers
+part 1's spec defined inline, so part 2's specs read the same way;
+part 1's spec imports them unchanged.
+
+**Tests first:** `e2e/dialog-146.spec.ts` at 390 coarse and 1280 fine on
+the three screens: the overlay's fill and backdrop filter, the popup's
+fill against the body's paper, its 1px ink border, radius and shadow, the
+footer's fill and rule, CANCEL then DELETE as boxes 44 at both pointers,
+then `expectDialogControls` for the order, the 24 and the cross. Failed
+against the build as it was: backdrop `oklab(0 0 0 / 0.1)` with
+`blur(4px)`, the popup's border 0 with a 10% ring shadow and a fill
+lighter than paper, the footer filled and ruled, Cancel filled; then
+passed.
+
+**Verification, step level (the dialog unit):** `dialog-146`,
+`manage.spec`, `record-detail.spec`, `want-list.spec` and `part1-145`
+on both projects: `242 passed` in 9.1m, nothing failed; the three
+screens' own dialog tests read the boxes at 44 under a mouse through
+the changed claim. Typecheck 0; lint 0 errors; build clean. Captures in
+`docs/captures/part2-146/` (the dialog's six, the window with the
+dialog open). Gate-listed files: `e2e/hit-area.ts` is a shared helper
+under `e2e/`, not `test/helpers/`; its one change is the dialog's drawn
+sizes, read only by `expectDialogControls`, whose three callers ran
+above.

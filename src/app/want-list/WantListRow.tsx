@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
+import { CONTROL_BOX } from '@/app/records/[id]/grid-type';
 import {
   Dialog,
   DialogClose,
@@ -239,15 +239,17 @@ export function WantListRow({ item }: { item: WantListItem }) {
               : 'This removes it from your want list, including the best-dig notes and anything you recorded about the pressing to hunt for.'}
           </DialogDescription>
           <DialogFooter>
-            <DialogClose render={<Button variant="outline">Cancel</Button>} />
-            <Button
-              variant="destructive"
+            {/* §T.6 part 2 (Design, 14 Oct): "Cancel's grey fill goes, and CANCEL and the verb are §9.3 boxes"; the verb ink, "as §24's Delete record is". */}
+            <DialogClose render={<button type="button" className={CONTROL_BOX}>Cancel</button>} />
+            <button
+              type="button"
+              className={`${CONTROL_BOX} disabled:opacity-50`}
               disabled={deleting}
               onClick={() => void remove()}
               data-testid="confirm-delete"
             >
               {deleting ? 'Deleting…' : 'Delete'}
-            </Button>
+            </button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
