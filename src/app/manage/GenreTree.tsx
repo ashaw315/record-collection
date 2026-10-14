@@ -152,7 +152,7 @@ export function GenreTree({
                       onChange={(event) =>
                         onMove(node.id, event.target.value === '' ? null : event.target.value)
                       }
-                      className="h-9 min-w-[8rem] rounded-xs border border-input bg-background px-2 text-label focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:outline-none pointer-coarse:h-[44px]"
+                      className="h-9 min-w-[8rem] rounded-xs border border-input bg-background px-2 text-label pointer-coarse:h-[44px]"
                     >
                       <option value="">— top level —</option>
                       {parents.map((parent) => (

@@ -34,7 +34,7 @@ import { MODAL_CONTROL, MODAL_CONTROL_GAP, MODAL_LABEL_GAP, MODAL_LABEL_LINE, MO
  * focus: "a 2px ink outline, offset 2 outside the box, on keyboard focus
  * only." The label is the header's own type, as the top row's CLOSE is.
  */
-const CONTROL = `${NAV_TYPE} box-border flex h-[44px] shrink-0 cursor-pointer items-center justify-center border border-foreground font-normal text-foreground decoration-1 underline-offset-[3px] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground`;
+const CONTROL = `${NAV_TYPE} box-border flex h-[44px] shrink-0 cursor-pointer items-center justify-center border border-foreground font-normal text-foreground decoration-1 underline-offset-[3px] hover:underline`;
 
 /** The closed square, a leaf of the open spread, and the paper between the top row and the closed sleeve, for the window as it is now. */
 function measureSleeve(): { side: number; leaf: number; room: number } {

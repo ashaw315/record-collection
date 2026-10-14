@@ -20,7 +20,7 @@ import { HAIRLINE, INK, LABEL_TYPE } from '@/app/records/[id]/grid-type';
  * have one, and nothing else draws this body (the probe's stand-in went
  * on 13 Oct, when `global-error.tsx` became reachable).
  */
-const CONTROL = `${LABEL_TYPE} ${INK} box-border flex h-[44px] items-center justify-center border ${HAIRLINE} px-[18px] decoration-1 underline-offset-[3px] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground`;
+const CONTROL = `${LABEL_TYPE} ${INK} box-border flex h-[44px] items-center justify-center border ${HAIRLINE} px-[18px] decoration-1 underline-offset-[3px] hover:underline`;
 
 export function ErrorBody({ retry }: { retry: () => void }) {
   return (

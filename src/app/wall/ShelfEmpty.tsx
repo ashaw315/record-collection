@@ -40,7 +40,7 @@ export function ShelfEmpty() {
             const query = toQueryString({ ...current, filters: {}, page: 1 });
             router.push(query === '' ? '/' : `/?${query}`);
           }}
-          className={`${LABEL_TYPE} ${INK} box-border flex h-[44px] cursor-pointer items-center justify-center border ${HAIRLINE} px-[18px] decoration-1 underline-offset-[3px] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground`}
+          className={`${LABEL_TYPE} ${INK} box-border flex h-[44px] cursor-pointer items-center justify-center border ${HAIRLINE} px-[18px] decoration-1 underline-offset-[3px] hover:underline`}
         >
           Clear filters
         </button>

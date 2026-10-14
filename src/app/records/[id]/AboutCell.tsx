@@ -124,7 +124,7 @@ export function AboutCell({ recordId, text, editedAt, configured }: { recordId: 
             (§3) and the cell clips, so the foot stays and the textarea gives
             up the row: it flexes into the region's space like the region did.
           */
-          className="text-prose mt-[6px] w-full min-h-0 flex-1 resize-none overflow-y-auto border-0 bg-transparent p-0 whitespace-pre-line focus:outline-none"
+          className="text-prose mt-[6px] w-full min-h-0 flex-1 resize-none overflow-y-auto border-0 bg-transparent p-0 whitespace-pre-line"
         />
       ) : (
         <div

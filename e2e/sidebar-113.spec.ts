@@ -369,8 +369,11 @@ type RingProbe = { ringAtFocus: () => number; ringReport: () => { total: number;
 test.describe('§M.6’s ring on every focusable control of the table and the grid', () => {
   for (const view of VIEWS) {
     for (const width of [1440, 390]) {
-      /* Fails against the browser's own outline, in any colour: "a recolour of the default does not meet it"; and against the ring's rule in `globals.css` taken out. */
-      test(`the ${view} at ${width}, with a filter open: each control reached by the keyboard draws no outline of its own and §M.6’s ring, 2px of paper and 2px of ink inside its box`, async ({ page, browserName }) => {
+      /*
+        Fails against the browser's own outline, in any colour: "a recolour of the default does not meet it"; and against the ring's rule in `globals.css` taken out.
+        Step 144 (§T.6, 20:23 drop; `T.4/focus-inside-row`): the claim changed with the ruling. Step 113 drew the inside ring on every control of these screens; "the table clips nothing, so by §T.6 its controls take the outside ring", and only the filter panel's options, in a container that scrolls, keep the inside ring. The row's and the cell's link draw it on the overlay that is their box. Fails against the inside ring everywhere, as step 113 built it.
+      */
+      test(`the ${view} at ${width}, with a filter open: each control reached by the keyboard draws §M.6’s outside ring, 2px of ink offset 2, the panel’s options the inside ring, the row’s link on its overlay, and nothing else`, async ({ page, browserName }) => {
         await open(page, width, view);
         await page.locator('[data-filter="genreId"] [data-filter-trigger]').click();
         await page.locator('[data-filter-panel]').waitFor();
@@ -391,7 +394,7 @@ test.describe('§M.6’s ring on every focusable control of the table and the gr
             const [a, b] = parts.map(read);
             return a.colour === paper && a.spread === '0,0,0,2' && b.colour === ink && b.spread === '0,0,0,4';
           };
-          const focusable = Array.from(document.querySelectorAll<HTMLElement>('main :is(a[href], button, input:not([type=hidden]), select, textarea, [tabindex]:not([tabindex="-1"]))')).filter((el) => el.closest('nextjs-portal') === null && !(el as HTMLButtonElement).disabled && el.getClientRects().length > 0);
+          const focusable = Array.from(document.querySelectorAll<HTMLElement>('main :is(a[href], button, input:not([type=hidden]), select, textarea, [tabindex]:not([tabindex="-1"]))')).filter((el) => el.closest('nextjs-portal') === null && el.getAttribute('tabindex') !== '-1' /* the band's Apply left the order (step 144) */ && !(el as HTMLButtonElement).disabled && el.getClientRects().length > 0);
           const nameOf = (el: HTMLElement) => `${el.tagName.toLowerCase()} "${((el.textContent ?? '').trim() || el.getAttribute('aria-label') || el.id || '').slice(0, 18)}"`;
           const names = focusable.map(nameOf);
           const seen = new Set<number>();
@@ -407,14 +410,26 @@ test.describe('§M.6’s ring on every focusable control of the table and the gr
               /* The precondition the scripted focus broke without a sound on WebKit: the ring's rule is on `:focus-visible`. */
               if (!el.matches(':focus-visible')) bad.push(`${name}: focused and not :focus-visible`);
               const cs = getComputedStyle(el);
-              if (cs.outlineStyle !== 'none' && cs.outlineWidth !== '0px') bad.push(`${name}: an outline, ${cs.outlineStyle} ${cs.outlineWidth}`);
               /* On its own box, on the overlay that is its hit area, or on the label that is its box. */
               const places = [cs.boxShadow, getComputedStyle(el, '::before').boxShadow, getComputedStyle(el, '::after').boxShadow, el.closest('label') === null ? 'none' : getComputedStyle(el.closest('label') as HTMLElement).boxShadow];
-              /* The same ring as the table's rows have drawn it since step 98: the 2px of paper as the overlay's border, and the ink as one shadow inside it. */
               const after = getComputedStyle(el, '::after');
-              const inkInset = split(after.boxShadow).some((part) => /inset/.test(part) && read(part).colour === ink && read(part).spread === '0,0,0,2');
-              const asBuilt = after.borderTopWidth === '2px' && paint(after.borderTopColor) === paper && inkInset;
-              if (!places.some(ring) && !asBuilt) bad.push(`${name}: no ring (${places.filter((p) => p !== 'none').join(' | ').slice(0, 80) || 'no shadow'})`);
+              const outside = (s: CSSStyleDeclaration) => s.outlineStyle === 'solid' && s.outlineWidth === '2px' && s.outlineOffset === '2px' && paint(s.outlineColor) === ink;
+              if (el.closest('[data-filter-panel]') !== null) {
+                /* Step 113's inside ring, kept at step 144: the panel scrolls, so its options are the clipping clause's. */
+                if (cs.outlineStyle !== 'none' && cs.outlineWidth !== '0px') bad.push(`${name}: an outline, ${cs.outlineStyle} ${cs.outlineWidth}`);
+                if (!places.some(ring)) bad.push(`${name}: no inside ring (${places.filter((p) => p !== 'none').join(' | ').slice(0, 80) || 'no shadow'})`);
+              } else if (el.getAttribute('data-ring') === 'after') {
+                /* The row's and the cell's link: the ring on the overlay that is the row, outside it. */
+                if (!outside(after)) bad.push(`${name}: the overlay has no outside ring (${after.outlineStyle} ${after.outlineWidth} ${after.outlineOffset})`);
+                if (places.some(ring)) bad.push(`${name}: an inside ring as well`);
+              } else if (el.getAttribute('data-ring') === 'label') {
+                /* Sort's select, laid unseen over its label: the ring on the label, outside it. */
+                const label = el.closest('label');
+                if (label === null || !outside(getComputedStyle(label))) bad.push(`${name}: the label has no outside ring`);
+              } else {
+                if (!outside(cs)) bad.push(`${name}: no outside ring (${cs.outlineStyle} ${cs.outlineWidth} ${cs.outlineOffset})`);
+                if (places.some(ring)) bad.push(`${name}: an inside ring as well`);
+              }
               return seen.size;
             },
             ringReport: () => ({ total: focusable.length, missed: names.filter((_, i) => !seen.has(i)), bad }),

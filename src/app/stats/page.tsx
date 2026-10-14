@@ -86,7 +86,7 @@ function Breakdown({
                   {href === undefined ? (
                     row.name
                   ) : (
-                    <Link href={href(row.id)} className={`${HIT_WHOLE_ROW} underline-offset-2 hover:underline`}>
+                    <Link href={href(row.id)} data-ring-held="" className={`${HIT_WHOLE_ROW} underline-offset-2 hover:underline`}>
                       {row.name}
                     </Link>
                   )}

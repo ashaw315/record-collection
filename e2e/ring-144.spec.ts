@@ -1,6 +1,10 @@
 import { expect, test, type Page } from '@playwright/test';
+import { registerCleanup } from './cleanup';
 import { login } from './sign-in';
-import { walkTab } from './ring-walk';
+import { errorScreen, ringRoutes, settled } from './ring-routes';
+import { drawnRing, expectedRing, walkTab, type Stop } from './ring-walk';
+
+registerCleanup();
 
 /**
  * Step 144, §T.6 "Focus, once for the app" (Design, 13 Oct), unit one: the
@@ -84,12 +88,88 @@ test('the Tab walk through the wall in its three states stops 31, 15 and 33 time
   const arrows = await page.locator('[data-testid="nav-next"], [data-testid="nav-previous"]').count();
   const pulled = await walkTab(page);
 
+  /*
+    The wall draws the whole collection, and under the full suites other
+    specs' records are on it while this walks (a run of 14 Oct read more
+    than seventeen spines). So the count is held in two parts: the chrome,
+    which is fixed (the header's six, the rail's seven, the zoom-out; pulled,
+    the panel's three and §W.9's arrows), and the composition, which is what
+    is drawn. Design's figures are the seed's seventeen, and are asserted
+    as such whenever the walk finds exactly those.
+  */
+  const CHROME = 6 + 7 + 1;
   for (const [state, stops] of [['as the shelf opens', opens], ['in the overview', overview], ['with a record pulled', pulled]] as const) {
     const names = stops.map((s) => `${s.tag} ${s.name}`);
     expect.soft(names.filter((n) => n === 'button Apply'), `${state}: the Apply is reached`).toEqual([]);
-    const expected = EXPECTED[state] + (state === 'with a record pulled' ? arrows : 0);
-    expect.soft(stops.length, `${state}: stops, against Design’s ${EXPECTED[state]}${state === 'with a record pulled' ? ` plus ${arrows} of §W.9’s arrows` : ''} (${names.join(' · ')})`).toBe(expected);
+    const composition = stops.filter((s) => s.composition).length;
+    const panel = state === 'with a record pulled' ? 3 + arrows : 0;
+    expect.soft(stops.length, `${state}: ${CHROME} of chrome${panel === 0 ? '' : `, the panel’s three and ${arrows} of §W.9’s arrows`}, and ${composition} of the composition (${names.join(' · ')})`).toBe(CHROME + panel + composition);
+    const seed = state === 'in the overview' ? 1 : state === 'as the shelf opens' ? 17 : 16;
+    if (composition === seed) expect.soft(stops.length, `${state}: Design’s ${EXPECTED[state]}${panel === 0 ? '' : ` plus ${arrows} of §W.9’s arrows`}, on the seed’s seventeen`).toBe(EXPECTED[state] + (state === 'with a record pulled' ? arrows : 0));
+    else test.info().annotations.push({ type: `${state}: not the seed alone`, description: `${composition} in the composition where the seed has ${seed}; Design’s ${EXPECTED[state]} not checked on this run` });
     const clipped = stops.filter((s) => s.clipped !== null && !s.composition).map((s) => `${s.tag} ${s.name}: ${s.clipped}`);
     test.info().annotations.push({ type: `clipped ${state}`, description: clipped.length === 0 ? 'none outside the composition' : clipped.join('; ') });
   }
+});
+
+/*
+  Unit two, the rule (§T.6, 20:23 drop): "Every focusable control in the app
+  outside the wall's drawn composition shows §M.6's outside ring when it has
+  keyboard focus, a 2px ink outline offset 2 outside its box, and nothing
+  else: the shared components' grey ring and the browser's default outline
+  are defects wherever they appear. Where a control's box is clipped by its
+  container, as the record page's cover is, it takes §M.6's inside ring
+  instead." The filter panel's options are the clipping clause's second
+  instance (step 113; Design correcting §T.6's "only the cover", 14 Oct).
+  The row's and the cell's link draw the ring on the overlay that is their
+  box, outside it (`T.4/focus-inside-row`). Stats' names are HELD
+  (`data-ring-held`): their own wrapper clips the ring and a fix is costed
+  before Design rules; the hold is asserted so it cannot grow unnoticed.
+  Fails against the build before the rule: the shared components' 3px grey
+  ring, the browser's default on the raw controls, the five inline rings
+  and the collection views' inside ring read as "something else".
+*/
+test('§M.6’s ring, once for the app: on every route each Tab stop draws the outside ring, the clipped cases the inside ring, the held names are stats’ and nothing else is held', async ({ page, context, browser }) => {
+  test.setTimeout(900_000);
+  await login(page);
+  await page.setViewportSize(WALL);
+  const bad: string[] = [];
+  const held: string[] = [];
+  const inner: string[] = [];
+  const counts: string[] = [];
+  let ringed = 0;
+  const read = (route: string, stops: Stop[]) => {
+    let here = 0;
+    for (const stop of stops) {
+      if (stop.composition) continue;
+      const want = expectedRing(stop);
+      if (want === 'held') { held.push(`${route}: ${stop.tag} ${stop.name}`); continue; }
+      const got = drawnRing(stop);
+      /* A stop inside the browser's own control (a date field's calendar button): not the rule's to reach, reported rather than counted either way. */
+      if (!stop.ring.focusVisible && stop.tag === 'input') { inner.push(`${route}: ${stop.tag} ${stop.name}`); continue; }
+      if (got === want) { ringed += 1; here += 1; } else bad.push(`${route}: ${stop.tag} ${stop.name}: draws ${got}, ruled ${want}`);
+    }
+    counts.push(`${route} ${here} of ${stops.length}`);
+  };
+  for (const route of await ringRoutes(page)) {
+    await page.goto(route.path);
+    await settled(page);
+    if (route.before !== undefined) await route.before(page);
+    read(route.name, await walkTab(page));
+  }
+  await errorScreen(page, context, async (p) => read('the error screen', await walkTab(p)));
+  const out = await browser.newContext({ viewport: WALL });
+  const loginPage = await out.newPage();
+  await loginPage.goto('/login');
+  await settled(loginPage);
+  read('login', await walkTab(loginPage));
+  await out.close();
+  expect.soft(bad, 'stops whose ring is not the one ruled').toEqual([]);
+  expect.soft(held.filter((h) => !/^stats: a /.test(h)), 'the hold is stats’ names and nothing else').toEqual([]);
+  expect.soft(held.length, 'the precondition: the hold is in force on stats').toBeGreaterThan(0);
+  expect(ringed, 'the precondition: the routes were walked').toBeGreaterThan(100);
+  test.info().annotations.push({ type: 'ringed', description: `${ringed} stops draw the ring ruled for them: ${counts.join('; ')}` });
+  test.info().annotations.push({ type: 'held', description: held.join('; ') });
+  test.info().annotations.push({ type: 'inside the browser’s control', description: inner.join('; ') || 'none' });
+  expect.soft(inner.filter((i) => !/input (entry-date|purchaseDate)/.test(i)), 'stops inside a browser control are the two date fields’ calendar buttons and nothing else').toEqual([]);
 });

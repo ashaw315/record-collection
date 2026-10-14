@@ -277,6 +277,7 @@ export function CollectionFilters({
                 }),
               );
             }}
+            data-ring="label"
             className="absolute inset-x-0 top-0 h-[44px] w-full cursor-pointer text-label opacity-0"
           >
             <option value="">Default</option>

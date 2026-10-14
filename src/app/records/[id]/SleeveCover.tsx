@@ -144,6 +144,7 @@ export function SleeveCover({
           its border is the paper band and its inset shadow, which lies
           inside the border, is the ink band. On keyboard focus only.
         */
+        data-ring="inside"
         className="block outline-none enabled:cursor-pointer focus-visible:after:pointer-events-none focus-visible:after:absolute focus-visible:after:inset-0 focus-visible:after:box-border focus-visible:after:border-2 focus-visible:after:border-background focus-visible:after:shadow-[inset_0_0_0_2px_var(--foreground)] focus-visible:after:content-['']"
       >
         {/* eslint-disable-next-line @next/next/no-img-element -- blob and data URLs the optimizer is not configured for, as in ImageGallery */}

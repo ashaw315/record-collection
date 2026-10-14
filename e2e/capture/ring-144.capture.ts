@@ -1,8 +1,9 @@
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { expect, test, type Page } from '@playwright/test';
-import { registerCleanup, trackArtist, trackCreated } from '../cleanup';
-import { stopsTable, walkTab, type Stop } from '../ring-walk';
+import { test, type Page } from '@playwright/test';
+import { registerCleanup } from '../cleanup';
+import { errorScreen, ringRoutes, settled } from '../ring-routes';
+import { drawnRing, expectedRing, stopsTable, walkTab, type Stop } from '../ring-walk';
 import { login } from '../sign-in';
 import { NO_SCROLL_HEIGHT } from '../../src/app/records/[id]/band-geometry';
 
@@ -54,7 +55,6 @@ test('the Tab walk in the wall’s three states, and the clipped controls on eve
   await page.locator('[data-wall="overview"]').waitFor({ timeout: 30_000 });
   const overview = await walkTab(page);
   await openShelf();
-  const recordHref = await page.locator('a[data-seat]').first().getAttribute('href');
   await page.locator('a[data-seat] [data-spine]').first().click();
   await page.getByTestId('record-chrome').waitFor({ timeout: 30_000 });
   await page.locator('[data-pulled]').waitFor({ timeout: 30_000 });
@@ -63,55 +63,20 @@ test('the Tab walk in the wall’s three states, and the clipped controls on eve
   md.push('## The wall, in the overview', '', ...stopsTable(overview), '', `${overview.length} stops; Design expects 15.`, '');
   md.push('## The wall, with a record pulled', '', ...stopsTable(pulled), '', `${pulled.length} stops; Design expects 33.`, '');
 
-  /* The survey: every route, its stops counted, and the clipped ones named. */
-  const suffix = `r144${Date.now().toString(36)}`;
-  const post = async (path: string, data: unknown) => {
-    const response = await page.request.post(path, { data });
-    expect(response.status(), path).toBe(201);
-    const body = (await response.json()) as { id: string };
-    trackCreated(path, body);
-    return body.id;
-  };
-  const artist = await post('/api/artists', { name: `Discharge ${suffix}` });
-  trackArtist(artist);
-  const item = await post('/api/want-list', { title: `Why ${suffix}`, artistId: artist });
-  const recordId = (recordHref ?? '').replace(/^\/records\//, '').replace(/[?#].*$/, '');
-  expect(recordId, 'a record of the seed, from the wall’s first seat').not.toBe('');
-  const ROUTES: Array<[string, string, ((p: Page) => Promise<void>)?]> = [
-    ['the collection, table view, with GENRE open', '/?view=table', async (p) => { await p.locator('[data-filter="genreId"] [data-filter-trigger]').click(); await p.locator('[data-filter-panel]').waitFor(); }],
-    ['the collection, grid view', '/?view=grid'],
-    ['stats', '/stats'],
-    ['the want list', '/want-list'],
-    ['a want-list item', `/want-list/${item}`],
-    ['a want-list item, editing', `/want-list/${item}/edit`],
-    ['the want list, new', '/want-list/new'],
-    ['manage', '/manage'],
-    ['look up', '/lookup'],
-    ['the record form, new', '/records/new'],
-    ['a record', `/records/${recordId}`],
-    ['a record, editing', `/records/${recordId}/edit`],
-    ['suggestions', '/suggestions/probe'],
-    ['not found', '/no-such-page'],
-  ];
+  /* The survey: every route, its stops counted, the clipped ones named, and the ring each draws against the one ruled. */
   const survey: Array<{ route: string; path: string; stops: Stop[] }> = [];
-  for (const [route, path, before] of ROUTES) {
-    await page.goto(path);
-    await settle(page);
-    if (before !== undefined) await before(page);
-    survey.push({ route, path, stops: await walkTab(page) });
+  for (const route of await ringRoutes(page)) {
+    await page.goto(route.path);
+    await settled(page);
+    if (route.before !== undefined) await route.before(page);
+    survey.push({ route: route.name, path: route.path, stops: await walkTab(page) });
   }
-  /* The error screen: the probe throws while the cookie says so. */
-  const origin = new URL(page.url()).origin;
-  await context.addCookies([{ name: 'error-probe', value: 'throw', url: origin }]);
-  await page.goto('/error-probe');
-  await page.getByRole('heading', { name: 'Something went wrong.' }).waitFor({ timeout: 30_000 });
-  survey.push({ route: 'the error screen', path: '/error-probe', stops: await walkTab(page) });
-  await context.clearCookies({ name: 'error-probe' });
+  await errorScreen(page, context, async (p) => { survey.push({ route: 'the error screen', path: '/error-probe', stops: await walkTab(p) }); });
   /* Login, signed out. */
   const out = await browser.newContext({ viewport: { width: 1440, height: NO_SCROLL_HEIGHT } });
   const loginPage = await out.newPage();
   await loginPage.goto('/login');
-  await settle(loginPage);
+  await settled(loginPage);
   survey.push({ route: 'login', path: '/login', stops: await walkTab(loginPage) });
   await out.close();
 
@@ -124,6 +89,19 @@ test('the Tab walk in the wall’s three states, and the clipped controls on eve
   }
   const wallCut = [...opens, ...overview, ...pulled].filter((s) => s.clipped !== null && !s.composition);
   md.push('', `${cutTotal} stops outside the composition with a cut ring across the routes above, and ${wallCut.length} in the wall’s three states.`, '');
+  /* The ring, route by route: what each stop draws against what §T.6 rules for it. */
+  md.push('## The ring, route by route', '', 'Each stop outside the composition, what it draws with keyboard focus, and what §T.6 rules for it: the outside ring; the outside ring on the overlay that is the row (the table’s rows and the grid’s cells); the inside ring where the container clips (the cover, the filter panel’s options); or held (stats’ names, whose own wrapper clips the ring, costed before Design rules).', '', '| route | stops outside the composition | as ruled | not as ruled | held |', '|---|---|---|---|---|');
+  let asRuled = 0;
+  for (const { route, stops } of survey) {
+    const outside = stops.filter((s) => !s.composition);
+    const heldHere = outside.filter((s) => expectedRing(s) === 'held');
+    const wrong = outside.filter((s) => expectedRing(s) !== 'held' && drawnRing(s) !== expectedRing(s));
+    const right = outside.length - heldHere.length - wrong.length;
+    asRuled += right;
+    md.push(`| ${route} | ${outside.length} | ${right} | ${wrong.length}${wrong.length === 0 ? '' : `: ${wrong.map((s) => `${s.tag} ${s.name.replace(/\|/g, '/')} draws ${drawnRing(s).replace(/\|/g, '/')}`).join('; ')}`} | ${heldHere.length}${heldHere.length === 0 ? '' : `: ${heldHere.map((s) => s.name.replace(/\|/g, '/')).join(', ')}`} |`);
+  }
+  md.push('', `${asRuled} stops draw the ring ruled for them.`, '');
+  for (const { route, stops } of survey) md.push(`### ${route}`, '', ...stopsTable(stops), '');
   await context.close();
   writeFileSync(join(OUT, 'ring-144.md'), `${md.join('\n')}\n`);
 });

@@ -49,7 +49,7 @@ const VIEW_NAMES: Record<ViewMode, string> = {
   grid: "Grid",
 };
 
-const FIELD_BASE = `mt-[6px] block w-full border-b bg-transparent px-0 outline-none ${HAIRLINE} ${INK}`;
+const FIELD_BASE = `mt-[6px] block w-full border-b bg-transparent px-0 ${HAIRLINE} ${INK}`;
 const FIELD = `${FIELD_BASE} h-[34px]`;
 /* §W.24 (step 100): the search field meets the 44 floor, in the rail and in the band. */
 const SEARCH_FIELD = `${FIELD_BASE} h-[44px]`;

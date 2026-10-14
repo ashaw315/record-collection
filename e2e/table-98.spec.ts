@@ -201,7 +201,8 @@ test.describe('with a page of fifty', () => {
 });
 
 /* Fails against the built hover, which lifts a row to a surface lighter than paper, and against a ring drawn outside the row. */
-test('under a pointer a row sinks to §W.27’s surface, and keyboard focus rings the row from inside', async ({ page }) => {
+/* Step 144 (`T.4/focus-inside-row`): "The table clips nothing, so by §T.6 its controls take the outside ring", on the overlay that is the row. Fails against the inside ring step 98 drew. */
+test('under a pointer a row sinks to §W.27’s surface, and keyboard focus rings the row from outside, on the overlay that is the row', async ({ page }) => {
   const f = await seed(page);
   await open(page, `&artistId=${f.artistId}&sort=title:asc`);
   const row = page.locator('main table tbody tr').nth(1);
@@ -215,12 +216,11 @@ test('under a pointer a row sinks to §W.27’s surface, and keyboard focus ring
   const ring = await row.evaluate((r) => {
     const a = r.querySelector('a') as HTMLElement;
     const after = getComputedStyle(a, '::after');
-    return { focused: document.activeElement === a, rowPosition: getComputedStyle(r).position, position: after.position, inset: [after.top, after.right, after.bottom, after.left], shadow: after.boxShadow, outline: getComputedStyle(a).outlineStyle };
+    return { focused: document.activeElement === a, rowPosition: getComputedStyle(r).position, position: after.position, inset: [after.top, after.right, after.bottom, after.left], shadow: after.boxShadow, outline: getComputedStyle(a).outlineStyle, ring: `${after.outlineStyle} ${after.outlineWidth} ${after.outlineOffset}` };
   });
   expect(ring.focused).toBe(true);
-  expect(ring).toMatchObject({ rowPosition: 'relative', position: 'absolute', inset: ['0px', '0px', '0px', '0px'], outline: 'none' });
-  expect(ring.shadow, 'an ink ring drawn inside the row').toMatch(/inset/);
-  expect(ring.shadow).toContain('2px');
+  expect(ring).toMatchObject({ rowPosition: 'relative', position: 'absolute', inset: ['0px', '0px', '0px', '0px'], outline: 'none', ring: 'solid 2px 2px' });
+  expect(ring.shadow, 'no ring inside the row any more').toBe('none');
 });
 
 /* Fails against a row held to 44: the reason a record matched, and the label and condition below 768, would be cut off. */

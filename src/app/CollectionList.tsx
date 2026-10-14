@@ -64,7 +64,7 @@ function Empty({ collectionTotal, params, figure }: { collectionTotal: number; p
       <Link
         data-collection-empty-clear=""
         href={query === '' ? '/' : `/?${query}`}
-        className={`${LABEL_TYPE} ${INK} box-border flex h-[44px] cursor-pointer items-center justify-center border ${HAIRLINE} px-[18px] decoration-1 underline-offset-[3px] hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-foreground`}
+        className={`${LABEL_TYPE} ${INK} box-border flex h-[44px] cursor-pointer items-center justify-center border ${HAIRLINE} px-[18px] decoration-1 underline-offset-[3px] hover:underline`}
       >
         Clear filters
       </Link>
@@ -112,7 +112,7 @@ function Grid({ rows, covers }: { rows: CollectionRow[]; covers: Readonly<Record
             data-grid-title=""
             data-ring="after"
             href={`/records/${row.id}`}
-            className="mt-2 block text-detail outline-none after:absolute after:inset-0 after:box-border after:content-[''] focus-visible:after:border-2 focus-visible:after:border-background focus-visible:after:shadow-[inset_0_0_0_2px_var(--foreground)]"
+            className="mt-2 block text-detail after:absolute after:inset-0 after:box-border after:content-['']"
           >
             {row.title}
           </Link>
@@ -242,12 +242,14 @@ export function CollectionList({
                     the 44 floor reaches it. The link is the title, and its
                     area is the row's: an empty box laid over the row, so a
                     press anywhere on it is a press on the title. Keyboard
-                    focus is §M.6's ring on that same box, inside the row.
+                    focus is §M.6's outside ring on that same box, drawn by
+                    the stylesheet's rule for `data-ring="after"` (step 144;
+                    inside the row until `T.4/focus-inside-row`).
                   */}
                   <Link
                     data-ring="after"
                     href={`/records/${row.id}`}
-                    className="font-medium outline-none after:absolute after:inset-0 after:box-border after:content-[''] focus-visible:after:border-2 focus-visible:after:border-background focus-visible:after:shadow-[inset_0_0_0_2px_var(--foreground)]"
+                    className="font-medium after:absolute after:inset-0 after:box-border after:content-['']"
                   >
                     {row.title}
                   </Link>

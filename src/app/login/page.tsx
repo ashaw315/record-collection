@@ -94,7 +94,7 @@ export default function LoginPage() {
             onChange={(event) => setPassword(event.target.value)}
             aria-invalid={error !== null}
             aria-describedby={error === null ? undefined : 'password-error'}
-            className="mb-4 h-11 w-full rounded-md border border-input bg-background px-3 text-typed shadow-xs outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50"
+            className="mb-4 h-11 w-full rounded-md border border-input bg-background px-3 text-typed shadow-xs"
           />
 
           {/*

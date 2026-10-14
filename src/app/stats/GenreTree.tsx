@@ -60,7 +60,8 @@ function Row({ node, href }: { node: GenrePairNode; href: (id: string) => string
         {/* Linked where the collection can be filtered by it: an account is
             only useful if you can open what it counts. */}
         {/* Step 143 (Design, 13 Oct): "The name's target is the row less the disclosure column, with the count inside it, because the count is not a control and pressing it means the name", on every row. Step 141 had that for a row with a branch and step 138 the whole row for one without; now the right 44 is the column's on both, the branch's control or empty. Under a coarse pointer; with a mouse the name is its own width. */}
-        <Link href={href(node.id)} className={`${HIT_ROW_LESS_44} underline-offset-2 hover:underline`}>
+        {/* Held out of §T.6's ring rule (step 144, 14 Oct): the name's wrapper clips the ring on the left, so the outside ring would be built and not seen; a fix is costed before Design rules. */}
+        <Link href={href(node.id)} data-ring-held="" className={`${HIT_ROW_LESS_44} underline-offset-2 hover:underline`}>
           {node.name}
         </Link>
       </span>

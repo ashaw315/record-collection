@@ -45134,3 +45134,121 @@ table clips nothing, `T.4/focus-inside-row`); the cover keeps its inside
 ring; the two text classes above as Design rules; the count of the 52
 raw controls that take the ring with no file touched, read by a walk per
 route that checks the computed outline on each stop.
+
+## 14 Oct, 12:43: step 144, unit two: the ring, once for the app; stats' names held
+
+**Step zero:** the design files against HEAD, nothing added or removed.
+
+**Built: one rule** (`globals.css`), §T.6's sentence as a selector: every
+`a[href]`, `button`, `input`, `select`, `textarea`, `summary` and
+`[tabindex]` that is `:focus-visible` draws `outline: 2px solid
+var(--foreground)` with `outline-offset: 2px`, unlayered so no utility
+class can put a grey ring or an `outline-none` back. The exceptions are
+marks in the markup and nothing else: `[data-seat]` and `[data-run]`, the
+composition; `[data-ring="inside"]`, the record's cover, which keeps its
+inside ring; `[data-ring="after"]`, the table row's and the grid cell's
+link, whose box is the overlay that is the row, with the outside ring
+drawn on the overlay (`T.4/focus-inside-row`); `[data-ring="label"]`, the
+sidebar's sort select, laid over its label at opacity 0 where an outline
+would not show, the ring on the label; `[data-ring-held]`, the hold;
+`[tabindex="-1"]`, never a stop. The filter panel's options keep step
+113's inside ring by a rule scoped to the panel (Design correcting §T.6's
+"only the cover"). **Removed, so the ring is written once:** the five
+inline copies (`CollectionList`'s clear control, `ErrorBody`,
+`ShelfEmpty`, `SleeveModal`, the want list page), the shared `ui/button`
+and `ui/input`'s `outline-none` and 3px grey ring, login's copy of it,
+manage's `GenreTree` select's, the collection views' inside-ring rule and
+the wall rail's `::before` ring, the rail fields' `outline-none` and the
+About cell's `focus:outline-none`. None of the five could not take it
+from the rule; no exception stays.
+
+**The hold.** Stats' names carry `data-ring-held` and the rule skips
+them: the coordinator's seven on the test database, and on the real
+collection every name on stats, genre, label and store, 42, because the
+label and store rows have the same wrapper. **The cost of the fix, staged
+in a bare browser** (`scratchpad/clip-probe*.mjs`, no test runner): as
+built the ring's left band paints 0 of 32 pixels. A 4px allowance on the
+wrapper (`px-1 -mx-1`) paints 32 of 32 with the text unmoved, but a long
+name's ring is still cut at the wrapper's right. The link as its own
+clipper (`inline-block max-w-full overflow-x-clip text-ellipsis
+whitespace-nowrap`, the wrapper losing the clip) paints both bands for a
+short name (box 25 wide) and for a long one (box the wrapper's width,
+ellipsis inside the ring): three classes moved, no allowance, the ring
+closing round what is visible. Cheap, and no exception needed; the
+probe becomes a test when it is built. Design's to say.
+
+**The spines' sequence** (the coordinator's third question): §W.23 rules
+it, "So the keyboard walk gets an explicit tabindex sequence in seat
+order", because paint order interleaves rows by column and the DOM is
+the paint order. The build realises that as `tabIndex` 1 to n, and a
+positive tabindex is visited before every ordinary stop, which is what
+puts the seventeen before the nav and the rail. Nothing rules that
+placement; §W.30 rules the opposite for the far view, "the rail is the
+page's chrome and the run is its content... Tab order follows that
+sequence rather than reversing it". So the seat order is ruled and its
+place before the chrome is not: a withdrawal or rewording of §W.23 for
+Design, since an explicit sequence in seat order and the page's own
+order cannot both be had with tabindex alone. Not changed.
+
+**Tests first.** `ring-144.spec.ts`'s rule test walks every route from one
+list (`ring-routes.ts`, shared with the survey) and reads each stop's ring
+from computed style (`ring-walk.ts`): the outside ring, the outside ring
+on the overlay or the label, the inside ring, or something else named.
+Fail first: 358 stops not as ruled, the browser's `auto 1px` on the
+header and the raw controls, nothing on the rail's fields, the inside
+ring across the collection views. Two claims changed with the ruling,
+said: `sidebar-113`'s ring test now expects the outside ring on the
+sidebar's controls and the inside ring on the panel's options only;
+`table-98`'s row ring is outside, on the overlay. The sidebar probe also
+drops `tabindex="-1"` controls, the band's Apply having left the order.
+
+**Two readings in my own tool, the read-before-it-settles family** (the
+coordinator, 14 Oct: the connection reset, the half-pixel hit test twice,
+the want-list crash's two reads, the pulled state's arrow, and now these).
+The shared button and input transition their outline, and a read on the
+Tab gave widths of 3px and 0px and a colour between the browser's and the
+ink; and a date field's first stop read none a frame early. The walker
+now settles two frames and waits for the focused control's animations
+before every read. **The rule for the next reading tool: write it waiting
+for the thing to finish arriving, then read.** A date field is four
+stops in Chromium, month, day, year and its calendar button, and on the
+last the host is not `:focus-visible`: the browser's own ring on its own
+button inside the control, which no rule reaches; the two (`entry-date`
+on a record, `purchaseDate` editing) are reported as such, asserted to be
+the only ones, and counted neither way.
+
+**The count** (`docs/captures/ring-144/ring-144.md`, the ring table):
+**356 stops across the routes draw the ring ruled for them**, 0 do not,
+7 are held (stats' names on the test database), 2 are inside a browser
+control. Of the raw controls, counted at HEAD by tag (74 `input`,
+`select`, `textarea` and `button` tags with no focus class, in 29 files,
+where the earlier reading by eye said 52): **50 in 21 files this unit
+never opened took the ring from the rule**, verified stop by stop on the
+walk; the other 24 are in 8 files opened for a copy's removal or a mark,
+none given a ring class. One rule replaced three treatments: the walk
+finds no shared grey ring and no browser default anywhere outside the
+two date fields' own buttons.
+
+**Verification, step level, as wide as a stylesheet change wants short
+of the gate:** 25 specs on chromium and mobile, the ones that read rings
+and the ones of every touched component (`ring-144`, `sidebar-113`,
+`table-98`, `filter-container-113`, `colour-103`, `trigger-ring-89`,
+`record-modal-81`, `cover-fail-87`, `collection-filters`,
+`collection-band-97`, `stats`, `manage`, `want-list`, `record-detail`,
+`error-screen-142`, `suggestions-140`, `shelf`, `shelf-offered-134`,
+`wall-route`, `wall-access`, `wall-labelled`, `record-form`,
+`lookup-flows`, `header-114`, `hairlines`): **742 passed, 5 skipped**,
+the skips the specs' own project scoping. A first run's summary line was
+lost to my own `head` and was not counted; the run was repeated with the
+whole log kept. In it the Tab walk found more than seventeen spines,
+other specs' records being on the wall under load, so the walk's count is
+now held as fixed chrome plus the composition drawn, with Design's 31, 15
+and 33 asserted whenever the composition is the seed's. `test/repo` with
+`ring-routes.ts` governed by the record-screen rule; typecheck 0; lint 0
+errors, 27 warnings; build clean. Gate-listed files touched: none. The
+gate is after part 1, as agreed.
+
+**Open for Design:** the pulled set with §W.9's arrows; stats' names,
+with the fix costed above; §W.23's sequence against the page's order.
+**Part 2 note:** manage's plus, cross and tick, and the chevron, are to
+be drawn from `disclosure-mark.tsx`, which grows to hold §T.1's glyphs.

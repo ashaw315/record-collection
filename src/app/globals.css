@@ -598,29 +598,64 @@
 }
 
 /*
- * §T.1, step 113: "§M.6's ring governs every focusable control on these
- * screens, the sidebar's lines, glyphs and containers included... A browser
- * default outline, in oxblood or anything else, is a defect against this."
+ * §T.6, step 144: "Focus, once for the app. Every focusable control in the
+ * app outside the wall's drawn composition shows §M.6's outside ring when
+ * it has keyboard focus, a 2px ink outline offset 2 outside its box, and
+ * nothing else: the shared components' grey ring and the browser's default
+ * outline are defects wherever they appear."
  *
- * A rule on the screen and not a class on each control, for the reason the
- * colours left `data-t6`: a control added later takes the ring without
- * anyone remembering to give it one. The drawing is §M.6's inside ring, as
- * the table's rows and the grid's cells already draw it, "2px of paper at
- * its edge, and 2px of ink inside that": inside, because these controls sit
- * edge to edge in a column and in a scrolling container, where a ring
- * outside the box would be under its neighbour or cut.
+ * One rule, and the only place the ring is written (the coordinator, 14
+ * Oct: five inline copies left "redundant" would be the rule stated six
+ * times). Unlayered, so no utility class can put a grey ring or an
+ * `outline-none` back on a control; what a control may do instead is say
+ * so in its markup, and the exceptions are those marks and nothing else:
  *
- * Four kinds of control do not draw it on their own box. A row's and a
- * cell's link draw it on the overlay that is the row (`data-ring`). A view
- * name's box is the 11 of its type, so it is drawn on its 44 hit area.
- * Sort's select is laid over its label unseen, and the year line's
- * checkbox is 14 wide, so each is drawn on its label.
+ *   `[data-seat]`, `[data-run]`  the composition, whose marks are its own
+ *                                (§W.33's spine mark, §W.30's run edge);
+ *   `[data-ring="inside"]`       a box its container clips, which takes
+ *                                §M.6's inside ring (the record's cover);
+ *   `[data-ring="after"]`        a link whose box is the overlay that is
+ *                                its row or cell: the ring goes on the
+ *                                overlay, outside it (below);
+ *   `[data-ring="label"]`        a control laid unseen over its label (the
+ *                                sidebar's sort select, opacity 0, on which
+ *                                an outline would not show): the ring goes
+ *                                on the label (below);
+ *   `[data-ring-held]`           held out of the rule while Design rules on
+ *                                it: stats' names, whose own wrapper clips
+ *                                the ring (14 Oct);
+ *   `[tabindex="-1"]`            not a Tab stop (the rail's Apply, a dialog's
+ *                                frame), so never a reader's to see.
  */
-[data-collection-views] :is(a, button, input, select, textarea, [tabindex], [data-filter-panel]):focus-visible {
+:where(a[href], button, input, select, textarea, summary, [tabindex]):not([tabindex='-1'], [data-ring], [data-ring-held], [data-seat], [data-run], [data-run] *):focus-visible {
+  outline: 2px solid var(--foreground);
+  outline-offset: 2px;
+}
+[data-ring='after']:focus-visible {
   outline: none;
 }
-[data-collection-views] :is(a, button, input, textarea, [tabindex], [data-filter-panel]):not([data-ring], [type='checkbox']):focus-visible,
-[data-collection-views] label:has(:is(select, [type='checkbox']):focus-visible) {
+[data-ring='after']:focus-visible::after {
+  outline: 2px solid var(--foreground);
+  outline-offset: 2px;
+}
+[data-ring='label']:focus-visible {
+  outline: none;
+}
+label:has([data-ring='label']:focus-visible) {
+  outline: 2px solid var(--foreground);
+  outline-offset: 2px;
+}
+/*
+ * §T.6's clipping clause, second instance (step 113, kept at step 144; Design
+ * correcting "only the cover has been counted", 14 Oct): the filter panel's
+ * options stand edge to edge in a container that scrolls, so a ring outside
+ * their box would be cut; they take §M.6's inside ring, "2px of paper at
+ * its edge, and 2px of ink inside that". The rest of the collection views
+ * take the rule above: "The table clips nothing, so by §T.6 its controls
+ * take the outside ring" (`T.4/focus-inside-row`).
+ */
+[data-filter-panel] :is(a, button):focus-visible {
+  outline: none;
   box-shadow:
     inset 0 0 0 2px var(--background),
     inset 0 0 0 4px var(--foreground);
@@ -643,11 +678,3 @@
   [data-composition] [data-testid='wall-rail'] li > span { pointer-events: none; }
 }
 
-[data-collection-band] [data-testid='wall-rail'] a:focus-visible {
-  box-shadow: none;
-}
-[data-collection-band] [data-testid='wall-rail'] a:focus-visible::before {
-  box-shadow:
-    inset 0 0 0 2px var(--background),
-    inset 0 0 0 4px var(--foreground);
-}
