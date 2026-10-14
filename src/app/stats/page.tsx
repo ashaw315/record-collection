@@ -3,7 +3,7 @@ import { AppHeader } from '@/components/AppHeader';
 import { formatTotal } from '@/app/collection-format';
 import { genreDirectRecords, recordStats } from '@/lib/db/queries/records';
 import { genrePairs } from './genre-pairs';
-import { GenreTree } from './GenreTree';
+import { GenreTree, NAME_CLIPPER } from './GenreTree';
 import { estimatedValueStatement, spendStatement } from './value-statement';
 import { SCREEN_FRAME } from '@/app/screen-frame';
 import { HIT_ALONE, HIT_WHOLE_ROW, ROW_CUTS, ROW_TARGET } from '@/app/hit-area';
@@ -82,11 +82,12 @@ function Breakdown({
               <div className="flex items-baseline justify-between gap-3 text-detail">
                 {/* Linked where the collection can be filtered by it: a
                     breakdown is only useful if you can open what it counts. */}
-                <span className="min-w-0 overflow-x-clip text-ellipsis whitespace-nowrap">
+                {/* A linked name is its own clipper (NAME_CLIPPER, §T.6 14 Oct), so the ring's bands paint; a decade, not a link, is cut by its wrapper as before. */}
+                <span className={href === undefined ? 'min-w-0 overflow-x-clip text-ellipsis whitespace-nowrap' : 'min-w-0'}>
                   {href === undefined ? (
                     row.name
                   ) : (
-                    <Link href={href(row.id)} data-ring-held="" className={`${HIT_WHOLE_ROW} underline-offset-2 hover:underline`}>
+                    <Link href={href(row.id)} className={`${NAME_CLIPPER} ${HIT_WHOLE_ROW} underline-offset-2 hover:underline`}>
                       {row.name}
                     </Link>
                   )}

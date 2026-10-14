@@ -32,9 +32,8 @@ export type Stop = {
      * stylesheet rule reaches (14 Oct).
      */
     focusVisible: boolean;
-    /** The `data-ring` mark, the hold (`data-ring-held`), and whether it stands in the filter panel, step 113's inside-ring case. */
+    /** The `data-ring` mark, and whether it stands in the filter panel, step 113's inside-ring case. */
     mark: string | null;
-    held: boolean;
     panel: boolean;
   };
 };
@@ -52,10 +51,9 @@ export function drawnRing(stop: Stop): string {
   return `something else: outline ${r.outline}${r.outlineInk ? ' ink' : ' not ink'}; overlay outline ${r.afterOutline}; label outline ${r.labelOutline}; inset shadow ${r.insetShadow}`;
 }
 
-/** What §T.6 rules a stop draws: the composition's own marks; the hold; the inside ring where the container clips; the overlay's outside ring where the overlay is the box; the outside ring. */
+/** What §T.6 rules a stop draws: the composition's own marks; the inside ring where the container clips; the overlay's outside ring where the overlay is the box; the outside ring. */
 export function expectedRing(stop: Stop): string {
   if (stop.composition) return 'own mark';
-  if (stop.ring.held) return 'held';
   if (stop.ring.mark === 'inside' || stop.ring.panel) return 'inside';
   if (stop.ring.mark === 'after') return 'outside on the overlay';
   if (stop.ring.mark === 'label') return 'outside on the label';
@@ -164,7 +162,6 @@ export async function walkTab(page: Page, limit = 400): Promise<Stop[]> {
         insetShadow: inset,
         focusVisible: el.matches(':focus-visible'),
         mark: el.getAttribute('data-ring'),
-        held: el.hasAttribute('data-ring-held'),
         panel: el.closest('[data-filter-panel]') !== null,
       };
       return {

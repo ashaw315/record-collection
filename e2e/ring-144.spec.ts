@@ -122,20 +122,19 @@ test('the Tab walk through the wall in its three states stops 31, 15 and 33 time
   instead." The filter panel's options are the clipping clause's second
   instance (step 113; Design correcting §T.6's "only the cover", 14 Oct).
   The row's and the cell's link draw the ring on the overlay that is their
-  box, outside it (`T.4/focus-inside-row`). Stats' names are HELD
-  (`data-ring-held`): their own wrapper clips the ring and a fix is costed
-  before Design rules; the hold is asserted so it cannot grow unnoticed.
+  box, outside it (`T.4/focus-inside-row`). Stats' names, held while their
+  wrapper clipped the ring, are their own clippers (§T.6, 14 Oct) and take
+  the outside ring; `stats-names-144.spec.ts` reads the bands painted.
   Fails against the build before the rule: the shared components' 3px grey
   ring, the browser's default on the raw controls, the five inline rings
   and the collection views' inside ring read as "something else".
 */
 /* "Add a check that focuses each focusable element on each route at 390 and 1280 and asserts the ring": those two, and 1440, the wall sheet's window. */
-for (const width of [390, 1280, 1440]) test(`§M.6’s ring, once for the app, at ${width}: on every route each Tab stop draws the outside ring, the clipped cases the inside ring, the held names are stats’ and nothing else is held`, async ({ page, context, browser }) => {
+for (const width of [390, 1280, 1440]) test(`§M.6’s ring, once for the app, at ${width}: on every route each Tab stop draws the outside ring, the clipped cases the inside ring`, async ({ page, context, browser }) => {
   test.setTimeout(900_000);
   await login(page);
   await page.setViewportSize({ width, height: WALL.height });
   const bad: string[] = [];
-  const held: string[] = [];
   const inner: string[] = [];
   const counts: string[] = [];
   let ringed = 0;
@@ -144,7 +143,6 @@ for (const width of [390, 1280, 1440]) test(`§M.6’s ring, once for the app, a
     for (const stop of stops) {
       if (stop.composition) continue;
       const want = expectedRing(stop);
-      if (want === 'held') { held.push(`${route}: ${stop.tag} ${stop.name}`); continue; }
       const got = drawnRing(stop);
       /* A stop inside the browser's own control (a date field's calendar button): not the rule's to reach, reported rather than counted either way. */
       if (!stop.ring.focusVisible && stop.tag === 'input') { inner.push(`${route}: ${stop.tag} ${stop.name}`); continue; }
@@ -166,11 +164,8 @@ for (const width of [390, 1280, 1440]) test(`§M.6’s ring, once for the app, a
   read('login', await walkTab(loginPage));
   await out.close();
   expect.soft(bad, 'stops whose ring is not the one ruled').toEqual([]);
-  expect.soft(held.filter((h) => !/^stats: a /.test(h)), 'the hold is stats’ names and nothing else').toEqual([]);
-  expect.soft(held.length, 'the precondition: the hold is in force on stats').toBeGreaterThan(0);
   expect(ringed, 'the precondition: the routes were walked').toBeGreaterThan(100);
   test.info().annotations.push({ type: 'ringed', description: `${ringed} stops draw the ring ruled for them: ${counts.join('; ')}` });
-  test.info().annotations.push({ type: 'held', description: held.join('; ') });
   test.info().annotations.push({ type: 'inside the browser’s control', description: inner.join('; ') || 'none' });
   expect.soft(inner.filter((i) => !/input (entry-date|purchaseDate)/.test(i)), 'stops inside a browser control are the two date fields’ calendar buttons and nothing else').toEqual([]);
 });

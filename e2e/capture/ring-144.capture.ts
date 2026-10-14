@@ -90,15 +90,14 @@ test('the Tab walk in the wall’s three states, and the clipped controls on eve
   const wallCut = [...opens, ...overview, ...pulled].filter((s) => s.clipped !== null && !s.composition);
   md.push('', `${cutTotal} stops outside the composition with a cut ring across the routes above, and ${wallCut.length} in the wall’s three states.`, '');
   /* The ring, route by route: what each stop draws against what §T.6 rules for it. */
-  md.push('## The ring, route by route', '', 'Each stop outside the composition, what it draws with keyboard focus, and what §T.6 rules for it: the outside ring; the outside ring on the overlay that is the row (the table’s rows and the grid’s cells); the inside ring where the container clips (the cover, the filter panel’s options); or held (stats’ names, whose own wrapper clips the ring, costed before Design rules).', '', '| route | stops outside the composition | as ruled | not as ruled | held |', '|---|---|---|---|---|');
+  md.push('## The ring, route by route', '', 'Each stop outside the composition, what it draws with keyboard focus, and what §T.6 rules for it: the outside ring; the outside ring on the overlay that is the row (the table’s rows and the grid’s cells); the inside ring where the container clips (the cover, the filter panel’s options).', '', '| route | stops outside the composition | as ruled | not as ruled |', '|---|---|---|---|');
   let asRuled = 0;
   for (const { route, stops } of survey) {
     const outside = stops.filter((s) => !s.composition);
-    const heldHere = outside.filter((s) => expectedRing(s) === 'held');
-    const wrong = outside.filter((s) => expectedRing(s) !== 'held' && drawnRing(s) !== expectedRing(s));
-    const right = outside.length - heldHere.length - wrong.length;
+    const wrong = outside.filter((s) => drawnRing(s) !== expectedRing(s));
+    const right = outside.length - wrong.length;
     asRuled += right;
-    md.push(`| ${route} | ${outside.length} | ${right} | ${wrong.length}${wrong.length === 0 ? '' : `: ${wrong.map((s) => `${s.tag} ${s.name.replace(/\|/g, '/')} draws ${drawnRing(s).replace(/\|/g, '/')}`).join('; ')}`} | ${heldHere.length}${heldHere.length === 0 ? '' : `: ${heldHere.map((s) => s.name.replace(/\|/g, '/')).join(', ')}`} |`);
+    md.push(`| ${route} | ${outside.length} | ${right} | ${wrong.length}${wrong.length === 0 ? '' : `: ${wrong.map((s) => `${s.tag} ${s.name.replace(/\|/g, '/')} draws ${drawnRing(s).replace(/\|/g, '/')}`).join('; ')}`} |`);
   }
   md.push('', `${asRuled} stops draw the ring ruled for them.`, '');
   for (const { route, stops } of survey) md.push(`### ${route}`, '', ...stopsTable(stops), '');

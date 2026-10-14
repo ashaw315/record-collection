@@ -45492,3 +45492,73 @@ the drop; not mine to add, not touched.
 **Verification:** none owed by this entry; the intake ran `test/repo`
 (`485 passed`) at its checked commit. The push point is unchanged: the
 gate at `e720483` plus two docs commits.
+
+## 14 Oct, 19:40: the evening drop taken in; stats' names as their own clippers, the hold released
+
+**Two drops today after the gate, both taken in at step zero** (17:32:
+`f3b1697`/`73eb1c4`; evening: `6db7f1f`/`9bfac4e`, index 12 PASS,
+WITHDRAWALS re-derived with `T.6/about-52-controls` and `T.6/pulled-33`).
+The evening drop carries the first reading of the arrows ("with a record
+pulled, focus and the pull move together, so a pulled record is the
+focused one"), the reading Code has reported cannot be built as the
+pulled record leaves the seat list; the coordinator's timing note came
+true, so when Design reopens it an entry follows. It also removes "as §W
+rules the keyboard" calling it a draft "with no drop carrying it": `git
+log -S` finds it in `faaaf76`, the 13:08 commit of the 14 Oct drop, so
+that entry is owed too. The 49 and the "52 in 16" sentences are still in
+the target; the coordinator says Design is removing both.
+
+**Stats' names as their own clippers, built** (§T.6, 14 Oct: "each link
+is its own clipper and the wrapper's classes move off it, so both bands
+paint, the ellipsis falls inside the ring, and no exception reaches
+them"). `NAME_CLIPPER` (`inline-block max-w-full overflow-x-clip
+text-ellipsis whitespace-nowrap`), exported from `GenreTree.tsx`, on the
+genre, label and store links; the wrapper keeps `min-w-0` (and `flex-1`
+on the tree); a decade, not a link, is cut by its wrapper as before. The
+hold is gone: `data-ring-held` off both links, out of the rule in
+`globals.css`, out of the walker's `Stop`, `expectedRing`, the rule test
+(its title and two soft assertions) and the capture tool's table. The
+step 144 block in the handoff says the hold was released.
+
+**The baseline, found by the probe and not by the costing.** An inline
+block with `overflow: hidden` takes its bottom edge as its baseline and
+lifts the name off the count's; `overflow-x: clip` keeps the text's. The
+bare-browser probe of four variants (`$S/baseline-probe.mjs`): wrapper
+clip and link clip both 21 tall with the name's and the count's text
+bottoms equal; `overflow: hidden` or `vertical-align: bottom` 26 tall
+with the name 8 up. **The guard was staged:** with `overflow-hidden`
+swapped in, the spec reports the name's text bottom 5.5 to 6.5 from the
+count's on every link; reverted, it passes.
+
+**Tests, first and watched failing.** `src/app/stats/GenreTree.test.tsx`
+(component, three claims: the link's clipper classes, the row-less-44
+target kept, the wrapper without a clip and the link without a hold;
+failed against the wrapper's clip and the hold). `e2e/stats-names-144.spec.ts`
+at 390 and 1280: a record of its own with a label and a store (the test
+database seeds no store); each name focused by the keyboard (the stop
+before it focused by script, then Tab, so `:focus-visible` holds); the
+ring's left band (4 to 2 left of the link's box) and right band read
+from a screenshot for ink over the box's height; a long name set on the
+first genre's link, cut by the link itself inside its wrapper; the
+name's text bottom within 2 of the count's. Failed under the hold with
+every band 0 of 32 and the long name cut by the wrapper; two defects of
+the test's own first (the target's quotes HTML-escaped in the class
+string; six genre links matched), then the long name fitting at 1280,
+where the genre column holds a hundred characters, so it is four times
+longer. The probe that costed the fix is this spec.
+
+**Verification, step level:** `npx playwright test stats-names-144
+ring-144 stats.spec`, both projects: `44 passed, 1 failed` in 3.3m, the
+one the long name fitting at 1280 (above), then the names spec `2
+passed` after the fix and again after the staged guard was reverted. The
+mobile project runs its fixed spec list and does not run the names spec;
+the ring's rule test and stats.spec passed on both. `npx vitest run
+src/app/stats` `32 passed`; typecheck 0 errors; lint 0 errors (warnings
+in twelve untouched files); build clean. Gate-listed files: none. Eleven
+files in the commit for one decision: two source, one stylesheet, two
+tests new, three tests and a capture tool following the hold's removal,
+the handoff block, NOTES.
+
+**Not built, as instructed:** the spines' roving index waits on Design
+picking the arrows' reading; the record form's doubled rule and manage's
+marks are part 2's.

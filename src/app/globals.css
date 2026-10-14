@@ -621,13 +621,10 @@
  *                                sidebar's sort select, opacity 0, on which
  *                                an outline would not show): the ring goes
  *                                on the label (below);
- *   `[data-ring-held]`           held out of the rule while Design rules on
- *                                it: stats' names, whose own wrapper clips
- *                                the ring (14 Oct);
  *   `[tabindex="-1"]`            not a Tab stop (the rail's Apply, a dialog's
  *                                frame), so never a reader's to see.
  */
-:where(a[href], button, input, select, textarea, summary, [tabindex]):not([tabindex='-1'], [data-ring], [data-ring-held], [data-seat], [data-run], [data-run] *):focus-visible {
+:where(a[href], button, input, select, textarea, summary, [tabindex]):not([tabindex='-1'], [data-ring], [data-seat], [data-run], [data-run] *):focus-visible {
   outline: 2px solid var(--foreground);
   outline-offset: 2px;
 }

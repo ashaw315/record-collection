@@ -1,6 +1,17 @@
 import Link from 'next/link';
 import { flattenPairs, genreFigure, type GenrePairNode } from './genre-pairs';
 import { HIT_ROW_LESS_44, ROW_CUTS, ROW_TARGET } from '@/app/hit-area';
+
+/**
+ * A name on stats cuts itself (§T.6, Design, 14 Oct): "each link is its own
+ * clipper and the wrapper's classes move off it, so both bands paint, the
+ * ellipsis falls inside the ring". A wrapper that clipped sideways took the
+ * ring's left band with the overflow (step 144's survey: 0 of 32 painted).
+ * An inline block, not `overflow-hidden`: hidden moves an inline block's
+ * baseline to its bottom edge and lifts the name 8px off the count's; clip
+ * keeps the text's (the 14 Oct probe, now `e2e/stats-names-144.spec.ts`).
+ */
+export const NAME_CLIPPER = 'inline-block max-w-full overflow-x-clip text-ellipsis whitespace-nowrap';
 import { DisclosureMark } from '@/app/disclosure-mark';
 
 /**
@@ -55,13 +66,12 @@ function Row({ node, href }: { node: GenrePairNode; href: (id: string) => string
       data-testid={`genre-row-${node.id}`}
     >
      <div className="flex w-full items-baseline gap-3">
-      {/* Cut sideways only: `truncate` hides both ways and would cut the link's hit area to the line. */}
-      <span className="min-w-0 flex-1 overflow-x-clip text-ellipsis whitespace-nowrap">
+      {/* The clip is the link's (NAME_CLIPPER), sideways only: `truncate` hides both ways and would cut the link's hit area to the line. */}
+      <span className="min-w-0 flex-1">
         {/* Linked where the collection can be filtered by it: an account is
             only useful if you can open what it counts. */}
         {/* Step 143 (Design, 13 Oct): "The name's target is the row less the disclosure column, with the count inside it, because the count is not a control and pressing it means the name", on every row. Step 141 had that for a row with a branch and step 138 the whole row for one without; now the right 44 is the column's on both, the branch's control or empty. Under a coarse pointer; with a mouse the name is its own width. */}
-        {/* Held out of §T.6's ring rule (step 144, 14 Oct): the name's wrapper clips the ring on the left, so the outside ring would be built and not seen; a fix is costed before Design rules. */}
-        <Link href={href(node.id)} data-ring-held="" className={`${HIT_ROW_LESS_44} underline-offset-2 hover:underline`}>
+        <Link href={href(node.id)} className={`${NAME_CLIPPER} ${HIT_ROW_LESS_44} underline-offset-2 hover:underline`}>
           {node.name}
         </Link>
       </span>
