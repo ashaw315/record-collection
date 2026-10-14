@@ -45388,3 +45388,107 @@ file part 1 never opened (`screens-103.ts`). The entry now says
 `SCREEN.measure` with the reason; `pinned-118` on both projects after
 it: `4 passed`. Nothing else failed: the ring's one rule across every
 route and part 1's type broke no other spec in the suites.
+
+## 14 Oct, 17:55: the 17:32 drop taken in; the two-run rule read; the arrows' two jobs; the homeless items placed; a property of the app named; the 14 owed
+
+**The 17:32 drop, taken in before anything else** (raw `f3b1697`, intake
+`73eb1c4`, listing `docs/intake/f3b1697-added.md`, index 12 PASS, Code's
+31 blocks restored). The handoff's one change is the ring's bullet: cost
+the spines in seat order in the source painted by CSS "and report before
+building"; on stats "make each name, label and store link its own
+clipper so the outside ring paints in full"; "leave the native date
+field's calendar button with the browser's ring". The target's §T.6
+Focus paragraph now rules what the last report asked: the date field's
+button is the ruled exception ("nobody should look for a fix"), the
+assertion that it is the only one stays; the clipping exception is
+stated by class, the cover and the filter rows; stats' names take the
+outside ring by the costed fix, so that is a build in the ring step,
+the hold (`data-ring-held`) coming off with it; "Arrow keys still move
+between spines within the run" is kept, with the spines' sentence
+waiting on Code's report. **Two sentences to flag, both Design's own
+corrections:** "a count of 14 on the test database, which the real
+collection makes 49" carries the coordinator's derived figure as a
+fact, and the coordinator withdrew it today ("I derived a figure and
+stated it as though it were measured"); nothing has measured it, and
+the sentence beside it says the count follows the collection, so the 49
+should go. And "an earlier sentence here estimated about 52 in 16":
+`git log -S` on docs/design finds "about 52" (`33e5a0c`) and no "16" in
+any drop, so the file now describes a sentence it never had. Neither
+blocks anything; both are Design's to amend.
+
+**The two-run rule, read as the coordinator asked.** The gate's green is
+two runs: the suites with three failures, then `pinned-118` on both
+projects after the one-line fix in `e2e/screens-103.ts`. Who reads that
+helper: four specs import it. `pinned-118` imports `framedScreens`,
+`openScreen` and `seedFixture`; `colour-103`, `radius-103` and
+`headings-103` import `eachScreen`, `openScreen` and `seedFixture`. The
+fix changed one entry inside `framedScreens`, not-found's measure, and
+nothing else in the file; `framedScreens` has one caller, `pinned-118`.
+So the three other importers ran at the gate against the functions they
+read, unchanged. One unit test reads the file's source,
+`test/repo/specs-import-constants.test.ts` (the helper is governed), and
+`test/repo` ran after the fix at the gate's checked commit and again at
+the intake's (`485 passed`). The green holds; nothing is owed a re-run.
+
+**The arrows' two jobs: how the roving index composes with the pull.**
+Today `WallLive.tsx` 456–463 listens on the window; `go` calls
+`navigate` (`adjacent-seat.ts` 38), which returns null unless a record
+is out and settled, so with nothing pulled the arrows do nothing. The
+roving index would add a keydown handler on the seat anchors
+(`WallLabelled.tsx` 385) moving focus to the adjacent seat. The two meet
+in one state only: a record pulled AND focus on one of the standing
+spines, where the window's handler would move the pull and the seat's
+would move focus, both on one press. One line decides which, so the
+coordinator's second reading, focus when nothing is pulled and the pull
+when something is, composes naturally: the seat handler yields when a
+record is out (or stops propagation so focus wins; either is a line).
+The first reading, focus moves and the pull follows, fights the
+structure: a pulled record leaves the seat list (`data-seat` goes,
+`data-pulled` arrives; `WallLabelled.test.tsx` 171), so the anchor
+holding focus unmounts on every arrow press and focus falls to the
+document, and the target rules the pulled cover not focusable (§T.6
+"the set bar and the pulled cover are not focusable"). It would need
+focus parked somewhere the ruling does not name, which is more than the
+30 lines and a new ruling, not a composition. A third reading that also
+composes: arrows move focus only, Enter pulls the focused record, as it
+does today, and the arrows move the pull only through §W.9's buttons.
+Design's to pick; nothing built.
+
+**The two homeless items are part 2's.** The record form's doubled rule
+and manage's marks (plus, cross and tick as §T.1 marks, EDIT and DELETE
+for the pencil and bin) are built in part 2, which opens the record form
+and manage anyway, and are off the ring step's list here. The ring's
+bullet in the handoff still carries both sentences; that is Design's
+text to move. The ring step's remaining builds: stats' names as their
+own clippers (ruled today), and the spines' order once Design picks the
+arrows' reading.
+
+**A property of the app, named, not three findings: the server's
+document carries things the client removes.** Below the fork the
+labelled wall is in the server's document and gone once the client
+takes over; both views of the empty shelf were in the server's document
+with CSS showing one; the `querySelector` wrapper exists because the
+first match in the server's document is not the element on the page.
+Three findings, one cause. **The rule for a reading tool:** anything
+read from a route below the fork is read after the client has taken
+over, which means waiting for a mark the client sets (`data-phase`,
+`[data-shelf-offered]` with a computed display, the API's answer) and
+never a locator that resolves during load. The ring walk's stall, the
+doubled sentence and the wrapper are the three; this is to save the
+fourth.
+
+**The entries table's fourth row: owed.** "14 clipped stops in three
+places" was carried in today's 14 Oct drop (`faaaf76`) and is false for
+the real collection, so by the file's own test it reads as owed, the
+same as "about 52" and the 33/34. Three owed, "16 files" none. Today's
+drop has already replaced the sentence with the class rule; the entry
+is Design's filing.
+
+**Not in the drop, in the tree:** `docs/captures/bridge-*.png` (29 Sep),
+`docs/captures/nav-menu/`, `nav-type/` (2 Oct) and
+`unpassed-screens-139/for-design/` (13 Oct) are untracked and older than
+the drop; not mine to add, not touched.
+
+**Verification:** none owed by this entry; the intake ran `test/repo`
+(`485 passed`) at its checked commit. The push point is unchanged: the
+gate at `e720483` plus two docs commits.
