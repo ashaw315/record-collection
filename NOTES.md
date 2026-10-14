@@ -45372,3 +45372,19 @@ control's animations is bounded at a second, since a looping animation
 never finishes. The rule test at 390 then reads every route in 40
 seconds. `test-results/` is cleared by each run, so a timed-out run's
 trace must be read before the next run, which cost one re-run.
+
+## 14 Oct, 15:46: the gate for the ring and part 1
+
+**Gate: full suites.** `npm test`: `4356 passed, 2 skipped` of 4358 in
+304 files. `npx playwright test`, no file argument, every project:
+`1270 passed, 3 failed, 29 skipped` in 1.0h (chromium 890, mobile 388,
+capture 24; the 29 skipped are the 24 capture tools without CAPTURE=1
+and the five project-scoped skips). **The three failures were one
+contract, found as the gate exists to find it:** `pinned-118.spec.ts`
+at 1024, 1440 and 1920 held not-found at manage's measure, 988 against
+736 read, from step 120; step 145 gave not-found the error screen's
+frame, as ruled, and the spec that encoded the old measure lives in a
+file part 1 never opened (`screens-103.ts`). The entry now says
+`SCREEN.measure` with the reason; `pinned-118` on both projects after
+it: `4 passed`. Nothing else failed: the ring's one rule across every
+route and part 1's type broke no other spec in the suites.

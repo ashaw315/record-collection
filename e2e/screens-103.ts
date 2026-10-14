@@ -71,6 +71,7 @@ export function framedScreens(f: Fixture): { name: string; path: string; measure
     { name: 'the want list’s new form', path: '/want-list/new', measure: SCREEN.item },
     { name: 'a want-list item', path: `/want-list/${f.want}`, measure: SCREEN.item },
     { name: 'a want-list item, editing', path: `/want-list/${f.want}/edit`, measure: SCREEN.item },
-    { name: 'not found', path: '/no-such-screen', measure: SCREEN.manage },
+    /* Step 145: not-found takes the error screen's frame, 736, "as the error screen does"; it had manage's 1,120 from step 120. The claim changed with the ruling, found at the gate. */
+    { name: 'not found', path: '/no-such-screen', measure: SCREEN.measure },
   ];
 }
