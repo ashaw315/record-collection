@@ -45551,8 +45551,9 @@ longer. The probe that costed the fix is this spec.
 ring-144 stats.spec`, both projects: `44 passed, 1 failed` in 3.3m, the
 one the long name fitting at 1280 (above), then the names spec `2
 passed` after the fix and again after the staged guard was reverted. The
-mobile project runs its fixed spec list and does not run the names spec;
-the ring's rule test and stats.spec passed on both. `npx vitest run
+mobile project runs its fixed spec list and runs neither the names spec
+nor the ring's rule test, so those are chromium's: the rule test's 5
+(the three widths and the walks) and stats.spec's 38 on both projects. `npx vitest run
 src/app/stats` `32 passed`; typecheck 0 errors; lint 0 errors (warnings
 in twelve untouched files); build clean. Gate-listed files: none. Eleven
 files in the commit for one decision: two source, one stylesheet, two
