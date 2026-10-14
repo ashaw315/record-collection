@@ -188,7 +188,15 @@ export function WallRail({
           </RailSelect>
         </div>
         {/* The no-JavaScript path: with it, a change is the submit (RailSelect). */}
-        <button type="submit" className="sr-only">
+        {/*
+          Out of the tab order (§T.6, step 144): "The rail's hidden one-pixel
+          Apply is not a stop for Tab: it leaves the tab order, and Enter in
+          the search field still submits. A keyboard reader must never land
+          on a control that shows nothing, so the ring has nothing to draw
+          there." It stays the form's submit button, which is what Enter's
+          implicit submission clicks.
+        */}
+        <button type="submit" tabIndex={-1} className="sr-only">
           Apply
         </button>
       </form>

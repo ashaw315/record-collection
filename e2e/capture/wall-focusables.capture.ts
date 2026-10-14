@@ -59,6 +59,8 @@ test('list the focusable controls in the wall’s view with where each stands', 
   await page.locator('a[data-seat] [data-spine]').first().click();
   await page.getByTestId('record-chrome').waitFor({ timeout: 30_000 });
   await page.locator('[data-pulled]').waitFor({ timeout: 30_000 });
+  /* §W.9's arrows arrive once the pull has settled; read before that, the first reading (13 Oct) missed NEXT RECORD and gave 34 where the Tab walk finds 35 with the Apply in the order (step 144). */
+  await page.locator('[data-testid="nav-next"], [data-testid="nav-previous"]').first().waitFor({ timeout: 30_000 });
   const pulled = await read();
   const table = (list: typeof rows) => list.map((row, index) => `| ${index + 1} | ${row.tag} | ${row.name.replace(/\|/g, '/')} | ${row.place.replace(/\|/g, '/') || '(none)'} | ${row.box} |`);
 
@@ -98,7 +100,7 @@ test('list the focusable controls in the wall’s view with where each stands', 
       '',
       '## Where Code would draw the line, for Design to confirm or correct',
       '',
-      '- **Outside the composition, the outside ring:** the header’s six links, which are not in the wall; the rail’s eight (the search field, the genre and sort selects, the hidden Apply, SHELF, TABLE, GRID, Add record), which are the page’s chrome; the count’s zoom-out, a control about the view in the count’s row above the fixture; and, pulled, the panel’s three (the link to the full record, TURN OVER, PUT BACK), because the panel is the pull’s chrome rather than a run or a record. The side is decided by what a control is part of, not by whether its box has room for a ring: a boxed control drawn inside the composition would still be inside it.',
+      '- **Outside the composition, the outside ring:** the header’s six links, which are not in the wall; the rail’s eight (the search field, the genre and sort selects, the hidden Apply, SHELF, TABLE, GRID, Add record), which are the page’s chrome; the count’s zoom-out, a control about the view in the count’s row above the fixture; and, pulled, the panel’s three (the link to the full record, TURN OVER, PUT BACK), because the panel is the pull’s chrome rather than a run or a record, and §W.9’s arrows beside the landed cover (NEXT RECORD, and PREVIOUS RECORD where there is a record before), 44 boxes present once the pull has settled, which the first reading missed. The side is decided by what a control is part of, not by whether its box has room for a ring: a boxed control drawn inside the composition would still be inside it.',
       '- **Inside the composition, its own marks:** the spines, whose focus §W.33 rules (the sink plus an ink mark on the top face), as the shelf opens and the sixteen left standing when one is pulled; and the run in the overview, whose focus §W.30 rules (the sink plus a 2px ink rule along its front edge), an SVG group that a CSS outline would not box in any case.',
       '- **Not focusable, so not in the question:** the set bar, and the pulled cover itself (its faces are turned by TURN OVER, not by focusing the cover).',
       '',

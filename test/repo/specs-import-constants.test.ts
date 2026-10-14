@@ -153,6 +153,8 @@ const GOVERNED = [
   'e2e/sheet/disc-59.sheet.ts',
   /* Step 71: the tile's Delete control over the tile's top-right corner. */
   'e2e/delete-control-71.spec.ts',
+  /* Step 144: the clipping survey walks every route, a record's among them. */
+  'e2e/capture/ring-144.capture.ts',
 ];
 
 /** The values a record-screen spec must not type. */

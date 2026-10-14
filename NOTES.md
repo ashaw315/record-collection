@@ -45046,3 +45046,91 @@ connection: the guard, working.
 `test/repo` `481 passed`; typecheck 0; lint 0 errors, 27 warnings; build
 clean. Gate-listed files touched: none (`pass.sheet.ts` is a capture
 tool). No entry owed: "No entries are owed from these sets."
+
+## 14 Oct, 10:52: step 144, unit one: the Apply out of the order, the Tab walk, the clipping survey
+
+**The ring step in units, as 143 went.** Its files run past eight, and the
+coordinator's second amendment (14 Oct) asks for the clipped controls to be
+reported and ruled on before a treatment is applied to them, so the reading
+comes first and the rule after it. Step zero first: the design files
+against HEAD, nothing added or removed.
+
+**Built: the rail's hidden Apply has `tabIndex={-1}`** (`WallRail.tsx`),
+one attribute. It stays the form's submit button, which is what Enter's
+implicit submission clicks. Test first (`ring-144.spec.ts`): Tab from the
+search field lands on the genre select, Tab from the sort select lands on
+SHELF (the Apply stands after the selects in the form, so this is the stop
+that changes; the coordinator's first assertion, from the search field,
+holds before and after and is kept as a reading), Enter in the field
+submits (`?q=` in the URL) and the drawn rail's form keeps a submit button
+with the attribute. Fail first: "the stop after the sort select is SHELF"
+received the Apply.
+
+**The Tab walk** (`e2e/ring-walk.ts`, `walkTab`): one whole cycle, not a
+walk from the document's start. The spines carry a positive `tabIndex`
+(§W.23, their own sequence) and a positive tabindex is visited before
+every ordinary stop, so a first version that began from a sentinel at the
+body's start never met them and read 16 where the sheet read 32; the probe
+of 14 Oct read the real cycle as the seventeen spines, then the nav, the
+rail with its Apply, the zoom-out, the dev overlay, then out of the page.
+So the walker Tabs until focus leaves the document, then records every
+stop until it leaves again, with the dev overlay hidden. Fail first, the
+Apply in the order: 32, 16 and 35, the Apply reached in all three. With
+the attribute: **31 as the shelf opens and 15 in the overview, Design's
+figures; with a record pulled 34, Design's 33 plus one.** The 34th is
+NEXT RECORD, §W.9's arrow, a 44 box beside the landed cover drawn "only
+where there is somewhere to go": one for the first record, two for a
+middle one. Code's reading (`wall-focusables.md`, 13 Oct) ran as the
+pull appeared and before it settled, so it missed the arrows, and Design
+confirmed its 33 "control by control" from that reading. The spec pins
+the measured figure as Design's 33 plus the arrows drawn, says why in its
+body, and fails if the Apply is reached. The arrows are boxed chrome by
+§T.6's own sentence ("a boxed control added to the wall later is chrome
+too") and take the outside ring; **for Design to confirm.** The sheet tool
+now waits for an arrow before reading the pulled state and its prose names
+them; the sheet is regenerated: 31, 15 and 34.
+
+**The clipping survey** (`e2e/capture/ring-144.capture.ts`,
+`docs/captures/ring-144/ring-144.md`): the wall's three walks listed stop
+by stop, and every route Tabbed through with each stop's ring box (the
+control's box plus 4 a side) tested against every ancestor whose overflow
+is not visible. **In the wall, no stop outside the composition is cut**
+(the spines and the run are cut by their SVG, and their marks are their
+own). **Across the routes, 14 stops in three places:**
+1. the collection's filter panel, GENRE open: its six option rows, cut on
+   the left and right (and the first on the top, the last on the bottom)
+   by the panel, `overflow: auto`; text controls in a scrolling container,
+   which step 113 gave the inside ring for that reason;
+2. stats' genre names with a branch or a long name, seven, cut on the left
+   (Mom + Pop on both sides) by the name's own wrapper, `overflow-x: clip`,
+   which is there for the ellipsis; text controls, the clip Code's own;
+3. the record page's cover, Open the sleeve, cut on three sides by its
+   frame, `overflow: hidden`: the photograph, the one case Design counted,
+   which draws the inside ring already (`SleeveCover.tsx`).
+The grid's cover cells, the likeliest second instance, are not cut at
+1440. So the inside ring fits one case; the other two are text, and the
+inside ring was designed for a photograph's edge (the coordinator, 14
+Oct): **reported, not decided.** Manage: 70 stops, none cut; a record,
+editing: 42, none; the error screen 8, not found 6, login 2.
+
+**Other sets, for the record:** the collection's table view with GENRE
+open 41 stops, the grid 32, stats 13, the want list 14, look up 13, the
+record form 15, suggestions 8.
+
+**Step level:** `ring-144.spec.ts` with `wall-route`, `wall-access`,
+`wall-labelled`, `collection-band-97` and `shelf-offered-134` (the specs
+that walk or read the rail) on chromium and mobile, `56 passed`;
+`test/repo` with the new capture governed by the record-screen rule;
+typecheck 0; lint 0 errors, 27 warnings; build clean. Gate-listed files
+touched: none. `test/repo/specs-import-constants.test.ts` gained one
+entry in its governed list, a test file and not shared infrastructure.
+
+**Unit two, waiting on the go:** the rule in the stylesheet, §M.6's
+outside ring on every focus-visible control outside the composition, with
+the shared components' grey ring, login's copy, manage's select and the
+five inline rings removed so the rule is the only place the ring is
+written; the collection views' scoped inside-ring rule replaced (the
+table clips nothing, `T.4/focus-inside-row`); the cover keeps its inside
+ring; the two text classes above as Design rules; the count of the 52
+raw controls that take the ring with no file touched, read by a walk per
+route that checks the computed outline on each stop.
