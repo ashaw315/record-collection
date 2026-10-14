@@ -247,7 +247,8 @@ export function GapAnalysis({
           "The controls take §9.3's type: ASK CLAUDE and the scope select set 11 mono uppercase, 44 under a coarse
           pointer." Square, with a hairline, as every §9.3 control is.
         */}
-        <div className="mt-3 flex items-center gap-2 sm:mt-0 sm:shrink-0">
+        {/* Step 143: the two stand 24 apart, §G.3's gap between grouped controls. */}
+        <div className="mt-3 flex items-center gap-6 sm:mt-0 sm:shrink-0">
           {genres.length > 0 && (
             <select
               aria-label="Scope"

@@ -27,7 +27,8 @@ export function ErrorBody({ retry }: { retry: () => void }) {
     <div data-error-screen="">
       <h1 className="font-heading text-headline font-semibold tracking-tight">Something went wrong.</h1>
       <p className="mt-1 text-prose text-[oklch(0.44_0.008_70)]">This page could not load.</p>
-      <div className="mt-6 flex flex-wrap gap-2">
+      {/* Step 143: grouped controls stand 24 apart, §G.3's gap, "so the gap is dead to the finger as well as the eye". */}
+      <div className="mt-6 flex flex-wrap gap-6">
         <button type="button" onClick={retry} className={`${CONTROL} bg-transparent`}>
           Try again
         </button>

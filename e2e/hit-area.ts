@@ -1,4 +1,5 @@
 import { expect, type Page } from '@playwright/test';
+import { gapBetween } from './pair-gap';
 
 /**
  * **What a finger reaches, for every control on a screen.**
@@ -200,13 +201,17 @@ export async function expectDialogControls(page: Page, pointer: Pointer, where: 
   expect(placed.map((button) => button.name), `${where}: Cancel first, the destructive verb last, in the page’s order`).toEqual(['Cancel', 'Delete']);
   const [cancel, destructive] = placed;
   if (cancel === undefined || destructive === undefined) throw new Error(`${where}: the dialog’s two buttons are not there`);
-  if ((page.viewportSize()?.width ?? 1280) < 640) {
-    expect.soft(destructive.top, `${where}: stacked, Cancel above the destructive verb`).toBeGreaterThan(cancel.bottom - 1);
-    expect.soft(destructive.top - cancel.bottom, `${where}: stacked 24 apart`).toBe(24);
-  } else {
-    expect.soft(destructive.left, `${where}: side by side, Cancel to the left`).toBeGreaterThan(cancel.right - 1);
-    expect.soft(destructive.top, `${where}: on one line`).toBe(cancel.top);
-  }
+  /*
+    Step 143: the 24 on both axes, §G.3's gap, "side by side or stacked". The axis is read from the boxes rather
+    than assumed (`pair-gap.ts`), and the footer's own fork, stacked below 640, is held as the build's claim.
+    Fails against the footer as built: side by side at 1280 the two stood 8 apart.
+  */
+  const stacked = (page.viewportSize()?.width ?? 1280) < 640;
+  const apart = gapBetween(cancel, destructive);
+  expect.soft(apart.axis, `${where}: ${stacked ? 'stacked below 640' : 'side by side from 640'}`).toBe(stacked ? 'y' : 'x');
+  expect.soft(stacked ? destructive.top >= cancel.bottom : destructive.left >= cancel.right, `${where}: Cancel first along ${apart.axis}`).toBe(true);
+  if (!stacked) expect.soft(destructive.top, `${where}: on one line`).toBe(cancel.top);
+  expect.soft(apart.gap, `${where}: 24 apart along ${apart.axis}`).toBe(24);
   if (pointer === 'coarse') {
     expect.soft(underFloor(reach).map((r) => `${r.name}: ${r.tall}`), `${where}: controls under ${HIT_FLOOR} to a finger`).toEqual([]);
     expect.soft(reach.filter((r) => r.left > HIT_PAST || r.right > HIT_PAST).map((r) => `${r.name}: ${r.left} left, ${r.right} right`), `${where}: controls a tap reaches from more than ${HIT_PAST} past them`).toEqual([]);

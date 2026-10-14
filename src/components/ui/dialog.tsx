@@ -121,9 +121,10 @@ function DialogFooter({
           Step 139 (Design, 12 Oct): one order at every width, "Cancel first and the destructive verb last, side
           by side left to right and stacked top to bottom", so the column is no longer reversed; and stacked they
           stand 24 apart, §G.3's gap, "so a thumb landing low reaches neither by sliding off the other". No
-          overlay reaches into that 24: each button is its own box.
+          overlay reaches into that 24: each button is its own box. Step 143 (Design, 13 Oct): the 24 side by side
+          as well, "controls in one group stand 24 apart, §G.3's gap, side by side or stacked"; it was 8 from 640.
         */
-        "-mx-4 -mb-4 flex flex-col gap-6 rounded-b-xl border-t bg-muted/50 p-4 sm:flex-row sm:justify-end sm:gap-2 pointer-coarse:[&>button]:h-[44px]",
+        "-mx-4 -mb-4 flex flex-col gap-6 rounded-b-xl border-t bg-muted/50 p-4 sm:flex-row sm:justify-end pointer-coarse:[&>button]:h-[44px]",
         className
       )}
       {...props}

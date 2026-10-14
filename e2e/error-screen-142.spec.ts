@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { POINTERS, expectFloor, pointerIs } from './hit-area';
+import { gapBetween } from './pair-gap';
 import { login } from './sign-in';
 
 /**
@@ -38,7 +39,7 @@ for (const pointer of POINTERS) test.describe(`the error screen under a ${pointe
         const main = document.querySelector('main') as HTMLElement;
         const h1 = main.querySelector('h1') as HTMLElement;
         const sentence = main.querySelector('p') as HTMLElement;
-        const controls = Array.from(main.querySelectorAll<HTMLElement>('button, a')).map((el) => { const cs = getComputedStyle(el); const box = el.getBoundingClientRect(); return { text: (el.textContent ?? '').trim(), tag: el.tagName.toLowerCase(), href: el.getAttribute('href'), size: cs.fontSize, upper: cs.textTransform, mono: /mono/i.test(cs.fontFamily), border: cs.borderTopWidth, radius: cs.borderTopLeftRadius, fill: cs.backgroundColor, colour: cs.color, height: Math.round(box.height), top: Math.round(box.top), right: Math.round(box.right) }; });
+        const controls = Array.from(main.querySelectorAll<HTMLElement>('button, a')).map((el) => { const cs = getComputedStyle(el); const box = el.getBoundingClientRect(); return { text: (el.textContent ?? '').trim(), tag: el.tagName.toLowerCase(), href: el.getAttribute('href'), size: cs.fontSize, upper: cs.textTransform, mono: /mono/i.test(cs.fontFamily), border: cs.borderTopWidth, radius: cs.borderTopLeftRadius, fill: cs.backgroundColor, colour: cs.color, height: Math.round(box.height), top: Math.round(box.top), right: Math.round(box.right), edges: { left: box.left, top: box.top, right: box.right, bottom: box.bottom } }; });
         return { heading: { text: h1.textContent, size: getComputedStyle(h1).fontSize, colour: getComputedStyle(h1).color, left: Math.round(h1.getBoundingClientRect().left) }, sentence: { text: (sentence.textContent ?? '').trim(), colour: getComputedStyle(sentence).color, count: main.querySelectorAll('p').length }, controls, figures: main.querySelectorAll('svg, img, [data-tint], [data-head-figure], [data-diagonal]').length, scroll: document.documentElement.scrollWidth, client: document.documentElement.clientWidth };
       });
       expect(m.heading).toMatchObject({ text: 'Something went wrong.', size: '40px', left: 18 });
@@ -52,6 +53,16 @@ for (const pointer of POINTERS) test.describe(`the error screen under a ${pointe
         expect.soft(control.right, `${control.text}: inside the window`).toBeLessThanOrEqual(width - 18);
       }
       expect(m.controls[0]?.top, 'the two controls on one line').toBe(m.controls[1]?.top);
+      /*
+        Step 143: grouped controls stand 24 apart, §G.3's gap, "side by side or stacked"; the axis is read from the
+        boxes rather than assumed (`pair-gap.ts`) and named in the message. Fails against the pair as built, 8 apart.
+      */
+      const [tryAgain, back] = m.controls;
+      if (tryAgain === undefined || back === undefined) throw new Error('the two controls are not both there');
+      const apart = gapBetween(tryAgain.edges, back.edges);
+      test.info().annotations.push({ type: 'axis', description: `TRY AGAIN and COLLECTION at ${width} ${pointer}: ${apart.axis}, ${apart.gap} apart` });
+      expect(['x', 'y'], `at ${width}: the pair is side by side or stacked`).toContain(apart.axis);
+      expect(apart.gap, `at ${width}: 24 apart along ${apart.axis}`).toBe(24);
       expect(m.figures, 'no ornament and no figure').toBe(0);
       expect(m.scroll, 'the page is the window’s width').toBe(m.client);
       await expectFloor(page, pointer, `the error screen at ${width}`);

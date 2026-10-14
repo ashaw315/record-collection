@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist } from './cleanup';
 import { POINTERS, pointerIs } from './hit-area';
+import { gapBetween } from './pair-gap';
 import { login } from './sign-in';
 
 registerCleanup();
@@ -42,7 +43,7 @@ test.beforeEach(async ({ page }) => login(page));
 
 for (const pointer of POINTERS) test.describe(`Ask Claude’s panel under a ${pointer} pointer`, () => {
   test.use({ hasTouch: pointer === 'coarse' });
-  for (const width of [390, 1280]) {
+  for (const width of [320, 390, 1280]) {
     /* Fails against "Thinking…" narrower than "Ask Claude" (the select moved 4), and against a failure line that is not there until it fails (what follows moved 31). */
     test(`nothing moves when ASK CLAUDE reads THINKING… or fails, at ${width}`, async ({ page }) => {
       expect(await pointerIs(page)).toBe(pointer);
@@ -73,6 +74,16 @@ for (const pointer of POINTERS) test.describe(`Ask Claude’s panel under a ${po
         expect.soft(control, 'type and corners').toMatchObject({ size: '11px', upper: 'uppercase', mono: true, radius: '0px' });
         if (pointer === 'coarse') expect.soft(control.height, '44 in the box under a coarse pointer').toBe(44);
       }
+      /*
+        Step 143: grouped controls stand 24 apart, §G.3's gap, "side by side or stacked"; the axis is read from the
+        boxes rather than assumed (`pair-gap.ts`) and named in the message. Fails against the row as built, 8 apart.
+      */
+      const [select, ask] = await page.evaluate(() => ['[data-testid="gap-scope"]', '[data-ask-button]'].map((selector) => { const b = (document.querySelector(selector) as HTMLElement).getBoundingClientRect(); return { left: b.left, top: b.top, right: b.right, bottom: b.bottom }; }));
+      if (select === undefined || ask === undefined) throw new Error('the select and the button are not both there');
+      const apart = gapBetween(select, ask);
+      test.info().annotations.push({ type: 'axis', description: `the select and ASK CLAUDE at ${width} ${pointer}: ${apart.axis}, ${apart.gap} apart` });
+      expect(['x', 'y'], `at ${width}: the pair is side by side or stacked`).toContain(apart.axis);
+      expect(apart.gap, `at ${width}: 24 apart along ${apart.axis}`).toBe(24);
     });
   }
 

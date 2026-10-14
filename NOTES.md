@@ -44923,3 +44923,57 @@ and the clipping count in its walk; part 1 back to back with the ring,
 one gate for both; part 2; login at 1280 and the hierarchy; the result
 card, held on the retaken pictures. Nothing waits on Design for the
 wall's focus.
+
+## 13 Oct, 20:35: step 143, unit one: the three grouped pairs 24 apart
+
+**Built.** The error screen's TRY AGAIN and COLLECTION, suggestions'
+scope select and ASK CLAUDE, and the dialog's CANCEL and DELETE side by
+side stand 24 apart, §G.3's gap; each was 8 (`gap-2` in `ErrorBody.tsx`
+and `GapAnalysis.tsx`, `sm:gap-2` on the dialog's footer, whose stacked
+24 was already there from step 139). Three classes, nothing else drawn.
+
+**The axis is read, not assumed** (the coordinator's amendment).
+`e2e/pair-gap.ts` finds which axis separates two boxes and the gap
+along it, held by `test/repo/pair-gap.test.ts` (6 tests, failed first on
+the missing module). The error spec, the suggestions spec and the
+dialog check in `hit-area.ts` assert 24 on the axis found and name it in
+the message; the dialog check keeps the footer's own fork, stacked below
+640, as the build's claim. Suggestions' loop gained 320. Fail first on
+chromium: 16 failed, every one `Received: 8` against 24, along x at 320,
+390 and 1280 for the error screen and suggestions and at 768 and 1280
+for the dialog. After the classes, both projects: the five specs that
+read these (`error-screen-142`, `suggestions-140`, `want-list`, `manage`,
+`record-detail`; the dialog check is read by three specs, not ten)
+`258 passed`.
+
+**Where pairs stack, Design's question, answered by the sheet**
+(`docs/captures/gap-143/gap-143.md`, nine pictures at 320 and 390 coarse
+and 1280 fine): the error screen's two and suggestions' pair sit side by
+side at every width down to 320; only the dialog stacks, below its 640
+fork, so at 320 and 390 its 24 is vertical and at 1280 horizontal. All
+nine read 24 along their axis. The pictures also show what this unit did
+not touch: the dialog's blur and dim and its sentence-case buttons are
+part 2's.
+
+**Step level:** those five specs on chromium and mobile, `258 passed`;
+`pair-gap` under `test/repo`; typecheck, lint (0 errors) and build clean.
+Every-test files touched: none; `hit-area.ts` changed in the dialog
+check only. The handoff's step 143 block is written when unit two, the
+stats column, closes the step.
+
+## 13 Oct, 20:50: the 20:23 drop taken in, found red at the step's commit
+
+**The drop** (raw `6891972`, the listing `docs/intake/6891972-added.md`:
+12 added, 2 reworded, 1 removed) landed while the covering run was
+going, unmentioned, and showed itself as the two red tests at step 143's
+checked commit. It is the one the coordinator described at 19:30: each
+focus mark scoped to its control, "so a state added later inherits it";
+the composition "the runs and their records, and nothing else", with the
+side decided by what a control is part of, which is the reason the sheet
+now states; the wall's sets confirmed control by control from
+`wall-focusables.md`, with 31, 15 and 33 expected once the Apply has
+left the order and today's 32, 16 and 34 named; and the ring step's
+handoff sentence now says the walk "fails if the Apply is still reached".
+The one sentence removed outright, "It is written here once Code has
+read the pulled state, and not before", is replaced by the sets it
+promised. The index: 12 PASS.
