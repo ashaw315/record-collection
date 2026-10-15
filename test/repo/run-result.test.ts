@@ -505,3 +505,10 @@ describe('a run in which every test skipped', () => {
     expect(summarise(result)).toMatch(/^0 passed, 29 skipped — NOT OK — every test skipped — nothing ran$/);
   });
 });
+
+/* Fails against a branch entered only on a MISSING passed count: a literal "0 passed" (a judged line fed back, as a gate log carries) was read as a run that passed. */
+it('a run with a passed count of zero and nothing failed is not a pass either', () => {
+  const result = readRunResult({ output: '0 passed, 29 skipped, ledger clean — NOT OK\n', exitCode: 0 });
+  expect(result.ok).toBe(false);
+  expect(result.reason).toBe('every test skipped — nothing ran');
+});
