@@ -240,6 +240,14 @@ export function readRunResult({
     steps.
   */
   if (passed === null && failed === 0) {
+    /*
+      A skipped count IS a summary: the run reported, and what it reported is
+      that nothing ran. The gate's capture project, alone since the projects
+      were split (15 Oct), is 29 skips and no passed count, and the line
+      called it unreported, which sends a reader after a crash that did not
+      happen. Not a pass either: a chunk in which nothing ran verified nothing.
+    */
+    if (skipped > 0) return { ...base, ok: false, reason: 'every test skipped — nothing ran' };
     return { ...base, ok: false, reason: 'no summary line found — the run did not report' };
   }
 

@@ -484,3 +484,24 @@ describe('a run the machine slept through says so', () => {
     expect(summarise(readRunResult({ output: green, exitCode: 0 }))).toBe('12 passed — OK');
   });
 });
+
+/**
+ * **A run in which every test skipped reported; it did not pass (15 Oct).**
+ * The gate runs Playwright one project at a time since f1a5082, and the
+ * capture project is a tool: all 29 of its tests skip without CAPTURE=1.
+ * Alone, Playwright summarises it as "  29 skipped" with no passed count,
+ * and the judge read that as "no summary line found — the run did not
+ * report", which is false: the run reported, and what it reported is that
+ * nothing ran. The two are different faults with different fixes, and a
+ * line that names the wrong one sends the reader to the wrong place.
+ */
+describe('a run in which every test skipped', () => {
+  /* Fails against `passed === null && failed === 0` being read as no summary: a skipped count is a summary. */
+  it('is reported as nothing having run, not as a run that did not report', () => {
+    const result = readRunResult({ output: '  -  1 [capture] › e2e/capture/wall-focusables.capture.ts:21:5 › list the focusables\n\n  29 skipped\n', exitCode: 0 });
+    expect(result.ok).toBe(false);
+    expect(result.skipped).toBe(29);
+    expect(result.reason).toBe('every test skipped — nothing ran');
+    expect(summarise(result)).toMatch(/^0 passed, 29 skipped — NOT OK — every test skipped — nothing ran$/);
+  });
+});

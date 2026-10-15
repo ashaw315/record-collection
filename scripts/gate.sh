@@ -131,12 +131,17 @@ UNIT="$LOGS/$COMMIT-unit.log"
 # for a whole `npx playwright test`, and it holds what it compiles: 1,565 MB
 # after a two-test run (15 Oct, NOTES). The gate for 146 was killed for memory
 # at test 1303 of 1319, deep into mobile, after one server had answered
-# everything before it. Chromium, capture, then mobile is the order a bare run
-# takes anyway; running them as three commands caps a server at one project's
-# requests and starts the next one fresh. Fewer workers never touched this:
-# the server is one process whatever the count. `GATE_PROJECTS` names the
-# projects, for staging the loop on fewer than three.
-PROJECTS="${GATE_PROJECTS:-chromium capture mobile}"
+# everything before it. Running the projects as separate commands caps a
+# server at one project's requests and starts the next one fresh. Fewer
+# workers never touched this: the server is one process whatever the count.
+# `GATE_PROJECTS` names the projects, for staging the loop on fewer.
+#
+# Chromium and mobile are the gate (CLAUDE.md §10: "both projects"). The
+# capture project is a tool: every one of its tests skips without CAPTURE=1,
+# so in the combined run it was only ever skips inside the summary, and alone
+# (dc19c46, 15 Oct) it was a dev server started for 29 skips and a chunk that
+# can never report a pass: "0 passed, 29 skipped — NOT OK".
+PROJECTS="${GATE_PROJECTS:-chromium mobile}"
 e2e_log() { echo "$LOGS/$COMMIT-e2e-$1${WORKERS:+-w$WORKERS}.log"; }
 
 # The gate's own report, written at the start and finished at the end, so it
