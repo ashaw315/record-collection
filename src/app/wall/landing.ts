@@ -18,6 +18,18 @@ export const LANDED_SIZE = 560;
 
 export type { View };
 
+/**
+ * §W.29: the arrival's offset as the scroll that replaces it. The server
+ * paints the composition translated by the arrival negated, with the
+ * region's scroll at zero; when the person's scroll wins and the arrival is
+ * not applied, the translate is still cleared, and the scroll grows by this
+ * so what is under their eye does not move. Nothing when there is no offset.
+ */
+export function offsetOf(transform: string): readonly [number, number] {
+  const m = /translate\((-?[\d.]+)px,\s*(-?[\d.]+)px\)/.exec(transform);
+  return m === null ? [0, 0] : [-Number(m[1]), -Number(m[2])];
+}
+
 export function parseMatrix(transform: string): number[] {
   const inner = /matrix\(([^)]+)\)/.exec(transform)?.[1] ?? '';
   return inner.split(/[\s,]+/).filter((t) => t !== '').map(Number);

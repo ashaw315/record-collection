@@ -7,7 +7,7 @@ import type { RecordSummary } from './summary';
 import type { WallSeat } from './shelf-runs';
 import { labelsFit } from './geometry';
 import { navigate, type Direction } from './adjacent-seat';
-import { LANDING_PAD } from './landing';
+import { LANDING_PAD, offsetOf } from './landing';
 import type { View } from './view';
 import { OUT_MS, RETURN_MS, SWING_MS, outTime, settled } from './gesture';
 import { frameView, landedExtent, panFraction, panView, type Pan } from './pan';
@@ -131,6 +131,17 @@ export function WallLive({
   const landingWriteRef = useRef<{ left: number; top: number } | null>(null);
   /* §W.29: the desktop opens near and ARRIVES on the occupied shelf, through the same landing a zoom-in uses. */
   const arrived = useRef(false);
+  /* §W.29: whether the pending landing is the arrival's, the one a person's scroll wins over; a zoom-in's or a filter's is their own act. */
+  const arrivalPending = useRef(false);
+  /*
+    §W.29: the offset the server painted the composition with, read at the
+    first commit, where the client's render still matches the server's
+    markup. The measuring commit renders the wrapper without the style, and
+    React removes it in that commit's mutation phase, before the layout
+    effect that consumes the landing: read there, the transform is already
+    empty, and a skip that trusted it moved the wall by exactly the offset.
+  */
+  const paintedOffset = useRef<readonly [number, number] | null>(null);
   const [pulls, setPulls] = useState<readonly PullState[]>([]);
   /* §W.22: every record that has moved since the wall was last at rest — its landing stays in the frame until then. */
   const [framed, setFramed] = useState<readonly string[]>([]);
@@ -211,6 +222,7 @@ export function WallLive({
   useLayoutEffect(() => {
     const el = region.current;
     if (el === null) return;
+    if (paintedOffset.current === null) paintedOffset.current = offsetOf(el.querySelector<HTMLElement>('[data-arrival-offset]')?.style.transform ?? '');
     /* The same layout the drawing committed, for its frame's origin. */
     const layout = wallLayout(seats, framed.map((id) => ({ id })), width, view === null ? 0 : Math.max(view.height, height));
     const [frameX, frameY] = layout.frame.viewBox.split(' ').map(Number);
@@ -249,7 +261,10 @@ export function WallLive({
           addressed === null
             ? arrivalSeat(layout.placed, emptied)
             : (layout.placed.find((p) => p.z === addressed) ?? arrivalSeat(layout.placed, emptied));
-        if (first !== null) landOn.current = first.id;
+        if (first !== null) {
+          landOn.current = first.id;
+          arrivalPending.current = true;
+        }
       }
     } else if (arrived.current && routeView === 'near' && landedFilter.current !== null && landedFilter.current !== filter && pulls.length === 0) {
       const first = arrivalSeat(layout.placed, emptied);
@@ -271,6 +286,36 @@ export function WallLive({
         /* Counted so the ordering can be asserted: consumed exactly once, on the commit whose frame is the region's own (§W.12). */
         const counter = window as unknown as { __landings?: number };
         counter.__landings = (counter.__landings ?? 0) + 1;
+        if (arrivalPending.current) {
+          arrivalPending.current = false;
+          /*
+            §W.29: the person's scroll wins. The server paints the composition
+            translated to the arrival with the region's scroll at zero, so a
+            scroll that is not zero at this commit is one the person made
+            before it — before the page was interactive, or in the gap a
+            deferred consumption leaves — and the arrival is not applied. The
+            offset is still cleared, in this same layout pass, and the scroll
+            takes the offset's amount, so what is under their eye does not
+            move. Staged 15 Oct: a scroll that waits for hydration lands after
+            this commit every time, because the measuring commit re-renders
+            synchronously; the window the ruling names is before it.
+          */
+          if (el.scrollLeft !== 0 || el.scrollTop !== 0) {
+            const offset = el.querySelector<HTMLElement>('[data-arrival-offset]');
+            const [dx, dy] = paintedOffset.current;
+            if (offset !== null) offset.style.transform = '';
+            el.scrollLeft += dx;
+            el.scrollTop += dy;
+            landingWriteRef.current = { left: Math.round(el.scrollLeft), top: Math.round(el.scrollTop) };
+            (window as unknown as { __arrival?: string }).__arrival = 'skipped';
+            originRef.current = [frameX, frameY];
+            viewNowRef.current = readView(el, [frameX, frameY]);
+            gestureOnRef.current = pulls.length > 0;
+            return;
+          }
+          /* Read by the specs that stage a scroll against the arrival (§W.29): which way it went. */
+          (window as unknown as { __arrival?: string }).__arrival = 'applied';
+        }
         /* The addressed seat's whole ROW, so the target takes in every top face the arrival shows (§W.28). */
         const row = layout.placed.filter((p) => p.z === seat.z);
         const target = nearView(seat, { width: el.clientWidth, height: el.clientHeight - LANDING_PAD }, row);
@@ -346,6 +391,8 @@ if (offset !== null) offset.style.transform = '';
       if (!gestureOnRef.current) viewNowRef.current = readView(el, originRef.current);
     };
     el.addEventListener('scroll', onScroll);
+    /* From here the region hears the person: the mark the specs stage a post-hydration scroll against (§W.29). */
+    el.dataset.hydrated = 'true';
     return () => el.removeEventListener('scroll', onScroll);
   }, []);
 

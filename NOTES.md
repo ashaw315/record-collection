@@ -46469,3 +46469,48 @@ CANCEL and MERGE THEM judgement, and §T.6's older `No entry:` that 12
 reports unnamed.
 
 **Next: step 147**, §W.29, the person's scroll wins.
+
+## 15 Oct, 18:51: step 147, the person's scroll wins
+
+**Built under §W.29's ruling, tests first.** The two staged cases went
+into `e2e/scroll-lock.spec.ts` and were watched red twice: first on
+the probe's absence (no `__arrival` at all), then, with the probe and
+the hydration mark added alone, on the ruling itself (`Expected:
+"skipped", Received: "applied"`). The fix is one check at the commit
+that consumes the arrival: the region's scroll against the zero the
+server painted; moved, the arrival is skipped, the offset cleared and
+the scroll compensated. `offsetOf` in `landing.ts` has its unit test,
+watched red on the missing export.
+
+**Three things the staging found, none of them in the ruling's text:**
+
+- **An init script runs before the document has a root.** Observing
+  `documentElement` threw and staged nothing; both cases reported
+  "the staged scroll took: Received null" rather than passing, which is
+  the precondition doing its job. The observer watches the document.
+- **The "after hydration, before the arrival" window does not exist for
+  a person.** A scroll that waits for the hydration mark landed after
+  the arrival was decided every time: the measuring commit re-renders
+  synchronously, so the mark, the measurement and the arrival's write
+  are one task. The second case now records that fact and holds that a
+  later commit does not write over the person; it passed first time,
+  which it should, since it guards §W.22's listener line and documents
+  the window. The ruling's "or after" is met by the same check at a
+  deferred consumption, which no spec reaches: a scroll back to exactly
+  zero before a deferred consumption is the one case the check misses.
+- **React removes the server's offset before the consuming layout
+  effect.** The first fix read `style.transform` there, got nothing,
+  and moved the wall by exactly 75, the offset. The offset is read once
+  at the first commit, where the client's render still matches the
+  markup. The existing `offset.style.transform = ''` in the normal path
+  is a no-op for the same reason; left as it is.
+
+**Step level:** scroll-lock (4) and wall-first-paint (8) on chromium 12
+passed; wall-route on chromium passed after the last edit; the mobile
+project matches no scroll-lock test; `landing.test.ts` 4 passed;
+typecheck clean; lint 0 errors, 27 warnings as before; build compiled.
+The staged scroll is 300, not 600: at the scroller's end the content the
+offset showed does not exist below the composition, and the clamp moves
+it by the difference.
+
+**For Adam:** nothing. **Next:** the spines' roving index.
