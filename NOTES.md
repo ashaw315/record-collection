@@ -46569,3 +46569,46 @@ by name and holds no wall spec.
 
 **For Adam:** nothing. **Next:** login at 1280 and the proposed
 hierarchy, the unnumbered §T.6 step at handoff line 561.
+
+## 15 Oct, 19:35: step 149, login at 1280 and the proposed hierarchy; the queue's end
+
+**Login's half was already step 145's.** The bullet says keep the
+centred 384 column from 420 up with the 18 inset below it and capture
+it at 1280; `part1-145.spec.ts` pins exactly that and the capture set
+holds `login-w1280-fine-h844.png`. Nothing built; the block says so.
+
+**The hierarchy, tests first.** `hierarchy-149.spec.ts` in the review
+spec's shape, at 1280 fine and 390 coarse with the suggestion route
+answered by the test, watched red on the section's absence (and the
+rest behind it), then green: the section between hairlines as the
+review's (`border-y border-border`, the same classes, since the review
+was ratified so); SUGGEST A HIERARCHY and ACCEPT ALL N REMAINING as
+`CONTROL_BOX`, the shadcn Button gone from the proposal; ACCEPT, REJECT
+and ACCEPT ALL UNDER as `CONTROL_LABEL`, 24 apart with no overlay; the
+name on one line with the verbs at the right, the evidence a `<p>` on
+the next line in the label colour, no parentheses. The settled states
+("Accepted", "Rejected — will not be suggested again") and the
+no-parent-fits block were not in the ruling and stand as they were; the
+dashed rule above no-parent-fits is noted for Design as the one internal
+rule the section still carries.
+
+**Step level:** `hierarchy-149.spec.ts` (2), `manage.spec.ts` 37 and
+`manage-146.spec.ts` 2 on chromium, manage's hierarchy flow on mobile 1,
+typecheck 0, lint 0 errors and 27 warnings as before, build compiled;
+the recapture by `e2e/capture/hierarchy-149.capture.ts` with CAPTURE=1,
+four whole pages, committed alone first; `test/repo` after the block.
+
+**The queue is run.** 147, 148 and 149 are done at step level on the
+reviewer's go; look up's result card waits on Design's layout rulings
+and is not started. **Items for Design, as text, gathered from today:**
+the two Maintaining sentences (assertion 12's entry); step 144's bullet
+pinning the Tab walk at 31, 15 and 33, now 15, 15 and 18 with the spines
+one stop; the review's CANCEL and MERGE THEM judgement (step 146's
+block); §T.6's older `No entry:` that 12 reports unnamed; the
+hierarchy's dashed rule above no-parent-fits. **For Adam:** nothing.
+
+**What a gate would cover now:** 147 changed the wall's landing and the
+scroll-lock spec; 148 changed every spine's tab order and three specs'
+order reads; 149 the manage screen. None touched fixtures, cleanup,
+seeding, `test/helpers/`, a config or a migration, so none is a gate by
+§10's list; a gate before the next merge covers all three.

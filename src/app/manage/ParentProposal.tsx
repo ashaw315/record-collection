@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
+import { CONTROL_BOX, CONTROL_LABEL } from '@/app/records/[id]/grid-type';
 import {
   evidenceLine,
   groupProposal,
@@ -82,14 +82,47 @@ export function ParentProposal({
               const state = settled[child.genreId];
 
               return (
-                <li
-                  key={child.genreId}
-                  data-testid={`pairing-${child.genreId}`}
-                  className="flex items-baseline gap-2 pl-3 text-detail"
-                >
-                  <span className={state === 'rejected' ? 'text-muted-foreground line-through' : ''}>
-                    {child.genre}
-                  </span>
+                /*
+                  Step 149 (§T.6, 14 Oct): "Each proposed genre sets its name on
+                  one line with ACCEPT and REJECT at the line's right, and its
+                  evidence ... on the next line in the label colour. At 390, as
+                  built, the name wrapped beside its evidence." The verbs are
+                  §9.3 labels, 24 apart by the grouped-controls rule and with no
+                  half-gap overlay.
+                */
+                <li key={child.genreId} data-testid={`pairing-${child.genreId}`} className="pl-3 text-detail">
+                  <div className="flex items-center justify-between gap-6">
+                    <span data-genre-name="" className={state === 'rejected' ? 'text-muted-foreground line-through' : ''}>
+                      {child.genre}
+                    </span>
+
+                    {state === undefined ? (
+                      <span className="flex shrink-0 gap-6">
+                        <button
+                          type="button"
+                          data-testid={`accept-${child.genreId}`}
+                          disabled={busy === child.genreId}
+                          onClick={() => void settle(child, 'accepted')}
+                          className={`${CONTROL_LABEL} disabled:opacity-50`}
+                        >
+                          Accept
+                        </button>
+                        <button
+                          type="button"
+                          data-testid={`reject-${child.genreId}`}
+                          disabled={busy === child.genreId}
+                          onClick={() => void settle(child, 'rejected')}
+                          className={`${CONTROL_LABEL} disabled:opacity-50`}
+                        >
+                          Reject
+                        </button>
+                      </span>
+                    ) : (
+                      <span className="text-meta text-muted-foreground">
+                        {state === 'accepted' ? 'Accepted' : 'Rejected — will not be suggested again'}
+                      </span>
+                    )}
+                  </div>
 
                   {/*
                     **The basis, STATED and never RATED.** A count is a fact the
@@ -99,36 +132,9 @@ export function ParentProposal({
                     and it is the EXAMPLE that reveals it, which is why the line
                     carries one rather than a number alone.
                   */}
-                  <span data-testid={`evidence-${child.genreId}`} className="text-meta text-muted-foreground">
-                    ({evidenceLine(child.evidence)})
-                  </span>
-
-                  {state === undefined ? (
-                    <span className="ml-auto flex gap-1">
-                      <button
-                        type="button"
-                        data-testid={`accept-${child.genreId}`}
-                        disabled={busy === child.genreId}
-                        onClick={() => void settle(child, 'accepted')}
-                        className="text-label underline underline-offset-2 disabled:text-muted-foreground"
-                      >
-                        Accept
-                      </button>
-                      <button
-                        type="button"
-                        data-testid={`reject-${child.genreId}`}
-                        disabled={busy === child.genreId}
-                        onClick={() => void settle(child, 'rejected')}
-                        className="text-label text-muted-foreground underline underline-offset-2"
-                      >
-                        Reject
-                      </button>
-                    </span>
-                  ) : (
-                    <span className="ml-auto text-meta text-muted-foreground">
-                      {state === 'accepted' ? 'Accepted' : 'Rejected — will not be suggested again'}
-                    </span>
-                  )}
+                  <p data-testid={`evidence-${child.genreId}`} className="text-meta text-[oklch(0.44_0.008_70)]">
+                    {evidenceLine(child.evidence)}
+                  </p>
                 </li>
               );
             })}
@@ -150,7 +156,7 @@ export function ParentProposal({
                   if (settled[child.genreId] === undefined) await settle(child, 'accepted');
                 }
               }}
-              className="mt-1 ml-3 text-label underline underline-offset-2"
+              className={`${CONTROL_LABEL} mt-1 ml-3 disabled:opacity-50`}
             >
               Accept all under {group.parent}
             </button>
@@ -182,19 +188,18 @@ export function ParentProposal({
         after the whole proposal has been read, and says how many it will change.
       */}
       {outstanding.length > 0 && (
-        <div className="mt-4 border-t border-border pt-3">
-          <Button
+        <div className="mt-4">
+          <button
             type="button"
-            variant="outline"
-            size="sm"
             data-testid="accept-all"
             disabled={busy !== undefined}
             onClick={async () => {
               for (const pairing of outstanding) await settle(pairing, 'accepted');
             }}
+            className={`${CONTROL_BOX} disabled:opacity-50`}
           >
             Accept all {outstanding.length} remaining
-          </Button>
+          </button>
         </div>
       )}
     </section>

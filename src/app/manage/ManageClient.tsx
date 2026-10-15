@@ -313,13 +313,17 @@ function ResourcePanel({ resource, rows }: { resource: ResourceSpec; rows: Row[]
               it costs**, because it spends one of ten hourly requests — §9.2's
               rule that a call is user-initiated and never incidental.
             */}
-            <div className="mt-4 border-t border-border pt-3">
+            {/*
+              Step 149 (§T.6, 14 Oct): "it is a section between hairlines", as
+              the duplicate review is, and SUGGEST A HIERARCHY a §9.3 box.
+            */}
+            <section data-testid="hierarchy" className="mt-4 border-y border-border py-4">
               <button
                 type="button"
                 data-testid="propose-parents"
                 disabled={proposing}
                 onClick={() => void proposeParents()}
-                className={`${HIT_ALONE} text-label underline underline-offset-2 disabled:text-muted-foreground`}
+                className={`${CONTROL_BOX} disabled:opacity-50`}
               >
                 {proposing ? 'Thinking…' : 'Suggest a hierarchy'}
               </button>
@@ -369,7 +373,7 @@ function ResourcePanel({ resource, rows }: { resource: ResourceSpec; rows: Row[]
                   }}
                 />
               )}
-            </div>
+            </section>
           </>
         ) : (
           <div data-manage-table="" className="hidden sm:block">
