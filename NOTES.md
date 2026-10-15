@@ -45895,3 +45895,48 @@ form (`13eeb85`), manage's rows (`de36a9a`), the lineup slot
 (`a117fd4`) and the review (below). The gate for the step is next: two
 screens' passes close with it (manage and the record form), and
 `e2e/hit-area.ts`'s drawn sizes changed.
+
+## 15 Oct, 04:50: the gate for 146, stopped short of a summary line
+
+**The gate ran as one background command, `npm test` then
+`npx playwright test` with no file argument.** The unit half is green:
+`Test Files 304 passed | 1 skipped`, `Tests 4367 passed | 2 skipped`, in
+508s. The Playwright half, `Running 1319 tests using 2 workers`, was
+stopped by the harness at test 1303 because the machine ran out of
+memory while the session was idle; it printed no summary line, and **no
+summary line is a failure, not a pass** (CLAUDE.md §9). The gate for
+146 is therefore NOT run. It is to be run again on the go, not on my
+own: the harness's note says memory may still be short.
+
+**What the stopped run shows, read from the traces** (the failure
+report never printed; `test-results/*/trace.zip` holds each test's
+error). 32 failure lines, 1236 passed, 34 skipped to the stop. Thirty
+of the 32 are the starved machine and say nothing about the code:
+`Test timeout of 30000ms exceeded` at the sign-in's arrival or a
+`page.goto`, tests that took 11 to 22 minutes where the previous gate
+took seconds, and `ring-144`'s three at `Test timeout of 900000ms`
+with `Target page, context or browser has been closed`. `dialog-146`'s
+two are of that kind: the sign-in did not arrive at 1280, and
+`toBeHidden` on the dialog timed out at 390 (its covering run was
+`242 passed`). The two in `discogs-prefill` and `lookup-flows` with a
+`toBeVisible` or `expand-evidence` after a 30s budget are the same
+starvation one step later.
+
+The one that failed the same assertion twice, `scroll-lock.spec.ts:59`
+"the region is scrolled before the pull": `Expected: > 100, Received:
+75`. 75 is the arrival's write, the figure the spec's own comment
+names (§W.22's latch, "593 scrolled, 75 returned"): on a page that
+took its time, the test's `scrollTo(600)` landed BEFORE the arrival
+pan, and the pan then wrote 75 over it. A race the starved machine
+widened, not a break. **Run alone on chromium, step level:
+`2 passed` in 25s.**
+
+**Memory at the reading:** 55% free, the run's processes gone (no
+`playwright`, `next` or `chromium` left). The DB guard did not have to
+refuse anything; nothing else was running beside the gate.
+
+**Not yet confirmed at step zero:** `git status --short docs/design`
+is clean and `export-diff` finds nothing added or removed, so the
+newest Design save (the coordinator's "confirm at step zero when you
+take that drop in") has not arrived in the working tree. The
+confirmation waits for the drop.
