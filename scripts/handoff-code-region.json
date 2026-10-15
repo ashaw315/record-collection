@@ -184,5 +184,15 @@
     "before": "No step: §G.7",
     "why": "Code's number for Design's unnumbered step of 13 Oct, \"part 1's passes\".",
     "text": "145. **Done: built.** **§T.6 — part 1's passes: Code's number for that unnumbered step.** On the want list's item page and its new and edit forms, field and section labels take §4.1's type, EDIT, SAVE CHANGES and ADD TO WANT LIST are §9.3 boxes with CANCEL a §9.3 label 24 clear, each label stands on its field's first line at 1280, the three headings share the Collection's weight, and the item page's title takes the record title's leading when it wraps. Login's heading, sentence and controls take the same type; its inset, centred column and refusal slot were built. Not-found draws the header, the 40 heading Not found., the address sentence in the label colour and a COLLECTION box, as the error screen does. The §9.3 box is one constant beside the label type, drawn by the four new places; five older copies of the same string stand unfolded, named for a later unit. Captured at 390 coarse and 1280 fine on the test database (`docs/captures/part1-145/`). Login's ring is step 144's."
+  },
+  {
+    "id": "step-146",
+    "before": "No step: §G.7",
+    "text": "146. **In progress; the gate pending.** **§T.6 — part 2's passes: Code's number for that unnumbered step.** The shared dialog, the record form, manage's rows, the lineup walk's slot and manage's duplicate review, each built and verified at step level (NOTES, 14 and 15 Oct). The block is written in full when the gate closes the step; the number is held here so the order runs without a gap."
+  },
+  {
+    "id": "step-147",
+    "before": "No step: §G.7",
+    "text": "147. **Not yet built.** **§W.29 — the person's scroll wins over the arrival: Code's number for the unnumbered step under Maintaining this file.** On hydrating, compare the region's scroll position with the first-painted one and skip the landing write if they differ; after hydration, skip any landing write once a scroll the code did not make has happened. `scroll-lock.spec.ts:59`'s failure in the 146 gate is this defect seen once: the spec's scroll landed before the hydrating commit and the landing wrote 75 over it, and under the ruling the spec's assertion is right as written. Add the two staged cases the ruling names, a scroll before hydration and one after, each confirmed to have taken before the reading, asserting the region is where the person put it."
   }
 ]

@@ -46155,8 +46155,18 @@ greens that examine the wrong thing:
   the instrument is a reading of nothing in particular, and 2 MB would
   never have looked wrong.
 
-Neither was visible to reading the script, and the script had been
-read. Both were obvious in the first run against real processes,
+- **The index's row, written by hand.** The apparatus index at the
+  head of this file is generated from the entries, and the morning's
+  commit added its row by hand, which `test/repo/notes-index.test.ts`
+  refused at the first gate-shaped run. A generated index with one row
+  written by hand is the same shape as a convention held by repetition:
+  the row was right, and the next regeneration would have dropped it
+  without a word. The generator caught in minutes what reading would
+  not have, which makes three instruments in two days that found what
+  reading missed (the DB guard, the sampler, the index test).
+
+Neither of the first two was visible to reading the script, and the
+script had been read. Both were obvious in the first run against real processes,
 which is what §9 says of guards and is now true of instruments: **the
 measurement is not verified until it has measured something whose
 answer is known.** That is several times now that staging found what
@@ -46223,8 +46233,67 @@ server's size is mostly its baseline, not its history: a figure that
 large that early is not what 1,300 tests built. What the whole run
 adds on top is what the rerun's samples will show.
 
+The reviewer's sharper reading of the same numbers (15 Oct): mobile's
+fresh server peaked at 2,135 and settled to 1,522 inside nine tests —
+a peak above the previous server's ceiling, then falling, is compile
+cost and not accumulation; routes compile on first visit and are then
+reused. So the question for the rerun is not whether chunking caps
+growth but **what the server's FLOOR is, and whether the floor alone
+can kill a run on this machine**: a 1.5 to 2 GB server beside Docker's
+1.9 GB virtual machine is near 4 of the 16 before a browser or the
+runner exists. That does not read as "chunking will not help where it
+died": at test 1303, chunked, mobile starts from the floor instead of
+from the floor plus 1,300 tests. At the exact point of death it helps
+by construction, whatever it does elsewhere. **If this run dies too,
+`next start` stops being a post-146 diagnostic and moves ahead of the
+remaining design work**: it is the only thing on the table that
+removes the floor rather than limiting what sits on top of it. Not
+reordered on a nine-test sample; the gate runs first.
+
 The staging also found one failing unit test, mine and from the
 morning's commit: `test/repo/notes-index.test.ts`, because the
 apparatus index at the head of this file is generated from the
 entries by `scripts/notes-index.ts`, and I had added its row by hand.
 Fixed by the generator, below.
+
+## 15 Oct, 14:20: step zero on the §W.29 drop, and 147 numbered for the scroll that wins
+
+**The drop the 04:50 entry was waiting for arrived** in the working
+tree as two modified files, the handoff and the Wall and Pull target,
+and was taken in as the precedent has it: raw at `3a8876a` with
+`code-region` and `index-assertions` red, then the intake. The applier
+put Code's 31 blocks back (`31 restored, 0 with no anchor`), and
+`export-diff` against f1a5082 with the blocks restored reads
+**0 removed, 0 reworded, 23 added** across the two files, the listing
+in `docs/intake/3a8876a-added.md`. Read against the reviewer's message:
+the §W.29 ruling is in both files as claimed; the drop also carries two
+unnumbered §T.6 items under the nav target that the message does not
+claim, tag rings on chips and ring-144's two cases, with one sentence
+standing in both. Code numbers those when they are built.
+
+**The ruling, as the target now states it:** "The person's scroll
+wins: once they have scrolled the region, the arrival is not applied."
+A scroll is a choice; before hydration the build cannot hear one, so on
+hydrating it compares the region's position with the one first painted
+and skips the landing write if they differ; every later landing write
+first asks whether a scroll the code did not make has happened. No
+entry owed: §W.29 never ruled the arrival over a reader's scroll.
+
+**147 is the scroll-loss step**, Code's number, in
+`scripts/handoff-code-region.json` where Code's lines live, and not in
+the handoff directly, where the next export would take it. The
+sequence check wants the order without a gap, so **146 holds a block
+too**, marked in progress with the gate pending and naming its five
+units; it is written in full when the gate closes the step. Neither
+block starts with Done, so `isDone` reads neither as done.
+
+**Item 2 reclassified a second time, now with a ruling to read it
+by.** The 09:40 entry called `scroll-lock.spec.ts:59` an ordering hole
+in the TEST and proposed waiting for the landing before scrolling.
+Under the ruling that is backwards: the spec scrolls the region before
+the landing, the landing writes 75 over it, and the ruling says the
+scroll should have won. The assertion is right as written; the code is
+what is wrong, and the failure the starved gate exposed was this
+defect seen once. The spec is not changed; step 147 changes the code
+and adds the two staged cases the ruling names. The proposal to wait
+on `__landings` is withdrawn.
