@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { COS30, DEPTH, SPINE_HEIGHT, frontFace, labelTransform, rightFace, topFace, type PlacedSeat } from './geometry';
+import { adjacentSeatId, type Direction } from './adjacent-seat';
 import { PAPER_CSS } from '@/lib/colour/paper';
 import { paintOrder, seatBounds } from './paint-sort';
 import { FACE_FILL, PLANE_FILL, TOP_FILL, points } from './WallOverview';
@@ -120,8 +122,32 @@ export function WallLabelled({
   const movingById = new Map(moving.map((state) => [state.id, state]));
 
   const byId = new Map(seats.map((seat) => [seat.id, seat]));
-  /* §W.23: paint order interleaves rows by column, so the keyboard walk gets its own sequence — seat order, 1-based, over the SEATED records (§W.12: an empty seat is not on the path). */
-  const tabOf = new Map(seats.filter((seat) => !seat.empty).map((seat, index) => [seat.id, index + 1]));
+  /*
+    §T.6 (14 Oct): the spines are ONE Tab stop with a roving index. The
+    arrow keys move focus seat to seat in §W.23's order, over the seated
+    records (§W.12: an empty seat is not on the path; a pulled record has
+    left the seat list) and do nothing else; Enter pulls, as the anchor's
+    own activation. Paint order interleaves rows by column, so the order is
+    the seats' and not the DOM's. The stop is the seat the arrows last
+    reached, or the first while none has been; it carries tabindex 0 and
+    every other seat -1, so one Tab leaves the wall.
+  */
+  const [roving, setRoving] = useState<string | null>(null);
+  const order = seats.filter((seat) => !seat.empty && !movingById.has(seat.id)).map((seat) => seat.id);
+  const stop = roving !== null && order.includes(roving) ? roving : (order[0] ?? null);
+  /* §W.23's seat order, 1-based over the seated records, carried on each anchor: the DOM's order is the painter's, and the tabindex sequence that used to carry it is gone with the roving stop. */
+  const seatOrder = new Map(seats.filter((seat) => !seat.empty).map((seat, index) => [seat.id, index + 1]));
+  const onSeatKey = (event: React.KeyboardEvent<HTMLAnchorElement>, id: string) => {
+    const direction: Direction | null =
+      event.key === 'ArrowRight' || event.key === 'ArrowDown' ? 'next' : event.key === 'ArrowLeft' || event.key === 'ArrowUp' ? 'previous' : null;
+    if (direction === null) return;
+    /* The region would scroll on the same key: one key, one job. */
+    event.preventDefault();
+    const to = adjacentSeatId(order, id, direction);
+    if (to === null) return;
+    setRoving(to);
+    event.currentTarget.closest('svg')?.querySelector<SVGAElement>(`a[data-seat="${to}"]`)?.focus();
+  };
   const { placed, pieces, frame } = wallLayout(seats, (framed ?? moving.map((m) => m.id)).map((id) => ({ id })), minWidth, minHeight);
   /* The view is the region's to pan (§W.22); the drawing needs none of it. */
   void view;
@@ -312,8 +338,8 @@ export function WallLabelled({
         nearer than and last once past the row on y. The spine is the +y
         face, toward the camera, so a record's anchor holds all three faces.
         Document order follows this order — within a row it is seat order;
-        across rows it interleaves by column, so the keyboard walk carries an
-        explicit tabindex sequence in seat order (§W.23).
+        across rows it interleaves by column, so the keyboard's seat order
+        (§W.23) is the arrows' order on one roving stop, not the DOM's.
       */}
       {paintOrder([
         ...pieces.map((piece) => ({ id: piece.id, ...piece.bounds })),
@@ -385,7 +411,9 @@ export function WallLabelled({
             key={seat.id}
             data-seat={seat.id}
             href={`/records/${seat.id}`}
-            tabIndex={tabOf.get(seat.id)}
+            tabIndex={seat.id === stop ? 0 : -1}
+            data-seat-order={seatOrder.get(seat.id)}
+            onKeyDown={(event) => onSeatKey(event, seat.id)}
             aria-label={`${record.artist} · ${record.title}`}
             style={{ cursor: onSeatClick === undefined ? undefined : 'pointer' }}
             onClick={

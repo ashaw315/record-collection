@@ -503,12 +503,17 @@ if (offset !== null) offset.style.transform = '';
       /* Escape dismisses the pulled state; with nothing out it is the way back to the collection (§W.12). */
       if (event.key === 'Escape' && held === null && routeView === 'near') zoomOut();
       if (event.key === 'Escape' && held !== null) begin(held.id, 'back');
-      if (event.key === 'ArrowRight') go('next');
-      if (event.key === 'ArrowLeft') go('previous');
+      /*
+        §T.6 (14 Oct): the arrow keys move FOCUS seat to seat and do nothing
+        else; the pull moves by the panel's buttons and §W.9's arrows
+        (`onNavigate`). Until step 148 the window heard the arrows and moved
+        the pull, so with a record out and a spine focused one press did two
+        things, and the spine's anchor unmounted under the focus.
+      */
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [held, begin, go, routeView, zoomOut]);
+  }, [held, begin, routeView, zoomOut]);
 
   /* The gesture's phase, for whoever watches: rest · swing · finish · landed · return. */
   const phase =

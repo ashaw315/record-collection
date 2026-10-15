@@ -68,9 +68,18 @@ test('the rail’s hidden Apply is not a Tab stop: Tab from the search field lan
   to the wall later is chrome too") and are reported for Design to confirm
   (14 Oct). Fails against the Apply still in the order: 32, 16 and 35.
 */
-const EXPECTED = { 'as the shelf opens': 31, 'in the overview': 15, 'with a record pulled': 33 } as const;
+/*
+  Step 148 (§T.6, 14 Oct): "the spines are one Tab stop with a roving
+  index". Design's 31 and 33 were measured with every seated spine a stop,
+  seventeen as the shelf opens and sixteen with one pulled; one stop makes
+  them 15 and 18, and the composition's expected count 1 in both states.
+  The figures changed by arithmetic under the ruling, not to pass code;
+  Design's bullet still says 31 and 33 and is told so as text.
+*/
+const EXPECTED = { 'as the shelf opens': 15, 'in the overview': 15, 'with a record pulled': 18 } as const;
+const SEED = { 'as the shelf opens': 1, 'in the overview': 1, 'with a record pulled': 1 } as const;
 
-test('the Tab walk through the wall in its three states stops 31, 15 and 33 times, and the Apply is never a stop', async ({ page }) => {
+test('the Tab walk through the wall in its three states stops 15, 15 and 18 times, the spines one stop, and the Apply is never a stop', async ({ page }) => {
   test.setTimeout(180_000);
   await login(page);
   await page.setViewportSize(WALL);
@@ -104,7 +113,7 @@ test('the Tab walk through the wall in its three states stops 31, 15 and 33 time
     const composition = stops.filter((s) => s.composition).length;
     const panel = state === 'with a record pulled' ? 3 + arrows : 0;
     expect.soft(stops.length, `${state}: ${CHROME} of chrome${panel === 0 ? '' : `, the panel’s three and ${arrows} of §W.9’s arrows`}, and ${composition} of the composition (${names.join(' · ')})`).toBe(CHROME + panel + composition);
-    const seed = state === 'in the overview' ? 1 : state === 'as the shelf opens' ? 17 : 16;
+    const seed = SEED[state];
     if (composition === seed) expect.soft(stops.length, `${state}: Design’s ${EXPECTED[state]}${panel === 0 ? '' : ` plus ${arrows} of §W.9’s arrows`}, on the seed’s seventeen`).toBe(EXPECTED[state] + (state === 'with a record pulled' ? arrows : 0));
     else test.info().annotations.push({ type: `${state}: not the seed alone`, description: `${composition} in the composition where the seed has ${seed}; Design’s ${EXPECTED[state]} not checked on this run` });
     const clipped = stops.filter((s) => s.clipped !== null && !s.composition).map((s) => `${s.tag} ${s.name}: ${s.clipped}`);

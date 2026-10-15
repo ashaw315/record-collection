@@ -31,6 +31,9 @@ const seat = (id: string, coverUrl: string | null, spineColour: string | null = 
 });
 
 const view = { x: 0, y: 0, width: 960, height: 760 };
+/** The seat anchor's tabindex as written, -1 included; NaN when the anchor is missing. */
+const tabOf = (html: string, id: string) => Number(/tabindex="(-?\d+)"/.exec(new RegExp(`<a [^>]*data-seat="${id}"[^>]*>`).exec(html)?.[0] ?? '')?.[1]);
+
 const render = (
   seats: WallSeat[],
   pull: Parameters<typeof WallLabelled>[0]['pull'] | Parameters<typeof WallLabelled>[0]['pulls'],
@@ -424,11 +427,17 @@ describe('a filter empties seats rather than re-seating them (§W.12)', () => {
     expect(filtered.split('data-furniture=').length).toBe(full.split('data-furniture=').length);
   });
 
-  it('gives the keyboard walk the seated records only, in seat order', () => {
+  /*
+    §T.6 (14 Oct): "On the wall the spines are one Tab stop with a roving
+    index." Until step 148 this test pinned a positive sequence, 1 and 2;
+    that contract is withdrawn by the ruling, so the test changed with it
+    and says so. An empty seat has no anchor at all (§W.12).
+  */
+  it('gives the keyboard walk one stop among the seated records: the first carries tabindex 0, the rest -1', () => {
     const html = render([seat('a', null), { ...seat('b', null), empty: true }, seat('c', null)], null);
-    const tab = (id: string) => Number(/tabindex="(\d+)"/.exec(new RegExp(`<a [^>]*data-seat="${id}"[^>]*>`).exec(html)?.[0] ?? '')?.[1]);
-    expect(tab('a')).toBe(1);
-    expect(tab('c')).toBe(2);
+    expect(tabOf(html, 'a')).toBe(0);
+    expect(tabOf(html, 'c')).toBe(-1);
+    expect(html).not.toContain('data-seat="b"');
   });
 });
 
@@ -456,22 +465,35 @@ describe('document order is seat order (§W.8) — asserted, because it holds on
     expect(order).toEqual(many.map((s) => s.id));
   });
 
-  it('carries an explicit tabindex sequence in seat order across rows, where paint order and reading order separate (§W.23)', () => {
+  it('is one Tab stop across rows too: the first seat in seat order carries 0 though a later row precedes it in the DOM (§W.23, §T.6)', () => {
     /*
       Paint order interleaves rows by column (225 of extent against 198 of
-      pitch), so document order is no longer the reading order across rows.
-      The keyboard walk gets its own sequence: §W.8 preferred anchors to a
-      parallel list because a list draws the identifying channel twice; a tab
-      sequence draws nothing, so the argument is silent on it.
+      pitch), so document order is not the reading order across rows. Until
+      step 148 the walk carried an explicit positive sequence; the ruling
+      makes the spines one stop, and §W.23's seat order is now the ARROWS'
+      order, held by the end-to-end walk on the probe route.
     */
     const many = Array.from({ length: 22 }, (_, i) => seat(`s${String(i).padStart(2, '0')}`, null));
     const html = render(many, null);
-    const tab = (id: string) => Number(/tabindex="(\d+)"/.exec(new RegExp(`<a [^>]*data-seat="${id}"[^>]*>`).exec(html)?.[0] ?? '')?.[1]);
-    expect(tab('s00')).toBe(1);
-    expect(tab('s19')).toBe(20);
-    expect(tab('s20'), 'the second row follows the first in the walk, though it precedes it in the DOM').toBe(21);
-    expect(tab('s21')).toBe(22);
+    expect(tabOf(html, 's00')).toBe(0);
+    expect(tabOf(html, 's19')).toBe(-1);
+    expect(tabOf(html, 's20'), 'the second row’s first seat is not a stop, though it precedes the first row in the DOM').toBe(-1);
+    expect(tabOf(html, 's21')).toBe(-1);
     expect(html.indexOf('data-seat="s20"')).toBeLessThan(html.indexOf('data-seat="s00"'));
+    expect((html.match(/<a [^>]*data-seat=[^>]*tabindex="0"/g) ?? []).length, 'exactly one stop').toBe(1);
+  });
+
+  it('carries §W.23’s seat order on each anchor, 1-based across rows, where the DOM interleaves them', () => {
+    /* The channel the tabindex sequence used to be: the specs read seat order from it, and the DOM's order is the painter's. */
+    const many = Array.from({ length: 22 }, (_, i) => seat(`s${String(i).padStart(2, '0')}`, null));
+    const html = render(many, null);
+    const orderOf = (id: string) => Number(/data-seat-order="(\d+)"/.exec(new RegExp(`<a [^>]*data-seat="${id}"[^>]*>`).exec(html)?.[0] ?? '')?.[1]);
+    expect(orderOf('s00')).toBe(1);
+    expect(orderOf('s19')).toBe(20);
+    expect(orderOf('s20'), 'the second row follows the first in seat order, though it precedes it in the DOM').toBe(21);
+    expect(orderOf('s21')).toBe(22);
+    const seated = render([seat('a', null), { ...seat('b', null), empty: true }, seat('c', null)], null);
+    expect(Number(/data-seat-order="(\d+)"/.exec(/<a [^>]*data-seat="c"[^>]*>/.exec(seated)?.[0] ?? '')?.[1]), 'over the seated records only').toBe(2);
   });
 
   it('puts a lower record before the one above it in the DOM — the painter’s order, which is no longer the reading order (with Design)', () => {

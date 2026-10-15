@@ -135,7 +135,7 @@ test('a bare / opens NEAR with the occupied shelf framed, and the far view is a 
   await page.waitForTimeout(900);
   const framed = await page.evaluate(() => {
     const rect = (q: string) => { const r = document.querySelector(q)?.getBoundingClientRect(); return r ? { left: r.left, top: r.top, right: r.right, bottom: r.bottom } : null; };
-    return { region: rect('[data-region="wall"]'), seat: rect('a[data-seat][tabindex="1"] [data-spine]'), top: rect('a[data-seat][tabindex="1"] [data-face="top"]') };
+    return { region: rect('[data-region="wall"]'), seat: rect('a[data-seat][data-seat-order="1"] [data-spine]'), top: rect('a[data-seat][data-seat-order="1"] [data-face="top"]') };
   });
   expect(framed.region && framed.seat && framed.top).toBeTruthy();
   if (framed.region && framed.seat && framed.top) {

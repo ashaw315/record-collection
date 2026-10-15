@@ -78,7 +78,7 @@ const read = (page: Page, ids: string[]) =>
     return {
       region: { left: r.left, top: r.top, right: r.right, bottom: r.bottom },
       scroll: { left: Math.round(el.scrollLeft), top: Math.round(el.scrollTop) },
-      seats: list.map((id) => ({ id, spine: box(`a[data-seat="${id}"] [data-spine]`), top: box(`a[data-seat="${id}"] [data-face="top"]`), order: Number(document.querySelector(`a[data-seat="${id}"]`)?.getAttribute('tabindex') ?? 0) })),
+      seats: list.map((id) => ({ id, spine: box(`a[data-seat="${id}"] [data-spine]`), top: box(`a[data-seat="${id}"] [data-face="top"]`), order: Number(document.querySelector(`a[data-seat="${id}"]`)?.getAttribute('data-seat-order') ?? 0) })),
       drawn: document.querySelectorAll('a[data-seat]').length,
       footprints: document.querySelectorAll('[data-footprint]').length,
     };

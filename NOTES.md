@@ -46514,3 +46514,58 @@ offset showed does not exist below the composition, and the clamp moves
 it by the difference.
 
 **For Adam:** nothing. **Next:** the spines' roving index.
+
+## 15 Oct, 19:20: step 148, the spines' roving index
+
+**Built under §T.6's 14 Oct ruling, tests first**, in four files watched
+red on the behaviour (the component's two tab-stop tests, the probe
+route's cross-row arrow walk, `roving-148.spec.ts`'s three), then green.
+`WallLabelled` holds the roving seat; the anchors' keydown moves focus by
+`adjacentSeatId` over the seated, unpulled records; the window's arrow
+handler in `WallLive` is gone, `go` kept for §W.9's buttons.
+
+**The contract change's fan-out, each said rather than slipped in:**
+
+- Two component tests pinned the positive tabindex sequence 1..N; the
+  ruling withdraws it, and they now pin one stop. The seat-order claim
+  moved to a new channel, `data-seat-order` on each anchor, with its own
+  component test, because the tabindex sequence was the ONLY channel
+  carrying §W.23's order and three specs read it: `record-navigation`'s
+  `wallOrder` sorted by tabindex and read the first record as whichever
+  sorted first (the one failure attributed, by reading the helper, not
+  by the ruling's shape); `wall-route` found the first seat by
+  `tabindex="1"` in two selectors; `wall-arrival-104` read `order` from
+  it. All three read the attribute now.
+- The ring walk's figures: 31 and 33 were measured with every spine a
+  stop; one stop makes them 15 and 18, re-pinned with the reason. **The
+  re-pinned test passed first time on the old build**, because its figure
+  branch runs only when the composition count equals the seed and
+  otherwise annotates past it; verified exercised after the build from a
+  JSON report with no "not the seed alone" annotation. The shape, a check
+  that quietly skips when its precondition fails, is the family this
+  project keeps meeting; left as it is, named here.
+- The probe route's §W.23 test pressed Tab across rows; it presses an
+  arrow now, and adds that one Tab leaves the wall.
+
+**For Design, as text:** step 144's bullet pins the Tab walk at 31, 15
+and 33; with the spines one stop the measured figures are 15, 15 and
+18, pinned at `e2e/ring-144.spec.ts`.
+
+**Two instrument catches of the unit's own.** A splice helper built on
+`String.replace` turned `page.$$eval` into `page.$eval`, because `$$` is
+an escape in a replacement string; four navigation tests failed on
+`links.map is not a function` and named it. And an init script's
+`observer.observe(document.documentElement)` from step 147 is the same
+family: the instrument's own text read as something else by the thing
+it was given to. Replacement strings with a dollar in them go through a
+function replacer from here.
+
+**Step level:** `roving-148.spec.ts` (3), the probe route's walk, the
+ring walk and the Apply, `record-navigation` (4), `wall-route` (8),
+`wall-arrival-104`, `frame-planes`' keyboard scroll, all on chromium;
+`WallLabelled.test.tsx` 41 passed; typecheck 0; lint 0 errors, 27
+warnings as before; build compiled. The mobile project is an allowlist
+by name and holds no wall spec.
+
+**For Adam:** nothing. **Next:** login at 1280 and the proposed
+hierarchy, the unnumbered §T.6 step at handoff line 561.

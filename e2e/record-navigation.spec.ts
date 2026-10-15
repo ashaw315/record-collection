@@ -66,18 +66,20 @@ async function cleanup(artistId: string) {
  */
 async function wallOrder(page: Page): Promise<string[]> {
   /*
-    **Seat order, by tabindex -- not DOM order.** §W.23: "Paint order and
-    reading order separate... a correct paint order must interleave rows by
-    column. So the keyboard walk gets an explicit tabindex sequence in seat
-    order." The anchors' DOM order is paint order; the arrows walk seat
+    **Seat order, by `data-seat-order` -- not DOM order.** §W.23: "Paint order
+    and reading order separate... a correct paint order must interleave rows
+    by column." The anchors' DOM order is paint order; the arrows walk seat
     order. Measured in the full run: at the DOM's first anchor the arrows
     saw 47/60, and ten slides from seat 53 ran off the end -- the put-back
     timeout -- while a previous arrow stood at what DOM order called first.
-    Reading DOM order here was right before §W.23 and wrong since.
+    Reading DOM order here was right before §W.23 and wrong since. Until
+    step 148 the order was read from the tabindex sequence; the roving stop
+    (§T.6) replaced that sequence with 0 and -1, and this read the first
+    record as whichever sorted first, so the order has its own attribute.
   */
   return page.$$eval('a[data-seat]', (links) =>
     links
-      .map((a) => ({ id: a.getAttribute('data-seat') ?? '', tab: Number(a.getAttribute('tabindex')) }))
+      .map((a) => ({ id: a.getAttribute('data-seat') ?? '', tab: Number(a.getAttribute('data-seat-order')) }))
       .sort((x, y) => x.tab - y.tab)
       .map((s) => s.id),
   );
