@@ -24,7 +24,7 @@ here. They are one defect seen from two sides: an assertion with no failing
 input, and an observation with no subject. Both produce green. If you are
 looking at something that passes and you are not sure why, start in those two.
 
-Generated from 132 declared rules. Regenerate with
+Generated from 133 declared rules. Regenerate with
 `npx tsx scripts/notes-index.ts --write`.
 
 ### Measurements that do not govern
@@ -33,7 +33,6 @@ Generated from 132 declared rules. Regenerate with
 | --- | --- |
 | two parts of one page are meant to share an edge and only one of them knows the rule | [A cap applied to the component instead of the composition](#a-cap-applied-to-the-component-instead-of-the-composition) |
 | a feature works correctly and you are debating how to improve it | [A FEATURE RETIRED ON THREE ARGUMENTS, NONE ABOUT ITS IMPLEMENTATION](#a-feature-retired-on-three-arguments-none-about-its-implementation) |
-| a new instrument printed a plausible figure and nothing with a known answer has been put under it | [An instrument that measured itself, and a comparison made as text (15 Oct)](#an-instrument-that-measured-itself-and-a-comparison-made-as-text-15-oct) |
 | the number is in band and you cannot say what it would forbid | [A measurement correlated with the signal instead of being it — fifth instance](#a-measurement-correlated-with-the-signal-instead-of-being-it-fifth-instance) |
 | a rule collides with rules that were never in tension, or a figure moves while nothing changes size | [A rule scoped past its subject, and a ratio that moved when nothing did](#a-rule-scoped-past-its-subject-and-a-ratio-that-moved-when-nothing-did) |
 | a page states a fact twice after a rebuild, and getByText starts failing with "resolved to 2 elements" | [A seam that has to move when the screen above it moves](#a-seam-that-has-to-move-when-the-screen-above-it-moves) |
@@ -176,6 +175,7 @@ Generated from 132 declared rules. Regenerate with
 | you are about to commit with -A and have not read what is staged | [A bookkeeping failure: `git add -A` swept code into NOTES commits](#a-bookkeeping-failure-git-add--a-swept-code-into-notes-commits) |
 | everything is green locally and you are about to deploy a schema change | [A GREEN SUITE CANNOT SEE THE SCHEMA IT DEPLOYS AGAINST](#a-green-suite-cannot-see-the-schema-it-deploys-against) |
 | a judgement is being made from a rendering and you have not checked the rendering is right | [A page that told the truth in text and a lie in pixels](#a-page-that-told-the-truth-in-text-and-a-lie-in-pixels) |
+| a new instrument printed a plausible figure and nothing with a known answer has been put under it | [An instrument that measured itself, and a comparison made as text (15 Oct)](#an-instrument-that-measured-itself-and-a-comparison-made-as-text-15-oct) |
 | a failure is logged as a category and the raw input was not kept | [LLM_UNREADABLE on a real gap analysis — and the diagnostic that was never written](#llm_unreadable-on-a-real-gap-analysis-and-the-diagnostic-that-was-never-written) |
 | a measurement came from a screenshot and you have not measured the element itself | [MEASURE INSIDE THE ELEMENT UNDER TEST, NOT THE SCREENSHOT THAT CONTAINS IT](#measure-inside-the-element-under-test-not-the-screenshot-that-contains-it) |
 | a progress indicator stopped moving and you cannot tell done from stuck | [OBSERVED, NOT ACTED ON — a progress count cannot say finished from dead](#observed-not-acted-on-a-progress-count-cannot-say-finished-from-dead) |
@@ -46131,7 +46131,15 @@ other project's three containers are what can go. And the kernel's
 level read 1 at every reading today, including at 08:46 with 193 MB
 unused: on this machine "unused" is not the measure either.
 
-### An instrument that measured itself, and a comparison made as text (15 Oct)
+**Verification, step level:** the three stagings above, and
+`test/repo/dev-targets-neon.test.ts`, the repo test that names the gate
+script. No TypeScript changed; typecheck, lint and build were not
+run for a shell-only unit. The gate for 146 has still not been run.
+
+## An instrument that measured itself, and a comparison made as text (15 Oct)
+
+**Shape:** instrument-reports-nothing
+**You are here if:** a new instrument printed a plausible figure and nothing with a known answer has been put under it
 
 The two defects staging found in the sampler, as a line of their own,
 because together they are the fourth item in CLAUDE.md §2's family of
@@ -46156,7 +46164,67 @@ reading did not (the DB guard's three, 12 Oct's swap floor, these
 two), and it is the reason a new instrument is staged on a real run
 before it is trusted on a gate.
 
-**Verification, step level:** the three stagings above, and
-`test/repo/dev-targets-neon.test.ts`, the repo test that names the gate
-script. No TypeScript changed; typecheck, lint and build were not
-run for a shell-only unit. The gate for 146 has still not been run.
+## 15 Oct, 10:30: the gate runs Playwright one project at a time, each with a server of its own
+
+**Why, and why now.** The reviewer's second caution: `--workers=1` does
+not touch the holder. The dev server is one process whatever the
+worker count, so the cap takes something off the browsers' 380 and
+the runner's 415 and nothing off the server's 1,565, and the rerun
+could die the same way. The lever that does reach it is to split the
+Playwright half so a fresh server starts between chunks. The 13 Oct
+gate's log gives the order a bare run takes: chromium (849) first,
+then capture (19), then mobile (388) — so the killed run's test 1303
+was deep into mobile, with one server having answered everything
+before it. Running the three projects as three commands caps a server
+at one project's requests. It is also what `npm run test:e2e` has done
+for the two projects since 25 Sep, for a different reason (the two
+interleaved on one server contend), so the shape is not new here.
+
+**Chosen over trying the single run first**, knowingly: the single
+run bets an hour on a growth curve nobody has seen, and the sampler
+would draw that curve only by letting the run reach the kill. The
+split costs two extra server boots (about a minute each) and a loop in
+`scripts/gate.sh`; the sampler draws the curve per project either way.
+What it does NOT settle is whether the server's growth is bounded by
+routes compiled (then a chunk of 849 tests holds most of it) or grows
+with requests (then the split helps in proportion). The rerun's
+samples answer that.
+
+**What changed in `scripts/gate.sh`:** `GATE_PROJECTS`, default
+`chromium capture mobile`; each project run as its own
+`npx playwright test --project=P --output test-results/P`, judged by
+`scripts/run-tests.ts` as before, to a log of its own
+(`<commit>-e2e-<project>[-wN].log`); the report lists each log and
+prints one `playwright: P:` judgement per project, with that project's
+projects, reset, margins and failed-at-least-once lines under it. The
+gate is green only when every line is. `--output` per project because a
+run clears the directory it is given, and a shared one lost the
+chromium failures' contexts to the mobile run (package.json's note).
+`scripts/run-result.ts` already treats `--project` and `--output` as
+value flags, so a per-project run is judged `whole`: a named project
+that matched nothing still fails its chunk. CLAUDE.md §10's "both
+projects with no file argument" is met: both projects, no file
+argument, in series.
+
+**Staged, 11:52 to 12:00, the whole script** (`GATE_PROJECTS="chromium
+mobile"`, `GATE_ONLY=e2e/auth.spec.ts`, one worker, samples every 10s,
+on a worktree at 9ce045e): the build, the whole unit suite, then the
+two chunks. Each chunk judged on its own line, `chromium: 11 passed,
+ledger clean, tree unchanged — OK` and `mobile: 11 passed …— OK`, with
+its own projects, margins and failed-once lines beneath; the report's
+`logs:` names a log per project. The samples show what the loop is
+for: the server at 1,184 then 1,848 MB through the chromium chunk,
+**0 between the chunks**, then 2,135 and 1,522 through mobile — a
+process that ended and another that began. Peaks over 35 samples:
+next 2,135 MB, browsers 345, runner 456, vitest 373, pressure level 1
+throughout, swap 3.3 of 4.0 GB at the start and 5.1 of 6.0 at the
+end. **2,135 MB twenty seconds into an eleven-test spec** says the
+server's size is mostly its baseline, not its history: a figure that
+large that early is not what 1,300 tests built. What the whole run
+adds on top is what the rerun's samples will show.
+
+The staging also found one failing unit test, mine and from the
+morning's commit: `test/repo/notes-index.test.ts`, because the
+apparatus index at the head of this file is generated from the
+entries by `scripts/notes-index.ts`, and I had added its row by hand.
+Fixed by the generator, below.

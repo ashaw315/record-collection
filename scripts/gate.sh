@@ -5,7 +5,8 @@
 #   scripts/gate.sh [commit] [workers]
 #
 # A gate is the full suites: `npm test`, then `npx playwright test` on both
-# projects with no file argument. It takes about fifty minutes, and for all
+# projects with no file argument -- run one project at a time, each with a
+# dev server of its own (see the loop below). It takes about an hour, and for all
 # of them nothing under `src/`, `e2e/` or `scripts/` could be edited, because
 # the run's "tree unchanged" is a statement about the tree it ran in. So the
 # gate runs in a second worktree pinned at one commit, which nobody edits,
@@ -125,7 +126,18 @@ export GATE_WORKTREE=1
 LOGS="$GATE-logs"
 mkdir -p "$LOGS"
 UNIT="$LOGS/$COMMIT-unit.log"
-E2E="$LOGS/$COMMIT-e2e${WORKERS:+-w$WORKERS}.log"
+# The Playwright half runs ONE PROJECT AT A TIME, each with a dev server of
+# its own, and each to a log of its own. The server is `next dev`, one process
+# for a whole `npx playwright test`, and it holds what it compiles: 1,565 MB
+# after a two-test run (15 Oct, NOTES). The gate for 146 was killed for memory
+# at test 1303 of 1319, deep into mobile, after one server had answered
+# everything before it. Chromium, capture, then mobile is the order a bare run
+# takes anyway; running them as three commands caps a server at one project's
+# requests and starts the next one fresh. Fewer workers never touched this:
+# the server is one process whatever the count. `GATE_PROJECTS` names the
+# projects, for staging the loop on fewer than three.
+PROJECTS="${GATE_PROJECTS:-chromium capture mobile}"
+e2e_log() { echo "$LOGS/$COMMIT-e2e-$1${WORKERS:+-w$WORKERS}.log"; }
 
 # The gate's own report, written at the start and finished at the end, so it
 # outlives the session that launched it. On 13 Oct the gate on 88a0e7e was cut
@@ -143,7 +155,7 @@ trap 'kill "$SAMPLER" 2>/dev/null' EXIT
   echo "load:       $LOAD_START at the start, on $CORES cores"
   echo "memory:     at the start, $MEMORY_START"
   echo "logs:       $UNIT"
-  echo "            $E2E"
+  for P in $PROJECTS; do echo "            $(e2e_log "$P")"; done
   echo "samples:    $SAMPLES"
 } > "$REPORT"
 
@@ -153,8 +165,12 @@ env -u TEST_DATABASE_URL -u DATABASE_URL npm run build > "$LOGS/$COMMIT-build.lo
 
 npx tsx scripts/run-tests.ts npm test > "$UNIT" 2>&1
 # GATE_ONLY names spec files, for trying the script itself without an hour's run. What it produces is NOT a gate, and says so.
-# shellcheck disable=SC2086
-npx tsx scripts/run-tests.ts npx playwright test ${WORKERS:+--workers=$WORKERS} ${GATE_ONLY:-} > "$E2E" 2>&1
+# Each project writes its own output directory: a run clears the directory it is given on start, and one shared
+# directory lost the chromium failures' contexts to the mobile run that followed (package.json, `test:e2e`).
+for P in $PROJECTS; do
+  # shellcheck disable=SC2086
+  npx tsx scripts/run-tests.ts npx playwright test --project="$P" --output "test-results/$P" ${WORKERS:+--workers=$WORKERS} ${GATE_ONLY:-} > "$(e2e_log "$P")" 2>&1
+done
 cp -R test-results "$LOGS/$COMMIT-test-results" 2>/dev/null
 
 report() {
@@ -166,10 +182,14 @@ report() {
   # The worst the run reached, by role: the sum of a role's resident sizes is a ceiling on it (shared pages count per process).
   echo "            peaks,        $("$ROOT/scripts/memory-sample.sh" --peaks "$SAMPLES")"
   echo "unit:       $(tail -1 "$UNIT")"
-  echo "playwright: $(tail -1 "$E2E")"
-  LC_ALL=C grep -h "\[projects\]\|\[reset\]\|SLEPT\| passed (\| flaky" "$E2E" | cut -c1-200
-  LC_ALL=C grep -h "\[margins\]" "$E2E" | sed -n 2p | cut -c1-200
-  # The tests that failed at least once, by line: a flake's artifacts are kept beside the log and this names them.
-  LC_ALL=C grep -h "^  ✘" "$E2E" | cut -c1-200
+  # One judgement per project; the gate is green only when every line is.
+  for P in $PROJECTS; do
+    E2E="$(e2e_log "$P")"
+    echo "playwright: $P: $(tail -1 "$E2E")"
+    LC_ALL=C grep -h "\[projects\]\|\[reset\]\|SLEPT\| passed (\| flaky" "$E2E" | cut -c1-200
+    LC_ALL=C grep -h "\[margins\]" "$E2E" | sed -n 2p | cut -c1-200
+    # The tests that failed at least once, by line: a flake's artifacts are kept beside the log and this names them.
+    LC_ALL=C grep -h "^  ✘" "$E2E" | cut -c1-200
+  done
 }
 report | tee -a "$REPORT"
