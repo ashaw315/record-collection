@@ -46417,3 +46417,55 @@ written up and left. A failure attributed without a demonstrated cause
 is to be left unattributed.
 
 **For Adam, in one place:** nothing yet.
+
+## 15 Oct, 18:26: the gate for 146 green on three halves, the fourth the gate's own; 146 closed
+
+**Gate: full suites, both projects, one worker, at dc19c46**, started
+16:27 and ended 18:19, report `../record-collection-gate-logs/dc19c46-gate-w1.txt`:
+
+- unit: 4367 passed, 5 skipped, tree unchanged — OK
+- chromium: 901 passed, 1 skipped, ledger clean, tree unchanged — OK (1.2h)
+- mobile: 384 passed, 4 skipped, ledger clean, tree unchanged — OK (33.6m)
+- capture: 0 passed, 29 skipped — NOT OK — "no summary line found"
+
+**The machine held.** Pressure level 1 in every one of 112 samples, free
+70% at the start and 71% at the end; the peaks next 1,846 MB (16:36, in
+chromium), browsers 2,416 MB (16:46, in chromium), runner 404, vitest
+350, swap 8,155 MB with the swap file grown from 6 to 8 GB. At the end
+the load was 6.95 and the swap rate 3,582 pages a second, against a
+refusal at 25,000. What else was running at the end was not read, so it
+is not named. The floor question from 09:40 has its first answer: the
+kernel never left normal, and the run that was killed at test 1303 last
+time finished with the server capped at one project's requests.
+
+**The capture line is the gate's own, demonstrated from its log and not
+from a cause that fit.** The log lists all 29 of the project's tests as
+skipped, each `A capture tool: run with CAPTURE=1` (`e2e/capture/*`),
+and Playwright's summary is `  29 skipped` with no passed count. In
+the combined run before the split those skips sat inside one summary
+(13 Oct: `1232 passed, 24 skipped`, `capture 19`); alone, the judge
+read a missing passed count as a missing summary and sent a reader
+after a crash that did not happen. Two fixes, test first each:
+`a46501e`, a skipped count is a summary and the line reads "every test
+skipped — nothing ran", NOT OK, and the gate's default projects are
+chromium and mobile, §10's two; then `34eaa37`, because the first fix
+read the real log as OK: a gate log ends with the gate's own judged
+line, "0 passed, 29 skipped …", and a literal zero took the branch that
+trusts a passed count. A passed count of zero is now refused as a
+missing one is. **The second hole was found by feeding the instrument
+the real log**, the same move as the four catches before it; its test
+was written beside its fix, so the red watched was the OK on the real
+log and not the test. The capture half is not run again: it would skip.
+
+**Step 146 is done** at the gate, the block written in full in
+`scripts/handoff-code-region.json` and the handoff (the applier: 33
+already present), the index 13 PASS, `code-region` and the two index
+tests 35 passed. Held for Design, in the block: the review's ruling
+names CANCEL and MERGE THEM without box or label.
+
+**For Adam, in one place:** nothing needs him. For Design, not him: the
+two Maintaining sentences (the assertion 12 entry above), the review's
+CANCEL and MERGE THEM judgement, and §T.6's older `No entry:` that 12
+reports unnamed.
+
+**Next: step 147**, §W.29, the person's scroll wins.
