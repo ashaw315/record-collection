@@ -45642,3 +45642,157 @@ dialog open). Gate-listed files: `e2e/hit-area.ts` is a shared helper
 under `e2e/`, not `test/helpers/`; its one change is the dialog's drawn
 sizes, read only by `expectDialogControls`, whose three callers ran
 above.
+
+## 14 Oct, 22:05: step 146, the record form
+
+**Built** (§T.6 part 2, Design 14 Oct, the sentences in `form-146.spec.ts`'s
+head). `RecordForm.tsx`: the row labels take `LABEL` (§4.1's type) with
+their layout classes kept, marked `data-row-label`; the submit is a
+`CONTROL_BOX`, Cancel a `CONTROL_LABEL` 24 clear (`gap-6`), marked
+`data-form-cancel`; Everything else keeps its `<details>` and takes
+§T.1's mark from `disclosure-mark.tsx` at the line's right
+(`DisclosureMark open="details"`, the details `group`) with the
+browser's triangle off (`list-none`, the WebKit marker hidden) and the
+hairline below its head; Pressing details, a fieldset with a rule above
+its legend, becomes the second disclosure in the same shape, open when
+editing as Everything else is, and its top rule goes, which is the
+doubled rule ("the fieldset's top rule goes, and the row's rule closes
+the group above": the 21 was the fieldset's `mt-5` plus its 1px, under
+the Tags row's own rule). `GROUP_HEAD` holds the head's classes once.
+`InlineCreate.tsx`: "+ New artist" and the rest become §9.3 labels, NEW
+ARTIST, drawn 44 so the 14 the trigger stood below its field under a
+coarse pointer (its overlay's half of 44) is no longer needed; the open
+row's Add is a box, its Cancel a label, 24 apart. **Two judgements for
+Design:** the + is dropped from the inline creates because §T.1's + is
+the disclosure mark, the reason the look-up card lost "+ COLLECTION";
+and Pressing details' open state follows Everything else's (open when
+editing, closed on a new record), since the ruling names it a disclosure
+and says nothing about its state. The shadcn Button leaves both files.
+
+**Tests first:** `e2e/form-146.spec.ts`, new and editing at 390 coarse
+and 1280 fine: every drawn field label §4.1's type (14 or more read);
+the submit a box 44 at both pointers with CANCEL a §9.3 label 24 clear
+along x; the inline creates §9.3 labels; the two disclosures by head,
+open as the page is, drawing §T.1's two-line mark with the down line
+hidden when open, the mark at the line's right, no marker, the head's
+hairline 1px and the group's top rule 0. Failed against the build as it
+was: sans 12px labels in grey, then (one expectation of the test's own
+corrected: an SVG line's display is `inline` when shown) passed.
+
+**Claims changed with the ruling, declared.** `record-form.spec.ts`: the
+inline creates pressed by their new names; the control count 28, since
+Pressing details' head is a control now; the drawn sizes under a mouse
+(Save changes 44, Cancel 44, New artist and New tag 44, the two heads
+29: their line, the 8 below and the hairline; were 32, 20, 16, 16 and
+20); the opened inline create's Add 44 and Cancel 44 with its field 32
+(were 32, 32, 32). `hairlines-record.json`: the record form's one held
+pair, "div bottom → fieldset top" at 390 and 1280, is the doubled rule
+the ruling removes, so the record no longer holds it and the file is
+empty: nothing else on the eight routes doubles. And one locator in
+four specs' copies of `formReady` (`record-form`, `discogs-prefill`,
+`lookup-flows`, `want-list`) and the unpassed-screens capture tool:
+`disclosure.locator('summary')` matched two once Pressing details
+nested a second disclosure, so the outer head is `.first()`. The first
+covering run: `282 passed, 82 failed` in 17.7m, the 82 all those
+claims (128 strict-mode hits on the summary, 32 on the count, 4 on the
+hairline record); re-run after.
+
+**The capture names, from the coordinator (14 Oct, late):** Design read
+"Discharge c145mv8e2fb5" in part 1's pictures. `part1-145.capture.ts`
+(14 Oct) stamped its artist with the suffix as specs do, against the
+12 Oct rule that a capture names plainly because its pictures are
+evidence; `bb23a34` renamed the unpassed-screens tool's fixtures and
+part 1's tool was written after it without the rule. The two tools
+written tonight carried the same stamp; both now make "Discharge", one
+record and one item once, plainly named, with the tag "uk82" made a
+pass. The dialog's six pictures are retaken for it; part 1's retake is
+owed after part 2, with the suffix taken off its tool.
+
+**Two more from the re-run (`295 passed, 14 failed`), both mine.** (1)
+Pressing details closed on a new record hid its fields, and two tests
+filling a pressing year timed out: the judgement is reversed, and the
+group opens to begin with on a new record as on an edit, since its
+fields were in view whenever Everything else was and a pressing is
+entered on the way in; the − is there for a reader who wants them away.
+(2) The §4.1 label's line is 16.5 where text-xs's was 24. My first pass
+made the label a block at every pointer, which moved the field up to
+32.5 below its row's top under a mouse and let a click above the field
+reach it (the mouse reach test read every field as reaching past
+itself). Put back as it was, inline under a mouse below 640, the label
+sits in the row's line of 24 and the field stands at 40 as it did; under
+a coarse pointer the label is the block with its 6 above and below (the
+one-target rule), 40.5. The label's words stand 19 below the row under
+either pointer, where they stood at 18. Probed at 390 and 320 under
+both pointers; the two claims in `record-form.spec.ts` carry the new
+measures and the reason.
+
+**Verification, step level (the record form unit):** `record-form`,
+`discogs-prefill`, `lookup-flows`, `want-list`, `hairlines` and
+`form-146` on both projects after the claims above: `295 passed, 14
+failed` in 15.3m, the 14 the two hidden-pressing timeouts and the moved
+geometry (both above); then `record-form` and `form-146`: `48 passed, 4
+failed` in 2.8m with the label inline again, the 4 the pointer tests
+carrying the old measures; those four and `form-146` after the measures
+were pinned: `18 passed` on both projects, the source unchanged between
+the two runs, so the green holds. Typecheck 0; lint 0 errors; build
+clean. Captures: `docs/captures/part2-146/form-*.png` (new and editing
+at 390 coarse and 1280 fine, GBH's record, plain names) and the dialog's
+six retaken with plain names, both committed alone at `1fdc91d`.
+Gate-listed files: none (`hairlines-record.json` is a spec's own record).
+
+## 15 Oct, 01:40: step 146, manage's rows
+
+**Built** (§T.6 part 2, Design 14 Oct, the sentences in
+`manage-146.spec.ts`'s head). `disclosure-mark.tsx` gains `Mark`, §T.1's
++, × and tick in the same 12 square at the hairline weight, named by
+`data-mark`. `ResourceTable.tsx`: the create row loses its tinted band
+and is marked `data-manage-create`; Add is a `CONTROL_BOX` with the +
+mark where lucide's plus was; every cell is `align-top`, so a row grown
+tall keeps its name at its top; the row's actions are `CONTROL_LABEL`
+words, Edit and Delete (the seeded row's Delete keeps its refusal and
+its tooltip), 24 apart; the inline edit's Save and Cancel are the tick
+and the × in a 28 box with the 44 overlay under a coarse pointer
+(`MARK_BUTTON`); the destructive red and the ghost hover fills go.
+`GenreTree.tsx` (manage's): the same for its add row, Add and Edit and
+Delete; its rename stays a field with Enter and Escape, so it has no
+tick or ×. `ResourceList.tsx`: the open form's action row is marked
+`data-manage-actions`, SAVE a box, DELETE a label, and LINEUP joins them
+in the row, 24 apart, where it stood on a line of its own beneath.
+`LineupAction.tsx`: the Lineup control is a `CONTROL_LABEL`; its
+progress, result and picker are the next unit's. The shadcn Button and
+lucide leave all four files; every aria-label stays, so the specs that
+press "Edit X" and "Delete X" are unchanged. Not touched: the tree's
+"└" depth glyph, a text character the glyph sentence does not list,
+named here for Design.
+
+**Tests first:** `e2e/manage-146.spec.ts`. At 1280 under a mouse, on
+Artists, Tags and Genres: the row's actions in words (LINEUP, EDIT,
+DELETE on an artist; EDIT, DELETE elsewhere) each a §9.3 label; Add a
+§9.3 box; the add row's fill transparent; no `svg.lucide` in the
+section at rest or editing; the marks by `data-mark`, 12 square, 1px,
+in ink (the + at rest; the tick and × on a table row's edit, none on a
+tree row's rename); every table cell top-aligned. At 390 under a coarse
+pointer, an artist's open form: SAVE, DELETE and LINEUP in one action
+row, on one line, 24 apart, each 44. Failed against the build as it
+was: the actions read as empty text (icons), no action row mark; three
+defects of the test's own first (the artist list hides an artist with
+no records, so the fixture has one; both the table and the list are in
+the document; a tree row's select names every genre, so the row is
+found from its own EDIT); then passed. The spec's reader
+(`type-read.ts`) now reads within a locator as well as a page.
+
+**Verification, step level (manage's rows unit):** `manage-146`,
+`manage.spec`, `hairlines`, `colour-103`, `radius-103`,
+`genres-collapse` and `pinned-118` on both projects: `121 passed, 4
+failed` in 9.2m, the 4 one claim: manage's coarse-pointer floor at 768
+and 1280 found EDIT 32 across (the icons had a 46 overlay, the word
+has none). The word actions take `HIT_ALONE`, 9 each side, which makes
+EDIT 50 across and stays within the 24 gap; a first try at 12 each side
+reached past the 9 an end allows. After it, manage's pointer tests at
+four widths on both projects and the rows spec: `18 passed`, and
+hairlines on manage at both widths on both projects: `4 passed`. The
+overlay is a coarse-pointer pseudo-element with no border or fill on
+three buttons, which nothing in the other specs of the first run reads,
+so the green holds. Typecheck 0; lint 0 errors; build clean. Captures:
+`docs/captures/part2-146/manage-*.png`, committed alone at `b43cce4`.
+Gate-listed files: none.

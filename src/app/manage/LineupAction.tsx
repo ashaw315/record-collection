@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import { Button } from '@/components/ui/button';
+import { CONTROL_LABEL } from '@/app/records/[id]/grid-type';
 import { HIT_ALONE } from '@/app/hit-area';
 import type { ArtistSearchHit } from '@/lib/musicbrainz/search-artist';
 
@@ -136,16 +136,10 @@ export function LineupAction({ artistId, artistName }: { artistId: string; artis
 
   return (
     <div className="inline-flex flex-col items-end gap-1">
-      <Button
-        size="sm"
-        variant="ghost"
-        disabled={walking}
-        onClick={() => void walk()}
-        aria-label={`Fetch lineup for ${artistName}`}
-        className={HIT_ALONE}
-      >
+      {/* §T.6 part 2 (Design, 14 Oct): a row's actions are §9.3 labels in words, LINEUP among them. */}
+      <button type="button" disabled={walking} onClick={() => void walk()} aria-label={`Fetch lineup for ${artistName}`} className={`${CONTROL_LABEL} ${HIT_ALONE} disabled:opacity-50`}>
         Lineup
-      </Button>
+      </button>
 
       {walking && (
         <p data-testid="lineup-progress" role="status" className="text-meta text-muted-foreground">

@@ -109,6 +109,7 @@ const GOVERNED = [
   'e2e/dialog-146.spec.ts',
   'e2e/capture/dialog-146.capture.ts',
   'e2e/form-146.spec.ts',
+  'e2e/capture/form-146.capture.ts',
   'e2e/sheet/cover-boxes.sheet.ts',
   'e2e/sheet/record-modal.sheet.ts',
   'e2e/sheet/record-modal-92.sheet.ts',

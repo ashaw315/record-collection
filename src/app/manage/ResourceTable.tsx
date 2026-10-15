@@ -1,8 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { Check, Pencil, Plus, Trash2, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Mark } from '@/app/disclosure-mark';
+import { CONTROL_BOX, CONTROL_LABEL } from '@/app/records/[id]/grid-type';
+import { HIT_ALONE } from '@/app/hit-area';
 import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
@@ -21,6 +22,8 @@ import { tableFields, type FieldSpec, type ResourceSpec } from './resources';
  */
 const TOUCH_TARGET =
   "relative after:absolute after:left-1/2 after:top-1/2 after:h-11 after:w-[46px] after:-translate-x-1/2 after:-translate-y-1/2 after:content-[''] pointer-coarse:after:block after:hidden";
+/** A mark's button (§T.6 part 2): the 12 mark in a 28 box, the 44 overlay under a coarse pointer, no fill. */
+const MARK_BUTTON = `${TOUCH_TARGET} inline-flex size-7 shrink-0 items-center justify-center disabled:opacity-50`;
 
 /**
  * The one table every flat resource renders through. Rows edit in place — these
@@ -100,9 +103,10 @@ export function ResourceTable({
 
           <tbody>
             {/* Create row sits at the top, always visible — no "add" mode. */}
-            <tr className="border-b border-border bg-secondary/40">
+            {/* §T.6 part 2 (Design, 14 Oct): "The add rows at 1280 lose their tinted band." */}
+            <tr data-manage-create="" className="border-b border-border">
               {fields.map((field, index) => (
-                <td key={field.name} className="px-3 py-1.5">
+                <td key={field.name} className="px-3 py-1.5 align-top">
                   {field.kind === 'boolean' ? null : (
                     <Input
                       aria-label={`New ${resource.singular} ${field.label.toLowerCase()}`}
@@ -122,18 +126,19 @@ export function ResourceTable({
                   )}
                 </td>
               ))}
-              <td className="px-3 py-1.5">
-                <Button
-                  size="sm"
+              <td className="px-3 py-1.5 align-top">
+                {/* A §9.3 box with §T.1's + where lucide's plus was. */}
+                <button
+                  type="button"
                   onClick={() => {
                     onCreate(newRow);
                     setNewRow({});
                   }}
-                  className="h-8 w-full pointer-coarse:h-[44px]"
+                  className={`${CONTROL_BOX} w-full gap-2`}
                 >
-                  <Plus aria-hidden="true" />
+                  <Mark kind="plus" />
                   Add
-                </Button>
+                </button>
               </td>
             </tr>
 
@@ -169,8 +174,8 @@ export function ResourceTable({
                     <td
                       key={field.name}
                       className={cn(
-                        /* A row is 44 under a coarse pointer, so each row's controls have their 44 without taking a neighbour row's. */
-                        'px-3 py-1.5 align-middle pointer-coarse:h-[44px]',
+                        /* A row is 44 under a coarse pointer, so each row's controls have their 44 without taking a neighbour row's. Top-aligned (§T.6 part 2): "An opened row keeps its name at the row's top, not centred in a row grown tall." */
+                        'px-3 py-1.5 align-top pointer-coarse:h-[44px]',
                         field.mono === true && 'font-mono text-detail tabular-nums',
                       )}
                     >
@@ -204,9 +209,9 @@ export function ResourceTable({
                     </td>
                   ))}
 
-                  <td className="px-3 py-1.5">
-                    {/* Across (step 132's rule): an icon of 28 has its 8 either side, so the gap between two is 18 under a coarse pointer, 9 each, and the overlay is 46 wide: 44 read 43 by the pixel. */}
-                    <div className="flex items-start justify-end gap-1 pointer-coarse:items-center pointer-coarse:gap-[18px]">
+                  <td className="px-3 py-1.5 align-top">
+                    {/* §T.6 part 2 (Design, 14 Oct): the actions are §9.3 labels in words, 24 apart (§G.3); the tick and the × on an inline edit are §T.1's marks in a 28 box. Across (step 132's rule): a mark's box of 28 has its 8 either side under a coarse pointer, and its overlay is 46 wide: 44 read 43 by the pixel. */}
+                    <div className="flex items-start justify-end gap-6">
                       {/*
                         §12 step 11: artists only. A lineup is band membership,
                         which no other resource here has — and the walk is ~32
@@ -218,40 +223,29 @@ export function ResourceTable({
                       )}
                       {isEditing ? (
                         <>
-                          <Button
-                            size="icon-sm"
-                            variant="ghost"
+                          {/* §T.6 part 2: "the tick confirms what the × cancels", §T.1's marks where lucide's check and x were. */}
+                          <button
+                            type="button"
                             aria-label={`Save ${name}`}
-                            className={TOUCH_TARGET}
+                            className={MARK_BUTTON}
                             disabled={busyId === row.id}
                             onClick={() => {
                               onUpdate(row.id, draft);
                               setEditingId(null);
                             }}
                           >
-                            <Check aria-hidden="true" />
-                          </Button>
-                          <Button
-                            size="icon-sm"
-                            variant="ghost"
-                            aria-label={`Cancel editing ${name}`}
-                            className={TOUCH_TARGET}
-                            onClick={() => setEditingId(null)}
-                          >
-                            <X aria-hidden="true" />
-                          </Button>
+                            <Mark kind="tick" />
+                          </button>
+                          <button type="button" aria-label={`Cancel editing ${name}`} className={MARK_BUTTON} onClick={() => setEditingId(null)}>
+                            <Mark kind="cross" />
+                          </button>
                         </>
                       ) : (
                         <>
-                          <Button
-                            size="icon-sm"
-                            variant="ghost"
-                            aria-label={`Edit ${name}`}
-                            className={TOUCH_TARGET}
-                            onClick={() => startEdit(row)}
-                          >
-                            <Pencil aria-hidden="true" />
-                          </Button>
+                          {/* §T.6 part 2: "LINEUP, EDIT and DELETE, not drawn icons"; the pencil and the bin are unruled drawing, replaced by words. */}
+                          <button type="button" aria-label={`Edit ${name}`} className={`${CONTROL_LABEL} ${HIT_ALONE}`} onClick={() => startEdit(row)}>
+                            Edit
+                          </button>
 
                           {/*
                             A seeded row gets a DISABLED control with an
@@ -263,31 +257,29 @@ export function ResourceTable({
                             <Tooltip>
                               <TooltipTrigger
                                 render={
-                                  <Button
-                                    size="icon-sm"
-                                    variant="ghost"
+                                  <button
+                                    type="button"
                                     aria-label={`Delete ${name}`}
                                     aria-disabled="true"
-                                    className={cn(TOUCH_TARGET, 'cursor-not-allowed opacity-40')}
+                                    className={cn(CONTROL_LABEL, HIT_ALONE, 'cursor-not-allowed opacity-40')}
                                     onClick={(event) => event.preventDefault()}
                                   >
-                                    <Trash2 aria-hidden="true" />
-                                  </Button>
+                                    Delete
+                                  </button>
                                 }
                               />
                               <TooltipContent>{seededMessage(name)}</TooltipContent>
                             </Tooltip>
                           ) : (
-                            <Button
-                              size="icon-sm"
-                              variant="ghost"
+                            <button
+                              type="button"
                               aria-label={`Delete ${name}`}
                               disabled={busyId === row.id}
                               onClick={() => onDelete(row)}
-                              className={cn(TOUCH_TARGET, 'text-destructive hover:bg-destructive/10')}
+                              className={cn(CONTROL_LABEL, HIT_ALONE, 'disabled:opacity-50')}
                             >
-                              <Trash2 aria-hidden="true" />
-                            </Button>
+                              Delete
+                            </button>
                           )}
                         </>
                       )}

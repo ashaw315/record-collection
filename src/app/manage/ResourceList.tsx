@@ -1,10 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { HIT } from '@/app/hit-area';
-import { LABEL, LABEL_TYPE } from '@/app/records/[id]/grid-type';
+import { CONTROL_BOX, CONTROL_LABEL, LABEL, LABEL_TYPE } from '@/app/records/[id]/grid-type';
 import { seededMessage } from '@/lib/api/messages';
 import { LineupAction } from './LineupAction';
 import { formFields, tableFields, type FieldSpec, type ResourceSpec } from './resources';
@@ -91,7 +90,6 @@ function draftOf(row: Row, field: FieldSpec): string {
 /* The field ruling: the label is the field's width and stands on it with nothing between, so label and field are one target. */
 const FIELD_LABEL = `block pb-1 ${LABEL}`;
 const FIELD = 'h-9 w-full';
-const ACTION = 'pointer-coarse:h-[44px]';
 
 export function ResourceList({ resource, rows, busyId, rowError, createError, onCreate, onUpdate, onDelete, genres }: Props) {
   const [openId, setOpenId] = useState<string | null>(null);
@@ -215,21 +213,24 @@ export function ResourceList({ resource, rows, busyId, rowError, createError, on
           </div>
         )}
 
-        <div className="flex items-center gap-2 pt-1">
-          <Button type="submit" aria-label={row === undefined ? `Save new ${resource.singular}` : `Save ${name}`} disabled={row !== undefined && busyId === row.id} className={ACTION}>
+        {/* §T.6 part 2 (Design, 14 Oct): SAVE a §9.3 box, DELETE a §9.3 label, and "at 390, LINEUP joins SAVE and DELETE in the form's action row", 24 apart (§G.3). */}
+        <div data-manage-actions="" className="flex flex-wrap items-center gap-6 pt-1">
+          <button type="submit" aria-label={row === undefined ? `Save new ${resource.singular}` : `Save ${name}`} disabled={row !== undefined && busyId === row.id} className={`${CONTROL_BOX} disabled:opacity-50`}>
             Save
-          </Button>
+          </button>
           {row !== undefined &&
             (seeded ? (
               /* A seeded row's Delete is shown refused, with its reason beside it: an action that always errors would be a lie, and there is no hover on a phone to explain it. */
-              <Button type="button" variant="outline" aria-label={`Delete ${name}`} aria-disabled="true" className={`${ACTION} cursor-not-allowed opacity-40`} onClick={(event) => event.preventDefault()}>
+              <button type="button" aria-label={`Delete ${name}`} aria-disabled="true" className={`${CONTROL_LABEL} cursor-not-allowed opacity-40`} onClick={(event) => event.preventDefault()}>
                 Delete
-              </Button>
+              </button>
             ) : (
-              <Button type="button" variant="outline" aria-label={`Delete ${name}`} disabled={busyId === row.id} className={`${ACTION} text-destructive`} onClick={() => onDelete(row)}>
+              <button type="button" aria-label={`Delete ${name}`} disabled={busyId === row.id} className={`${CONTROL_LABEL} disabled:opacity-50`} onClick={() => onDelete(row)}>
                 Delete
-              </Button>
+              </button>
             ))}
+          {/* §12 step 11, artists only: the lineup walk is asked for, here with the artist's other actions. */}
+          {resource.key === 'artists' && row !== undefined && <LineupAction artistId={row.id} artistName={name} />}
         </div>
         {seeded && <p className="text-meta text-muted-foreground">{seededMessage(name)}</p>}
 
@@ -245,12 +246,6 @@ export function ResourceList({ resource, rows, busyId, rowError, createError, on
           </div>
         )}
 
-        {/* §12 step 11, artists only: the lineup walk is asked for, here with the artist's other actions. */}
-        {resource.key === 'artists' && row !== undefined && (
-          <div className="flex pt-1">
-            <LineupAction artistId={row.id} artistName={name} />
-          </div>
-        )}
       </form>
     );
   }

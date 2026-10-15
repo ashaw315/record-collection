@@ -64,5 +64,5 @@ export const HIT_WHOLE_ROW = "before:absolute before:inset-0 before:hidden befor
  * The row takes `ROW_TARGET`. Coarse only.
  */
 export const HIT_ROW_LESS_44 = "before:absolute before:inset-y-0 before:left-0 before:right-[44px] before:hidden before:content-[''] pointer-coarse:before:block";
-/** No neighbour on either side: 9 past the thing. */
+/** No neighbour on either side: 9 past the thing. Also manage's row actions (step 146), words 24 apart: EDIT at 32 meets the floor across with its 9 each side, and 9 keeps within the gap. */
 export const HIT_ALONE = `${HIT} before:-left-[9px] before:-right-[9px]`;

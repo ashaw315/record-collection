@@ -1,4 +1,4 @@
-import { expect, type Page } from '@playwright/test';
+import { expect, type Locator, type Page } from '@playwright/test';
 
 /**
  * **One reading of a control's type, for the §T.6 passes.** Written for
@@ -10,7 +10,8 @@ export const INK = ['lab(6.18075 1.20374 2.12039)', 'oklch(0.19 0.008 60)'];
 export const LABEL_INK = ['lab(35.0433 0.937879 2.8959)', 'oklch(0.44 0.008 70)'];
 
 export type Read = { text: string; size: string; upper: string; mono: boolean; colour: string; weight: string; border: string; radius: string; fill: string; height: number; lineHeight: string; left: number; edges: { left: number; top: number; right: number; bottom: number } };
-export const read = (page: Page, selector: string) => page.evaluate((sel): Read[] => Array.from(document.querySelectorAll<HTMLElement>(sel)).map((el) => { const cs = getComputedStyle(el); const b = el.getBoundingClientRect(); return { text: (el.textContent ?? '').trim().slice(0, 40), size: cs.fontSize, upper: cs.textTransform, mono: /mono/i.test(cs.fontFamily), colour: cs.color, weight: cs.fontWeight, border: cs.borderTopWidth, radius: cs.borderTopLeftRadius, fill: cs.backgroundColor, height: Math.round(b.height), lineHeight: cs.lineHeight, left: Math.round(b.left), edges: { left: b.left, top: b.top, right: b.right, bottom: b.bottom } }; }), selector);
+/** Read within a page or within one locator (a row, a form), so a reading needs no selector CSS cannot write. */
+export const read = (scope: Page | Locator, selector: string) => scope.locator(selector).evaluateAll((els): Read[] => (els as HTMLElement[]).map((el) => { const cs = getComputedStyle(el); const b = el.getBoundingClientRect(); return { text: (el.textContent ?? '').trim().slice(0, 40), size: cs.fontSize, upper: cs.textTransform, mono: /mono/i.test(cs.fontFamily), colour: cs.color, weight: cs.fontWeight, border: cs.borderTopWidth, radius: cs.borderTopLeftRadius, fill: cs.backgroundColor, height: Math.round(b.height), lineHeight: cs.lineHeight, left: Math.round(b.left), edges: { left: b.left, top: b.top, right: b.right, bottom: b.bottom } }; }));
 
 /* §4.1's label type: 11 mono uppercase in the label colour. */
 export const expectLabel = (r: Read, what: string) => { expect.soft(r, `${what}: §4.1’s label type`).toMatchObject({ size: '11px', upper: 'uppercase', mono: true }); expect.soft(LABEL_INK, `${what}: in the label colour`).toContain(r.colour); };

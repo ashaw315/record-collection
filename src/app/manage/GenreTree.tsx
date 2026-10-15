@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { Pencil, Trash2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Mark } from '@/app/disclosure-mark';
+import { CONTROL_BOX, CONTROL_LABEL } from '@/app/records/[id]/grid-type';
+import { HIT_ALONE } from '@/app/hit-area';
 import { Input } from '@/components/ui/input';
-import { cn } from '@/lib/utils';
 import {
   buildTree,
   flattenTree,
@@ -24,9 +24,6 @@ import {
  * The list is a real nested `<ul>` with `aria-level`, so the hierarchy is
  * conveyed structurally rather than by indentation alone.
  */
-
-const TOUCH_TARGET =
-  "relative after:absolute after:left-1/2 after:top-1/2 after:h-11 after:w-[46px] after:-translate-x-1/2 after:-translate-y-1/2 after:content-[''] pointer-coarse:after:block after:hidden";
 
 type Props = {
   rows: GenreRow[];
@@ -57,7 +54,8 @@ export function GenreTree({
 
   return (
     <div className="w-full">
-      <div className="flex gap-2 border-b border-border bg-secondary/40 px-3 py-2">
+      {/* §T.6 part 2 (Design, 14 Oct): the add row untinted; Add a §9.3 box with §T.1's +. */}
+      <div data-manage-create="" className="flex items-center gap-6 border-b border-border px-3 py-2">
         <Input
           aria-label="New genre name"
           placeholder="New genre…"
@@ -71,17 +69,18 @@ export function GenreTree({
           }}
           className="h-8 max-w-xs pointer-coarse:h-[44px]"
         />
-        <Button
-          size="sm"
-          className="h-8 pointer-coarse:h-[44px]"
+        <button
+          type="button"
+          className={`${CONTROL_BOX} gap-2`}
           onClick={() => {
             if (newName.trim() === '') return;
             onCreate({ name: newName });
             setNewName('');
           }}
         >
+          <Mark kind="plus" />
           Add
-        </Button>
+        </button>
       </div>
 
       {createError !== undefined && (
@@ -163,29 +162,22 @@ export function GenreTree({
                     </select>
                   </label>
 
-                  <div className="flex gap-1 pointer-coarse:gap-[18px]">
-                    <Button
-                      size="icon-sm"
-                      variant="ghost"
+                  {/* §T.6 part 2 (Design, 14 Oct): the actions in words, 24 apart, where lucide's pencil and bin were. */}
+                  <div className="flex gap-6">
+                    <button
+                      type="button"
                       aria-label={`Edit ${node.name}`}
-                      className={TOUCH_TARGET}
+                      className={`${CONTROL_LABEL} ${HIT_ALONE}`}
                       onClick={() => {
                         setEditingId(node.id);
                         setDraftName(node.name);
                       }}
                     >
-                      <Pencil aria-hidden="true" />
-                    </Button>
-                    <Button
-                      size="icon-sm"
-                      variant="ghost"
-                      aria-label={`Delete ${node.name}`}
-                      disabled={busyId === node.id}
-                      onClick={() => onDelete(node)}
-                      className={cn(TOUCH_TARGET, 'text-destructive hover:bg-destructive/10')}
-                    >
-                      <Trash2 aria-hidden="true" />
-                    </Button>
+                      Edit
+                    </button>
+                    <button type="button" aria-label={`Delete ${node.name}`} disabled={busyId === node.id} onClick={() => onDelete(node)} className={`${CONTROL_LABEL} ${HIT_ALONE} disabled:opacity-50`}>
+                      Delete
+                    </button>
                   </div>
                 </div>
 
