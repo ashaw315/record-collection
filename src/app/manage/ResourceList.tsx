@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Input } from '@/components/ui/input';
 import { HIT } from '@/app/hit-area';
 import { CONTROL_BOX, CONTROL_LABEL, LABEL, LABEL_TYPE } from '@/app/records/[id]/grid-type';
@@ -127,7 +127,7 @@ export function ResourceList({ resource, rows, busyId, rowError, createError, on
     go(id, row);
   }
 
-  function form(row: Row | undefined) {
+  function form(row: Row | undefined, lineup: { control: ReactNode; status: ReactNode | null } | null = null) {
     const name = row === undefined ? '' : String(row.name ?? '');
     const called = (field: FieldSpec) => (row === undefined ? `New ${resource.singular} ${field.label.toLowerCase()}` : `${name} ${field.label.toLowerCase()}`);
     const seeded = row !== undefined && resource.hasSeeded === true && row.isSeeded === true;
@@ -229,9 +229,14 @@ export function ResourceList({ resource, rows, busyId, rowError, createError, on
                 Delete
               </button>
             ))}
-          {/* §12 step 11, artists only: the lineup walk is asked for, here with the artist's other actions. */}
-          {resource.key === 'artists' && row !== undefined && <LineupAction artistId={row.id} artistName={name} />}
+          {/* §12 step 11, artists only: the lineup walk is asked for, here with the artist's other actions; its status in a slot the row's width beneath (§T.6 part 2). */}
+          {lineup?.control}
         </div>
+        {lineup?.status != null && (
+          <div data-lineup-slot={row?.id} className="w-full">
+            {lineup.status}
+          </div>
+        )}
         {seeded && <p className="text-meta text-muted-foreground">{seededMessage(name)}</p>}
 
         {asked !== null && (
@@ -308,7 +313,12 @@ export function ResourceList({ resource, rows, busyId, rowError, createError, on
                 {rowError.message}
               </p>
             )}
-            {openId === row.id && form(row)}
+            {openId === row.id &&
+              (resource.key === 'artists' ? (
+                <LineupAction artistId={row.id} artistName={name} render={(parts) => form(row, parts)} />
+              ) : (
+                form(row)
+              ))}
           </li>
         );
       })}

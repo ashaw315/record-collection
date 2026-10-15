@@ -45796,3 +45796,44 @@ three buttons, which nothing in the other specs of the first run reads,
 so the green holds. Typecheck 0; lint 0 errors; build clean. Captures:
 `docs/captures/part2-146/manage-*.png`, committed alone at `b43cce4`.
 Gate-listed files: none.
+
+## 15 Oct, 02:40: step 146, the lineup walk's slot
+
+**Built** (§T.6 part 2, Design 14 Oct: "The lineup picker's choices
+become hairline-separated rows, and its progress line takes a reserved
+slot the row's width beneath the row. At 1280 that is not the 60-wide
+actions cell, where it ran to three lines", and the reserved-slot rule).
+`LineupAction.tsx` keeps the walk and hands its two parts to the caller
+through a render prop, the LINEUP control and the status (null while
+there is nothing to say), because the two stand in different places: in
+`ResourceTable.tsx` the control among the row's actions and the status
+in a row beneath spanning every column (`data-lineup-slot`), the row
+function taking the control as an argument so an artist's row and any
+other row are one markup; in `ResourceList.tsx` the control in the
+action row and the status in a block beneath it, the row's width. The
+status is one line of `text-meta` held at 20 (`min-h`), so the count
+replacing "Asking MusicBrainz…" and the result replacing the count move
+nothing. The picker is no box: a sentence, then the choices as rows
+between hairlines, each a full-width text control in ink with its
+description in the label colour. The actions cell is marked
+`data-lineup-for` so a reading can hold its width.
+
+**Tests first:** `e2e/lineup-146.spec.ts`, the walk and the search
+mocked at the route as manage.spec mocks them, at 1280 under a mouse on
+the table and 390 under a coarse pointer on the open form: the slot
+appears beneath the row, starting and ending at the row's edges, below
+LINEUP; it holds one height from the first word through the count to
+the result; the actions cell keeps its width; the picker has no border,
+radius or fill, fills its slot's content box (the row's width less the
+cell's 12 either side in the table), and each choice is a row with a
+hairline, unboxed, the slot's width. Failed against the build as it was
+(no slot), then passed, after one expectation of the test's own was
+corrected: the picker fills the cell's content box, not the table's
+edge.
+
+**Verification, step level (the lineup unit):** `lineup-146`,
+`manage-146` and `manage.spec` on both projects: `78 passed` in 6.0m.
+Typecheck 0; lint 0 errors; build clean. Captures:
+`docs/captures/part2-146/lineup-*.png`, the walk held in progress and
+the picker, the routes answered by the tool, committed alone.
+Gate-listed files: none.

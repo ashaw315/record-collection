@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { Fragment, useState, type ReactNode } from 'react';
 import { Mark } from '@/app/disclosure-mark';
 import { CONTROL_BOX, CONTROL_LABEL } from '@/app/records/[id]/grid-type';
 import { HIT_ALONE } from '@/app/hit-area';
@@ -168,8 +168,9 @@ export function ResourceTable({
               const isSeeded = resource.hasSeeded === true && row.isSeeded === true;
               const name = String(row.name ?? '');
 
-              return (
-                <tr key={row.id} className="border-b border-border last:border-0 hover:bg-accent/60">
+              /* The row, with the lineup control among its actions where the row is an artist's; the walk's status goes in a row beneath, the table's width (§T.6 part 2). */
+              const tableRow = (lineup: ReactNode | null) => (
+                <tr className="border-b border-border last:border-0 hover:bg-accent/60">
                   {fields.map((field) => (
                     <td
                       key={field.name}
@@ -209,7 +210,7 @@ export function ResourceTable({
                     </td>
                   ))}
 
-                  <td className="px-3 py-1.5 align-top">
+                  <td data-lineup-for={resource.key === 'artists' ? row.id : undefined} className="px-3 py-1.5 align-top">
                     {/* §T.6 part 2 (Design, 14 Oct): the actions are §9.3 labels in words, 24 apart (§G.3); the tick and the × on an inline edit are §T.1's marks in a 28 box. Across (step 132's rule): a mark's box of 28 has its 8 either side under a coarse pointer, and its overlay is 46 wide: 44 read 43 by the pixel. */}
                     <div className="flex items-start justify-end gap-6">
                       {/*
@@ -218,9 +219,7 @@ export function ResourceTable({
                         requests, so it must be asked for rather than offered
                         everywhere.
                       */}
-                      {resource.key === 'artists' && !isEditing && (
-                        <LineupAction artistId={row.id} artistName={name} />
-                      )}
+                      {!isEditing && lineup}
                       {isEditing ? (
                         <>
                           {/* §T.6 part 2: "the tick confirms what the × cancels", §T.1's marks where lucide's check and x were. */}
@@ -292,6 +291,26 @@ export function ResourceTable({
                     )}
                   </td>
                 </tr>
+              );
+              if (resource.key !== 'artists') return <Fragment key={row.id}>{tableRow(null)}</Fragment>;
+              return (
+                <LineupAction
+                  key={row.id}
+                  artistId={row.id}
+                  artistName={name}
+                  render={({ control, status }) => (
+                    <>
+                      {tableRow(control)}
+                      {status !== null && (
+                        <tr data-lineup-slot={row.id} className="border-b border-border last:border-0">
+                          <td colSpan={fields.length + 1} className="px-3 py-1.5 align-top">
+                            {status}
+                          </td>
+                        </tr>
+                      )}
+                    </>
+                  )}
+                />
               );
             })}
           </tbody>
