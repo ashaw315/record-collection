@@ -46297,3 +46297,68 @@ what is wrong, and the failure the starved gate exposed was this
 defect seen once. The spec is not changed; step 147 changes the code
 and adds the two staged cases the ruling names. The proposal to wait
 on `__landings` is withdrawn.
+
+## 15 Oct, 15:48: the no-entry convention against the index, staged before it spreads
+
+**Design's safeguard save arrived in the tree after 33faa0c** and went
+in by the precedent: raw at `3bca06c`, Code's 33 blocks out of the
+handoff again and back by the applier (`33 restored, 0 with no anchor`),
+`export-diff` against 33faa0c reading **0 removed, 0 reworded, 4 added**
+in the handoff (the rule, "A no-entry call names the sentence it
+spares", under Maintaining this file) and **1 removed, 2 added** in the
+target (§W.29's old no-entry line replaced by the call that quotes "So
+the arrival lands on the occupied shelf rather than at the fixture's top
+corner." inside its own paragraph), the listing in
+`docs/intake/3bca06c-added.md`. The index 12 PASS on the intaken tree;
+`test/repo` 494 passed.
+
+**The reviewer asked, before the convention reaches twenty instances,
+whether a quoted copy of a target sentence trips the declared-sentence
+parser and whether any assertion assumes a sentence occurs once.** Read
+first, then staged, because a guard is not verified by reading it.
+
+- **As used, nothing trips.** Every reader of sentences in
+  `check-index.mjs` starts at one of the six declared prefixes: 7 (from
+  a prefix wherever it occurs, to the next full stop followed by space),
+  9 (the same, after blanking quoted text), and 6 and 8a look only for
+  entries' quotes, which are declared sentences. A spared sentence has
+  no prefix by definition, so its copy is invisible to all four, and the
+  listing's splitter keeps the copy inside its host sentence (the host
+  has no full stop before the opening quote), so `export-diff` does not
+  count it as a second occurrence either. The intaken tree: 12 PASS.
+- **The parser trip is real for a quoted DECLARED sentence, and it is
+  caught, not passed.** Staged by making the call quote §W.29's own
+  declared sentence instead: `6 W.29/route-opens-far quote-repeated`
+  and `7 §W.29 unquoted "Withdrawn within §W.29: below the fork the
+  route opening on "`, the copy running on past `.”` into its host
+  exactly as the maintaining note says, while 9 stayed at 0 because it
+  blanks quotes before it looks. 10 PASS, 2 FAIL. So a no-entry call
+  may never quote a withdrawal sentence, and if one does, the index says
+  so twice.
+- **The one assertion that assumes once is 6**, an entry's quote
+  exactly once in its section, with 7's pairing counting one to one
+  beside it; both over declared sentences only. No test in `test/repo`
+  assumes a sentence occurs once in a file.
+- **The cost of the convention is on the day a spared sentence is
+  withdrawn, and nothing detects it.** Staged: a declared withdrawal of
+  the arrival sentence added to §W.29 and its entry to WITHDRAWALS.md,
+  the no-entry call left standing with its quote. 11 PASS and the one
+  FAIL is `6 comment-stale`, the regeneration step. The stale call that
+  still says the sentence survives fires nothing, which is the index's
+  known blind spot, currency, in a new place. So the save that
+  withdraws a spared sentence must also edit the call that spared it,
+  and that is a sentence for Design's rule, sent as text.
+
+**The staging's own catch, a fourth in two days.** The first run of
+both stages edited nothing and worse: `perl -CSD` decoded the files as
+UTF-8 and read its own script as bytes, so the curly-quoted pattern
+never matched (12 PASS against an unchanged file, a stage that measured
+nothing) and the inserted entry landed as mojibake, which the
+withdrawal parser refused (`6 ABSENT of 12`). Caught by counting the
+copies in the file before reading the check; the rerun with `-Mutf8`
+counted 2 and failed as expected. A stage whose edit did not land reads
+exactly like a guard that passed. Count the edit first.
+
+**Crosses to Design as text**, for the rule at handoff line 688: "When
+a spared sentence is later withdrawn, the same save edits the call
+that spared it; the index checks the entry and never the call."
