@@ -46362,3 +46362,58 @@ exactly like a guard that passed. Count the edit first.
 **Crosses to Design as text**, for the rule at handoff line 688: "When
 a spared sentence is later withdrawn, the same save edits the call
 that spared it; the index checks the entry and never the call."
+
+## 15 Oct, 16:27: assertion 12, a no-entry call held to the sentence it spares; the go received
+
+**The reviewer pushed on the residual.** "The same save edits the call" is
+a convention held by discipline, the class of this morning's hand-written
+index row and of entry-heading drift before 11 went fatal, and the
+material for a check was already in the convention: a call quotes its
+spared sentence verbatim, so the spared text stands exactly twice in its
+section, once at home and once in the call. **Assertion 12** is that
+count, the mirror of 6: a home rewritten or removed drops it to one on
+the save that does it. Spec in `scripts/ASSERTIONS-spec.md`, three tests
+in `test/repo/index-inputs.test.ts` written first and watched red (no
+line for 12 at all), then green; the id-count expectations in the two
+index tests moved from 12 to 13 ids because an id was added, which is a
+test changing by construction and not to pass failing code. On the tree:
+`12: 2 no-entry calls, 1 named and checked, 1 unnamed (report only)`,
+the unnamed one §T.6's older `No entry:` with no quote, reported and
+not failed while the older calls are Design's to bring to the form, as
+11 was report-only while the ten were its to move.
+
+**Written down, not glossed, in the spec:** 12 cannot see withdrawal by
+addition, the spared text untouched and a declared sentence for it added
+elsewhere in the section. The count stays two and the call goes stale
+silently. No cheap count reaches it.
+
+**Two sentences cross to Design as text**, for the Maintaining section
+at handoff line 688, since the spec asks that an assertion's motivating
+defect be recorded there and that region is not Code's to write:
+
+- "A no-entry call may never quote a withdrawal sentence: the index
+  fails it twice, 6 as quote-repeated and 7 as unquoted."
+- "Assertion 12 counts a spared sentence twice in its section, at home
+  and in the call, because a later withdrawal of a spared sentence
+  passed every assertion with the call still saying it survived."
+
+**Design's tool re-exported both files at 16:20:28** with no change to
+its prose (`export-diff` against HEAD: nothing removed, 0 added) and
+Code's 33 blocks out of the handoff again; the applier restored them
+(`33 restored, 0 with no anchor`). No raw commit, since there was
+nothing of Design's to take in; recorded because the mtime is the only
+trace and the gate's worktree is HEAD, not the tree.
+
+**The go arrived** from the reviewer, with Adam away: start
+`scripts/gate.sh HEAD 1` on finishing this unit and wait for no other
+word; idle while it runs, since a second heavy process beside a server
+holding 2 GB is what starved the last run. Outcomes ruled in advance:
+green, commit and carry on to 147, then the spines' roving index, then
+login at 1280, stopping before look up's result card; killed on memory
+again, no retry as-is, next start built as costed with the env var so
+step runs stay on dev, then the gate on the new path; real failures,
+fixed where they belong to the step, with anything needing a ruling
+written up and left. A failure attributed without a demonstrated cause
+is to be left unattributed.
+
+**For Adam, in one place:** nothing yet.

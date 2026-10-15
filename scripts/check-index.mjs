@@ -47,7 +47,7 @@ const FILES = {
   stack trace: to someone skimming for FAIL, a clean run. An id with no
   result is now named as one, and the last line counts all three.
 */
-const IDS = ['0', '1', '2', '3', '4', '5', '6', '7', '8a', '8b', '9', '11'];
+const IDS = ['0', '1', '2', '3', '4', '5', '6', '7', '8a', '8b', '9', '11', '12'];
 const results = new Map();
 function stop(reason) {
   console.log(`RUN STOPPED: ${reason}`);
@@ -602,6 +602,59 @@ const WITHDRAWAL_PREFIX =
   console.log(`     11: ${misplaced.length} of ${entries} entries under another target's heading`);
   for (const line of misplaced) fail(line);
   report(11, failures.length === before);
+}
+
+/*
+  12 -- every no-entry call stands by the sentence it spares (15 Oct). The
+  handoff's rule has a call quote, verbatim, the sentence that would have
+  been withdrawn. Staged the day the rule landed: a later withdrawal of the
+  spared sentence passed every assertion with the call still saying the
+  sentence survives, and "the same save edits the call" is a convention
+  held by discipline, the class the hand-written index row and the entry
+  under the wrong heading were. The material for a check is in the
+  convention itself: the spared text stands exactly twice in its section,
+  at home and in the call, so a home rewritten or removed drops the count
+  on the save that does it. The mirror of 6. What it cannot see, named
+  rather than glossed: withdrawal by addition, the home untouched and a
+  declared sentence added elsewhere in the section -- the count stays two
+  and the call goes stale silently. A call in the form with no quoted
+  sentence is the one the rule says to file instead; report-only while the
+  older calls are Design's to bring to the form, as 11 was while the ten
+  were its to move. A call that quotes a DECLARED sentence is not 12's:
+  6 fails it as quote-repeated and 7 as unquoted, staged 15 Oct.
+*/
+{
+  const before = failures.length;
+  let calls = 0;
+  let named = 0;
+  const unnamed = [];
+  for (const h of ALL) {
+    const sectionText = collapse(stripTags(h.html));
+    for (const para of h.html.matchAll(/<p\b[^>]*>([\s\S]*?)<\/p>/g)) {
+      const plain = collapse(stripTags(para[1]));
+      for (const m of plain.matchAll(/No entry:/g)) {
+        calls += 1;
+        const rest = plain.slice(m.index);
+        /* The call's own sentence, by 7's rule, decides whether it names anything; the quote is then read from the paragraph, since a spared sentence may carry a full stop of its own. */
+        const end = /[.!?](?=\s|$)/.exec(rest);
+        const sentence = end === null ? rest : rest.slice(0, end.index + 1);
+        const q = sentence.includes('“') ? /“([^”]+)”/.exec(rest) : null;
+        if (q === null) {
+          unnamed.push(`12 §${h.id} unnamed "${sentence.slice(0, 80)}"`);
+          continue;
+        }
+        named += 1;
+        /* The home occurrence may run on into a clause, as §W.29's does past an em dash, so the quote's closing stop is not part of what is counted. */
+        const spared = q[1].replace(/[.!?]$/, '');
+        const n = sectionText.split(spared).length - 1;
+        if (n !== 2) fail(`12 §${h.id} spared-count=${n} "${spared}"`);
+      }
+    }
+  }
+  if (calls === 0) fail('12 empty');
+  for (const line of unnamed) console.log(line);
+  console.log(`     12: ${calls} no-entry calls, ${named} named and checked, ${unnamed.length} unnamed (report only)`);
+  report(12, failures.length === before);
 }
 
 for (const line of failures) console.log(line);

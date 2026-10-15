@@ -96,5 +96,7 @@ describe('the design index passes its own assertions', () => {
     const scope = count(/8a: \d+ rows, \d+ of (\d+) in-scope/);
     expect(removed, '8a removed quotes').toBeGreaterThan(0);
     expect(removed, 'and removed every quote it could reach').toBe(scope);
+    /* 12 counts the calls it read, and the named ones are the set it checks; zero named is the vacuous pass. */
+    expect(count(/12: \d+ no-entry calls, (\d+) named/), 'assertion 12 checked a named call').toBeGreaterThan(0);
   });
 });

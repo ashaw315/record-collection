@@ -8,7 +8,7 @@ import { parseBullets } from '../../scripts/withdrawals.mjs';
 
 const REPO_ROOT = join(import.meta.dirname, '..', '..');
 const DESIGN = join(REPO_ROOT, 'docs', 'design');
-const IDS = ['0', '1', '2', '3', '4', '5', '6', '7', '8a', '8b', '9'];
+const IDS = ['0', '1', '2', '3', '4', '5', '6', '7', '8a', '8b', '9', '11', '12'];
 
 /**
  * **The nav target, §G, is an input (2 Oct).** The first record-detail
@@ -293,15 +293,15 @@ describe('a run that stops partway names the ids it never reached', () => {
     });
     const { code, out } = run(dir);
     expect(code).not.toBe(0);
-    for (const id of ['6', '7', '8a', '8b', '9', '11']) expect(out).toMatch(new RegExp(`^ABSENT ${id}\\b`, 'm'));
-    expect(out).toMatch(/^RESULT: \d+ PASS, \d+ FAIL, 6 ABSENT of 12 -- INCOMPLETE/m);
+    for (const id of ['6', '7', '8a', '8b', '9', '11', '12']) expect(out).toMatch(new RegExp(`^ABSENT ${id}\\b`, 'm'));
+    expect(out).toMatch(/^RESULT: \d+ PASS, \d+ FAIL, 7 ABSENT of 13 -- INCOMPLETE/m);
   });
 
   /* Fails against the summary: a complete run must say it reported every id, so a short run cannot pass for a clean one. */
   it('reports every id on a complete run, and says so in its last line', () => {
     const { out } = run();
     for (const id of IDS) expect(out).toMatch(new RegExp(`^(PASS|FAIL) ${id}$`, 'm'));
-    expect(out).toMatch(/^RESULT: \d+ PASS, \d+ FAIL, 0 ABSENT of 12$/m);
+    expect(out).toMatch(/^RESULT: \d+ PASS, \d+ FAIL, 0 ABSENT of 13$/m);
   });
 });
 
@@ -362,5 +362,57 @@ describe('the table and grid target is read: §T references resolve, and §T is 
     expect(named, 'this list is the script\'s own').toEqual([...inputs].sort());
     const tracked = execFileSync('git', ['ls-files', '--', ...inputs.map((f) => join('docs', 'design', f))], { cwd: REPO_ROOT, encoding: 'utf8' }).trim().split('\n').filter(Boolean).length;
     expect(tracked).toBe(inputs.length);
+  });
+});
+
+/**
+ * **Assertion 12 holds a no-entry call to the sentence it spares (15 Oct).**
+ * The handoff's rule has a call quote, verbatim, the sentence that would
+ * have been withdrawn. Staged the day the convention landed: a later
+ * withdrawal of the spared sentence passed every assertion with the stale
+ * call still saying the sentence survives, and the remedy proposed was
+ * "the same save edits the call", a convention held by discipline. The
+ * material for a check is in the convention itself: the spared text stands
+ * exactly twice in its section, once at home and once in the call, so a
+ * home rewritten or removed drops the count to one on the save that does
+ * it. The mirror of 6.
+ */
+describe('assertion 12 holds a no-entry call to its spared sentence', () => {
+  const HOME = /So the arrival lands on the occupied shelf rather than at the fixture’s top corner(<\/strong> — )/;
+  const LAST = 'This is new, so no entry is owed.</p>';
+  const W = 'Wall and Pull - build target.dc.html';
+
+  /* Fails against the id's absence: no line for 12 at all. */
+  it('passes on the tree as it stands, and says how many calls it read', () => {
+    const { out } = run();
+    expect(out).toMatch(/^PASS 12$/m);
+    expect(out).toMatch(/^     12: \d+ no-entry calls, \d+ named and checked, \d+ unnamed/m);
+  });
+
+  /* Fails against the count: the home sentence reworded, the call still quoting the old wording, and the spared text standing once. */
+  it('fails when the home sentence is rewritten and the call still quotes the old one', () => {
+    const dir = stage((d) => {
+      const t = join(d, W);
+      const html = readFileSync(t, 'utf8');
+      if (!HOME.test(html)) throw new Error('staging anchor missing: §W.29’s home sentence before its dash');
+      writeFileSync(t, html.replace(HOME, 'So the arrival lands on the occupied shelf and not at the fixture’s top corner$1'));
+    });
+    const { code, out } = run(dir);
+    expect(code).not.toBe(0);
+    expect(out).toMatch(/^FAIL 12$/m);
+    expect(out).toContain('12 §W.29 spared-count=1 "So the arrival lands on the occupied shelf rather than at the fixture’s top corner"');
+  });
+
+  /* Fails against a check that reads only quoted calls: a call in the form with no sentence named is the one the rule says to file instead. */
+  it('names a call that quotes no sentence, report-only while the older calls are Design’s to bring to the form', () => {
+    const dir = stage((d) => {
+      const t = join(d, W);
+      const html = readFileSync(t, 'utf8');
+      if (html.split(LAST).length !== 2) throw new Error('staging anchor missing: §W.29’s closing sentence');
+      writeFileSync(t, html.replace(LAST, 'No entry: this is new.</p>'));
+    });
+    const { out } = run(dir);
+    expect(out).toContain('12 §W.29 unnamed "No entry: this is new."');
+    expect(out).toMatch(/^PASS 12$/m);
   });
 });
