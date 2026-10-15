@@ -33,6 +33,7 @@ Generated from 132 declared rules. Regenerate with
 | --- | --- |
 | two parts of one page are meant to share an edge and only one of them knows the rule | [A cap applied to the component instead of the composition](#a-cap-applied-to-the-component-instead-of-the-composition) |
 | a feature works correctly and you are debating how to improve it | [A FEATURE RETIRED ON THREE ARGUMENTS, NONE ABOUT ITS IMPLEMENTATION](#a-feature-retired-on-three-arguments-none-about-its-implementation) |
+| a new instrument printed a plausible figure and nothing with a known answer has been put under it | [An instrument that measured itself, and a comparison made as text (15 Oct)](#an-instrument-that-measured-itself-and-a-comparison-made-as-text-15-oct) |
 | the number is in band and you cannot say what it would forbid | [A measurement correlated with the signal instead of being it — fifth instance](#a-measurement-correlated-with-the-signal-instead-of-being-it-fifth-instance) |
 | a rule collides with rules that were never in tension, or a figure moves while nothing changes size | [A rule scoped past its subject, and a ratio that moved when nothing did](#a-rule-scoped-past-its-subject-and-a-ratio-that-moved-when-nothing-did) |
 | a page states a fact twice after a rebuild, and getByText starts failing with "resolved to 2 elements" | [A seam that has to move when the screen above it moves](#a-seam-that-has-to-move-when-the-screen-above-it-moves) |
@@ -45940,3 +45941,222 @@ is clean and `export-diff` finds nothing added or removed, so the
 newest Design save (the coordinator's "confirm at step zero when you
 take that drop in") has not arrived in the working tree. The
 confirmation waits for the drop.
+
+## 15 Oct, 08:46: before the gate's restart, the Playwright worker count and the memory it starts with
+
+**The count is set in the config, not left to the default.**
+`playwright.config.ts:83` reads `workers: process.env.CI ? 1 : 2`: two
+locally, one in CI, pinned at `2ee580c` on 14 Aug (reduced from three,
+which had replaced the default of roughly half the cores on 12 Aug; the
+measurements are in the comment above the line). The stopped run's own
+first line confirms it: `Running 1319 tests using 2 workers`. So the
+run the harness killed was already at the cap proposed for it, with at
+most two Chromium instances up at any moment, not several.
+
+**For the rerun: one worker, on the command line, the config
+untouched, as a PRECAUTION while the cause is unknown and not as a
+fix.** The cap was proposed on a belief that the browsers held the
+memory; nothing measured that, and the reviewer has withdrawn it. One
+worker is cheap insurance either way (the config's own note says more
+workers bought contention, not throughput, so the cost is wall clock),
+so it is `scripts/gate.sh HEAD 1`: the script's second argument, which it
+passes to Playwright as `--workers=1` and names in its log and report. The
+config's 2 is a measured decision about flakes and is not re-decided by
+one killed run. **A reader must not take the browsers as the
+established holder from this line**; the sampling below is what would
+establish one.
+
+**What the stopped run's memory went to cannot be read now.** The
+processes were gone at the 04:50 reading, and no per-process figure
+was taken while it ran. The candidates, unranked because nothing
+measured them: the dev server (`next dev`, one for the whole run, with
+a 15-minute run's compiled routes held), the two browsers, and the
+runner. A reading of `ps -o rss` on `next`, `chrom` and `playwright`
+every minute during the rerun would rank them; without one the next
+kill is as unexplained as this one.
+
+**The machine at 08:46, before anything of the gate is up:**
+
+| reading | figure |
+|---|---|
+| physical memory in use | 16G of 16G, **193M unused** |
+| compressor | 3252M |
+| wired | 3292M |
+| Docker Desktop, host processes | 646 MB RSS |
+| containers up | three of `popcom-game-on` (directus 304 MiB, postgres 54 MiB, backup 2 MiB), **none of this repo's** |
+
+**Quitting Docker Desktop does not return memory to this gate; it
+removes the gate's database.** The test database is
+`docker-compose.yml`'s `postgres:16-alpine` on 5433, with the Neon
+`wsproxy` beside it on 5434 for the nine transaction tests; both halves
+of the gate read `localhost:5433`, and the unit half's integration
+files truncate it in `beforeEach`. With Docker quit, `npm test` fails
+at the DB guard and every Playwright spec fails at its first write.
+Neither container is running at this reading (nothing listens on 5433),
+so `docker compose up -d` is the gate's first step, not its last. What
+Docker holds that the gate does not need is the other project's three
+containers, about 360 MiB inside the VM; stopping those is the saving
+on offer, and it is a decision for the project they belong to.
+
+**The gate itself has not been run.** This entry records the figure
+asked for and the reading before the restart; the restart is on the go.
+
+## 15 Oct, 09:40: the four owed items, the server the Playwright half runs against, and the gate's floor
+
+**1. `dialog-146` alone, before the restart.** On chromium with one
+worker, after migrating the fresh database (the containers I brought
+up at 08:50 were empty: a tmpfs database has no tables until
+`drizzle-kit migrate`, and Playwright's global setup does not run it,
+`npm test`'s does): `2 passed (21.3s)`, judged clean. Step 146's own
+two tests are now classified on their own evidence, not their
+neighbours'. Run twice, in fact: the second time under the sampler
+below, `2 passed` again.
+
+**2. `scroll-lock.spec.ts:59` reclassified: an ordering hole in the
+test, not starvation.** The spec waits for the wall to be visible and
+then scrolls the region to 600. "Visible" is the server's markup, which
+§W.29 paints at the arrival already; the client's landing write comes
+later, in the layout effect of the first commit whose width is the
+region's own (`WallLive.tsx`, "Consumed only on a commit whose frame is
+the region's OWN"), and that write replaces the tracked view rather
+than restoring it ("it is where the reader is GOING"). So a scroll
+that lands between first paint and that commit is overwritten,
+whatever the machine is doing. The starved run did not cause the hole;
+it widened the window the test falls into, which exists on every run
+and is usually shorter than the test's own round trips. The 04:50
+entry's "a race the starved machine widened, not a break" stands
+corrected to: **a break in the test's ordering, which starvation
+exposed.** The fix is the test's, and needs agreement before it is
+made (CLAUDE.md §2): wait for the landing to have been consumed before
+scrolling. The code counts exactly that, `window.__landings`, "so the
+ordering can be asserted" — the spec would `waitForFunction` on it
+reaching 1 before its `scrollTo`. Not applied.
+
+**3. A person scrolling during the arrival loses their scroll: yes, and
+it is the same window.** Mechanism, read from `WallLive.tsx`: the
+scroll listener is attached in a mount effect, so a scroll before
+hydration is not tracked at all; a scroll after mount but before the
+landing's commit is tracked, and then the landing write replaces it
+(the write records its own position so the listener ignores THAT
+scroll, and only that). "Once only — a reader who has scrolled away is
+not dragged back by a later commit" holds after the landing has been
+consumed, not before. The window is first paint to the hydrating
+commit: milliseconds on a fast machine, seconds under a dev server's
+compile or a starved one, and §W.29 made the first paint look arrived,
+so a reader sees a settled wall, scrolls, and has it snapped back.
+**This one is a ruling**, as the reviewer said: whether a scroll made
+in that window is the reader's to keep (the landing yields when the
+region has moved since first paint) or the arrival's to overwrite.
+Not changed.
+
+**The Playwright half runs against `next dev`, in the gate too.**
+`playwright.config.ts`'s `webServer` is `NODE_ENV=test npm run dev`,
+and `scripts/gate.sh` runs `npm run build` only because
+`type-scale.test.ts` reads a build's CSS; the built output is never
+served. So the dev-server hypothesis stays open, and the sampler's
+first reading says it is the one to watch: on a 24-second two-test
+run, the server reached **1,565 MB** resident, the browsers 380, the
+runner 415 (`scripts/memory-sample.sh`, 2-second samples; a role's
+figure is a ceiling, shared pages counting once per process). That is
+one spec's routes compiled; 1,319 tests touch every route, and a dev
+server holds what it compiles. **Costing `next start` against the
+build for the gate**, not done:
+
+- *Env.* `next start` sets `NODE_ENV=production` and reads
+  `.env.local`, the developer's own Neon URL and password hash. The
+  test values would go in `webServer.env`, which wins over any file.
+  `distDir` is already keyed on `NODE_ENV=test` (`.next-test`), so the
+  test build would need its own key or the gate's `.next` would be
+  the test's.
+- *Per-step cost.* The gate builds already (14 to 17s). A step's spec
+  run does not, and under `next start` every edit needs a build before
+  its spec: the dev server's on-demand compile is what makes a 25s
+  spec run possible. So the switch is for the gate, selected by an env
+  var the config reads, with step runs staying on dev; the two halves
+  then differ in server, which the report would have to say.
+- *Specs that lean on dev-mode timing.* Unknown count. The retry
+  comment names "typed text lost to the hydration window" and
+  `wall-first-paint.spec.ts` asserts a known failure that is about
+  paint order; a production server changes both. Each would need
+  reading, and a first run would show which.
+- *What it buys.* Lower and flat server memory, the compile-stall
+  reading of thirty failures closed either way, and a run that serves
+  what deploys. Worth doing as its own unit with a gate after it,
+  because it changes the Playwright config (CLAUDE.md §10's shared
+  infrastructure).
+- *The specs that lean on dev-mode timing are the value as well as the
+  cost* (the reviewer, 15 Oct). `scroll-lock` is one: it passed for
+  months because the dev server was slow in a particular way, and the
+  hole in its ordering showed only when the machine was slower still.
+  A production server changes the timing for every spec at once, so
+  the switch surfaces that whole class in one run rather than one spec
+  at a time over months. The unit is a diagnostic as much as a chore,
+  and is to be costed as both: a first run's failures are the finding,
+  not the obstacle. After 146 lands, not before.
+
+**4. The floor in the gate's refusals: the kernel's pressure level,
+not a percentage.** Neither existing threshold (load above 36, swap
+above 25,000 pages a second) names exhaustion, and the free percentage
+`memory_pressure` prints cannot: the passing gate on 0d78df5 ended at
+54 percent, the killed run read 55 after its processes were gone, and
+the 12 Oct entry had already found it at 56 to 64 "while the machine
+was plainly short". No figure of mine would be better than those.
+`kern.memorystatus_vm_pressure_level` is the kernel's own judgement of
+the same thing, 1 normal, 2 warning, 4 critical, and the figure macOS's
+memory killer acts on. `scripts/gate.sh` now refuses above 1
+(`GATE_MAX_PRESSURE`), checks it first because it is the one reading
+the other two cannot stand in for, and prints it in every memory line.
+**Read at the start, it catches a gate begun on a machine already
+short, not one that grows into the kill.** For that it starts
+`scripts/memory-sample.sh` beside the run, once a minute
+(`GATE_SAMPLE_EVERY`), one line of level, free, swap and the resident
+size of the server, the browsers, the runner and vitest, and the
+report ends with the peaks. **Staged, three ways:** `GATE_MAX_PRESSURE=0`
+refused, naming level 1 above 0, nothing run; `GATE_MAX_LOAD=0` passed
+the floor at its default and was refused by the load check behind it;
+the sampler beside the `dialog-146` run, 12 samples, with its peaks
+line reading `next 1565MB, browsers 380MB, runner 415MB`. Two defects
+were found by staging and not by reading, as §9 says they are: the
+peaks compared `1565MB` as text, and the sampler's own `ps` line
+matched its browser pattern and counted itself.
+
+**Three readings the rerun should know.** The killed gate did not go
+through `scripts/gate.sh`: the gate logs' newest report is 0d78df5's
+of 13 Oct, so the 146 run has no reading at its start and no log beside
+the tree. The rerun is `scripts/gate.sh HEAD 1`, which has both. Docker
+Desktop's virtual machine is the largest process on the machine at
+**1.9 GB** resident (the gate's refusal lists it first), not the 1 GB
+estimated; the test database lives inside it, so it stays, and the
+other project's three containers are what can go. And the kernel's
+level read 1 at every reading today, including at 08:46 with 193 MB
+unused: on this machine "unused" is not the measure either.
+
+### An instrument that measured itself, and a comparison made as text (15 Oct)
+
+The two defects staging found in the sampler, as a line of their own,
+because together they are the fourth item in CLAUDE.md §2's family of
+greens that examine the wrong thing:
+
+- **The peaks compared `1565MB` as text.** awk holds a field that
+  carries a unit as a string, and a string against a number compares
+  as text, so the "largest" sample was the one that sorted last. The
+  line printed a plausible figure and would have gone on printing one.
+- **The sampler counted itself as a browser.** Its `ps` line is a
+  process whose command holds the pattern `ms-playwright`, so the
+  pattern matched the thing looking for it. A reading that includes
+  the instrument is a reading of nothing in particular, and 2 MB would
+  never have looked wrong.
+
+Neither was visible to reading the script, and the script had been
+read. Both were obvious in the first run against real processes,
+which is what §9 says of guards and is now true of instruments: **the
+measurement is not verified until it has measured something whose
+answer is known.** That is several times now that staging found what
+reading did not (the DB guard's three, 12 Oct's swap floor, these
+two), and it is the reason a new instrument is staged on a real run
+before it is trusted on a gate.
+
+**Verification, step level:** the three stagings above, and
+`test/repo/dev-targets-neon.test.ts`, the repo test that names the gate
+script. No TypeScript changed; typecheck, lint and build were not
+run for a shell-only unit. The gate for 146 has still not been run.

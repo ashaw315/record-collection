@@ -24,6 +24,18 @@
 # second, which load does not see. Load, swap and free memory at the start
 # and at the end are printed with the result.
 #
+# It also refuses on an exhausted machine, which neither of those names. The
+# gate for 146 (15 Oct) was killed by the harness for memory at test 1303 of
+# 1319, and the free percentage `memory_pressure` prints cannot tell that
+# state apart: a passing gate ended at 54 percent (13 Oct) and the killed run
+# read 55 after its processes were gone. The floor is the kernel's own
+# judgement instead, `kern.memorystatus_vm_pressure_level`: 1 is normal, 2
+# warning, 4 critical, and macOS's memory killer acts on the same figure. A
+# run is refused above 1 (`GATE_MAX_PRESSURE`). It is read at the start, so
+# it catches a gate begun on a machine already short, not one that grows into
+# the kill: for that, `scripts/memory-sample.sh` samples the run's own
+# processes once a minute beside it, and the report names the peaks.
+#
 # The 25,000 is a conservative pick from a confounded sample, not a measured
 # boundary (12 Oct, NOTES; `scripts/measure-swap.sh`). One nine-test spec,
 # twelve runs, on whatever the machine was doing: swap was not induced, and
@@ -53,15 +65,21 @@ swap_pages() { vm_stat | awk '/Swapins/ { i = $2 } /Swapouts/ { o = $2 } END { p
 # Pages swapped in or out per second, over five seconds. Load does not see this: a machine at a load of 16 that is
 # swapping is in worse shape for a run than one at 30 that is computing.
 swap_rate() { local a b; a="$(swap_pages)"; /bin/sleep 5; b="$(swap_pages)"; echo $(( (b - a) / 5 )); }
-memory() { echo "swap $(sysctl -n vm.swapusage | awk '{print $6 " of " $3}' | tr -d 'M' | awk '{printf "%.1f of %.1f GB", $1 / 1024, $3 / 1024}'), $(memory_pressure | awk -F': ' '/free percentage/ {print $2}') free, $1 pages a second swapped"; }
+pressure() { sysctl -n kern.memorystatus_vm_pressure_level; }
+memory() { echo "swap $(sysctl -n vm.swapusage | awk '{print $6 " of " $3}' | tr -d 'M' | awk '{printf "%.1f of %.1f GB", $1 / 1024, $3 / 1024}'), $(memory_pressure | awk -F': ' '/free percentage/ {print $2}') free, pressure level $(pressure), $1 pages a second swapped"; }
 CORES="$(sysctl -n hw.physicalcpu)"
 MAX_LOAD="${GATE_MAX_LOAD:-$((CORES * 6))}"
 MAX_SWAP_RATE="${GATE_MAX_SWAP_RATE:-25000}"
+MAX_PRESSURE="${GATE_MAX_PRESSURE:-1}"
 LOAD_START="$(load)"
+PRESSURE_START="$(pressure)"
 RATE_START="$(swap_rate)"
 MEMORY_START="$(memory "$RATE_START")"
 REFUSED=""
-if awk -v l="$LOAD_START" -v m="$MAX_LOAD" 'BEGIN { exit !(l > m) }'; then
+# Pressure first: it is the one reading that names exhaustion, and the one the other two cannot stand in for.
+if [ "$PRESSURE_START" -gt "$MAX_PRESSURE" ]; then
+  REFUSED="memory is exhausted: the kernel's pressure level is $PRESSURE_START (1 normal, 2 warning, 4 critical), above $MAX_PRESSURE"
+elif awk -v l="$LOAD_START" -v m="$MAX_LOAD" 'BEGIN { exit !(l > m) }'; then
   REFUSED="the one-minute load is $LOAD_START on $CORES cores, above $MAX_LOAD"
 elif [ "$RATE_START" -gt "$MAX_SWAP_RATE" ]; then
   REFUSED="the machine is swapping, $RATE_START pages a second, above $MAX_SWAP_RATE"
@@ -115,12 +133,18 @@ E2E="$LOGS/$COMMIT-e2e${WORKERS:+-w$WORKERS}.log"
 # the gate had read around them (load, memory, swap) had gone to a stdout
 # nobody saw. A report with a start and no "ended" line is a run cut off.
 REPORT="$LOGS/$COMMIT-gate${WORKERS:+-w$WORKERS}.txt"
+# The run's own processes, sampled once a minute beside it (scripts/memory-sample.sh), so a kill has a cause.
+SAMPLES="$LOGS/$COMMIT-memory${WORKERS:+-w$WORKERS}.log"
+"$ROOT/scripts/memory-sample.sh" "$SAMPLES" "${GATE_SAMPLE_EVERY:-60}" &
+SAMPLER=$!
+trap 'kill "$SAMPLER" 2>/dev/null' EXIT
 {
   echo "gate on $COMMIT${WORKERS:+, $WORKERS workers}, in $GATE, started $(date '+%d %b %H:%M')"
   echo "load:       $LOAD_START at the start, on $CORES cores"
   echo "memory:     at the start, $MEMORY_START"
   echo "logs:       $UNIT"
   echo "            $E2E"
+  echo "samples:    $SAMPLES"
 } > "$REPORT"
 
 # `src/app/type-scale.test.ts` reads the CSS a build produces, and a fresh checkout has none.
@@ -139,6 +163,8 @@ report() {
   echo "load:       $LOAD_START at the start, $(load) at the end, on $CORES cores"
   echo "memory:     at the start, $MEMORY_START"
   echo "            at the end,   $(memory "$(swap_rate)")"
+  # The worst the run reached, by role: the sum of a role's resident sizes is a ceiling on it (shared pages count per process).
+  echo "            peaks,        $("$ROOT/scripts/memory-sample.sh" --peaks "$SAMPLES")"
   echo "unit:       $(tail -1 "$UNIT")"
   echo "playwright: $(tail -1 "$E2E")"
   LC_ALL=C grep -h "\[projects\]\|\[reset\]\|SLEPT\| passed (\| flaky" "$E2E" | cut -c1-200
