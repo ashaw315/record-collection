@@ -21,6 +21,8 @@ test('the shared dialog on a record, a want-list row and manage, at 390 coarse a
   if (existsSync(join(OUT, 'dialog-146.md')) && process.env.CAPTURE_REPLACE !== '1') throw new Error(`${OUT} already holds the dialog's capture. It is not replaced unless CAPTURE_REPLACE=1 says so`);
   test.setTimeout(300_000);
   mkdirSync(OUT, { recursive: true });
+  /* Plain names (NOTES, 12 Oct 23:00): a capture runs alone and its pictures are evidence, so no name carries a suffix no screen would show. Made once; the tag a pass, since the pass's confirmation deletes it. */
+  let made: { record: string; want: string } | null = null;
   const md = ['# Step 146: part 2, the shared dialog', '', 'The test database, desktop Chromium, touch on for the coarse pointer; the window, with the dialog open. The record, the want-list item and the tag are this tool’s own.', '', '| file | screen | window | pointer |', '|---|---|---|---|'];
   for (const [width, pointer] of WINDOWS) {
     const context = await browser.newContext({ hasTouch: pointer === 'coarse', viewport: { width, height: 844 } });
@@ -28,21 +30,24 @@ test('the shared dialog on a record, a want-list row and manage, at 390 coarse a
     const page = await context.newPage();
     await login(page);
     expect(await pointerIs(page)).toBe(pointer);
-    const suffix = `c146${Date.now().toString(36)}`;
+    /* A plain name can be there already, left by a run that failed before its cleanup: an artist the API answers 409 for is reused by the id it names, so a leftover never blocks a capture. */
     const post = async (path: string, data: unknown) => {
       const response = await page.request.post(path, { data });
-      expect(response.status(), path).toBe(201);
-      const body = (await response.json()) as { id: string };
+      const body = (await response.json()) as { id?: string; error?: { existingId?: string } };
+      if (response.status() === 409 && path === '/api/artists' && typeof body.error?.existingId === 'string') { trackArtist(body.error.existingId); return body.error.existingId; }
+      expect(response.status(), `${path} ${JSON.stringify(data)} answered ${response.status()} ${JSON.stringify(body)}`).toBe(201);
+      if (typeof body.id !== 'string') throw new Error(`${path}: no id`);
       trackCreated(path, body);
       return body.id;
     };
-    const artist = await post('/api/artists', { name: `Discharge ${suffix}` });
-    trackArtist(artist);
-    const record = await post('/api/records', { title: 'Why', artistId: artist });
-    /* Titled by the pass: the first pass's item is still there when the second runs, since cleanup runs at the test's end. */
-    const want = `Hear Nothing See Nothing Say Nothing ${suffix}`;
-    await post('/api/want-list', { title: want, artistId: artist });
-    const tag = `punk-${suffix}`;
+    if (made === null) {
+      const artist = await post('/api/artists', { name: 'The Varukers' });
+      trackArtist(artist);
+      made = { record: await post('/api/records', { title: 'Why', artistId: artist }), want: 'Hear Nothing See Nothing Say Nothing' };
+      await post('/api/want-list', { title: made.want, artistId: artist });
+    }
+    const { record, want } = made;
+    const tag = 'uk82';
     await post('/api/tags', { name: tag });
     const shoot = async (p: Page, slug: string, name: string) => {
       await p.locator(DIALOG).waitFor();

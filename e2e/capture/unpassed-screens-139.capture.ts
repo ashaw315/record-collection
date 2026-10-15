@@ -206,7 +206,7 @@ const STATES: State[] = [
   { screen: '/records/new', slug: 'record-new-everything-else-open', state: 'the form with Everything else opened', arrange: async (page) => {
     await page.goto('/records/new');
     await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 30_000 });
-    await page.locator('details').filter({ has: page.locator('summary', { hasText: 'Everything else' }) }).first().locator('summary').click();
+    await page.locator('details').filter({ has: page.locator('summary', { hasText: 'Everything else' }) }).first().locator('summary').first().click();
   } },
   { screen: '/records/[id]/edit', slug: 'record-edit', state: 'the form, a record in it', arrange: async (page, made) => { await page.goto(`/records/${made.record}/edit`); await page.locator('form[data-hydrated="true"]').waitFor({ timeout: 30_000 }); } },
 

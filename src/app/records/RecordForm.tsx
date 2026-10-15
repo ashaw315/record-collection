@@ -3,10 +3,11 @@
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { HIT } from '@/app/hit-area';
+import { CONTROL_BOX, CONTROL_LABEL, LABEL } from '@/app/records/[id]/grid-type';
+import { DisclosureMark } from '@/app/disclosure-mark';
 import { parseApiError, fallbackMessage } from '@/lib/api/messages';
 import { CONDITION_GRADES } from '@/lib/records/fields';
 import { conditionLabel } from './record-detail-format';
@@ -38,6 +39,9 @@ class PressingError extends Error {
 }
 
 export type Option = { id: string; name: string };
+
+/** A group's head on the form: the disclosure's line, with §T.1's mark at its right and the hairline below it. */
+const GROUP_HEAD = 'flex cursor-pointer list-none items-center justify-between border-b border-border pb-2 font-heading text-sm font-semibold tracking-tight [&::-webkit-details-marker]:hidden';
 
 export type ReferenceData = {
   artists: Option[];
@@ -76,15 +80,16 @@ function Row({
     gave it, so its words and the field stand where they stood. From 640 the field itself is 44, and the label
     beside it comes down 4 with the field's middle.
   */
+  /* §T.6 part 2 (Design, 14 Oct): the record form's labels in §4.1's type, as part 1 gave the want list's. Inline under a mouse below 640, as it was: a block label the field's width is reached by a click above the field, which a mouse's reach test reads as the field reaching past itself. */
   const labelClass =
-    'text-xs tracking-wide text-muted-foreground uppercase sm:w-40 sm:shrink-0 sm:pt-2 pointer-coarse:max-sm:block pointer-coarse:max-sm:py-[6px] pointer-coarse:sm:pt-3';
+    `${LABEL} sm:w-40 sm:shrink-0 sm:pt-2 pointer-coarse:max-sm:block pointer-coarse:max-sm:py-[6px] pointer-coarse:sm:pt-3`;
 
   return (
     <div className="border-b border-border py-3 last:border-0 sm:flex sm:gap-4">
       {htmlFor === undefined ? (
-        <span className={labelClass}>{label}</span>
+        <span data-row-label="" className={labelClass}>{label}</span>
       ) : (
-        <label htmlFor={htmlFor} className={labelClass}>
+        <label htmlFor={htmlFor} data-row-label="" className={labelClass}>
           {label}
         </label>
       )}
@@ -672,9 +677,11 @@ export function RecordForm({
         announced as a disclosure, and it needs no JavaScript to open — so the
         fields inside remain submittable and focusable exactly as before.
       */}
-      <details open={recordId !== undefined} className="mt-4 pt-1">
-        <summary className={`${HIT} cursor-pointer font-heading text-sm font-semibold tracking-tight before:inset-x-0`}>
+      <details open={recordId !== undefined} className="group mt-4 pt-1">
+        {/* §T.6 part 2: §T.1's + and −, at the line's right, not the browser's triangle; the hairline below the head, as every group has. */}
+        <summary className={`${HIT} ${GROUP_HEAD} before:inset-x-0`}>
           Everything else
+          <DisclosureMark open="details" />
         </summary>
         <p className="mt-1 mb-2 text-xs text-muted-foreground">
           Label, format, condition, what you paid, genres, tags, and the rest of
@@ -827,11 +834,19 @@ export function RecordForm({
           seconds, and leaving every field blank attaches no pressing at all
           rather than creating an empty row.
         */}
-        <fieldset className="mt-5 border-t border-border pt-3">
-          <legend className="font-heading text-sm font-semibold tracking-tight">
+        {/*
+          §T.6 part 2 (Design, 14 Oct): a disclosure like Everything else, with §T.1's mark and the hairline below
+          its head; and the doubled rule: "where the last field row's bottom rule and Everything else's top rule
+          stand 21 apart with nothing between, the fieldset's top rule goes, and the row's rule closes the group
+          above". Open to begin with, on a new record as on an edit: its fields were in view whenever Everything
+          else was, and a pressing is entered on the way in; the − is there for a reader who wants them away.
+        */}
+        <details open className="group mt-5">
+          <summary className={`${HIT} ${GROUP_HEAD} before:inset-x-0`}>
             Pressing details
-          </legend>
-          <p className="mb-1 text-xs text-muted-foreground">
+            <DisclosureMark open="details" />
+          </summary>
+          <p className="mt-2 mb-1 text-xs text-muted-foreground">
             All optional. Leave blank if you are logging the record quickly.
           </p>
 
@@ -914,7 +929,7 @@ export function RecordForm({
               This is a reissue
             </label>
           </Row>
-        </fieldset>
+        </details>
 
         <Row
           label="Notes"
@@ -941,8 +956,9 @@ export function RecordForm({
         </Row>
       </details>
 
-      <div className="mt-4 flex items-center gap-2">
-        <Button type="submit" disabled={saving} className="pointer-coarse:h-[44px]">
+      {/* §T.6 part 2: the submit a §9.3 box, CANCEL a §9.3 label 24 clear of it, §G.3's gap, as the want list's forms have. */}
+      <div className="mt-4 flex items-center gap-6">
+        <button type="submit" disabled={saving} className={`${CONTROL_BOX} disabled:opacity-50`}>
           {saving
             ? 'Saving…'
             : recordId !== undefined
@@ -950,11 +966,8 @@ export function RecordForm({
               : acquiresWantListId === undefined
                 ? 'Add record'
                 : 'Add to collection'}
-        </Button>
-        <Link
-          href={recordId === undefined ? '/' : `/records/${recordId}`}
-          className={`${HIT} text-sm text-muted-foreground underline-offset-2 before:-left-[4px] before:-right-[9px] hover:text-foreground hover:underline`}
-        >
+        </button>
+        <Link href={recordId === undefined ? '/' : `/records/${recordId}`} data-form-cancel="" className={CONTROL_LABEL}>
           Cancel
         </Link>
       </div>

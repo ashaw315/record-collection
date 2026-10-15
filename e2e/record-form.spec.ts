@@ -68,7 +68,8 @@ async function formReady(page: Page): Promise<void> {
     (await disclosure.count()) > 0 &&
     !(await disclosure.first().evaluate((el) => (el as HTMLDetailsElement).open))
   ) {
-    await disclosure.first().locator('summary').click();
+    /* Step 146: Pressing details is a second disclosure nested inside this one, so the outer head is the first summary. */
+    await disclosure.first().locator('summary').first().click();
     await expect(disclosure.first()).toHaveAttribute('open', '');
   }
 }
@@ -288,7 +289,7 @@ test('creates an artist inline and uses it without leaving the form', async ({ p
   // /manage.
   await page.getByLabel('Title').fill(title);
 
-  await page.getByRole('button', { name: '+ New artist' }).click();
+  await page.getByRole('button', { name: 'New artist' }).click();
   await page.getByLabel('New artist name').fill(artistName);
   await page.getByRole('button', { name: 'Add', exact: true }).click();
 
@@ -317,7 +318,7 @@ test('a colliding inline create selects the existing row rather than failing', a
 
   await page.goto('/records/new');
   await formReady(page);
-  await page.getByRole('button', { name: '+ New label' }).click();
+  await page.getByRole('button', { name: 'New label' }).click();
   await page.getByLabel('New label name').fill(name);
   await page.getByRole('button', { name: 'Add', exact: true }).click();
 
@@ -344,7 +345,7 @@ test('a collision that only cleanName can see still selects the existing row', a
 
   await page.goto('/records/new');
   await formReady(page);
-  await page.getByRole('button', { name: '+ New label' }).click();
+  await page.getByRole('button', { name: 'New label' }).click();
   await page.getByLabel('New label name').fill(typed);
   await page.getByRole('button', { name: 'Add', exact: true }).click();
 
@@ -367,7 +368,7 @@ test('a zero-width character cannot enter through the form', async ({ page }) =>
 
   await page.goto('/records/new');
   await formReady(page);
-  await page.getByRole('button', { name: '+ New label' }).click();
+  await page.getByRole('button', { name: 'New label' }).click();
   await page.getByLabel('New label name').fill(sneaky);
   await page.getByRole('button', { name: 'Add', exact: true }).click();
 
@@ -610,8 +611,8 @@ test('a valid pressing year saves, confirming only the reporting was wrong', asy
   tag, and the genres and tags are whatever the database holds.
 */
 const FORM_FIELDS = ['title', 'artistId', 'catalogNumber', 'matrixRunout', 'labelId', 'formatId', 'releaseYear', 'conditionMedia', 'conditionSleeve', 'purchasePrice', 'purchaseDate', 'storeId', 'countryPressed', 'yearPressed', 'pressingPlant', 'vinylWeightGrams', 'colorVariant', 'isReissue', 'notes'] as const;
-/** The form's controls that are not a genre's or a tag's chip: the 19 fields, four + New, the way back, Everything else, Save and Cancel. */
-const FORM_CONTROLS = 27;
+/** The form's controls that are not a genre's or a tag's chip: the 19 fields, four New …, the way back, the two disclosures (Everything else and, since step 146, Pressing details), Save and Cancel. */
+const FORM_CONTROLS = 28;
 const LABEL_ABOVE_BELOW = 640;
 
 for (const pointer of POINTERS) test.describe(`the record form under a ${pointer} pointer`, () => {
@@ -662,10 +663,15 @@ for (const pointer of POINTERS) test.describe(`the record form under a ${pointer
     const above = width < LABEL_ABOVE_BELOW;
     for (const field of drawn.fields.filter((each) => each.id !== 'isReissue' && each.id !== 'notes')) {
       expect.soft(field.height, `at ${width}: ${field.id} is drawn ${!above && pointer === 'coarse' ? 44 : 36} tall`).toBe(!above && pointer === 'coarse' ? 44 : 36);
-      /* Below 640 a field stands where it stood under either pointer: 40 below its row’s top, the row’s 12, the label’s line of 24 and the 4 beneath it. */
-      if (above) expect.soft(field.fromRow, `at ${width}: ${field.id} stands 40 below its row’s top`).toBeCloseTo(40, 0);
-      /* And its label's words within a pixel of 18 below it, where they stood. Measured, step 129: exactly 18 under both pointers on Chromium; on WebKit 18.2 as a word in a line and 18.7 as a block with 6 above it, half a pixel no whole padding removes. A block of 24 with its own line had let them rise 2. */
-      if (above) expect.soft(Math.abs(field.words - 18), `at ${width}: ${field.id}’s label’s words stand within 1 of 18 below its row’s top (${field.words})`).toBeLessThan(1);
+      /*
+        Below 640 a field stands under its label: the row's 12, the label's line and the 4 beneath it. Step 146
+        (§T.6 part 2) set the label in §4.1's type: under a mouse the label is inline and its line is the row's, so
+        the field stands 40 below its row's top (it stood 40 under text-xs's line of 24); under a coarse pointer the
+        label is a block with its 6 above and below, so the field stands 40.5. The claim changed with the ruling.
+      */
+      if (above) expect.soft(field.fromRow, `at ${width}: ${field.id} stands ${pointer === 'coarse' ? 40.5 : 40} below its row’s top`).toBeCloseTo(pointer === 'coarse' ? 40.5 : 40, 0);
+      /* And its label's words 19 below the row's top under either pointer: inline under a mouse, the 11px line sits in the row's line of 24; a block under a coarse pointer, it has its 6 above. They stood at 18 while the label was text-xs. Within a pixel, as step 129 measured it. */
+      if (above) expect.soft(Math.abs(field.words - 19), `at ${width}: ${field.id}’s label’s words stand within 1 of 19 below its row’s top (${field.words})`).toBeLessThan(1);
     }
 
     if (pointer === 'coarse') {
@@ -682,7 +688,8 @@ for (const pointer of POINTERS) test.describe(`the record form under a ${pointer
       expect.soft(reachingPastItself(reach), `at ${width}: controls a mouse reaches from outside their drawn box`).toEqual([]);
       expect.soft(reach.filter((r) => r.tall >= HIT_FLOOR && r.height < HIT_FLOOR).map((r) => `${r.name}: ${r.tall}`), `at ${width}: controls 44 tall under a mouse that were not drawn so`).toEqual([]);
       expect.soft(drawn.lineGaps.filter((gap) => Math.abs(gap - 4) > 0.5), `at ${width}: the chips’ lines are 4 apart, as they were (${drawn.lineGaps.join(', ')})`).toEqual([]);
-      for (const [name, height] of [['Save changes', 32], ['Cancel', 20], ['Everything else', 20], ['+ New artist', 16], ['+ New tag', 16]] as const) expect.soft(reach.find((r) => r.name === name)?.height, `at ${width}: ${name} is drawn ${height} tall, as it was`).toBe(height);
+      /* Step 146 (§T.6 part 2): Save changes a §9.3 box and Cancel and the inline creates §9.3 labels, 44 at every pointer; the two disclosure heads 29, their line of 20, the 8 below and the hairline. The claims changed with the ruling: they were 32, 20, 20, 16 and 16. */
+      for (const [name, height] of [['Save changes', 44], ['Cancel', 44], ['Everything else', 29], ['Pressing details', 29], ['New artist', 44], ['New tag', 44]] as const) expect.soft(reach.find((r) => r.name === name)?.height, `at ${width}: ${name} is drawn ${height} tall`).toBe(height);
     }
 
     /*
@@ -706,12 +713,12 @@ for (const pointer of POINTERS) test.describe(`the record form under a ${pointer
       expect.soft(await reissue.isChecked(), `at ${width}: a press ${dy} from the Reissue box’s middle ${toggles ? 'toggles it' : 'leaves it'}`).toBe(toggles ? !before : before);
     }
 
-    /* A + New, opened: a field with no drawn label and two buttons, which are boxes and are 44 in the box under a finger. */
-    await page.getByRole('button', { name: '+ New artist' }).click();
+    /* A New …, opened: a field with no drawn label, Add as a §9.3 box and Cancel as a §9.3 label, 44 at every pointer since step 146; the field 32 under a mouse. */
+    await page.getByRole('button', { name: 'New artist' }).click();
     const opened = (await readReach(page)).filter((r) => r.name === 'New artist name' || r.name === 'Add' || (r.name === 'Cancel' && r.kind === 'button'));
-    expect(opened.map((r) => r.name).sort(), 'the precondition: the opened + New has its field and two buttons').toEqual(['Add', 'Cancel', 'New artist name']);
+    expect(opened.map((r) => r.name).sort(), 'the precondition: the opened New … has its field and two buttons').toEqual(['Add', 'Cancel', 'New artist name']);
     if (pointer === 'coarse') expect.soft(opened.filter((r) => r.height < HIT_FLOOR).map((r) => `${r.name}: ${r.height}`), `at ${width}: the opened + New’s controls under ${HIT_FLOOR} in the box`).toEqual([]);
-    else expect.soft(opened.map((r) => r.height), `at ${width}: the opened + New’s controls are 32 tall, as they were`).toEqual([32, 32, 32]);
+    else expect.soft(opened.map((r) => `${r.name} ${r.height}`), `at ${width}: the opened New …’s field 32 and its two controls 44 under a mouse`).toEqual(['New artist name 32', 'Add 44', 'Cancel 44']);
   });
  }
 });

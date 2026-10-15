@@ -59,7 +59,8 @@ async function formReady(page: Page): Promise<void> {
     (await disclosure.count()) > 0 &&
     !(await disclosure.first().evaluate((el) => (el as HTMLDetailsElement).open))
   ) {
-    await disclosure.first().locator('summary').click();
+    /* Step 146: Pressing details is a second disclosure nested inside this one, so the outer head is the first summary. */
+    await disclosure.first().locator('summary').first().click();
     await expect(disclosure.first()).toHaveAttribute('open', '');
   }
 }

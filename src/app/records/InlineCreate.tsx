@@ -1,9 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { HIT_ALONE } from '@/app/hit-area';
+import { CONTROL_BOX, CONTROL_LABEL } from '@/app/records/[id]/grid-type';
 import { duplicateMessage, resolveCreated } from './inline-create';
 import type { Option } from './RecordForm';
 
@@ -102,17 +101,17 @@ export function InlineCreate({
       <button
         type="button"
         onClick={() => setOpen(true)}
-        /* §T.6: under a coarse pointer it stands 14 below the field, the half of 44 its 16 lacks, so its hit area ends where the field's begins. */
-        className={`${HIT_ALONE} mt-1 text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground pointer-coarse:mt-[14px]`}
+        /* §T.6 part 2 (Design, 14 Oct): an action as a §9.3 control, a label drawn 44, so it needs no overlay below the field. No +: §T.1's + is the disclosure mark. */
+        className={CONTROL_LABEL}
       >
-        + New {noun}
+        New {noun}
       </button>
     );
   }
 
   return (
     <div className="mt-1.5">
-      <div className="flex gap-1.5">
+      <div className="flex items-center gap-6">
         <label htmlFor={`new-${noun}`} className="sr-only">
           New {noun} name
         </label>
@@ -135,21 +134,19 @@ export function InlineCreate({
             if (event.key === 'Escape') setOpen(false);
           }}
         />
-        <Button type="button" size="sm" className="h-8 shrink-0 pointer-coarse:h-[44px]" disabled={busy} onClick={() => void create()}>
+        <button type="button" className={`${CONTROL_BOX} shrink-0 disabled:opacity-50`} disabled={busy} onClick={() => void create()}>
           {busy ? 'Adding…' : 'Add'}
-        </Button>
-        <Button
+        </button>
+        <button
           type="button"
-          size="sm"
-          variant="outline"
-          className="h-8 shrink-0 pointer-coarse:h-[44px]"
+          className={`${CONTROL_LABEL} shrink-0`}
           onClick={() => {
             setOpen(false);
             setError(undefined);
           }}
         >
           Cancel
-        </Button>
+        </button>
       </div>
 
       {error !== undefined && (
