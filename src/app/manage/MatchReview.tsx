@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
-import { Button } from '@/components/ui/button';
+import { CONTROL_BOX, CONTROL_LABEL, LABEL } from '@/app/records/[id]/grid-type';
 import type { OpenMatchCandidate } from '@/lib/db/queries/artist-match-candidates';
 import { mergeSummary } from './merge-summary';
 
@@ -69,7 +69,8 @@ export function MatchReview({ candidates }: { candidates: OpenMatchCandidate[] }
   }
 
   return (
-    <section data-testid="match-review" className="mb-6 rounded-xs border border-border p-3">
+    /* §T.6 part 2 (Design, 14 Oct): "a box in a box in a box with grey panels" becomes "a section between hairlines, set below Manage's heading and above its section names". */
+    <section data-testid="match-review" className="mb-5 border-y border-border py-4">
       <h2 className="font-heading text-title font-semibold tracking-tight">
         Possible duplicate artists
       </h2>
@@ -79,41 +80,28 @@ export function MatchReview({ candidates }: { candidates: OpenMatchCandidate[] }
         share a name, so nothing was merged.
       </p>
 
-      <ul className="mt-3 space-y-3">
+      <ul className="mt-3 divide-y divide-border">
         {candidates.map((candidate) => (
-          <li
-            key={candidate.id}
-            data-testid="match-candidate"
-            className="rounded-xs border border-border p-3 text-detail"
-          >
+          <li key={candidate.id} data-testid="match-candidate" className="py-3 text-detail first:pt-0 last:pb-0">
             <p className="font-medium">{candidate.artist.name}</p>
 
-            <div className="mt-2 grid gap-2 sm:grid-cols-2">
+            {/* "the two artists stand as two labelled columns at 1280 and stacked at 390" */}
+            <div className="mt-2 grid gap-4 sm:grid-cols-2">
               <ArtistFacts label="Imported" artist={candidate.artist} />
               <ArtistFacts label="Already in your collection" artist={candidate.candidate} />
             </div>
 
-            <div className="mt-3 flex flex-wrap gap-2">
+            <div data-match-choices="" className="mt-3 flex flex-wrap gap-6">
               {/*
                 Order and weight are deliberate: the safe answer is not hidden
                 behind the dangerous one, and neither is styled as the default.
               */}
-              <Button
-                type="button"
-                variant="outline"
-                disabled={busy !== null}
-                onClick={() => void answer(candidate.id, 'distinct')}
-              >
+              <button type="button" disabled={busy !== null} onClick={() => void answer(candidate.id, 'distinct')} className={`${CONTROL_BOX} disabled:opacity-50`}>
                 Different artists
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                disabled={busy !== null}
-                onClick={() => setConfirming(candidate.id)}
-              >
+              </button>
+              <button type="button" disabled={busy !== null} onClick={() => setConfirming(candidate.id)} className={`${CONTROL_BOX} disabled:opacity-50`}>
                 Same artist
-              </Button>
+              </button>
             </div>
 
             {confirming === candidate.id && (
@@ -121,7 +109,8 @@ export function MatchReview({ candidates }: { candidates: OpenMatchCandidate[] }
                 data-testid="merge-confirm"
                 role="group"
                 aria-label="Confirm merge"
-                className="mt-3 rounded-xs border border-destructive/40 p-3 text-meta"
+                /* "The merge's confirmation is the same section's next lines, with CANCEL and MERGE THEM": no box, no tint. */
+                className="mt-3 text-meta"
               >
                 {/*
                   Names what MOVES and what is DESTROYED, the way the delete
@@ -130,22 +119,13 @@ export function MatchReview({ candidates }: { candidates: OpenMatchCandidate[] }
                 */}
                 <MergeConfirmation candidate={candidate} />
 
-                <div className="mt-2 flex flex-wrap gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    disabled={busy !== null}
-                    onClick={() => setConfirming(null)}
-                  >
+                <div className="mt-2 flex flex-wrap items-center gap-6">
+                  <button type="button" disabled={busy !== null} onClick={() => setConfirming(null)} className={`${CONTROL_LABEL} disabled:opacity-50`}>
                     Cancel
-                  </Button>
-                  <Button
-                    type="button"
-                    disabled={busy !== null}
-                    onClick={() => void answer(candidate.id, 'merged')}
-                  >
+                  </button>
+                  <button type="button" disabled={busy !== null} onClick={() => void answer(candidate.id, 'merged')} className={`${CONTROL_BOX} disabled:opacity-50`}>
                     {busy === candidate.id ? 'Merging…' : 'Merge them'}
-                  </Button>
+                  </button>
                 </div>
               </div>
             )}
@@ -176,8 +156,9 @@ function ArtistFacts({
   ].filter((part): part is string => part !== null && part !== '');
 
   return (
-    <div className="rounded-xs bg-muted/40 p-2 text-meta">
-      <p className="tracking-wide text-muted-foreground uppercase">{label}</p>
+    /* A labelled column, no panel: the label in §4.1's type. */
+    <div data-match-side="" className="text-meta">
+      <p data-match-label="" className={LABEL}>{label}</p>
 
       {/*
         The record count first — the strongest signal on the screen. Stated in

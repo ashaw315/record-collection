@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useTransition } from 'react';
+import { useState, useTransition, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { CONTROL_BOX } from '@/app/records/[id]/grid-type';
 import {
@@ -418,9 +418,12 @@ export type ArtistCounts = { shown: number; hidden: number; showingAll: boolean 
 export function ManageClient({
   rowsByResource,
   artistCounts,
+  review = null,
 }: {
   rowsByResource: Record<string, Row[]>;
   artistCounts: ArtistCounts;
+  /** The duplicate review, drawn between the heading and the section names (§T.6 part 2). */
+  review?: ReactNode;
 }) {
   const [activeKey, setActiveKey] = useState(RESOURCES[0].key);
   const resource = RESOURCES.find((entry) => entry.key === activeKey) as ResourceSpec;
@@ -433,6 +436,8 @@ export function ManageClient({
           Reference data used across the collection.
         </p>
       </header>
+
+      {review}
 
       <div className="flex flex-col gap-5 md:flex-row md:gap-8">
         {/* Sidebar on desktop, horizontally scrolling rail on mobile — the same

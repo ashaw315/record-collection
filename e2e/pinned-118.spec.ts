@@ -38,7 +38,6 @@ for (const width of [390, 1024, 1440, 1920]) {
           heading: heading.getBoundingClientRect().left,
           wordmark: wordmark.getBoundingClientRect().left,
           scrolls: document.documentElement.scrollWidth - document.documentElement.clientWidth,
-          review: [...document.querySelectorAll<HTMLElement>('[data-review-frame]')].map((el) => el.getBoundingClientRect().left + Number.parseFloat(getComputedStyle(el).paddingLeft)),
         };
       });
       if (m === null) throw new Error(`${screen.name} at ${width}: no frame, heading or wordmark`);
@@ -48,7 +47,7 @@ for (const width of [390, 1024, 1440, 1920]) {
       expect.soft(m.heading, `${screen.name}: its heading's left`).toBeCloseTo(SCREEN.inset, 1);
       expect.soft(m.measure, `${screen.name}: its measure`).toBeCloseTo(measure, 1);
       expect.soft(m.heading - m.wordmark, `${screen.name}: the heading under the wordmark`).toBeCloseTo(0, 1);
-      for (const left of m.review) expect.soft(left, `${screen.name}: the match review's left`).toBeCloseTo(SCREEN.inset, 1);
+      /* The match review's own frame went with step 146 (part 2): the review stands inside manage's frame, under its heading, so its left is the frame's, read above. */
     }
   });
 }

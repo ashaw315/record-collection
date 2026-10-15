@@ -10,7 +10,6 @@ import { listFormats } from '@/lib/db/queries/formats';
 import { listStores } from '@/lib/db/queries/stores';
 import { listTags } from '@/lib/db/queries/tags';
 import type { Offset } from '@/lib/api/query-params';
-import { REVIEW_FRAME } from '@/app/screen-frame';
 
 /**
  * SPEC.md §10 `/manage`: CRUD for genres (incl. hierarchy), labels, formats,
@@ -94,10 +93,9 @@ export default async function ManagePage({
   return (
     <>
       <AppHeader />
-      <div data-review-frame="" className={`${REVIEW_FRAME} pt-4`}>
-        <MatchReview candidates={matchCandidates} />
-      </div>
+      {/* The review goes below the heading (T.6 part 2: "set below Manage's heading and above its section names, not above the heading"), so the client places it. */}
       <ManageClient
+        review={matchCandidates.length === 0 ? null : <MatchReview candidates={matchCandidates} />}
         rowsByResource={rowsByResource}
         artistCounts={{
           shown: artists.total,

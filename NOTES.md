@@ -45837,3 +45837,61 @@ Typecheck 0; lint 0 errors; build clean. Captures:
 `docs/captures/part2-146/lineup-*.png`, the walk held in progress and
 the picker, the routes answered by the tool, committed alone.
 Gate-listed files: none.
+
+## 15 Oct, 03:30: step 146, manage's duplicate review
+
+**Built** (§T.6 part 2, Design 14 Oct, the sentences in
+`review-146.spec.ts`'s head). The review moves from its own frame above
+the heading into `ManageClient`, which takes it as a `review` prop and
+draws it between the heading and the section names; `page.tsx` passes
+it, or null with nothing to review. `MatchReview.tsx`: the section is
+`border-y` with no side border, radius, fill or padding box; the pairs
+are lines divided by hairlines, not boxes; each artist is a labelled
+column (`data-match-side`), the label in §4.1's type
+(`data-match-label`), no tinted panel, two columns from 640 and stacked
+below; DIFFERENT ARTISTS and SAME ARTIST are `CONTROL_BOX` 24 apart
+(`data-match-choices`); the merge's confirmation is the next lines with
+no box or red tint, CANCEL a `CONTROL_LABEL` and MERGE THEM a
+`CONTROL_BOX` 24 apart, the form's order. **One judgement for Design:**
+the ruling names CANCEL and MERGE THEM without saying box or label;
+the forms' pattern (the verb a box, CANCEL a label) is used, where the
+dialog has both as boxes. The shadcn Button leaves the file. With the
+ruling, `REVIEW_FRAME` and `SCREEN.review` go from `screen-frame.ts`
+and its test, and `pinned-118` no longer reads a review frame: the
+review's left is manage's frame's, which that spec reads already (the
+claim changed with the ruling, declared there).
+
+**Tests first:** `e2e/review-146.spec.ts`, one seeded pair, at 1280
+under a mouse and 390 under a coarse pointer: the section's hairlines
+above and below with no side border, radius or fill; its top below the
+heading's bottom and its bottom above the section names; the pair
+unboxed; the two columns side by side at 1280 and stacked at 390, no
+panel, their labels IMPORTED and ALREADY IN YOUR COLLECTION in §4.1's
+type; the two answers as boxes 44 tall, 24 apart; SAME ARTIST pressed,
+the confirmation unboxed with CANCEL a label and MERGE THEM a box 24
+apart. Failed against the build as it was (a bordered box above the
+heading, boxed pairs, tinted panels, outline buttons 8 apart), then
+passed after one defect of the test's own: two widths run side by side
+each seed a pair into the same review, so every reading is scoped to
+the test's own pair.
+
+**Verification, step level (the review unit):** `review-146`,
+`manage.spec`, `pinned-118`, `hairlines`, `colour-103`, `headings-103`
+and `radius-103` on both projects: `126 passed` in 8.8m;
+`screen-frame.test.ts` `4 passed`. Typecheck 0; lint 0 errors; build
+clean. Captures: `docs/captures/part2-146/review-*.png`, committed
+alone with part 1's retake. Gate-listed files: none.
+
+**Part 1's pictures retaken with plain names** (the coordinator's item,
+14 Oct late): `part1-145.capture.ts` makes Crass and one item once,
+reusing an artist the API answers 409 for; Discharge is the
+seventeen's seed artist, which a plain "Discharge" collided with
+tonight until the dialog's and form's tools took The Varukers and GBH.
+The ten pictures in `docs/captures/part1-145/` are replaced, a capture
+changed on purpose.
+
+**Part 2 is built: four units, 146.** The dialog (`efbc69d`), the record
+form (`13eeb85`), manage's rows (`de36a9a`), the lineup slot
+(`a117fd4`) and the review (below). The gate for the step is next: two
+screens' passes close with it (manage and the record form), and
+`e2e/hit-area.ts`'s drawn sizes changed.

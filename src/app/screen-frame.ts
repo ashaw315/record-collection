@@ -9,14 +9,12 @@
  * The classes are written out whole because Tailwind reads them from the
  * source; `screen-frame.test.ts` holds each to the figures.
  */
-export const SCREEN = { inset: 18, measure: 736, manage: 1120, review: 1000, item: 640 } as const;
+export const SCREEN = { inset: 18, measure: 736, manage: 1120, item: 640 } as const;
 
 /** Stats, the want list, look up, the record form and suggestions. */
 export const SCREEN_FRAME = 'w-full max-w-[772px] px-[18px]';
 /** Manage, and the not-found page, which had the same measure. */
 export const MANAGE_FRAME = 'w-full max-w-[1156px] px-[18px]';
-/** Manage's match review, which stood in a narrower centred column of its own. */
-export const REVIEW_FRAME = 'w-full max-w-[1036px] px-[18px]';
 /** The want list's new form, an item's page and its edit form. */
 export const ITEM_FRAME = 'w-full max-w-[676px] px-[18px]';
 /** The table's and grid's content below the sidebar's fork: the window less the inset a side. */

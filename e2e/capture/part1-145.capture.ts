@@ -25,23 +25,29 @@ test('part 1’s pages at 390 coarse and 1280 fine', async ({ browser }) => {
   test.setTimeout(600_000);
   mkdirSync(OUT, { recursive: true });
   const md = ['# Step 145: part 1’s passes, the want list’s item page and forms, login and not-found', '', 'The test database, desktop Chromium, touch on for the coarse pointer; whole pages. The item is this tool’s own, titled to wrap at 390.', '', '| file | page | width | pointer | page height |', '|---|---|---|---|---|'];
+  let made: { item: string } | null = null;
   for (const [width, pointer] of WINDOWS) {
     const context = await browser.newContext({ hasTouch: pointer === 'coarse', viewport: { width, height: 844 } });
     context.setDefaultTimeout(30_000);
     const page = await context.newPage();
     await login(page);
     expect(await pointerIs(page)).toBe(pointer);
-    const suffix = `c145${Date.now().toString(36)}`;
+    /* Plain names (NOTES, 12 Oct 23:00; Design read "Discharge c145…" in the first pictures): the artist and the item made once, named as a screen would show them; an artist the API answers 409 for is reused by the id it names. Crass, not Discharge, which the seventeen's seed holds. */
     const post = async (path: string, data: unknown) => {
       const response = await page.request.post(path, { data });
-      expect(response.status(), path).toBe(201);
-      const body = (await response.json()) as { id: string };
+      const body = (await response.json()) as { id?: string; error?: { existingId?: string } };
+      if (response.status() === 409 && path === '/api/artists' && typeof body.error?.existingId === 'string') { trackArtist(body.error.existingId); return body.error.existingId; }
+      expect(response.status(), `${path} ${JSON.stringify(data)} answered ${response.status()} ${JSON.stringify(body)}`).toBe(201);
+      if (typeof body.id !== 'string') throw new Error(`${path}: no id`);
       trackCreated(path, body);
       return body.id;
     };
-    const artist = await post('/api/artists', { name: `Discharge ${suffix}` });
-    trackArtist(artist);
-    const item = await post('/api/want-list', { title: 'Why — Grave New World, The Nightmare Continues', artistId: artist, bestDigNotes: 'The Clay first press, matrix A1/B1.', maxPrice: '40.00' });
+    if (made === null) {
+      const artist = await post('/api/artists', { name: 'Crass' });
+      trackArtist(artist);
+      made = { item: await post('/api/want-list', { title: 'The Feeding of the 5000 — The Second Sitting, Stations of the Crass', artistId: artist, bestDigNotes: 'The Small Wonder first press, matrix A1/B1.', maxPrice: '40.00' }) };
+    }
+    const { item } = made;
     const settle = async (p: Page) => { await p.addStyleTag({ content: 'nextjs-portal{display:none!important}' }); await p.evaluate(() => document.fonts.ready); await p.mouse.move(1, 1); await p.waitForTimeout(300); };
     const shoot = async (p: Page, slug: string, name: string) => {
       await settle(p);
