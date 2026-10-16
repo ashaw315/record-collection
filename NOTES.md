@@ -24,7 +24,7 @@ here. They are one defect seen from two sides: an assertion with no failing
 input, and an observation with no subject. Both produce green. If you are
 looking at something that passes and you are not sure why, start in those two.
 
-Generated from 136 declared rules. Regenerate with
+Generated from 137 declared rules. Regenerate with
 `npx tsx scripts/notes-index.ts --write`.
 
 ### Measurements that do not govern
@@ -125,6 +125,7 @@ Generated from 136 declared rules. Regenerate with
 | You are here if | The rule |
 | --- | --- |
 | two parties each verify the same thing against their own copy and disagree, and neither check has been shown to run against the copy the other reads | [16 Oct, 11:20: the family in a new place — two sound checks, neither where the thing lives; step zero and the file that did not cross](#16-oct-1120-the-family-in-a-new-place-two-sound-checks-neither-where-the-thing-lives-step-zero-and-the-file-that-did-not-cross) |
+| a check downstream fails on an input that never arrived, and nothing upstream said the input was missing when it would have been cheap to say | [16 Oct, 18:48: the export-diff line — a withdrawal sentence arriving without its entries' file is named as it arrives](#16-oct-1848-the-export-diff-line-a-withdrawal-sentence-arriving-without-its-entries-file-is-named-as-it-arrives) |
 | an error path renders and you have not checked what it exposes | [A 403 on a JS chunk became a credential disclosure](#a-403-on-a-js-chunk-became-a-credential-disclosure) |
 | several captures of one record and window differ only in a prefix, and the wrong one can reach a reader without anyone noticing | [A capture's name carries the figure that differs, not only a step prefix (30 Sep)](#a-captures-name-carries-the-figure-that-differs-not-only-a-step-prefix-30-sep) |
 | an output names a thing and you have not checked the thing exists | [A FABRICATED IDENTIFIER IS A DIFFERENT FAILURE CLASS FROM AN UNCERTAIN CLAIM](#a-fabricated-identifier-is-a-different-failure-class-from-an-uncertain-claim) |
@@ -47336,3 +47337,35 @@ gate that was red on one test since shown the spec's own; this gate at
 the same HEAD is green on both projects, so the clearance the merge
 went without is now behind it. Next, as queued: the export-diff line,
 then the §9.3 box across its fifteen files.
+
+## 16 Oct, 18:48: the export-diff line — a withdrawal sentence arriving without its entries' file is named as it arrives
+
+**Built, as its own small unit after the merge** (the reviewer). One
+pure function in `scripts/export-diff.mjs`, `entriesNotCrossed`: given
+the added sentences per target and whether WITHDRAWALS.md changed at
+all against the same base, it returns one line when any added sentence
+is in a declared withdrawal form (the index's own prefixes) and the
+withdrawals file did not move: "N withdrawal sentences arrived and
+WITHDRAWALS.md did not change: the entries' file has not crossed, or the
+entries were not written." `main` prints it before the summary. It
+reports; the index still judges. Four pure tests first, red on the
+function's absence, and two on real data through the script as the
+intake runs it: dfa6fe2 against 831ddd4 (Design's 143–145 save, two §T.6
+sentences and no file) prints the line with 2; 92d2614 against 4c6897d
+(the file arriving alone) prints nothing. The negative pair was green
+first time, which is the point of pairing it. `test/repo` 515 passed,
+index 13 PASS.
+
+**Shape:** observer-without-subject
+**You are here if:** a check downstream fails on an input that never arrived, and nothing upstream said the input was missing when it would have been cheap to say
+
+**What it does not do:** it cannot say which of the two it is, not
+crossed or not written; that is the reader's, against Design's message.
+And it reads the save against one base: a sentence and its entry
+arriving in two saves an hour apart print the line once and then
+nothing, which is right.
+
+**Next:** the §9.3 box's drawn height under a mouse across its fifteen
+files, Design's ruling being general (32 under a fine pointer, as Save
+is; 44 under a coarse one), as its own step with its own gate, on the
+reviewer's word with the plan below.
