@@ -491,4 +491,25 @@ describe('assertion 12 holds a no-entry call to its spared sentence', () => {
     expect(out).not.toContain('spared-count=');
     expect(out).toMatch(/^PASS 12$/m);
   });
+
+  /*
+    The lead ruled for readers (the reviewer, 16 Oct): `No entry:` in bold,
+    the spared sentence on the line after. Green first time, and said so:
+    tags are stripped before the split and a call sentence without a quote
+    takes the spared line after it, each held by a test above; this pins the
+    combination Design will now write, so a change to either path fails the
+    form in use by name.
+  */
+  it('reads the ruled lead, bold “No entry:” with the spared sentence on the line after, as one named call', () => {
+    const dir = stage((d) => {
+      const t = join(d, W);
+      const html = readFileSync(t, 'utf8');
+      if (html.split(LAST).length !== 2) throw new Error('staging anchor missing: §W.29’s closing sentence');
+      writeFileSync(t, html.replace(LAST, '<strong>No entry:</strong> a defect, not a new claim. The sentence spared is “The arrival is a starting place for someone who has not yet chosen one.”</p>'));
+    });
+    const { out } = run(dir);
+    expect(out).not.toContain('unnamed "No entry: a defect');
+    expect(out).not.toContain('spared-count=');
+    expect(out).toMatch(/^PASS 12$/m);
+  });
 });
