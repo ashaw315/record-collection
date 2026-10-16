@@ -1,4 +1,5 @@
 import type { PressingEvidence as Evidence } from './pressing-evidence';
+import { HAIRLINE, LABEL } from '@/app/records/[id]/grid-type';
 
 /**
  * SPEC.md §12 step 14c — the evidence panel.
@@ -16,7 +17,7 @@ export function PressingEvidencePanel({ evidence }: { evidence: Evidence }) {
    */
   if (!evidence.hasEvidence) {
     return (
-      <div data-testid="pressing-evidence" className="mt-2 border-t border-border px-3 pt-2">
+      <div data-testid="pressing-evidence" className={`mt-3 border-t ${HAIRLINE} pt-3`}>
         <p data-testid="evidence-none" className="text-meta text-muted-foreground">
           Discogs holds no matrix, runout or pressing details for this release. That is a gap in
           the database, not a fact about the record.
@@ -27,7 +28,8 @@ export function PressingEvidencePanel({ evidence }: { evidence: Evidence }) {
   }
 
   return (
-    <div data-testid="pressing-evidence" className="mt-2 border-t border-border px-3 pt-2">
+    /* Step 150, §T.6: "Opened pressing details sit inside the row under a hairline, with MATRIX / RUNOUT, MADE BY and CONTRIBUTOR NOTES as §4.1 labels." On the row's inset, no inset of their own. */
+    <div data-testid="pressing-evidence" className={`mt-3 border-t ${HAIRLINE} pt-3`}>
       {/*
         **Identifiers and companies FIRST** (§12 step 14c). These are transcribed
         off the object and checkable against what the user is holding, which is
@@ -36,7 +38,7 @@ export function PressingEvidencePanel({ evidence }: { evidence: Evidence }) {
       */}
       {evidence.runouts.length > 0 && (
         <section data-testid="evidence-runouts">
-          <h4 className="text-label font-medium">Matrix / runout</h4>
+          <h4 className={LABEL}>Matrix / runout</h4>
           <dl className="mt-1 space-y-1">
             {evidence.runouts.map((runout, index) => (
               <div key={`${runout.value}-${index}`} className="text-detail">
@@ -91,7 +93,7 @@ export function PressingEvidencePanel({ evidence }: { evidence: Evidence }) {
 
       {evidence.otherIdentifiers.length > 0 && (
         <section data-testid="evidence-identifiers" className="mt-2">
-          <h4 className="text-label font-medium">Other identifiers</h4>
+          <h4 className={LABEL}>Other identifiers</h4>
           <ul className="mt-1 space-y-0.5">
             {evidence.otherIdentifiers.map((identifier, index) => (
               <li key={`${identifier.type}-${index}`} className="text-detail text-muted-foreground">
@@ -108,7 +110,7 @@ export function PressingEvidencePanel({ evidence }: { evidence: Evidence }) {
 
       {evidence.companies.length > 0 && (
         <section data-testid="evidence-companies" className="mt-2">
-          <h4 className="text-label font-medium">Made by</h4>
+          <h4 className={LABEL}>Made by</h4>
           <ul className="mt-1 space-y-0.5">
             {evidence.companies.map((company, index) => (
               <li key={`${company.role}-${company.name}-${index}`} className="text-detail">
@@ -139,11 +141,10 @@ export function PressingEvidencePanel({ evidence }: { evidence: Evidence }) {
  */
 function Notes({ notes }: { notes: string }) {
   return (
-    <section data-testid="evidence-notes" className="mt-2 border-t border-dashed border-border pt-2">
-      <h4 className="text-label font-medium text-muted-foreground">
-        Contributor notes — context, not evidence
-      </h4>
-      <p className="mt-1 text-prose whitespace-pre-wrap text-muted-foreground italic">{notes}</p>
+    /* Step 150, §T.6: "The dashed rule becomes a hairline, and the notes drop their italic, because their label already says they are context." The label's words stay, as a §4.1 label: they are the reason the italic can go. */
+    <section data-testid="evidence-notes" className={`mt-3 border-t ${HAIRLINE} pt-3`}>
+      <h4 className={LABEL}>Contributor notes — context, not evidence</h4>
+      <p className="mt-1 text-prose whitespace-pre-wrap text-muted-foreground">{notes}</p>
     </section>
   );
 }

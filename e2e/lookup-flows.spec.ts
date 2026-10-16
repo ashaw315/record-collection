@@ -1810,7 +1810,15 @@ const market = (numForSale: number | null, lowest: number | null, conditions: Ar
 const failure = (status: number, message: string, code: string) => ({ status, body: { error: { message, code } } });
 /* The slot is two lines below this window and one from it: the narrowest standard width at which the longest answer here sets on one line (it needs 680, which a 742 window gives). */
 const ONE_LINE_FROM = 768;
-const SLOT = { below: 30, from: 24 };
+/*
+  Step 150, §T.6: "the market slot at Check the market's height" — the §9.3
+  label's 44 at every width, "the same height before and after", the answer
+  still held to its lines inside it. Was 30 below 768 and 24 from it, the
+  lines' own height round a 16.5 link (step 123); the pins moved with the
+  ruling, not to pass code, and the movement they guard is unchanged.
+*/
+const SLOT = { below: 44, from: 44 };
+/* Step 150 widened the row by 26 at every width (the card's own box and inset gone), and two answers that needed two lines at 390 on 10 Oct now set on one: a price and no condition guide, and two grades. Re-measured 16 Oct, both engines; the others unchanged. */
 const MARKET_ANSWERS: Array<{ name: string; answer: { status: number; body: unknown }; needs: { 390: number; 768: number } }> = [
   { name: 'Discogs could not be reached', answer: failure(502, 'Could not reach Discogs. Try again shortly.', 'UPSTREAM_ERROR'), needs: { 390: 1, 768: 1 } },
   { name: 'the rate limit', answer: failure(429, 'Discogs rate limit reached. Try again in a moment.', 'RATE_LIMITED'), needs: { 390: 1, 768: 1 } },
@@ -1818,10 +1826,10 @@ const MARKET_ANSWERS: Array<{ name: string; answer: { status: number; body: unkn
   { name: 'an error with no message', answer: { status: 500, body: {} }, needs: { 390: 1, 768: 1 } },
   { name: 'no market data', answer: market(null, null, []), needs: { 390: 1, 768: 1 } },
   { name: 'none for sale', answer: market(0, null, []), needs: { 390: 1, 768: 1 } },
-  { name: 'a price and no condition guide', answer: market(11, 47.28, []), needs: { 390: 2, 768: 1 } },
+  { name: 'a price and no condition guide', answer: market(11, 47.28, []), needs: { 390: 1, 768: 1 } },
   { name: 'a price and three estimates', answer: market(11, 47.28, priced(130.45, 30, GRADES.slice(1, 4))), needs: { 390: 2, 768: 1 } },
   { name: 'four figures and three estimates', answer: market(1234, 1247.28, priced(2130.45, 300, GRADES.slice(1, 4))), needs: { 390: 2, 768: 1 } },
-  { name: 'two grades, one of the usual three', answer: market(11, 47.28, [{ grade: GRADES[1], value: 130.45 }, { grade: GRADES[5], value: 20.45 }]), needs: { 390: 2, 768: 1 } },
+  { name: 'two grades, one of the usual three', answer: market(11, 47.28, [{ grade: GRADES[1], value: 130.45 }, { grade: GRADES[5], value: 20.45 }]), needs: { 390: 1, 768: 1 } },
   { name: 'seven grades', answer: market(11, 47.28, priced(230.45, 25, GRADES.filter((grade) => grade !== 'Very Good (VG)'))), needs: { 390: 2, 768: 1 } },
   /* The one answer here the slot clips: three lines at 390, in a slot of two. */
   { name: 'four figures and seven grades', answer: market(1234, 1247.28, priced(2930.45, 250, GRADES.filter((grade) => grade !== 'Very Good (VG)'))), needs: { 390: 3, 768: 1 } },

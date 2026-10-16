@@ -47007,3 +47007,54 @@ not touched by B: the form's "part 1 controls" clause waits with the
 ruling, its labels and the + and − do not. **For Design:** the ruling,
 with the entry above and the two sentences quoted. **For Adam:** nothing
 new.
+
+## 16 Oct, 10:52: step 150 unit B, the card's layout; what its own measurements found
+
+**Done at step level.** The row between hairlines, the two boxes, the
+slot at the control's height, the disclosures with + and −, Gatefold in
+the format line, the details' §4.1 labels and hairlines, the versions
+table on the inset, the form's labels and + and −, SEARCHING…'s width
+and the failure's slot: eighteen tests first in
+`e2e/result-card-150.spec.ts`, fifteen red on the card as built, the
+sixteenth the walk's report. The block at step 150 carries the figures.
+Step level: that spec (18), lookup-flows and discogs-prefill on chromium
+(89 passed, 3 failed, below) and on mobile (71 passed, 3 failed, the
+same three); after the two corrections below, the slot group and the
+notes test reran 13 passed on each project; typecheck 0, lint 27
+warnings as before, build compiled; the captures by
+`e2e/capture/result-card-150.capture.ts` with CAPTURE=1, committed alone
+at d36243a. The full covering set did not rerun as one after those two
+edits; the next gate covers it.
+
+**Three things the measurements caught, worth their lines.**
+
+- *My fixtures had no thumbnails, so the stacking branch never ran and
+  the long title never wrapped.* A green "side by side or stacked" test
+  whose stacked branch no card reaches is the family (a check that cannot
+  fail). The second card now draws a thumbnail the tool serves, which is
+  what makes the boxes stack at 320 (a row of 200 against the 262 they
+  need), and the long-title card wraps at 320 as the ruling names, held
+  as a precondition. The first probe counted a block's client rects,
+  which are one however many lines it takes; lines are counted by height
+  now.
+- *The notes test was right and I was wrong.* I had shortened the notes'
+  label to CONTRIBUTOR NOTES; Design's sentence says the italic goes
+  "because their label already says they are context", so the words
+  "context, not evidence" are the reason and stay, as a §4.1 label.
+  Restored before anything else.
+- *Two of lookup-flows' pins were measurements of the old card's width.*
+  "The lines this answer needs" held 2 at 390 for a price with no
+  condition guide and for two grades; the row is 26 wider now (the box
+  and its inset gone) and both set on one line. Re-measured on both
+  engines and re-pinned with the reason; the slot's own pins moved from
+  30 and 24 to the control's 44 by the ruling. Neither change touches
+  what those tests guard, that nothing beneath the slot moves.
+
+**For Design, as text, from this unit:** the adds' width (262 of a row;
+with a thumbnail, stacked below a 368 window); the disclosures stacking
+at 390 as well as 320; the thumbnail kept though the ruling's inventory
+of the row omits it; the §9.3 box under a mouse (the entry before this
+one), which also decides whether this card's controls shrink under a
+mouse; SEARCH DISCOGS, the Searched line and Show more left at step 125's
+heights until then. **For Adam:** nothing new; the preview and the
+merge.

@@ -4,7 +4,6 @@ import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { cn } from '@/lib/utils';
 import { marketSummary, type MarketView } from './market-summary';
 import type { SpreadSummary } from '@/lib/discogs/version-spread';
 
@@ -23,6 +22,7 @@ import { pressingEvidence, type PressingEvidence } from './pressing-evidence';
 import type { OwnershipPayload } from '@/lib/discogs/ownership-payload';
 import { HIT } from '@/app/hit-area';
 import { DisclosureMark } from '@/app/disclosure-mark';
+import { CONTROL_BOX, CONTROL_LABEL, HAIRLINE, LABEL } from '@/app/records/[id]/grid-type';
 
 /**
  * SPEC.md §10 `/lookup` — the in-store screen.
@@ -324,7 +324,7 @@ export function LookupClient({ emptyFigure = null }: { /** §T.6's figure for a 
         reaches neither: a tap on a label goes to its field, which is what
         makes a field of 36 one of 56 (§9.3's floor, step 125).
       */}
-      <label htmlFor={field.name} className="block pb-1 text-label text-muted-foreground uppercase">
+      <label htmlFor={field.name} className={`${LABEL} block pb-1`}>
         {field.label}
       </label>
       <Input
@@ -396,10 +396,12 @@ export function LookupClient({ emptyFigure = null }: { /** §T.6's figure for a 
         <details
           open={refinementsOpen}
           onToggle={(event) => setRefinementsOpen((event.target as HTMLDetailsElement).open)}
+          className="group"
         >
-          {/* The button is 12 below, so the overlay reaches down half of that and takes the rest of its 44 above, over the hint, which is not a control. */}
-          <summary className="relative w-fit cursor-pointer text-label text-muted-foreground underline underline-offset-2 before:absolute before:-bottom-[6px] before:-left-[9px] before:-right-[9px] before:hidden before:h-[44px] before:content-[''] pointer-coarse:before:block">
+          {/* The button is 12 below, so the overlay reaches down half of that and takes the rest of its 44 above, over the hint, which is not a control. Step 150: §T.1's + and − in place of the browser's triangle. */}
+          <summary className="relative inline-flex w-fit cursor-pointer list-none items-center gap-2 text-label text-muted-foreground underline underline-offset-2 before:absolute before:-bottom-[6px] before:-left-[9px] before:-right-[9px] before:hidden before:h-[44px] before:content-[''] pointer-coarse:before:block [&::-webkit-details-marker]:hidden">
             More search terms
+            <DisclosureMark open="details" />
           </summary>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             {FIELDS.filter(
@@ -410,8 +412,10 @@ export function LookupClient({ emptyFigure = null }: { /** §T.6's figure for a 
 
         <div className="flex items-center gap-3">
           {/* A boxed control is §9.3's 44 in its box, where the pointer is coarse (step 127). */}
-          <Button type="submit" disabled={searching} className="pointer-coarse:h-[44px]">
-            {searching ? 'Searching…' : 'Search Discogs'}
+          {/* Step 150: "SEARCHING… keeps SEARCH DISCOGS's drawn width, which as built narrows" — the longer label reserves the width unseen and out of the name, the showing one is set over it. */}
+          <Button type="submit" disabled={searching} className="grid pointer-coarse:h-[44px]">
+            <span aria-hidden="true" className="invisible col-start-1 row-start-1">Search Discogs</span>
+            <span className="col-start-1 row-start-1">{searching ? 'Searching…' : 'Search Discogs'}</span>
           </Button>
           {results !== null && (
             <button
@@ -428,11 +432,10 @@ export function LookupClient({ emptyFigure = null }: { /** §T.6's figure for a 
           )}
         </div>
 
-        {error !== undefined && (
-          <p role="alert" data-testid="lookup-error" className="text-prose text-destructive">
-            {error}
-          </p>
-        )}
+        {/* Step 150: "the rate-limit and credential lines take their reserved slots" — one line, there before any search, so the first failure moves nothing. */}
+        <p role="status" data-testid="lookup-error" title={error} className="line-clamp-1 min-h-[1lh] text-prose text-destructive">
+          {error ?? null}
+        </p>
       </form>
 
       {/*
@@ -496,7 +499,7 @@ export function LookupClient({ emptyFigure = null }: { /** §T.6's figure for a 
             </p>
           )}
 
-          <ul className="space-y-3">
+          <ul className={`border-t ${HAIRLINE}`}>
             {results.map((result) => (
               <ResultCard
                 key={result.discogsId}
@@ -692,9 +695,10 @@ function ResultCard({
     <li
       data-testid="result-card"
       data-discogs-id={result.discogsId}
-      className="rounded-xs border border-border"
+      /* Step 150, §T.6: "A look-up result is a row between hairlines, not a box", its content on the row's inset. */
+      className={`border-b ${HAIRLINE} py-[18px]`}
     >
-      <div className="flex gap-3 p-3">
+      <div className="flex gap-3">
         {/*
           Discogs images are remote and next/image would need each host
           allow-listed; a plain img keeps the sleeve visible without adding
@@ -735,30 +739,37 @@ function ResultCard({
           {/* Always rendered: `detailParts` guarantees at least the year slot. */}
           <p className="font-mono text-detail text-muted-foreground">{details.join(' · ')}</p>
 
-          {result.formats.length > 0 && (
-            <p className="text-detail text-muted-foreground">{result.formats.join(' · ')}</p>
-          )}
-
           {/*
             The qualifier from `formats[].text` — often the pressing plant, and
-            the most discriminating thing Discogs gives at list level. Two cards
-            on one screen can be identical on every other field and differ only
-            here.
-
-            Rendered SEPARATELY from the descriptor list rather than appended to
-            it, because it is a different kind of claim: the descriptors are a
-            controlled vocabulary, this is prose a contributor typed. Live
-            values include "Allentown Pressing" but also "180g", "Blue" and
-            "USA Cover" — so it is shown as Discogs' own words and never
-            labelled as a plant. §7.8: never present a Discogs match as certain.
+            the most discriminating thing Discogs gives at list level — joins
+            the format line (step 150, §T.6: "Gatefold joins the format line,
+            unitalicised"). It is still Discogs' own words and never labelled
+            as a plant: live values include "Allentown Pressing" but also
+            "180g", "Blue" and "USA Cover". §7.8: never present a Discogs
+            match as certain.
           */}
-          {result.formatText !== null && (
-            <p className="text-prose italic text-muted-foreground" data-testid="format-text">
-              {result.formatText}
+          {(result.formats.length > 0 || result.formatText !== null) && (
+            <p className="text-detail text-muted-foreground">
+              {result.formats.join(' · ')}
+              {result.formatText !== null && (
+                <>
+                  {result.formats.length > 0 ? ' · ' : ''}
+                  <span data-testid="format-text">{result.formatText}</span>
+                </>
+              )}
             </p>
           )}
 
-          <div className="flex flex-wrap items-center gap-2 pt-1">
+          {/*
+            Step 150, §T.6: the two adds as unfilled §9.3 boxes, "side by side
+            where both fit the row and stack full width where they do not;
+            Code measures where". The row is a container, and the boxes take
+            the full width below the 262 the two and their 24 need (measured
+            16 Oct): with a thumbnail's 84 beside them, that is a window
+            narrower than 368, so they stack at 320 and stand side by side
+            from 390.
+          */}
+          <div data-adds="" className="@container mt-3 flex flex-wrap gap-x-6 gap-y-3">
             {/*
               §5.7: import is two-stage. Both actions open the FORM prefilled;
               neither writes anything. "There is no path that writes a record
@@ -771,33 +782,16 @@ function ResultCard({
             */}
             <Link
               href={`/records/new?discogsReleaseId=${result.discogsId}`}
-              className="rounded-xs bg-primary px-2 py-1 text-label text-primary-foreground"
+              className={`${CONTROL_BOX} @max-[261px]:w-full`}
             >
               I own this
             </Link>
             <Link
               href={`/want-list/new?discogsReleaseId=${result.discogsId}`}
-              className="rounded-xs border border-border px-2 py-1 text-label"
+              className={`${CONTROL_BOX} @max-[261px]:w-full`}
             >
               I want this
             </Link>
-
-            {result.masterId !== null && (
-              <button
-                type="button"
-                onClick={() => void loadVersions()}
-                data-testid="expand-versions"
-                aria-expanded={versions !== null}
-                className={cn(
-                  'ml-auto inline-flex items-center gap-2 text-label underline underline-offset-2',
-                  versions === null ? 'text-foreground' : 'text-muted-foreground',
-                )}
-              >
-                {/* Step 150, §T.6: a disclosure "with + and −"; the mark carries the open state, so the name stands open and closed and "Hide pressings" is gone. */}
-                {loadingVersions ? 'Loading versions…' : 'Compare pressings'}
-                <DisclosureMark open={versions !== null} />
-              </button>
-            )}
           </div>
 
           {/*
@@ -817,14 +811,20 @@ function ResultCard({
             needs three lines at 390 and is cut at two, with an ellipsis; the
             whole of it is the line's title.
           */}
-          <div data-market-slot="" className="mt-1 flex h-[30px] items-center overflow-hidden md:h-6">
+          {/*
+            Step 150, §T.6: "the market slot at Check the market's height" — the
+            §9.3 label's 44, "the same height before and after", the answer
+            held to its lines inside it (two below 768, one from it, as step
+            123 measured) and cut with an ellipsis where longer.
+          */}
+          <div data-market-slot="" className="mt-3 flex h-[44px] items-center overflow-hidden">
             {market === null && marketError === undefined && (
               <button
                 type="button"
                 onClick={() => void loadMarket()}
                 disabled={loadingMarket}
                 data-testid="check-market"
-                className="text-label text-foreground underline underline-offset-2 disabled:text-muted-foreground"
+                className={`${CONTROL_LABEL} disabled:text-muted-foreground`}
               >
                 {loadingMarket ? 'Checking the market…' : 'Check the market'}
               </button>
@@ -849,18 +849,34 @@ function ResultCard({
             deliberately does not promise an answer, because the app does not
             supply one.
           */}
-          <div className="mt-1">
+          {/* Step 150, §T.6: the two disclosures "on one line with + and −", 24 apart, "stacking COMPARE above IDENTIFY where they do not fit". */}
+          <div className="mt-1 flex flex-wrap gap-x-6">
+            {result.masterId !== null && (
+              <button
+                type="button"
+                onClick={() => void loadVersions()}
+                data-testid="expand-versions"
+                aria-expanded={versions !== null}
+                className={`${CONTROL_LABEL} gap-2`}
+              >
+                {/* The mark carries the open state, so the name stands open and closed and "Hide pressings" is gone (unit A). */}
+                {loadingVersions ? 'Loading versions…' : 'Compare pressings'}
+                <DisclosureMark open={versions !== null} />
+              </button>
+            )}
             <button
               type="button"
               onClick={() => void loadEvidence()}
               disabled={loadingEvidence}
               data-testid="expand-evidence"
               aria-expanded={evidence !== null}
-              className="inline-flex items-center gap-2 text-label text-foreground underline underline-offset-2 disabled:text-muted-foreground"
+              className={`${CONTROL_LABEL} gap-2 disabled:text-muted-foreground`}
             >
               {loadingEvidence ? 'Loading pressing details…' : 'Identify this pressing'}
               <DisclosureMark open={evidence !== null} />
             </button>
+          </div>
+          <div>
 
             {/*
               The reserved slot (step 140, Design, 12 Oct): a failure "that replaces or follows a control takes a
@@ -892,7 +908,7 @@ function ResultCard({
             — see `summariseSpread`.
           */}
           {spread !== null && (
-            <p data-testid="version-spread" className="mt-2 px-3 text-meta text-muted-foreground">
+            <p data-testid="version-spread" className="mt-3 text-meta text-muted-foreground">
               {spread.text}
             </p>
           )}

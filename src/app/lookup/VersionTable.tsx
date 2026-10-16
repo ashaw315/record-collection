@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
+import { HAIRLINE, LABEL } from '@/app/records/[id]/grid-type';
 import { comparisonKey, groupIdenticalVersions, mustStayExpanded } from './identical-versions';
 import { OwnershipBadge } from './OwnershipBadge';
 import { describeOwnedPressing } from './ownership-badge';
@@ -135,12 +136,13 @@ export function VersionTable({
   }
 
   return (
-    <div className="border-t border-border">
+    /* Step 150, §T.6: "The versions table takes the table's own rows and §4.1 header labels, its first column on the row's inset rather than 20 further in." */
+    <div className={`mt-3 border-t ${HAIRLINE}`}>
       {/*
         The count first, because it is the answer to "have I got this already?"
         before any row is read — and on a phone it is what fits above the fold.
       */}
-      <p data-testid="version-table-summary" className="px-3 py-2 text-meta text-muted-foreground">
+      <p data-testid="version-table-summary" className="py-2 text-meta text-muted-foreground">
         {versions.length} version{versions.length === 1 ? '' : 's'}
         {ownershipChecked && ownedCount > 0 && (
           <span className="font-medium text-foreground"> · {ownedCount} already on your shelf</span>
@@ -164,7 +166,7 @@ export function VersionTable({
         <p
           data-testid="ownership-unchecked"
           role="status"
-          className="mx-3 mb-2 rounded-xs border border-primary px-2 py-1.5 text-label font-medium"
+          className="mb-2 rounded-xs border border-primary px-2 py-1.5 text-label font-medium"
         >
           Could not check what you already own — this list does not show your collection. Search
           again in a moment.
@@ -178,13 +180,14 @@ export function VersionTable({
       <div className="overflow-x-auto">
         <table className="w-full min-w-[34rem] border-collapse text-detail">
           <thead>
-            <tr className="border-y border-border text-left text-muted-foreground">
-              <th scope="col" className="w-6 px-2 py-1.5" aria-label="Owned" />
+            <tr className={`border-y ${HAIRLINE} text-left`}>
+              <th scope="col" className="w-6 py-1.5 pr-2 pl-0" aria-label="Owned" />
               {COMPARISON_COLUMNS.map((column) => (
                 <th
                   key={column.key}
                   scope="col"
                   className={cn(
+                    LABEL,
                     'px-2 py-1.5 font-normal whitespace-nowrap',
                     // Dropped first when the viewport cannot hold everything.
                     column.optionalOnNarrow && 'hidden sm:table-cell',
@@ -194,7 +197,7 @@ export function VersionTable({
                 </th>
               ))}
               {prices !== undefined && (
-                <th scope="col" className="px-2 py-1.5 text-right font-normal whitespace-nowrap">
+                <th scope="col" className={`${LABEL} px-2 py-1.5 text-right font-normal whitespace-nowrap`}>
                   Cheapest
                 </th>
               )}
@@ -216,13 +219,13 @@ export function VersionTable({
                   data-discogs-id={version.discogsId}
                   data-owned={onShelf ? 'true' : 'false'}
                   className={cn(
-                    'border-b border-border last:border-0',
+                    `h-[44px] border-b ${HAIRLINE} last:border-0`,
                     // Muted, not hidden: an owned pressing is still evidence
                     // about which versions exist, and §7.7 never hides a row.
                     onShelf && 'text-muted-foreground',
                   )}
                 >
-                  <td className="px-2 py-2 text-center">
+                  <td className="py-2 pr-2 pl-0 text-center">
                     {onShelf && (
                       // A glyph as well as the colour — three signals for the
                       // same fact, since colour alone fails in sunlight.
