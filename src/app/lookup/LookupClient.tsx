@@ -22,6 +22,7 @@ import { PressingEvidencePanel } from './PressingEvidence';
 import { pressingEvidence, type PressingEvidence } from './pressing-evidence';
 import type { OwnershipPayload } from '@/lib/discogs/ownership-payload';
 import { HIT } from '@/app/hit-area';
+import { DisclosureMark } from '@/app/disclosure-mark';
 
 /**
  * SPEC.md §10 `/lookup` — the in-store screen.
@@ -762,18 +763,23 @@ function ResultCard({
               §5.7: import is two-stage. Both actions open the FORM prefilled;
               neither writes anything. "There is no path that writes a record
               straight from a search result without passing through the form."
+              Step 150, §T.6: the two "mean opposite things, so their labels
+              lead with the difference and keep a verb: I OWN THIS and I WANT
+              THIS, own first" — look up is for the record in the reader's
+              hand, so the labels speak as the reader does. Named states (IN
+              COLLECTION, ON WANT LIST) were an earlier draft and never built.
             */}
             <Link
               href={`/records/new?discogsReleaseId=${result.discogsId}`}
               className="rounded-xs bg-primary px-2 py-1 text-label text-primary-foreground"
             >
-              Add to collection
+              I own this
             </Link>
             <Link
               href={`/want-list/new?discogsReleaseId=${result.discogsId}`}
               className="rounded-xs border border-border px-2 py-1 text-label"
             >
-              Add to want list
+              I want this
             </Link>
 
             {result.masterId !== null && (
@@ -783,15 +789,13 @@ function ResultCard({
                 data-testid="expand-versions"
                 aria-expanded={versions !== null}
                 className={cn(
-                  'ml-auto text-label underline underline-offset-2',
+                  'ml-auto inline-flex items-center gap-2 text-label underline underline-offset-2',
                   versions === null ? 'text-foreground' : 'text-muted-foreground',
                 )}
               >
-                {loadingVersions
-                  ? 'Loading versions…'
-                  : versions === null
-                    ? 'Compare pressings'
-                    : 'Hide pressings'}
+                {/* Step 150, §T.6: a disclosure "with + and −"; the mark carries the open state, so the name stands open and closed and "Hide pressings" is gone. */}
+                {loadingVersions ? 'Loading versions…' : 'Compare pressings'}
+                <DisclosureMark open={versions !== null} />
               </button>
             )}
           </div>
@@ -852,13 +856,10 @@ function ResultCard({
               disabled={loadingEvidence}
               data-testid="expand-evidence"
               aria-expanded={evidence !== null}
-              className="text-label text-foreground underline underline-offset-2 disabled:text-muted-foreground"
+              className="inline-flex items-center gap-2 text-label text-foreground underline underline-offset-2 disabled:text-muted-foreground"
             >
-              {loadingEvidence
-                ? 'Loading pressing details…'
-                : evidence === null
-                  ? 'Identify this pressing'
-                  : 'Hide pressing details'}
+              {loadingEvidence ? 'Loading pressing details…' : 'Identify this pressing'}
+              <DisclosureMark open={evidence !== null} />
             </button>
 
             {/*
