@@ -386,7 +386,7 @@ describe('assertion 12 holds a no-entry call to its spared sentence', () => {
   it('passes on the tree as it stands, and says how many calls it read', () => {
     const { out } = run();
     expect(out).toMatch(/^PASS 12$/m);
-    expect(out).toMatch(/^     12: \d+ no-entry calls, \d+ named and checked, \d+ unnamed/m);
+    expect(out).toMatch(/^     12: \d+ no-entry calls, \d+ named and checked, \d+ ruling something new, \d+ unnamed/m);
   });
 
   /* Fails against the count: the home sentence reworded, the call still quoting the old wording, and the spared text standing once. */
