@@ -652,6 +652,7 @@ function sentencesOf(plain) {
   let calls = 0;
   let named = 0;
   const unnamed = [];
+  const newRulings = [];
   const phrases = [];
   const other = [];
   /*
@@ -685,6 +686,11 @@ function sentencesOf(plain) {
           source = sentences[i + 1];
           i += 1;
         }
+        /* The rule's third form (16 Oct): a ruling on something no sentence ruled, declared so it is counted apart from the calls still owed a sentence. */
+        if (/^No entry: nothing was ruled here before\b/.test(sentence)) {
+          newRulings.push(`12 §${h.id} new-ruling "${sentence.slice(0, 120)}"`);
+          continue;
+        }
         const q = /“([^”]+)”/.exec(source);
         if (q === null) {
           unnamed.push(`12 §${h.id} unnamed "${sentence.slice(0, 80)}"`);
@@ -704,10 +710,11 @@ function sentencesOf(plain) {
     }
   }
   if (calls === 0) fail('12 empty');
+  for (const line of newRulings) console.log(line);
   for (const line of unnamed) console.log(line);
   for (const line of phrases) console.log(line);
   for (const line of other) console.log(line);
-  console.log(`     12: ${calls} no-entry calls, ${named} named and checked, ${unnamed.length} unnamed and ${phrases.length} quoting a phrase (report only), ${other.length} mention${other.length === 1 ? '' : 's'} in another sense`);
+  console.log(`     12: ${calls} no-entry calls, ${named} named and checked, ${newRulings.length} ruling something new, ${unnamed.length} unnamed and ${phrases.length} quoting a phrase (report only), ${other.length} mention${other.length === 1 ? '' : 's'} in another sense`);
   report(12, failures.length === before);
 }
 

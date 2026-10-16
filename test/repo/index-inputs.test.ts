@@ -512,4 +512,25 @@ describe('assertion 12 holds a no-entry call to its spared sentence', () => {
     expect(out).not.toContain('spared-count=');
     expect(out).toMatch(/^PASS 12$/m);
   });
+
+  /*
+    The rule's third form (Design, 16 Oct): "No entry: nothing was ruled
+    here before", for a ruling on something no sentence ruled, "declared so
+    it can be counted apart from calls still owed a sentence". Fails against
+    the reader before it, which lists the form as unnamed, with the eight
+    older calls for something new.
+  */
+  it('counts the third form, “No entry: nothing was ruled here before”, apart from the calls still owed a sentence', () => {
+    const dir = stage((d) => {
+      const t = join(d, W);
+      const html = readFileSync(t, 'utf8');
+      if (html.split(LAST).length !== 2) throw new Error('staging anchor missing: §W.29’s closing sentence');
+      writeFileSync(t, html.replace(LAST, '<strong>No entry:</strong> nothing was ruled here before; the paper block under the sentence is new.</p>'));
+    });
+    const { out } = run(dir);
+    expect(out).toContain('12 §W.29 new-ruling "No entry: nothing was ruled here before; the paper block under the sentence is new."');
+    expect(out).not.toContain('unnamed "No entry: nothing was ruled here before');
+    expect(out).toMatch(/^     12: \d+ no-entry calls, \d+ named and checked, \d+ ruling something new, \d+ unnamed/m);
+    expect(out).toMatch(/^PASS 12$/m);
+  });
 });
