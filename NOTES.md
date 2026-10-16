@@ -47143,3 +47143,15 @@ set that did not rerun as one. On Adam's word.
 **For Design:** the two entries above. **For Adam:** the preview at
 3ce01c0; the word for the gate; whether the §9.3 box's drawn height
 under a mouse is a unit now or after the merge, and the figure for it.
+
+## 16 Oct, 11:12: the box unit held; the sequence to the merge
+
+The reviewer: the §9.3 box's height under a mouse is a unit after the
+merge, its own step with its own gate, not before. Design's ruling is
+written for look up's boxes and its reasoning is general; the fifteen
+files that draw the shared constant are what make the scope matter, and
+that question is with Design now. **Nothing starts on either reading
+until it answers.** The sequence: Design's two §T.6 entries land → main
+green → `scripts/gate.sh HEAD 1` → Adam looks at the preview → merge →
+the box unit. Nothing of Code's is in the way of the first step; the
+tree is clean and waiting on the entries.
