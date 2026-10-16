@@ -46847,3 +46847,26 @@ else. **For Design, as text:** the table above; the bold lead; §T.3's
 phrase; step 144's bullet against 15, 15 and 18 plus the arrows drawn;
 the review's CANCEL and MERGE THEM judgement; the hierarchy's dashed
 rule.
+
+## 16 Oct, 09:24: Design's three forms landed, 12 counts the third apart
+
+Design's save of d118c49 took the reviewer's lead the same hour: a
+no-entry call has three forms, each led by a bold `No entry:`. It spares
+a sentence and quotes it; it cannot name one and files the entry; or it
+rules something no sentence ruled and says "No entry: nothing was ruled
+here before", naming what is new, "declared so it can be counted apart
+from calls still owed a sentence". §W.29's two prose-form calls were
+brought to the bold lead in the same save, and 12 read them as named
+without a change. The third form is a bucket of its own at f73ccb9,
+`new-ruling`, test first: the unnamed count is now only the calls still
+owed a sentence, and the eight "something new" calls in the 21 move out
+of it as Design rewrites each to the form. The tree reads 25 calls, 3
+named and checked, 0 ruling something new, 21 unnamed, 1 phrase. The
+older summary-line test's pattern was changed to read the new line and
+nothing else, said here.
+
+**Step level:** `test/repo` 507 passed, index 13 PASS. **For Adam:**
+whether to push `main`. **For Design, as text:** the table of 21 in the
+entry before this one, with the eight to take the third form; §T.3's
+phrase; step 144's bullet; the review's CANCEL and MERGE THEM judgement;
+the hierarchy's dashed rule.
