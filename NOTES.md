@@ -47304,3 +47304,35 @@ rerun adds is the proof under the whole suite, with one worker.
 withdrawal sentence arriving without its entries' file, then the §9.3
 box's drawn height under a mouse across its fifteen files, each its own
 step with its own gate.
+
+## 16 Oct, 18:45: the gate at 2913878 green on both projects — the merge's clearance, after the fact
+
+**Gate: full suites, both projects, one worker**, 17:01 to 18:43 in the
+gate worktree, at the HEAD that was pushed and deployed at 16:59.
+
+| half | result |
+|---|---|
+| unit | 4382 passed, 5 skipped, tree unchanged — OK |
+| chromium | 926 passed, 1 skipped, ledger clean, tree unchanged — OK |
+| mobile | 384 passed, 4 skipped, ledger clean, tree unchanged — OK |
+
+Pressure level 1 in all 103 samples; peaks browsers 2,502 MB, next 1,773
+MB, swap 8,486 MB; load 4.75 at the end. Report
+`../record-collection-gate-logs/2913878-gate-w1.txt`; the red gate's logs
+kept beside it in `afc87d1-red-1620/`.
+
+**What this confirms rather than discovers.** The roving spec's fix
+(a1b5a44) passes under the whole suite: chromium's 926 includes its
+three. And the sixty records it now seeds leaked into nothing, as argued
+before the run: they are removed per test by the helpers scroll-lock's
+120 already use, the ledger that ends every run fails on anything a spec
+leaves behind and reads clean here as it did on the red gate, no spec
+pins the live wall's count, and with one worker nothing else is on the
+wall while they are. The run is the proof of an argument, not the first
+time the question was asked.
+
+**The merge, closed.** Production has been 2913878 since 17:00:46, on a
+gate that was red on one test since shown the spec's own; this gate at
+the same HEAD is green on both projects, so the clearance the merge
+went without is now behind it. Next, as queued: the export-diff line,
+then the §9.3 box across its fifteen files.
