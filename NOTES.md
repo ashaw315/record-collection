@@ -47258,3 +47258,49 @@ test and the fix changes that test. A gate at the fixed HEAD is the
 clearance, on Adam's word; it covers 147 to 150 and this spec as one.
 Nothing under `src/` changed, so the preview at 3ce01c0 still shows the
 app as it will ship.
+
+## 16 Oct, 16:55: the merge, recorded as it went; the sixty records' other direction, answered before the rerun
+
+**The merge, plainly, as Adam asked.** Adam merged main to production
+on the gate at afc87d1, which was red on one test, chromium 925 passed
+and 1 failed, with unit and mobile green: 5,691 of 5,692. The one
+failure was since reproduced and fixed as the spec's own reading
+(a1b5a44), and **that fix is unverified by a full gate at merge time**;
+the gate that covers it runs after. Nothing under `src/` changed between
+the preview at 3ce01c0 and the merge, so what Adam clicked through is
+what shipped. (At 16:55 `origin/main` still read 88a0e7e from here; the
+merge is Adam's push and is recorded on his word.)
+
+**The mirror the reviewer named: can the spec's sixty leak into other
+specs the way theirs leaked into it?** Answered by reading, before the
+rerun, not by the rerun:
+
+- *Cleanup.* Yes, per test: `afterEach` removes the sixty by
+  `removeRecordsFor` and deletes the artist, the same helpers
+  `scroll-lock` uses for its 120, and the ledger that ends every run
+  fails on anything a spec leaves behind ("ledger clean" is that
+  reading). The gate at afc87d1 ended ledger clean with the old spec;
+  the new one cleans the same way.
+- *Overlap.* At the gate there is one worker, so the sixty exist only
+  while roving-148's three tests run and no other spec sees them. Under
+  parallel workers at step level they can be on the wall while another
+  spec reads it, which is the exposure five specs already create with
+  their own scenery (`collection-filters`, `scroll-lock`, `table-98`,
+  `wall-panel`, `wall-access`), and the suite is written to it: the ring
+  walk's figure branch checks Design's counts only when the composition
+  is the seed's and annotates otherwise; the navigation, route and
+  arrival specs read seat order from `data-seat-order` and their own
+  records.
+- *Exact counts.* The two assertions of an exact anchor count are not
+  the live wall's: `wall-labelled.spec.ts:250` counts the probe route's
+  fixture spines, and `wall-arrival-104.spec.ts:126` counts a filter's
+  three of its own. No spec pins the live wall's row or record count.
+
+So the answer is not "the suite will tell us": by reading, the sixty
+clean up every run and nothing reads a count they would move. What the
+rerun adds is the proof under the whole suite, with one worker.
+
+**After the merge and the rerun:** the export-diff line for a
+withdrawal sentence arriving without its entries' file, then the §9.3
+box's drawn height under a mouse across its fifteen files, each its own
+step with its own gate.
