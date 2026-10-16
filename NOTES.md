@@ -24,7 +24,7 @@ here. They are one defect seen from two sides: an assertion with no failing
 input, and an observation with no subject. Both produce green. If you are
 looking at something that passes and you are not sure why, start in those two.
 
-Generated from 134 declared rules. Regenerate with
+Generated from 135 declared rules. Regenerate with
 `npx tsx scripts/notes-index.ts --write`.
 
 ### Measurements that do not govern
@@ -59,6 +59,7 @@ Generated from 134 declared rules. Regenerate with
 | You are here if | The rule |
 | --- | --- |
 | a validator checks a value is non-empty and the value has a required shape | [`z.string().min(1)` on APP_PASSWORD_HASH — presence where shape was needed](#zstringmin1-on-app_password_hash-presence-where-shape-was-needed) |
+| a spec or a comment says a check reports or fails on something, and you have not found the line of code that does it | [16 Oct, 09:06: a guard that saw two of twenty-five, the spec read for claims nothing checks, and 12's lead and trigger](#16-oct-0906-a-guard-that-saw-two-of-twenty-five-the-spec-read-for-claims-nothing-checks-and-12s-lead-and-trigger) |
 | a check's summary count is smaller than the thing it counts is known to be, and the index reads clean | [23:47: the reviewer's three checks after the gate — 12 read two calls of three, the ring walked, the floor is the browsers'](#2347-the-reviewers-three-checks-after-the-gate-12-read-two-calls-of-three-the-ring-walked-the-floor-is-the-browsers) |
 | a screen was rebuilt, every fact still appears, and something that used to be clickable is now plain text | [A capability lost three times, and the assertion shape that keeps missing it](#a-capability-lost-three-times-and-the-assertion-shape-that-keeps-missing-it) |
 | a comment describes a protection and you have not found the code that performs it | [A COMMENT THAT PROMISED A SAFEGUARD NOBODY WROTE](#a-comment-that-promised-a-safeguard-nobody-wrote) |
@@ -46698,3 +46699,70 @@ lead 12 reads and that a quote is a whole sentence; whether the eight
 "new" calls are in the rule's scope; §T.3's phrase quote; step 144's
 bullet at 31, 15 and 33 against the walked 15, 15 and 19; the review's
 CANCEL and MERGE THEM judgement; the hierarchy's dashed rule.
+
+## 16 Oct, 09:06: a guard that saw two of twenty-five, the spec read for claims nothing checks, and 12's lead and trigger
+
+**Shape:** check-cannot-fail
+**You are here if:** a spec or a comment says a check reports or fails on something, and you have not found the line of code that does it
+
+**The 2-of-25, recorded beside the judge's self-read as the reviewer
+asked.** Assertion 12 counted 2 no-entry calls where the corpus holds
+25. That is not a guard that ran in the wrong place once; it is a guard
+blind to 92 percent of its subject while reading clean, and it is the
+first instance at that scale in the family CLAUDE.md §2 keeps. The
+sharper half is the spec: its own line said the older prose-form calls
+"are reported", and the detector it described could not see them. A
+spec describing behaviour the code lacks is a documentation claim with
+no check behind it, the same shape as a convention held by repetition,
+and the reader of the spec is the one it misleads.
+
+**So the spec was read once for other lines of that kind** (the
+reviewer: worth asking once, separately). Two passes. Mechanically,
+every output template the spec names in backticks (`6 quote-repeated`,
+`12 §SEC not-a-call "…"`, and so on) was looked for in the script: all
+present, and the two that were not are the spec's own placeholders
+(`1 §ID rows=K`, `4 FILE→§REF`) whose forms are there. Assertion 10
+names fail lines the script lacks, and its heading says NOT BUILT in
+capitals, so it is honest. By reading, the behavioural claims
+("report-only", "fatal", "fails if zero", "prints the count") match the
+script for 3, 6, 7, 8b, 9, 11 and 12, with one exception, which is the
+finding:
+
+- **The spec's opening claim, that every assertion "fails if a set it
+  quantifies over is empty", is wider than the script.** An `empty`
+  failure exists for 3 (steps), 6 (entries), 7 (declared sentences), 8b
+  (a column) and 12 (calls). Assertions 1, 2, 4, 5, 8a and 9 quantify
+  over the parsed sections (`ALL`) and print no count of them; were the
+  heading parser to read nothing after an export change, each would pass
+  over an empty set. A broken parser would be caught by 6's
+  `section-absent` on every entry, which is "some other test would catch
+  that", the proxy CLAUDE.md §2 names. The test that reads the counts
+  (`index-assertions.test.ts`, "checks a non-empty set") covers 3, 6, 7
+  and 12 only, so it does not reach the gap either. **Not fixed here:**
+  it is a unit of its own, test first, an `empty` failure and a printed
+  section count at the first assertion over `ALL`, and the spec's claim
+  narrowed or met. Waiting on the next go.
+
+**12's lead and trigger, as the reviewer settled them.** For human
+readers the lead is `No entry:` in bold with the spared sentence
+following, in the same sentence or in a `The sentence spared is` line
+after it; the detector reads both and the bold one is the one a reader
+can scan for. **For Design, as text: that lead, and it can proceed.** A
+test pins the form, green first time and said so, since each of its two
+paths had a test. The fatal trigger is written against the corpus, not
+§W.29: 12 goes fatal when every target reads 0 unnamed and the eight
+calls for something new are brought to a form or ruled outside the rule,
+and not before. The spec says both.
+
+**Design's save of 7d10f1e closes a standing observation.** Its
+Maintaining paragraph rules that a drop arriving without Code's blocks
+is expected, since the file's author never had them, and that the
+applier's restoring them is not a fault to report. The target's §W.29
+now records step 147's one-task window. Nothing removed, no call added,
+12 unchanged at 25.
+
+**Step level:** `test/repo` 506 passed after each commit, index 13 PASS.
+**For Adam:** nothing. **For Design, as text:** the bold lead; whether
+the eight "new" calls are in the rule's scope; §T.3's phrase quote; step
+144's bullet against the walked 15, 15 and 19; the review's CANCEL and
+MERGE THEM judgement; the hierarchy's dashed rule.
