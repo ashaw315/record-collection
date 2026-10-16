@@ -653,6 +653,7 @@ function sentencesOf(plain) {
   let named = 0;
   const unnamed = [];
   const newRulings = [];
+  const draftFixes = [];
   const phrases = [];
   const other = [];
   /*
@@ -677,6 +678,11 @@ function sentencesOf(plain) {
         const isCall = CALL.test(sentence) || SPARED.test(sentence);
         if (!isCall) {
           if (/\bno entry\b/i.test(sentence)) other.push(`12 §${h.id} not-a-call "${sentence.slice(0, 80)}"`);
+          continue;
+        }
+        /* Design, 16 Oct: a draft fix is not a call. It invokes WITHDRAWALS.md's own exemption, quotes nothing, and is checked against git; listed apart so the class stays visible. */
+        if (/\bdraft fix\b/i.test(sentence)) {
+          draftFixes.push(`12 §${h.id} draft-fix "${sentence.slice(0, 120)}"`);
           continue;
         }
         calls += 1;
@@ -711,10 +717,11 @@ function sentencesOf(plain) {
   }
   if (calls === 0) fail('12 empty');
   for (const line of newRulings) console.log(line);
+  for (const line of draftFixes) console.log(line);
   for (const line of unnamed) console.log(line);
   for (const line of phrases) console.log(line);
   for (const line of other) console.log(line);
-  console.log(`     12: ${calls} no-entry calls, ${named} named and checked, ${newRulings.length} ruling something new, ${unnamed.length} unnamed and ${phrases.length} quoting a phrase (report only), ${other.length} mention${other.length === 1 ? '' : 's'} in another sense`);
+  console.log(`     12: ${calls} no-entry calls, ${named} named and checked, ${newRulings.length} ruling something new, ${unnamed.length} unnamed and ${phrases.length} quoting a phrase (report only), ${draftFixes.length} draft fix${draftFixes.length === 1 ? '' : 'es'} not calls, ${other.length} mention${other.length === 1 ? '' : 's'} in another sense`);
   report(12, failures.length === before);
 }
 

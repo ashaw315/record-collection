@@ -533,4 +533,25 @@ describe('assertion 12 holds a no-entry call to its spared sentence', () => {
     expect(out).toMatch(/^     12: \d+ no-entry calls, \d+ named and checked, \d+ ruling something new, \d+ unnamed/m);
     expect(out).toMatch(/^PASS 12$/m);
   });
+
+  /*
+    Design, 16 Oct: "A draft fix is not a no-entry call. A sentence saying a
+    change was a draft fix invokes the withdrawal rule's own exemption… It
+    quotes nothing… That check [against git], not a spared sentence, is what
+    makes it verifiable." Fails against the reader before it, which listed
+    the three draft-fix sentences among the unnamed calls.
+  */
+  it('does not count a draft-fix sentence as a call, and lists it apart', () => {
+    const dir = stage((d) => {
+      const t = join(d, W);
+      const html = readFileSync(t, 'utf8');
+      if (html.split(LAST).length !== 2) throw new Error('staging anchor missing: §W.29’s closing sentence');
+      writeFileSync(t, html.replace(LAST, 'No drop carried the first wording, so this was a draft fix and no entry is owed.</p>'));
+    });
+    const { out } = run(dir);
+    expect(out).toContain('12 §W.29 draft-fix "No drop carried the first wording, so this was a draft fix and no entry is owed."');
+    expect(out).not.toContain('unnamed "No drop carried the first wording');
+    expect(out).toMatch(/^     12: \d+ no-entry calls, \d+ named and checked, \d+ ruling something new, \d+ unnamed and \d+ quoting a phrase \(report only\), \d+ draft fix/m);
+    expect(out).toMatch(/^PASS 12$/m);
+  });
 });
