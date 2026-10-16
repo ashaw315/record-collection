@@ -47218,3 +47218,43 @@ since 3ce01c0; the merge; then the two queued units, the export-diff
 line for a withdrawal sentence arriving without its entries' file, and
 the §9.3 box's drawn height under a mouse across its fifteen files, each
 its own step with its own gate.
+
+## 16 Oct, 16:23: the gate at afc87d1 — unit and mobile green, chromium one failure, attributed by reproduction and fixed in the spec
+
+**Gate: full suites, both projects, one worker**, 14:40 to 16:20 in the
+gate worktree, after a first start at 13:47 aborted on Adam's word
+before the laptop slept and a refusal at 14:38 on the swap rate as the
+machine paged back in (86,773 pages a second; 1,300 a minute later).
+
+| half | result |
+|---|---|
+| unit | 4382 passed, 5 skipped, tree unchanged — OK |
+| chromium | 925 passed, 1 failed, 1 skipped, ledger clean — NOT OK |
+| mobile | 384 passed, 4 skipped, ledger clean — OK |
+
+Pressure level 1 in all 100 samples; peaks next 1,573 MB, browsers
+2,505 MB, vitest 1,071 MB, swap 9,023 MB; load 7.45 at the end, 225
+pages a second swapped. Report `../record-collection-gate-logs/afc87d1-gate-w1.txt`.
+
+**The one failure, demonstrated and not inferred.** `roving-148.spec.ts`,
+"the arrow keys move focus seat to seat…", at "the first seat has no
+previous: focus stays": expected the first anchor's seat, received
+another, on the retry too. The spec read the anchors' DOM order as
+§W.23's seat order. On the seventeen alone the wall is one row and the
+two agree; under the full suite other specs' records gave it a second
+row, and `WallLabelled` says why that breaks it: "Paint order interleaves
+rows by column, so the [seat] order is" a separate channel, the
+`data-seat-order` step 148 itself added. Reproduced before the fix: the
+spec now seeds sixty records of its own, and on the old reading the
+arrow test failed with the gate's exact message; read by
+`data-seat-order` all three tests pass, with a precondition that the
+wall has more than one row. The behaviour under test was never wrong;
+the spec's reading of "first" was. The shape is the family's seed-alone
+case again, a test that passed because its fixture could not reach the
+state that breaks it, and this time the full suite reached it.
+
+**The merge is not cleared from Code's side:** the gate ran red on one
+test and the fix changes that test. A gate at the fixed HEAD is the
+clearance, on Adam's word; it covers 147 to 150 and this spec as one.
+Nothing under `src/` changed, so the preview at 3ce01c0 still shows the
+app as it will ship.
