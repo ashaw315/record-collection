@@ -47202,3 +47202,19 @@ wording, and whether the entry is wanted on carriage alone is Design's.
 `scripts/gate.sh HEAD 1` on Adam's word → Adam's look at the preview →
 merge → the box unit as its own step with its own gate. **For Adam:**
 the file, the word, the look. **For Design:** the carriage finding above.
+
+## 16 Oct, 11:34: main green on Design's complete set; no third gap; waiting on the word for the gate
+
+Design sent all eight input files. Three moved, each as expected: the
+Modal target with the keyboard-only withdrawal (M.6/keyboard-only's
+quote, verbatim), the handoff without Code's blocks, WITHDRAWALS.md
+without the derived comment. Five were byte-identical to the repo's
+copies, so nothing had been missed in the other direction: no third
+gap. Index 13 PASS, test/repo 509 passed. The intake at the commit
+after 0d671ae. **Next, in order:** Adam's word for `scripts/gate.sh HEAD
+1`, the full suites on both projects; Adam's look at the preview, which
+still shows the app as it will ship, nothing under `src/` having changed
+since 3ce01c0; the merge; then the two queued units, the export-diff
+line for a withdrawal sentence arriving without its entries' file, and
+the §9.3 box's drawn height under a mouse across its fifteen files, each
+its own step with its own gate.
