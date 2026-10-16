@@ -1,4 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
+import { sql } from 'drizzle-orm';
+import { getTestDb } from '../test/helpers/db';
+import { seedRecords, removeRecordsFor } from './seed';
 import { login } from './sign-in';
 
 /**
@@ -26,14 +29,36 @@ const active = (page: Page) =>
     tag: document.activeElement?.tagName.toLowerCase() ?? '',
   }));
 
+/*
+  More than one row, on purpose (the gate at afc87d1, 16 Oct). On the
+  seventeen alone the wall is one row and the anchors' DOM order is §W.23's
+  seat order; under the full suite other specs' records gave it a second
+  row, and "Paint order interleaves rows by column" (WallLabelled), so the
+  DOM's first anchor was not the first seat and ArrowLeft from it had
+  somewhere to go. Sixty records of this spec's own make the second row
+  every run, so the reading below is exercised where it was wrong.
+*/
+let artistId: string;
+
 test.beforeEach(async ({ page }) => {
+  const db = getTestDb();
+  const rows = await db.execute(sql`INSERT INTO artists (name) VALUES ('Roving Probe') RETURNING id`);
+  artistId = (rows.rows[0] as { id: string }).id;
+  await seedRecords(artistId, 'Rove', 'probe', 60);
   await login(page);
+});
+
+test.afterEach(async () => {
+  const db = getTestDb();
+  await removeRecordsFor(artistId);
+  await db.execute(sql`DELETE FROM artists WHERE id = ${artistId}::uuid`);
 });
 
 test('the spines are one Tab stop: search is reached before any spine, the stop is the roving seat, and one Tab leaves the wall', async ({ page }) => {
   await openShelf(page);
   const stops = await page.evaluate(() => Array.from(document.querySelectorAll('a[data-seat]')).map((a) => a.getAttribute('tabindex')));
-  expect(stops.length, 'the seventeen are seated').toBeGreaterThanOrEqual(17);
+  expect(stops.length, 'the seventeen and this spec’s sixty are seated').toBeGreaterThanOrEqual(77);
+  expect(await page.evaluate(() => new Set(Array.from(document.querySelectorAll('a[data-seat]')).map((a) => Math.round(a.getBoundingClientRect().top))).size), 'the precondition: more than one row').toBeGreaterThan(1);
   expect(stops.filter((t) => t === '0'), 'exactly one spine is in the tab order').toHaveLength(1);
   expect(stops.filter((t) => t === '-1'), 'and every other spine is reachable only by the arrows').toHaveLength(stops.length - 1);
 
@@ -56,7 +81,8 @@ test('the spines are one Tab stop: search is reached before any spine, the stop 
 
 test('the arrow keys move focus seat to seat and do nothing else; Enter pulls the focused record', async ({ page }) => {
   await openShelf(page);
-  const seats = await page.evaluate(() => Array.from(document.querySelectorAll('a[data-seat]')).map((a) => a.getAttribute('data-seat')));
+  /* §W.23's order is the anchors' seat order, not their DOM order: read by `data-seat-order`, the channel step 148 added for exactly this. */
+  const seats = await page.evaluate(() => Array.from(document.querySelectorAll<HTMLElement>('a[data-seat][data-seat-order]')).sort((a, b) => Number(a.dataset.seatOrder) - Number(b.dataset.seatOrder)).map((a) => a.getAttribute('data-seat')));
   await page.locator(`a[data-seat="${seats[0]}"]`).focus();
   await page.keyboard.press('ArrowRight');
   expect((await active(page)).seat, 'ArrowRight: the next seat').toBe(seats[1]);
@@ -79,7 +105,8 @@ test('the arrow keys move focus seat to seat and do nothing else; Enter pulls th
 
 test('an arrow with a record pulled moves focus and not the pull', async ({ page }) => {
   await openShelf(page);
-  const seats = await page.evaluate(() => Array.from(document.querySelectorAll('a[data-seat]')).map((a) => a.getAttribute('data-seat')));
+  /* §W.23's order is the anchors' seat order, not their DOM order: read by `data-seat-order`, the channel step 148 added for exactly this. */
+  const seats = await page.evaluate(() => Array.from(document.querySelectorAll<HTMLElement>('a[data-seat][data-seat-order]')).sort((a, b) => Number(a.dataset.seatOrder) - Number(b.dataset.seatOrder)).map((a) => a.getAttribute('data-seat')));
   await page.locator(`a[data-seat="${seats[0]}"] [data-spine]`).click();
   await page.getByTestId('record-chrome').waitFor({ timeout: 5000 });
   await page.locator('[data-pulled]').waitFor({ timeout: 5000 });
