@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import { describe, expect, it } from 'vitest';
-import { addedBySection, diffProse, sentencesOf, stepsOf } from '../../scripts/export-diff.mjs';
+import { addedBySection, diffProse, entriesNotCrossed, sentencesOf, stepsOf } from '../../scripts/export-diff.mjs';
 
 /**
  * **What an export took away (8 Oct).** Design's exports replace the
@@ -155,5 +155,48 @@ describe('against this repository’s own history', () => {
     const sentences = sentencesOf('Report the baselines.\n\n> Each meets its neighbours halfway.\n\n97. Build the table.\n');
     expect(sentences).toContain('Each meets its neighbours halfway.');
     expect(sentences).toContain('97. Build the table.');
+  });
+});
+
+/**
+ * **A withdrawal sentence that arrives without its entries' file (16 Oct).**
+ * Twice in one day a file did not cross between Design's tree and the
+ * repo's, in opposite directions, and each was invisible until the index
+ * failed days later in a way that read as Design's fault. The index checks
+ * entries against sentences in one tree and cannot see that the tree is
+ * missing a whole input. This names the state at the moment it arises: a
+ * save that adds a sentence in withdrawal form to a target and brings no
+ * change to WITHDRAWALS.md against the same base. It reports; the index
+ * still judges.
+ */
+describe('entriesNotCrossed', () => {
+  const WITHDRAWN = 'Withdrawn within §T.6: the arrow keys moving focus with the pull, so that a pulled record is the focused one.';
+  /* Fails against the function's absence, and against one that reads only the sentences: the line names both the count and the file. */
+  it('names the state when a withdrawal-form sentence arrives and WITHDRAWALS.md did not change', () => {
+    const line = entriesNotCrossed([{ file: 'Table and Grid - build target.dc.html', added: ['A plain sentence.', WITHDRAWN] }], false);
+    expect(line).toBe("1 withdrawal sentence arrived and WITHDRAWALS.md did not change: the entries' file has not crossed, or the entries were not written.");
+  });
+  it('counts every form the index declares, across files', () => {
+    const line = entriesNotCrossed([
+      { file: 'Nav - build target.dc.html', added: ['Superseded by §G.3 on the gap: the 8 is 24.'] },
+      { file: 'Wall and Pull - build target.dc.html', added: ['Withdrawn in part by §W.29: the seat.', 'Nothing here.'] },
+    ], false);
+    expect(line).toMatch(/^2 withdrawal sentences arrived/);
+  });
+  it('says nothing when WITHDRAWALS.md changed in the same save, however little', () => {
+    expect(entriesNotCrossed([{ file: 'Table and Grid - build target.dc.html', added: [WITHDRAWN] }], true)).toBeNull();
+  });
+  it('says nothing when no added sentence is in withdrawal form', () => {
+    expect(entriesNotCrossed([{ file: 'Table and Grid - build target.dc.html', added: ['The row is between hairlines.'] }], false)).toBeNull();
+  });
+  /* Real data: Design's save of 16 Oct that brought two §T.6 withdrawals and no WITHDRAWALS.md, committed raw at dfa6fe2 on 831ddd4. The script, run as the intake runs it, must say so. */
+  it('says so on the save where it happened, dfa6fe2 against 831ddd4', () => {
+    const out = execFileSync('node', ['scripts/export-diff.mjs', '--from', '831ddd4', '--to', 'dfa6fe2'], { encoding: 'utf8' });
+    expect(out).toContain("2 withdrawal sentences arrived and WITHDRAWALS.md did not change: the entries' file has not crossed, or the entries were not written.");
+  });
+  /* And not on the save that brought the file: 92d2614 against 4c6897d changed WITHDRAWALS.md and added no target sentence. */
+  it('says nothing on the save that brought the entries, 92d2614 against 4c6897d', () => {
+    const out = execFileSync('node', ['scripts/export-diff.mjs', '--from', '4c6897d', '--to', '92d2614'], { encoding: 'utf8' });
+    expect(out).not.toContain('withdrawal sentence');
   });
 });

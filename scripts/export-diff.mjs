@@ -163,6 +163,26 @@ export function stepsOf(markdown) {
   return [...markdown.matchAll(/^(\d{1,3})\. /gm)].map((m) => Number(m[1]));
 }
 
+/**
+ * A withdrawal sentence that arrives without its entries' file (16 Oct).
+ * Twice in one day a file did not cross between Design's tree and the
+ * repo's, in opposite directions, and each showed only as an index failure
+ * days later that read as Design's fault: the index checks entries against
+ * sentences in one tree and cannot see that the tree is missing a whole
+ * input. This names the state as it arises: a save adding a sentence in
+ * withdrawal form (the index's declared prefixes) to a target while
+ * WITHDRAWALS.md is unchanged against the same base. It reports; the index
+ * still judges. `arrivals` is `[{ file, added }]` for the files other than
+ * WITHDRAWALS.md; `withdrawalsChanged` is whether that file differed at all.
+ */
+const WITHDRAWAL_FORM = /^(Withdrawn by §|Withdrawn in part by §|Withdrawn in whole by §|Withdrawn within §|Superseded by §|Superseded in part by §)/;
+export function entriesNotCrossed(arrivals, withdrawalsChanged) {
+  if (withdrawalsChanged) return null;
+  const n = arrivals.flatMap((a) => a.added).filter((sentence) => WITHDRAWAL_FORM.test(sentence)).length;
+  if (n === 0) return null;
+  return `${n} withdrawal sentence${n === 1 ? '' : 's'} arrived and WITHDRAWALS.md did not change: the entries' file has not crossed, or the entries were not written.`;
+}
+
 const DESIGN = 'docs/design';
 const FILES = ['HANDOFF-wall-and-pull.md', 'Record Detail 8a - build target.dc.html', 'Record Detail 8a - settled 1-10.dc.html', 'Wall and Pull - build target.dc.html', 'Nav - build target.dc.html', 'Record Modal - build target.dc.html', 'Table and Grid - build target.dc.html', 'WITHDRAWALS.md'];
 
@@ -174,6 +194,8 @@ function main(argv) {
   const at = (rev, path) => { try { return execFileSync('git', ['show', `${rev}:${path}`], { encoding: 'utf8', maxBuffer: 256 * 1024 * 1024, stdio: ['ignore', 'pipe', 'ignore'] }); } catch { return null; } };
   let outright = 0;
   let arrivals = 0;
+  const arrivalsByFile = [];
+  let withdrawalsChanged = false;
   for (const file of FILES) {
     const path = `${DESIGN}/${file}`;
     const before = at(from, path);
@@ -182,6 +204,8 @@ function main(argv) {
     if (before === null) { console.log(`\n${file}: new since ${from}; nothing to have been removed.`); continue; }
     if (after === null) { console.log(`\n${file}: GONE. It is in ${from} and not in ${to ?? 'the working tree'}.`); outright += 1; continue; }
     const { removed, reworded, added } = diffProse(before, after);
+    if (file === 'WITHDRAWALS.md') withdrawalsChanged = before !== after;
+    else arrivalsByFile.push({ file, added });
     const lostSteps = file.startsWith('HANDOFF') ? stepsOf(before).filter((n) => !stepsOf(after).includes(n)) : [];
     if (removed.length === 0 && reworded.length === 0 && added.length === 0 && lostSteps.length === 0) continue;
     console.log(`\n${file}: ${removed.length} removed, ${reworded.length} reworded, ${added.length} added${lostSteps.length ? `, steps gone: ${lostSteps.join(', ')}` : ''}`);
@@ -200,6 +224,8 @@ function main(argv) {
     outright += removed.length + lostSteps.length;
     arrivals += added.length;
   }
+  const notCrossed = entriesNotCrossed(arrivalsByFile, withdrawalsChanged);
+  if (notCrossed !== null) console.log(`\n${notCrossed}`);
   console.log(`\n${outright === 0 ? 'Nothing was removed outright.' : `${outright} removed outright (sentences and steps).`} ${arrivals} sentence${arrivals === 1 ? '' : 's'} added, to be read against what Design said the drop holds. Compared ${to ?? 'the working tree'} with ${from}.`);
   return strict && outright > 0 ? 1 : 0;
 }
