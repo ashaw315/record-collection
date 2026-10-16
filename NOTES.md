@@ -46870,3 +46870,83 @@ whether to push `main`. **For Design, as text:** the table of 21 in the
 entry before this one, with the eight to take the third form; §T.3's
 phrase; step 144's bullet; the review's CANCEL and MERGE THEM judgement;
 the hierarchy's dashed rule.
+
+## 16 Oct, 09:48: the preview branch, built clean on Vercel; what a production build changes; Design's save with two entries unfiled
+
+**The branch.** `preview/steps-143-149` from main at 831ddd4, pushed at
+09:41; main not pushed, nothing merged. Vercel's git integration built
+it as a preview, Ready at 09:44:42 after a 1m build (compiled 26.5s, 26
+static pages, every app and api route in the table, the middleware as a
+proxy), aliased
+`record-collection-git-preview-steps-143-149-ashaw315s-projects.vercel.app`
+and at `record-collection-2dflcbkzi-ashaw315s-projects.vercel.app`.
+Every route answers 302 to Vercel's SSO from outside a Vercel session:
+deployment protection, so the preview opens for Adam in a browser that
+is signed in to Vercel and for nobody else, and no route could be
+smoke-tested from here. Said plainly: the build is clean; the runtime
+is untested by Code.
+
+**Three things in the log worth Adam's eye, none an error.** The build
+command is `drizzle-kit migrate && npm run db:verify:state && next
+build`, and the Preview environment shares every variable with
+Production, `DATABASE_URL` included: **the preview's build ran the
+migrator against the production database** ("29 of 29 migrations
+applied", nothing new since 0028 on 8 Sep) and the preview reads and
+writes production data, so a click-through writes real records. Next
+16.3 warns that the `middleware` file convention is deprecated for
+`proxy` (a codemod exists; not done). And `pg` warns that `sslmode=
+require` will weaken in its next major; the URL should say
+`verify-full` before that upgrade.
+
+**What a production build changes, as asked, since Playwright has only
+ever run against `next dev`.** No commit since step 142 touches
+migrations, the env example, `vercel.json` or the Next config, and the
+only new `process.env` read is `NODE_ENV`, guarding step 142's error
+probe out of the client bundle. The classes that differ by build, and
+where each lands:
+
+- *React strict mode is dev-only*, and the app router's default: every
+  effect ran twice in every Playwright run and runs once in production.
+  Step 147's arrival (a ref consumed at the first layout commit, the
+  offset read and cleared in the same pass) is the code most shaped by
+  that, so the wall's opening is the first screen to look at.
+- *Hydration is faster*, so the window in which a scroll lands before
+  the page is interactive (147's staged case) is shorter; the person
+  benefits, nothing is lost. The record form's `data-hydrated`
+  affordance exists for the same window and has always met production.
+- *The root error boundary renders only in production*: `next dev`
+  shows its overlay instead, so step 142's `global-error.tsx` has never
+  drawn in a browser Code watched. The route-level `error.tsx` has, by
+  the probe. A thrown error at the root is the one screen no spec has
+  seen.
+- *The dev overlay (`nextjs-portal`) is absent*, which the captures hid
+  anyway; and CSS is minified from the same Tailwind scan, so a class
+  missing in dev is missing in both and not a difference.
+
+**For Adam, by screen, what changed since step 142 (origin/main):** the
+wall (147 the arrival yielding to a scroll; 148 the spines one Tab stop,
+arrows moving focus, Enter pulling, the pull's arrows and buttons only);
+every route (144 the focus ring, 2px ink offset 2, and the rail's Apply
+out of the tab order); the error screen and suggestions (143, TRY AGAIN
+and COLLECTION, the scope select and ASK CLAUDE 24 apart); stats (143
+the disclosure column); the shared delete dialog on a record, a
+want-list row and manage (143 CANCEL and DELETE 24 apart; 146 opaque
+paper in an ink box over an undimmed page, the footer band gone); the
+want list's item page and its forms (145 labels, boxes, headings, the
+title); login at 1280 (145); the record form (146 labels, controls, the
++ and − disclosures); manage (146 rows, the duplicate review, the lineup
+walk's slot; 149 the proposed hierarchy as a section between
+hairlines). Look up is unchanged since 142 and its card is the next
+unit.
+
+**Design's save of dfa6fe2 arrived during this**, the 143–145 reading
+the reviewer referred to, with two declared withdrawals in §T.6 and no
+entries filed: the index fails 7 and `test/repo` is 3 red on its exit
+until Design's entries land. The entries are Design's to write (12
+Oct), so the raw and intake commits name the gap and do not fill it.
+**For Design:** the two entries (`T.6`, the arrow keys moving focus with
+the pull; arrow keys between spines within the run), and the question
+the reviewer raised, whether the three DRAFT calls in the 21 are calls
+at all, since WITHDRAWALS.md's own rule exempts a draft fix by name; if
+so 12 excludes the class and 21 becomes 18. **For Adam:** the preview
+URL, the shared database, and the merge.
