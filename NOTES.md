@@ -24,7 +24,7 @@ here. They are one defect seen from two sides: an assertion with no failing
 input, and an observation with no subject. Both produce green. If you are
 looking at something that passes and you are not sure why, start in those two.
 
-Generated from 135 declared rules. Regenerate with
+Generated from 136 declared rules. Regenerate with
 `npx tsx scripts/notes-index.ts --write`.
 
 ### Measurements that do not govern
@@ -124,6 +124,7 @@ Generated from 135 declared rules. Regenerate with
 
 | You are here if | The rule |
 | --- | --- |
+| two parties each verify the same thing against their own copy and disagree, and neither check has been shown to run against the copy the other reads | [16 Oct, 11:20: the family in a new place — two sound checks, neither where the thing lives; step zero and the file that did not cross](#16-oct-1120-the-family-in-a-new-place-two-sound-checks-neither-where-the-thing-lives-step-zero-and-the-file-that-did-not-cross) |
 | an error path renders and you have not checked what it exposes | [A 403 on a JS chunk became a credential disclosure](#a-403-on-a-js-chunk-became-a-credential-disclosure) |
 | several captures of one record and window differ only in a prefix, and the wrong one can reach a reader without anyone noticing | [A capture's name carries the figure that differs, not only a step prefix (30 Sep)](#a-captures-name-carries-the-figure-that-differs-not-only-a-step-prefix-30-sep) |
 | an output names a thing and you have not checked the thing exists | [A FABRICATED IDENTIFIER IS A DIFFERENT FAILURE CLASS FROM AN UNCERTAIN CLAIM](#a-fabricated-identifier-is-a-different-failure-class-from-an-uncertain-claim) |
@@ -47155,3 +47156,49 @@ until it answers.** The sequence: Design's two §T.6 entries land → main
 green → `scripts/gate.sh HEAD 1` → Adam looks at the preview → merge →
 the box unit. Nothing of Code's is in the way of the first step; the
 tree is clean and waiting on the entries.
+
+## 16 Oct, 11:20: the family in a new place — two sound checks, neither where the thing lives; step zero and the file that did not cross
+
+**Main's red was a delivery gap, not missing work** (the reviewer). Both
+entries have existed in Design's `WITHDRAWALS.md` since the evening of
+14 Oct, `T.6/arrows-per-W` and `T.6/focus-with-pull`, quoting exactly
+the two sentences the index names. The targets have been crossing; that
+file has not, and Adam is passing it now. Design verified against its
+copy and read clean; Code verified against the repo's and read fail;
+both checks were sound and neither ran where the thing that matters
+lives. The index checks entries against sentences in one tree and cannot
+see that the tree is missing a whole input file, so its failure looked
+like Design's fault for a day.
+
+**Shape:** observer-without-subject
+**You are here if:** two parties each verify the same thing against their own copy and disagree, and neither check has been shown to run against the copy the other reads
+
+**Step zero already compares WITHDRAWALS.md.** `scripts/export-diff.mjs`
+lists it among its eight inputs (`FILES`), so a save that changes it is
+read like a target. The gap is the file that does not change: a save
+that adds declared withdrawal sentences to a target and brings no change
+to WITHDRAWALS.md shows, in the listing, only the sentences, and the
+first thing that says the entries are absent is assertion 7, an hour or
+a day later, with no way to tell "not written" from "not crossed".
+**Proposed, not built, on the eve of a merge:** one line in the
+export-diff summary, when any added sentence is in withdrawal form and
+WITHDRAWALS.md is unchanged against the same base: "N withdrawal
+sentences arrived and WITHDRAWALS.md did not change: the entries' file
+has not crossed, or the entries were not written". It is Code's tooling,
+small, test first, and it names the state at the moment it arises rather
+than leaving it to the index. For the reviewer's word.
+
+**Design answered the scope**, in the save at a74051f: the reason is
+general, every §9.3 box in the app is 32 under a mouse and 44 under a
+finger, the shared constant is the defect in all fifteen files, and the
+step is Adam's to name after the merge, the pins of 145 to 150 moving
+with it. Design's draft had scoped it to look up and asked Code whether
+a drop carried that wording: one did, at 4d42466, taken in at e9420cd;
+the rule's own test (a claim in force now false for some real case) is
+not met, since look up's boxes are 32 under a mouse under either
+wording, and whether the entry is wanted on carriage alone is Design's.
+
+**Sequence unchanged:** WITHDRAWALS.md crosses → intake → main green →
+`scripts/gate.sh HEAD 1` on Adam's word → Adam's look at the preview →
+merge → the box unit as its own step with its own gate. **For Adam:**
+the file, the word, the look. **For Design:** the carriage finding above.
