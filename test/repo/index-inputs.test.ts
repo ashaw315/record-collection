@@ -415,4 +415,80 @@ describe('assertion 12 holds a no-entry call to its spared sentence', () => {
     expect(out).toContain('12 §W.29 unnamed "No entry: this is new."');
     expect(out).toMatch(/^PASS 12$/m);
   });
+
+  /*
+    The reviewer, 15 Oct, after Design's save: §W.29 holds three calls and 12
+    read two, because its detector keyed on the literal `No entry:` while
+    Design's two newer calls read "no entry is owed. The sentence spared is
+    “…”". An unnamed call is reported; an unseen one is not, and the index
+    read clean either way. Fails against the literal-marker detector: the
+    prose-form call's home sentence rewritten passes 12, unseen.
+  */
+  const PROSE_HOME = /The occupied shelf is the right landing for the whole collection, and the matching records are the occupied shelf of a filtered one(, by §W\.12’s emptied seats\.)/;
+  it('reads a call in the prose form, “no entry is owed” with “The sentence spared is” following, and fails it when that home sentence is rewritten', () => {
+    const dir = stage((d) => {
+      const t = join(d, W);
+      const html = readFileSync(t, 'utf8');
+      if (!PROSE_HOME.test(html)) throw new Error('staging anchor missing: §W.29’s occupied-shelf home sentence with its trailing clause');
+      writeFileSync(t, html.replace(PROSE_HOME, 'The occupied shelf is the landing for the whole collection, and the matching records are the occupied shelf of a filtered one$1'));
+    });
+    const { code, out } = run(dir);
+    expect(code).not.toBe(0);
+    expect(out).toMatch(/^FAIL 12$/m);
+    expect(out).toContain('12 §W.29 spared-count=1 "The occupied shelf is the right landing for the whole collection, and the matching records are the occupied shelf of a filtered one"');
+  });
+
+  /* Fails against the literal-marker detector: a call in the "owes no entry" form with no sentence named is neither counted nor reported by it. */
+  it('reports a call in the “owes no entry” form that names no sentence, rather than not seeing it', () => {
+    const dir = stage((d) => {
+      const t = join(d, W);
+      const html = readFileSync(t, 'utf8');
+      if (html.split(LAST).length !== 2) throw new Error('staging anchor missing: §W.29’s closing sentence');
+      writeFileSync(t, html.replace(LAST, 'Being new, this owes no entry.</p>'));
+    });
+    const { out } = run(dir);
+    expect(out).toContain('12 §W.29 unnamed "Being new, this owes no entry."');
+    expect(out).toMatch(/^PASS 12$/m);
+  });
+
+  /* Fails against a detector that keys on "no entry" alone: the phrase in another sense (a journal with no entry, the record's entries never leaving) is listed as not a call, so a form the detector does not know is never silently absent. */
+  it('lists a “no entry” in another sense as not a call, report-only, so an unknown form is visible rather than unseen', () => {
+    const dir = stage((d) => {
+      const t = join(d, W);
+      const html = readFileSync(t, 'utf8');
+      if (html.split(LAST).length !== 2) throw new Error('staging anchor missing: §W.29’s closing sentence');
+      writeFileSync(t, html.replace(LAST, 'The journal frame shows no entry at all.</p>'));
+    });
+    const { out } = run(dir);
+    expect(out).toContain('12 §W.29 not-a-call "The journal frame shows no entry at all."');
+    expect(out).not.toContain('12 §W.29 unnamed "The journal frame shows no entry at all."');
+    expect(out).toMatch(/^PASS 12$/m);
+  });
+
+  /* Fails against a reader that takes the first curly quote in the call's own sentence: §W.29's second call says “shelf” in its sentence and names its spared sentence on the line after. */
+  it('takes a prose-form call’s spared sentence from the line after it, not from a quote inside the call’s own sentence', () => {
+    const dir = stage((d) => {
+      const t = join(d, W);
+      const html = readFileSync(t, 'utf8');
+      if (html.split(LAST).length !== 2) throw new Error('staging anchor missing: §W.29’s closing sentence');
+      writeFileSync(t, html.replace(LAST, 'A defect against “shelf”, so no entry is owed. The sentence spared is “The arrival is a starting place for someone who has not yet chosen one.”</p>'));
+    });
+    const { out } = run(dir);
+    expect(out).not.toContain('spared-count=');
+    expect(out).toMatch(/^PASS 12$/m);
+  });
+
+  /* Fails against a count of whatever is quoted: §T.3's older call quotes a phrase that stands seven times in its section, and a phrase is not the sentence the rule asks for. */
+  it('reports a call that quotes a phrase rather than a sentence, report-only, instead of counting the phrase', () => {
+    const dir = stage((d) => {
+      const t = join(d, W);
+      const html = readFileSync(t, 'utf8');
+      if (html.split(LAST).length !== 2) throw new Error('staging anchor missing: §W.29’s closing sentence');
+      writeFileSync(t, html.replace(LAST, 'No entry: “shelf” stays true as built.</p>'));
+    });
+    const { out } = run(dir);
+    expect(out).toContain('12 §W.29 quotes-a-phrase "shelf"');
+    expect(out).not.toContain('spared-count=');
+    expect(out).toMatch(/^PASS 12$/m);
+  });
 });

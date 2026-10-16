@@ -605,6 +605,30 @@ const WITHDRAWAL_PREFIX =
 }
 
 /*
+  12's sentences: a paragraph's text split at `.`, `!` or `?` followed by
+  space or the end, as 7 reads a sentence end, except inside curly quotes,
+  because a spared sentence carries its own full stop within the quote.
+*/
+function sentencesOf(plain) {
+  const out = [];
+  let start = 0;
+  let depth = 0;
+  for (let i = 0; i < plain.length; i += 1) {
+    const c = plain[i];
+    if (c === '“') depth += 1;
+    else if (c === '”') depth = Math.max(0, depth - 1);
+    else if (depth === 0 && /[.!?]/.test(c) && (i + 1 === plain.length || /\s/.test(plain[i + 1]))) {
+      const s = plain.slice(start, i + 1).trim();
+      if (s !== '') out.push(s);
+      start = i + 1;
+    }
+  }
+  const tail = plain.slice(start).trim();
+  if (tail !== '') out.push(tail);
+  return out;
+}
+
+/*
   12 -- every no-entry call stands by the sentence it spares (15 Oct). The
   handoff's rule has a call quote, verbatim, the sentence that would have
   been withdrawn. Staged the day the rule landed: a later withdrawal of the
@@ -628,19 +652,47 @@ const WITHDRAWAL_PREFIX =
   let calls = 0;
   let named = 0;
   const unnamed = [];
+  const phrases = [];
+  const other = [];
+  /*
+    The forms a call takes (15 Oct, the reviewer): a sentence beginning
+    `No entry:` with its quote, or one in running prose (`no entry is owed`,
+    `no entry is filed`, `no entry owed`, `owes no entry`) followed by a
+    sentence beginning `The sentence spared is` that carries the quote.
+    Keyed on the literal marker alone, 12 read two calls where §W.29 held
+    three: an unnamed call is reported and an unseen one is not, and the
+    index read clean either way. So every `no entry` outside these forms
+    is listed too, as not a call, for the same reason.
+  */
+  const CALL = /\bno entry(?::| is owed\b| is filed\b| owed\b)|\bowes no entry\b/i;
+  const SPARED = /^The sentence spared is\b/;
   for (const h of ALL) {
     const sectionText = collapse(stripTags(h.html));
     for (const para of h.html.matchAll(/<p\b[^>]*>([\s\S]*?)<\/p>/g)) {
       const plain = collapse(stripTags(para[1]));
-      for (const m of plain.matchAll(/No entry:/g)) {
+      const sentences = sentencesOf(plain);
+      for (let i = 0; i < sentences.length; i += 1) {
+        const sentence = sentences[i];
+        const isCall = CALL.test(sentence) || SPARED.test(sentence);
+        if (!isCall) {
+          if (/\bno entry\b/i.test(sentence)) other.push(`12 §${h.id} not-a-call "${sentence.slice(0, 80)}"`);
+          continue;
+        }
         calls += 1;
-        const rest = plain.slice(m.index);
-        /* The call's own sentence, by 7's rule, decides whether it names anything; the quote is then read from the paragraph, since a spared sentence may carry a full stop of its own. */
-        const end = /[.!?](?=\s|$)/.exec(rest);
-        const sentence = end === null ? rest : rest.slice(0, end.index + 1);
-        const q = sentence.includes('“') ? /“([^”]+)”/.exec(rest) : null;
+        /* The quote sits in the call's own sentence, or in the spared-sentence line that follows a prose-form call; that pair is one call. */
+        let source = sentence;
+        if (i + 1 < sentences.length && SPARED.test(sentences[i + 1])) {
+          source = sentences[i + 1];
+          i += 1;
+        }
+        const q = /“([^”]+)”/.exec(source);
         if (q === null) {
           unnamed.push(`12 §${h.id} unnamed "${sentence.slice(0, 80)}"`);
+          continue;
+        }
+        /* A quote with no closing stop is a phrase, not the sentence the rule asks for; §T.3's older call quotes one that stands seven times in its section. */
+        if (!/[.!?]$/.test(q[1])) {
+          phrases.push(`12 §${h.id} quotes-a-phrase "${q[1]}"`);
           continue;
         }
         named += 1;
@@ -653,7 +705,9 @@ const WITHDRAWAL_PREFIX =
   }
   if (calls === 0) fail('12 empty');
   for (const line of unnamed) console.log(line);
-  console.log(`     12: ${calls} no-entry calls, ${named} named and checked, ${unnamed.length} unnamed (report only)`);
+  for (const line of phrases) console.log(line);
+  for (const line of other) console.log(line);
+  console.log(`     12: ${calls} no-entry calls, ${named} named and checked, ${unnamed.length} unnamed and ${phrases.length} quoting a phrase (report only), ${other.length} mention${other.length === 1 ? '' : 's'} in another sense`);
   report(12, failures.length === before);
 }
 
