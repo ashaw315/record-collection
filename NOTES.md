@@ -46766,3 +46766,84 @@ now records step 147's one-task window. Nothing removed, no call added,
 the eight "new" calls are in the rule's scope; §T.3's phrase quote; step
 144's bullet against the walked 15, 15 and 19; the review's CANCEL and
 MERGE THEM judgement; the hierarchy's dashed rule.
+
+## 16 Oct, 09:17: three asks answered — the 21 unnamed calls by location, git and deploy status, part 2's captures; 148's formula already pinned
+
+**1. The 21 unnamed no-entry calls, by location, read from the index at
+0756f52.** NEW marks the eight Code judged calls for something new, with
+no sentence to spare; the other thirteen each stand by a sentence that
+could be quoted. Three of the thirteen (marked DRAFT) say the change was
+made before any drop carried it, which may be a class of its own for
+Design to rule.
+
+| # | section | file | the call | class |
+|---|---|---|---|---|
+| 1 | §G.1 | Nav | No entry is owed against §4.1 or §24. | quote |
+| 2 | §G.3 | Nav | So this was a draft fix and no entry is owed. | DRAFT |
+| 3 | §G.5 | Nav | An earlier draft of this paragraph said that nothing hides and there is no menu, and no entry is owed for replacing it. | DRAFT |
+| 4 | §G.8 | Nav | That is a defect in the build, not a change to the claim, so no entry is owed. | quote |
+| 5 | §G.8 | Nav | That was corrected before any drop carried it, so it was a draft fix and no entry is owed. | DRAFT |
+| 6 | §M.6 | Modal | Its sentence was false only through the ring this entry withdraws, so it owes no entry of its own. | quote |
+| 7 | §T.1 | Table and Grid | No ruling put the rail’s first line at 20, so this is new and owes no entry. | NEW |
+| 8 | §T.4 | Table and Grid | No entry is owed, because nothing was built against the exception. | quote |
+| 9 | §T.6 | Table and Grid | No ruling centred these columns, so this is new and owes no entry. | NEW |
+| 10 | §T.6 | Table and Grid | Nothing ruled the jump, so this is new and owes no entry. | NEW |
+| 11 | §T.6 | Table and Grid | No entry: §T.1’s sentence stays true at every width. | quote |
+| 12 | §T.6 | Table and Grid | The conclusion was true and its reason was not, so this corrects a reason and owes no entry. | quote |
+| 13 | §T.6 | Table and Grid | No drop Code took carried the 24, so this is a draft fix and no entry is filed. | DRAFT |
+| 14 | §T.6 | Table and Grid | No sentence said the lone-row rule closed every short name on stats, so this is a new case, not a correction, and no entry is owed. | NEW |
+| 15 | §T.6 | Table and Grid | The 16 at 390 is a defect against a ruling in force, not a gap in it, so the fix owes no entry. | quote |
+| 16 | §T.6 | Table and Grid | That is the trigger’s ring, so the trigger’s scope sentence becomes a case of this one, and no entry is owed for it. | quote |
+| 17 | §T.6 | Table and Grid | As built, the arrows moved the pull, which no §W sentence rules, so that behaviour changes with no entry owed. | NEW |
+| 18 | §T.6 | Table and Grid | §M.6 and §T.6 already ruled the ring for their screens, so this extends a rule rather than withdrawing one, and owes no entry. | NEW |
+| 19 | §W.8 | Wall and Pull | SPEC.md’s reduced-motion clause had no wall handling and the stylesheet’s rules address classes nothing draws, so this is new and owes no entry. | NEW |
+| 20 | §W.24 | Wall and Pull | That is a defect, not a new claim, and no entry is owed. | quote |
+| 21 | §W.29 | Wall and Pull | This is new, so no entry is owed. | NEW |
+
+Beside these, one call quotes a phrase (§T.3, "beneath the last filter
+line", seven in its section) and would need its whole sentence.
+
+**2. Git and deploy status, read at 09:17.** `main` is the only branch,
+97 commits ahead of `origin/main` and 0 behind; nothing is unpushed on
+another branch. `origin/main` stands at 88a0e7e, step 142, pushed 13 Oct
+00:36. Production on Vercel is the deployment created 13 Oct 00:36:59,
+four seconds after that commit's timestamp, Ready, carrying the
+`git-main` alias; read from `vercel ls` and `vercel inspect`, which do
+not print the commit, so "production is 88a0e7e" is the timestamps'
+coincidence and the alias, not a sha read off the deployment. The 97
+commits ahead hold steps 143 to 149 with their captures, the gate at
+146, assertion 12 and the day's intakes. **None needs a migration or an
+env change:** no commit since `origin/main` touches `drizzle/`,
+`.env.example`, `vercel.json` or the Next config (the last migration,
+0028, is dated 8 Sep), and the only new `process.env` read since the
+last recorded deployment is `NODE_ENV`. **A consequence worth saying
+once:** if Design reads captures from GitHub, nothing since step 142 is
+visible to it, part 2's captures included. Pushing is Adam's or the
+reviewer's call, not taken here.
+
+**3. Part 2's captures exist, are generated, and are committed.**
+`docs/captures/part2-146/`, 27 files, 14 Oct, five sets each with its
+note and its tool under `e2e/capture/`: the shared dialog (6 shots,
+`dialog-146.capture.ts`), the record form (4, `form-146`), the lineup
+walk's slot (4, `lineup-146`), manage's rows (4, `manage-146`) and the
+duplicate review (4, `review-146`), each at 390 coarse and 1280 fine,
+whole pages with the height in the name. Committed alone at afb9d32,
+1fdc91d, b43cce4, abc38e9 and f7e391f. Part 1's are
+`docs/captures/part1-145/` (11 files) and the hierarchy's
+`docs/captures/hierarchy-149/` (5). The four judgements held for Design
+from 146 have their pictures in the review set (CANCEL and MERGE THEM)
+and the dialog set.
+
+**148's correction is already how the spec reads.** `ring-144.spec.ts`
+counts the arrows drawn from the DOM (`nav-next`, `nav-previous`) and
+asserts the pulled state at `EXPECTED + arrows`, Design's 18 plus the
+arrows drawn for the record actually pulled; a middle record draws two
+and the expectation becomes 20. The 19 was the figure the walk reported
+with one arrow drawn, in Code's report and not in the spec. No change.
+
+**Step level:** `test/repo` after the commit. **For Adam:** whether to
+push `main` (97 commits, no migration or env change among them); nothing
+else. **For Design, as text:** the table above; the bold lead; §T.3's
+phrase; step 144's bullet against 15, 15 and 18 plus the arrows drawn;
+the review's CANCEL and MERGE THEM judgement; the hierarchy's dashed
+rule.
