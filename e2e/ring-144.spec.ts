@@ -109,6 +109,8 @@ test('the Tab walk through the wall in its three states stops 15, 15 and 18 time
   const CHROME = 6 + 7 + 1;
   for (const [state, stops] of [['as the shelf opens', opens], ['in the overview', overview], ['with a record pulled', pulled]] as const) {
     const names = stops.map((s) => `${s.tag} ${s.name}`);
+    /* The walked count on every run, so the figure is read from the report as a measurement and not inferred from the figure branch's silence (the reviewer, 15 Oct). */
+    test.info().annotations.push({ type: `walked ${state}`, description: `${stops.length} stops: ${names.join(' · ')}` });
     expect.soft(names.filter((n) => n === 'button Apply'), `${state}: the Apply is reached`).toEqual([]);
     const composition = stops.filter((s) => s.composition).length;
     const panel = state === 'with a record pulled' ? 3 + arrows : 0;

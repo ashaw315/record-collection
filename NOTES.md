@@ -24,7 +24,7 @@ here. They are one defect seen from two sides: an assertion with no failing
 input, and an observation with no subject. Both produce green. If you are
 looking at something that passes and you are not sure why, start in those two.
 
-Generated from 133 declared rules. Regenerate with
+Generated from 134 declared rules. Regenerate with
 `npx tsx scripts/notes-index.ts --write`.
 
 ### Measurements that do not govern
@@ -59,6 +59,7 @@ Generated from 133 declared rules. Regenerate with
 | You are here if | The rule |
 | --- | --- |
 | a validator checks a value is non-empty and the value has a required shape | [`z.string().min(1)` on APP_PASSWORD_HASH — presence where shape was needed](#zstringmin1-on-app_password_hash-presence-where-shape-was-needed) |
+| a check's summary count is smaller than the thing it counts is known to be, and the index reads clean | [23:47: the reviewer's three checks after the gate — 12 read two calls of three, the ring walked, the floor is the browsers'](#2347-the-reviewers-three-checks-after-the-gate-12-read-two-calls-of-three-the-ring-walked-the-floor-is-the-browsers) |
 | a screen was rebuilt, every fact still appears, and something that used to be clickable is now plain text | [A capability lost three times, and the assertion shape that keeps missing it](#a-capability-lost-three-times-and-the-assertion-shape-that-keeps-missing-it) |
 | a comment describes a protection and you have not found the code that performs it | [A COMMENT THAT PROMISED A SAFEGUARD NOBODY WROTE](#a-comment-that-promised-a-safeguard-nobody-wrote) |
 | the data changed, no code changed, and the suite is still green | [A DATA change opened an untested branch, and the suite could not see it](#a-data-change-opened-an-untested-branch-and-the-suite-could-not-see-it) |
@@ -46093,6 +46094,11 @@ build for the gate**, not done:
   at a time over months. The unit is a diagnostic as much as a chore,
   and is to be costed as both: a first run's failures are the finding,
   not the obstacle. After 146 lands, not before.
+- *Corrected at full scale (15 Oct, the gate at dc19c46; the entry at 23:47):* the
+  browsers outweighed the server, 2,416 MB against 1,846. `next start`
+  takes the server's share off; it does not remove the floor. The costing
+  above carried a nine-test sample's reading, and should not be read as
+  the reason any more.
 
 **4. The floor in the gate's refusals: the kernel's pressure level,
 not a percentage.** Neither existing threshold (load above 36, swap
@@ -46612,3 +46618,83 @@ scroll-lock spec; 148 changed every spine's tab order and three specs'
 order reads; 149 the manage screen. None touched fixtures, cleanup,
 seeding, `test/helpers/`, a config or a migration, so none is a gate by
 §10's list; a gate before the next merge covers all three.
+
+## 23:47: the reviewer's three checks after the gate — 12 read two calls of three, the ring walked, the floor is the browsers'
+
+**Shape:** check-cannot-fail
+**You are here if:** a check's summary count is smaller than the thing it counts is known to be, and the index reads clean
+
+**1. Assertion 12 was keyed on the literal `No entry:` and did not see
+Design's two newer calls.** The reviewer read the summary line, "2
+no-entry calls", against §W.29's three and §T.6's one, and asked whether
+the two in the prose form ("no entry is owed. The sentence spared is
+“…”") were unnamed or unseen. Unseen: the spec defined a call as a
+sentence beginning `No entry:`, so a call in any other form fell outside
+its own definition and was neither counted nor reported, and the index
+read clean either way. That is the defect, in the detector and not in
+Design's phrasing; the spec's own line that the older prose-form calls
+would be "reported" was a claim the detector did not support.
+
+Fixed at f74dc60, five tests first, each red on the literal-marker
+reader. A call is now a sentence beginning `No entry:` with its quote in
+that sentence, or one in the prose forms (`no entry is owed`, `is
+filed`, `owed`, `owes no entry`) with its spared sentence in a line
+beginning `The sentence spared is` directly after it, the pair one call.
+A `no entry` outside those forms is listed as `not-a-call`, so a form
+the detector does not know shows as a line rather than as nothing. The
+wider net found two more things on the first run: §W.29's second call
+says “shelf” in its own sentence, so the quote has to come from the
+spared line and not from the first curly quote in the call (counted 26
+"shelf" before that was fixed); and §T.3's older call quotes a phrase,
+"beneath the last filter line", which stands seven times in its section.
+A quote with no closing stop is reported as `quotes-a-phrase` and not
+counted. The tree reads: 25 calls, 3 named and checked (all §W.29's), 21
+unnamed and 1 phrase (report only), 1 mention in another sense (§9.4's
+"no frame cell"). Of the 21 unnamed, eight are calls for something new
+("this is new, so no entry is owed"), which have no sentence to name;
+whether those are in the rule's scope is Design's to say.
+
+**For Design, which lead to use:** either reads. `No entry: the sentence
+that would be withdrawn is “…”` in one sentence, or `… no entry is owed.
+The sentence spared is “…”` as two. A quote must be a whole sentence
+with its closing stop, not a phrase. Design's save of 8b9e593 also wrote
+the Maintaining line Code had queued for it ("Never quote a withdrawal
+sentence in a no-entry call"), so that item is closed by Design's hand.
+
+**2. The ring walk, walked.** The reviewer asked for 15, 15 and 18 to be
+measured and not derived. Walked at f74dc60 on chromium, 23s, the walk
+test passing, and read from the JSON report: 15 as the shelf opens, 15
+in the overview, 19 with a record pulled. The 19 is 18 plus §W.9's one
+arrow for the first record (NEXT RECORD, "Darkside (22)"), which the pin
+adds on top of Design's figure exactly as it read the 33: Design's count
+took the panel's three and not the arrows, reported for Design to
+confirm on 14 Oct and still open. So 15, 15 and 18 are measurements,
+with the 18 read as 19 on the walk by that convention. The spec now
+annotates the walked count and the stop list on every run (`walked
+<state>`), so the figure is read from the report and not inferred from
+the figure branch's silence; the test's assertions are unchanged.
+
+**3. The floor is the browsers', not the server's.** At full scale with
+one worker the browsers peaked at 2,416 MB and the server at 1,846, so
+the day's story that the dev server is the holder, argued from a
+nine-test sample, does not stand at 1,300 tests. `next start` is still
+worth doing, for the server's share and the diagnostic the reviewer
+named, but it is not what removes the floor; the costing's "What it
+buys" bullet is marked so where it stands, and a memory ceiling for the
+browsers (one worker already) is the open question that unit does not
+answer.
+
+**4. The judge's self-read, in CLAUDE.md §2's table by name.** The
+reviewer's call: the fix at 34eaa37, found by feeding the real gate log
+back through the fix before it, is an instrument confirming its own
+output, and belongs beside the three the table holds. Added as the
+fourth row with a line saying why it is the one a reader would not
+expect.
+
+**Step level:** the ring walk on chromium (1 passed, ledger clean),
+`test/repo` 505 passed, index 13 PASS, typecheck 0, lint 0 errors and 27
+warnings as before. **For Adam:** nothing. **For Design, as text:** which
+lead 12 reads and that a quote is a whole sentence; whether the eight
+"new" calls are in the rule's scope; §T.3's phrase quote; step 144's
+bullet at 31, 15 and 33 against the walked 15, 15 and 19; the review's
+CANCEL and MERGE THEM judgement; the hierarchy's dashed rule.
