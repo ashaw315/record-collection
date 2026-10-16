@@ -47058,3 +47058,88 @@ one), which also decides whether this card's controls shrink under a
 mouse; SEARCH DISCOGS, the Searched line and Show more left at step 125's
 heights until then. **For Adam:** nothing new; the preview and the
 merge.
+
+## 16 Oct, 11:05: the two orphan sentences for Design, the preview refreshed to 150, the §9.3 box ruled and its consequence, 12's draft class out
+
+**1. What is failing on main, verbatim, for Design.** Design verified
+`T.6/arrows-per-W` and `T.6/focus-with-pull` and found both sound;
+neither id is in the `WITHDRAWALS.md` this repo holds (grep finds no
+line for either), so whatever Design checked has not reached us. What
+the index fails on are two declared withdrawal sentences in §T.6, added
+by Design's save of dfa6fe2 (the 143–145 reading), with no entry quoting
+either. The sentences, exactly as the target has them:
+
+> Withdrawn within §T.6: the arrow keys moving focus with the pull, so that a pulled record is the focused one.
+
+> Withdrawn within §T.6: arrow keys moving between spines within the run as §W rules the keyboard.
+
+The index's lines, as printed:
+
+```
+7 §T.6 unquoted "Withdrawn within §T.6: the arrow keys moving focus with the "
+7 §T.6 unquoted "Withdrawn within §T.6: arrow keys moving between spines with"
+9 §T.6 unentered "Withdrawn within §T.6: the arrow keys moving focus with the pull, so that a pulled record is the focused one."
+9 §T.6 unentered "Withdrawn within §T.6: arrow keys moving between spines within the run as §W rules the keyboard."
+FAIL 7
+```
+
+Each entry's quote must be one of those two sentences, whole, with its
+stop. The sentences each say "the entry is owed" (the first carried in
+the evening drop, the second at faaaf76). Main is red until they land:
+`test/repo` 3 failed on the index's exit, nothing else.
+
+**2. The preview branch is refreshed to 3ce01c0.** `preview/steps-143-149`
+fast-forwarded and pushed at 10:58, the name kept so the alias holds;
+Vercel built it Ready at 11:00:49 on
+`record-collection-git-preview-steps-143-149-ashaw315s-projects.vercel.app`
+and `record-collection-ookrw0a14-ashaw315s-projects.vercel.app`. Adam
+now sees 147 to 150, the result card included.
+
+**3. Design ruled the §9.3 box, and the git check it asked for is done.**
+"§9.3's 44 is this floor, not a height ruled on its own grounds… under a
+fine pointer a boxed control keeps its drawn size, as Save keeps its 32.
+So SEARCH DISCOGS at 32 under a mouse is right, as step 125 pins it. Any
+sentence that has §9.3's box 44 under both pointers states the claim
+T.6/floor-every-pointer withdrew, and that entry covers it. If such a
+sentence was written after that entry and a drop carried it, it owes its
+own entry, and Code's git check decides." The check: §9.3's "44px tall"
+entered the settled target at 0904fad on 24 Sep; the entry was filed at
+64891a1 on 11 Oct. The sentence is older than the entry, so the entry
+covers it and **no new entry is owed.** The step 125 pins stand as they
+are and the three controls held in step 150 need no change.
+
+**The consequence is in the code, not the record:** `CONTROL_BOX` in
+`grid-type.ts` is 44 under both pointers, built on §9.3's vocabulary at
+step 145, and fifteen files draw it (the want list's forms and item page,
+the record form, manage, the dialog, login, the error screen, the empty
+states, the hierarchy, and now the card's two adds). Under the ruling
+every one of those boxes is a defect against §T.6's drawn-size sentence
+under a mouse, by one line: the box's drawn height where the pointer is
+fine, 44 where it is coarse. What that drawn height is for a §9.3 box is
+the one thing the ruling does not say in a figure ("as Save keeps its
+32" is the record form's Save); and whether the unboxed `CONTROL_LABEL`,
+also 44 tall, follows is not said. **Not built here.** It is a fix
+against a ruling in force and not a design step, but it reaches fifteen
+screens and every pin step 145 to 150 took on those boxes, so it is a
+unit with a gate behind it, and it is written up for Adam's word rather
+than started on the eve of a merge.
+
+**4. Assertion 12 and the cap.** Design ruled that a draft fix is not a
+call: it invokes WITHDRAWALS.md's exemption, quotes nothing, and is
+checked against git. 12 lists the three apart as `draft-fix` and the
+unnamed count reads 18, as the reviewer predicted. Adam capped the work:
+the three §W.29 calls, the draft class out, the eight calls for
+something new in the fixed form, the phrase call given its sentence, and
+the remaining ten unnamed as a settled resting state; 12 stays
+report-only permanently and the corpus-wide trigger is withdrawn from
+the spec. Design's words also close the step list: "The result card is
+the last design step."
+
+**5. The gate before the merge.** Once Design's two entries land and
+main is green, `scripts/gate.sh HEAD 1`: the full suites on both
+projects, covering 147, 148, 149 and 150 together and the last covering
+set that did not rerun as one. On Adam's word.
+
+**For Design:** the two entries above. **For Adam:** the preview at
+3ce01c0; the word for the gate; whether the §9.3 box's drawn height
+under a mouse is a unit now or after the merge, and the figure for it.
