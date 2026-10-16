@@ -46950,3 +46950,60 @@ the reviewer raised, whether the three DRAFT calls in the 21 are calls
 at all, since WITHDRAWALS.md's own rule exempts a draft fix by name; if
 so 12 excludes the class and 21 becomes 18. **For Adam:** the preview
 URL, the shared database, and the merge.
+
+## 16 Oct, 10:03: step 150 unit A, the card's words; the §9.3 box's height under a mouse put to Design with the record
+
+**Unit A is done at step level.** The reviewer split the card's step in
+two, the words before the layout, "so that a red is a word and not a
+layout": with a hundred-plus selectors in play a combined step makes
+every red ambiguous. The selector count turned out small once read: the
+specs reach the card's controls by test id, and the "Add to collection"
+references in discogs-prefill are the record form's submit button, not
+the card's link. So A changed `LookupClient.tsx` and nothing else: I own
+this and I want this, own first, each a link to its form with the
+release; the two disclosures keep their names open and closed, with
+§T.1's mark (`DisclosureMark`) carrying the state where "Hide pressings"
+and "Hide pressing details" did. `e2e/result-card-150.spec.ts`, two
+tests, red first on the old words. Step level: that spec, lookup-flows
+and discogs-prefill on chromium (76 passed) and on mobile (74 passed),
+typecheck 0, lint 0 errors, build compiled.
+
+**The box's height under a fine pointer is Design's to rule, and the
+record is set out here rather than a number chosen.** Step 125's test
+pins SEARCH DISCOGS drawn 32 under a mouse and 44 under a finger; the
+§9.3 box every control since step 145 uses (`CONTROL_BOX`) is 44 under
+both. The reviewer asked whether the filed entry already decides it:
+
+> `T.6/floor-every-pointer`: §T.6, withdrawn by §T.6. The 44 floor for
+> every pointer; it applies where the pointer is coarse. "Withdrawn
+> within §T.6: the 44 floor applying to every pointer."
+
+Read against §9.3's own sentence, it does not: §9.3 (the settled target)
+says "One control vocabulary: 44px tall, 1px ink box, no fill, no
+radius, 11px mono uppercase ink label… 44px satisfies the hit-target
+floor and is also 4× the label's 11px, so the control's height is on
+the type scale rather than beside it." That is a height ruled for its
+own reasons, the floor a consequence, so the withdrawn claim is not
+resurfacing in it; the two rules simply disagree, §9.3's vocabulary
+against §T.6's "where the primary pointer is fine, controls keep their
+drawn size" and "Save… drawn 44 from 32 under a coarse pointer… a boxed
+control meets the floor by its box". The git record, as asked: §9.3's
+sentence has been in the settled target since 0904fad, 24 Sep, and every
+§9.3 box built since step 145 (0648dae, 14 Oct) stands at 44 under both
+pointers on it; §T.6's drawn-size sentence arrived in Design's save
+64891a1 on 11 Oct and step 127 (d74af6a, the same day) built the 32
+against it. Both carried, both built against: **whichever yields owes an
+entry.** If §9.3's 44 wins, the entry narrows §T.6's drawn-size sentence
+for §9.3 boxes and step 125's pins move to 44. If §T.6's 32 stands,
+§9.3's "44px tall" is narrowed to the coarse pointer or to the record
+page, and the boxes built since 145 shrink under a mouse.
+
+**How B proceeds without the number.** The card's new controls take the
+shared constants as every §9.3 control does, so the fine-pointer height
+is one line in `grid-type.ts` and moves with the ruling for all of them
+at once; B asserts nothing about height under a fine pointer. SEARCH
+DISCOGS, the Searched line and Show more, the three step 125 pins, are
+not touched by B: the form's "part 1 controls" clause waits with the
+ruling, its labels and the + and − do not. **For Design:** the ruling,
+with the entry above and the two sentences quoted. **For Adam:** nothing
+new.
