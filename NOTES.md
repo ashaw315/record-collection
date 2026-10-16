@@ -47369,3 +47369,28 @@ nothing, which is right.
 files, Design's ruling being general (32 under a fine pointer, as Save
 is; 44 under a coarse one), as its own step with its own gate, on the
 reviewer's word with the plan below.
+
+## 16 Oct, 19:47: the push and the deployment, confirmed; the box step held on the label question, reframed
+
+**Confirmed from the remote and from Vercel.** `git push origin main` ran
+at 16:59:01 and `origin/main` reads 2913878, the merged commit; the
+reflog shows it as a push. Vercel's production deployment was created
+at 16:59:06 from that push and is Ready, aliased
+`record-collection-rust.vercel.app`, with 29 of 29 migrations already
+applied and the same build output as the preview. Local main is three
+commits ahead of origin since, all NOTES and the export-diff tooling,
+nothing under `src/`; not pushed, since each push is a deploy, and on
+the word if wanted.
+
+**The §9.3 box step is held** until Design answers the label question,
+reframed by the reviewer so it does not smuggle in an answer: a box's
+drawn size is 32 because that is what a box is drawn at; a label has no
+box, so its drawn size is its type, about 11 of line, and read literally
+the ruling collapses an unboxed label under a mouse to its type and
+takes the row with it. Whether that is what Design means is the
+question. Downstream of it, the recaptures: if labels keep 44 the only
+visible change is boxes shrinking 12 under a mouse, which the five
+re-pinned specs assert and no picture adds to; if labels collapse,
+layout moves and Design needs to see it. Three of the step's four parts
+wait on the answer; the five specs' expectations are written first when
+it comes.
