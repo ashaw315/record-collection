@@ -50,6 +50,9 @@ Step 8 is the one you will be most tempted to skip. Don't. The developer is revi
   | `transactional code IS verified against the real Neon driver` | the env var string is non-empty | a stale branch credential: three days reported as verified while nothing ran |
   | `gives any-copy and unknown different tones` | two token strings differ | `border-l-dashed` generated no CSS; the state rendered at 1.29:1, nearly unmarked |
   | `has every spine cast and the shelf receive` | the source text contains `castShadow` | one character at `WallScene.tsx:712` removes every shadow in the scene, file stays green |
+| the gate's judge: `a half's summary line is read, never its exit code` | the first `N passed` line found in the log, which on the capture half was the judge's OWN verdict from the run before, `0 passed, 29 skipped`, written at the log's foot | a half in which nothing ran reported OK; caught by feeding the real log back through the fix (15 Oct) |
+
+  The fourth is the family's instrument case, named here because it is the one a reader of this table would not expect: **an instrument that confirms its own output**, reading a line it wrote as a line it was given. Real data caught it where its own test could not, because the test's example was clean.
 
   The shape is identical each time: **the assertion tests a proxy one layer below the claim** — a variable instead of a connection, a token instead of a rendering, a source string instead of a behaviour. The proxy is easy to assert and cannot fail on the thing the name names.
 
