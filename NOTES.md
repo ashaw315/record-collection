@@ -47481,3 +47481,47 @@ beside it in `6cbae10-red-1053/`. Step 151 is cleared, and the push that
 follows carries it with the docs commits since 2913878. **The list is
 empty.** Open for Design: the §T.6 passage carrying both readings of the
 unboxed label (the intake at 8777194); for Adam, nothing.
+
+## 17 Oct, 17:56: does the intake check bold balance? No — and the unclosed tag never reached the repo
+
+**The question** (the reviewer): Design found an opening bold tag before
+"The 44 floor applies where the pointer is coarse" unclosed since the
+13 Oct ring ruling, in every version of the Table and Grid target
+including the repo's; does the intake check bold balance on every
+drop, and if so how did it survive four days?
+
+**The answer, in two parts.** First, there is no such check. The
+intake's parser (`design-target-parser.mjs`) strips inline tags,
+`strong` among them, to the empty string before any assertion reads a
+word, by design: quote matching has to see through markup, and mapping
+inline tags to a space once made a quote score zero. So bold is
+structurally invisible to every one of the thirteen assertions and to
+export-diff, which reads sentences from the same stripped text. The
+"nested bold runs in three files, five in this target" the reviewer
+recalls from earlier this month is not in NOTES, the commits or the
+intake listings under any wording I can find; if it happened, it was a
+read and not a check, and it left no instrument behind. Second, and
+this is the part that changes the shape: **the repo's copies never
+carried the fault.** A per-paragraph read of `<strong>` depth at the
+commit before Design's fix (183ad37) and after it (ca41207) finds no
+paragraph where the depth exceeds one or ends open, and the run opened
+at "The 44 floor applies…" is one sentence of 165 characters, closed,
+in both. The counts agree: 401 opening and 401 closing tags before, 400
+and 400 after, the one pair gone with the removed sentences. So the
+tag Design found unclosed was unclosed in its own document's model and
+the export it sends normalised it on the way out; nothing in our eight
+files was ever nested or open, and a balance check here would have read
+clean every day since the 13th, truthfully.
+
+**So the shape is not quite the week's third.** The toBe(44) search and
+12's literal marker were detectors narrower than a thing that WAS in
+their input. Here the thing was never in the input: the fault lived
+upstream of the file that crosses, and the file that crosses was sound.
+The gap, if there is one, is Design's own export having no check that
+its model and its export agree, which is not a check Code's intake can
+run on Code's side.
+
+**Proposed, not built, since nothing is open:** a per-paragraph bold
+depth and closure read in `check-index.mjs`, report-only, is cheap and
+would catch a future export that does carry nesting or an open run;
+the read above is its shape. For the word, if wanted.
