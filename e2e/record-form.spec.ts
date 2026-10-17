@@ -688,8 +688,9 @@ for (const pointer of POINTERS) test.describe(`the record form under a ${pointer
       expect.soft(reachingPastItself(reach), `at ${width}: controls a mouse reaches from outside their drawn box`).toEqual([]);
       expect.soft(reach.filter((r) => r.tall >= HIT_FLOOR && r.height < HIT_FLOOR).map((r) => `${r.name}: ${r.tall}`), `at ${width}: controls 44 tall under a mouse that were not drawn so`).toEqual([]);
       expect.soft(drawn.lineGaps.filter((gap) => Math.abs(gap - 4) > 0.5), `at ${width}: the chips’ lines are 4 apart, as they were (${drawn.lineGaps.join(', ')})`).toEqual([]);
-      /* Step 146 (§T.6 part 2): Save changes a §9.3 box and Cancel and the inline creates §9.3 labels, 44 at every pointer; the two disclosure heads 29, their line of 20, the 8 below and the hairline. The claims changed with the ruling: they were 32, 20, 20, 16 and 16. */
-      for (const [name, height] of [['Save changes', 44], ['Cancel', 44], ['Everything else', 29], ['Pressing details', 29], ['New artist', 44], ['New tag', 44]] as const) expect.soft(reach.find((r) => r.name === name)?.height, `at ${width}: ${name} is drawn ${height} tall`).toBe(height);
+      /* Step 146 (§T.6 part 2): Save changes a §9.3 box, 32 under a mouse since Design's ruling of 17 Oct, and Cancel and the inline creates §9.3 labels at their 44 line; the two disclosure heads 29, their line of 20, the 8 below and the hairline. The claims changed with the ruling: they were 32, 20, 20, 16 and 16. */
+      /* Design, 17 Oct: a §9.3 box is drawn 32 under a fine pointer, as Save is; the labels keep their 44 line. */
+      for (const [name, height] of [['Save changes', 32], ['Cancel', 44], ['Everything else', 29], ['Pressing details', 29], ['New artist', 44], ['New tag', 44]] as const) expect.soft(reach.find((r) => r.name === name)?.height, `at ${width}: ${name} is drawn ${height} tall`).toBe(height);
     }
 
     /*
@@ -713,12 +714,13 @@ for (const pointer of POINTERS) test.describe(`the record form under a ${pointer
       expect.soft(await reissue.isChecked(), `at ${width}: a press ${dy} from the Reissue box’s middle ${toggles ? 'toggles it' : 'leaves it'}`).toBe(toggles ? !before : before);
     }
 
-    /* A New …, opened: a field with no drawn label, Add as a §9.3 box and Cancel as a §9.3 label, 44 at every pointer since step 146; the field 32 under a mouse. */
+    /* A New …, opened: a field with no drawn label, Add as a §9.3 box and Cancel as a §9.3 label; the field 32 under a mouse, and since 17 Oct the box too. */
     await page.getByRole('button', { name: 'New artist' }).click();
     const opened = (await readReach(page)).filter((r) => r.name === 'New artist name' || r.name === 'Add' || (r.name === 'Cancel' && r.kind === 'button'));
     expect(opened.map((r) => r.name).sort(), 'the precondition: the opened New … has its field and two buttons').toEqual(['Add', 'Cancel', 'New artist name']);
     if (pointer === 'coarse') expect.soft(opened.filter((r) => r.height < HIT_FLOOR).map((r) => `${r.name}: ${r.height}`), `at ${width}: the opened + New’s controls under ${HIT_FLOOR} in the box`).toEqual([]);
-    else expect.soft(opened.map((r) => `${r.name} ${r.height}`), `at ${width}: the opened New …’s field 32 and its two controls 44 under a mouse`).toEqual(['New artist name 32', 'Add 44', 'Cancel 44']);
+    /* Design, 17 Oct: Add is a §9.3 box, drawn 32 under a mouse as the field is; Cancel is a §9.3 label and keeps its 44 line. */
+    else expect.soft(opened.map((r) => `${r.name} ${r.height}`), `at ${width}: the opened New …’s field and its Add box 32, its Cancel label 44, under a mouse`).toEqual(['New artist name 32', 'Add 32', 'Cancel 44']);
   });
  }
 });

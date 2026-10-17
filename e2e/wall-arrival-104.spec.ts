@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist, trackCreated } from './cleanup';
 import { login } from './sign-in';
+import { pointerIs } from './hit-area';
 
 registerCleanup();
 
@@ -195,7 +196,8 @@ test('where nothing matches, the wall arrives as unfiltered and the shelf says s
   expect({ x: at.offCentreX, y: at.offCentreY }, 'centred over the region').toEqual({ x: 0, y: 0 });
   expect(at.controlBelow, 'CLEAR FILTERS beneath it').toBe(true);
   expect(at.control.text).toMatch(/^clear filters$/i);
-  expect(at.control).toMatchObject({ height: 44, border: '1px', size: '11px', transform: 'uppercase', fill: 'rgba(0, 0, 0, 0)', radius: '0px' });
+  /* Design, 17 Oct: a §9.3 box is drawn 32 under a fine pointer and 44 under a coarse one, the floor. */
+  expect(at.control).toMatchObject({ height: (await pointerIs(page)) === 'coarse' ? 44 : 32, border: '1px', size: '11px', transform: 'uppercase', fill: 'rgba(0, 0, 0, 0)', radius: '0px' });
   expect(['lab(6.18075 1.20374 2.12039)', 'oklch(0.19 0.008 60)'], 'a §9.3 control: ink box').toContain(at.control.borderColour);
   expect(['lab(6.18075 1.20374 2.12039)', 'oklch(0.19 0.008 60)'], 'ink label').toContain(at.control.colour);
   expect(at.figures, 'no figure').toBe(0);

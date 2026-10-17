@@ -47450,3 +47450,22 @@ rerun of want-list and dialog) and on mobile (106, then 44), typecheck
 0, lint 27 warnings as before, build compiled, index 13 PASS with 152
 steps. **Next:** the gate at HEAD, then the push, batched with the four
 docs commits. After that the list is empty.
+
+## 17 Oct, 11:01: the gate at 6cbae10 red on two of the step's own pins my search missed
+
+Full suites at 6cbae10, 09:20 to 10:53: unit 4388 passed; chromium 921
+passed, 5 failed; mobile 380 passed, 4 failed; pressure level 1 in all
+93 samples, browsers peaking at 2,445 MB. Every failure was a pin of the
+old 44 under a mouse in a spec the step's covering set did not include:
+`record-form.spec.ts`'s fine test, which lists SAVE CHANGES at 44 in a
+named list and the opened New …'s Add at 44 in a string, and
+`wall-arrival-104.spec.ts`, which pins the shelf's CLEAR FILTERS at 44
+inside an object. My search for pins had looked for `toBe(44)` and its
+kin, so a list, a string and an object literal were invisible to it:
+the same shape as 12's literal marker, a detector narrower than the
+thing it detects, and the full suite found what the search did not.
+Re-pinned to the ruling (the two boxes 32, the labels beside them 44),
+red first on the constant and green on both projects (31 and 25). A
+wider search afterwards, for a name beside 44 in a list or a template,
+finds nothing else. The gate runs again at the fixed HEAD; the push
+waits on it.
