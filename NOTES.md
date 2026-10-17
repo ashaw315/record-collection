@@ -47525,3 +47525,19 @@ run on Code's side.
 depth and closure read in `check-index.mjs`, report-only, is cheap and
 would catch a future export that does carry nesting or an open run;
 the read above is its shape. For the word, if wanted.
+
+## 17 Oct, 17:58: the bold-depth read not built, by §G.1's test; the finding stands
+
+The reviewer, on the entry above: the correction stands and the framing
+does not; the thing was never in the input. The per-paragraph read is
+not built: bold is stripped to empty before any assertion reads a word,
+so nesting is structurally harmless to the index; the export normalises
+it; and Design now checks balance at the source, which is where the
+fault lives. A report-only guard against a failure mode that has never
+occurred in the repo and is normalised away before arrival is machinery
+with no reader. **What stands, explicitly so it is not rediscovered:**
+the fault was in Design's model and not in the delivered file; the read
+at 183ad37 and ca41207 proved it on both sides of the fix; and bold is
+invisible to all thirteen assertions and to export-diff by design.
+Nothing is open on Code's side. The docs commits since the last deploy
+are pushed with this one; they change nothing under `src/`.
