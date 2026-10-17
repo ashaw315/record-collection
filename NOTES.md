@@ -47667,9 +47667,9 @@ sixteen-step bound. **The one judgement, stated:** Adam said "top-level
 genre"; read literally, a record tagged only with a child genre has none
 and would sort with the genreless. Read as the root, it sorts under its
 section, as the shelf already places it, so the wall's default and this
-order cannot disagree. On the real collection every record with a genre
-carries a top-level genre directly, so the readings agree today; they
-part only for a future child-only record. Direction handling untouched:
+order cannot disagree. (The sentence that stood here, that the readings agree today because
+every record with a genre carries a top-level one directly, was asserted
+and not measured; corrected below.) Direction handling untouched:
 the list query writes `NULLS LAST` after either direction and the shelf
 writes it in both, so the genreless are last both ways, tested. Ties
 within a genre fall to each query's existing tie-break, as for every
@@ -47693,3 +47693,29 @@ the withdrawal's own record. This is the case named in 12's spec as
 what it cannot see, withdrawal by addition, met for real. It was handled
 by hand, which is the only way available, and the call says so in its
 own words.
+
+## 17 Oct, 18:50: the two readings of "top-level genre" differ today, on one record — measured
+
+The reviewer: carrying a top-level genre directly guarantees the literal
+reading has something to use; it does not make the two sets equal. A
+record tagged with a child and an unrelated top-level genre, the child's
+own root untagged, sorts differently under each. Measured on the real
+collection, read-only, every record's two keys side by side (the least
+directly tagged top-level genre, against the least root of all its
+genres):
+
+| record | literal reading | root reading (built) |
+|---|---|---|
+| Wired | Rock | Jazz |
+
+The other nineteen agree. Wired carries Fusion and Jazz-Rock, both
+children of Jazz, and Rock directly; Jazz itself is not tagged, so the
+literal reading never sees it. Of the three child assignments that are
+not paired with their own parent, Wired's two are these; the third is
+Grave New World's UK82 without Punk, whose root, Rock, is tagged
+directly, so its two keys agree. Under the Genre order Wired sorts with
+the Jazz records, before Rock, where the literal reading would have put
+it among them. **The build stands** (the reviewer: the root reading is
+right, so the wall and the table can never disagree); the sentence in
+step 152's block, the test's comment and the entry above said the
+readings agreed today, and now say this.

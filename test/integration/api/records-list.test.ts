@@ -612,8 +612,9 @@ describe('GET /api/records — sorting', () => {
     alphabetically first top-level genre, with records without a genre last,
     and draws no grouping." Read as the ROOT of each genre the record carries,
     the shelf's own section rule, so the wall's default and this order cannot
-    disagree; on the real collection every record with a genre carries a top-level
-    one directly and the two readings agree. Fails against the allowlist
+    disagree. On the real collection the two readings differ on one record,
+    Wired, whose Jazz children outrank its directly tagged Rock (NOTES, 17
+    Oct). Fails against the allowlist
     without the field: the route answers 400.
   */
   describe('the genre order', () => {
