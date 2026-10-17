@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  SORT_LABELS,
   parseCollectionParams,
   toQueryString,
   VIEW_MODES,
@@ -148,6 +149,13 @@ describe('parseCollectionParams', () => {
     for (const value of ['0', '-2', 'abc', '1.5', '', '99999999999999999999']) {
       expect(parseCollectionParams(params(`page=${value}`)).page, value).toBe(1);
     }
+  });
+
+  /* Adam's ruling, 17 Oct: Genre is a sixth order. Fails against the allowlist before it, which dropped the field. */
+  it('reads the genre order, labelled Genre, in both directions', () => {
+    expect(parseCollectionParams(params('sort=genre:asc')).sort).toEqual({ field: 'genre', direction: 'asc' });
+    expect(parseCollectionParams(params('sort=genre:desc')).sort).toEqual({ field: 'genre', direction: 'desc' });
+    expect(SORT_LABELS.genre).toBe('Genre');
   });
 });
 

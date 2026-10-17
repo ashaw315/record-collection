@@ -36,6 +36,7 @@ export const SORT_LABELS: Record<RecordSortField, string> = {
   purchaseDate: 'Date bought',
   purchasePrice: 'Price paid',
   releaseYear: 'Year',
+  genre: 'Genre',
 };
 
 export type CollectionParams = {

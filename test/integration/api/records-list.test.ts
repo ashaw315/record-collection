@@ -606,6 +606,65 @@ describe('GET /api/records — sorting', () => {
       'Hear Nothing See Nothing Say Nothing',
     ]);
   });
+
+  /*
+    Adam's ruling, 17 Oct, §T.4: "The Genre order sorts each record by its
+    alphabetically first top-level genre, with records without a genre last,
+    and draws no grouping." Read as the ROOT of each genre the record carries,
+    the shelf's own section rule, so the wall's default and this order cannot
+    disagree; on the real collection every record with a genre carries a top-level
+    one directly and the two readings agree. Fails against the allowlist
+    without the field: the route answers 400.
+  */
+  describe('the genre order', () => {
+    async function genreFixture() {
+      const g = async (name: string, parent?: string) =>
+        (await db.execute<{ id: string }>(sql`INSERT INTO genres (name, parent_genre_id) VALUES (${name}, ${parent ?? null}) RETURNING id`)).rows[0].id;
+      const a = (await db.execute<{ id: string }>(sql`INSERT INTO artists (name) VALUES ('Genre Probe') RETURNING id`)).rows[0].id;
+      const jazz = await g('Jazz');
+      const rock = await g('Rock');
+      const metal = await g('Metal');
+      const punk = await g('Punk', rock);
+      const aardvark = await g('Aardvark Core', rock);
+      const rec = async (title: string, genreIds: string[]) => {
+        const id = (await db.execute<{ id: string }>(sql`INSERT INTO records (artist_id, title) VALUES (${a}, ${title}) RETURNING id`)).rows[0].id;
+        for (const genreId of genreIds) await db.execute(sql`INSERT INTO record_genres (record_id, genre_id) VALUES (${id}, ${genreId})`);
+      };
+      await rec('On Rock', [rock]);
+      await rec('On Jazz and Rock', [rock, jazz]);
+      /* A child genre's own name is not the key: "Aardvark Core" would come first; its root, Rock, is what counts, and Metal beats Rock. */
+      await rec('On Aardvark Core and Metal', [aardvark, metal]);
+      /* A child alone sorts under its root, never with the genreless. */
+      await rec('On Punk alone', [punk]);
+      await rec('No genre', []);
+    }
+    const order = async (direction: 'asc' | 'desc') =>
+      (await (await listRecords(request(`/api/records?sort=genre:${direction}&pageSize=50`))).json()).data.map((r: { title: string }) => r.title);
+
+    it('sorts by the alphabetically first top-level genre, ascending, with no genre last', async () => {
+      await genreFixture();
+      const asc = await order('asc');
+      expect(asc[0], 'Jazz first: the record with Jazz and Rock sorts under Jazz').toBe('On Jazz and Rock');
+      expect(asc[1], 'then Metal, reached through a record whose child genre would have sorted first by its own name').toBe('On Aardvark Core and Metal');
+      expect(new Set(asc.slice(2, 4)), 'then Rock, the child-only record among them').toEqual(new Set(['On Rock', 'On Punk alone']));
+      expect(asc.at(-1), 'no genre last').toBe('No genre');
+    });
+
+    it('reverses the genres descending, and still puts no genre last', async () => {
+      await genreFixture();
+      const desc = await order('desc');
+      expect(new Set(desc.slice(0, 2)), 'Rock first descending').toEqual(new Set(['On Rock', 'On Punk alone']));
+      expect(desc.slice(2, 4)).toEqual(['On Aardvark Core and Metal', 'On Jazz and Rock']);
+      expect(desc.at(-1), 'no genre last in both directions, not flipped to the top').toBe('No genre');
+    });
+
+    it('returns each record once, however many genres it carries', async () => {
+      await genreFixture();
+      const asc = await order('asc');
+      expect(asc).toHaveLength(5);
+      expect(new Set(asc).size).toBe(5);
+    });
+  });
 });
 
 /**

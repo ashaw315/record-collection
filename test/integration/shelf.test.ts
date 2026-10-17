@@ -403,6 +403,18 @@ describe('shelfRecords — the rail’s sort reaches the wall (§W.24)', () => {
     expect(rows.map((r) => r.title), 'every record, in the chosen order').toEqual(['Alpha', 'Bravo', 'Charlie']);
     expect(rows.map((r) => r.matches)).toEqual([false, true, true]);
   });
+
+  /* Adam's ruling, 17 Oct: the genre order reaches the wall through the same expression as the table. Fails against the allowlist without the field (a type error, and no case in the expression). */
+  it('orders the wall by genre in both directions, no genre last both ways', async () => {
+    const jazz = await genre('Jazz');
+    const rock = await genre('Rock');
+    const a = await artist('Zeta');
+    await record('Rocky', a, { genreIds: [rock] });
+    await record('Jazzy', a, { genreIds: [jazz] });
+    await record('Bare', a);
+    expect((await shelfRecords({}, { field: 'genre', direction: 'asc' })).map((r) => r.title)).toEqual(['Jazzy', 'Rocky', 'Bare']);
+    expect((await shelfRecords({}, { field: 'genre', direction: 'desc' })).map((r) => r.title)).toEqual(['Rocky', 'Jazzy', 'Bare']);
+  });
 });
 
 describe('shelfRecords — scope', () => {

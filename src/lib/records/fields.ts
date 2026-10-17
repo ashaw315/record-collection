@@ -18,6 +18,8 @@ export const RECORD_SORT_FIELDS = [
   'purchaseDate',
   'purchasePrice',
   'releaseYear',
+  /* Adam's ruling, 17 Oct (§T.4: three of the six orders have no header). */
+  'genre',
 ] as const;
 
 export type RecordSortField = (typeof RECORD_SORT_FIELDS)[number];

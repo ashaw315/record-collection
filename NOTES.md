@@ -47654,3 +47654,42 @@ the phrase call becomes named, so **4 named, 10 new rulings, 9 unnamed,
 0 phrase, 4 draft fixes**, 23 calls still. That agrees with the
 reviewer's arithmetic. Any disagreement when the files arrive is the
 finding.
+
+## 17 Oct, 18:45: step 152, the Genre order; and the first live case of a spared sentence later withdrawn
+
+**Built at step level.** Adam's ruling, §T.4's count brought to six by
+Design first (T.4/two-of-five-orders, intake 3f78b69). `genre` joins
+`RECORD_SORT_FIELDS`, labelled Genre; both selects and the route's
+allowed set read that one list, so the order reaches the shelf, the
+table and the grid. One case in `sortExpression`: the least name among
+the ROOTS of the genres a record carries, walked up with the shelf's
+sixteen-step bound. **The one judgement, stated:** Adam said "top-level
+genre"; read literally, a record tagged only with a child genre has none
+and would sort with the genreless. Read as the root, it sorts under its
+section, as the shelf already places it, so the wall's default and this
+order cannot disagree. On the real collection every record with a genre
+carries a top-level genre directly, so the readings agree today; they
+part only for a future child-only record. Direction handling untouched:
+the list query writes `NULLS LAST` after either direction and the shelf
+writes it in both, so the genreless are last both ways, tested. Ties
+within a genre fall to each query's existing tie-break, as for every
+order. Five tests first, red on the field's absence; step level: the
+three test files 141 passed, the rail and params 44, the Sort select's
+specs on chromium (33) and mobile (11), typecheck 0, lint 27 warnings as
+before, build compiled. **Not built:** the sorting genre on the table's
+italic line, Adam's to call. The gate follows.
+
+**The first live instance of the currency blind spot.** §T.3's phrase
+call, rewritten under Adam's cap, now quotes its whole sentence ("An
+open filter's panel covers what lies beneath the last filter line…"),
+which stands exactly twice in §T.3, so 12 passes it. But that sentence
+was itself later withdrawn, by T.3/covers-below-last-line, and Design
+wrote the call to say so: "It stayed true wherever a panel was open. It
+was later withdrawn…, so this call records what held when it was made."
+So the fixed form now carries two meanings, "this sentence stays true"
+and "this sentence held when this was written", and 12 cannot tell them
+apart: it counts the text, and the text is still there, quoted inside
+the withdrawal's own record. This is the case named in 12's spec as
+what it cannot see, withdrawal by addition, met for real. It was handled
+by hand, which is the only way available, and the call says so in its
+own words.

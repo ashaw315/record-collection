@@ -382,6 +382,32 @@ export function sortExpression(field: RecordSortField) {
       return records.purchasePrice;
     case 'releaseYear':
       return records.releaseYear;
+    /*
+      Adam's ruling, 17 Oct, §T.4: "The Genre order sorts each record by its
+      alphabetically first top-level genre, with records without a genre
+      last, and draws no grouping." The top-level genre of each genre the
+      record carries is the ROOT of its chain, which is how the shelf places
+      a record in its section, so the wall's default and this order agree;
+      a record carrying only a child sorts under its root rather than with
+      the genreless. One value per record, so no row repeats. The walk is
+      bounded at sixteen for the reason the shelf's is: `parent_genre_id`
+      has no cycle constraint, and a cycle has no root, so it contributes
+      nothing. No genre is NULL, which the callers' NULLS LAST puts last in
+      both directions.
+    */
+    case 'genre':
+      return sql`(
+        SELECT min(root.name) FROM record_genres rg
+        CROSS JOIN LATERAL (
+          WITH RECURSIVE up AS (
+            SELECT g.id, g.name, g.parent_genre_id, 0 AS depth FROM genres g WHERE g.id = rg.genre_id
+            UNION ALL
+            SELECT p.id, p.name, p.parent_genre_id, up.depth + 1 FROM genres p JOIN up ON p.id = up.parent_genre_id WHERE up.depth < 16
+          )
+          SELECT name FROM up WHERE parent_genre_id IS NULL LIMIT 1
+        ) root
+        WHERE rg.record_id = ${records.id}
+      )`;
   }
 }
 
