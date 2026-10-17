@@ -47629,3 +47629,28 @@ The mechanics, for when it goes: the field and label through
 and both selects read; one `sortExpression` case, a subquery for the
 least top-level genre name, under `NULLS LAST` in both directions, which
 is already how the other fields place an absent value.
+
+## 17 Oct, 18:30: the nine rewrites reported done; not yet crossed; 12 confirmed on the split form; the figures to expect
+
+Design reports the last items under Adam's cap done: the eight calls for
+something new in the fixed form and the phrase call given its sentence.
+The reviewer verified Design's copies (fixed form 8 in Table and Grid
+and 2 in the wall, bold 407/407 and 672/672). **They have not reached
+the repo:** its copies read the fixed form 2 and 0 times, bold 400/400
+and 670/670, Table and Grid last crossed at ca41207.
+
+**12 reads the form split by markup.** The reviewer's literal search
+for the whole sentence found nothing, because the form is
+`<strong>No entry:</strong> nothing was ruled here before.` The two
+instances already in the repo are in exactly that markup, and 12 lists
+both as `new-ruling`: the parser strips inline tags to empty before
+anything reads a word. Checked on the real file, not assumed; the
+staged test with that markup has held it since 16 Oct.
+
+**The figures to expect when the set lands**, from the index as it
+stands (23 calls: 3 named, 2 new rulings, 17 unnamed, 1 phrase; 4 draft
+fixes apart): the eight rewrites move eight unnamed to new rulings and
+the phrase call becomes named, so **4 named, 10 new rulings, 9 unnamed,
+0 phrase, 4 draft fixes**, 23 calls still. That agrees with the
+reviewer's arithmetic. Any disagreement when the files arrive is the
+finding.
