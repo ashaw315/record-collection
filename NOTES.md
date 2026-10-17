@@ -47541,3 +47541,28 @@ at 183ad37 and ca41207 proved it on both sides of the fix; and bold is
 invisible to all thirteen assertions and to export-diff by design.
 Nothing is open on Code's side. The docs commits since the last deploy
 are pushed with this one; they change nothing under `src/`.
+
+## 17 Oct, 18:04: three facts for sort by genre, read from the schema and the real collection
+
+Asked before anything is designed (Adam is choosing between sorting the
+table by genre and grouping it under genre headings). Read-only: a
+`default_transaction_read_only` session against the production
+database, which reported `on`. No step is open.
+
+1. **A record carries any number of genres.** `record_genres` is a join
+   with the pair as its primary key, no cap and no ordering column, so
+   no genre is a record's first. On the real collection, 20 records:
+   2 have none, 1 has one, and 17 have two to six (4, 4, 4, 3 and 2 at
+   two through six). The maximum is 6, on Psychic and Loss Of Life.
+2. **The hierarchy is three deep**: 19 top-level genres, 20 at the
+   second level, 3 at the third (UK82 and US Hardcore under Punk,
+   Black Metal under Heavy Metal, both of which sit under Rock). Of 64
+   assignments, 30 are to a non-top-level genre, covering 16 records.
+   No record is on a child alone: every one also carries a top-level
+   genre, and 27 assignments put a record on a child and that child's
+   own parent together.
+3. **The Sort select is a fixed list.** It iterates `RECORD_SORT_FIELDS`
+   (`src/lib/records/fields.ts`): title, artist, date bought, price
+   paid, year, each ascending and descending, after Default. The labels
+   are `SORT_LABELS` in `collection-params.ts`, and the route refuses a
+   field not in that list. Nothing is derived from the data.
