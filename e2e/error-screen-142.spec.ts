@@ -48,8 +48,10 @@ for (const pointer of POINTERS) test.describe(`the error screen under a ${pointe
       expect(m.sentence.text, 'which says the page could not load').toMatch(/could not load/i);
       expect(LABEL_INK, 'in the label colour').toContain(m.sentence.colour);
       expect(m.controls.map((c) => [c.text.toUpperCase(), c.tag, c.href]), 'TRY AGAIN, then the way back to the Collection').toEqual([['TRY AGAIN', 'button', null], ['COLLECTION', 'a', '/']]);
+      /* Design, 17 Oct: a §9.3 box is drawn 32 under a fine pointer and 44 under a coarse one, the floor. */
+      const boxHeight = (await pointerIs(page)) === 'coarse' ? 44 : 32;
       for (const control of m.controls) {
-        expect.soft(control, `${control.text}: a §9.3 control`).toMatchObject({ size: '11px', upper: 'uppercase', mono: true, border: '1px', radius: '0px', fill: 'rgba(0, 0, 0, 0)', height: 44 });
+        expect.soft(control, `${control.text}: a §9.3 control, ${boxHeight} tall`).toMatchObject({ size: '11px', upper: 'uppercase', mono: true, border: '1px', radius: '0px', fill: 'rgba(0, 0, 0, 0)', height: boxHeight });
         expect.soft(control.right, `${control.text}: inside the window`).toBeLessThanOrEqual(width - 18);
       }
       expect(m.controls[0]?.top, 'the two controls on one line').toBe(m.controls[1]?.top);

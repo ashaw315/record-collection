@@ -175,8 +175,8 @@ export async function readReach(page: Page, within = 'main', except?: string): P
 
 /** The shared dialog (`src/components/ui/dialog.tsx`), which a record's delete, a want-list row's delete and manage's delete each open. */
 export const DIALOG = '[data-slot="dialog-content"]';
-/** What its three controls are drawn under a mouse: the cross as it was before step 128; the two buttons §9.3 boxes, 44 at every pointer since step 146 (part 2), where they were 32. The claim changed with the ruling. */
-const DIALOG_DRAWN = { Cancel: 44, Delete: 44, Close: 28 } as const;
+/** What its three controls are drawn under a mouse: the cross as it was before step 128; the two buttons §9.3 boxes, 32, which is a box's drawn size under a fine pointer (Design, 17 Oct: §9.3's 44 is the floor, met by the box under a coarse pointer; under a mouse a boxed control keeps its drawn size, as Save keeps its 32). Step 146 had drawn them 44 at every pointer on §9.3's vocabulary, which was the build's reading. The claim changed with the ruling, twice. */
+const DIALOG_DRAWN = { Cancel: 32, Delete: 32, Close: 28 } as const;
 
 /**
  * Step 128, the handoff: "bring Cancel, Delete and Close to the floor under

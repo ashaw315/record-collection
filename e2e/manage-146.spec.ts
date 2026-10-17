@@ -85,7 +85,9 @@ test('manage at 1280 under a fine pointer: row actions as LINEUP, EDIT and DELET
     /* The add row and its Add. */
     const [add] = await read(page, `section[aria-label="${label}"] [data-manage-create] button, [role="region"][aria-label="${label}"] [data-manage-create] button`);
     expect(add, `${label}: the Add control`).toBeDefined();
-    expectBox(add, `${label}: Add`);
+    expectBox(add, `${label}: Add`, 'fine');
+    /* Design, 17 Oct: a §9.3 box is drawn 32 under a fine pointer, as Save is, and 44 under a coarse one, the floor; a label keeps its 44 line under both. */
+    expect.soft(add.height, `${label}: Add is the box's drawn 32 under a mouse`).toBe(32);
     const rest = await readSection(page, label);
     expect.soft(rest.create, `${label}: the add row untinted`).toBe('rgba(0, 0, 0, 0)');
     expect.soft(rest.lucide, `${label}: no lucide drawing at rest`).toBe(0);
@@ -117,7 +119,7 @@ test('manage at 390 under a coarse pointer: an open artist’s form has SAVE as 
   const actions = (await read(page, '[data-manage-form] [data-manage-actions] button')).filter((r) => r.height > 0);
   expect(actions.map((r) => r.text), 'the action row: SAVE, DELETE, LINEUP').toEqual(['Save', 'Delete', 'Lineup']);
   const [save, del, lineup] = actions;
-  expectBox(save, 'Save');
+  expectBox(save, 'Save', 'coarse');
   expectLabelControl(del, 'Delete');
   expectLabelControl(lineup, 'Lineup');
   expect.soft(new Set(actions.map((r) => Math.round(r.edges.top))).size, 'the three on one line').toBe(1);

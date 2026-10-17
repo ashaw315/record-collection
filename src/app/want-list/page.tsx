@@ -88,7 +88,7 @@ export default async function WantListPage({ searchParams }: PageProps<'/want-li
             <Link
               data-want-list-lookup=""
               href="/lookup"
-              className={`${LABEL_TYPE} ${INK} box-border flex h-[44px] items-center justify-center border ${HAIRLINE} px-[18px] decoration-1 underline-offset-[3px] hover:underline`}
+              className={`${LABEL_TYPE} ${INK} box-border flex h-[32px] items-center justify-center border ${HAIRLINE} px-[18px] decoration-1 underline-offset-[3px] hover:underline pointer-coarse:h-[44px]`}
             >
               Look up a record
             </Link>

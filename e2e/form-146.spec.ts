@@ -45,7 +45,7 @@ const disclosures = (page: Page) => page.evaluate((): Disclosure[] => Array.from
   };
 }));
 
-async function expectForm(page: Page, where: string, editing: boolean) {
+async function expectForm(page: Page, where: string, editing: boolean, pointer: 'coarse' | 'fine') {
   await page.locator('form').first().waitFor();
   await page.evaluate(() => document.fonts.ready);
   /* The field labels: every <label for> that is drawn, and the two group heads (Genres, Tags) that are spans because a group has no single control. */
@@ -57,9 +57,13 @@ async function expectForm(page: Page, where: string, editing: boolean) {
   const [cancel] = await read(page, 'form [data-form-cancel]');
   expect(submit, `${where}: the submit`).toBeDefined();
   expect(cancel, `${where}: Cancel`).toBeDefined();
-  expectBox(submit, `${where}: ${submit.text}`);
+  expectBox(submit, `${where}: ${submit.text}`, pointer);
   expectLabelControl(cancel, `${where}: ${cancel.text}`);
-  expect.soft(submit.height, `${where}: the submit is the box's 44 at every pointer`).toBe(44);
+  /* Design, 17 Oct: a §9.3 box is drawn 32 under a fine pointer, as Save is, and 44 under a coarse one, the floor; a label keeps its 44 line under both. Measured, not assumed (the reviewer): the row around the box keeps CANCEL's 44 and the 32 box stands centred in it, so nothing below the form moves under a mouse. */
+  expect.soft(submit.height, `${where}: the submit is the box's ${pointer === 'coarse' ? '44 under a finger' : 'drawn 32 under a mouse'}`).toBe(pointer === 'coarse' ? 44 : 32);
+  const row = await page.locator('form button[type="submit"]').evaluate((el) => { const r = (el.parentElement as HTMLElement).getBoundingClientRect(); const b = el.getBoundingClientRect(); const c = (el.parentElement as HTMLElement).querySelector('[data-form-cancel]')?.getBoundingClientRect(); return { height: r.height, boxCentre: b.top + b.height / 2, cancelCentre: c === undefined ? NaN : c.top + c.height / 2 }; });
+  expect.soft(row.height, `${where}: the action row keeps the label's 44`).toBe(44);
+  expect.soft(Math.abs(row.boxCentre - row.cancelCentre), `${where}: the box centred on CANCEL`).toBeLessThanOrEqual(1);
   const apart = gapBetween({ ...submit.edges }, { ...cancel.edges });
   expect.soft(`${apart.axis} ${apart.gap}`, `${where}: CANCEL 24 clear of the submit, side by side`).toBe('x 24');
   /* The inline creates: + New artist and the rest are §9.3 labels. */
@@ -99,8 +103,8 @@ for (const [width, pointer] of WINDOWS) test(`the record form at ${width} under 
   trackArtist(artist);
   const record = await post('/api/records', { title: `Form ${suffix}`, artistId: artist });
   await page.goto('/records/new');
-  await expectForm(page, `new at ${width}`, false);
+  await expectForm(page, `new at ${width}`, false, pointer);
   await page.goto(`/records/${record}/edit`);
-  await expectForm(page, `editing at ${width}`, true);
+  await expectForm(page, `editing at ${width}`, true, pointer);
   await context.close();
 });

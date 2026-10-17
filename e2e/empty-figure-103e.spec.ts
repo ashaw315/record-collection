@@ -2,6 +2,7 @@ import { FORK } from '../src/app/sidebar-layout';
 import { expect, test, type Page } from '@playwright/test';
 import { clearing } from '../src/app/figure-source';
 import { login } from './sign-in';
+import { pointerIs } from './hit-area';
 
 /**
  * Step 103e, §T.6: the empty state's figure on the table and the grid.
@@ -87,7 +88,8 @@ for (const view of ['table', 'grid'] as const) {
       expect(r.clearText).toMatch(/^clear filters$/i);
       expect(r.sentence?.top, 'the sentence is beneath the figure').toBeGreaterThanOrEqual((r.svg?.bottom ?? Infinity) - 0.5);
       expect(r.clear?.top, 'and the control beneath the sentence').toBeGreaterThanOrEqual((r.sentence?.bottom ?? Infinity) - 0.5);
-      expect(r.clear?.height, '§9.3: 44 tall').toBeCloseTo(44, 0);
+      /* Design, 17 Oct: a §9.3 box is drawn 32 under a fine pointer, as Save is, and 44 under a coarse one, the floor; a label keeps its 44 line under both. */
+      expect(r.clear?.height, `§9.3: ${(await pointerIs(page)) === 'coarse' ? 44 : 32} tall`).toBeCloseTo((await pointerIs(page)) === 'coarse' ? 44 : 32, 0);
       expect(r.clearBorder?.slice(0, 3), '§9.3: an unfilled 1px box, square').toEqual(['1px', 'solid', '0px']);
       expect([r.paper, 'rgba(0, 0, 0, 0)'], 'unfilled').toContain(r.clearBorder?.[3]);
     });

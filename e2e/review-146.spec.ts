@@ -76,7 +76,8 @@ for (const [width, pointer] of WINDOWS) test(`the duplicate review at ${width} u
   for (const r of labels) expectLabel(r, `${width}: ${r.text}`);
   const choices = (await read(row, '[data-match-choices] button')).filter((r) => r.height > 0);
   expect(choices.map((r) => r.text), `${width}: the two answers`).toEqual(['Different artists', 'Same artist']);
-  for (const r of choices) { expectBox(r, `${width}: ${r.text}`); expect.soft(r.height, `${width}: ${r.text} is 44`).toBe(44); }
+  /* Design, 17 Oct: a §9.3 box is drawn 32 under a fine pointer, as Save is, and 44 under a coarse one, the floor; a label keeps its 44 line under both. */
+  for (const r of choices) { expectBox(r, `${width}: ${r.text}`, pointer); expect.soft(r.height, `${width}: ${r.text} is ${pointer === 'coarse' ? 44 : 32}`).toBe(pointer === 'coarse' ? 44 : 32); }
   expect.soft(gapBetween(choices[0].edges, choices[1].edges), `${width}: the two answers 24 apart`).toMatchObject({ gap: 24 });
 
   await row.getByRole('button', { name: /same artist/i }).click();
@@ -86,7 +87,7 @@ for (const [width, pointer] of WINDOWS) test(`the duplicate review at ${width} u
   const verbs = (await read(row.getByTestId('merge-confirm'), 'button')).filter((r) => r.height > 0);
   expect(verbs.map((r) => r.text), `${width}: CANCEL then MERGE THEM`).toEqual(['Cancel', 'Merge them']);
   expectLabelControl(verbs[0], `${width}: Cancel`);
-  expectBox(verbs[1], `${width}: Merge them`);
+  expectBox(verbs[1], `${width}: Merge them`, pointer);
   expect.soft(gapBetween(verbs[0].edges, verbs[1].edges), `${width}: CANCEL 24 clear of MERGE THEM`).toMatchObject({ gap: 24 });
   await context.close();
 });

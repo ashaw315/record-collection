@@ -47394,3 +47394,59 @@ re-pinned specs assert and no picture adds to; if labels collapse,
 layout moves and Design needs to see it. Three of the step's four parts
 wait on the answer; the five specs' expectations are written first when
 it comes.
+
+## 17 Oct, 09:18: step 151, the §9.3 box drawn 32 under a mouse — one line in five places, nineteen specs' pins, and what moved
+
+**Built at step level.** Design's rulings of 16 and 17 Oct: a §9.3 box
+is 32 under a fine pointer and 44 under a coarse one, the floor; an
+unboxed label keeps its 44 line under both, since a label has no box and
+its 44 is the row it sets. The change is `h-[32px]` with
+`pointer-coarse:h-[44px]` in `CONTROL_BOX` and in the four copies of its
+string part 1 left unfolded (ErrorBody, CollectionList's empty control,
+ShelfEmpty, the want list's LOOK UP A RECORD). Nothing else in `src/`.
+
+**The pins, first and red.** Nine specs and two shared readers said 44
+at every pointer; each now says 44 under a finger and 32 under a mouse,
+written before the constant moved and watched fail on it: dialog-146,
+form-146, review-146, manage-146, hierarchy-149, result-card-150,
+part1-145, error-screen-142, want-list, empty-figure-103e, and
+`type-read`'s `expectBox` (now taking the pointer) and `hit-area`'s
+`DIALOG_DRAWN`. Two readers I got wrong were refused by their tests, and
+the refusals stand in the record: grid-99's Sort control is §T.5's 44
+line with the select over it, not a box, re-pinned to 32 by me and put
+back at 44 with the reason; and the error screen spec already imported
+the pointer reader, so my second import broke its compile and the run
+found no tests — the judge's "no summary line" caught it, as it is
+built to. One more instrument note: in zsh an unquoted `$SPECS` does not
+word-split, so a twelve-file list went to Playwright as one path and
+"No tests found" was the shell's, not the suite's; literal paths from
+here.
+
+**Measured, not assumed, as the reviewer asked: what a box shrinking 44
+to 32 moves under a mouse.**
+
+| where the box stands | the row | what moves |
+|---|---|---|
+| beside a 44 label (record form's and want list's SAVE CHANGES by CANCEL) | keeps the label's 44, the box centred in it | nothing below; pinned in form-146 |
+| alone in its row (the card's two adds) | the box's 32 | the market slot, 12 up, its 12 gap kept; pinned in result-card-150 |
+| alone in its row (the dialog's footer) | 32 at 1280 from 44; 112 at 390 coarse, unchanged | the dialog 12 shorter under a mouse; reported from dialog-146 |
+| alone, by the same construction | the box's 32 | the hierarchy's SUGGEST, the error screen's pair, login's SIGN IN, the empty states' CLEAR FILTERS, LOOK UP A RECORD alone |
+
+The lists keep their rhythm, because their rows are set by labels, which
+did not move. Nothing here needs a ruling: Design's "no layout moves"
+holds for the lists it meant, and the 12 that moves under a box alone is
+the box's own, by arithmetic Design named.
+
+**Not done, by the cap:** the look-up form's §9.3 styling (SEARCH DISCOGS
+as the box, the Searched line as a hairline line with EDIT, Show more)
+was the part of step 150 held on this ruling; the ruling now reaches it,
+but Adam named this step as the box's height and no new design step
+opens without his reason, so it stays as the one unbuilt clause and is
+said so in 151's block. No recapture: boxes 12 shorter under a mouse,
+which the specs assert.
+
+**Step level:** the twelve specs on chromium (159 passed, then 46 on the
+rerun of want-list and dialog) and on mobile (106, then 44), typecheck
+0, lint 27 warnings as before, build compiled, index 13 PASS with 152
+steps. **Next:** the gate at HEAD, then the push, batched with the four
+docs commits. After that the list is empty.

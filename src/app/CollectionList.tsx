@@ -64,7 +64,7 @@ function Empty({ collectionTotal, params, figure }: { collectionTotal: number; p
       <Link
         data-collection-empty-clear=""
         href={query === '' ? '/' : `/?${query}`}
-        className={`${LABEL_TYPE} ${INK} box-border flex h-[44px] cursor-pointer items-center justify-center border ${HAIRLINE} px-[18px] decoration-1 underline-offset-[3px] hover:underline`}
+        className={`${LABEL_TYPE} ${INK} box-border flex h-[32px] cursor-pointer items-center justify-center border ${HAIRLINE} px-[18px] decoration-1 underline-offset-[3px] hover:underline pointer-coarse:h-[44px]`}
       >
         Clear filters
       </Link>

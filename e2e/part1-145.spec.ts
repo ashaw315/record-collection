@@ -61,7 +61,7 @@ for (const [width, pointer] of WINDOWS) test.describe(`part 1 at ${width} under 
     for (const r of await read(page, 'main [data-testid="hunt"] h2, main [data-testid="ceiling"] h2, main [data-testid="hunt"] dt, main section h2')) expectLabel(r, `“${r.text}”`);
     const [edit] = await read(page, '[data-testid="want-list-edit"]');
     expect(edit).toBeDefined();
-    if (edit !== undefined) expectBox(edit, 'EDIT');
+    if (edit !== undefined) expectBox(edit, 'EDIT', pointer);
     expect.soft(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth), 'nothing wider than the window').toBe(true);
   });
 
@@ -83,7 +83,7 @@ for (const [width, pointer] of WINDOWS) test.describe(`part 1 at ${width} under 
       expect(submit).toBeDefined();
       expect(cancel).toBeDefined();
       if (submit === undefined || cancel === undefined) return;
-      expectBox(submit, submit.text);
+      expectBox(submit, submit.text, pointer);
       expectLabelControl(cancel, 'CANCEL');
       expect.soft(cancel.text.toUpperCase()).toBe('CANCEL');
       const apart = gapBetween(submit.edges, cancel.edges);
@@ -115,7 +115,7 @@ for (const [width, pointer] of WINDOWS) test.describe(`part 1 at ${width} under 
     expect.soft(sentence.size, 'the sentence is 13').toBe('13px');
     expect.soft(LABEL_INK, 'the sentence in the label colour').toContain(sentence.colour);
     expectLabel(label, 'PASSWORD');
-    expectBox(button, 'SIGN IN');
+    expectBox(button, 'SIGN IN', pointer);
     expect.soft(h1.left, width === 390 ? 'the block at the 18 inset' : 'the block centred, 384 wide: its left at 448').toBe(width === 390 ? 18 : 448);
     expect.soft(await page.locator('#password-error').evaluate((el) => el.getBoundingClientRect().height), 'the refusal’s slot is reserved, one line, before anything is refused').toBeGreaterThan(0);
   });
@@ -140,6 +140,6 @@ for (const [width, pointer] of WINDOWS) test.describe(`part 1 at ${width} under 
     expect.soft(LABEL_INK, 'in the label colour').toContain(line.colour);
     await expect(page.getByTestId('not-found-line'), 'naming the address').toContainText('/no-such-page-145');
     expect.soft(control.text.toUpperCase()).toBe('COLLECTION');
-    expectBox(control, 'COLLECTION');
+    expectBox(control, 'COLLECTION', pointer);
   });
 });

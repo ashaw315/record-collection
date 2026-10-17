@@ -162,6 +162,8 @@ test.describe('unit B, the layout', () => {
       expect(await style(link, 'border-left-width'), `${name}: a 1px box`).toBe('1px');
       expect(await link.locator('svg').count(), `${name}: no glyph`).toBe(0);
       expect(await style(link, 'font-family'), `${name}: the label type`).toMatch(MONO);
+      /* Design, 17 Oct: a §9.3 box is drawn 32 under a fine pointer, as Save is, and 44 under a coarse one, the floor; a label keeps its 44 line under both. These layout tests run under a mouse. */
+      expect((await box(link)).height, `${name}: the box's drawn 32 under a mouse`).toBeCloseTo(32, 0);
     }
     const o = await box(own);
     const w = await box(want);
@@ -174,6 +176,10 @@ test.describe('unit B, the layout', () => {
       expect(w.width, `${which}: stacked, full width`).toBeCloseTo(row.width, 0);
     }
     test.info().annotations.push({ type: `adds at ${width}, ${which}`, description: `${sideBySide ? 'side by side' : 'stacked'}; the two boxes and their gap need ${sideBySide ? Math.round(o.width + w.width + 24) : 'more than'} of a row ${Math.round(row.width)} wide` });
+    /* Measured, not assumed (the reviewer): the boxes stand alone in their row, so the row is the box's height and what sits below, the market slot, moves up with it; its 12 above stays. */
+    const slot = await box(card.locator('[data-market-slot]'));
+    if (sideBySide) expect(row.height, `${which}: the adds' row is the box's own height under a mouse`).toBeCloseTo(32, 0);
+    expect(slot.top - row.bottom, `${which}: the slot keeps its 12 below the row, so it moves up with the box`).toBeCloseTo(12, 0);
     }
   });
 
@@ -353,6 +359,8 @@ test.describe('the floor on four cards, coarse', () => {
     await page.evaluate(() => document.fonts.ready);
     const reach = await readReach(page, 'section[aria-label="Results"]');
     expect(reach.length, 'the precondition: the cards’ controls were read').toBeGreaterThanOrEqual(16);
+    /* Design, 17 Oct: a §9.3 box is drawn 32 under a fine pointer, as Save is, and 44 under a coarse one, the floor; a label keeps its 44 line under both. */
+    for (const r of reach.filter((each) => /^I (own|want) this$/i.test(each.name))) expect.soft(r.height, `${r.name}: the box's 44 under a finger`).toBe(44);
     expect.soft(underFloor(reach).map((r) => `${r.name}: ${r.tall} (${r.lostTo.join('; ')})`), `controls under ${HIT_FLOOR} to a finger at ${width}, of ${reach.length}`).toEqual([]);
     expect.soft(reach.filter((r) => r.left > HIT_PAST || r.right > HIT_PAST).map((r) => `${r.name}: ${r.left} left, ${r.right} right`), `controls a tap reaches from more than ${HIT_PAST} past them at ${width}`).toEqual([]);
     const heights = await all.evaluateAll((els) => els.map((el) => Math.round(el.getBoundingClientRect().height)));

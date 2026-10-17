@@ -1042,7 +1042,8 @@ for (const width of [1440, 390, 320]) {
           tint: empty?.querySelector<HTMLElement>('[data-tint]')?.dataset.tint ?? null,
         };
       });
-      expect(m.height, `${path}: §9.3, 44 tall`).toBeCloseTo(44, 0);
+      /* Design, 17 Oct: a §9.3 box is drawn 32 under a fine pointer, as Save is, and 44 under a coarse one, the floor; a label keeps its 44 line under both. */
+      expect(m.height, `${path}: §9.3, ${(await pointerIs(page)) === 'coarse' ? 44 : 32} tall`).toBeCloseTo((await pointerIs(page)) === 'coarse' ? 44 : 32, 0);
       expect(m.border, `${path}: an unfilled 1px box, square`).toEqual(['1px', 'solid', '0px']);
       expect([m.paper, 'rgba(0, 0, 0, 0)'], 'unfilled').toContain(m.background);
       expect(m.header, `${path}: in the heading’s row`).toBe(true);
@@ -1194,8 +1195,8 @@ for (const pointer of POINTERS) test.describe(`the want list’s forms and an it
       await page.evaluate(() => document.fonts.ready);
       const reach = await expectFloor(page, pointer, `${where} at ${width}`);
       if (path === `/want-list/${item.id}`) {
-        /* Step 145 (part 1): EDIT is a §9.3 box, 44 tall at every pointer as the app's other boxes are; it was drawn 30.5. The claim changed with the ruling. */
-        expect.soft(reach.find((r) => r.name === 'Edit')?.height, `${where} at ${width}: EDIT is a §9.3 box, 44`).toBe(44);
+        /* Step 145 (part 1) drew EDIT 44 at every pointer. Design, 17 Oct: a §9.3 box is drawn 32 under a fine pointer, as Save is, and 44 under a coarse one, the floor; a label keeps its 44 line under both. The claim changed with the ruling, twice. */
+        expect.soft(reach.find((r) => r.name === 'Edit')?.height, `${where} at ${width}: EDIT is a §9.3 box, ${pointer === 'coarse' ? 44 : 32}`).toBe(pointer === 'coarse' ? 44 : 32);
         continue;
       }
       const fields = await page.evaluate(() => Array.from(document.querySelectorAll<HTMLLabelElement>('[data-testid="want-list-form"] label[for]')).filter((label) => !label.classList.contains('sr-only')).map((label) => {
@@ -1212,9 +1213,9 @@ for (const pointer of POINTERS) test.describe(`the want list’s forms and an it
         }
         if (pointer === 'fine' && width < 640) expect.soft(field.strip, `${where} at ${width}: ${field.id} stands 4 below its label, as it did`).toBeCloseTo(4, 0);
       }
-      /* Step 145 (part 1): the submit is a §9.3 box, 44 tall at every pointer; it was 32 under a mouse. The claim changed with the ruling. */
+      /* Step 145 (part 1) drew the submit 44 at every pointer; it had been 32 under a mouse, and is again: Design, 17 Oct: a §9.3 box is drawn 32 under a fine pointer, as Save is, and 44 under a coarse one, the floor; a label keeps its 44 line under both. */
       const submit = reach.find((r) => r.name === 'Add to want list' || r.name === 'Save changes');
-      expect.soft(submit?.height, `${where} at ${width}: the submit is a §9.3 box, 44`).toBe(44);
+      expect.soft(submit?.height, `${where} at ${width}: the submit is a §9.3 box, ${pointer === 'coarse' ? 44 : 32}`).toBe(pointer === 'coarse' ? 44 : 32);
     }
   });
  }

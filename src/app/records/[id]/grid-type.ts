@@ -53,11 +53,18 @@ export const INK = 'text-[oklch(0.19_0.008_60)]';
 export const HAIRLINE = 'border-[oklch(0.19_0.008_60)]';
 /**
  * §9.3's control, boxed: the label type in ink, a 1px square hairline box,
- * no fill, 44 tall, 18 of padding a side, underlined under a pointer. As
- * the error screen, the collection's and the shelf's empty controls, the
- * sleeve modal and the want list's LOOK UP A RECORD draw it (each with
- * its own copy of this string, which part 1 did not fold; step 145). A
- * §9.3 control as a label is the same type with no box.
+ * no fill, 18 of padding a side, underlined under a pointer. **Drawn 32
+ * tall under a fine pointer and 44 under a coarse one** (Design, 17 Oct):
+ * §9.3's 44 is the floor and not a height ruled on its own grounds, a box
+ * is how a control meets the floor, and under a mouse "a boxed control
+ * keeps its drawn size, as Save keeps its 32". Built 44 under both from
+ * step 145 to 150 on §9.3's vocabulary, which was the build's reading and
+ * not a ruling. The error screen, the collection's and the shelf's empty
+ * controls and the want list's LOOK UP A RECORD draw the same box with
+ * their own copy of this string (not folded at 145), each changed with it.
+ * A §9.3 control as a label is the same type with no box, and keeps its
+ * 44 line under both pointers: a label has no box, so its 44 is the row
+ * it sets (Design, 17 Oct).
  */
-export const CONTROL_BOX = `${LABEL_TYPE} ${INK} box-border inline-flex h-[44px] items-center justify-center border ${HAIRLINE} px-[18px] decoration-1 underline-offset-[3px] hover:underline`;
+export const CONTROL_BOX = `${LABEL_TYPE} ${INK} box-border inline-flex h-[32px] items-center justify-center border ${HAIRLINE} px-[18px] decoration-1 underline-offset-[3px] hover:underline pointer-coarse:h-[44px]`;
 export const CONTROL_LABEL = `${LABEL_TYPE} ${INK} inline-flex h-[44px] items-center decoration-1 underline-offset-[3px] hover:underline`;

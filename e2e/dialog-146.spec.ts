@@ -43,8 +43,12 @@ async function expectDialog(page: Page, pointer: 'coarse' | 'fine', where: strin
   expect.soft(s.footer, `${where}: no tinted band and no rule under the buttons`).toMatchObject({ fill: 'rgba(0, 0, 0, 0)', borderTop: '0px' });
   const buttons = await read(page, `${DIALOG} [data-slot="dialog-footer"] button`);
   expect(buttons.map((b) => b.text), `${where}: CANCEL then the verb`).toEqual(['Cancel', 'Delete']);
-  for (const b of buttons) { expectBox(b, `${where}: ${b.text}`); expect.soft(b.height, `${where}: ${b.text} is the box's 44 at every pointer`).toBe(44); }
+  /* Design, 17 Oct: a §9.3 box is drawn 32 under a fine pointer, as Save is, and 44 under a coarse one, the floor; a label keeps its 44 line under both. */
+  for (const b of buttons) { expectBox(b, `${where}: ${b.text}`, pointer); expect.soft(b.height, `${where}: ${b.text} is the box's ${pointer === 'coarse' ? '44 under a finger' : 'drawn 32 under a mouse'}`).toBe(pointer === 'coarse' ? 44 : 32); }
   await expectDialogControls(page, pointer, where);
+  /* Measured, not assumed (the reviewer, 17 Oct): the footer holds boxes alone, so its row is the box's height and the dialog is 12 shorter under a mouse. Reported, not pinned. */
+  const footer = await page.locator(`${DIALOG} [data-slot="dialog-footer"]`).evaluate((el) => el.getBoundingClientRect().height);
+  test.info().annotations.push({ type: `footer row, ${where}`, description: `${Math.round(footer)} tall with the boxes at ${pointer === 'coarse' ? 44 : 32}` });
 }
 
 for (const [width, pointer] of WINDOWS) test(`the shared dialog at ${width} under a ${pointer} pointer: paper in an ink box over an undimmed page, CANCEL and DELETE as §9.3 boxes 24 apart, on a record, a want-list row and manage`, async ({ browser }) => {

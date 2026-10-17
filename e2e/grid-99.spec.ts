@@ -192,7 +192,8 @@ test('the grid keeps the Sort control, a 44 control naming the order', async ({ 
   await open(page, f.artistId, 390);
   const control = page.locator('[data-sort-control]');
   await expect(control.locator('[data-sort-current]')).toHaveText('Sort · Title ↑');
-  expect(await control.evaluate((el) => el.getBoundingClientRect().height)).toBe(44);
+  /* Not a §9.3 box: §T.5's Sort control is a 44 line with the select over it and a hairline below, so Design's 17 Oct box ruling (32 under a mouse) does not reach it; a control with no ink box keeps its 44 line under both pointers. Re-pinned to 32 by mistake that day and refused by this test. */
+  expect(await control.evaluate((el) => el.getBoundingClientRect().height), 'the Sort control is a 44 line under either pointer').toBe(44);
   await control.locator('select').selectOption('title:desc');
   await expect(page).toHaveURL(/sort=title(%3A|:)desc/, { timeout: 15_000 });
   await expect.poll(() => page.locator('[data-collection-grid] li [data-grid-title]').first().textContent()).toContain('C Bare');

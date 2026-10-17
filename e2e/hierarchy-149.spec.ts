@@ -79,9 +79,12 @@ for (const [width, pointer] of WINDOWS) test(`the proposed hierarchy at ${width}
 
   /* The two boxes. */
   const suggest = (await read(page, '[data-testid="propose-parents"]'))[0];
-  expectBox(suggest, `${width}: SUGGEST A HIERARCHY`);
+  expectBox(suggest, `${width}: SUGGEST A HIERARCHY`, pointer);
+  /* Design, 17 Oct: a §9.3 box is drawn 32 under a fine pointer, as Save is, and 44 under a coarse one, the floor; a label keeps its 44 line under both. */
+  expect.soft(suggest.height, `${width}: SUGGEST A HIERARCHY is ${pointer === 'coarse' ? 44 : 32}`).toBe(pointer === 'coarse' ? 44 : 32);
   const acceptAll = (await read(proposal, '[data-testid="accept-all"]'))[0];
-  expectBox(acceptAll, `${width}: ACCEPT ALL 2 REMAINING`);
+  expectBox(acceptAll, `${width}: ACCEPT ALL 2 REMAINING`, pointer);
+  expect.soft(acceptAll.height, `${width}: ACCEPT ALL 2 REMAINING is ${pointer === 'coarse' ? 44 : 32}`).toBe(pointer === 'coarse' ? 44 : 32);
   expect.soft(acceptAll.text, `${width}: says how many`).toMatch(/^Accept all 2 remaining$/);
 
   /* One proposed genre's line: the name, ACCEPT and REJECT at the line's right, 24 apart, and the evidence on the next line. */

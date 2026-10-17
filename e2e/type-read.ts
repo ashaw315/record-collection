@@ -15,8 +15,8 @@ export const read = (scope: Page | Locator, selector: string) => scope.locator(s
 
 /* §4.1's label type: 11 mono uppercase in the label colour. */
 export const expectLabel = (r: Read, what: string) => { expect.soft(r, `${what}: §4.1’s label type`).toMatchObject({ size: '11px', upper: 'uppercase', mono: true }); expect.soft(LABEL_INK, `${what}: in the label colour`).toContain(r.colour); };
-/* §9.3's control, boxed: 11 mono uppercase in ink, a 1px square box, no fill, 44 tall. */
-export const expectBox = (r: Read, what: string) => { expect.soft(r, `${what}: a §9.3 box`).toMatchObject({ size: '11px', upper: 'uppercase', mono: true, border: '1px', radius: '0px', fill: 'rgba(0, 0, 0, 0)', height: 44 }); expect.soft(INK, `${what}: in ink`).toContain(r.colour); };
+/* §9.3's control, boxed: 11 mono uppercase in ink, a 1px square box, no fill; drawn 32 under a fine pointer and 44 under a coarse one (Design, 17 Oct: the 44 is the floor, a box meets it, and under a mouse a boxed control keeps its drawn size, as Save keeps its 32). */
+export const expectBox = (r: Read, what: string, pointer: 'coarse' | 'fine') => { expect.soft(r, `${what}: a §9.3 box, ${pointer === 'coarse' ? 44 : 32} under a ${pointer} pointer`).toMatchObject({ size: '11px', upper: 'uppercase', mono: true, border: '1px', radius: '0px', fill: 'rgba(0, 0, 0, 0)', height: pointer === 'coarse' ? 44 : 32 }); expect.soft(INK, `${what}: in ink`).toContain(r.colour); };
 /* §9.3's control as a label: the type, no box. */
 export const expectLabelControl = (r: Read, what: string) => { expect.soft(r, `${what}: a §9.3 label`).toMatchObject({ size: '11px', upper: 'uppercase', mono: true, border: '0px' }); expect.soft(INK, `${what}: in ink`).toContain(r.colour); };
 /* One heading weight with the Collection's: 40, semibold. */
