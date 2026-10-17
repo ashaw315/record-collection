@@ -47469,3 +47469,15 @@ red first on the constant and green on both projects (31 and 25). A
 wider search afterwards, for a name beside 44 in a list or a template,
 finds nothing else. The gate runs again at the fixed HEAD; the push
 waits on it.
+
+## 17 Oct, 12:45: the gate at cce6bdd green on both projects; step 151 pushed
+
+Full suites, one worker, 11:03 to 12:44: unit 4388 passed, 5 skipped;
+chromium 926 passed, 1 skipped, ledger clean; mobile 384 passed, 4
+skipped, ledger clean; pressure level 1 in all 102 samples, browsers
+peaking at 2,304 MB, next at 1,789 MB, swap 9,034 MB. Report
+`../record-collection-gate-logs/cce6bdd-gate-w1.txt`, the red run's logs
+beside it in `6cbae10-red-1053/`. Step 151 is cleared, and the push that
+follows carries it with the docs commits since 2913878. **The list is
+empty.** Open for Design: the §T.6 passage carrying both readings of the
+unboxed label (the intake at 8777194); for Adam, nothing.
