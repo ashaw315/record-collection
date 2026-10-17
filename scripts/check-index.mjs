@@ -681,7 +681,8 @@ function sentencesOf(plain) {
           continue;
         }
         /* Design, 16 Oct: a draft fix is not a call. It invokes WITHDRAWALS.md's own exemption, quotes nothing, and is checked against git; listed apart so the class stays visible. */
-        if (/\bdraft fix\b/i.test(sentence)) {
+        /* "A draft fix" by name, or the exemption's subject named, "an earlier draft" (§G.5's call, 17 Oct). */
+        if (/\bdraft fix\b|\ban earlier draft\b/i.test(sentence)) {
           draftFixes.push(`12 §${h.id} draft-fix "${sentence.slice(0, 120)}"`);
           continue;
         }

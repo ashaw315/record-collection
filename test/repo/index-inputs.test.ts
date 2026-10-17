@@ -554,4 +554,24 @@ describe('assertion 12 holds a no-entry call to its spared sentence', () => {
     expect(out).toMatch(/^     12: \d+ no-entry calls, \d+ named and checked, \d+ ruling something new, \d+ unnamed and \d+ quoting a phrase \(report only\), \d+ draft fix/m);
     expect(out).toMatch(/^PASS 12$/m);
   });
+
+  /*
+    The reviewer, 17 Oct: the inventory marked four draft calls and the
+    count said three. §G.5's call reads "An earlier draft of this paragraph
+    said…, and no entry is owed for replacing it", naming the exemption's
+    subject without the phrase "draft fix", which its paragraph states
+    three sentences on. Fails against the reader keyed on "draft fix"
+    alone, which listed it unnamed and reported 18 where 17 exist.
+  */
+  it('counts a call that names an earlier draft as a draft fix, not as unnamed', () => {
+    const dir = stage((d) => {
+      const t = join(d, W);
+      const html = readFileSync(t, 'utf8');
+      if (html.split(LAST).length !== 2) throw new Error('staging anchor missing: §W.29’s closing sentence');
+      writeFileSync(t, html.replace(LAST, 'An earlier draft of this paragraph said the arrival was the seat, and no entry is owed for replacing it.</p>'));
+    });
+    const { out } = run(dir);
+    expect(out).toContain('12 §W.29 draft-fix "An earlier draft of this paragraph said the arrival was the seat, and no entry is owed for replacing it."');
+    expect(out).not.toContain('unnamed "An earlier draft of this paragraph');
+  });
 });

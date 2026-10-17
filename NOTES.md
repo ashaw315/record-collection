@@ -47566,3 +47566,25 @@ database, which reported `on`. No step is open.
    paid, year, each ascending and descending, after Default. The labels
    are `SORT_LABELS` in `collection-params.ts`, and the route refuses a
    field not in that list. Nothing is derived from the data.
+
+## 17 Oct, 18:05: four draft calls, not three — the count was mine, and the detector agreed with it for the wrong reason
+
+The reviewer: the inventory of the 21 marks four calls DRAFT (§G.3, §G.5,
+§G.8 and §T.6's "No drop Code took carried the 24"), and the classes sum
+8 NEW, 4 DRAFT, 9 quote; yet the entry under it and my report said
+"three", and assertion 12 went from 21 to 18 unnamed. **The table was
+right and the word was wrong**, and the detector agreed with the wrong
+word because it was narrow: it read a call as a draft fix only when its
+own sentence said "draft fix". §G.5's call says "An earlier draft of
+this paragraph said that nothing hides and there is no menu, and no
+entry is owed for replacing it", and its paragraph concludes "replacing
+it was a draft fix" three sentences on. Widened, test first and red on
+the phrase-only reader: a call naming "an earlier draft", the
+exemption's subject, is a draft fix too. **12 now reads 17 unnamed and
+4 draft fixes**; the spec says so. The 16 Oct entries' "three" and
+"18" are superseded by this one.
+
+A fourth narrow detector this week, small, and this time the number a
+person wrote and the number the instrument printed agreed, so neither
+checked the other: the table beside them was the only thing that
+disagreed, and the reviewer read it.
