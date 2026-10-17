@@ -47588,3 +47588,44 @@ A fourth narrow detector this week, small, and this time the number a
 person wrote and the number the instrument printed agreed, so neither
 checked the other: the table beside them was the only thing that
 disagreed, and the reviewer read it.
+
+## 17 Oct, 18:18: sort by genre, step zero — a ruled sentence counts the orders; stopped before building
+
+Adam's ruling, relayed by the reviewer: a sixth option in the Sort
+select, each record once under its alphabetically first top-level genre,
+the two records with no genre last in both directions, ascending and
+descending, wherever the select applies; no column, no filter change, no
+layout change. The reviewer asked for step zero to confirm no §T section
+enumerates the Sort options before anything is built.
+
+**One does.** §T.4, the Table and Grid target: "The table keeps §T.5's
+Sort control at every width, because two of the five orders have no
+header to carry them at any width: Date bought has no column, and Artist
+has none of its own, being the Record cell's second line." And: "If
+Date bought ever gets a column, the control's scope shrinks to Artist."
+A genre order makes the orders six, and genre has no header either, so
+the count goes stale and the reason grows a third member. Nothing else
+in the eight files names the options. **Not built**, as the instruction
+says, until it is said and answered.
+
+**Where the select applies: all three views.** The table and grid share
+`CollectionFilters`' select, and the wall's rail draws the same list
+(`WallRail.tsx` maps `RECORD_SORT_FIELDS`). The shelf query takes the
+same sort through the same `sortExpression` as the table ("so the wall
+and the table cannot sort differently"). §W already licenses a sort
+reordering the wall: "position carries the collection's order, not a
+record's address", section order the tie-break. So a genre order would
+reach the shelf, the table and the grid.
+
+**Does the table show genres? No cell.** The columns are Record, Label,
+Format, Year, Cond. and Paid. Genres appear on a row only under a genre
+filter, as an italic line beneath the artist saying why the row matched
+(§5.2's explanation), and never otherwise. The grid's tiles carry no
+genre. So sorted by genre, nothing on screen says why a record sits
+where it does.
+
+The mechanics, for when it goes: the field and label through
+`fields.ts` and `collection-params.ts`, which the route's allowed set
+and both selects read; one `sortExpression` case, a subquery for the
+least top-level genre name, under `NULLS LAST` in both directions, which
+is already how the other fields place an absent value.
