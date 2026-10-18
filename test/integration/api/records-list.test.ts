@@ -666,6 +666,44 @@ describe('GET /api/records — sorting', () => {
       expect(new Set(asc).size).toBe(5);
     });
   });
+
+  /*
+    Adam, 17 Oct: sorted by Genre, The Soft Parade and The Doors were not
+    adjacent, Mind Games between them. Ties fell to the record's id, a random
+    uuid, which keeps the order total (no record on two pages) but not
+    readable. The tie-break is the shelf's own, artist, year, title, then id,
+    so the wall and the table order a tie the same way, for every order.
+    Ids are fixed here so the old id-only tie-break would interleave the
+    artists: fails against it.
+  */
+  describe('the tie-break within an order', () => {
+    async function tied() {
+      const a = async (name: string) => (await db.execute<{ id: string }>(sql`INSERT INTO artists (name) VALUES (${name}) RETURNING id`)).rows[0].id;
+      const rock = (await db.execute<{ id: string }>(sql`INSERT INTO genres (name) VALUES ('Rock') RETURNING id`)).rows[0].id;
+      const doors = await a('The Doors');
+      const lennon = await a('John Lennon');
+      const rec = async (id: string, title: string, artistId: string, year: number) => {
+        await db.execute(sql`INSERT INTO records (id, artist_id, title, release_year) VALUES (${id}::uuid, ${artistId}, ${title}, ${year})`);
+        await db.execute(sql`INSERT INTO record_genres (record_id, genre_id) VALUES (${id}::uuid, ${rock})`);
+      };
+      await rec('10000000-0000-4000-8000-000000000001', 'The Soft Parade', doors, 1969);
+      await rec('20000000-0000-4000-8000-000000000002', 'Mind Games', lennon, 1969);
+      await rec('30000000-0000-4000-8000-000000000003', 'The Doors', doors, 1967);
+    }
+    const order = async (sort: string) =>
+      (await (await listRecords(request(`/api/records?sort=${sort}&pageSize=50`))).json()).data.map((r: { title: string }) => r.title);
+
+    it('orders a genre tie by artist, then year, then title, so one artist’s records stand together', async () => {
+      await tied();
+      expect(await order('genre:asc')).toEqual(['Mind Games', 'The Doors', 'The Soft Parade']);
+      expect(await order('genre:desc'), 'the tie-break does not reverse with the key').toEqual(['Mind Games', 'The Doors', 'The Soft Parade']);
+    });
+
+    it('breaks a tie the same way under every other order: two records of one year', async () => {
+      await tied();
+      expect(await order('releaseYear:asc')).toEqual(['The Doors', 'Mind Games', 'The Soft Parade']);
+    });
+  });
 });
 
 /**

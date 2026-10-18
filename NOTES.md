@@ -47730,3 +47730,33 @@ Step 152 is cleared and pushed with the commits after it, which change
 documentation and one test comment and nothing under `src/`. The wall
 target with its two rewrites has still not crossed; 12 reads 8 new
 rulings and 11 unnamed until it does.
+
+## 17 Oct, 20:42: step 153, a tie within any order — the table's gap, not genre's; the wall had none
+
+Adam: sorted by Genre, The Soft Parade and The Doors were not adjacent,
+Mind Games between them. Reproduced on the real collection, read-only:
+the six Rock records came back in id order, a random uuid, and Mind
+Games's id falls between the two Doors records'. **The premise, half
+right.** The list query (table and grid) already ended every order in
+`records.id`, so the order was total and the paging consequence the
+reviewer feared, a record on two pages or none, does not occur; the
+comment there says the id is for exactly that. What it lacked was a
+readable tie-break: within a tie the order was the uuid's, **for all six
+orders**, not genre alone. The shelf had no gap: its ORDER BY runs the
+chosen sort, then section, artist, year with nulls last, title, id, so
+on the wall the Doors records already stood together.
+
+**Fixed once for all six**, as the reviewer asked if the gap was
+general, and said so because it changes existing sorts: within any tie
+on the table and grid, records now stand by artist, then year (undated
+last), then title, then id. **One deviation, stated:** the reviewer
+asked for artist, title, id; built with the shelf's year between, so
+the wall and the table order a tie alike and an artist's records stand
+chronologically, as the wall already shows them. The tie-break does not
+reverse with the key. Two tests first with fixed ids the old tie-break
+interleaves, red on it (the Doors case under Genre in both directions,
+and a year tie); the earlier red was a test bug of mine, values in the
+wrong column order, read and fixed before the real red was taken. Step
+level: list, shelf and params tests 143 passed; the sort-reading and
+collection specs on chromium (88) and mobile (46); lint 27 warnings as
+before; build compiled. The gate follows; the push waits on it.

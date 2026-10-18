@@ -526,7 +526,20 @@ export async function listRecords(options: {
     // NULLS LAST and the id tiebreaker, for the same reasons as every other
     // list endpoint: Postgres flips null placement between ASC and DESC, and an
     // untied sort loses rows across pages.
-    .orderBy(sql`${ordered} NULLS LAST`, asc(records.id))
+    //
+    // Between the key and the id, the shelf's own tie-break: artist, year
+    // (undated last), title. Ties fell straight to the id, a random uuid, so
+    // the order was total but unreadable: under the Genre order Mind Games
+    // stood between The Soft Parade and The Doors (Adam, 17 Oct). The same
+    // tie-break as the wall's, so the two order a tie alike, for every order;
+    // it does not reverse with the key.
+    .orderBy(
+      sql`${ordered} NULLS LAST`,
+      asc(artists.name),
+      sql`${records.releaseYear} ASC NULLS LAST`,
+      asc(records.title),
+      asc(records.id),
+    )
     .limit(options.limit)
     .offset(options.offset);
 
