@@ -47811,3 +47811,15 @@ leaves one label per run behind, as `table-98` does; the ledger judges
 genres only. The list query's genres are read as json, tested on local
 Postgres; on Neon the evidence is Adam's look at the preview, which drew
 the column, not a test.
+
+## 18 Oct: `apply-code-region` adds an edited step block beside the old one
+
+The applier finds a block in the handoff by its exact text. Edit a block's
+`text` in `scripts/handoff-code-region.json` and the applier no longer
+finds it, so it inserts the edited version as new and leaves the old one
+standing: step 155 appeared twice, the stale copy removed by hand
+(6c74559). After editing a block, count it in the handoff
+(`grep -c '^155\. ' docs/design/HANDOFF-wall-and-pull.md`) and remove the
+old copy; the applier's "restored" for a block it already had is the sign.
+Not fixed: the script is report-and-insert by design, and matching by id
+instead of text is a change to the tool nobody has asked for.

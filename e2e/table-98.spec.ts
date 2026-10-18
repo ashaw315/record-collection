@@ -93,7 +93,8 @@ test('a row is at least 44, a row of title and artist exactly 44, hairlined and 
     expect(row.fill, 'no fill').toBe('rgba(0, 0, 0, 0)');
   }
   expect(m.filter((row) => row.lines === 2).length, 'the exact case is reached: rows of title and artist alone').toBeGreaterThan(0);
-  expect(m.filter((row) => row.lines > 2).length, 'and the growing one: Alpha’s genre wraps in its 80').toBe(1);
+  /* At least one, not a count: the ruling says a row grows with its content, not how many rows do. */
+  expect(m.filter((row) => row.lines > 2).length, 'and a growing one: Alpha’s genre wraps in its 80').toBeGreaterThan(0);
   expect(m[0].rule, 'a hairline beneath a row').toBe('1px');
   /* The far end of the row, in the Paid column, well clear of the title's text. */
   await page.mouse.click(m[1].right - 12, m[1].mid);
