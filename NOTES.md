@@ -47804,8 +47804,9 @@ T.4/genre-to-content, 96 with the cell's 16 of padding included, which
 was the reading the preview was built on. This entry replaces the one the
 branch carried, which said the width was a proposal and not a ruling: true
 when written, false once the ruling landed. The preview commit's message
-says the same and goes to main only through a squash merge, so it does not
-stand in main's history. The fork stays 1054, Genre taking its 96 at 768
+says the same and reached main unchanged, the branch merged without a
+squash (67eecbd); the merge commit's message names c0c35d6 and supersedes
+it. The fork stays 1054, Genre taking its 96 at 768
 and above the fork alike; Record there is 173, from 269. The new spec
 leaves one label per run behind, as `table-98` does; the ledger judges
 genres only. The list query's genres are read as json, tested on local
@@ -47823,3 +47824,28 @@ standing: step 155 appeared twice, the stale copy removed by hand
 old copy; the applier's "restored" for a block it already had is the sign.
 Not fixed: the script is report-and-insert by design, and matching by id
 instead of text is a change to the tool nobody has asked for.
+
+## 18 Oct: assertion 12's figures, registered before the wall target arrived, confirmed
+
+Before the relayed Wall and Pull target (6077355) was read, assertion 12
+was registered to read 10 ruling something new and 9 unnamed. Against
+67eecbd's target it read 8 and 11; against 6077355's it reads 10 and 9.
+The mechanism agrees with the prediction: two calls, §W.8's and one of
+§W.29's, moved from prose ("so this is new and owes no entry", "This is
+new, so no entry is owed") to the fixed form "No entry: nothing was ruled
+here before", so 8 + 2 and 11 − 2. Both readings total 23, with 4 named, 0
+quoting a phrase, 4 draft fixes and 3 other mentions. Report only, per
+Adam's cap; index 13 PASS.
+
+## 18 Oct: a file's contents are not its additions
+
+Before stating what an arriving file adds, read the receiving copy. A
+file's contents are not its additions, and a difference read from one side
+is not a difference. The relayed wall target was described as adding the
+scroll ruling and the unreachable second window; both had been in the
+repo since 3a8876a (15 Oct) and 7d10f1e (16 Oct), and the file's only
+change was the two calls above. It is the same defect as "several Chromium
+instances" and Design's bold-fault claim, now on all three sides. The
+coordinator asked for this as a Maintaining note in
+`HANDOFF-wall-and-pull.md`; that section is Design's prose, so it waits on
+Design's save and stands here meanwhile.
