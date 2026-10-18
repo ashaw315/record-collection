@@ -16,8 +16,7 @@ describe('the sidebar’s figures', () => {
   /*
     Coordinator, 10 Oct: the fork is set from Record at the width it has at a
     768 window, 269 then; 128 is the floor Design ruled. The Genre column
-    (Design's PROPOSAL of 18 Oct, on a branch, not a filed ruling) draws 96
-    at 768 and above the fork alike, so it moves 96 from Record to the other
+    (§T.4, T.4/genre-to-content) draws 96 at 768 and above the fork alike, so it moves 96 from Record to the other
     columns and the fork does not move.
   */
   it('forks at 1054: Record at 173, the other six columns’ 463.6 with Genre’s 96, and the 417', () => {

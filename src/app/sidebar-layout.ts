@@ -32,7 +32,7 @@ export const RECORD_MINIMUM = 128;
 /**
  * Label, Format, Year, Cond. and Paid at their content's own widths with
  * their 16 of padding, measured with it: 136.6, 62.2, 52.4, 54.5, 61.9; and
- * Genre's 96, Design's PROPOSAL of 18 Oct on a branch, not a filed ruling.
+ * Genre's stated 96, its padding included (§T.4, T.4/genre-to-content).
  */
 export const OTHER_COLUMNS = 367.6 + 96;
 

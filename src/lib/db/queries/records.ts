@@ -412,8 +412,8 @@ const ROOT_OF_GENRE = sql`CROSS JOIN LATERAL (
 
 /**
  * The Genre column's names: the same roots the Genre order reads, each once,
- * alphabetical, so a row shows why it sits where it does under that order.
- * Built on a branch against Design's proposal of 18 Oct, not a filed ruling.
+ * alphabetical, so a row shows why it sits where it does under that order
+ * (§T.4).
  */
 const TOP_GENRES = sql<string[]>`(
   SELECT coalesce(json_agg(DISTINCT root.name ORDER BY root.name), '[]'::json)

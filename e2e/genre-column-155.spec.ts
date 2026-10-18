@@ -4,9 +4,8 @@ import { FORK, RECORD_MINIMUM } from '../src/app/sidebar-layout';
 import { login } from './sign-in';
 
 /**
- * The Genre column, built on the branch `preview/genre-column` against
- * Design's PROPOSED rule of 18 Oct, NOT a filed ruling: Genre 96 wide
- * wherever it draws, names wrapping at their own spaces, each genre its own
+ * The Genre column (§T.4, T.4/genre-to-content): Genre 96 wide
+ * wherever it draws, its 16 of padding included, names wrapping at their own spaces, each genre its own
  * element with the dot drawn between, Record taking the rest. What a
  * component render cannot see is asserted here: the width, the drawn dot,
  * and the genres on the second line below 768. Each fails against the

@@ -74,15 +74,14 @@ describe('the empty state’s figure, sentence and control', () => {
 
 
 /**
- * The Genre column, built on a branch as a preview against Design's
- * PROPOSED rule of 18 Oct, not a filed ruling: after Record, its header the
+ * The Genre column (§T.4): after Record, its header the
  * Genre order's control, each top-level genre its own element so the
  * separator is drawn between them and never enters the text, nothing for a
  * record with none, and below 768 the genres first on the row's second line
  * where Label goes. Each fails against the table as built, which has no
  * Genre column.
  */
-describe('the Genre column (preview)', () => {
+describe('the Genre column', () => {
   const row = (title: string, topGenres: string[], label: string | null) => ({
     id: `00000000-0000-4000-8000-00000000000${title.length % 10}`,
     title,

@@ -228,7 +228,7 @@ export default defineConfig({
        */
       testMatch: [
         /collection-filters\.spec\.ts$/,
-        /* The Genre column's preview (branch only): its second line at 390 and 320 on the phone's engine. */
+        /* The Genre column (§T.4): its second line at 390 and 320 on the phone's engine. */
         /genre-column-155\.spec\.ts$/,
         /* Steps 113 and 114: the sidebar, its figures and rings, and the header's full width, on the phone's engine. */
         /sidebar-113\.spec\.ts$/,

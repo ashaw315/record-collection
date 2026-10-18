@@ -136,8 +136,8 @@ const HEADER_SORT: Partial<Record<string, RecordSortField>> = { Record: 'title',
 
 /**
  * The Genre column's width, its 16 of padding inside it, so names wrap at
- * their own spaces within 80: Design's PROPOSAL of 18 Oct, built on a
- * branch for Adam to see at 1054, not a filed ruling. Record takes the rest.
+ * their own spaces within 80 (§T.4, T.4/genre-to-content). Stated rather
+ * than measured from content, so Record takes the rest by construction.
  */
 const GENRE_WIDTH = 'w-[96px] min-w-[96px] max-w-[96px]';
 

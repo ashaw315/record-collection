@@ -677,8 +677,7 @@ describe('GET /api/records — sorting', () => {
     artists: fails against it.
   */
   /*
-    The Genre column (Design's proposal of 18 Oct, previewed on a branch, not
-    a filed ruling): a row carries the genres the Genre order reads, its
+    The Genre column (§T.4, T.4/genre-to-content): a row carries the genres the Genre order reads, its
     top-level ones, each once, alphabetical. Fails against the row as built,
     which carries none.
   */
