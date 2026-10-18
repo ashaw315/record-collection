@@ -300,7 +300,8 @@ export function CollectionList({
                   )}
                 </td>
 
-                <td className={`${cell} hidden pl-4 text-left md:table-cell ${GENRE_WIDTH}`}>
+                {/* A single word wider than the 80 breaks within itself, a rare fallback (T.4/genre-to-content). */}
+                <td className={`${cell} hidden pl-4 text-left [overflow-wrap:anywhere] md:table-cell ${GENRE_WIDTH}`}>
                   <Genres names={row.topGenres} />
                 </td>
 

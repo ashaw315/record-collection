@@ -97,3 +97,35 @@ for (const width of [390, 320]) {
     expect(line.before, 'a dot between the genres and the label').toBe('" · "');
   });
 }
+
+/**
+ * T.4/genre-to-content: "A single word wider than the 80 of content breaks
+ * within itself." Fails against a cell that only wraps at spaces, where the
+ * word runs past the column and widens it or overflows it.
+ */
+test('a single word wider than the 80 of content breaks within itself, and the column stays 96', async ({ page }) => {
+  const suffix = `g155w${Date.now().toString(36)}${Math.floor(Math.random() * 1e4)}`;
+  const post = async (path: string, data: unknown) => {
+    const response = await page.request.post(path, { data, failOnStatusCode: false });
+    expect(response.status(), `${path} ${JSON.stringify(data)}`).toBe(201);
+    const body = (await response.json()) as { id: string };
+    trackCreated(path, body);
+    return body;
+  };
+  const word = `Psychedelicdronetronica${suffix}`;
+  const genre = await post('/api/genres', { name: word });
+  const artist = await post('/api/artists', { name: `Wide-${suffix}` });
+  trackArtist(artist.id);
+  await post('/api/records', { title: `Wide ${suffix}`, artistId: artist.id, genreIds: [genre.id] });
+  await open(page, FORK, suffix);
+  const m = await page.locator('main [data-collection-table] tbody tr').filter({ has: page.getByRole('link', { name: `Wide ${suffix}`, exact: true }) }).evaluate((tr) => {
+    const td = tr.querySelectorAll('td')[1] as HTMLElement;
+    const name = td.querySelector('[data-genre]') as HTMLElement;
+    const lines = name.getClientRects().length;
+    return { cell: td.getBoundingClientRect().width, right: name.getBoundingClientRect().right, cellRight: td.getBoundingClientRect().right, lines, scroll: td.scrollWidth, client: td.clientWidth };
+  });
+  expect(m.cell, 'the column stays 96').toBe(96);
+  expect(m.lines, 'the word set on more than one line').toBeGreaterThan(1);
+  expect(m.right, 'and inside the cell').toBeLessThanOrEqual(m.cellRight);
+  expect(m.scroll, 'nothing overflows the cell').toBeLessThanOrEqual(m.client);
+});
