@@ -47847,5 +47847,5 @@ repo since 3a8876a (15 Oct) and 7d10f1e (16 Oct), and the file's only
 change was the two calls above. It is the same defect as "several Chromium
 instances" and Design's bold-fault claim, now on all three sides. The
 coordinator asked for this as a Maintaining note in
-`HANDOFF-wall-and-pull.md`; that section is Design's prose, so it waits on
-Design's save and stands here meanwhile.
+`HANDOFF-wall-and-pull.md`; that section is Design's prose, so it waited on
+Design's save. Closed: Design filed it in bbde83e, taken in that day.
