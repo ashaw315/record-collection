@@ -677,31 +677,61 @@ describe('GET /api/records — sorting', () => {
     artists: fails against it.
   */
   describe('the tie-break within an order', () => {
+    /*
+      Ids run against the expected order, so any level the tie-break loses
+      falls through to the id and reverses what follows. The Doors' five
+      separate each level: Absolutely Live (1970) sorts before The Soft
+      Parade (1969) by title but after it by year; Absolutely Live and
+      Morrison Hotel share 1970 and only their titles part them; An American
+      Prayer is undated here and sorts first by title, so only "undated
+      last" puts it at the end.
+    */
     async function tied() {
       const a = async (name: string) => (await db.execute<{ id: string }>(sql`INSERT INTO artists (name) VALUES (${name}) RETURNING id`)).rows[0].id;
       const rock = (await db.execute<{ id: string }>(sql`INSERT INTO genres (name) VALUES ('Rock') RETURNING id`)).rows[0].id;
       const doors = await a('The Doors');
       const lennon = await a('John Lennon');
-      const rec = async (id: string, title: string, artistId: string, year: number) => {
+      const rec = async (id: string, title: string, artistId: string, year: number | null) => {
         await db.execute(sql`INSERT INTO records (id, artist_id, title, release_year) VALUES (${id}::uuid, ${artistId}, ${title}, ${year})`);
         await db.execute(sql`INSERT INTO record_genres (record_id, genre_id) VALUES (${id}::uuid, ${rock})`);
       };
-      await rec('10000000-0000-4000-8000-000000000001', 'The Soft Parade', doors, 1969);
-      await rec('20000000-0000-4000-8000-000000000002', 'Mind Games', lennon, 1969);
-      await rec('30000000-0000-4000-8000-000000000003', 'The Doors', doors, 1967);
+      await rec('10000000-0000-4000-8000-000000000001', 'An American Prayer', doors, null);
+      await rec('20000000-0000-4000-8000-000000000002', 'Morrison Hotel', doors, 1970);
+      await rec('30000000-0000-4000-8000-000000000003', 'Absolutely Live', doors, 1970);
+      await rec('40000000-0000-4000-8000-000000000004', 'The Soft Parade', doors, 1969);
+      await rec('50000000-0000-4000-8000-000000000005', 'The Doors', doors, 1967);
+      await rec('60000000-0000-4000-8000-000000000006', 'Mind Games', lennon, 1969);
     }
     const order = async (sort: string) =>
       (await (await listRecords(request(`/api/records?sort=${sort}&pageSize=50`))).json()).data.map((r: { title: string }) => r.title);
+    /* Artist, then year with the undated last, then title: what every tie below resolves to. */
+    const BY_TIE_BREAK = ['Mind Games', 'The Doors', 'The Soft Parade', 'Absolutely Live', 'Morrison Hotel', 'An American Prayer'];
 
-    it('orders a genre tie by artist, then year, then title, so one artist’s records stand together', async () => {
+    it('orders a genre tie by artist, then year with the undated last, then title, so one artist’s records stand together', async () => {
       await tied();
-      expect(await order('genre:asc')).toEqual(['Mind Games', 'The Doors', 'The Soft Parade']);
-      expect(await order('genre:desc'), 'the tie-break does not reverse with the key').toEqual(['Mind Games', 'The Doors', 'The Soft Parade']);
+      expect(await order('genre:asc')).toEqual(BY_TIE_BREAK);
+      expect(await order('genre:desc'), 'the tie-break does not reverse with the key').toEqual(BY_TIE_BREAK);
     });
 
-    it('breaks a tie the same way under every other order: two records of one year', async () => {
+    it('breaks a tie the same way under artist, date bought, price and year', async () => {
       await tied();
-      expect(await order('releaseYear:asc')).toEqual(['The Doors', 'Mind Games', 'The Soft Parade']);
+      expect(await order('artist:asc'), 'one artist’s records tie on the key').toEqual(BY_TIE_BREAK);
+      expect(await order('purchaseDate:asc'), 'no record has a date bought: all six tie').toEqual(BY_TIE_BREAK);
+      expect(await order('purchasePrice:desc'), 'nor a price').toEqual(BY_TIE_BREAK);
+      expect(await order('releaseYear:asc'), 'Mind Games and The Soft Parade tie on 1969, Absolutely Live and Morrison Hotel on 1970').toEqual([
+        'The Doors', 'Mind Games', 'The Soft Parade', 'Absolutely Live', 'Morrison Hotel', 'An American Prayer',
+      ]);
+    });
+
+    /* ABBA's is the later, so the year alone would put Queen first: only the artist puts ABBA there. */
+    it('breaks a tie under title by artist: two records of one name', async () => {
+      const a = async (name: string) => (await db.execute<{ id: string }>(sql`INSERT INTO artists (name) VALUES (${name}) RETURNING id`)).rows[0].id;
+      const queen = await a('Queen');
+      const abba = await a('ABBA');
+      await db.execute(sql`INSERT INTO records (id, artist_id, title, release_year) VALUES ('10000000-0000-4000-8000-000000000001'::uuid, ${queen}, 'Greatest Hits', 1981)`);
+      await db.execute(sql`INSERT INTO records (id, artist_id, title, release_year) VALUES ('20000000-0000-4000-8000-000000000002'::uuid, ${abba}, 'Greatest Hits', 1992)`);
+      const artists = (await (await listRecords(request('/api/records?sort=title:asc&pageSize=50'))).json()).data.map((r: { artist: { name: string } }) => r.artist.name);
+      expect(artists).toEqual(['ABBA', 'Queen']);
     });
   });
 });

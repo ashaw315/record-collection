@@ -47772,3 +47772,23 @@ grid, is cleared and pushed. No spec outside the step's own tests read
 the old id-only order within a tie. The wall target with its two
 rewrites has still not crossed; 12 reads 8 new rulings and 11 unnamed
 until it does.
+
+## 18 Oct: step 154, the tie-break's tests named for what they check; the italic line retired
+
+The second tie-break test was named "breaks a tie the same way under every
+other order" and checked only Release year, and no tie in the fixture told
+year from title or tested an undated record. Now six records whose ids run
+against the expected order, each level separated by a record (Absolutely
+Live 1970 before The Soft Parade 1969 by title, after it by year; Morrison
+Hotel and Absolutely Live share 1970; An American Prayer undated and first
+by title); the orders checked are genre both ways, artist, date bought,
+price, year, and title through two records of one name. The new tests
+passed first, as the behaviour existed. Each level was then taken out
+one at a time and the tests failed: without artist, 3 of 3; without
+year, 2; with the undated first, 2; without title, 2. The first title test
+still passed without artist, its year agreeing; ABBA's year moved to 1992
+and it failed. Postgres sorts ASC nulls last by default, so the undated
+case is held against NULLS FIRST, not against dropping the clause; the id
+level holds paging and no order test can reach it. The fixture is the
+test's own, truncated before each test, so step level. The italic line
+showing the sorting genre is retired: Design's Genre column answers it.
