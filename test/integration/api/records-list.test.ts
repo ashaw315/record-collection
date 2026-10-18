@@ -676,6 +676,38 @@ describe('GET /api/records — sorting', () => {
     Ids are fixed here so the old id-only tie-break would interleave the
     artists: fails against it.
   */
+  /*
+    The Genre column (§T.4, T.4/genre-to-content): a row carries the genres the Genre order reads, its
+    top-level ones, each once, alphabetical. Fails against the row as built,
+    which carries none.
+  */
+  describe('a row’s top-level genres', () => {
+    it('carries each record’s roots once, alphabetical, a child read as its root, and none for the genreless', async () => {
+      const g = async (name: string, parent?: string) =>
+        (await db.execute<{ id: string }>(sql`INSERT INTO genres (name, parent_genre_id) VALUES (${name}, ${parent ?? null}) RETURNING id`)).rows[0].id;
+      const a = (await db.execute<{ id: string }>(sql`INSERT INTO artists (name) VALUES ('Genre Probe') RETURNING id`)).rows[0].id;
+      const rock = await g('Rock');
+      const jazz = await g('Jazz');
+      const folk = await g('Folk, World, & Country');
+      const punk = await g('Punk', rock);
+      const oi = await g('Oi!', punk);
+      const rec = async (title: string, genreIds: string[]) => {
+        const id = (await db.execute<{ id: string }>(sql`INSERT INTO records (artist_id, title) VALUES (${a}, ${title}) RETURNING id`)).rows[0].id;
+        for (const genreId of genreIds) await db.execute(sql`INSERT INTO record_genres (record_id, genre_id) VALUES (${id}, ${genreId})`);
+      };
+      await rec('Three roots given out of order', [rock, folk, jazz]);
+      await rec('Two children of one root', [punk, oi]);
+      await rec('A root and its own child', [rock, oi]);
+      await rec('No genre', []);
+      const rows: { title: string; topGenres: string[] }[] = (await (await listRecords(request('/api/records?pageSize=50'))).json()).data;
+      const by = Object.fromEntries(rows.map((r) => [r.title, r.topGenres]));
+      expect(by['Three roots given out of order']).toEqual(['Folk, World, & Country', 'Jazz', 'Rock']);
+      expect(by['Two children of one root'], 'a grandchild and a child both read as Rock, once').toEqual(['Rock']);
+      expect(by['A root and its own child']).toEqual(['Rock']);
+      expect(by['No genre'], 'an empty list, not null').toEqual([]);
+    });
+  });
+
   describe('the tie-break within an order', () => {
     /*
       Ids run against the expected order, so any level the tie-break loses

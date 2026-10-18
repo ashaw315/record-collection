@@ -29,17 +29,22 @@ export const CAP = 1440;
  */
 export const RECORD_MINIMUM = 128;
 
-/** Label, Format, Year, Cond. and Paid at their content's own widths with their 16 of padding, measured with it: 136.6, 62.2, 52.4, 54.5, 61.9. */
-export const OTHER_COLUMNS = 367.6;
+/**
+ * Label, Format, Year, Cond. and Paid at their content's own widths with
+ * their 16 of padding, measured with it: 136.6, 62.2, 52.4, 54.5, 61.9; and
+ * Genre's stated 96, its padding included (§T.4, T.4/genre-to-content).
+ */
+export const OTHER_COLUMNS = 367.6 + 96;
 
 /**
  * What the fork is set from, on the coordinator's ruling of 10 Oct: the
  * width Record has at a 768 window with no sidebar, which Adam has judged
  * from step 98's capture. At the 128 floor the fork would be 913 and Record
  * would fall from about 505 to 128 across it, narrower than on the window
- * the fork exists to keep the sidebar out of.
+ * the fork exists to keep the sidebar out of. The Genre column takes its 96
+ * from Record at 768 and above the fork alike, so the fork stays at 1054.
  */
-export const RECORD_AT_FORK = 269;
+export const RECORD_AT_FORK = 269 - 96;
 
 /** The narrowest window that takes the sidebar. Below it the two-row band and the filters above the table stand. */
 export const FORK = Math.ceil(RECORD_AT_FORK + OTHER_COLUMNS + SIDEBAR.taken);

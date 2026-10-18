@@ -72,3 +72,66 @@ describe('the empty state’s figure, sentence and control', () => {
   }
 });
 
+
+/**
+ * The Genre column (§T.4): after Record, its header the
+ * Genre order's control, each top-level genre its own element so the
+ * separator is drawn between them and never enters the text, nothing for a
+ * record with none, and below 768 the genres first on the row's second line
+ * where Label goes. Each fails against the table as built, which has no
+ * Genre column.
+ */
+describe('the Genre column', () => {
+  const row = (title: string, topGenres: string[], label: string | null) => ({
+    id: `00000000-0000-4000-8000-00000000000${title.length % 10}`,
+    title,
+    releaseYear: 1975,
+    conditionMedia: 'VG+' as string | null,
+    purchasePrice: null,
+    artist: { id: 'a', name: 'Artist' },
+    label: label === null ? null : { id: 'l', name: label },
+    format: null,
+    store: null,
+    matchedVia: null,
+    topGenres,
+  });
+  const table = (rows: ReturnType<typeof row>[], search = '') =>
+    renderToStaticMarkup(<CollectionList rows={rows} params={parseCollectionParams(new URLSearchParams(search))} collectionTotal={rows.length} />);
+  const cells = (html: string) => Array.from(html.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/g)).map((m) => Array.from(m[1].matchAll(/<t[hd][^>]*>([\s\S]*?)<\/t[hd]>/g)).map((c) => c[1]));
+
+  it('stands immediately after Record, its header the Genre order’s control', () => {
+    const html = table([row('Wired', ['Jazz', 'Rock'], 'Epic')]);
+    const heads = cells(html)[0].map((h) => h.replace(/<[^>]+>/g, '').replace(/ [↑↓]$/, ''));
+    expect(heads).toEqual(['Record', 'Genre', 'Label', 'Format', 'Year', 'Cond.', 'Paid']);
+    expect(cells(html)[0][1], 'a link sorting by genre').toMatch(/data-sort-header[^>]*href="\/\?sort=genre%3Aasc"|href="\/\?sort=genre%3Aasc"[^>]*data-sort-header/);
+  });
+
+  it('marks its header sorted when the Genre order is', () => {
+    const html = table([row('Wired', ['Jazz', 'Rock'], 'Epic')], 'sort=genre:asc');
+    expect(html).toMatch(/aria-sort="ascending"[^>]*>(?:(?!<\/th>)[\s\S])*Genre/);
+  });
+
+  it('sets each genre as its own element, in the order given, with no separator in the text', () => {
+    const html = table([row('The Hurdy Gurdy Man', ['Folk, World, & Country', 'Rock'], 'Epic')]);
+    const cell = cells(html)[1][1];
+    expect(Array.from(cell.matchAll(/<span[^>]*data-genre=""[^>]*>([^<]*)<\/span>/g)).map((m) => m[1])).toEqual(['Folk, World, &amp; Country', 'Rock']);
+    expect(cell.replace(/<[^>]+>/g, ''), 'the dot is drawn, not written').not.toContain('·');
+  });
+
+  it('leaves a genreless record’s cell empty: no dash, nothing drawn', () => {
+    const cell = cells(table([row('Never Too Much', [], 'Epic')]))[1][1];
+    expect(cell).toBe('');
+  });
+
+  it('puts the genres first on the second line below 768, where Label goes, each its own element', () => {
+    const html = table([row('Wired', ['Jazz', 'Rock'], 'Epic')]);
+    const line = /<div[^>]*md:hidden[^>]*>([\s\S]*?)<\/div>/.exec(cells(html)[1][0])?.[1] ?? '';
+    expect(Array.from(line.matchAll(/data-genre=""[^>]*>([^<]*)</g)).map((m) => m[1])).toEqual(['Jazz', 'Rock']);
+    expect(line.indexOf('data-genre'), 'genres before the label').toBeLessThan(line.indexOf('Epic'));
+  });
+
+  it('still draws the second line for a record with genres and no label or condition', () => {
+    const html = table([{ ...row('Wired', ['Jazz'], null), conditionMedia: null }]);
+    expect(cells(html)[1][0]).toMatch(/md:hidden[\s\S]*data-genre=""[^>]*>Jazz</);
+  });
+});

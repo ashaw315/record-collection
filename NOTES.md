@@ -47792,3 +47792,34 @@ case is held against NULLS FIRST, not against dropping the clause; the id
 level holds paging and no order test can reach it. The fixture is the
 test's own, truncated before each test, so step level. The italic line
 showing the sorting genre is retired: Design's Genre column answers it.
+
+## 18 Oct: step 155, the Genre column, previewed against a proposal, then ruled
+
+Built first on `preview/genre-column` against Design's proposed width,
+held unsaved so nothing would need withdrawing if Adam dropped the
+column: Genre 96 wide wherever it draws, names wrapping at their own
+spaces, Record taking the rest. Adam saw the table at 1054 with his own
+titles and kept the column; Design then filed the width as
+T.4/genre-to-content, 96 with the cell's 16 of padding included, which
+was the reading the preview was built on. This entry replaces the one the
+branch carried, which said the width was a proposal and not a ruling: true
+when written, false once the ruling landed. The preview commit's message
+says the same and goes to main only through a squash merge, so it does not
+stand in main's history. The fork stays 1054, Genre taking its 96 at 768
+and above the fork alike; Record there is 173, from 269. The new spec
+leaves one label per run behind, as `table-98` does; the ledger judges
+genres only. The list query's genres are read as json, tested on local
+Postgres; on Neon the evidence is Adam's look at the preview, which drew
+the column, not a test.
+
+## 18 Oct: `apply-code-region` adds an edited step block beside the old one
+
+The applier finds a block in the handoff by its exact text. Edit a block's
+`text` in `scripts/handoff-code-region.json` and the applier no longer
+finds it, so it inserts the edited version as new and leaves the old one
+standing: step 155 appeared twice, the stale copy removed by hand
+(6c74559). After editing a block, count it in the handoff
+(`grep -c '^155\. ' docs/design/HANDOFF-wall-and-pull.md`) and remove the
+old copy; the applier's "restored" for a block it already had is the sign.
+Not fixed: the script is report-and-insert by design, and matching by id
+instead of text is a change to the tool nobody has asked for.

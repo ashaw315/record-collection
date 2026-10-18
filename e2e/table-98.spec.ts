@@ -63,20 +63,38 @@ const titles = (page: Page) => page.locator('main table tbody tr').evaluateAll((
 test.beforeEach(async ({ page }) => login(page));
 
 /* Fails against the built rows: 57.5 tall with two lines, where the link is the title's text and the rest of the row goes nowhere. */
-test('a row is at least 44, hairlined and unfilled, and the whole of it is one link to its record', async ({ page }) => {
+/*
+  T.4/rows-44: 44 is the floor and a row grows with its content. A row of
+  title and artist, two lines, is the floor exactly; that was the check this
+  test was built for, and it named no condition, so a seeded genre that wraps
+  in the Genre column (§T.4) made one row three lines and read as a defect.
+  The condition is now read from the row: its tallest cell's lines.
+*/
+test('a row is at least 44, a row of title and artist exactly 44, hairlined and unfilled, and the whole of it is one link to its record', async ({ page }) => {
   const f = await seed(page);
   await open(page, `&artistId=${f.artistId}&sort=title:asc`);
   const m = await page.locator('main table tbody tr').evaluateAll((rows) => rows.map((r) => {
     const cs = getComputedStyle(r);
     const box = r.getBoundingClientRect();
-    return { height: box.height, links: r.querySelectorAll('a').length, fill: cs.backgroundColor, rule: getComputedStyle(r.querySelector('td') as HTMLElement).borderBottomWidth, right: box.right, mid: box.top + box.height / 2 };
+    /* Each shown cell's own content height, read through a range over it: the cell's box is the row's, whatever it holds. */
+    const lines = Math.max(...Array.from(r.querySelectorAll('td')).filter((td) => td.getClientRects().length > 0).map((td) => {
+      const range = document.createRange();
+      range.selectNodeContents(td);
+      return Math.round(range.getBoundingClientRect().height / parseFloat(getComputedStyle(td).lineHeight));
+    }));
+    return { height: box.height, lines, links: r.querySelectorAll('a').length, fill: cs.backgroundColor, rule: getComputedStyle(r.querySelector('td') as HTMLElement).borderBottomWidth, right: box.right, mid: box.top + box.height / 2 };
   }));
   expect(m.length).toBe(3);
   for (const row of m) {
-    expect(row.height, 'a row of title and artist is the floor exactly, its hairline included').toBe(44);
+    expect(row.height, 'no row under the floor').toBeGreaterThanOrEqual(44);
+    if (row.lines === 2) expect(row.height, 'a row of title and artist is the floor exactly, its hairline included').toBe(44);
+    else expect(row.height, `a row of ${row.lines} lines grows with them`).toBeGreaterThan(44);
     expect(row.links, 'one link').toBe(1);
     expect(row.fill, 'no fill').toBe('rgba(0, 0, 0, 0)');
   }
+  expect(m.filter((row) => row.lines === 2).length, 'the exact case is reached: rows of title and artist alone').toBeGreaterThan(0);
+  /* At least one, not a count: the ruling says a row grows with its content, not how many rows do. */
+  expect(m.filter((row) => row.lines > 2).length, 'and a growing one: Alpha’s genre wraps in its 80').toBeGreaterThan(0);
   expect(m[0].rule, 'a hairline beneath a row').toBe('1px');
   /* The far end of the row, in the Paid column, well clear of the title's text. */
   await page.mouse.click(m[1].right - 12, m[1].mid);
@@ -93,12 +111,12 @@ test('text is left and figures right in tabular figures, under 11 label headers'
     const cells = Array.from(row.querySelectorAll<HTMLElement>('td')).map((td) => { const cs = getComputedStyle(td); return { text: (td.textContent ?? '').trim().slice(0, 12), align: cs.textAlign, numeric: cs.fontVariantNumeric, size: cs.fontSize }; });
     return { heads, cells };
   });
-  expect(m.heads.map((h) => h.name)).toEqual(['Record', 'Label', 'Format', 'Year', 'Cond.', 'Paid']);
+  expect(m.heads.map((h) => h.name)).toEqual(['Record', 'Genre', 'Label', 'Format', 'Year', 'Cond.', 'Paid']);
   for (const h of m.heads) expect(h, h.name).toMatchObject({ size: '11px', transform: 'uppercase' });
-  expect(m.heads.map((h) => h.align), 'a header sits over its column’s edge').toEqual(['left', 'left', 'left', 'right', 'left', 'right']);
-  expect(m.cells.map((c) => c.align)).toEqual(['left', 'left', 'left', 'right', 'left', 'right']);
-  expect(m.cells[3].numeric, 'the year').toContain('tabular-nums');
-  expect(m.cells[5].numeric, 'the price').toContain('tabular-nums');
+  expect(m.heads.map((h) => h.align), 'a header sits over its column’s edge').toEqual(['left', 'left', 'left', 'left', 'right', 'left', 'right']);
+  expect(m.cells.map((c) => c.align)).toEqual(['left', 'left', 'left', 'left', 'right', 'left', 'right']);
+  expect(m.cells[4].numeric, 'the year').toContain('tabular-nums');
+  expect(m.cells[6].numeric, 'the price').toContain('tabular-nums');
   for (const c of m.cells) expect(c.size, c.text).toBe('13px');
 });
 
@@ -109,7 +127,7 @@ test('a header is a sort control: the sorted one is ink, underlined, with its ar
   const header = (name: string) => page.locator('main table thead [data-sort-header]').filter({ hasText: name });
   const read = (name: string) => header(name).evaluate((el) => { const cs = getComputedStyle(el); const label = el.querySelector('[data-sort-name]') as HTMLElement; const ls = getComputedStyle(label); return { text: (el.textContent ?? '').trim(), colour: cs.color, line: ls.textDecorationLine, thickness: ls.textDecorationThickness, sorted: el.closest('th')?.getAttribute('aria-sort') ?? null }; });
 
-  expect(await page.locator('main table thead [data-sort-header]').evaluateAll((all) => all.map((el) => (el.textContent ?? '').trim())), 'the three orders that have a column').toEqual(['Record', 'Year', 'Paid']);
+  expect(await page.locator('main table thead [data-sort-header]').evaluateAll((all) => all.map((el) => (el.textContent ?? '').trim())), 'the orders that have a column').toEqual(['Record', 'Genre', 'Year', 'Paid']);
   expect(await read('Year')).toEqual({ text: 'Year', colour: LABEL_INK, line: 'none', thickness: expect.any(String), sorted: null });
 
   await header('Year').click();
