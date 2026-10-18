@@ -47792,3 +47792,22 @@ case is held against NULLS FIRST, not against dropping the clause; the id
 level holds paging and no order test can reach it. The fixture is the
 test's own, truncated before each test, so step level. The italic line
 showing the sorting genre is retired: Design's Genre column answers it.
+
+## 18 Oct: PREVIEW ONLY, the Genre column on `preview/genre-column`
+
+**The width here is Design's proposal, not a filed ruling.** Design has
+the rule ready and deliberately unsaved: Genre 96 wide wherever it draws,
+names wrapping at their own spaces, each genre its own element with the
+dot drawn between, Record taking the rest. Built so Adam can see the table
+at 1054 with his own titles; then Design files the ruling or this branch
+is thrown away. Nothing on this branch is evidence of a decision, and it
+is not to be merged as it stands. The 96 is read as including the cell's
+16 of padding, which gives Design's 173 for Record at the fork; the fork
+stays 1054, since Genre takes its 96 from Record at 768 and above the fork
+alike. The separator, the column's place, the narrow line and the empty
+cell are filed rulings (§T.4, T.4/genre-commas); only the width is not.
+Specs touched beyond the new one: `table-98`'s header list and sortable
+headers, the fork's constants, the mobile project's file list. The new
+spec leaves one label per run behind, as `table-98` does; the ledger
+judges genres only. The list query's genres are read as json, verified on
+local Postgres; the preview is their first run on Neon.

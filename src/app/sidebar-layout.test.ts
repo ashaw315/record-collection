@@ -13,12 +13,20 @@ describe('the sidebar’s figures', () => {
     expect(SIDEBAR.width + SIDEBAR.rule + SIDEBAR.gap, 'the content column’s first element').toBe(377);
   });
 
-  /* Coordinator, 10 Oct: the fork is set from Record at 269, the width it has at a 768 window today; 128 is the floor Design ruled. */
-  it('forks at 1054: Record at 269, the other five columns’ 367.6, and the 417', () => {
+  /*
+    Coordinator, 10 Oct: the fork is set from Record at the width it has at a
+    768 window, 269 then; 128 is the floor Design ruled. The Genre column
+    (Design's PROPOSAL of 18 Oct, on a branch, not a filed ruling) draws 96
+    at 768 and above the fork alike, so it moves 96 from Record to the other
+    columns and the fork does not move.
+  */
+  it('forks at 1054: Record at 173, the other six columns’ 463.6 with Genre’s 96, and the 417', () => {
+    expect(OTHER_COLUMNS, 'the five measured on 10 Oct, and Genre').toBeCloseTo(367.6 + 96, 5);
+    expect(RECORD_AT_FORK, '269 less Genre’s 96').toBe(173);
     expect(RECORD_AT_FORK + OTHER_COLUMNS + SIDEBAR.taken).toBeCloseTo(1053.6, 5);
     expect(FORK).toBe(1054);
     expect(RECORD_MINIMUM, 'the longest title in two lines, measured once on 10 Oct').toBe(128);
-    expect(RECORD_MINIMUM + OTHER_COLUMNS + SIDEBAR.taken, 'the fork that floor alone would give').toBeCloseTo(912.6, 5);
+    expect(RECORD_MINIMUM + OTHER_COLUMNS + SIDEBAR.taken, 'the fork that floor alone would give').toBeCloseTo(1008.6, 5);
   });
 
   it('gives the content column the window less 417, and stops it where a 1440 window puts it', () => {

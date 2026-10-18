@@ -93,12 +93,12 @@ test('text is left and figures right in tabular figures, under 11 label headers'
     const cells = Array.from(row.querySelectorAll<HTMLElement>('td')).map((td) => { const cs = getComputedStyle(td); return { text: (td.textContent ?? '').trim().slice(0, 12), align: cs.textAlign, numeric: cs.fontVariantNumeric, size: cs.fontSize }; });
     return { heads, cells };
   });
-  expect(m.heads.map((h) => h.name)).toEqual(['Record', 'Label', 'Format', 'Year', 'Cond.', 'Paid']);
+  expect(m.heads.map((h) => h.name)).toEqual(['Record', 'Genre', 'Label', 'Format', 'Year', 'Cond.', 'Paid']);
   for (const h of m.heads) expect(h, h.name).toMatchObject({ size: '11px', transform: 'uppercase' });
-  expect(m.heads.map((h) => h.align), 'a header sits over its column’s edge').toEqual(['left', 'left', 'left', 'right', 'left', 'right']);
-  expect(m.cells.map((c) => c.align)).toEqual(['left', 'left', 'left', 'right', 'left', 'right']);
-  expect(m.cells[3].numeric, 'the year').toContain('tabular-nums');
-  expect(m.cells[5].numeric, 'the price').toContain('tabular-nums');
+  expect(m.heads.map((h) => h.align), 'a header sits over its column’s edge').toEqual(['left', 'left', 'left', 'left', 'right', 'left', 'right']);
+  expect(m.cells.map((c) => c.align)).toEqual(['left', 'left', 'left', 'left', 'right', 'left', 'right']);
+  expect(m.cells[4].numeric, 'the year').toContain('tabular-nums');
+  expect(m.cells[6].numeric, 'the price').toContain('tabular-nums');
   for (const c of m.cells) expect(c.size, c.text).toBe('13px');
 });
 
@@ -109,7 +109,7 @@ test('a header is a sort control: the sorted one is ink, underlined, with its ar
   const header = (name: string) => page.locator('main table thead [data-sort-header]').filter({ hasText: name });
   const read = (name: string) => header(name).evaluate((el) => { const cs = getComputedStyle(el); const label = el.querySelector('[data-sort-name]') as HTMLElement; const ls = getComputedStyle(label); return { text: (el.textContent ?? '').trim(), colour: cs.color, line: ls.textDecorationLine, thickness: ls.textDecorationThickness, sorted: el.closest('th')?.getAttribute('aria-sort') ?? null }; });
 
-  expect(await page.locator('main table thead [data-sort-header]').evaluateAll((all) => all.map((el) => (el.textContent ?? '').trim())), 'the three orders that have a column').toEqual(['Record', 'Year', 'Paid']);
+  expect(await page.locator('main table thead [data-sort-header]').evaluateAll((all) => all.map((el) => (el.textContent ?? '').trim())), 'the orders that have a column').toEqual(['Record', 'Genre', 'Year', 'Paid']);
   expect(await read('Year')).toEqual({ text: 'Year', colour: LABEL_INK, line: 'none', thickness: expect.any(String), sorted: null });
 
   await header('Year').click();

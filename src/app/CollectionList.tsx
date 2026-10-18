@@ -27,6 +27,8 @@ export type CollectionRow = {
   format: { id: string; name: string } | null;
   store: { id: string; name: string } | null;
   matchedVia: MatchedVia | null;
+  /** The roots the Genre order reads, each once, alphabetical; empty for a record with none. */
+  topGenres: string[];
 };
 
 /**
@@ -129,11 +131,19 @@ function Grid({ rows, covers }: { rows: CollectionRow[]; covers: Readonly<Record
 const ROW_SURFACE = 'oklch(0.731 0.004 80)';
 const INK_VALUE = 'oklch(0.19 0.008 60)';
 
-/** The three sort orders that have a column to carry them (§T.4). Date bought and Artist have none, which is why the Sort control stays. */
-const HEADER_SORT: Partial<Record<string, RecordSortField>> = { Record: 'title', Year: 'releaseYear', Paid: 'purchasePrice' };
+/** The sort orders that have a column to carry them (§T.4). Not every order has one, which is why the Sort control stays. */
+const HEADER_SORT: Partial<Record<string, RecordSortField>> = { Record: 'title', Genre: 'genre', Year: 'releaseYear', Paid: 'purchasePrice' };
+
+/**
+ * The Genre column's width, its 16 of padding inside it, so names wrap at
+ * their own spaces within 80: Design's PROPOSAL of 18 Oct, built on a
+ * branch for Adam to see at 1054, not a filed ruling. Record takes the rest.
+ */
+const GENRE_WIDTH = 'w-[96px] min-w-[96px] max-w-[96px]';
 
 const COLUMNS = [
   { name: 'Record', align: 'left', show: '' },
+  { name: 'Genre', align: 'left', show: `hidden md:table-cell ${GENRE_WIDTH}` },
   { name: 'Label', align: 'left', show: 'hidden md:table-cell' },
   { name: 'Format', align: 'left', show: '' },
   { name: 'Year', align: 'right', show: '' },
@@ -208,7 +218,8 @@ export function CollectionList({
         the header row sticking to the viewport. The hover surface is a
         plain rule so it is the value as written and not a compiled one.
       */}
-      <style>{`[data-collection-table] tbody tr:hover { background: ${ROW_SURFACE}; }`}</style>
+      <style>{`[data-collection-table] tbody tr:hover { background: ${ROW_SURFACE}; }
+[data-collection-table] [data-dotted] + [data-dotted]::before { content: " · "; }`}</style>
       <table className="w-full border-collapse text-detail">
         <caption className="sr-only">Records in the collection</caption>
         <thead>
@@ -280,9 +291,17 @@ export function CollectionList({
                     Format is no longer listed here: it is now a real column at
                     every width, and printing it twice below md was redundant.
                   */}
-                  {narrowLine !== '' && (
-                    <div className="mt-0.5 text-detail text-[oklch(0.44_0.008_70)] md:hidden">{narrowLine}</div>
+                  {(narrowLine !== '' || row.topGenres.length > 0) && (
+                    <div className="mt-0.5 text-detail text-[oklch(0.44_0.008_70)] md:hidden">
+                      {/* The genres leave their column with Label and set first on this line. */}
+                      <Genres names={row.topGenres} />
+                      {narrowLine !== '' && <span data-dotted="">{narrowLine}</span>}
+                    </div>
                   )}
+                </td>
+
+                <td className={`${cell} hidden pl-4 text-left md:table-cell ${GENRE_WIDTH}`}>
+                  <Genres names={row.topGenres} />
                 </td>
 
                 <td className={`${cell} hidden pl-4 text-left text-[oklch(0.44_0.008_70)] md:table-cell`}>
@@ -307,6 +326,20 @@ export function CollectionList({
       </table>
     </div>
   );
+}
+
+/**
+ * Each genre its own element, the dot drawn between them by the table's
+ * stylesheet, so the separator is never a character in the text and no
+ * genre's name can collide with it: Folk, World, & Country holds commas,
+ * Funk / Soul a slash. Nothing for a record with none.
+ */
+function Genres({ names }: { names: string[] }) {
+  return names.map((name) => (
+    <span key={name} data-genre="" data-dotted="">
+      {name}
+    </span>
+  ));
 }
 
 /* Sticks to the top of the viewport: the app's header scrolls away (§G.6), so nothing is above it. On paper, so rows pass beneath unseen. */

@@ -396,20 +396,29 @@ export function sortExpression(field: RecordSortField) {
       both directions.
     */
     case 'genre':
-      return sql`(
-        SELECT min(root.name) FROM record_genres rg
-        CROSS JOIN LATERAL (
-          WITH RECURSIVE up AS (
-            SELECT g.id, g.name, g.parent_genre_id, 0 AS depth FROM genres g WHERE g.id = rg.genre_id
-            UNION ALL
-            SELECT p.id, p.name, p.parent_genre_id, up.depth + 1 FROM genres p JOIN up ON p.id = up.parent_genre_id WHERE up.depth < 16
-          )
-          SELECT name FROM up WHERE parent_genre_id IS NULL LIMIT 1
-        ) root
-        WHERE rg.record_id = ${records.id}
-      )`;
+      return sql`(SELECT min(root.name) FROM record_genres rg ${ROOT_OF_GENRE} WHERE rg.record_id = ${records.id})`;
   }
 }
+
+/** Each of `rg`'s genres walked up to its root, the 16 bounding a cycle the schema can store. */
+const ROOT_OF_GENRE = sql`CROSS JOIN LATERAL (
+  WITH RECURSIVE up AS (
+    SELECT g.id, g.name, g.parent_genre_id, 0 AS depth FROM genres g WHERE g.id = rg.genre_id
+    UNION ALL
+    SELECT p.id, p.name, p.parent_genre_id, up.depth + 1 FROM genres p JOIN up ON p.id = up.parent_genre_id WHERE up.depth < 16
+  )
+  SELECT name FROM up WHERE parent_genre_id IS NULL LIMIT 1
+) root`;
+
+/**
+ * The Genre column's names: the same roots the Genre order reads, each once,
+ * alphabetical, so a row shows why it sits where it does under that order.
+ * Built on a branch against Design's proposal of 18 Oct, not a filed ruling.
+ */
+const TOP_GENRES = sql<string[]>`(
+  SELECT coalesce(json_agg(DISTINCT root.name ORDER BY root.name), '[]'::json)
+  FROM record_genres rg ${ROOT_OF_GENRE} WHERE rg.record_id = ${records.id}
+)`;
 
 export type MatchedVia = {
   filtered: Named;
@@ -424,6 +433,7 @@ export type ListedRecord = RecordRow & {
   format: Named | null;
   store: Named | null;
   matchedVia: MatchedVia | null;
+  topGenres: string[];
 };
 
 /**
@@ -516,6 +526,7 @@ export async function listRecords(options: {
       formatName: formats.name,
       storeId: recordStores.id,
       storeName: recordStores.name,
+      topGenres: TOP_GENRES,
     })
     .from(records)
     .leftJoin(artists, eq(artists.id, records.artistId))
@@ -575,6 +586,7 @@ export async function listRecords(options: {
 
   const hydrate = (row: (typeof rows)[number]) => ({
     ...row.record,
+    topGenres: row.topGenres,
     // artist_id is NOT NULL and the join is on the primary key, so this only
     // falls back if the row were deleted mid-query. Named rather than asserted
     // non-null: CLAUDE.md §6 forbids `!` to silence the compiler.
