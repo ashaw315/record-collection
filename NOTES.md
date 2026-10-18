@@ -47849,3 +47849,26 @@ instances" and Design's bold-fault claim, now on all three sides. The
 coordinator asked for this as a Maintaining note in
 `HANDOFF-wall-and-pull.md`; that section is Design's prose, so it waited on
 Design's save. Closed: Design filed it in bbde83e, taken in that day.
+
+## 18 Oct: a stale count in the handoff's Maintaining section is rewritten, not withdrawn
+
+Design asked what id and host a withdrawal entry against a handoff
+maintaining note should use, with the cap sentence's "eight" and "ten"
+standing against assertion 12's 10 and 9. None is owed, for four reasons
+in `scripts/check-index.mjs`:
+
+- The handoff is an index input, file key `H` (line 33).
+- The index reads three parts of it: the governs table and the
+  structural pointers (lines 114 and 115), and the build order (line 118,
+  and from HEAD's copy for the done marks at line 212).
+- Both build-order reads stop at `## Maintaining`, so nothing reads that
+  section.
+- An entry's host is looked up by `textOf` (line 308) in `byId` (line
+  87), built from `ALL` (line 86): the headings of L, S, W, G, M and T.
+  H has none, so an entry hosted there would fail as section-absent.
+
+Resolved by a rewrite with no entry (821c140), and no parser change was
+needed. No check reads the Maintaining section, and none should be built
+without a case that needs one. On 18 Oct I first cited lines 241 to 263
+for the fourth fact. Those are assertion 4's cross-reference loops, which
+skip H for the same reason but are not the withdrawal lookup.
