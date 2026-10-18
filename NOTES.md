@@ -47719,3 +47719,14 @@ it among them. **The build stands** (the reviewer: the root reading is
 right, so the wall and the table can never disagree); the sentence in
 step 152's block, the test's comment and the entry above said the
 readings agreed today, and now say this.
+
+## 17 Oct, 20:20: the gate at 546ed9b green on both projects; step 152 pushed
+
+Full suites, one worker, 18:46 to 20:19: unit 4394 passed, 5 skipped;
+chromium 926 passed, 1 skipped, ledger clean; mobile 384 passed, 4
+skipped, ledger clean; pressure level 1 in all 93 samples, browsers
+peaking at 2,522 MB. Report `../record-collection-gate-logs/546ed9b-gate-w1.txt`.
+Step 152 is cleared and pushed with the commits after it, which change
+documentation and one test comment and nothing under `src/`. The wall
+target with its two rewrites has still not crossed; 12 reads 8 new
+rulings and 11 unnamed until it does.
