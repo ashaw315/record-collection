@@ -47760,3 +47760,15 @@ wrong column order, read and fixed before the real red was taken. Step
 level: list, shelf and params tests 143 passed; the sort-reading and
 collection specs on chromium (88) and mobile (46); lint 27 warnings as
 before; build compiled. The gate follows; the push waits on it.
+
+## 17 Oct, 22:30: the gate at a6b4cfe green on both projects; step 153 pushed
+
+Full suites, one worker, 20:43 to 22:26: unit 4396 passed, 5 skipped;
+chromium 926 passed, 1 skipped, ledger clean; mobile 384 passed, 4
+skipped, ledger clean; pressure level 1 in all 103 samples, browsers
+peaking at 2,586 MB. Report `../record-collection-gate-logs/a6b4cfe-gate-w1.txt`.
+Step 153, the readable tie-break for all six orders on the table and
+grid, is cleared and pushed. No spec outside the step's own tests read
+the old id-only order within a tie. The wall target with its two
+rewrites has still not crossed; 12 reads 8 new rulings and 11 unnamed
+until it does.
