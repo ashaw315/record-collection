@@ -107,10 +107,10 @@ export function recordSummary(panel: FactPanel, recordId: string): RecordSummary
 }
 
 /*
-  No line count is exported. `SUMMARY_LINES` (2: the title, then the artist
-  with the year) was the quantity a size rule reserved room for, and its
-  comment said the rule was built on it and `e2e/summary-card.spec.ts`
-  measured it. Nothing read it, and the spec went with the lit wall
+  No line count is exported. `SUMMARY_LINES` is deleted: it was 2, the
+  title then the artist with the year, the quantity a size rule reserved
+  room for, and its comment said the rule was built on it and
+  `e2e/summary-card.spec.ts` measured it. Nothing read it, and the spec went with the lit wall
   (4290137, 17 Sep), so the claim stood here with nothing behind it
   (the audit of 18 Oct, item 17). If a size rule needs the count again, it
   needs a measurement with it.
