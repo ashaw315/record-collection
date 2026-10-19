@@ -379,8 +379,65 @@ describe('the table and grid target is read: §T references resolve, and §T is 
  */
 describe('assertion 12 holds a no-entry call to its spared sentence', () => {
   const HOME = /So the arrival lands on the occupied shelf rather than at the fixture’s top corner(<\/strong> — )/;
-  const LAST = 'This is new, so no entry is owed.</p>';
   const W = 'Wall and Pull - build target.dc.html';
+
+  /*
+    The staging anchor is asked of check-index, not quoted. These tests
+    staged over §W.29's closing sentence by its literal text, and Design's
+    save 6077355 reworded it into the third form: nine tests failed on a
+    missing anchor while check-index passed on the same file. Asking the
+    parser which third-form call §W.29 holds makes a rewording invisible
+    here, and a staging whose anchor the parser did not report cannot run.
+    Exactly one, or the test fails naming what was found; never a skip.
+  */
+  const figures = (out: string) => {
+    const m = out.match(/^     12: (\d+) no-entry calls, (\d+) named and checked, (\d+) ruling something new, (\d+) unnamed and (\d+) quoting a phrase \(report only\), (\d+) draft fix(?:es)? not calls, (\d+) mentions/m);
+    if (m === null) throw new Error(`no assertion 12 summary line in:\n${out}`);
+    const [calls, named, fresh, unnamed, phrase, draft, mentions] = m.slice(1).map(Number);
+    return { calls, named, fresh, unnamed, phrase, draft, mentions };
+  };
+  const thirdForm = (html: string, out: string): { at: number; text: string } => {
+    const reported = out.split('\n').filter((line) => line.startsWith('12 §W.29 new-ruling "'));
+    if (reported.length !== 1) throw new Error(`staging anchor: check-index reports ${reported.length} third-form calls in §W.29, one expected: ${reported.join(' | ') || 'none'}`);
+    const sentence = reported[0].slice('12 §W.29 new-ruling "'.length, -1);
+    if (sentence.length >= 80) throw new Error(`staging anchor: the reported call may be cut at 80 characters: "${sentence}"`);
+    /* Offsets into the file itself: svg blanked to its own length, so sections() counts as the file does. */
+    const masked = html.replace(/<svg[\s\S]*?<\/svg>/g, (svg) => ' '.repeat(svg.length));
+    const homes = sections(masked, { prefixW: true }).filter((s: { id: string }) => s.id === 'W.29');
+    if (homes.length !== 1) throw new Error(`staging anchor: ${homes.length} sections read as §W.29`);
+    const pattern = new RegExp([...sentence].map((c) => (c === ' ' ? '\\s+' : c.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))).join('(?:<[^>]*>)*'), 'g');
+    const hits = [...homes[0].html.matchAll(pattern)];
+    if (hits.length !== 1) throw new Error(`staging anchor: "${sentence}" stands ${hits.length} times in §W.29's html, one expected`);
+    return { at: homes[0].at + (hits[0].index ?? 0), text: hits[0][0] };
+  };
+  let unstaged: string | null = null;
+  const baseline = () => (unstaged ??= run().out);
+  /** §W.29's one third-form call replaced by `call`; returns the run and the figures it moved from the tree as it stands. */
+  const overThirdForm = (call: string) => {
+    const dir = stage((d) => {
+      const t = join(d, W);
+      const html = readFileSync(t, 'utf8');
+      const { at, text } = thirdForm(html, baseline());
+      writeFileSync(t, html.slice(0, at) + call + html.slice(at + text.length));
+    });
+    const result = run(dir);
+    const before = figures(baseline());
+    const after = figures(result.out);
+    const moved = Object.fromEntries(Object.entries(after).map(([k, v]) => [k, v - before[k as keyof typeof before]]).filter(([, d]) => d !== 0));
+    return { ...result, moved };
+  };
+
+  /* Fails against an anchor taken on trust: with a second third-form call in §W.29 the staging refuses, naming both, rather than choosing one. */
+  it('refuses to stage when check-index reports other than one third-form call in §W.29', () => {
+    const dir = stage((d) => {
+      const t = join(d, W);
+      const html = readFileSync(t, 'utf8');
+      const { at, text } = thirdForm(html, baseline());
+      writeFileSync(t, `${html.slice(0, at)}${text} ${text}${html.slice(at + text.length)}`);
+    });
+    const html = readFileSync(join(dir, W), 'utf8');
+    expect(() => thirdForm(html, run(dir).out)).toThrow(/check-index reports 2 third-form calls in §W\.29, one expected: 12 §W\.29 new-ruling .* \| 12 §W\.29 new-ruling /);
+  });
 
   /* Fails against the id's absence: no line for 12 at all. */
   it('passes on the tree as it stands, and says how many calls it read', () => {
@@ -405,13 +462,8 @@ describe('assertion 12 holds a no-entry call to its spared sentence', () => {
 
   /* Fails against a check that reads only quoted calls: a call in the form with no sentence named is the one the rule says to file instead. */
   it('names a call that quotes no sentence, report-only while the older calls are Design’s to bring to the form', () => {
-    const dir = stage((d) => {
-      const t = join(d, W);
-      const html = readFileSync(t, 'utf8');
-      if (html.split(LAST).length !== 2) throw new Error('staging anchor missing: §W.29’s closing sentence');
-      writeFileSync(t, html.replace(LAST, 'No entry: this is new.</p>'));
-    });
-    const { out } = run(dir);
+    const { out, moved } = overThirdForm('No entry: this is new.');
+    expect(moved, 'a ruling on something new becomes a call naming nothing').toEqual({ fresh: -1, unnamed: 1 });
     expect(out).toContain('12 §W.29 unnamed "No entry: this is new."');
     expect(out).toMatch(/^PASS 12$/m);
   });
@@ -440,26 +492,16 @@ describe('assertion 12 holds a no-entry call to its spared sentence', () => {
 
   /* Fails against the literal-marker detector: a call in the "owes no entry" form with no sentence named is neither counted nor reported by it. */
   it('reports a call in the “owes no entry” form that names no sentence, rather than not seeing it', () => {
-    const dir = stage((d) => {
-      const t = join(d, W);
-      const html = readFileSync(t, 'utf8');
-      if (html.split(LAST).length !== 2) throw new Error('staging anchor missing: §W.29’s closing sentence');
-      writeFileSync(t, html.replace(LAST, 'Being new, this owes no entry.</p>'));
-    });
-    const { out } = run(dir);
+    const { out, moved } = overThirdForm('Being new, this owes no entry.');
+    expect(moved, 'a ruling on something new becomes a call naming nothing').toEqual({ fresh: -1, unnamed: 1 });
     expect(out).toContain('12 §W.29 unnamed "Being new, this owes no entry."');
     expect(out).toMatch(/^PASS 12$/m);
   });
 
   /* Fails against a detector that keys on "no entry" alone: the phrase in another sense (a journal with no entry, the record's entries never leaving) is listed as not a call, so a form the detector does not know is never silently absent. */
   it('lists a “no entry” in another sense as not a call, report-only, so an unknown form is visible rather than unseen', () => {
-    const dir = stage((d) => {
-      const t = join(d, W);
-      const html = readFileSync(t, 'utf8');
-      if (html.split(LAST).length !== 2) throw new Error('staging anchor missing: §W.29’s closing sentence');
-      writeFileSync(t, html.replace(LAST, 'The journal frame shows no entry at all.</p>'));
-    });
-    const { out } = run(dir);
+    const { out, moved } = overThirdForm('The journal frame shows no entry at all.');
+    expect(moved, 'a call becomes a mention, which is not a call').toEqual({ calls: -1, fresh: -1, mentions: 1 });
     expect(out).toContain('12 §W.29 not-a-call "The journal frame shows no entry at all."');
     expect(out).not.toContain('12 §W.29 unnamed "The journal frame shows no entry at all."');
     expect(out).toMatch(/^PASS 12$/m);
@@ -467,26 +509,16 @@ describe('assertion 12 holds a no-entry call to its spared sentence', () => {
 
   /* Fails against a reader that takes the first curly quote in the call's own sentence: §W.29's second call says “shelf” in its sentence and names its spared sentence on the line after. */
   it('takes a prose-form call’s spared sentence from the line after it, not from a quote inside the call’s own sentence', () => {
-    const dir = stage((d) => {
-      const t = join(d, W);
-      const html = readFileSync(t, 'utf8');
-      if (html.split(LAST).length !== 2) throw new Error('staging anchor missing: §W.29’s closing sentence');
-      writeFileSync(t, html.replace(LAST, 'A defect against “shelf”, so no entry is owed. The sentence spared is “The arrival is a starting place for someone who has not yet chosen one.”</p>'));
-    });
-    const { out } = run(dir);
+    const { out, moved } = overThirdForm('A defect against “shelf”, so no entry is owed. The sentence spared is “The arrival is a starting place for someone who has not yet chosen one.”');
+    expect(moved, 'a ruling on something new becomes a call naming its sentence').toEqual({ named: 1, fresh: -1 });
     expect(out).not.toContain('spared-count=');
     expect(out).toMatch(/^PASS 12$/m);
   });
 
   /* Fails against a count of whatever is quoted: §T.3's older call quotes a phrase that stands seven times in its section, and a phrase is not the sentence the rule asks for. */
   it('reports a call that quotes a phrase rather than a sentence, report-only, instead of counting the phrase', () => {
-    const dir = stage((d) => {
-      const t = join(d, W);
-      const html = readFileSync(t, 'utf8');
-      if (html.split(LAST).length !== 2) throw new Error('staging anchor missing: §W.29’s closing sentence');
-      writeFileSync(t, html.replace(LAST, 'No entry: “shelf” stays true as built.</p>'));
-    });
-    const { out } = run(dir);
+    const { out, moved } = overThirdForm('No entry: “shelf” stays true as built.');
+    expect(moved, 'a ruling on something new becomes a call quoting a phrase').toEqual({ phrase: 1, fresh: -1 });
     expect(out).toContain('12 §W.29 quotes-a-phrase "shelf"');
     expect(out).not.toContain('spared-count=');
     expect(out).toMatch(/^PASS 12$/m);
@@ -501,13 +533,8 @@ describe('assertion 12 holds a no-entry call to its spared sentence', () => {
     form in use by name.
   */
   it('reads the ruled lead, bold “No entry:” with the spared sentence on the line after, as one named call', () => {
-    const dir = stage((d) => {
-      const t = join(d, W);
-      const html = readFileSync(t, 'utf8');
-      if (html.split(LAST).length !== 2) throw new Error('staging anchor missing: §W.29’s closing sentence');
-      writeFileSync(t, html.replace(LAST, '<strong>No entry:</strong> a defect, not a new claim. The sentence spared is “The arrival is a starting place for someone who has not yet chosen one.”</p>'));
-    });
-    const { out } = run(dir);
+    const { out, moved } = overThirdForm('<strong>No entry:</strong> a defect, not a new claim. The sentence spared is “The arrival is a starting place for someone who has not yet chosen one.”');
+    expect(moved, 'a ruling on something new becomes a call naming its sentence').toEqual({ named: 1, fresh: -1 });
     expect(out).not.toContain('unnamed "No entry: a defect');
     expect(out).not.toContain('spared-count=');
     expect(out).toMatch(/^PASS 12$/m);
@@ -521,13 +548,8 @@ describe('assertion 12 holds a no-entry call to its spared sentence', () => {
     older calls for something new.
   */
   it('counts the third form, “No entry: nothing was ruled here before”, apart from the calls still owed a sentence', () => {
-    const dir = stage((d) => {
-      const t = join(d, W);
-      const html = readFileSync(t, 'utf8');
-      if (html.split(LAST).length !== 2) throw new Error('staging anchor missing: §W.29’s closing sentence');
-      writeFileSync(t, html.replace(LAST, '<strong>No entry:</strong> nothing was ruled here before; the paper block under the sentence is new.</p>'));
-    });
-    const { out } = run(dir);
+    const { out, moved } = overThirdForm('<strong>No entry:</strong> nothing was ruled here before; the paper block under the sentence is new.');
+    expect(moved, 'a third-form call replaced by a third-form call: nothing moves').toEqual({});
     expect(out).toContain('12 §W.29 new-ruling "No entry: nothing was ruled here before; the paper block under the sentence is new."');
     expect(out).not.toContain('unnamed "No entry: nothing was ruled here before');
     expect(out).toMatch(/^     12: \d+ no-entry calls, \d+ named and checked, \d+ ruling something new, \d+ unnamed/m);
@@ -542,13 +564,8 @@ describe('assertion 12 holds a no-entry call to its spared sentence', () => {
     the three draft-fix sentences among the unnamed calls.
   */
   it('does not count a draft-fix sentence as a call, and lists it apart', () => {
-    const dir = stage((d) => {
-      const t = join(d, W);
-      const html = readFileSync(t, 'utf8');
-      if (html.split(LAST).length !== 2) throw new Error('staging anchor missing: §W.29’s closing sentence');
-      writeFileSync(t, html.replace(LAST, 'No drop carried the first wording, so this was a draft fix and no entry is owed.</p>'));
-    });
-    const { out } = run(dir);
+    const { out, moved } = overThirdForm('No drop carried the first wording, so this was a draft fix and no entry is owed.');
+    expect(moved, 'a call becomes a draft fix, which is not a call').toEqual({ calls: -1, fresh: -1, draft: 1 });
     expect(out).toContain('12 §W.29 draft-fix "No drop carried the first wording, so this was a draft fix and no entry is owed."');
     expect(out).not.toContain('unnamed "No drop carried the first wording');
     expect(out).toMatch(/^     12: \d+ no-entry calls, \d+ named and checked, \d+ ruling something new, \d+ unnamed and \d+ quoting a phrase \(report only\), \d+ draft fix/m);
@@ -564,13 +581,8 @@ describe('assertion 12 holds a no-entry call to its spared sentence', () => {
     alone, which listed it unnamed and reported 18 where 17 exist.
   */
   it('counts a call that names an earlier draft as a draft fix, not as unnamed', () => {
-    const dir = stage((d) => {
-      const t = join(d, W);
-      const html = readFileSync(t, 'utf8');
-      if (html.split(LAST).length !== 2) throw new Error('staging anchor missing: §W.29’s closing sentence');
-      writeFileSync(t, html.replace(LAST, 'An earlier draft of this paragraph said the arrival was the seat, and no entry is owed for replacing it.</p>'));
-    });
-    const { out } = run(dir);
+    const { out, moved } = overThirdForm('An earlier draft of this paragraph said the arrival was the seat, and no entry is owed for replacing it.');
+    expect(moved, 'a call becomes a draft fix, which is not a call').toEqual({ calls: -1, fresh: -1, draft: 1 });
     expect(out).toContain('12 §W.29 draft-fix "An earlier draft of this paragraph said the arrival was the seat, and no entry is owed for replacing it."');
     expect(out).not.toContain('unnamed "An earlier draft of this paragraph');
   });
