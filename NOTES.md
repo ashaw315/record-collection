@@ -47872,3 +47872,46 @@ needed. No check reads the Maintaining section, and none should be built
 without a case that needs one. On 18 Oct I first cited lines 241 to 263
 for the fourth fact. Those are assertion 4's cross-reference loops, which
 skip H for the same reason but are not the withdrawal lookup.
+
+## 19 Oct: check-index passed while index-inputs failed, a green from whichever instrument ran
+
+Design's save 6077355 reworded §W.29's closing sentence into the third form.
+Its intake ran `check-index.mjs`, which passed (13 PASS, with 12 at the
+pre-registered 10 and 9). The intake commit d823138 and the three pushes after
+it were cleared on "nothing under src/, test/, e2e/ or scripts/". The next gate
+(b6221d3, 19 Oct) failed 9 tests in `test/repo/index-inputs.test.ts`, all with
+`staging anchor missing: §W.29’s closing sentence`. They staged over that
+sentence by its literal text.
+
+That green was a fact about which instrument ran, not about the documents. The
+`.dc.html` targets and the handoff are test inputs that live outside any test
+directory: `index-inputs.test.ts` reads them, and `notes-index.test.ts` reads
+this file. **What decides whether a change needs the suite is what reads the
+file, not which directory it is in.** The criterion that cleared Sunday's
+pushes was the coordinator's, and the coordinator has withdrawn it.
+
+The remedy is not to gate every Design drop: a gate is 1h50, past Adam's cap.
+It is to run the repo-document suite at intake beside the index:
+`npx vitest run test/repo` took 77s on 19 Oct (53 files, 517 tests), not
+seconds, and would have failed on Sunday. Where that step lives is open with
+the coordinator. `apply-code-region.mjs` runs only when a drop arrives without
+Code's blocks, and 6077355 was not such a drop.
+
+The nine tests now ask check-index for the anchor (f53d555), so a rewording no
+longer breaks them.
+
+## 19 Oct: a comment change needs the comment guard, not the touched files' tests
+
+Commit b6221d3 replaced `SUMMARY_LINES`' comment with a note recording its
+deletion. The step-level run covered the files the commit touched: 477 passed.
+The gate failed `test/repo/comment-references-exist.test.ts`, which lives in
+a file the commit never opened. It flags a backticked CONSTANT_CASE name
+that exists only in comments, unless a deletion word follows it within 80
+characters. The note named the constant without one. Fixed in aa9ee55 by
+saying that it is deleted. The guard and its window are untouched.
+
+This is a guard passing because it ran where the thing wasn't: the step's
+files were green, and the guard that reads every comment in src was not among
+them. **A step that edits comments runs the comment guard.** More generally,
+a step's covering run includes the repo-wide checks that read what the step
+changed, whichever file they live in.
