@@ -108,9 +108,10 @@ const SYMBOLS: Record<string, string> = { USD: '$', GBP: '£', EUR: '€', JPY: 
 /**
  * A market figure with ITS OWN currency, not the app's.
  *
- * The rest of the app renders `£` (a step 5 assumption — SPEC.md names no
- * currency) while these figures are USD from Discogs. A number beside the wrong
- * symbol is the confidently-wrong shape §8 warns about, applied to money.
+ * The rest of the app renders its own symbol (`CURRENCY_SYMBOL` in
+ * `src/lib/money.ts`), while these figures arrive in whatever currency Discogs
+ * reports. A number beside the wrong symbol is the confidently-wrong shape §8
+ * warns about, applied to money.
  *
  * An unknown currency falls back to its code: "SEK 120.00" is honest where a
  * guessed symbol is not.

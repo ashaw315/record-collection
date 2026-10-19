@@ -45,15 +45,12 @@ export function formatPrice(price: string | null): string {
 }
 
 /**
- * A money total with thousands separated — for SUMS, not row-level prices.
+ * A money total, for SUMS rather than row-level prices.
  *
- * A five-figure collection total is genuinely misread without separators:
- * `$12405.00` and `$1240.50` differ by a decimal point's worth of attention.
- * Individual record prices are rarely four digits and read fine without.
- *
- * Grouped by STRING manipulation, keeping `formatPrice`'s no-float rule:
- * `Number(...).toLocaleString()` would route a NUMERIC(10,2) through a float,
- * which is the precision loss the column type exists to prevent.
+ * Its body is now `formatPrice`'s: `formatMoney` separates thousands for
+ * every amount, rows included, so the difference this name once marked is
+ * gone. Kept as a name rather than merged, which the audit of 18 Oct left
+ * for later (item 6).
  */
 export function formatTotal(price: string | null): string {
   return formatMoney(price);

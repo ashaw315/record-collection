@@ -71,7 +71,6 @@ export const CURVED_ASPECT = {
   ring: 226 / SPECIMEN_HEIGHT,
   quarterRing: 322 / SPECIMEN_HEIGHT,
 } as const;
-export type CurvedForm = keyof typeof CURVED_ASPECT;
 
 /** §25: no face narrower than this as drawn — below it a solid reads as a rule, within reach of §W.31's 2px. */
 export const MIN_FACE_WIDTH = 6;
@@ -236,9 +235,6 @@ export function gatePasses(sectionHeight: number, cellHeight: number): boolean {
   if (cellHeight <= 0 || sectionHeight <= 0) return false;
   return visibleRatio(sectionHeight, cellHeight) <= GATE_RATIO + 0.01;
 }
-
-/** §9.2's clearance: no figure within half a column of a control's box. */
-export const CONTROL_CLEARANCE = 60;
 
 /*
   A single right-inset constant of 240 was here, fitted across §26's two

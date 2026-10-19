@@ -106,20 +106,12 @@ export function recordSummary(panel: FactPanel, recordId: string): RecordSummary
   };
 }
 
-/**
- * The summary's line count — **the quantity the size rule reserves room for.**
- *
- * Two lines, always, whatever the record holds:
- *
- *   1. the title
- *   2. artist, and the year when there is one
- *
- * plus the link. The year joins line 2 rather than taking a third, which is
- * what keeps this constant when it is absent.
- *
- * **This is a claim the layout has to honour**, not a description of it: if the
- * card's rendered height varies with how much is recorded, the reservation is a
- * guess again and the size rule built on it is wrong. `e2e/summary-card.spec.ts`
- * measures both extremes against each other.
- */
-export const SUMMARY_LINES = 2;
+/*
+  No line count is exported. `SUMMARY_LINES` (2: the title, then the artist
+  with the year) was the quantity a size rule reserved room for, and its
+  comment said the rule was built on it and `e2e/summary-card.spec.ts`
+  measured it. Nothing read it, and the spec went with the lit wall
+  (4290137, 17 Sep), so the claim stood here with nothing behind it
+  (the audit of 18 Oct, item 17). If a size rule needs the count again, it
+  needs a measurement with it.
+*/

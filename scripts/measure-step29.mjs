@@ -62,8 +62,6 @@ const CELL_W = (1440 / GRID_COLUMNS) * IDENTITY_SPANS[1] - 2 * STILL_MARGIN;
 const CELL_H = BANDS.identity - 2 * STILL_MARGIN;
 const PAGE = 1440 * NO_SCROLL_HEIGHT;
 const FLOOR = 0.005;
-/** §33: "capped at 1.5 times the scale the shared frame gave". */
-const CAP = 1.5;
 
 const faceArea = (points) => {
   let sum = 0;

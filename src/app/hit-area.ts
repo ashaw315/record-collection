@@ -31,16 +31,6 @@
  * is the neighbour's and Tailwind reads classes from the source as text.
  */
 export const HIT = "relative before:absolute before:top-1/2 before:h-[44px] before:-translate-y-1/2 before:hidden before:content-[''] pointer-coarse:before:block";
-/**
- * For a link in a row that is itself the 44 (stats): the overlay is taller
- * than any row and the row cuts it (`ROW_CUTS`), so the link's hit area is
- * the row's height exactly, over the link's own width. An overlay of 44
- * centred on the name is not that: the name does not stand at the row's
- * exact middle, and the overlay took the first pixel of the row beneath
- * (a branch's row read 43 where a long name above it reached its middle;
- * stats at 320, step 127).
- */
-export const HIT_ROW = "relative before:absolute before:inset-x-0 before:top-1/2 before:hidden before:h-[88px] before:-translate-y-1/2 before:content-[''] pointer-coarse:before:block";
 export const ROW_CUTS = 'pointer-coarse:overflow-y-clip';
 /**
  * For a link ALONE on its row (step 138, Design, 12 Oct): "Where a control

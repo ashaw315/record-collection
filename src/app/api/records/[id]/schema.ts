@@ -49,4 +49,3 @@ export const recordPatchSchema = z
     message: 'At least one field must be supplied',
   });
 
-export type RecordPatch = z.infer<typeof recordPatchSchema>;

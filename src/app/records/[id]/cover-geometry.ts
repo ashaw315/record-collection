@@ -30,8 +30,6 @@ export const COVER_CELL = (GRID_FORK / GRID_COLUMNS) * IDENTITY_SPANS[2];
 
 export const COVER_PAD = 26;
 export const COVER = 414;
-export const COVER_GAP = 10;
-export const COVER_COLUMN = 30;
 
 /** The bar's ruled extent: 26 → 398, which is the 30 × 372 §23 costs at 13%. */
 export const BAR_BOTTOM = 398;

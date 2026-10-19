@@ -38,10 +38,6 @@ import { LABEL, LABEL_INK } from './grid-type';
  * `e2e/identity-cell.spec.ts` asserts both states rather than assuming either.
  */
 
-/** §4.2: the title is the 72, the artist the 40 beneath it. */
-const TITLE = 'text-[72px] leading-[0.94] font-extrabold tracking-[-0.02em]';
-const ARTIST = 'text-[40px] leading-none font-extrabold';
-
 /** §3: the inset hairline runs the 372px text measure, not the 480px cell. */
 const INSET_RULE = 'oklch(0.72 0.004 80)';
 

@@ -125,16 +125,6 @@ export const IDENTITY_SPANS = [4, 4, 4] as const;
  */
 export const LOWER_SPANS = [3, 2, 2, 2, 3] as const;
 
-/** One column, at a given viewport. The page bleeds — there is no container. */
-export function columnWidth(viewport: number): number {
-  return viewport / 12;
-}
-
-/** What a span of columns measures at a given viewport. */
-export function spanWidth(span: number, viewport: number): number {
-  return span * columnWidth(viewport);
-}
-
 /**
  * §26: the construction is drawn at its fitted size INSIDE the cell's 24px
  * margin — forms and disc together in the inner box, 432 × 499 at 1440. The

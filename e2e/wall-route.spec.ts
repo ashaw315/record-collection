@@ -33,27 +33,6 @@ async function clickFarRun(page: Page) {
   await page.locator('[data-run]').first().click();
 }
 
-async function clickFarSeat(page: Page, id: string) {
-  const point = await page.evaluate((seatId) => {
-    const anchor = document.querySelector(`[data-far-seat="${seatId}"]`);
-    if (anchor === null) return null;
-    for (const polygon of Array.from(anchor.querySelectorAll('polygon')).reverse()) {
-      const box = polygon.getBoundingClientRect();
-      for (const fx of [0.5, 0.25, 0.75, 0.1, 0.9]) {
-        for (const fy of [0.5, 0.75, 0.25]) {
-          const x = box.left + box.width * fx;
-          const y = box.top + box.height * fy;
-          if (document.elementFromPoint(x, y)?.closest('[data-far-seat]')?.getAttribute('data-far-seat') === seatId) return { x, y };
-        }
-      }
-    }
-    return null;
-  }, id);
-  expect(point, `a clickable point on far seat ${id}`).not.toBeNull();
-  if (point === null) return;
-  await page.mouse.click(point.x, point.y);
-}
-
 /** Enough records to fill more than one shelf, so a zoom lands on a row that is not the first. */
 async function seed(page: Page, count: number): Promise<{ artistId: string; ids: string[] }> {
   const artist = await page.request.post('/api/artists', { data: { name: `Route-${suffix()}` } });
@@ -86,7 +65,7 @@ test('the near view can be reached and used at desktop width, with no unmeasured
     A unit test cannot catch this: it reads the stylesheet's rules, which were
     correct. What was wrong was that nothing ever satisfied them.
   */
-  const { artistId, ids } = await seed(page, 24);
+  const { artistId } = await seed(page, 24);
   await page.goto(`/?artistId=${artistId}`);
   await expect(page.getByTestId('wall')).toBeAttached({ timeout: 30_000 });
 
@@ -337,7 +316,7 @@ test('the run is reachable by keyboard after the rail, and Enter zooms to that s
 });
 
 test('Escape returns to the collection when nothing is pulled, and dismisses the pull when something is', async ({ page }) => {
-  const { artistId, ids } = await seed(page, 12);
+  const { artistId } = await seed(page, 12);
   await page.goto(`/?artistId=${artistId}`);
   await expect(page.locator('[data-wall="labelled"]')).toBeVisible({ timeout: 30_000 });
 

@@ -387,9 +387,13 @@ export function sortExpression(field: RecordSortField) {
       alphabetically first top-level genre, with records without a genre
       last, and draws no grouping." The top-level genre of each genre the
       record carries is the ROOT of its chain, which is how the shelf places
-      a record in its section, so the wall's default and this order agree;
-      a record carrying only a child sorts under its root rather than with
-      the genreless. One value per record, so no row repeats. The walk is
+      a record in its section. The two walks are separate (`shelf.ts` takes
+      the deepest hop, this one the genre with no parent), and they agree on
+      every tree the app can write, because cycles are refused at the app
+      level (§4.1) and no tree is 16 deep; on a cycle the shelf files the
+      record under a member of it and this order puts it last. A record
+      carrying only a child sorts under its root rather than with the
+      genreless. One value per record, so no row repeats. The walk is
       bounded at sixteen for the reason the shelf's is: `parent_genre_id`
       has no cycle constraint, and a cycle has no root, so it contributes
       nothing. No genre is NULL, which the callers' NULLS LAST puts last in

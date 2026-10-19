@@ -1,11 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
-import { registerCleanup, trackArtist } from './cleanup';
-import { OVERFLOWS_THE_MEASURE, WORST } from '../src/app/records/[id]/identity-extremes';
+import { registerCleanup } from './cleanup';
+import { OVERFLOWS_THE_MEASURE } from '../src/app/records/[id]/identity-extremes';
 import { seedExtreme } from './identity-extremes';
-import { COLLAPSE_TOLERANCE } from '../src/app/records/[id]/genres-run';
-import { seedImage } from './seed';
-import { getTestDb } from '../test/helpers/db';
-import { sql } from 'drizzle-orm';
 import { NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
 import { login } from './sign-in';
 
@@ -38,26 +34,6 @@ registerCleanup();
   collection's worst case — the disagreement is how a 16.5px row passed one
   and cut the other.
 */
-const FIVE_LINE_TITLE = WORST.title;
-/** The genres run's own height: one 13px line at leading-none, no margin. */
-const RUN_HEIGHT = 13;
-
-/**
- * Short, because it lands in the pressing line: a long suffix wrapped
- * `Casablanca gc… · NBLP-7119-gc… · United States, 1979` to two lines and made
- * the "fits" record fit by 8px instead of 27. The catalog number carries no
- * suffix at all — pressings are found-or-created, so reuse is correct.
- */
-function makeSuffix(): string {
-  return Date.now().toString(36).slice(-6);
-}
-
-async function post(page: Page, path: string, data: unknown) {
-  const response = await page.request.post(path, { data, failOnStatusCode: false });
-  expect([200, 201], `${path} ${response.status()}`).toContain(response.status());
-  return response.json();
-}
-
 /**
  * The five-line title with a normal pressing block: three genres, a short
  * label. This is the collection's longest title, as it actually renders.

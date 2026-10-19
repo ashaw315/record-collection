@@ -5,9 +5,11 @@ import {
   IDENTITY_SPANS,
   LOWER_SPANS,
   NO_SCROLL_HEIGHT,
-  columnWidth,
-  spanWidth,
 } from './band-geometry';
+import { columnWidthAt } from './region-rows';
+
+/* The live column at 1440, twelve of them; band-geometry's own `viewport / 12` helper was retired with §28's columns (the audit of 18 Oct, item 9). */
+const spanWidth = (span: number) => span * columnWidthAt(1440);
 
 /**
  * 8a §2.1 — three fixed bands and twelve columns, at 1440 × 900.
@@ -97,7 +99,7 @@ describe('the no-scroll budget (§2.1)', () => {
 
 describe('twelve columns at 1440 (§2.1)', () => {
   it('is a 120px column', () => {
-    expect(columnWidth(1440)).toBe(120);
+    expect(columnWidthAt(1440)).toBe(120);
   });
 
   /**
@@ -111,7 +113,7 @@ describe('twelve columns at 1440 (§2.1)', () => {
     const [identity, still, sleeve] = IDENTITY_SPANS;
 
     expect(identity + still + sleeve, 'twelve columns').toBe(12);
-    expect(spanWidth(identity, 1440), 'the raster had 451').toBe(480);
+    expect(spanWidth(identity), 'the raster had 451').toBe(480);
     /*
       §23 moved the second divider: the construction takes the fourth column
       from the cover, so identity + still is 960 rather than 840. The CLAIM —
@@ -120,8 +122,8 @@ describe('twelve columns at 1440 (§2.1)', () => {
       840 was to it. §2.1 had rounded the construction cell from a drawn 437 to
       360 without naming the loss.
     */
-    expect(spanWidth(identity + still, 1440), 'the raster had 888').toBe(960);
-    expect(spanWidth(still, 1440), 'the construction cell, drawn at 437').toBe(480);
+    expect(spanWidth(identity + still), 'the raster had 888').toBe(960);
+    expect(spanWidth(still), 'the construction cell, drawn at 437').toBe(480);
   });
 
   it('divides the lower band 3 / 2 / 2 / 2 / 3', () => {
@@ -134,17 +136,10 @@ describe('twelve columns at 1440 (§2.1)', () => {
    * widest at both ends, the two narrow interior cells flanking the figures.
    */
   it('is widest at both ends of the lower band', () => {
-    const widths = LOWER_SPANS.map((span) => spanWidth(span, 1440));
+    const widths = LOWER_SPANS.map((span) => spanWidth(span));
 
     expect(widths[0]).toBeGreaterThan(widths[1]);
     expect(widths[4]).toBeGreaterThan(widths[3]);
     expect(widths[0]).toBe(widths[4]);
-  });
-
-  it('scales with the viewport rather than assuming 1440', () => {
-    // The page bleeds — there is no centred container — so a column is a
-    // fraction of whatever the viewport is.
-    expect(columnWidth(1200)).toBe(100);
-    expect(spanWidth(3, 1200)).toBe(300);
   });
 });

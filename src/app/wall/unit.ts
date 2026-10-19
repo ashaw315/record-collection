@@ -2,7 +2,6 @@ import {
   ROW_PITCH,
   SEAT_PITCH,
   SHELF_DEPTH,
-  SHELF_INSET_X,
   SHELF_THICKNESS,
   UPRIGHT,
   project,
@@ -154,11 +153,6 @@ export function unitPieces(seatsPerShelf: number): UnitPiece[] {
 /** The fixture's faces in piece order — the frame's and the tests' view of the furniture. */
 export function unitFurniture(seatsPerShelf: number): FurnitureFace[] {
   return unitPieces(seatsPerShelf).flatMap((piece) => piece.faces);
-}
-
-/** Where seat `i` of a row sits in x. */
-export function seatX(index: number): number {
-  return SHELF_INSET_X + index * SEAT_PITCH;
 }
 
 export type UnitRow = { row: number; seats: ShelfSeat[] };

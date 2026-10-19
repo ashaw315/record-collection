@@ -572,13 +572,14 @@ test('clicking through to a filtered view equals loading that URL directly', asy
  * that leaves you on page 4 of a result set with one page.
  */
 /**
- * Desktop only: the toggle is hidden below `sm`, because a single-column grid
- * at 390px is a taller table rather than a distinct view (§10 wants mobile
- * usable one-handed). The mobile case is covered by the test below, which
- * asserts the control is absent AND that a grid URL still renders.
+ * Desktop only, because the phone has its own test below: since §T.1 (step
+ * 97a) the band's view names are drawn at every width, and that test reaches
+ * the grid by them on a phone and checks a grid URL renders. This one was
+ * written when the toggle was hidden below `sm`; that reason no longer holds
+ * (the audit of 18 Oct, item 4), and the skip stands on the coverage below.
  */
 test('the view toggle switches layout and survives a reload', async ({ page }, testInfo) => {
-  test.skip(testInfo.project.name === 'mobile', 'the toggle is desktop-only by design');
+  test.skip(testInfo.project.name === 'mobile', 'covered on mobile by the phone test below, which reaches the grid by the band’s view name');
 
   /**
    * Scoped to this run's records with `q`, not left on an unfiltered page 1.

@@ -63,8 +63,6 @@ export const SHELF_INSET_Y = 0;
 /** The unit's uprights: 10 thick, the shelf's depth, four pitches tall. */
 export const ROW_PITCH = 198;
 export const UPRIGHT = { thickness: 10, depth: SHELF_DEPTH, height: 4 * ROW_PITCH } as const;
-/** No ledge: the shelf is the record's depth. Kept as a name so nothing derives from a literal zero. */
-export const LEDGE = 0;
 
 /** A point on the page. */
 export type Point = readonly [number, number];

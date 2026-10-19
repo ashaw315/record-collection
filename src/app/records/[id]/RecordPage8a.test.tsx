@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import '../../../../test/component/next-navigation';
 import { RecordPage8a, type PageRecord } from './RecordPage8a';
-import { BANDS } from './band-geometry';
 import { STRIP_SPLIT } from './cover-33';
 import { recordLadder } from '@/lib/colour/record-ladder';
 import { construction } from './construction';

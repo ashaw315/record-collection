@@ -35,16 +35,6 @@ export function wallFrame(
   };
 }
 
-export function wallViewBox(...groups: ReadonlyArray<ReadonlyArray<readonly Point[]>>): string {
-  return wallFrame(...groups).viewBox;
-}
-
-/** The frame's screen-x range, for a plane that must run past both of its edges. */
-export function frameRange(frame: { viewBox: string; width: number }): { minX: number; maxX: number } {
-  const minX = Number(frame.viewBox.split(' ')[0]);
-  return { minX, maxX: minX + frame.width };
-}
-
 /** The same frame, at least `minWidth` × `minHeight` — the drawing is never smaller than the region that shows it, so a record landing in the region lands inside the svg. */
 export function widened(
   frame: { viewBox: string; width: number; height: number },

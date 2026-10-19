@@ -201,9 +201,6 @@ export function placeRow(width: RegionWidth, section: SectionName): { figure: 'a
   return { figure: airOf(width, section) === undefined ? null : 'air' };
 }
 
-/** Every section, in §9's order — re-exported so a caller need not import both modules. */
-export const ORDERED_SECTIONS = SECTIONS;
-
 /** Where a section sits in its row: the column it starts at, its span, and whether anything follows it. */
 export type Placement = { start: number; span: number; endsRow: boolean };
 

@@ -1,4 +1,4 @@
-import { DEPTH, SPINE_HEIGHT, type PlacedSeat, type RecordBox } from './geometry';
+import { DEPTH, SPINE_HEIGHT, type PlacedSeat } from './geometry';
 
 /**
  * The painter's order, by separating plane (8a §W.20, and the probe's
@@ -38,11 +38,6 @@ export type PaintBounds = {
 /** A seated record's bounds: its box, DEPTH deep and SPINE_HEIGHT tall. */
 export function seatBounds(seat: PlacedSeat): PaintBounds {
   return { id: seat.id, x0: seat.x, x1: seat.x + seat.width, y0: seat.y, y1: seat.y + DEPTH, z0: seat.z, z1: seat.z + SPINE_HEIGHT };
-}
-
-/** A box's bounds — a grown record still axis-aligned. */
-export function boxBounds(box: RecordBox): PaintBounds {
-  return { id: box.id, x0: box.x, x1: box.x + box.width, y0: box.y, y1: box.y + box.depth, z0: box.z, z1: box.z + box.height, moving: true };
 }
 
 /**

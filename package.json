@@ -35,7 +35,6 @@
     "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "d3-force": "^3.0.0",
     "drizzle-orm": "^0.45.2",
     "jose": "^6.2.8",
     "lucide-react": "^1.28.0",
@@ -52,7 +51,6 @@
   "devDependencies": {
     "@playwright/test": "^1.62.1",
     "@tailwindcss/postcss": "^4",
-    "@types/d3-force": "^3.0.10",
     "@types/node": "^20",
     "@types/pg": "^8.20.4",
     "@types/react": "^19",

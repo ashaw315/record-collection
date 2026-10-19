@@ -286,27 +286,6 @@ const SYMMETRIES: ReadonlyArray<(slot: readonly [number, number]) => readonly [n
 ];
 
 
-/** The eight projected corners of a box, for the containment clamp. */
-function boxCorners(
-  u: number,
-  v: number,
-  w: number,
-  du: number,
-  dv: number,
-  dw: number,
-): ReadonlyArray<readonly [number, number]> {
-  const out: Array<readonly [number, number]> = [];
-  for (const uu of [u, u + du]) {
-    for (const vv of [v, v + dv]) {
-      for (const ww of [w, w + dw]) {
-        const [x, y] = project(uu, vv, ww);
-        out.push([x * SCALE, y * SCALE]);
-      }
-    }
-  }
-  return out;
-}
-
 function boxFaces(
   u: number,
   v: number,

@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
-import { GRID_FORK } from '@/app/records/[id]/band-geometry';
 import { currentSection } from './nav-current';
 import { NAV_TYPE } from './nav-type';
 import { holdScroll } from './scroll-hold';

@@ -106,27 +106,6 @@ export type MatchKey = {
 };
 
 /**
- * Whether a request carries enough to identify a pressing at all (§4).
- *
- * `matrixRunout` counts here but is deliberately NOT part of the match key
- * below: a white label with only an etched runout is identified rather than
- * unknown, so it must not be treated as an empty request — but runout
- * transcriptions are frequently partial, and a false merge silently rewrites
- * another record's pressing while a duplicate stays visible and fixable.
- */
-export function hasIdentifyingFields(
-  input: MatchKey & { matrixRunout?: string | null },
-): boolean {
-  return (
-    input.discogsReleaseId !== null && input.discogsReleaseId !== undefined
-      ? true
-      : [input.catalogNumber, input.countryPressed, input.yearPressed, input.matrixRunout].some(
-          (value) => value !== null && value !== undefined,
-        )
-  );
-}
-
-/**
  * Finds the pressing a request should reuse, or undefined to create one.
  *
  * §4: match by `discogs_release_id` if present, otherwise by the tuple
@@ -134,6 +113,10 @@ export function hasIdentifyingFields(
  * non-empty. An all-null tuple matches any other all-null row in SQL (verified),
  * so without the emptiness check two unrelated white labels silently collapse
  * into one shared row.
+ *
+ * `matrix_runout` is deliberately NOT part of the key: runout transcriptions
+ * are frequently partial, and a false merge silently rewrites another record's
+ * pressing while a duplicate stays visible and fixable.
  */
 export async function findMatchingPressing(input: MatchKey): Promise<Pressing | undefined> {
   const db = getDb();

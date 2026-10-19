@@ -64,4 +64,3 @@ export const recordCreateSchema = z.strictObject({
   tagIds: z.array(uuid).max(MAX_NESTED).optional(),
 });
 
-export type RecordCreateBody = z.infer<typeof recordCreateSchema>;

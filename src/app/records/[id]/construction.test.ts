@@ -3,9 +3,6 @@ import * as constructionModule from './construction';
 import { ownFitViewBox } from './own-fit';
 import {
   ARCHETYPES,
-  EXHAUSTED_ID,
-  HASH_ADVANCE_CAP,
-  constructionWithin,
   FORM_COUNT,
   SIZE_BAND,
   construction,
