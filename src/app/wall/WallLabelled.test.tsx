@@ -658,14 +658,16 @@ describe('the frame holds the landing (§W.22): the pan needs somewhere to pan t
     const pulling = wallLayout(two.map((s) => ({ id: s.id, section: 'S' })), [{ id: 'a' }], 0, 0).frame;
     const placed = layoutRow([{ id: 'a', section: 'S' }], 0)[0];
     const extent = landedExtent(placed);
-    const [sx, sy, sw, sh] = seated.viewBox.split(' ').map(Number);
+    const [sx, , sw, sh] = seated.viewBox.split(' ').map(Number);
     const [px, py, pw, ph] = pulling.viewBox.split(' ').map(Number);
     expect(px).toBeLessThanOrEqual(extent.minX);
     expect(py).toBeLessThanOrEqual(extent.minY);
     expect(px + pw).toBeGreaterThanOrEqual(extent.maxX);
     expect(py + ph).toBeGreaterThanOrEqual(extent.maxY);
     expect(px, 'the landing lies left of the seated frame, so the frame grows there').toBeLessThan(sx);
-    expect(sy).toBe(sy);
+    /* Was `expect(sy).toBe(sy)` from its first commit, so the name's second half was never asserted (the audit of 18 Oct, item 5). */
+    const still = renderToStaticMarkup(<WallLabelled seats={two} pulls={[]} />);
+    expect(/viewBox="([^"]+)"/.exec(still)?.[1], 'with nothing pulled the frame is the seated one').toBe(seated.viewBox);
     expect(sw).toBeGreaterThan(0);
     expect(sh).toBeGreaterThan(0);
     /* The rendered svg carries the grown frame while the record is out. */

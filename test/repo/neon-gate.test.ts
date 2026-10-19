@@ -86,6 +86,40 @@ describe('the Neon verification gate cannot go quiet', () => {
   }, 200_000);
 
   /**
+   * **A missing branch and an unreachable one read differently, and neither
+   * reads as verified** (the audit of 18 Oct, item 1). The entry that said
+   * "UNVERIFIED ... its credential expired" was skipped on every run: its
+   * `skipIf` was read at collection, before `beforeAll` could set the reason,
+   * so a run with no branch, a healthy branch and an expired one all printed
+   * the same skipped line and its diagnosis. Staged for real, both states, on
+   * the summary and the verbose lines rather than the exit status. The third
+   * state, a healthy branch, needs a live Neon branch and is not stageable
+   * here; its result is a pass, which neither line below can be.
+   */
+  it('names a missing branch as missing and an unreachable one as unreachable, and passes neither', () => {
+    const run = (branch: string) =>
+      execFileSync('npx', ['vitest', 'run', '--reporter=verbose', 'test/integration/neon-transactions.test.ts'], {
+        cwd: REPO_ROOT,
+        encoding: 'utf-8',
+        stdio: ['ignore', 'pipe', 'pipe'],
+        timeout: 150_000,
+        env: { ...process.env, NEON_TEST_DATABASE_URL: branch },
+      });
+    const branchLines = (output: string) => output.split('\n').filter((l) => /Neon (test )?branch/.test(l) && /^\s*[✓↓×]/.test(l));
+
+    const missing = branchLines(run(''));
+    expect(missing, 'one line about the branch').toHaveLength(1);
+    expect(missing[0], 'skipped, saying none is configured').toMatch(/^\s*↓.*none is configured/);
+    expect(missing[0], 'and no diagnosis it never tested').not.toMatch(/expired|unreachable/);
+
+    /* A reserved name (RFC 6761), so the probe fails at resolution and nothing leaves the machine. */
+    const unreachable = branchLines(run('postgresql://probe:probe@ep-audit-item-1.neon-branch.invalid/neondb?sslmode=require'));
+    expect(unreachable, 'one line about the branch').toHaveLength(1);
+    expect(unreachable[0], 'skipped, naming the configured branch and why it was not reached').toMatch(/^\s*↓.*configured Neon test branch.*unreachable/);
+    expect(unreachable[0]).not.toBe(missing[0]);
+  }, 400_000);
+
+  /**
    * **The harness must use the REAL driver, not local `pg`.**
    *
    * This is the assertion the whole file exists for, and it is the one most

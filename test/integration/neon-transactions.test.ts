@@ -68,9 +68,6 @@ const LOCAL_DATABASE =
     : new URL(process.env.TEST_DATABASE_URL).pathname.slice(1);
 const LOCAL_URL = `postgres://postgres:postgres@postgres:5432/${LOCAL_DATABASE}?sslmode=disable`;
 
-/** Always configured: the proxy is the default, a branch the exception. */
-const configured = true;
-
 /**
  * What the driver actually connects to, and what the app primitives must be
  * pointed at so they exercise the same path rather than local `pg`.
@@ -85,57 +82,6 @@ let TARGET_URL = remote && branchUrl !== undefined ? branchUrl : LOCAL_URL;
  * failure mode this gate exists to prevent. A named test in the summary cannot
  * be missed the same way.
  */
-describe('Neon verification gate', () => {
-  /**
-   * **Reported as SKIPPED, never as passed.**
-   *
-   * The original formulation was `it.skipIf(configured)(...)` with a body that
-   * PASSED, so an unverified driver added one to the green count. **That is
-   * absent-versus-unknown inside the harness** — "we could not check" rendered
-   * as "we checked and it was fine" — and it hid a three-day outage: `.env.local`
-   * was stranded on 2026-08-25, this suite skipped from then on, the summary
-   * stayed green, and the consequence surfaced two days later as a mysterious
-   * "environmental hazard" with three wrong candidate causes.
-   *
-   * **Naming the skip was right and insufficient.** Nobody reads 200 green lines
-   * looking for the one whose name says it checked nothing. `it.skip` puts it in
-   * vitest's SKIPPED count, which is a separate number a reader cannot mistake
-   * for verification.
-   *
-   * The name still carries the instruction, because the summary line is where
-   * someone will read it.
-   */
-  /**
-   * **The name says CONFIGURED, not VERIFIED, and the difference is the whole
-   * point.** This assertion only proves the variable is set and non-empty. It
-   * cannot prove the branch exists, accepts the password, or ran a single
-   * statement — a deleted branch or a rotated credential leaves `configured`
-   * true.
-   *
-   * The earlier name, "transactional code IS verified against the real Neon
-   * driver", claimed the stronger thing. When the branch went stale it kept
-   * passing and read as verification while the nine real tests errored out in
-   * setup — absent-versus-unknown one level up from the case this file's
-   * header already records. The verification itself is the nine tests below;
-   * the reachability probe in `beforeAll` is what makes their absence loud.
-   */
-  /**
-   * **The name says which target, because the two verify different things.**
-   *
-   * Against the proxy the driver is real and the server is local Postgres:
-   * wire protocol, transaction handling and session semantics are exercised,
-   * while Neon's hosted behaviour — pooling at their edge, compute suspend,
-   * their timeouts — is not. Against a branch, both are real.
-   *
-   * Neither is a skip, which is the point: the old formulation could report
-   * "configured" while nothing ran, and did for three days.
-   */
-  it('names the target the driver is verified against', () => {
-    expect(remote ? 'neon-branch' : 'local-proxy').toBe(remote ? 'neon-branch' : 'local-proxy');
-    expect(configured, 'there is always a target now').toBe(true);
-  });
-});
-
 describe('transactions over the Neon serverless driver', () => {
   let pool: Pool;
   let db: ReturnType<typeof drizzle>;
@@ -291,20 +237,90 @@ describe('transactions over the Neon serverless driver', () => {
     }
   });
 
-  /*
-    **The remote branch's absence is DECLARED, in the skipped count.**
+  /**
+   * **Reported as SKIPPED, never as passed.**
+   *
+   * The original formulation was `it.skipIf(configured)(...)` with a body that
+   * PASSED, so an unverified driver added one to the green count. **That is
+   * absent-versus-unknown inside the harness** — "we could not check" rendered
+   * as "we checked and it was fine" — and it hid a three-day outage: `.env.local`
+   * was stranded on 2026-08-25, this suite skipped from then on, the summary
+   * stayed green, and the consequence surfaced two days later as a mysterious
+   * "environmental hazard" with three wrong candidate causes.
+   *
+   * **Naming the skip was right and insufficient.** Nobody reads 200 green lines
+   * looking for the one whose name says it checked nothing. `it.skip` puts it in
+   * vitest's SKIPPED count, which is a separate number a reader cannot mistake
+   * for verification.
+   *
+   * The name still carries the instruction, because the summary line is where
+   * someone will read it.
+   */
+  /**
+   * **The name says CONFIGURED, not VERIFIED, and the difference is the whole
+   * point.** This assertion only proves the variable is set and non-empty. It
+   * cannot prove the branch exists, accepts the password, or ran a single
+   * statement — a deleted branch or a rotated credential leaves `configured`
+   * true.
+   *
+   * The earlier name, "transactional code IS verified against the real Neon
+   * driver", claimed the stronger thing. When the branch went stale it kept
+   * passing and read as verification while the nine real tests errored out in
+   * setup — absent-versus-unknown one level up from the case this file's
+   * header already records. The verification itself is the nine tests below;
+   * the reachability probe in `beforeAll` is what makes their absence loud.
+   */
+  /**
+   * **The name says which target, because the two verify different things.**
+   *
+   * Against the proxy the driver is real and the server is local Postgres:
+   * wire protocol, transaction handling and session semantics are exercised,
+   * while Neon's hosted behaviour — pooling at their edge, compute suspend,
+   * their timeouts — is not. Against a branch, both are real.
+   *
+   * Neither is a skip, which is the point: the old formulation could report
+   * "configured" while nothing ran, and did for three days.
+   */
+  /**
+   * **What the target test asserted, it asserted of itself** (the audit of
+   * 18 Oct, item 1): it compared an expression with itself and checked a
+   * constant set to true, under a name saying the target was verified. It
+   * now asks the driver which database answered, which is the channel the
+   * claim travels on: the branch, the proxy's database for this run, or the
+   * proxy after a branch could not be reached.
+   */
+  it('answers from the database this run targets', async () => {
+    const [row] = (await db.execute(sql`SELECT current_database() AS name`)).rows as { name: string }[];
+    expect(row.name).toBe(new URL(TARGET_URL).pathname.slice(1));
+  });
 
-    `remoteUnreachable()` is read after `beforeAll` has probed, so this
-    entry appears only when a configured branch could not be reached -- an
-    expired credential, most often. The local proxy run is unaffected and
-    the nine transaction tests below still execute against it.
+  /*
+    **Three states, three results** (the audit of 18 Oct, item 1). This was
+    one `skipIf` read at collection, before `beforeAll` had set the reason,
+    so it skipped on every run and printed "its credential expired" with no
+    branch, a healthy branch and an expired one alike. Whether a branch is
+    configured is known at collection, so that state is decided there; whether
+    it was reached is known only after the probe, so that state is decided
+    in the body:
+
+    - none configured: skipped, named as none configured;
+    - configured and reached: passes, having queried the branch;
+    - configured and not reached: skipped with the probe's own diagnosis,
+      expired or unreachable, as the skip's note.
+
+    The last stays a skip, not a failure, for the reason the probe records:
+    the guarantees are verified on the proxy every run, and a branch is the
+    optional extra check.
   */
-  it.skipIf(!remote || skipRemote === null)(
-    'UNVERIFIED against a real Neon branch: its credential expired — local proxy verification still ran',
-    () => {
-      expect(skipRemote).not.toBeNull();
-    },
-  );
+  if (!remote) {
+    it.skip('NOT checked against a real Neon branch: none is configured, and the transaction tests run on the local proxy', () => {});
+  } else {
+    it('the configured Neon test branch is reached and answers', async ({ skip }) => {
+      if (skipRemote !== null) skip(skipRemote);
+      const [row] = (await db.execute(sql`SELECT current_database() AS name`)).rows as { name: string }[];
+      expect(row.name, 'the database the branch URL names').toBe(new URL(TARGET_URL).pathname.slice(1));
+    });
+  }
 
   /*
     **Not skipped, because it does not need a branch.** This was
