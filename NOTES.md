@@ -47948,7 +47948,8 @@ How the totals move, from counting the tests each changed file collects:
 - neon-transactions: 0 (the self-comparing target test and the old skip out,
   the real target test and the named skip in; the reached-branch test is not
   collected without a branch);
-- neon-gate: +1;
+- neon-gate: +1 (`names a missing branch as missing and an unreachable one
+  as unreachable, and passes neither`, commit A's staging of the states);
 - index-inputs: +1 (f53d555's anchor guard).
 
 That is 0 at b6221d3 and +1 at 414e121. **Do not reopen the five on its count
@@ -47985,3 +47986,36 @@ declarations and imports nothing. The 25,000 refusal is far off.
 The test is a reboot, then mobile alone on the full project: that changes
 memory and keeps the test population. **If a reboot before a gate turns out to
 clear the flakes, it becomes routine before a gate, not a remedy after one.**
+
+## 19 Oct: two exceptions taken at the push of e7a69da..HEAD, kept beside the rules they bend
+
+**§10, a change to shared infrastructure is a gate trigger: waived for
+run-result's flaky verdict.** The coordinator waived it with these reasons:
+
+- it changes a reporter's wording, not app code, and cannot reach production;
+- its failure modes are enumerated and tested, and the new test was red first;
+- nothing else parses the "— OK" ending (checked with grep across scripts and
+  test/repo).
+
+Step level: run-result 47 passed. **The next real gate is the confirmation.**
+If its result lines read wrong, that is reported, not patched quietly.
+
+**A gate's green with flakes accepted without the controlled re-run.** That was
+Adam's call. The gate at 414e121 read mobile `384 passed, 4 flaky`. The re-run
+that would isolate the cause was a reboot, then mobile alone at 414e121. It was
+not done. The evidence taken instead:
+
+- all four failed in the sign-in `beforeEach`, none on an assertion;
+- none of the four spec files changed since 79ad686, and at function level
+  nothing the six commits changed is reachable from the sign-in path;
+- the gate had the highest swap peak recorded (11592MB).
+
+For a one-user app that was judged enough. If flakes recur at the next gate,
+this exception is the first place to look.
+
+**Owed, for the next piece of real work:** an unreachable Neon branch fails
+rather than skips. The gate's unit log prints counts, not skip reasons, so a
+skip with a perfect diagnosis is a diagnosis nobody reads (see "the Neon skip
+count staying at five", above). The rule: nothing configured → skip;
+configured but unreachable → fail. This is CLAUDE.md §2's three states as
+written.
