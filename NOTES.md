@@ -48019,3 +48019,47 @@ skip with a perfect diagnosis is a diagnosis nobody reads (see "the Neon skip
 count staying at five", above). The rule: nothing configured → skip;
 configured but unreachable → fail. This is CLAUDE.md §2's three states as
 written.
+
+## 19 Oct: the intake is one command, and it runs the document tests
+
+`node scripts/apply-code-region.mjs` is now run on **every** intake, not "if
+needed". It is a no-op on a handoff that already carries Code's blocks
+(`0 restored, 41 already present`). After the blocks it runs `check-index.mjs`
+and then the document suite, and it exits 1 if either fails.
+
+Each check is judged on three signals: exit 0, a count above zero, and nothing
+failed. One signal alone has let a run through before. The judge once read its
+own "0 passed" as a pass. A mistyped path run with `--passWithNoTests` exits 0
+with no count at all. The two judges are held by code-region.test.ts, red
+against an exit-only judge of each and against an intake that stops at the
+index.
+
+The document suite is `test/repo` plus `src/app/wall/unit.test.ts`, which
+reads the wall target's drawing. A test fails if any vitest file that reads
+`docs/design` is missing from the suite, so the next such reader is added, not
+missed. 94s on 19 Oct.
+
+The intake precedent's step 2 changes from "Applier, if needed" to "Applier,
+always; INTAKE OK before the intake commit."
+
+**What this does not do.** It fails the command, not the commit. A `git commit`
+typed without running it is not refused, and nothing here can tell that the
+command was skipped. A git hook would close that gap, and was deliberately not
+built: it is local-only, it can be bypassed, and it would fail in its own ways.
+**Do not read this as airtight.** It holds only if the intake runs this command,
+and it removes the need to remember *which* checks, not the need to run one.
+`scripts/commit-checked.sh` already sits between work and a commit with most
+of that suite: its default check is `run-tests.ts npx vitest run test/repo`,
+which does not include the wall's unit test, and it commits only on a pass. Sunday's intake commits were made with plain
+`git commit` and never went through it. It is the natural second place, and
+the coordinator is weighing it.
+
+**§10, read by Code: this change does not trigger a gate.** §10's shared
+infrastructure is a list: `test/helpers/`, the Playwright and Vitest configs,
+the driver module, migrations, and fixtures, cleanup and seeding. The applier
+is none of these. Nothing in the app or e2e imports it, and its one importer,
+code-region.test.ts, ran (13 passed). Gates exist to catch a contract broken in
+files a step never opened. The suites that read what this changes ran in full,
+through the command itself (539 passed). Pushed at step level. No waiver was
+needed; this is a reading of the rule, and a reader who disagrees with it
+should say so.

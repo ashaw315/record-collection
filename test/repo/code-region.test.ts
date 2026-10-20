@@ -1,7 +1,8 @@
-import { readFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { applyRegion, readRegion } from '../../scripts/apply-code-region.mjs';
+import { DOCUMENT_SUITE, applyRegion, intake, judgeIndex, judgeSuite, readRegion } from '../../scripts/apply-code-region.mjs';
 
 /**
  * **A Design export cannot remove what Code wrote into the handoff (8 Oct).**
@@ -18,6 +19,7 @@ import { applyRegion, readRegion } from '../../scripts/apply-code-region.mjs';
  * a drop taken without applying the region fails the unit suite.
  */
 const HANDOFF = join('docs', 'design', 'HANDOFF-wall-and-pull.md');
+const REPO_ROOT = join(import.meta.dirname, '..', '..');
 const block = { id: 'step-71', before: '72. ', text: '71. **Done.** The tile’s Delete control.' };
 const exported = '70. Build the disc.\n\n72. Build the nav.\n\n## Maintaining this file\n';
 
@@ -73,4 +75,97 @@ describe('Code’s region of the handoff', () => {
     expect(region.length).toBeGreaterThan(0);
     expect({ restored: result.restored, unanchored: result.unanchored }, 'blocks missing from the handoff').toEqual({ restored: [], unanchored: [] });
   });
+});
+
+/**
+ * **The intake runs the document tests, and fails on them (19 Oct).**
+ *
+ * Design's save 6077355 reworded a sentence that nine tests in
+ * `index-inputs.test.ts` staged over. Its intake ran `check-index.mjs`,
+ * which passed, and not `test/repo`, which would have failed, and main sat
+ * red for two days until a gate read it. The applier is a no-op on a
+ * handoff that already carries Code's blocks, so it can run on every
+ * intake, and it is now the one intake command: blocks, then the index,
+ * then the document suite. Each is judged on three signals, never one: the
+ * exit code, a count above zero, and nothing failed. Either alone has let
+ * a run through (a judge reading its own "0 passed"; a path that collects
+ * nothing and exits 0).
+ */
+describe('the intake runs the index and the document suite, and fails on either', () => {
+  const INDEX_GREEN = 'PASS 12\nRESULT: 13 PASS, 0 FAIL, 0 ABSENT of 13\n';
+
+  /* Fails against a judge of the exit code alone, and of the line alone. */
+  it('passes the index only on exit 0 with every assertion passing and none absent', () => {
+    expect(judgeIndex({ code: 0, output: INDEX_GREEN }).ok).toBe(true);
+    expect(judgeIndex({ code: 1, output: 'FAIL 12\nRESULT: 12 PASS, 1 FAIL, 0 ABSENT of 13\n' }).ok, 'a failed assertion').toBe(false);
+    expect(judgeIndex({ code: 2, output: 'RUN STOPPED: x\nRESULT: 3 PASS, 0 FAIL, 10 ABSENT of 13 -- INCOMPLETE\n' }).ok, 'a stopped run').toBe(false);
+    expect(judgeIndex({ code: 0, output: '' }).ok, 'no RESULT line, exit 0').toBe(false);
+    expect(judgeIndex({ code: 1, output: INDEX_GREEN }).ok, 'a clean line, a non-zero exit').toBe(false);
+    expect(judgeIndex({ code: 0, output: 'RESULT: 0 PASS, 0 FAIL, 0 ABSENT of 0\n' }).ok, 'nothing checked').toBe(false);
+  });
+
+  /* Fails against a judge that trusts any one of the three signals. */
+  it('passes the suite only on exit 0, a passed count above zero and nothing failed', () => {
+    expect(judgeSuite({ code: 0, output: '      Tests  518 passed (518)\n' }).ok).toBe(true);
+    expect(judgeSuite({ code: 1, output: '      Tests  9 failed | 509 passed (518)\n' }).ok, 'failures').toBe(false);
+    expect(judgeSuite({ code: 1, output: '      Tests  518 passed (518)\n' }).ok, 'a clean count, a non-zero exit').toBe(false);
+    expect(judgeSuite({ code: 0, output: '      Tests  0 passed (0)\n' }).ok, 'a zero count').toBe(false);
+    expect(judgeSuite({ code: 0, output: 'include: test/**/*.test.ts\n' }).ok, 'no count, exit 0').toBe(false);
+  });
+
+  /*
+    What reads Design's files decides what the intake runs, not the folder
+    a test lives in: `src/app/wall/unit.test.ts` reads the wall target
+    beside test/repo. Fails against a suite of test/repo alone, and against
+    the next test outside it that starts reading docs/design.
+  */
+  it('runs every unit test file that reads docs/design', () => {
+    const walk = (dir: string): string[] =>
+      readdirSync(join(REPO_ROOT, dir), { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(join(dir, e.name)) : /\.test\.tsx?$/.test(e.name) ? [join(dir, e.name)] : []));
+    const readers = ['src', 'test'].flatMap(walk).filter((file) => {
+      const code = readFileSync(join(REPO_ROOT, file), 'utf8').replace(/\/\*[\s\S]*?\*\/|\/\/[^\n]*/g, '');
+      return /docs\/design|'docs', 'design'|\.dc\.html|HANDOFF-wall-and-pull|WITHDRAWALS\.md/.test(code);
+    });
+    expect(readers.length, 'the scan finds the readers it is for').toBeGreaterThan(5);
+    const outside = readers.filter((file) => !DOCUMENT_SUITE.some((entry: string) => file === entry || file.startsWith(`${entry}/`)));
+    expect(outside, 'tests that read Design’s files and that the intake does not run').toEqual([]);
+  });
+
+  /* Fails against an intake that stops at the index, which is Sunday's. */
+  it('fails the intake on a failing document suite when the index passes, and prints both lines', () => {
+    const run = (command: string) =>
+      command === 'node' ? { code: 0, output: INDEX_GREEN } : { code: 1, output: '      Tests  9 failed | 509 passed (518)\n' };
+    const result = intake(run);
+    expect(result.ok).toBe(false);
+    expect(result.lines[0]).toMatch(/^index: 13 PASS, 0 FAIL, 0 ABSENT of 13 — OK$/);
+    expect(result.lines[1]).toMatch(/^test\/repo src\/app\/wall\/unit\.test\.ts: 509 passed, 9 failed — NOT OK — 9 failed$/);
+  });
+
+  /*
+    The command itself, on real vitest output: a mistyped suite path, and
+    the same path with --passWithNoTests, which exits 0 with no count. Both
+    must fail the intake. INTAKE_SUITE exists for these two runs only; the
+    intake proper runs test/repo, which a test inside test/repo cannot.
+  */
+  const cli = (suite: string) =>
+    spawnSync('node', ['scripts/apply-code-region.mjs'], { cwd: REPO_ROOT, encoding: 'utf-8', env: { ...process.env, INTAKE_SUITE: suite } });
+
+  it('fails the intake on a suite path that collects nothing, with or without --passWithNoTests', () => {
+    for (const suite of ['test/repoo', 'test/repoo --passWithNoTests']) {
+      const r = cli(suite);
+      expect(r.status, `${suite}: ${r.stdout}${r.stderr}`).toBe(1);
+      expect(r.stdout).toMatch(/^code region: 0 restored/m);
+      expect(r.stdout).toMatch(/^index: 13 PASS, 0 FAIL, 0 ABSENT of 13 — OK$/m);
+      expect(r.stdout).toMatch(new RegExp(`^${suite.replace(/[-/]/g, '\\$&')}: .* — NOT OK — no summary line found`, 'm'));
+      expect(r.stdout).toMatch(/^INTAKE NOT OK/m);
+    }
+  }, 120_000);
+
+  it('passes the intake on a suite that runs and passes', () => {
+    const r = cli('test/repo/run-result.test.ts');
+    expect(r.status, `${r.stdout}${r.stderr}`).toBe(0);
+    expect(r.stdout).toMatch(/^test\/repo\/run-result\.test\.ts: \d+ passed — OK$/m);
+    expect(r.stdout).toMatch(/^INTAKE OK/m);
+    expect(r.stderr, 'no module-type warning on every intake').not.toMatch(/MODULE_TYPELESS_PACKAGE_JSON/);
+  }, 120_000);
 });
