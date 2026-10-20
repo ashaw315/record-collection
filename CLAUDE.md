@@ -213,7 +213,10 @@ both projects with no file argument. A gate is:
   `e2e/global-setup.ts`, `e2e/seventeen.ts`, `e2e/seed.ts`, anything a spec
   reads that it did not create);
 - a change to shared infrastructure (`test/helpers/`, the Playwright or
-  Vitest config, the driver module, migrations);
+  Vitest config, the driver module, migrations, and the commit path:
+  `scripts/apply-code-region.mjs`, which is the intake's one command and
+  decides what enters the repo, `scripts/document-suite.mjs`, its test set,
+  and `scripts/commit-checked.sh`, which runs the same set);
 - before a merge;
 - on request.
 
