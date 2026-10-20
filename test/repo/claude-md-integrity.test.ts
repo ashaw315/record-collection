@@ -2,6 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { declaredPaths, editState } from '../../scripts/commit-paths.mjs';
 
 const REPO_ROOT = join(import.meta.dirname, '..', '..');
 
@@ -45,19 +46,40 @@ describe('CLAUDE.md integrity', () => {
     );
   });
 
-  it('is unmodified relative to git HEAD', () => {
-    // The real guarantee: any edit at all, by any tool, shows up here.
+  /*
+    Three states, not two (20 Oct). This refused every uncommitted edit, so
+    a deliberate one, about to be committed through commit-checked.sh, read
+    the same as a tool's stray write, and every change to the rules file was
+    forced onto a plain `git commit`, the path that let Sunday's break in.
+    commit-checked.sh now declares the paths it is about to commit
+    (COMMIT_PATHS); an edit to CLAUDE.md that the commit names is the
+    commit's, and one it does not name is still refused. The content checks
+    above still read the working copy, so a generated block inside a
+    deliberate edit is still caught.
+  */
+  it('is unmodified relative to git HEAD, unless the commit being checked names it', () => {
     const changed = execFileSync('git', ['status', '--porcelain', '--', 'CLAUDE.md'], {
       cwd: REPO_ROOT,
       encoding: 'utf-8',
-    }).trim();
+    });
 
     expect(
-      changed,
-      `CLAUDE.md has uncommitted changes. If a tool wrote to it, revert with ` +
+      editState(changed, 'CLAUDE.md', declaredPaths()),
+      `CLAUDE.md has uncommitted changes that no commit being checked names. If a tool wrote to it, revert with ` +
         `\`git checkout CLAUDE.md\` and check that AGENTS.md still hosts the ` +
-        `Next.js agent-rules block.`,
-    ).toBe('');
+        `Next.js agent-rules block. If the edit is yours, commit it through scripts/commit-checked.sh, naming CLAUDE.md.`,
+    ).not.toBe('undeclared');
+  });
+
+  /* Fails against the two-state reading: a declared edit and a stray one reading alike, either way. */
+  it('reads an edit as unchanged, the commit’s own, or a stray write, three ways', () => {
+    expect(editState('', 'CLAUDE.md', [])).toBe('unchanged');
+    expect(editState(' M CLAUDE.md\n', 'CLAUDE.md', ['CLAUDE.md'])).toBe('declared');
+    expect(editState(' M CLAUDE.md\n', 'CLAUDE.md', ['./CLAUDE.md', 'NOTES.md'])).toBe('declared');
+    expect(editState(' M CLAUDE.md\n', 'CLAUDE.md', [])).toBe('undeclared');
+    expect(editState(' M CLAUDE.md\n', 'CLAUDE.md', ['NOTES.md'])).toBe('undeclared');
+    expect(declaredPaths({ COMMIT_PATHS: 'CLAUDE.md\nNOTES.md\n' })).toEqual(['CLAUDE.md', 'NOTES.md']);
+    expect(declaredPaths({}), 'nothing declared outside a checked commit').toEqual([]);
   });
 
   it('keeps the governing rules in CLAUDE.md, not AGENTS.md', () => {

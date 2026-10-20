@@ -117,7 +117,7 @@ describe('the default check is the document suite', () => {
     const bin = join(dir, 'bin');
     mkdirSync(bin);
     const record = join(dir, 'npx-args');
-    writeFileSync(join(bin, 'npx'), `#!/bin/sh\nprintf '%s\\n' "$@" > '${record}'\nexit 1\n`);
+    writeFileSync(join(bin, 'npx'), `#!/bin/sh\nprintf '%s\\n' "$@" > '${record}'\nprintf '%s' "$COMMIT_PATHS" > '${record}-paths'\nexit 1\n`);
     chmodSync(join(bin, 'npx'), 0o755);
     writeFileSync(join(dir, 'second.txt'), 'second\n');
     const before = git('rev-parse', 'HEAD');
@@ -135,6 +135,8 @@ describe('the default check is the document suite', () => {
     const at = args.indexOf('run');
     expect(args.slice(at - 1, at + 1), 'a vitest run').toEqual(['vitest', 'run']);
     expect(args.slice(at + 1), 'on the document suite, whole and nothing else').toEqual(DOCUMENT_SUITE);
+    /* Fails against a check told nothing of the commit it guards: CLAUDE.md's integrity test reads this to tell the commit's own edit from a stray one. */
+    expect(readFileSync(`${record}-paths`, 'utf8').split('\n'), 'the check is told the paths it is guarding').toEqual(['second.txt']);
   });
 
   /* Fails against a default that passes an empty list on: `vitest run` with no path runs every suite and says nothing of why. */

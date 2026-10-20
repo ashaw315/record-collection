@@ -53,6 +53,9 @@ if [ -z "${COMMIT_CHECK:-}" ]; then
   fi
 fi
 check="${COMMIT_CHECK:-npx tsx scripts/run-tests.ts npx vitest run $suite}"
+# The check is told what this commit will carry, so a guard can tell the
+# commit's own edit from a stray one (scripts/commit-paths.mjs).
+export COMMIT_PATHS="$(printf '%s\n' "${paths[@]}")"
 if ! bash -o pipefail -c "$check"; then
   echo "NOT COMMITTED: the check failed. Nothing was staged." >&2
   exit 1

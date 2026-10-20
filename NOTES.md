@@ -48100,3 +48100,40 @@ that decides what enters the repo, which makes it shared by what it does,
 whatever the list said. Writing that into the list means the next change to
 it is covered without anyone having to argue the case again. **This change is
 the first one the new line covers, so it waits for a gate.**
+
+## 20 Oct: the rules file's guard could not tell a deliberate edit from a stray one
+
+`claude-md-integrity.test.ts` refused any uncommitted change to CLAUDE.md.
+A deliberate edit about to be committed read the same as `next dev`
+appending its block: the absent/broken/working collapse again, two states
+reading as one. The consequence was precise. `commit-checked.sh` runs the
+check before it stages, so it could never carry a CLAUDE.md edit, and every
+change to the rules file was forced onto a plain `git commit`. That is the
+path that let Sunday's break in. The guard protecting the rules file
+guaranteed that the rules file was edited unchecked. 95bf07d was committed that
+way, and said so.
+
+Now `commit-checked.sh` declares the paths it is about to commit
+(`COMMIT_PATHS`), and `scripts/commit-paths.mjs` reads an edit three ways:
+
+- unchanged;
+- declared: changed, and named by the commit being checked;
+- undeclared: changed, and named by nothing. Still refused.
+
+The content checks still read the working copy. So a generated block inside a
+deliberate edit fails them whatever the commit declares.
+
+How it was verified:
+
+- red on a mutation to each collapse (every edit refused, every edit
+  accepted);
+- commit-checked held to passing the paths by what its check receives, through
+  the stub `npx`;
+- the real case staged once: a heading in CLAUDE.md changed, the test failing
+  with nothing declared and passing with `COMMIT_PATHS=CLAUDE.md`, then
+  restored.
+
+**What it does not do.** `COMMIT_PATHS` is a declaration, not a proof. Anyone
+can set it by hand and pass the check over a stray write. That is the same
+standing as typing the commit plainly, with the declaration on record in the
+command rather than in nothing.
