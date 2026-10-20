@@ -47915,3 +47915,73 @@ files were green, and the guard that reads every comment in src was not among
 them. **A step that edits comments runs the comment guard.** More generally,
 a step's covering run includes the repo-wide checks that read what the step
 changed, whichever file they live in.
+
+## 19 Oct: the Neon skip count staying at five is the fix working, not the fix missing
+
+Unit totals at three gates: 4409 at 79ad686, 4409 at b6221d3, 4410 at 414e121,
+with 5 skipped at all three. A fix that turned an always-skip into a running
+test would have moved the skip count. This one did not, and should not have.
+
+The gate worktree has no Neon branch configured. With none configured, the
+fixed entry is a skip that says so, where the old one was a skip that lied.
+Verbose unit runs in the gate worktree, outside a gate, read:
+
+- at 79ad686: `UNVERIFIED against a real Neon branch: its credential expired`;
+- at b6221d3 and 414e121: `NOT checked against a real Neon branch: none is
+  configured, and the transaction tests run on the local proxy`.
+
+The other four skips are the same tests at all three: `dev-targets-neon` 3
+and blob 1. The three states read differently, staged by
+`neon-gate.test.ts`'s child runs:
+
+- none configured: the skip above;
+- unreachable: a skip carrying the probe's diagnosis, `NEON_TEST_DATABASE_URL
+  is set but the branch is unreachable (host: …)`;
+- reached: a pass that queried the branch.
+
+The reached and expired states cannot be staged without a live branch.
+
+How the totals move, from counting the tests each changed file collects:
+
+- band-geometry: −1 (the 1200 test, audit item 9; its 1440 tests moved onto
+  `columnWidthAt` and still count);
+- neon-transactions: 0 (the self-comparing target test and the old skip out,
+  the real target test and the named skip in; the reached-branch test is not
+  collected without a branch);
+- neon-gate: +1;
+- index-inputs: +1 (f53d555's anchor guard).
+
+That is 0 at b6221d3 and +1 at 414e121. **Do not reopen the five on its count
+alone**; read the Neon line.
+
+## 19 Oct: swap at the gate, by peak, with the flakes beside it
+
+Peak swap from each gate summary in `../record-collection-gate-logs/`, with
+mobile's flaky count:
+
+| gate | ended | peak swap | flaky |
+|---|---|---|---|
+| dc19c46 | 15 Oct 18:19 | 8155MB | 0 |
+| 2913878 | 16 Oct 18:43 | 8486MB | 0 |
+| cce6bdd | 17 Oct 12:44 | 9034MB | 0 |
+| 546ed9b | 17 Oct 20:19 | 9381MB | 0 |
+| a6b4cfe | 17 Oct 22:26 | 9980MB | 0 |
+| 6c74559 | 18 Oct 12:08 | 10747MB | 0 |
+| 79ad686 | 18 Oct 14:20 | 10774MB | 0 |
+| b6221d3 | 19 Oct 10:38 | 9966MB | 0 |
+| 414e121 | 19 Oct 15:09 | 11592MB | 4 |
+
+The trend is upward across five days, though not every gate is higher than the
+last: b6221d3 dipped. 414e121 has both the highest peak and the first flakes.
+It was still swapping 3316 pages a second at its end. All four flakes timed out
+in the sign-in `beforeEach` (three on `page.goto`, one on
+`pressSequentially`), and none failed on an assertion.
+
+The six commits under them change no code on that path. Every non-comment line
+is a deleted declaration or import. The only module that dropped out of a
+graph, `band-geometry` from `AppHeader`, has no top-level statement but
+declarations and imports nothing. The 25,000 refusal is far off.
+
+The test is a reboot, then mobile alone on the full project: that changes
+memory and keeps the test population. **If a reboot before a gate turns out to
+clear the flakes, it becomes routine before a gate, not a remedy after one.**
