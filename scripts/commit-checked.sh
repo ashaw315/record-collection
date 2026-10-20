@@ -17,8 +17,9 @@
 #
 # The check is `COMMIT_CHECK` where that is set, which is how
 # `test/repo/commit-checked.test.ts` stages a pass and a failure; otherwise
-# the repo checks through the judged runner, which exits non-zero unless
-# the summary line says the run passed.
+# the document suite (scripts/document-suite.mjs, the intake's list) through
+# the judged runner, which exits non-zero unless the summary line says the
+# run passed.
 set -uo pipefail
 
 message=""
@@ -41,7 +42,17 @@ if ! git diff --cached --quiet; then
   exit 1
 fi
 
-check="${COMMIT_CHECK:-npx tsx scripts/run-tests.ts npx vitest run test/repo}"
+# The test set is the intake's (scripts/document-suite.mjs), so the two ways
+# into a commit cannot drift apart. An empty list would run every suite and
+# say nothing about why, so it is refused.
+if [ -z "${COMMIT_CHECK:-}" ]; then
+  suite="$(node scripts/document-suite.mjs | tr '\n' ' ')"
+  if [ -z "${suite// /}" ]; then
+    echo "NOT COMMITTED: scripts/document-suite.mjs named no tests. Nothing was staged." >&2
+    exit 1
+  fi
+fi
+check="${COMMIT_CHECK:-npx tsx scripts/run-tests.ts npx vitest run $suite}"
 if ! bash -o pipefail -c "$check"; then
   echo "NOT COMMITTED: the check failed. Nothing was staged." >&2
   exit 1

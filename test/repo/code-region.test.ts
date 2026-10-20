@@ -2,7 +2,8 @@ import { spawnSync } from 'node:child_process';
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { DOCUMENT_SUITE, applyRegion, intake, judgeIndex, judgeSuite, readRegion } from '../../scripts/apply-code-region.mjs';
+import { applyRegion, intake, judgeIndex, judgeSuite, readRegion } from '../../scripts/apply-code-region.mjs';
+import { DOCUMENT_SUITE } from '../../scripts/document-suite.mjs';
 
 /**
  * **A Design export cannot remove what Code wrote into the handoff (8 Oct).**

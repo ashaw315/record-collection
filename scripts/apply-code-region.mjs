@@ -33,6 +33,7 @@ process.on('warning', (warning) => {
   if (warning.code !== 'MODULE_TYPELESS_PACKAGE_JSON') for (const listener of warned) listener(warning);
 });
 const { readRunResult, summarise } = await import('./run-result.ts');
+const { DOCUMENT_SUITE } = await import('./document-suite.mjs');
 
 const HANDOFF = 'docs/design/HANDOFF-wall-and-pull.md';
 const REGION = new URL('./handoff-code-region.json', import.meta.url);
@@ -71,8 +72,6 @@ export function judgeSuite({ code, output }) {
   return { ok: result.ok, line: summarise(result) };
 }
 
-/** Every unit test that reads Design's files: test/repo, and the wall's unit test, which reads the target's drawing. Held whole by code-region.test.ts. */
-export const DOCUMENT_SUITE = ['test/repo', 'src/app/wall/unit.test.ts'];
 const SUITE = process.env.INTAKE_SUITE?.split(' ') ?? DOCUMENT_SUITE;
 
 /** The index, then the document suite, each run whatever the other said, so both lines are read. */

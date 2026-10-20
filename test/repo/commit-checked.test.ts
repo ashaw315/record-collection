@@ -1,8 +1,9 @@
 import { execFileSync } from 'node:child_process';
-import { copyFileSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { chmodSync, copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { DOCUMENT_SUITE } from '../../scripts/document-suite.mjs';
 
 /**
  * **A check whose result does not stop the commit is not a check.**
@@ -94,5 +95,74 @@ describe('a commit that depends on its check', () => {
     const { dir } = repo();
     expect(run(dir, 'true', ['second.txt']).status).not.toBe(0);
     expect(run(dir, 'true', ['-m', 'second']).status).not.toBe(0);
+  });
+});
+
+/**
+ * **One list, two consumers (20 Oct).** The intake command ran test/repo
+ * and the wall's unit test, which reads the target's drawing; this script
+ * ran test/repo alone. Two paths into a commit with different tolerances,
+ * and the weaker one had the shorter name. Both now take their test set
+ * from `scripts/document-suite.mjs`, the list code-region.test.ts holds
+ * whole against every test that reads docs/design. Read here from what the
+ * script actually runs: a stub `npx` records its arguments and refuses, so
+ * nothing is committed. Fails against the default check that named
+ * test/repo itself.
+ */
+describe('the default check is the document suite', () => {
+  it('runs vitest on exactly the list the intake runs', () => {
+    const { dir, git } = repo();
+    mkdirSync(join(dir, 'scripts'));
+    copyFileSync(join(process.cwd(), 'scripts', 'document-suite.mjs'), join(dir, 'scripts', 'document-suite.mjs'));
+    const bin = join(dir, 'bin');
+    mkdirSync(bin);
+    const record = join(dir, 'npx-args');
+    writeFileSync(join(bin, 'npx'), `#!/bin/sh\nprintf '%s\\n' "$@" > '${record}'\nexit 1\n`);
+    chmodSync(join(bin, 'npx'), 0o755);
+    writeFileSync(join(dir, 'second.txt'), 'second\n');
+    const before = git('rev-parse', 'HEAD');
+    const env: NodeJS.ProcessEnv = { ...process.env, PATH: `${bin}:${process.env.PATH ?? ''}` };
+    delete env.COMMIT_CHECK;
+    let status = 0;
+    try {
+      execFileSync('bash', [join(dir, 'commit-checked.sh'), '-m', 'second', 'second.txt'], { cwd: dir, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], env });
+    } catch (error) {
+      status = (error as { status?: number }).status ?? 1;
+    }
+    expect(status, 'the stub refuses, so the script does not commit').not.toBe(0);
+    expect(git('rev-parse', 'HEAD')).toBe(before);
+    const args = readFileSync(record, 'utf8').trim().split('\n');
+    const at = args.indexOf('run');
+    expect(args.slice(at - 1, at + 1), 'a vitest run').toEqual(['vitest', 'run']);
+    expect(args.slice(at + 1), 'on the document suite, whole and nothing else').toEqual(DOCUMENT_SUITE);
+  });
+
+  /* Fails against a default that passes an empty list on: `vitest run` with no path runs every suite and says nothing of why. */
+  it('refuses, running nothing, when the list names no tests', () => {
+    const { dir, git } = repo();
+    mkdirSync(join(dir, 'scripts'));
+    writeFileSync(join(dir, 'scripts', 'document-suite.mjs'), "process.stdout.write('');\n");
+    const bin = join(dir, 'bin');
+    mkdirSync(bin);
+    const record = join(dir, 'npx-args');
+    writeFileSync(join(bin, 'npx'), `#!/bin/sh\nprintf '%s\\n' "$@" > '${record}'\nexit 0\n`);
+    chmodSync(join(bin, 'npx'), 0o755);
+    writeFileSync(join(dir, 'second.txt'), 'second\n');
+    const before = git('rev-parse', 'HEAD');
+    const env: NodeJS.ProcessEnv = { ...process.env, PATH: `${bin}:${process.env.PATH ?? ''}` };
+    delete env.COMMIT_CHECK;
+    let status = 0;
+    let output = '';
+    try {
+      execFileSync('bash', [join(dir, 'commit-checked.sh'), '-m', 'second', 'second.txt'], { cwd: dir, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], env });
+    } catch (error) {
+      const failure = error as { status?: number; stderr?: string };
+      status = failure.status ?? 1;
+      output = failure.stderr ?? '';
+    }
+    expect(status).not.toBe(0);
+    expect(output).toMatch(/named no tests/);
+    expect(git('rev-parse', 'HEAD'), 'no commit').toBe(before);
+    expect(existsSync(record), 'and nothing ran').toBe(false);
   });
 });

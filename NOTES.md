@@ -48063,3 +48063,40 @@ files a step never opened. The suites that read what this changes ran in full,
 through the command itself (539 passed). Pushed at step level. No waiver was
 needed; this is a reading of the rule, and a reader who disagrees with it
 should say so.
+
+## 20 Oct: one test list for both ways into a commit; the tooling was adequate and the path taken was not
+
+**The thing worth keeping from Sunday.** The break would have been caught by
+a script that already existed. `commit-checked.sh` ran test/repo before every
+commit made through it, and the index-inputs failure was in test/repo. The
+intake commits were made with plain `git commit`. The tooling was adequate;
+the path taken was not. That is a convention held by repetition in its purest
+form, and it is why the applier is now the one intake command rather than one
+step among several.
+
+**One list, two consumers.** On 19 Oct the intake ran test/repo plus the
+wall's unit test, while commit-checked ran test/repo alone. So there were two
+ways into a commit with different tolerances, and the weaker one had the
+shorter name. Both now take their test set from `scripts/document-suite.mjs`:
+
+- code-region.test.ts holds that list whole against every vitest file that
+  reads docs/design;
+- commit-checked.test.ts holds the second consumer to it by what the script
+  runs, not by its text. A stub `npx` on PATH records the arguments, and the
+  test was red on the old default, which recorded `test/repo` alone;
+- an empty list is refused, with nothing run. That test was red with the
+  refusal removed.
+
+The arithmetic from 19 Oct: the intake read 539, commit-checked read 526, and
+the 13 between them is `src/app/wall/unit.test.ts`, counted at 13 on its own.
+code-region.test.ts's own 13 sits inside the 526. test/repo went from 518 to
+526 since the 414e121 gate: +2 in run-result, and +6 in code-region (the five
+intake tests and the reader test).
+
+**§10 now names the commit path.** The applier, the list and commit-checked
+are added to its shared infrastructure. The 19 Oct reading stands as the rule
+then was: the applier was not on the list. As of a795649 it is the command
+that decides what enters the repo, which makes it shared by what it does,
+whatever the list said. Writing that into the list means the next change to
+it is covered without anyone having to argue the case again. **This change is
+the first one the new line covers, so it waits for a gate.**
