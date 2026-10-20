@@ -115,6 +115,28 @@ describe('a run is judged by its summary, never by its exit code', () => {
     expect(summarise(result)).toMatch(/1 flaky/);
   });
 
+  /**
+   * **A flaky run is never called OK** (19 Oct). The gate at 414e121 read
+   * "384 passed, 4 flaky, 4 skipped, ledger clean, tree unchanged — OK":
+   * four tests that failed first time, folded into a pass by the verdict
+   * whose job is to catch exactly that. Not fatal, since refusing on a flake
+   * costs reruns past Adam's cap, but its own verdict, so the push is a
+   * decision. Fails against the verdict that said OK whenever `ok` held.
+   */
+  it('calls a run with flakes green with flakes, never OK, and does not fail it', () => {
+    const out = '  4 flaky\n    [mobile] › e2e/stats.spec.ts:333:5 › the genre tree\n  4 skipped\n  384 passed (22.0m)\n';
+    const result = readRunResult({ output: out, exitCode: 0 });
+    expect(result.ok, 'not fatal: the runner still exits 0').toBe(true);
+    const line = summarise(result);
+    expect(line).toMatch(/ — GREEN WITH FLAKES \(4 flaky\), not OK$/);
+    expect(line).not.toMatch(/ — OK$/);
+  });
+
+  it('lets a failure outrank a flake: failed and flaky together is NOT OK', () => {
+    const out = '  1 failed\n  2 flaky\n  300 passed (9.0m)\n';
+    expect(summarise(readRunResult({ output: out, exitCode: 1 }))).toMatch(/ — NOT OK — 1 failed$/);
+  });
+
   /** The human-facing line must carry the counts, not a verdict alone. */
   it('summarises with the numbers a reader needs', () => {
     const result = readRunResult({ output: '  1 failed\n  444 passed (11.5m)\n', exitCode: 0 });

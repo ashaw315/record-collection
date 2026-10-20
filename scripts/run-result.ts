@@ -321,7 +321,12 @@ export function summarise(result: RunResult): string {
     parts.push(`the machine SLEPT ${minutes >= 60 ? `${Math.floor(minutes / 60)}h ` : ''}${minutes % 60}m during the run`);
   }
 
-  const verdict = result.ok ? 'OK' : `NOT OK — ${result.reason}`;
+  /*
+    A pass with retries is not called OK (19 Oct): the gate at 414e121 said
+    "4 flaky … — OK", and the verdict made a decision for its reader. Not a
+    failure either, so `ok` and the runner's exit stay as they were.
+  */
+  const verdict = !result.ok ? `NOT OK — ${result.reason}` : result.flaky > 0 ? `GREEN WITH FLAKES (${result.flaky} flaky), not OK` : 'OK';
 
   return `${parts.join(', ')} — ${verdict}`;
 }
