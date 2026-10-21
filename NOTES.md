@@ -48148,6 +48148,13 @@ grep that finds nothing fails. So the status was the LAST half's ✘ grep:
 - a gate with a failure in mobile, which has a ✘ line to find, exited 0;
 - a failure in chromium alone exited 1, by coincidence.
 
+**The dangerous direction is the second: a red gate exited 0.** A gate
+with a failing mobile test reported success to anything that read its status.
+Nobody was looking that way. It was found from the harmless direction: a
+stray exit 1 on the passing gate at f4c265e, a number that could not be
+accounted for and was not let go. The clean case's wrong exit cost nothing
+but led to the case that does.
+
 That has been true for as long as the grep was last. Nothing caught it
 because nothing read the exit code; the summary lines were read instead.
 The rule this sharpens, from the coordinator: read both signals, because
@@ -48246,6 +48253,12 @@ verdict was not wrong here. But it is the CLAUDE.md §2 instrument case
 again: the judge reading text it was not given as a summary. A test whose
 failure output quotes a summary line with a lower failed count could read
 as better than it was. Not checked further.
+
+**Its direction.** It can misread only on a failing run, since a passing run
+quotes nothing, and the misreading can be better than the truth. That is
+the same shape as the `0 passed, 29 skipped` self-read fixed on 15 Oct: the
+judge taking text in the log for its own input. **This is the one open item,
+and the first thing to pick up when work resumes.**
 
 ## 20 Oct: the reboot before a gate (the memory question, as closed)
 
