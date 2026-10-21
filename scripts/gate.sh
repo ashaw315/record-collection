@@ -68,6 +68,19 @@ swap_pages() { vm_stat | awk '/Swapins/ { i = $2 } /Swapouts/ { o = $2 } END { p
 swap_rate() { local a b; a="$(swap_pages)"; /bin/sleep 5; b="$(swap_pages)"; echo $(( (b - a) / 5 )); }
 pressure() { sysctl -n kern.memorystatus_vm_pressure_level; }
 memory() { echo "swap $(sysctl -n vm.swapusage | awk '{print $6 " of " $3}' | tr -d 'M' | awk '{printf "%.1f of %.1f GB", $1 / 1024, $3 / 1024}'), $(memory_pressure | awk -F': ' '/free percentage/ {print $2}') free, pressure level $(pressure), $1 pages a second swapped"; }
+
+# Docker first, before the machine is read or the worktree touched. After a reboot, which is now routine before a
+# gate, Docker is not running, and on 20 Oct the first word of it was "could not create record_collection_gate".
+DB_CONTAINER="record-collection-test-db"
+if ! docker info > /dev/null 2>&1; then
+  echo "gate: Docker isn't running. Start Docker Desktop, then \`docker compose up -d\`. Nothing run." >&2
+  exit 1
+fi
+if [ "$(docker inspect -f '{{.State.Running}}' "$DB_CONTAINER" 2>/dev/null)" != "true" ]; then
+  echo "gate: Docker is up but $DB_CONTAINER isn't running. Run \`docker compose up -d\`. Nothing run." >&2
+  exit 1
+fi
+
 CORES="$(sysctl -n hw.physicalcpu)"
 MAX_LOAD="${GATE_MAX_LOAD:-$((CORES * 6))}"
 MAX_SWAP_RATE="${GATE_MAX_SWAP_RATE:-25000}"
@@ -113,7 +126,6 @@ fi
 
 # A database and a port of its own, so a run in the working tree and this one never meet.
 GATE_DB="record_collection_gate"
-DB_CONTAINER="record-collection-test-db"
 if ! docker exec "$DB_CONTAINER" psql -U postgres -tAc "SELECT 1 FROM pg_database WHERE datname = '$GATE_DB'" | grep -q 1; then
   docker exec "$DB_CONTAINER" psql -U postgres -qc "CREATE DATABASE $GATE_DB" || { echo "gate: could not create $GATE_DB" >&2; exit 1; }
 fi
@@ -164,6 +176,11 @@ trap 'kill "$SAMPLER" 2>/dev/null' EXIT
   echo "samples:    $SAMPLES"
 } > "$REPORT"
 
+# A dev server writes route types into the checkout, ignored by git and read by tsconfig.json. A route deleted since
+# goes on being named there, and the build fails typechecking a page that no longer exists: the gate on f4c265e,
+# 20 Oct, over /wall/probe/isolate (ff6575d). Only the types go; the build writes its own.
+rm -rf .next/dev/types .next/dev/dev/types .next-test/dev/types .next-test/dev/dev/types
+
 # `src/app/type-scale.test.ts` reads the CSS a build produces, and a fresh checkout has none.
 # The build is not given the test database: it is to build as a deploy would, and reads none.
 env -u TEST_DATABASE_URL -u DATABASE_URL npm run build > "$LOGS/$COMMIT-build.log" 2>&1 || { echo "gate: npm run build failed in $GATE; see $LOGS/$COMMIT-build.log" >&2; exit 1; }
@@ -179,22 +196,16 @@ done
 cp -R test-results "$LOGS/$COMMIT-test-results" 2>/dev/null
 
 report() {
-  if [ -n "${GATE_ONLY:-}" ]; then echo "NOT A GATE: Playwright ran only $GATE_ONLY"; fi
   echo "gate on $COMMIT${WORKERS:+, $WORKERS workers}, in $GATE, ended $(date '+%d %b %H:%M')"
   echo "load:       $LOAD_START at the start, $(load) at the end, on $CORES cores"
   echo "memory:     at the start, $MEMORY_START"
   echo "            at the end,   $(memory "$(swap_rate)")"
   # The worst the run reached, by role: the sum of a role's resident sizes is a ceiling on it (shared pages count per process).
   echo "            peaks,        $("$ROOT/scripts/memory-sample.sh" --peaks "$SAMPLES")"
-  echo "unit:       $(tail -1 "$UNIT")"
-  # One judgement per project; the gate is green only when every line is.
-  for P in $PROJECTS; do
-    E2E="$(e2e_log "$P")"
-    echo "playwright: $P: $(tail -1 "$E2E")"
-    LC_ALL=C grep -h "\[projects\]\|\[reset\]\|SLEPT\| passed (\| flaky" "$E2E" | cut -c1-200
-    LC_ALL=C grep -h "\[margins\]" "$E2E" | sed -n 2p | cut -c1-200
-    # The tests that failed at least once, by line: a flake's artifacts are kept beside the log and this names them.
-    LC_ALL=C grep -h "^  ✘" "$E2E" | cut -c1-200
-  done
+  local halves=()
+  for P in $PROJECTS; do halves+=("$P=$(e2e_log "$P")"); done
+  "$ROOT/scripts/gate-report.sh" "$COMMIT" "$UNIT" "${halves[@]}"
 }
+# The verdict's status, not tee's (scripts/gate-report.sh says what each means).
 report | tee -a "$REPORT"
+exit "${PIPESTATUS[0]}"

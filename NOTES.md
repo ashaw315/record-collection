@@ -48137,3 +48137,126 @@ How it was verified:
 can set it by hand and pass the check over a stray write. That is the same
 standing as typing the commit plainly, with the declaration on record in the
 command rather than in nothing.
+
+## 20 Oct: the gate's exit status was backwards in both directions
+
+The gate on f4c265e read OK on every half and exited 1. `report()` ended on
+`grep "^  ✘"`, the list of mobile's failed tests, and under `pipefail` a
+grep that finds nothing fails. So the status was the LAST half's ✘ grep:
+
+- a clean gate exited 1;
+- a gate with a failure in mobile, which has a ✘ line to find, exited 0;
+- a failure in chromium alone exited 1, by coincidence.
+
+That has been true for as long as the grep was last. Nothing caught it
+because nothing read the exit code; the summary lines were read instead.
+The rule this sharpens, from the coordinator: read both signals, because
+where they disagree, the disagreement is the finding. An exit code is only as
+trustworthy as the script producing it, and that is a per-program fact to
+check.
+
+Now `scripts/gate-report.sh` holds the verdict, out of gate.sh so it can be
+run on logs without an hour's run, and its status is the verdict:
+
+- 0: every half reads `— OK`;
+- 1: a half does not, wrote no log or an empty one, or the logs are from more
+  than one run;
+- 2: green, but `GATE_ONLY` narrowed it, so it was not a gate. Nothing
+  depended on that run exiting 0: nothing in the repo calls gate.sh, and the
+  one CI workflow is the price refresh;
+- 3: green with retries. `run-result.ts` will not call that OK and will not
+  call it a failure (19 Oct), so neither does the gate.
+
+**One run only.** A log names its commit only by its file name.
+`414e121-flaky-run/` kept the names when it was copied aside, so a report
+mixing it with a rerun would be the same commit from two runs. A filename
+check alone passes that. Logs named for another commit are refused, and so
+are logs from more than one directory.
+
+How it was verified (`test/repo/gate-report.test.ts`, real lines from
+f4c265e and 414e121):
+
+- `report()` was moved verbatim with the defect, and 10 of 11 were red. The
+  clean case exited 1, as f4c265e did, and a mobile failure exited 0.
+- The one test green on the old script (chromium red, mobile clean) passes
+  there by the coincidence above. It is kept because it is what fails a fix
+  that judges only the last half: mutated to do that, it went red.
+- Each other rule was mutated alone: no directory refusal, flakes called OK,
+  flakes called red, the commit prefix unchecked, an empty log not red,
+  `GATE_ONLY` exiting 0. Each turned exactly one test red.
+
+**What it does not do.** The logs do not name their commit inside them. Two
+runs of one commit written to one directory are not told apart, but gate.sh
+writes every half of a run anew, so that would take a hand copying logs in.
+
+## 20 Oct: the gate checks Docker first, and builds without a dev server's route types
+
+Two of the f4c265e gate's false starts, each first reported as something
+else:
+
+- **Docker was not running after the reboot.** The first word of it was
+  `gate: could not create record_collection_gate`. Reboots are now routine
+  before a gate, so this would recur, and "start Docker first" was a
+  convention held by repetition. gate.sh now checks the daemon and then the
+  `record-collection-test-db` container, before it reads the machine or
+  touches the worktree. Each message says plainly what is down and what to
+  run.
+- **Stale route types in the gate's checkout.** `.next-test/dev/types` was
+  left by an earlier gate's dev server and still named
+  `/wall/probe/isolate`, deleted in ff6575d. It is ignored, so the checkout
+  read as clean, but `tsconfig.json` includes it, so the build failed:
+  `Cannot find module '../../../src/app/wall/probe/isolate/page.js'`. Any
+  checkout whose dev server ran before a route deletion carries the same,
+  the working tree included (ff6575d removed it there by hand). The gate now
+  removes the four dev-type directories tsconfig reads before it builds:
+  `.next{,-test}/dev/types` and `.next{,-test}/dev/dev/types`. It leaves
+  `.next/types`, which the build writes, and the rest of the dev output.
+  In the working tree it is still by hand, and the build's error names the
+  file.
+
+`test/repo/gate-preflight.test.ts` runs the real gate.sh in a throwaway
+repository, with stub `docker` and `npm`. All three tests were red first:
+with Docker down the old script made a worktree and died at the database,
+and the stub build saw all four type directories present.
+
+A thing the staging found: gate.sh's memory sampler sleeps holding the run's
+stdout, so whatever reads that stdout waits up to a sample interval after
+the gate has exited. That was 66 s in the test before `GATE_SAMPLE_EVERY=1`.
+Harmless to a gate, which writes to a file.
+
+## 20 Oct: no typecheck in commit-checked (decided, not done)
+
+Asked whether `commit-checked.sh` should run `npm run typecheck` beside the
+document suite. Not done. Typecheck reads generated state that no commit
+carries: `.next*/dev/types`, as above and in ff6575d. So it would refuse
+commits for files that are ignored and were not changed, a red about the
+machine and not the commit. The commit path's job is the document suite;
+the per-step checks run typecheck, and a gate builds, which typechecks, in
+a checkout that now clears that state first. Revisit if a type error
+reaches a commit that the step's own checks would have caught.
+
+## 20 Oct: run-result reads counts from a failing test's quoted output (observed, not acted on)
+
+While mutating gate-report.sh, a red run of that one file reported
+`10 passed, 1 failed, 4 flaky, 4 skipped`. The file has no flaky and no
+skipped tests: the `4 flaky` and `4 skipped` came from fixture lines quoted
+in the assertion messages (`  4 flaky`, `384 passed, 4 flaky, 4 skipped,
+…`). The `1 failed` was right, and a passing run quotes nothing, so the
+verdict was not wrong here. But it is the CLAUDE.md §2 instrument case
+again: the judge reading text it was not given as a summary. A test whose
+failure output quotes a summary line with a lower failed count could read
+as better than it was. Not checked further.
+
+## 20 Oct: the reboot before a gate (the memory question, as closed)
+
+The gate on f4c265e after a fresh boot: mobile 0 flaky, at a swap peak of
+4,418 MB. The earlier peaks were 10.77, 9.97 and 11.59 GB, the last with 4
+mobile flakes, on the same measure (`memory-sample.sh --peaks`). Swap was not
+low on the fresh boot: 1.0 GB at the start, 3.0 GB during chromium.
+
+**Recorded as the coordinator framed it.** One run against one run, and a
+reboot changes more than swap: caches, background processes, whatever a
+machine accumulates over days. What's established is "reboot before a gate
+and the flakes went away", not "swap volume causes flakes". The practical
+rule is the reboot. The cause is consistent with memory, not proven to be
+it. That is enough for a one-user app.
