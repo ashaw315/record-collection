@@ -120,6 +120,12 @@ describe('§4 conformance — cascade directions', () => {
       'price_history.want_list_id -> want_list: CASCADE',
       'record_genres.genre_id -> genres: NO ACTION',
       'record_genres.record_id -> records: CASCADE',
+      /*
+        §4.5 (A76). CASCADE, the stated exception to "reference rows in use are
+        never cascade-deleted": a tag set is an attribute of its record, not a
+        reference row, and describes nothing once the record is gone.
+      */
+      'record_moods.record_id -> records: CASCADE',
       'record_tags.record_id -> records: CASCADE',
       'record_tags.tag_id -> tags: NO ACTION',
       'records.artist_id -> artists: NO ACTION',
@@ -260,6 +266,9 @@ describe('§4 conformance — NOT NULL where the spec requires it', () => {
       ['discogs_cache', 'payload'],
       ['discogs_cache', 'fetched_at'],
       ['artist_influences', 'strength'],
+      ['record_moods', 'moods'],
+      ['record_moods', 'tagged_at'],
+      ['record_moods', 'overridden'],
     ];
 
     const nullable: string[] = [];
@@ -331,6 +340,12 @@ describe('§4 conformance — NOT NULL where the spec requires it', () => {
         recorded once and deleted or kept. Same reasoning as `llm_requests`.
       */
       'genre_parent_rejections',
+      /*
+        §4.5 (A76) specifies exactly five columns. `tagged_at` is when the set
+        was written, and a rewrite replaces it, so a `created_at` or
+        `updated_at` would be a second and third answer to the same question.
+      */
+      'record_moods',
       'record_genres',
       'want_list_genres',
       'artist_genres',

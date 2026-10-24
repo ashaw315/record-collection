@@ -1,0 +1,33 @@
+{
+  "_about": "Payloads in the shape the mood tagger returns once it has parsed the model's reply (SPEC.md §7.12, §11). Keyed by scenario, then by record title. Hand-written, never captured: §11 forbids a live call to get them.",
+  "varied": {
+    "Kind of Blue": { "moods": ["smooth", "zone out", "sleepy"] },
+    "London Calling": { "moods": ["loud and dirty", "jacked up"] },
+    "Remain in Light": { "moods": ["dancing", "jacked up", "showing off", "zone out"] }
+  },
+  "flat": {
+    "Kind of Blue": { "moods": ["smooth", "zone out"] },
+    "London Calling": { "moods": ["loud and dirty", "jacked up"] },
+    "Remain in Light": { "moods": ["dancing", "zone out"] }
+  },
+  "one-empty": {
+    "Kind of Blue": { "moods": ["smooth", "zone out", "sleepy"] },
+    "London Calling": { "moods": [] },
+    "Remain in Light": { "moods": ["dancing", "jacked up"] }
+  },
+  "outside-list": {
+    "Kind of Blue": { "moods": ["smooth", "melancholy"] },
+    "London Calling": { "moods": ["loud and dirty", "jacked up"] },
+    "Remain in Light": { "moods": ["dancing", "jacked up", "zone out"] }
+  },
+  "five": {
+    "Kind of Blue": { "moods": ["smooth", "zone out", "sleepy", "sunny", "showing off"] },
+    "London Calling": { "moods": ["loud and dirty", "jacked up"] },
+    "Remain in Light": { "moods": ["dancing", "jacked up", "zone out"] }
+  },
+  "as-written": {
+    "Kind of Blue": { "moods": ["Smooth ", "Zone Out", "smooth"] },
+    "London Calling": { "moods": ["loud and dirty", "jacked up"] },
+    "Remain in Light": { "moods": ["dancing", "jacked up", "zone out"] }
+  }
+}

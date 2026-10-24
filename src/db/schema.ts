@@ -952,3 +952,36 @@ export const artistInfluences = pgTable(
     check('artist_influences_no_self_edge', sql`${t.sourceArtistId} <> ${t.targetArtistId}`),
   ],
 );
+
+/**
+ * SPEC.md §4.5 (A76) — the mood pick's tags, one row per record.
+ *
+ * **A side table rather than columns on `records`** because the feature is
+ * expected to be outgrown: retiring it is dropping this table.
+ *
+ * **No row means not yet looked at**, which is a different answer from "tagged,
+ * and no record carries this mood". So a failed tagging writes nothing, and the
+ * next run retries it.
+ *
+ * No `id` and no `created_at`/`updated_at`: §4.5 names exactly these five
+ * columns, the record is the key, and `tagged_at` is when the set was written.
+ */
+export const recordMoods = pgTable(
+  'record_moods',
+  {
+    // The exception to "reference rows in use are never cascade-deleted": a tag
+    // set is an attribute of its record, not a reference row.
+    recordId: uuid('record_id')
+      .primaryKey()
+      .references(() => records.id, { onDelete: 'cascade' }),
+    // Plain text from §7.12's list, which lives in code; the database holds
+    // only the count, because a list change must not need a migration.
+    moods: text('moods').array().notNull(),
+    taggedAt: timestamp('tagged_at', { withTimezone: true }).notNull(),
+    // NULL when the set was written by hand.
+    taggedByModel: text('tagged_by_model'),
+    // A regeneration never rewrites a set someone corrected.
+    overridden: boolean('overridden').notNull().default(false),
+  },
+  (t) => [check('record_moods_one_to_four', sql`cardinality(${t.moods}) BETWEEN 1 AND 4`)],
+);

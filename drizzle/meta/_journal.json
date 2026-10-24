@@ -204,6 +204,13 @@
       "when": 1788913971425,
       "tag": "0028_fair_hairball",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1792866907238,
+      "tag": "0029_omniscient_exodus",
+      "breakpoints": true
     }
   ]
 }
