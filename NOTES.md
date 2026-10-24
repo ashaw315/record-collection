@@ -48273,3 +48273,62 @@ machine accumulates over days. What's established is "reboot before a gate
 and the flakes went away", not "swap volume causes flakes". The practical
 rule is the reboot. The cause is consistent with memory, not proven to be
 it. That is enough for a one-user app.
+
+## 23 Oct: §W.22's pan from a seat out of frame, measured for Design (a read, nothing changed)
+
+§W rules the pull from a seat the reader clicked, so a seat in frame. A mood
+pick can name a seat that is out of frame. This is a read of what the current
+pan does in that case. Nothing was fixed. Design rules what it should be.
+
+**How.** A probe outside the tree (the session scratchpad, not committed) on
+`/wall/probe/labelled?count=N`, the same `WallComposition` as the wall, under
+a paused clock. No control yet starts a pull from out of frame, so the trigger
+was the spine's own click handler fired on an out-of-frame seat, the entry a
+pick would call. The proxy was checked first: on the same in-frame seat, a
+real click and the fired handler gave identical figures at all six sizes.
+
+**At 22 records, no seat is out of frame at rest** at 1280×800, 1440×900 or
+1920×1080: all 22 are in. The region does scroll, by 375, 275 and 95px, so a
+reader who has scrolled can put seats out of frame. At 200 records, seats
+were out of frame below at rest (53, 29 and 5 of them at those sizes). No
+seat was ever out of frame to the left or right at any size or count.
+
+**The pan reaches every out-of-frame case measured:** below at rest; above
+and partial after scrolling to the bottom; below and partial after scrolling
+to the top; at 22 and 200 records; at 1280×800 and 1440×900 (and below at
+1920×1080). In every one:
+
+- the landed record sat inside the region at the same screen offset as the
+  in-frame control, within half a pixel: (90, 153) at 1440×900, (90, 103) at
+  1280×800, (90, 243) at 1920×1080;
+- the emptied seat was in the region, 55 to 58px clear of the cover's
+  trailing edge (the control's own range, 56 to 58);
+- the next arrow was in the region (absent only for the last record, which
+  has none);
+- the phase read `landed`.
+
+The pans ran up to 672px across and 758px down. At the first frame the
+region's scroll extent grows to hold the target, and the swing ends at that
+extent: the frame makes the room, then the pan uses it.
+
+**One put-back did not return, once in three runs.** At 1440×900, 200
+records, scrolled to the bottom, putting back `collection-0` left the wall
+455px from where it began. That was the largest pan measured, 669 across and
+758 down. Every other put-back measured returned to 0,0, and the same case
+repeated twice returned to 0,0 both times. The outward pull in the bad run
+was normal, landing at the usual place. Cause not read.
+
+**Not measured:** widths between the fork (1044) and 1280; a pick while
+another record is already out; real time rather than the paused clock;
+the narrow view, where §W.24 sends a tap elsewhere.
+
+## 23 Oct: commit-checked cannot carry an edit to ASSERTIONS-spec.md
+
+Assertion 0 refuses `scripts/ASSERTIONS-spec.md` differing from HEAD, and
+the intake and the index tests run it. `commit-checked.sh` checks before it
+stages, so a commit that edits the spec is refused by its own content (557
+passed, 3 failed, all three assertion 0). It is the hole 7d1549b closed for
+CLAUDE.md, still open here. 1e88e0e went by plain `git commit`, said so, and
+the committed tree was checked next: index 13 of 13, the document suite 560
+passed. The fix would be the same as 7d1549b's, assertion 0 reading
+`COMMIT_PATHS`. Not done; it is shared infrastructure and wants its own unit.
