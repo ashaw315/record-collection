@@ -24,7 +24,7 @@ Read every input as UTF-8. Decode `&rsquo;` → `’` and `&amp;` → `&` before
 ## Shared definitions
 
 **Heading.** In `L`, `S` and `W`: any `<p …>` whose `style` contains `text-transform:uppercase` and whose text starts with an optional `§`, then a section id, then ` · `.
-Section id pattern: `W` | `W\.\d+(\.\d+)?` | `G\.\d+(\.\d+)?` | `M\.\d+(\.\d+)?` | `T\.\d+(\.\d+)?` | `\d{1,2}(\.\d+)?`. `M` is the record modal's target; its ids are accepted before it is an input, so the first §M citation is read rather than refused. `T` is the table and grid target's, accepted on the same terms from 8 Oct.
+Section id pattern: `W` | `W\.\d+(\.\d+)?` | `G\.\d+(\.\d+)?` | `M\.\d+(\.\d+)?` | `T\.\d+(\.\d+)?` | `P\.\d+(\.\d+)?` | `\d{1,2}(\.\d+)?`. `M` is the record modal's target; its ids are accepted before it is an input, so the first §M citation is read rather than refused. `T` is the table and grid target's, accepted on the same terms from 8 Oct, and `P` the mood pick's from 23 Oct.
 In `W`, a bare numeric id is prefixed `W.`.
 **Never match headings inside `<svg>`**: SVG text holds cell labels like `1 · Cover`.
 
@@ -47,7 +47,7 @@ In `W`, a bare numeric id is prefixed `W.`.
 ```
 
 - `ID` is `S/slug`, in backticks inside the bold, unique across the list.
-- `S` and `BY` are section ids: `\d{1,2}(\.\d+)?`, `W(\.\d+)*`, `G(\.\d+)+`, `M(\.\d+)+` or `T(\.\d+)+`.
+- `S` and `BY` are section ids: `\d{1,2}(\.\d+)?`, `W(\.\d+)*`, `G(\.\d+)+`, `M(\.\d+)+`, `T(\.\d+)+` or `P(\.\d+)+`.
 - `WHAT` runs from the character after the by-clause's own `. ` to the end of the line and is carried **verbatim** into the entry: its capital, its trailing period, any colon or inner period, and apostrophes straight or curly as written. No assertion reads `WHAT`; it is for people.
 - `QUOTE` is the whole of the next line after `> `, verbatim; it is what 6 and 7 compare, so it is never normalised.
 - A line beginning `- ` that does not match, or a bullet with no `> ` line after it, **fails the parse loudly** with its line number. An entry is never dropped silently.
@@ -65,7 +65,7 @@ Test cases, all of which the grammar must yield unchanged: `31/whole` (a colon a
 **Known limit: a whole-section withdrawal removes one sentence, not the section.** An entry quotes a sentence, so withdrawing a section "in whole" leaves the rest of its body in live text. §31 is withdrawn in whole and most of it is live — correct for a section kept as a record, but it means 8a checks such a section's row figures against retired reasoning. §31's row carries no figures, so nothing is wrong today.
 
 **Stripping for assertion 8.** Remove, in order:
-1. Section references: `§W\.\d+(\.\d+)?`, `§W\b`, `§G\.\d+(\.\d+)?`, `§M\.\d+(\.\d+)?`, `§T\.\d+(\.\d+)?`, `§\d+(\.\d+)?`. (§G was missing until 3 Oct, so §G.7's pointer, "held until §G.8 recorded Adam's choice", failed 8b on the 8 of a section reference.)
+1. Section references: `§W\.\d+(\.\d+)?`, `§W\b`, `§G\.\d+(\.\d+)?`, `§M\.\d+(\.\d+)?`, `§T\.\d+(\.\d+)?`, `§P\.\d+(\.\d+)?`, `§\d+(\.\d+)?`. (§G was missing until 3 Oct, so §G.7's pointer, "held until §G.8 recorded Adam's choice", failed 8b on the 8 of a section reference.)
 2. Step references: `steps? \d+` (case-insensitive)
 3. Artefact names: `\b[A-Z]\d+[a-z]?\b` (D2, A75) and `\b\d{1,2}[a-z]\b` (5b, 7a, 8a). **Not** `\d+px` or other units: those are figures.
 
@@ -92,6 +92,7 @@ Twelve are built and numbered 0 to 9, 11 and 12. Assertion 8 has two parts, so t
    - every `§G.N` in `L`, `S`, `W`, `G`, `M` or `T` names a heading in `G`;
    - every `§M.N` in `L`, `S`, `W`, `G`, `M` or `T` names a heading in `M`;
    - every `§T.N` in `L`, `S`, `W`, `G`, `M` or `T` names a heading in `T`;
+   - every `§P.N` in `L`, `S`, `W`, `G`, `M` or `T` names a heading. `P` is not yet an input, so until it is, none does, and a citation fails: nothing cites the prefix before its target is read (23 Oct);
    - every `§N` with 1 ≤ N ≤ 10 in `L`, `W`, `G`, `M` or `T` names a heading in `S`;
    - every `§N` with N ≥ 12 in `S`, `W`, `G`, `M` or `T` names a heading in `L`. No upper bound: the live set is `L`'s own headings, and a bound restates them and goes stale each time a section is added (it sat at 32 while §33 and §34 were referenced unchecked).
    Fail: `4 FILE→§REF`.

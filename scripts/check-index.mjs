@@ -253,6 +253,10 @@ const report = (n, ok) => {
     for (const m of bodyOf(key).matchAll(/§(T\.\d+(?:\.\d+)?)/g)) {
       if (!has(m[1])) fail(`4 ${key}→§${m[1]}`);
     }
+    /* §P (23 Oct): read before its target is an input, so a citation of it fails until its headings exist; unread, one passed. */
+    for (const m of bodyOf(key).matchAll(/§(P\.\d+(?:\.\d+)?)/g)) {
+      if (!has(m[1])) fail(`4 ${key}→§${m[1]}`);
+    }
   }
   for (const key of ['L', 'W', 'G', 'M', 'T']) {
     for (const m of bodyOf(key).matchAll(/§(\d{1,2}(?:\.\d+)?)/g)) {
@@ -477,6 +481,7 @@ const WITHDRAWAL_PREFIX =
       .replace(/§G\.\d+(\.\d+)?/g, ' ')
       .replace(/§M\.\d+(\.\d+)?/g, ' ')
       .replace(/§T\.\d+(\.\d+)?/g, ' ')
+      .replace(/§P\.\d+(\.\d+)?/g, ' ')
       .replace(/§\d+(\.\d+)?/g, ' ')
       .replace(/steps? \d+/gi, ' ')
       .replace(/\b[A-Z]\d+[a-z]?\b/g, ' ')

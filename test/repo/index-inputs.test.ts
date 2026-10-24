@@ -587,3 +587,68 @@ describe('assertion 12 holds a no-entry call to its spared sentence', () => {
     expect(out).not.toContain('unnamed "An earlier draft of this paragraph');
   });
 });
+
+/**
+ * **P, the mood pick's target, ahead of anything citing it (23 Oct).** The
+ * same move as T (ee39ebd): the grammars accept `P.N` before a tracked
+ * heading or entry uses one, and Design's §P rows wait for this. Checked
+ * free first: no index input has P as its file key; no section heading, row,
+ * withdrawal id or reference in any input carries a P id; the only file with
+ * one is `Mood Pick - build target.dc.html` itself, which is not an input.
+ *
+ * **One thing T's move did not do, read before this one.** With the target
+ * on disk and not an input, the index ignores it: 13 of 13, and the current
+ * parser finds no heading in it. A handoff row citing §P.1 fails loudly
+ * (`1 §P.1 no-heading`, `2 §P.1 not-in-order`). But a §P.1 in another
+ * target's prose passed, 13 of 13: assertion 4 scanned W, G, M, T and bare
+ * numbers, so a citation of a prefix it did not know was not a reference at
+ * all, the 2 Oct shape for §G. So 4 reads §P now, and until the target is an
+ * input every §P citation names a heading that does not exist, and fails.
+ */
+describe('the shared parser and the bullet grammar read §P ids', () => {
+  /* Fails against SECTION_ID, which accepts W, G, M, T and bare numbers only. */
+  it('finds headings written P.1 onward', () => {
+    const html = '<p style="font-size:11px;text-transform:uppercase">P.1 · Where the feature is ruled, and where it is presented</p><p>Body.</p><p style="text-transform:uppercase">P.12 · A later one</p>';
+    expect(sections(html).map((h: { id: string }) => h.id)).toEqual(['P.1', 'P.12']);
+  });
+
+  /* Fails against BULLET, whose section slots accept numbers, W, G, M and T only. */
+  it('parses an entry withdrawn in and by a §P section, and one in §P withdrawn by §W', () => {
+    const md = '- **`P.4/states`**: §P.4, withdrawn by §P.4. A first wording.\n  > Withdrawn within §P.4: a sentence.\n\n- **`P.2/control`**: §P.2, withdrawn by §W.24. Another.\n  > Superseded by §W.24: a sentence.\n';
+    expect(parseBullets(md)).toEqual([
+      { id: 'P.4/states', s: 'P.4', by: 'P.4', what: 'A first wording.', quote: 'Withdrawn within §P.4: a sentence.' },
+      { id: 'P.2/control', s: 'P.2', by: 'W.24', what: 'Another.', quote: 'Superseded by §W.24: a sentence.' },
+    ]);
+  });
+});
+
+describe('assertion 4 reads a §P citation as a reference', () => {
+  /* Fails against assertion 4's reference rules: "§P.1" was not a shape it read, so the run stayed 13 of 13 (measured 23 Oct). */
+  it('fails a §P reference in the table and grid target while no §P heading exists', () => {
+    const dir = stage((d) => {
+      const p = join(d, 'Table and Grid - build target.dc.html');
+      const text = readFileSync(p, 'utf8');
+      const staged = text.replace(/(T\.1 · [^<]*<\/p>\s*<p[^>]*>)/, '$1The mood pick presents here too (§P.1). ');
+      if (staged === text) throw new Error('staging anchor missing: T.1');
+      writeFileSync(p, staged);
+    });
+    const { out } = run(dir);
+    expect(out).toMatch(/^FAIL 4$/m);
+    expect(out).toContain('4 T→§P.1');
+  });
+});
+
+describe('assertion 8 reads a §P reference as a reference, not a figure', () => {
+  /* Fails against the stripping in assertion 8: §G.6's text has no 3, so "§P.3" in its pointer would fail 8a as a missing figure, as "§G.8" did on 3 Oct. */
+  it('passes 8a on a governs row whose pointer names a §P section', () => {
+    const dir = stage((d) => {
+      const p = join(d, 'HANDOFF-wall-and-pull.md');
+      const from = '| §G.6 | The header is not sticky | Why the header scrolls away with the page. |';
+      const text = readFileSync(p, 'utf8');
+      if (!text.includes(from)) throw new Error(`staging anchor missing: ${from}`);
+      writeFileSync(p, text.replace(from, '| §G.6 | The header is not sticky | Why the header scrolls away with the page, unlike §P.3’s pick. |'));
+    });
+    const { out } = run(dir);
+    expect(out).not.toMatch(/^8a §G\.6 /m);
+  });
+});
