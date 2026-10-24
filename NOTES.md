@@ -48455,3 +48455,62 @@ is what both share. Report-only, so nothing fails on it, and the draft fix
 itself is checked against git, not by 12 (it held on 24 Oct: the Mood Pick
 target was never committed by any route). Not fixed: it is the index's
 shared infrastructure and wants its own unit.
+
+## 24 Oct: the flat-count refusal watches the backfill hardest (a decision's consequence, as confirmed)
+
+§7.12's refusal of a run in which every record received the same count
+applies only when the run tagged at least two records (`runTagging` in
+`src/lib/moods/tagging.ts`). Without that, a run picking up one new record
+would be refused every time and could never finish.
+
+**So the guard does not watch every run equally.** It is strongest exactly
+once, on the first backfill, where it sees the whole collection (22 records,
+as given). On the one- and two-record runs after that it is nearly inert: one
+record cannot be flat, and two records match by chance often. The coordinator
+confirmed this is the right shape, because a flat-two failure belongs to the
+prompt and shows on the big run, and a run's count spread is printed every
+time (`moods per record: 2×n, 3×n, …`) for anyone reading one by hand. A
+later reader should not take a passing small run as the check having looked.
+A `--regenerate` run re-asks every set that is not overridden, so it is the
+big run again.
+
+Two neighbouring decisions, confirmed with it. A mood outside the list, or a
+fifth mood, fails the whole record rather than being dropped or trimmed,
+since a repair would change the count the check reads. Duplicates are
+removed without failing, but the report names each record whose reply
+needed it, with what the model wrote, so padding is visible rather than
+quietly normalised.
+
+## 24 Oct: the tag-batch route will need protection from repeated calls (owed at Phase 3, not solved now)
+
+§9.2's limit, 10 Anthropic calls an hour in `src/lib/llm/rate-limit.ts`, is
+for calls a user triggers, and the mood tagging script does not go through
+it. That is right for the script: Adam runs it by hand, offline (§7.12), and
+a backfill is one call per record.
+
+**The reason does not carry over to §5.10.** Phase 3 puts the same module
+behind `POST /api/moods/tag-batch` with `CRON_SECRET`, and a route is
+triggerable: the Action on a schedule, a retry loop, a re-run by hand, or
+anyone holding the secret. Each call spends the account the user-facing
+limit also guards. So the route needs its own protection against being called
+repeatedly, decided when it is built. Nothing is owed until then, because no
+mood code sits in a request path today.
+
+## 24 Oct: a new migration cannot pass commit-checked (an instance of the class above)
+
+0029 is the first migration since `scripts/commit-checked.sh` arrived on 9 Oct
+(0028 is dated 8 Sep), and the path cannot carry it. The script runs its
+check before staging and refuses to start with anything staged, while
+`test/repo/migrations-complete.test.ts` copies only git-tracked files into
+its fresh clone. So an unstaged 0029 is a journal entry with no file behind
+it, and the check fails on exactly the commit it is guarding. The same shape
+as the class above, "The checked commit path cannot modify a file its own
+checks read against HEAD", reached through the index rather than HEAD.
+
+4509325 was committed plainly. The document suite ran against exactly the
+staged tree in a clean worktree at HEAD, with only the commit's paths copied
+in (559 passed, 1 skipped for want of a build manifest, OK), and its message
+says so. The clean worktree also kept Design's uncommitted §P drop, which
+fails the index until the intake, out of a check that was not about it. Not
+fixed: the commit path is shared infrastructure, and this wants the same
+unit as the open ASSERTIONS-spec.md hole.
