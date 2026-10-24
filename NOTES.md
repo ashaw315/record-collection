@@ -48431,3 +48431,27 @@ scope still come first (CLAUDE.md §4, §7).
 - **Model:** the larger model, for its breadth of music knowledge: reaching
   records like Super Rich is the point. Id and output format to be confirmed
   against current docs before the client is written.
+
+## 24 Oct: assertion 12's draft-fix detector missed §P.1's sentences (cause confirmed, not fixed)
+
+§P.1 says "An earlier draft of this section left …" and "… so all three are
+draft fixes", and 12 listed neither: `4 draft fixes not calls`, the same
+count as the tree without the target. The cause was confirmed with the
+index's own `sentencesOf` on §P.1, and there are two:
+
+1. **The draft check sits behind the call gate.** `check-index.mjs` tests a
+   sentence for a draft fix only after it has matched `CALL` or `SPARED`
+   (lines 683 to 693). A sentence with neither is dropped first. Both of
+   §P.1's sentences carry no `No entry:` and no prose call form, so neither
+   reaches the check. "An earlier draft" matches the pattern, and is never
+   tested.
+2. **The pattern misses the plural.** "draft fixes" fails `\bdraft fix\b`:
+   the `\b` after "fix" does not hold before "es".
+
+**The second instance of this detector being narrow.** On 17 Oct it keyed
+on the call's own sentence saying "draft fix", and §G.5's words came three
+sentences later. Each fix widened one case; the gate in front of the check
+is what both share. Report-only, so nothing fails on it, and the draft fix
+itself is checked against git, not by 12 (it held on 24 Oct: the Mood Pick
+target was never committed by any route). Not fixed: it is the index's
+shared infrastructure and wants its own unit.
