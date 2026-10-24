@@ -48316,13 +48316,19 @@ records, scrolled to the bottom, putting back `collection-0` left the wall
 455px from where it began. That was the largest pan measured, 669 across and
 758 down. Every other put-back measured returned to 0,0, and the same case
 repeated twice returned to 0,0 both times. The outward pull in the bad run
-was normal, landing at the usual place. Cause not read.
+was normal, landing at the usual place.
+
+**UNEXPLAINED, not noise.** Once in three runs, unreproduced, no cause
+found. It was a synthetic 200-record case, so it blocks nothing. It stays
+open, because this project has been bitten by intermittents twice, and both
+times the first report called them noise. If a put-back ever lands somewhere
+other than where it began, start here.
 
 **Not measured:** widths between the fork (1044) and 1280; a pick while
 another record is already out; real time rather than the paused clock;
 the narrow view, where §W.24 sends a tap elsewhere.
 
-## 23 Oct: commit-checked cannot carry an edit to ASSERTIONS-spec.md
+## 23 Oct: commit-checked cannot carry an edit to ASSERTIONS-spec.md (an instance of the class below)
 
 Assertion 0 refuses `scripts/ASSERTIONS-spec.md` differing from HEAD, and
 the intake and the index tests run it. `commit-checked.sh` checks before it
@@ -48332,3 +48338,85 @@ CLAUDE.md, still open here. 1e88e0e went by plain `git commit`, said so, and
 the committed tree was checked next: index 13 of 13, the document suite 560
 passed. The fix would be the same as 7d1549b's, assertion 0 reading
 `COMMIT_PATHS`. Not done; it is shared infrastructure and wants its own unit.
+
+## The checked commit path cannot modify a file its own checks read against HEAD (a class, named 24 Oct)
+
+**Twice now, and not a coincidence.** `commit-checked.sh` runs its checks
+on the working tree before it stages. A check that compares a file with
+HEAD, and refuses it when the two differ, therefore refuses every commit
+that changes that file. So the path built to make commits safe cannot carry
+an edit to the files that define what safe means. That edit goes by plain
+`git commit`, the path the check exists to replace.
+
+- **CLAUDE.md** (to 20 Oct): `claude-md-integrity` refused any uncommitted
+  change. 95bf07d went plainly. 7d1549b closed it with `COMMIT_PATHS`, so
+  the check can tell the commit's own declared edit from a stray one.
+- **`scripts/ASSERTIONS-spec.md`** (23 Oct): the index's assertion 0
+  refuses the spec differing from HEAD. 1e88e0e went plainly. Still open.
+
+**How to recognise the next one.** A check reads a file against HEAD (`git
+diff HEAD`, `git show HEAD:`, "untracked or differing from HEAD fails"), and
+that file is one a deliberate change would edit. Either the check reads
+`COMMIT_PATHS` (scripts/commit-paths.mjs), or that file's edits go plainly,
+are said so in the message, and the committed tree is checked next.
+
+## 24 Oct: a second pick while a record is out, measured for Design (a read, nothing changed)
+
+Pressing again for a different record is the feature's main loop, so every
+second press is this case. Measured as before: the spine's click handler,
+the entry a pick would call, at 1440×900, on 22 and 200 records, under a
+paused clock. Record A was pulled first. Then B was fired, from a seat in
+frame or out of frame after A's pan, with A either landed or mid-swing
+(800ms in).
+
+**The spine's entry refuses a second pull while a record is out.** In every
+case B stayed seated and A stayed out. The view did not move, and A landed
+on its own schedule if it was mid-swing. Sampled to 3.5s after the second
+press.
+
+The real-click comparison could not reach B with A landed. At B's spine,
+the topmost element was the next arrow (22 records) or A's landed cover (200
+records), so Playwright's click timed out after scrolling the region itself.
+That moved scroll is the instrument's, not the app's. Mid-swing, the real
+click matched the handler: refused.
+
+**The arrows are the one existing path that changes the record while one is
+out.** A next press with A landed sends A back while the neighbour comes out
+on the same clock. Both are out together from about 1 to 800ms, A is gone by
+1300ms, and the neighbour has landed by 2000ms. The panel was blank for the
+first ~300ms, then the neighbour's. The view moved 15px at 22 records and 16
+across, 9 down, at 200. That reaches the adjacent seat only. Whether the
+mechanism can take a record that is not adjacent was not read.
+
+## 24 Oct: the mood feature's Phase 1, as decided by the coordinator (not built)
+
+Recorded so it outlives the session. The SPEC amendment and Adam's full
+scope still come first (CLAUDE.md §4, §7).
+
+- **Mood list:** sleepy · jacked up · dancing · zone out · smooth · loud and
+  dirty · showing off · sunny. A fixed list in code, plain text, no table, no
+  ids. Adam's to change; the tags regenerate.
+- **Schema:** one side table, `record_moods`, with one row per record:
+  `record_id`, `moods text[]`, `tagged_at`, `tagged_by_model`, `overridden`.
+  - A side table because Adam expects to retire the feature, and retiring it
+    should be dropping one table.
+  - An array because the override is per record: a corrected set is
+    rewritten, not toggled a word at a time, and provenance is per record
+    with it.
+- **Last record served:** not in the database. One value for one user, and
+  what annoys is the same record twice in one sitting, so it goes in the
+  client, session-scoped. No column.
+- **(b) stands: every record ends with at least one mood.** The script
+  refuses to finish with an untagged record. "A record with no moods" is
+  forbidden; "a mood no record carries" is allowed. That leaves Design three
+  states:
+  1. a mood nothing carries, everything tagged: "nothing you own is sleepy";
+  2. nothing tagged: "I haven't looked yet";
+  3. some tagged, some not: "nothing so far, and three I haven't read". This
+     is the normal state whenever records are added before a re-run.
+- **(a) and (b) as tests:** the script refuses to end a run in which every
+  record got the same count, or any record got none, naming the records.
+  Stub tests drive each refusal red first.
+- **Model:** the larger model, for its breadth of music knowledge: reaching
+  records like Super Rich is the point. Id and output format to be confirmed
+  against current docs before the client is written.
