@@ -36,7 +36,7 @@ Single user for v1, behind a password gate. Designed so multi-user is a later fe
 | E2E tests | Playwright |
 | Hosting | Vercel |
 | External API | Discogs (personal access token) |
-| LLM | Anthropic API (suggestion engine, §9.2) |
+| LLM | Anthropic API (suggestion engine, §9.2; mood tagging, §7.12, offline and never at request time, A76) |
 
 **Constraints:**
 - All DB access goes through Drizzle. No raw `pg` client usage except in migration scripts.
@@ -57,7 +57,7 @@ Simple password gate. Not a user system.
 - Single shared password stored as a bcrypt/argon2 hash in env var `APP_PASSWORD_HASH`.
 - `POST /api/auth/login` accepts `{ password }`, verifies against the hash, sets an httpOnly, secure, sameSite=lax session cookie (signed JWT or iron-session; pick one, 30-day expiry).
 - Next.js middleware protects all routes except `/login` and `/api/auth/login`.
-- **Cron exception:** `/api/discogs/refresh-prices` is not reachable by session cookie. It authenticates instead via a `CRON_SECRET` bearer token (Vercel Cron sends this automatically). Reject any request to it lacking a valid secret with `401`. Do not exempt it from middleware wholesale — that would leave it open to the internet.
+- **Cron exception:** `/api/discogs/refresh-prices`, and `/api/moods/tag-batch` on the same terms (A76, §5.10), is not reachable by session cookie. It authenticates instead via a `CRON_SECRET` bearer token (Vercel Cron sends this automatically). Reject any request to it lacking a valid secret with `401`. Do not exempt it from middleware wholesale — that would leave it open to the internet.
 - `POST /api/auth/logout` clears the cookie.
 - **Forward compatibility:** every user-owned table (`records`, `want_list`, `journal_entries`) gets a nullable `user_id UUID` column now, unused in v1. Do not add a `users` table yet.
 
@@ -416,6 +416,36 @@ Index every FK column. Additionally:
 - `pressings(discogs_release_id)`
 - Trigram index on `records(title)` and `artists(name)` for fuzzy search (`pg_trgm`).
 
+### 4.5 Mood tags (A76, 2026-10-24)
+
+**`record_moods`**: the mood pick's stored tags, one row per record. A side
+table and not columns on `records`, because the feature is expected to be
+outgrown: retiring it is dropping this table, not unpicking columns from the
+records table.
+| Column | Type | Notes |
+|---|---|---|
+| record_id | UUID PRIMARY KEY REFERENCES records(id) ON DELETE CASCADE | one row per record |
+| moods | TEXT[] NOT NULL | one to four of §7.12's list, as plain text |
+| tagged_at | TIMESTAMPTZ NOT NULL | when the set was written |
+| tagged_by_model | TEXT | the model id that wrote it; NULL when the set was written by hand |
+| overridden | BOOLEAN NOT NULL DEFAULT false | true when the set was corrected by hand; a regeneration never rewrites it |
+
+CHECK that `cardinality(moods)` is between 1 and 4. The cascade is the
+exception to "reference rows in use are never cascade-deleted": a tag set is
+an attribute of its record, not a reference row, and has no meaning without
+it.
+
+**No row means the record has not been looked at.** That absence is what
+tells "not yet tagged" from "tagged, and no record carries this mood", which
+read differently (§P). A row exists only once the record has been through
+the script, or its set has been written by hand. A record whose tagging
+failed gets no row, so the next run retries it.
+
+**The last record served is not stored.** It is one value for one user, and
+what it guards against is the same record twice in one sitting, so it lives
+in the client, session-scoped. Override, provenance and the served record
+are all per record or per session; nothing here is per mood.
+
 ---
 
 ## 5. API contract
@@ -762,6 +792,20 @@ quietly retire that work.
 | POST | `/api/records/:id/images` | Multipart upload → Vercel Blob → creates `images` row. Max 10MB, accept jpeg/png/webp only. |
 | DELETE | `/api/images/:id` | Deletes blob and row. |
 
+### 5.10 Mood tagging (A76, 2026-10-24) — SPEC'D, NOT BUILT (step 17, unit 3)
+| Method | Path | Notes |
+|---|---|---|
+| POST | `/api/moods/tag-batch` | **Cron-invoked only**, on the price refresh's terms (§3). Tags a bounded batch of untagged records through the same module the script uses (§7.12), and returns `{ data: { tagged, remaining, failed } }`. A bounded batch keeps the call inside the serverless limit at any collection size. |
+
+**Why a route and not an Action holding the credentials.** A route behind
+`CRON_SECRET` exposes a trigger: if the secret leaks, someone can make the
+tagger run, which costs an API bill and rewrites tags that regenerate. An
+Action holding `DATABASE_URL` puts the production credential in a second
+place, and a leak of that is full database access. The route is the lower
+risk, and the price refresh already works this way. A manual "run now" is a
+GitHub Action that CALLS this route, so GitHub holds only `CRON_SECRET` and
+the database credential never leaves Vercel.
+
 ---
 
 ## 6. Discogs integration
@@ -809,6 +853,31 @@ quietly retire that work.
 10. **A relayed claim's settler travels with the claim (A63, 2026-09-09).** Where a stored field records *where* an observation came from or *when* it was actually written, that field is part of the claim and must reach the screen with it: `price_history.source` records where an observation came from, and `journal_entries.created_at` records when an entry was actually written as opposed to the `entry_date` it claims. Both are currently selected on every page view and dropped before rendering — the query takes every column, the page maps `id`, `price`, `priceType` and `recordedAt` and drops `source`; the journal renders only `entry_date`, and the two differ whenever a user backdates, which the date input supports to 1877. On the price side the copy *"Nothing here says what a copy sold for — only what someone asked"* is carried entirely by `priceTypeMeaning()`, while the field naming who asked is loaded and thrown away. The journal case is not a settler and not an age but **the difference between when a claim was made and when it says it was made.** (`journal_entries.user_id` is null on every row; nothing writes it.)
 
 11. **An action that will never exist says so; an absent control otherwise reads as one not yet built (A65, 2026-09-09).** `journal_entries` has POST and DELETE and no PATCH or PUT, so an entry cannot be corrected once written — and nothing on screen says so. A user finds out by looking for an Edit control that is not there, beside a Delete control that is, and fixes a typo by deleting and rewriting, which loses the original and changes `created_at`. **Price history makes the same promise about editing and states it** — *"each one is added, never edited"* — and makes the opposite promise about deletion, with no per-row delete at all. Two logs on one page, the same rule on editing, opposite rules on deletion, one announced and one silent, enforced at different layers.
+
+12. **Mood tags are written offline, and every record carries at least one (A76, 2026-10-24).**
+    - **The list is eight moods, fixed in code** as plain text, with no table
+      and no ids: sleepy, jacked up, dancing, zone out, smooth, loud and
+      dirty, showing off, sunny. Adam's to change; a change re-runs the
+      script, and hand-overrides naming a renamed mood are redone by hand.
+    - **No model runs at request time.** One module tags records. The
+      script, run by hand, calls it, and so does §5.10's route; there is no
+      second code path. It tags every record with no row in `record_moods`
+      (§4.5), so one run backfills, picks up new records and retries
+      failures. A regeneration rewrites every row that is not `overridden`.
+    - **Two to four moods per record where they honestly apply, never a
+      flat count.** If every record carried exactly two, choosing four moods
+      could never find a record matching three, and that cap is invisible.
+    - **Every record ends with at least one mood.** A record with none can
+      never be picked. "A mood no record carries" is allowed; "a record with
+      no moods" is not.
+    - **The script refuses to finish in either bad state**, exiting non-zero
+      and naming the records: a run in which every record received the same
+      number of moods, or one that leaves any record with none. The model's
+      honesty cannot be tested with a stub; the refusal can.
+    - **The larger model**, recorded in `tagged_by_model`. Breadth of music
+      knowledge is the point, since a thinner model describes records like
+      *Super Rich* vaguely, and at this collection's size the cost difference
+      does not exist.
 
 ---
 
@@ -1867,12 +1936,20 @@ Note that `has_genre` was **not** among the survivors, though an earlier version
 - Discogs field mapping — a real-shaped payload in, our fields out.
 - Estimated-value fallback chain.
 - Rate limiter behavior.
+- **Mood tagging's refusals (A76, §7.12)**, with the model stubbed: a run in which every record receives the same count is refused; a run that leaves a record with no mood is refused, naming it; up to four moods per record are stored without being capped; a mood outside §7.12's list is rejected; an `overridden` row survives a regeneration.
 
 ### Integration (Vitest against a test database)
 - Every endpoint in §5: happy path, validation failure, not-found, and auth-required.
 - `POST /api/want-list/:id/acquire` transactional integrity — force a failure partway and assert nothing was written.
 - `409` on deleting in-use reference rows.
 - `price_history` CHECK constraint rejects rows with both or neither parent ID.
+- `record_moods`' CHECK rejects an empty set and a set of five (A76).
+
+**The model is always stubbed (A76).** Mood tagging receives its tagger as a
+function, and tests pass one that returns fixture payloads from
+`test/fixtures/`. The no-live-call guard covers the real client, so a test
+that forgets the stub fails rather than calls out. Nothing in a gate reaches
+the network.
 
 ### Component (Vitest + `react-dom/server`) — A46
 
@@ -2118,6 +2195,11 @@ Mock the Discogs, MusicBrainz and Anthropic APIs in tests. Never hit live extern
 
 15. Mobile pass across all screens. E2E #10. **Unit 1 was the E2E flake, fixed by per-spec cleanup rather than the per-worker isolation originally prescribed** — see below.
 16. Vercel deploy config + cron for price refresh.
+17. **The mood pick (A76, 2026-10-24).** Adam presses moods and gets one record back, from tags written offline (§7.12). Behaviour is ruled in the Mood Pick build target (§P), not here. Units, in the order they can be built:
+    1. **The tagging pipeline.** The mood list in code, the `record_moods` migration (§4.5), the tagging module, and the script, run by hand. No UI. Needs nothing from Design.
+    2. **Surprise me, then the mood control**, once §P rules the control. Surprise me is built first, on its own, as a probe: look at it, decide whether the pull-as-answer feels right, then add the moods.
+    3. **The tag-batch route (§5.10)** on the price refresh's terms, and a GitHub Action that calls it.
+    4. **Want-list tagging**, optional, later: the same module over `want_list`, so a mood nothing on the shelf satisfies can answer with what is wanted.
 
     **THE DEPLOY APPLIES MIGRATIONS (A49, 2026-09-07).** `buildCommand` is
     `npm run db:deploy` — `drizzle-kit migrate && db:verify:state && next build`.
@@ -2542,6 +2624,11 @@ Do not build these. Do not add schema for them beyond what §4 specifies.
 - Mobile native apps.
 - Real-time/websocket anything.
 - Dark mode toggle (pick one good theme and ship it).
+- **Free-text AI search over the collection (A76).** At this size, specificity is the enemy: measured on four real prompts against 22 records, the answers ran three, two, one, none. Broad moods always have an answer (§7.12).
+- **A model choosing records at search time (A76).** It favours canonical records and buries the ones dug for. Per-record tags do not compete on fame.
+- **Embeddings or vector search (A76).** A thousand records serialised fit in one request; retrieval infrastructure is beyond any realistic collection.
+- **A human review gate on mood tags (A76).** A tag is an opinion checked by playing the record, and correcting one is free, so the pipeline runs unsupervised.
+- **Learning from what is played (A76). Not deferred: impossible.** The records are vinyl. The app cannot know what went on the turntable, so there is no feedback loop at any point, and tags change only when the script re-runs. Recorded because it is the first thing anyone will propose, and why it cannot work is not visible from inside the codebase.
 
 ---
 
