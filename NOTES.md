@@ -48274,6 +48274,17 @@ and the flakes went away", not "swap volume causes flakes". The practical
 rule is the reboot. The cause is consistent with memory, not proven to be
 it. That is enough for a one-user app.
 
+**24 Oct: a run without a reboot, which weakens the explanation.** The gate
+on b42c8b6 ran on a machine NOT rebooted since the last gate. Swap was 6.7 GB
+at the start and peaked at 9,816 MB, and mobile had 0 flaky (388 passed,
+nothing failed even once), against 4 flakes at the 11.59 GB peak. One run,
+the same standing as the run the finding went in on, and recorded for that
+reason: keeping the supporting run and holding back the contradicting one
+would tilt the record. If there is a memory link, it sits above 9.8 GB, and
+it may not be there at all. **The practical rule is unchanged**: a reboot
+before a gate costs nothing. But the explanation is weaker than it was on
+20 Oct. The reboot is no longer shown to be what made the flakes go away.
+
 ## 23 Oct: §W.22's pan from a seat out of frame, measured for Design (a read, nothing changed)
 
 §W rules the pull from a seat the reader clicked, so a seat in frame. A mood
