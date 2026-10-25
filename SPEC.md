@@ -2209,6 +2209,12 @@ Mock the Discogs, MusicBrainz and Anthropic APIs in tests. Never hit live extern
 17. **The mood pick (A76, 2026-10-24).** Adam presses moods and gets one record back, from tags written offline (§7.12). Behaviour is ruled in the Mood Pick build target (§P), not here. Units, in the order they can be built:
     1. **The tagging pipeline.** The mood list in code, the `record_moods` migration (§4.5), the tagging module, and the script, run by hand. No UI. Needs nothing from Design.
     2. **Surprise me, then the mood control**, once §P rules the control. Surprise me is built first, on its own, as a probe: look at it, decide whether the pull-as-answer feels right, then add the moods.
+
+       **Phase 0 is step 156** (the handoff's "§P.3, §P.4, §P.5 and §P.6: Phase 0, surprise me"). It builds §P.5's permanent control with the moods not yet built, never a control conditional on nothing being tagged. Its re-roll ordering, in sequence or with the pull starting before the put back ends, is settled by Adam pressing a probe route himself, not by captures. **Both orderings exist only until his choice, and the gate that applies it owes two removals, which close the step:**
+       - **the ordering prop itself**, not only its losing branch, since a prop with one surviving behaviour is a feature flag's husk and the repo carries none;
+       - **the probe route Adam pressed**, since its purpose ends with his choice.
+
+       The step is not done while either remains. The report of his choice goes to Design, to edit §P.3's provisional paragraph.
     3. **The tag-batch route (§5.10)** on the price refresh's terms, and a GitHub Action that calls it.
     4. **Want-list tagging**, optional, later: the same module over `want_list`, so a mood nothing on the shelf satisfies can answer with what is wanted.
 
