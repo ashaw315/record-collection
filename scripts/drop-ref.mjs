@@ -1,0 +1,104 @@
+#!/usr/bin/env node
+/**
+ * **A Design drop as it arrived, kept before anything runs against it.**
+ *
+ *     node scripts/drop-ref.mjs    # on arrival, before the index
+ *
+ * Keeps docs/design as it stands on disk, ignored files included, as a commit
+ * under refs/drops/<date>-NN whose parent is the drop before it. It goes in
+ * through a throwaway index, so HEAD, the real index and the working tree
+ * are untouched, and the ref is on no branch, so neither the commit path nor
+ * a push of the branch carries it.
+ *
+ * Then it says what differs from the last drop, file by file and sentence by
+ * sentence. A drop sits uncommitted while the index runs, and on 25 Oct a
+ * corrected drop was relayed with nothing saying a new generation had
+ * arrived, so a failing assertion read as an unexplained edit. It also gives
+ * Design a copy of its own send to compare a claim against.
+ *
+ * Read one back with `git show refs/drops/<name>:docs/design/<file>`, and
+ * compare two with `git diff <a> <b>`.
+ */
+import { execFileSync } from 'node:child_process';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { diffProse } from './export-diff.mjs';
+
+const DIR = 'docs/design';
+const PREFIX = 'refs/drops/';
+
+/** The next name for `date`: numbered within the day, so two drops in one day keep two refs. */
+export function nextRefName(existing, date) {
+  const taken = existing
+    .map((name) => new RegExp(`^${PREFIX}${date}-(\\d+)$`).exec(name)?.[1])
+    .filter((n) => n !== undefined)
+    .map(Number);
+  const next = taken.length === 0 ? 1 : Math.max(...taken) + 1;
+  return `${PREFIX}${date}-${String(next).padStart(2, '0')}`;
+}
+
+const git = (args, env) => execFileSync('git', args, { encoding: 'utf8', env: { ...process.env, ...env }, stdio: ['ignore', 'pipe', 'pipe'] }).trim();
+
+function localDate() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+/** The tree of docs/design as on disk, written through an index of its own. */
+function treeOfDisk() {
+  const scratch = mkdtempSync(join(tmpdir(), 'drop-ref-'));
+  try {
+    const env = { GIT_INDEX_FILE: join(scratch, 'index') };
+    git(['add', '--force', '--', DIR], env);
+    return git(['write-tree'], env);
+  } finally {
+    rmSync(scratch, { recursive: true, force: true });
+  }
+}
+
+const isBinary = (ref, path) => git(['diff', '--numstat', `${ref.from}`, `${ref.to}`, '--', path]).startsWith('-\t-\t');
+
+/** What differs between two drops, as lines to print. */
+function report(from, to) {
+  const lines = [];
+  const changes = git(['diff', '--name-status', '--no-renames', from, to]).split('\n').filter(Boolean);
+  for (const change of changes) {
+    const [status, path] = change.split('\t');
+    if (status === 'A') { lines.push(`  added    ${path}`); continue; }
+    if (status === 'D') { lines.push(`  gone     ${path}`); continue; }
+    lines.push(`  changed  ${path}`);
+    if (isBinary({ from, to }, path)) { lines.push('    (binary)'); continue; }
+    const d = diffProse(git(['show', `${from}:${path}`]), git(['show', `${to}:${path}`]));
+    if (d.removed.length + d.reworded.length + d.added.length === 0) { lines.push('    markup only: no sentence differs'); continue; }
+    for (const r of d.reworded) lines.push(`    reworded`, `      was: ${r.was}`, `      now: ${r.now}`);
+    for (const s of d.removed) lines.push(`    removed: ${s}`);
+    for (const s of d.added) lines.push(`    added: ${s}`);
+  }
+  return lines;
+}
+
+function main() {
+  const existing = git(['for-each-ref', '--format=%(refname)', PREFIX]).split('\n').filter(Boolean).sort();
+  const previous = existing.at(-1);
+  const tree = treeOfDisk();
+  if (previous !== undefined && git(['rev-parse', `${previous}^{tree}`]) === tree) {
+    process.stdout.write(`The same as ${previous}: nothing new has arrived, and no ref was recorded.\n`);
+    return 0;
+  }
+  const name = nextRefName(existing, localDate());
+  const parent = previous === undefined ? [] : ['-p', previous];
+  const commit = git(['commit-tree', tree, ...parent, '-m', `Design drop, ${DIR} as it arrived (${new Date().toISOString()})`]);
+  /* The empty old value refuses a name already taken rather than moving it. */
+  git(['update-ref', name, commit, '']);
+  if (previous === undefined) {
+    process.stdout.write(`First drop recorded: ${name}. Nothing earlier to compare it with.\n`);
+    return 0;
+  }
+  const lines = report(previous, name);
+  process.stdout.write(`New drop: ${name}. It differs from ${previous} in ${lines.filter((l) => /^ {2}\S/.test(l)).length} file(s):\n${lines.join('\n')}\n`);
+  return 0;
+}
+
+if (process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href) process.exit(main());
