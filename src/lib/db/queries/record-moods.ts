@@ -2,6 +2,7 @@ import 'server-only';
 import { asc, eq, isNull, or, sql } from 'drizzle-orm';
 import { getDb } from '@/db/client';
 import { artists, recordMoods, records } from '@/db/schema';
+import type { Mood } from '@/lib/moods/moods';
 import type { MoodSet, RecordToTag } from '@/lib/moods/tagging';
 
 /**
@@ -55,4 +56,34 @@ export async function writeMoodSets(sets: MoodSet[], model: string): Promise<num
     .returning({ recordId: recordMoods.recordId });
 
   return written.length;
+}
+
+/** A record's stored set, or `null` when no row exists: not yet looked at (§4.5). */
+export async function moodSetFor(recordId: string): Promise<string[] | null> {
+  const db = getDb();
+  const [row] = await db.select({ moods: recordMoods.moods }).from(recordMoods).where(eq(recordMoods.recordId, recordId));
+  return row?.moods ?? null;
+}
+
+export async function recordExists(recordId: string): Promise<boolean> {
+  const db = getDb();
+  const [row] = await db.select({ id: records.id }).from(records).where(eq(records.id, recordId));
+  return row !== undefined;
+}
+
+/**
+ * A set written by hand (§4.5): `overridden`, and no model, so a regeneration
+ * leaves it alone and `tagged_by_model` cannot claim a model wrote it.
+ */
+export async function overrideMoodSet(recordId: string, moods: Mood[]): Promise<void> {
+  const db = getDb();
+  const row = { recordId, moods, taggedAt: new Date(), taggedByModel: null, overridden: true };
+
+  await db
+    .insert(recordMoods)
+    .values(row)
+    .onConflictDoUpdate({
+      target: recordMoods.recordId,
+      set: { moods: row.moods, taggedAt: row.taggedAt, taggedByModel: null, overridden: true },
+    });
 }
