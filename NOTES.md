@@ -48514,3 +48514,75 @@ says so. The clean worktree also kept Design's uncommitted §P drop, which
 fails the index until the intake, out of a check that was not about it. Not
 fixed: the commit path is shared infrastructure, and this wants the same
 unit as the open ASSERTIONS-spec.md hole.
+
+## 24 Oct: the mood backfill, run 1, kept as evidence before the regenerate
+
+The first run of `scripts/tag-moods.mts` against the real collection, after
+4509325's deploy applied 0029 (Neon at 30 of 30): `22 tagged, 22 written`,
+`moods per record: 2×9, 3×12, 4×1`, no duplicates, no failures, exit 0. Every
+row reads `tagged_by_model = claude-opus-5-5`, `tagged_at`
+2026-10-24T23:30:50.702Z. The prompt was 4509325's: artist, title and the
+record's year, and "Most records suit two to four; if only one fits, give
+only one".
+
+| artist | record | moods |
+|---|---|---|
+| Buddy Rich | Super Rich | showing off, jacked up |
+| Darkside (22) | Psychic | zone out, dancing, smooth |
+| Death Grips | The Money Store | jacked up, loud and dirty |
+| Dire Straits | Dire Straits | smooth, showing off, zone out |
+| Donna Summer | On The Radio | dancing, jacked up, showing off, sunny |
+| Donovan | The Hurdy Gurdy Man | zone out, sunny, sleepy |
+| Hello Mary | Emita Ox | loud and dirty, zone out |
+| Jeff Beck | Wired | showing off, jacked up |
+| John Lennon | Mind Games | smooth, sunny, zone out |
+| Kraftwerk | The Man • Machine | dancing, zone out, smooth |
+| Luther Vandross | Never Too Much | smooth, dancing, sunny |
+| MGMT | Loss Of Life | zone out, smooth, sleepy |
+| Miles Davis | Bitches Brew | zone out, loud and dirty |
+| Pavement | Wowee Zowee | zone out, loud and dirty |
+| Simon & Garfunkel | Bridge Over Troubled Water | smooth, sunny, sleepy |
+| Smerz (2) | Believer | zone out, dancing |
+| Steely Dan | Gaucho | smooth, zone out, showing off |
+| The Blues Project | The Best Of The Blues Project | loud and dirty, zone out |
+| The Doors | The Doors | zone out, dancing |
+| The Doors | The Soft Parade | smooth, showing off, zone out |
+| Water From Your Eyes | It's A Beautiful Place | loud and dirty, dancing, zone out |
+| Weezer | Weezer | sunny, loud and dirty, jacked up |
+
+By mood: zone out 15, smooth 9, dancing 7, loud and dirty 7, showing off 6,
+sunny 6, jacked up 5, sleepy 3.
+
+**What it showed, as the coordinator read it.** Never Too Much (no genre at
+all) and Super Rich (which loses every Jazz prompt to Bitches Brew) both came
+back correctly placed, so the method reaches records the tags cannot.
+Two faults:
+- **"zone out" does not discriminate.** On 15 of 22 records, several plainly
+  wrong (Dire Straits' debut, Mind Games), pressing it alone hands back two
+  thirds of the collection, barely different from SURPRISE ME. "sleepy" is on
+  three.
+- **The prompt's "two to four" made the model pad.** Bitches Brew, Wowee
+  Zowee, The Blues Project and The Doors each carry one right mood and one
+  reached for, and The Doors' debut got "dancing", which is wrong.
+
+**The floor that moved, and what the flat check now means.** The code's floor
+was always one: `readMoodSet` has accepted a single mood since 4509325. What
+moved is the prompt's anchor, from "most records suit two to four" to
+"prefer fewer". So a run where every record gets exactly one is now invited,
+not only allowed, and it would trip the flat-count refusal. That is the check
+working: one-for-everything is as suspect as two-for-everything. But the
+refusal's meaning is to be read against this prompt and not the first one.
+A flat run of ones says the model stopped discriminating, not that it obeyed
+a floor.
+
+**SPEC §7.12 still says "Two to four moods per record where they honestly
+apply".** The prompt now departs from that sentence's number, by the
+coordinator's instruction, and the spec wants amending to match. Flagged, not
+edited.
+
+The change for run 2: no year (it is the pressing's on several records:
+Gaucho 1987, Wowee Zowee 2016, The Money Store 2018); "zone out" defined as a
+record that invites you to disappear into it, not one merely atmospheric;
+fewer preferred where fewer are honest, and no number named. One changed
+instruction set, the same 22 records, and whether the spread improves is the
+finding. The raw rows are kept outside the repo as JSON as well.

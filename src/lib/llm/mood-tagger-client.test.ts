@@ -9,7 +9,7 @@ import { buildMoodPrompt, createMoodTagger, MOOD_TAGGER_MODEL } from './mood-tag
  * reports what came back, and why nothing did.
  */
 
-const RECORD = { id: 'r1', artist: 'Miles Davis', title: 'Kind of Blue', year: 1959 };
+const RECORD = { id: 'r1', artist: 'Miles Davis', title: 'Kind of Blue' };
 
 const respond = (text: string | undefined, extra: Record<string, unknown> = {}) =>
   vi.fn().mockResolvedValue({
@@ -26,17 +26,37 @@ describe('the prompt', () => {
     for (const mood of MOODS) expect(prompt).toContain(`- ${mood}\n`);
   });
 
-  it('names the record by artist, title and year', () => {
-    expect(buildMoodPrompt(RECORD)).toContain('Miles Davis — Kind of Blue (1959)');
-    expect(buildMoodPrompt({ ...RECORD, year: null })).toContain('Miles Davis — Kind of Blue\n');
+  /**
+   * No year, by decision (24 Oct): on a quarter of the collection the year
+   * held is the pressing's (Gaucho 1987, Wowee Zowee 2016), and a mood does
+   * not depend on it, so it could only mislead.
+   */
+  it('names the record by artist and title, and never its year', () => {
+    const prompt = buildMoodPrompt(RECORD);
+
+    expect(prompt).toContain('THE RECORD: Miles Davis — Kind of Blue\n');
+    expect(prompt).not.toMatch(/\b(19|20)\d\d\b/);
   });
 
-  /** §7.12: a flat count is the failure the run refuses, so the prompt must not ask for one. */
-  it('asks for the moods that honestly apply, never a number to fill', () => {
+  /**
+   * §7.12: a flat count is the failure the run refuses, so the prompt must not
+   * ask for one. The first run's "most records suit two to four" made the
+   * model find a second mood for records with one honest one (24 Oct).
+   */
+  it('prefers fewer moods where fewer are honest, and names no number to reach', () => {
     const prompt = buildMoodPrompt(RECORD);
 
     expect(prompt).toMatch(/never pad/i);
-    expect(prompt).toMatch(/only one/i);
+    expect(prompt).toMatch(/fewer/i);
+    expect(prompt).not.toMatch(/two to four/i);
+  });
+
+  /** On 15 of 22 records in the first run, "zone out" picked out almost nothing. */
+  it('defines zone out as a record you disappear into, not one that is merely atmospheric', () => {
+    const prompt = buildMoodPrompt(RECORD);
+
+    expect(prompt).toMatch(/zone out.*disappear into/i);
+    expect(prompt).toMatch(/merely atmospheric/i);
   });
 });
 

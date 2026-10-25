@@ -10,9 +10,9 @@ import { reportRun, runTagging, type RecordToTag, type Tagger } from './tagging'
  */
 
 const RECORDS: RecordToTag[] = [
-  { id: 'r1', artist: 'Miles Davis', title: 'Kind of Blue', year: 1959 },
-  { id: 'r2', artist: 'The Clash', title: 'London Calling', year: 1979 },
-  { id: 'r3', artist: 'Talking Heads', title: 'Remain in Light', year: 1980 },
+  { id: 'r1', artist: 'Miles Davis', title: 'Kind of Blue' },
+  { id: 'r2', artist: 'The Clash', title: 'London Calling' },
+  { id: 'r3', artist: 'Talking Heads', title: 'Remain in Light' },
 ];
 
 type Scenario = Exclude<keyof typeof replies, '_about'>;

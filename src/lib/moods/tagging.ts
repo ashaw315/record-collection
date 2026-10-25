@@ -7,7 +7,7 @@ import { MAX_MOODS_PER_RECORD, MOODS, type Mood } from './moods';
  * model stubbed (§11).
  */
 
-export type RecordToTag = { id: string; artist: string; title: string; year: number | null };
+export type RecordToTag = { id: string; artist: string; title: string };
 
 /**
  * What the tagger hands back: the parsed reply, or why there is none.

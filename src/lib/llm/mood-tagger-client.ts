@@ -33,26 +33,38 @@ export const MOOD_TAGGER_MAX_TOKENS = 2_000;
  */
 const EFFORT = 'medium' as const;
 
+/**
+ * The record is named by artist and title only. **No year** (24 Oct): on a
+ * quarter of the collection the year held is the pressing's, not the
+ * album's, and a mood does not depend on it.
+ */
 export function buildMoodPrompt(record: RecordToTag): string {
-  const year = record.year === null ? '' : ` (${record.year})`;
-
   return [
     'A record collector picks what to play by mood. Which of these moods does',
     'this record honestly suit?',
     '',
-    `THE RECORD: ${record.artist} — ${record.title}${year}`,
+    `THE RECORD: ${record.artist} — ${record.title}`,
     '',
     'THE MOODS:',
     ...MOODS.map((mood) => `- ${mood}`),
     '',
     /*
-     * §7.12: never a flat count. A run where every record gets the same
-     * number is refused, because a collection tagged two-each can never match
-     * three moods; so the prompt asks for honesty and names no target.
+     * The first run's definition, by its own result (24 Oct): "zone out" came
+     * back on 15 of 22 records, so pressing it alone answered with most of the
+     * collection.
      */
-    'Choose every mood that genuinely fits the music, and no others. Most',
-    'records suit two to four; if only one fits, give only one. Never pad the',
-    'answer to reach a number.',
+    'One mood needs a closer reading: "zone out" means a record that invites you to disappear into it,',
+    'not one that is merely atmospheric or laid-back.',
+    '',
+    /*
+     * §7.12: never a flat count, and never padding. The first run said "most
+     * records suit two to four", and the model found a second mood for
+     * records with one honest one (The Doors' debut came back "dancing"). So
+     * no number is named, and fewer is preferred where fewer are true.
+     */
+    'Choose only the moods that genuinely fit the music. Prefer fewer: one',
+    'honest mood is a better answer than two where the second is a reach, and',
+    'four is right when four are true. Never pad the answer to reach a number.',
     '',
     'Use only the moods listed above, spelled as they are written there.',
     '',

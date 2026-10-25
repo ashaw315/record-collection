@@ -17,7 +17,7 @@ export async function recordsToTag({ regenerate }: { regenerate: boolean }): Pro
   const unlooked = isNull(recordMoods.recordId);
 
   return db
-    .select({ id: records.id, artist: artists.name, title: records.title, year: records.releaseYear })
+    .select({ id: records.id, artist: artists.name, title: records.title })
     .from(records)
     .innerJoin(artists, eq(artists.id, records.artistId))
     .leftJoin(recordMoods, eq(recordMoods.recordId, records.id))
