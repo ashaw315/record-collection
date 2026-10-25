@@ -48754,3 +48754,19 @@ change an overridden set is another override naming the full set, and that
 one is overridden too. Right at 22 records, where five are corrected by
 reading them; wrong at two hundred, where it would need building. Not built
 because Adam has not asked for it.
+
+## 25 Oct: §P.6's "the moods join when the first tags land" is stale reasoning (a line for Design, not blocking)
+
+§P.6 says that with nothing tagged the control is SURPRISE ME alone, and that
+this "is also Phase 0's form, so Phase 0 builds it first, and the moods join
+when the first tags land." The tags landed before Phase 0 began: all 22
+records have rows (run 3 plus five overrides), so the no-tags state is not
+the collection's state. §P.5 makes SURPRISE ME a permanent part of the
+control, not a fallback.
+
+So Phase 0 (step 156) builds the permanent control with the moods not yet
+built. It does not build a control conditional on tags being absent, which
+would disappear as soon as anyone looked at it. The ruling itself stands,
+because SURPRISE ME alone is still correct for an untagged collection. Only
+the sentence's account of the sequence is out of date. The coordinator's
+reading, 25 Oct. Design is owed a line when the next drop is answered.
