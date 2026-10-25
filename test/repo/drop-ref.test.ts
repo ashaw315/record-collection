@@ -60,7 +60,13 @@ describe('drop-ref', () => {
       const ref = `refs/drops/${today()}-01`;
       expect(r.drops()).toEqual([ref]);
       expect(out).toContain(ref);
-      expect(out).toMatch(/first drop recorded/i);
+      /*
+        Named by when it was captured, not by what arrived (the coordinator, 25 Oct): a ref is the whole directory,
+        so one taken after a single file was copied in holds every other file as it was before that.
+      */
+      expect(out).toMatch(/^Captured docs\/design at \d{2}:\d{2}:\d{2} on \d{4}-\d{2}-\d{2} as refs\/drops\/\S+-01\. The first drop ref/);
+      expect(r.git('log', '-1', '--format=%B', ref)).toMatch(/^docs\/design as captured at \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/);
+      expect(r.git('log', '-1', '--format=%B', ref)).not.toMatch(/arriv/i);
       for (const name of ['Target.dc.html', 'Ignored.dc.html']) {
         expect(r.git('cat-file', 'blob', `${ref}:docs/design/${name}`) + '\n').toBe(readFileSync(join(r.dir, 'docs', 'design', name), 'utf8'));
       }
@@ -98,8 +104,8 @@ describe('drop-ref', () => {
       const [first, second] = [`refs/drops/${today()}-01`, `refs/drops/${today()}-02`];
       expect(r.drops()).toEqual([first, second]);
       expect(r.git('rev-parse', `${second}^`)).toBe(r.git('rev-parse', first));
-      expect(out).toMatch(/new drop/i);
-      expect(out).toContain(`differs from ${first}`);
+      expect(out).toMatch(/^Captured docs\/design at \d{2}:\d{2}:\d{2} on \d{4}-\d{2}-\d{2} as refs\/drops\/\S+-02\./);
+      expect(out).toMatch(new RegExp(`differs from ${first}, captured at \\d{2}:\\d{2}:\\d{2} on \\d{4}-\\d{2}-\\d{2}, in 3 file`));
       expect(out).toMatch(/added\s+docs\/design\/New\.dc\.html/);
       expect(out).toMatch(/gone\s+docs\/design\/Ignored\.dc\.html/);
       expect(out).toMatch(/changed\s+docs\/design\/Target\.dc\.html/);

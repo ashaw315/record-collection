@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /**
- * **A Design drop as it arrived, kept before anything runs against it.**
+ * **docs/design as captured when a Design drop lands, before anything runs against it.**
  *
  *     node scripts/drop-ref.mjs    # on arrival, before the index
  *
- * Keeps docs/design as it stands on disk, ignored files included, as a commit
+ * Keeps docs/design as it stands on disk at capture, ignored files included, as a commit
  * under refs/drops/<date>-NN whose parent is the drop before it. It goes in
  * through a throwaway index, so HEAD, the real index and the working tree
  * are untouched, and the ref is on no branch, so neither the commit path nor
@@ -41,10 +41,16 @@ export function nextRefName(existing, date) {
 
 const git = (args, env) => execFileSync('git', args, { encoding: 'utf8', env: { ...process.env, ...env }, stdio: ['ignore', 'pipe', 'pipe'] }).trim();
 
-function localDate() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-}
+const pad = (n) => String(n).padStart(2, '0');
+const localDate = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const localTime = (d) => `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+
+/*
+  A ref is named by when it was captured, never by what arrived (the coordinator, 25 Oct). It is the whole
+  directory, so one captured after a single file was copied in holds every other file as it stood before:
+  "the 12:53 drop" would be wrong about 49 of its 50 files, and "captured at 13:21" is not.
+*/
+const capturedAt = (ref) => git(['log', '-1', '--format=%cd', '--date=format-local:%H:%M:%S on %Y-%m-%d', ref]);
 
 /** The tree of docs/design as on disk, written through an index of its own. */
 function treeOfDisk() {
@@ -87,17 +93,19 @@ function main() {
     process.stdout.write(`The same as ${previous}: nothing new has arrived, and no ref was recorded.\n`);
     return 0;
   }
-  const name = nextRefName(existing, localDate());
+  const now = new Date();
+  const name = nextRefName(existing, localDate(now));
   const parent = previous === undefined ? [] : ['-p', previous];
-  const commit = git(['commit-tree', tree, ...parent, '-m', `Design drop, ${DIR} as it arrived (${new Date().toISOString()})`]);
+  const commit = git(['commit-tree', tree, ...parent, '-m', `${DIR} as captured at ${localDate(now)} ${localTime(now)}: the whole directory as it stood, not only what a drop changed`]);
+  const captured = `Captured ${DIR} at ${localTime(now)} on ${localDate(now)} as ${name}.`;
   /* The empty old value refuses a name already taken rather than moving it. */
   git(['update-ref', name, commit, '']);
   if (previous === undefined) {
-    process.stdout.write(`First drop recorded: ${name}. Nothing earlier to compare it with.\n`);
+    process.stdout.write(`${captured} The first drop ref: nothing earlier to compare it with.\n`);
     return 0;
   }
   const lines = report(previous, name);
-  process.stdout.write(`New drop: ${name}. It differs from ${previous} in ${lines.filter((l) => /^ {2}\S/.test(l)).length} file(s):\n${lines.join('\n')}\n`);
+  process.stdout.write(`${captured} It differs from ${previous}, captured at ${capturedAt(previous)}, in ${lines.filter((l) => /^ {2}\S/.test(l)).length} file(s):\n${lines.join('\n')}\n`);
   return 0;
 }
 
