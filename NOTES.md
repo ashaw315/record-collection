@@ -48586,3 +48586,59 @@ record that invites you to disappear into it, not one merely atmospheric;
 fewer preferred where fewer are honest, and no number named. One changed
 instruction set, the same 22 records, and whether the spread improves is the
 finding. The raw rows are kept outside the repo as JSON as well.
+
+## 24 Oct: the mood regenerate, run 2, beside run 1 (the comparison, recorded)
+
+`scripts/tag-moods.mts --regenerate` with 8c10837's prompt, over the same 22
+records (none overridden): `22 tagged, 22 written`, `moods per record: 1×10,
+2×11, 3×1`, exit 0, `tagged_at` 2026-10-25T00:16:36.251Z, every row
+`claude-opus-5-5`. Run 1 was `2×9, 3×12, 4×1`. Moods given in all: 63 in
+run 1, 35 in run 2.
+
+| artist | record | run 1 | run 2 |
+|---|---|---|---|
+| Buddy Rich | Super Rich | showing off, jacked up | showing off, jacked up |
+| Darkside (22) | Psychic | zone out, dancing, smooth | zone out |
+| Death Grips | The Money Store | jacked up, loud and dirty | jacked up, loud and dirty |
+| Dire Straits | Dire Straits | smooth, showing off, zone out | smooth |
+| Donna Summer | On The Radio | dancing, jacked up, showing off, sunny | dancing |
+| Donovan | The Hurdy Gurdy Man | zone out, sunny, sleepy | zone out |
+| Hello Mary | Emita Ox | loud and dirty, zone out | loud and dirty, zone out |
+| Jeff Beck | Wired | showing off, jacked up | showing off, jacked up |
+| John Lennon | Mind Games | smooth, sunny, zone out | smooth |
+| Kraftwerk | The Man • Machine | dancing, zone out, smooth | dancing, zone out |
+| Luther Vandross | Never Too Much | smooth, dancing, sunny | smooth, dancing, sunny |
+| MGMT | Loss Of Life | zone out, smooth, sleepy | smooth |
+| Miles Davis | Bitches Brew | zone out, loud and dirty | zone out |
+| Pavement | Wowee Zowee | zone out, loud and dirty | zone out, loud and dirty |
+| Simon & Garfunkel | Bridge Over Troubled Water | smooth, sunny, sleepy | smooth |
+| Smerz (2) | Believer | zone out, dancing | zone out |
+| Steely Dan | Gaucho | smooth, zone out, showing off | smooth, showing off |
+| The Blues Project | The Best Of The Blues Project | loud and dirty, zone out | loud and dirty, zone out |
+| The Doors | The Doors | zone out, dancing | zone out |
+| The Doors | The Soft Parade | smooth, showing off, zone out | showing off, smooth |
+| Water From Your Eyes | It's A Beautiful Place | loud and dirty, dancing, zone out | loud and dirty, dancing |
+| Weezer | Weezer | sunny, loud and dirty, jacked up | jacked up, sunny |
+
+| mood | run 1 | run 2 |
+|---|---|---|
+| zone out | 15 | 9 |
+| smooth | 9 | 7 |
+| dancing | 7 | 4 |
+| loud and dirty | 7 | 5 |
+| showing off | 6 | 4 |
+| jacked up | 5 | 4 |
+| sunny | 6 | 2 |
+| sleepy | 3 | 0 |
+
+**What changed, read off the tables rather than judged.** The two records
+named as wrongly "zone out" (Dire Straits, Mind Games) lost it, and The
+Doors' debut lost "dancing". "zone out" is still the most given mood, on 9 of
+22. **"sleepy" is now on no record**, which §7.12 allows ("a mood no record
+carries") and which leaves pressing it alone unanswerable. Ten records now
+carry one mood, including On The Radio, which went from four to "dancing"
+only. Fifteen records lost moods, none gained any, and seven came back
+identical (Super Rich, The Money Store, Wired, Never Too Much, Emita Ox,
+Wowee Zowee, The Best Of The Blues Project). Whether run 2 is better is
+Adam's to judge: the instruction to prefer fewer cut the reached-for moods
+and, on some records, the honest ones with them.
