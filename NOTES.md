@@ -48705,3 +48705,52 @@ do not. New in run 3 and not in either earlier run: The Hurdy Gurdy Man
 On The Radio has no "sunny". With no lean the model settled at two or three
 on every record, no ones and no fours, which is not flat (two counts) but is
 narrower than run 1's spread.
+
+## 24 Oct: five hand overrides on run 3, and the spread they reach (recorded)
+
+Run 3 kept, run 1 not restored: the coordinator's call. Run 3's "zone out" on
+10 of 22 is a working distribution, where run 1's 15 of 22 barely
+discriminates and could not be corrected by hand, being 15 records. Run 3's
+errors were three wrong moods and two missing, which is what `overridden`
+(§4.5) is for. Run 3's prompt stays in code, so the stored tags and the
+prompt that would regenerate them agree.
+
+Written with `scripts/override-moods.mts` (ab7d7d6) after Adam confirmed
+each, every one exiting 0 with its before-set matching run 3:
+
+| record | run 3 | override |
+|---|---|---|
+| Buddy Rich — Super Rich | jacked up, showing off, dancing | jacked up, showing off |
+| Donovan — The Hurdy Gurdy Man | zone out, loud and dirty | zone out, sleepy, sunny |
+| The Doors — The Doors (1967) | zone out, loud and dirty | zone out |
+| Simon & Garfunkel — Bridge Over Troubled Water | smooth, sunny | smooth, sunny, sleepy |
+| Donna Summer — On The Radio | dancing, jacked up, showing off | dancing, jacked up, showing off, sunny |
+
+Read back from Neon: 22 rows, 5 overridden, all 5 with `tagged_by_model`
+NULL, `moods per record` 1×1, 2×13, 3×7, 4×1, 52 moods in all.
+
+| mood | run 1 | run 2 | run 3 | run 3 with overrides |
+|---|---|---|---|---|
+| zone out | 15 | 9 | 10 | 10 (45%) |
+| smooth | 9 | 7 | 8 | 8 (36%) |
+| showing off | 6 | 4 | 7 | 7 (32%) |
+| loud and dirty | 7 | 5 | 9 | 7 (32%) |
+| jacked up | 5 | 4 | 6 | 6 (27%) |
+| sunny | 6 | 2 | 4 | 6 (27%) |
+| dancing | 7 | 4 | 5 | 4 (18%) |
+| sleepy | 3 | 0 | 2 | 4 (18%) |
+
+**The finding, as the coordinator put it.** The top mood is on 45% of the
+collection and the bottom on 18%, with nothing dead and nothing dominant.
+Run 1 had a mood on 68% and run 2 had one on none; five corrections on run 3
+reach a spread neither prompt produced. That is the argument for the
+override path earning its place.
+
+**The trade the overrides make.** Five of 22 records carry `overridden =
+true`, so a future prompt improvement will not reach nearly a quarter of the
+collection: `--regenerate` skips them by design. **Clearing an override is
+not built.** No command returns a record to model tagging, so the only way to
+change an overridden set is another override naming the full set, and that
+one is overridden too. Right at 22 records, where five are corrected by
+reading them; wrong at two hundred, where it would need building. Not built
+because Adam has not asked for it.
