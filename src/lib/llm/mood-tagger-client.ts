@@ -57,14 +57,14 @@ export function buildMoodPrompt(record: RecordToTag): string {
     'not one that is merely atmospheric or laid-back.',
     '',
     /*
-     * §7.12: never a flat count, and never padding. The first run said "most
-     * records suit two to four", and the model found a second mood for
-     * records with one honest one (The Doors' debut came back "dancing"). So
-     * no number is named, and fewer is preferred where fewer are true.
+     * §7.12: never a flat count, and no lean either way. Run 1's "most
+     * records suit two to four" made the model pad (The Doors' debut came
+     * back "dancing"); run 2's "prefer fewer" made it prune honest moods
+     * ("sleepy" on no record at all). So no number is named and no direction
+     * is preferred (24 Oct).
      */
-    'Choose only the moods that genuinely fit the music. Prefer fewer: one',
-    'honest mood is a better answer than two where the second is a reach, and',
-    'four is right when four are true. Never pad the answer to reach a number.',
+    'Choose only the moods that genuinely fit the music. Never pad the answer',
+    'to reach a number.',
     '',
     'Use only the moods listed above, spelled as they are written there.',
     '',

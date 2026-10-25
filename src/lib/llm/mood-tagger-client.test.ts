@@ -40,15 +40,17 @@ describe('the prompt', () => {
 
   /**
    * §7.12: a flat count is the failure the run refuses, so the prompt must not
-   * ask for one. The first run's "most records suit two to four" made the
-   * model find a second mood for records with one honest one (24 Oct).
+   * ask for one, and it leans neither way. Run 1's "most records suit two to
+   * four" made the model pad; run 2's "prefer fewer" made it prune honest
+   * moods, "sleepy" going from three records to none (24 Oct). Run 3 keeps
+   * only the instruction not to pad.
    */
-  it('prefers fewer moods where fewer are honest, and names no number to reach', () => {
+  it('names no number and leans toward neither more moods nor fewer', () => {
     const prompt = buildMoodPrompt(RECORD);
 
     expect(prompt).toMatch(/never pad/i);
-    expect(prompt).toMatch(/fewer/i);
     expect(prompt).not.toMatch(/two to four/i);
+    expect(prompt).not.toMatch(/fewer|prefer/i);
   });
 
   /** On 15 of 22 records in the first run, "zone out" picked out almost nothing. */
