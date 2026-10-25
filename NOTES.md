@@ -48592,8 +48592,9 @@ finding. The raw rows are kept outside the repo as JSON as well.
 `scripts/tag-moods.mts --regenerate` with 8c10837's prompt, over the same 22
 records (none overridden): `22 tagged, 22 written`, `moods per record: 1×10,
 2×11, 3×1`, exit 0, `tagged_at` 2026-10-25T00:16:36.251Z, every row
-`claude-opus-5-5`. Run 1 was `2×9, 3×12, 4×1`. Moods given in all: 63 in
-run 1, 35 in run 2.
+`claude-opus-5-5`. Run 1 was `2×9, 3×12, 4×1`. Moods given in all: 58 in
+run 1, 35 in run 2. (Corrected from 63, which was reported first and is not
+what 2×9, 3×12, 4×1 sums to.)
 
 | artist | record | run 1 | run 2 |
 |---|---|---|---|
@@ -48642,3 +48643,65 @@ identical (Super Rich, The Money Store, Wired, Never Too Much, Emita Ox,
 Wowee Zowee, The Best Of The Blues Project). Whether run 2 is better is
 Adam's to judge: the instruction to prefer fewer cut the reached-for moods
 and, on some records, the honest ones with them.
+
+## 24 Oct: the mood regenerate, run 3, one variable, beside runs 1 and 2
+
+The coordinator's reading of run 2: it overcorrected, and run 2 changed more
+than one thing at once (the year, "zone out"'s definition and the lean), so
+neither the gain nor the loss could be attributed. Run 3 is run 2's prompt
+with one sentence removed, "Prefer fewer: one honest mood is a better answer
+than two where the second is a reach, and four is right when four are true"
+(3c1b9ff). No number named, no direction preferred, never pad.
+
+`--regenerate`, the same 22 records, none overridden: `22 tagged, 22
+written`, `moods per record: 2×15, 3×7`, exit 0, `tagged_at`
+2026-10-25T00:37:16.656Z, every row `claude-opus-5-5`. Moods given in all:
+58, 35, 51.
+
+| artist | record | run 1 | run 2 | run 3 |
+|---|---|---|---|---|
+| Buddy Rich | Super Rich | showing off, jacked up | showing off, jacked up | jacked up, showing off, dancing |
+| Darkside | Psychic | zone out, dancing, smooth | zone out | zone out, smooth |
+| Death Grips | The Money Store | jacked up, loud and dirty | jacked up, loud and dirty | jacked up, loud and dirty |
+| Dire Straits | Dire Straits | smooth, showing off, zone out | smooth | smooth, showing off |
+| Donna Summer | On The Radio | dancing, jacked up, showing off, sunny | dancing | dancing, jacked up, showing off |
+| Donovan | The Hurdy Gurdy Man | zone out, sunny, sleepy | zone out | zone out, loud and dirty |
+| Hello Mary | Emita Ox | loud and dirty, zone out | loud and dirty, zone out | loud and dirty, zone out |
+| Jeff Beck | Wired | showing off, jacked up | showing off, jacked up | showing off, jacked up |
+| John Lennon | Mind Games | smooth, sunny, zone out | smooth | smooth, sunny |
+| Kraftwerk | The Man • Machine | dancing, zone out, smooth | dancing, zone out | dancing, zone out |
+| Luther Vandross | Never Too Much | smooth, dancing, sunny | smooth, dancing, sunny | dancing, smooth, sunny |
+| MGMT | Loss Of Life | zone out, smooth, sleepy | smooth | smooth, zone out, sleepy |
+| Miles Davis | Bitches Brew | zone out, loud and dirty | zone out | zone out, loud and dirty |
+| Pavement | Wowee Zowee | zone out, loud and dirty | zone out, loud and dirty | loud and dirty, zone out |
+| Simon & Garfunkel | Bridge Over Troubled Water | smooth, sunny, sleepy | smooth | smooth, sunny |
+| Smerz | Believer | zone out, dancing | zone out | zone out, sleepy |
+| Steely Dan | Gaucho | smooth, zone out, showing off | smooth, showing off | smooth, showing off |
+| The Blues Project | The Best Of The Blues Project | loud and dirty, zone out | loud and dirty, zone out | loud and dirty, zone out, showing off |
+| The Doors | The Doors | zone out, dancing | zone out | zone out, loud and dirty |
+| The Doors | The Soft Parade | smooth, showing off, zone out | showing off, smooth | smooth, showing off |
+| Water From Your Eyes | It's A Beautiful Place | loud and dirty, dancing, zone out | loud and dirty, dancing | loud and dirty, dancing, jacked up |
+| Weezer | Weezer | sunny, loud and dirty, jacked up | jacked up, sunny | jacked up, sunny, loud and dirty |
+
+| mood | run 1 | run 2 | run 3 |
+|---|---|---|---|
+| zone out | 15 | 9 | 10 |
+| loud and dirty | 7 | 5 | 9 |
+| smooth | 9 | 7 | 8 |
+| showing off | 6 | 4 | 7 |
+| jacked up | 5 | 4 | 6 |
+| dancing | 7 | 4 | 5 |
+| sunny | 6 | 2 | 4 |
+| sleepy | 3 | 0 | 2 |
+
+**Read off the tables.** Against run 1, the three named wrongs are gone:
+Dire Straits and Mind Games without "zone out", The Doors' debut without
+"dancing". "zone out" is down from 15 to 10 and is no longer alone at the
+top ("loud and dirty" 9). "sleepy" is back on two records, but they are Loss
+Of Life and Believer: of the three records named as deserving it most, only
+Loss Of Life has it, and Bridge Over Troubled Water and The Hurdy Gurdy Man
+do not. New in run 3 and not in either earlier run: The Hurdy Gurdy Man
+"loud and dirty", The Doors' debut "loud and dirty", Super Rich "dancing".
+On The Radio has no "sunny". With no lean the model settled at two or three
+on every record, no ones and no fours, which is not flat (two counts) but is
+narrower than run 1's spread.
