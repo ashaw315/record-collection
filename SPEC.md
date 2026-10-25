@@ -864,9 +864,20 @@ the database credential never leaves Vercel.
       second code path. It tags every record with no row in `record_moods`
       (§4.5), so one run backfills, picks up new records and retries
       failures. A regeneration rewrites every row that is not `overridden`.
-    - **Two to four moods per record where they honestly apply, never a
-      flat count.** If every record carried exactly two, choosing four moods
-      could never find a record matching three, and that cap is invisible.
+    - ~~**Two to four moods per record where they honestly apply, never a
+      flat count.**~~ **One to four moods per record, as many as honestly
+      apply, never a flat count (A77, 2026-10-24).** If every record carried
+      exactly two, choosing four moods could never find a record matching
+      three, and that cap is invisible. **The prompt names no number and
+      leans neither way**, and three runs over the 22 records are why: "most
+      records suit two to four" made the model pad a second mood onto
+      records with one honest one, and "prefer fewer" made it prune honest
+      ones, leaving "sleepy" on no record. The prompt that shipped says only
+      to choose the moods that genuinely fit and never to pad; the stored
+      sets are its third run with five corrected by hand (`overridden`,
+      §4.5). The floor of one is the code's and always was; what moved is
+      the prompt. A run in which every record received exactly one is
+      refused like any flat count.
     - **Every record ends with at least one mood.** A record with none can
       never be picked. "A mood no record carries" is allowed; "a record with
       no moods" is not.
