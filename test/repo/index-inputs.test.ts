@@ -29,7 +29,7 @@ afterEach(() => {
 /** A copy of the design inputs the script reads, for a run over a deliberately broken tree. */
 function stage(edit: (dir: string) => void): string {
   staged = mkdtempSync(join(tmpdir(), 'index-inputs-'));
-  for (const f of ['HANDOFF-wall-and-pull.md', 'Record Detail 8a - build target.dc.html', 'Record Detail 8a - settled 1-10.dc.html', 'Wall and Pull - build target.dc.html', 'Nav - build target.dc.html', 'Record Modal - build target.dc.html', 'Table and Grid - build target.dc.html', 'WITHDRAWALS.md']) {
+  for (const f of ['HANDOFF-wall-and-pull.md', 'Record Detail 8a - build target.dc.html', 'Record Detail 8a - settled 1-10.dc.html', 'Wall and Pull - build target.dc.html', 'Nav - build target.dc.html', 'Record Modal - build target.dc.html', 'Table and Grid - build target.dc.html', 'Mood Pick - build target.dc.html', 'WITHDRAWALS.md']) {
     cpSync(join(DESIGN, f), join(staged, f));
   }
   edit(staged);
@@ -356,7 +356,7 @@ describe('the table and grid target is read: §T references resolve, and §T is 
 
   /* The pairing, pinned: an index input the repository does not track is read here and nowhere else. Fails if any input is ignored by git. */
   it('every index input is tracked by git, the table and grid target among them', () => {
-    const inputs = ['HANDOFF-wall-and-pull.md', 'Record Detail 8a - build target.dc.html', 'Record Detail 8a - settled 1-10.dc.html', 'Wall and Pull - build target.dc.html', 'Nav - build target.dc.html', 'Record Modal - build target.dc.html', 'Table and Grid - build target.dc.html', 'WITHDRAWALS.md'];
+    const inputs = ['HANDOFF-wall-and-pull.md', 'Record Detail 8a - build target.dc.html', 'Record Detail 8a - settled 1-10.dc.html', 'Wall and Pull - build target.dc.html', 'Nav - build target.dc.html', 'Record Modal - build target.dc.html', 'Table and Grid - build target.dc.html', 'Mood Pick - build target.dc.html', 'WITHDRAWALS.md'];
     const script = readFileSync(join(REPO_ROOT, 'scripts', 'check-index.mjs'), 'utf8');
     const named = [...script.matchAll(/^  [A-Z]: '([^']+)',$/gm)].map((m) => m[1]).sort();
     expect(named, 'this list is the script\'s own').toEqual([...inputs].sort());
@@ -622,19 +622,48 @@ describe('the shared parser and the bullet grammar read §P ids', () => {
   });
 });
 
-describe('assertion 4 reads a §P citation as a reference', () => {
-  /* Fails against assertion 4's reference rules: "§P.1" was not a shape it read, so the run stayed 13 of 13 (measured 23 Oct). */
-  it('fails a §P reference in the table and grid target while no §P heading exists', () => {
+/**
+ * **P, the mood pick's target, as input P (24 Oct)**, in the shape T was
+ * given on 8 Oct: read the same ways as G, M and T, and tracked by its own
+ * `.gitignore` exception in the commit that makes it an input. Until then a
+ * §P citation in another target failed because no §P heading existed at all
+ * (`4 T→§P.1`); now §P.1 exists, so that case is the wrong test, and what
+ * must fail is a §P citation naming a heading P does not have.
+ */
+describe('the mood pick target is read: §P references resolve both ways', () => {
+  /* Fails before input P, as 4 T→§P.1 and every other §P citation did: no §P heading was read. Passes after only if P.99 still fails. */
+  it('fails a §P reference in the table and grid target that names no mood-pick heading', () => {
     const dir = stage((d) => {
       const p = join(d, 'Table and Grid - build target.dc.html');
       const text = readFileSync(p, 'utf8');
-      const staged = text.replace(/(T\.1 · [^<]*<\/p>\s*<p[^>]*>)/, '$1The mood pick presents here too (§P.1). ');
+      const staged = text.replace(/(T\.1 · [^<]*<\/p>\s*<p[^>]*>)/, '$1The mood pick presents here too (§P.99). ');
       if (staged === text) throw new Error('staging anchor missing: T.1');
       writeFileSync(p, staged);
     });
     const { out } = run(dir);
     expect(out).toMatch(/^FAIL 4$/m);
-    expect(out).toContain('4 T→§P.1');
+    expect(out).toContain('4 T→§P.99');
+  });
+
+  /* Fails before input P: the target's own references were read by nothing. */
+  it('fails a reference from the mood pick target to a wall section that does not exist', () => {
+    const dir = stage((d) => {
+      const p = join(d, 'Mood Pick - build target.dc.html');
+      const text = readFileSync(p, 'utf8');
+      const edited = text.replace(/(P\.2 · [^<]*<\/[a-z0-9]+>)/, '$1<p>As §W.99 rules.</p>');
+      if (edited === text) throw new Error('staging anchor missing: P.2');
+      writeFileSync(p, edited);
+    });
+    const { out } = run(dir);
+    expect(out).toMatch(/^FAIL 4$/m);
+    expect(out).toContain('4 P→§W.99');
+  });
+
+  /* Fails before input P: the target's §P.N headings were not among the headings a handoff row could name. */
+  it('reads the six §P sections as headings, so the handoff rows for them resolve', () => {
+    const { out } = run();
+    expect(out).not.toMatch(/^1 §P\.\d+ no-heading$/m);
+    expect(out).toMatch(/^PASS 1$/m);
   });
 });
 

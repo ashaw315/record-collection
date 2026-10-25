@@ -37,6 +37,7 @@ const FILES = {
   G: 'Nav - build target.dc.html',
   M: 'Record Modal - build target.dc.html',
   T: 'Table and Grid - build target.dc.html',
+  P: 'Mood Pick - build target.dc.html',
   D: 'WITHDRAWALS.md',
 };
 
@@ -73,7 +74,7 @@ const read = (key) => {
   return decode(readFileSync(path, 'utf8'));
 };
 
-const src = { H: read('H'), L: read('L'), S: read('S'), W: read('W'), G: read('G'), M: read('M'), T: read('T'), D: read('D') };
+const src = { H: read('H'), L: read('L'), S: read('S'), W: read('W'), G: read('G'), M: read('M'), T: read('T'), P: read('P'), D: read('D') };
 
 /**
  * Headings of one target file — delegated to `design-target-parser.mjs`, the
@@ -83,7 +84,7 @@ const src = { H: read('H'), L: read('L'), S: read('S'), W: read('W'), G: read('G
  */
 const headings = (key) => sections(src[key], { prefixW: key === 'W' });
 
-const ALL = [...headings('L'), ...headings('S'), ...headings('W'), ...headings('G'), ...headings('M'), ...headings('T')];
+const ALL = [...headings('L'), ...headings('S'), ...headings('W'), ...headings('G'), ...headings('M'), ...headings('T'), ...headings('P')];
 const byId = new Map(ALL.map((h) => [h.id, h]));
 
 /*
@@ -238,12 +239,13 @@ const report = (n, ok) => {
   */
   /* §M (5 Oct): the modal target is input M, read the same two ways as G. */
   /* §T (8 Oct): the table and grid target is input T, read the same two ways as G and M. */
-  for (const key of ['L', 'S', 'G', 'M', 'T']) {
+  /* §P (24 Oct): the mood pick target is input P, read the same ways as T. */
+  for (const key of ['L', 'S', 'G', 'M', 'T', 'P']) {
     for (const m of bodyOf(key).matchAll(/§(W\.\d+(?:\.\d+)?)/g)) {
       if (!has(m[1])) fail(`4 ${key}→§${m[1]}`);
     }
   }
-  for (const key of ['L', 'S', 'W', 'G', 'M', 'T']) {
+  for (const key of ['L', 'S', 'W', 'G', 'M', 'T', 'P']) {
     for (const m of bodyOf(key).matchAll(/§(G\.\d+(?:\.\d+)?)/g)) {
       if (!has(m[1])) fail(`4 ${key}→§${m[1]}`);
     }
@@ -253,18 +255,18 @@ const report = (n, ok) => {
     for (const m of bodyOf(key).matchAll(/§(T\.\d+(?:\.\d+)?)/g)) {
       if (!has(m[1])) fail(`4 ${key}→§${m[1]}`);
     }
-    /* §P (23 Oct): read before its target is an input, so a citation of it fails until its headings exist; unread, one passed. */
+    /* §P (23 Oct): read before its target was an input, so a citation failed until its headings existed; unread, one passed. Input P from 24 Oct. */
     for (const m of bodyOf(key).matchAll(/§(P\.\d+(?:\.\d+)?)/g)) {
       if (!has(m[1])) fail(`4 ${key}→§${m[1]}`);
     }
   }
-  for (const key of ['L', 'W', 'G', 'M', 'T']) {
+  for (const key of ['L', 'W', 'G', 'M', 'T', 'P']) {
     for (const m of bodyOf(key).matchAll(/§(\d{1,2}(?:\.\d+)?)/g)) {
       const n = Number(m[1].split('.')[0]);
       if (n >= 1 && n <= 10 && !has(m[1])) fail(`4 ${key}→§${m[1]}`);
     }
   }
-  for (const key of ['S', 'W', 'G', 'M', 'T']) {
+  for (const key of ['S', 'W', 'G', 'M', 'T', 'P']) {
     for (const m of bodyOf(key).matchAll(/§(\d{1,2}(?:\.\d+)?)/g)) {
       const n = Number(m[1].split('.')[0]);
       if (n >= 12 && !has(m[1])) fail(`4 ${key}→§${m[1]}`);

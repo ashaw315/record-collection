@@ -136,6 +136,9 @@ docs/design/*
 # reachability rule, and this line lands in the commit that makes it an input:
 # ignored and untracked, the file is invisible to git and to the tree guard.
 !docs/design/Table and Grid - build target.dc.html
+# The mood pick target (§P), the index's input P since 24 Oct. Same
+# reachability rule, and in the commit that makes it an input, as T's was.
+!docs/design/Mood Pick - build target.dc.html
 
 # The same artefacts' STALE root copies, from before they moved into
 # docs/design/. Each root file is smaller than its docs/design counterpart, so
