@@ -48770,3 +48770,38 @@ would disappear as soon as anyone looked at it. The ruling itself stands,
 because SURPRISE ME alone is still correct for an untagged collection. Only
 the sentence's account of the sequence is out of date. The coordinator's
 reading, 25 Oct. Design is owed a line when the next drop is answered.
+
+## 25 Oct: step 156 unit 2 is held in the working tree, waiting on Design (two rulings and a withdrawal)
+
+The control is built in its two ruled hosts but not committed: `PickControl.tsx`,
+the `pick` slot on `WallRail.tsx`, its placements in `page.tsx`,
+`PickControl.test.tsx`, the new `WallRail.test.tsx` case and
+`e2e/pick-control-156.spec.ts`. The unit picks up when Design's ruling lands.
+
+**The 1044–1273 band, a gap for Design to rule in two parts.** §P.5 measures
+the rail "at the narrowest window that offers the shelf", which is 1044, but
+from 1044 to 1273 the shelf offered is the far view (§W.26 moved the near
+view's fork to the landing's 1274). Its rail is drawn by the band rules, and
+the control falls into the view row as SHELF · TABLE · GRID · SURPRISE ME,
+reading as a fourth view. Design is owed two rulings:
+- **The host:** where the control sits in the shelf's band.
+- **The answer:** what it answers with there, since §P.3's answer is §W's
+  pull and the far view has none.
+
+**Eight `sidebar-113` tests held, not changed.** They assert §T.6's "the
+fragment is 24 below the last filter line" and read 106.5: the control's 82.5
+(18, the 1px hairline, 44 and the slot's 19.5) now stands between. §P.5 makes
+§T.6's sentence false, so a withdrawal is owed before any test moves, and it
+has gone to Design. Changing the tests first would fit the instrument to code
+that isn't ruled yet.
+
+**The fit, measured at 1274, the narrowest rail.** SURPRISE ME is 84.7 of the
+rail's 112. The control adds 97.5 of height, putting ADD RECORD's foot at
+630.5: 269.5 free at 900, 137.5 at 768 and 9.5 at 640. **The measured floor is
+a 631 window**, below which ADD RECORD's foot stops clearing. It fits at all
+three heights, which is §P.5's stop condition. No minimum window height is
+ruled, so none is invented here; that is scope Adam hasn't asked for (the
+coordinator, 25 Oct).
+
+Also held for Design: SURPRISE ME is built as a §9.3 label, like ADD RECORD,
+since §P.5 says "§9.3 controls" without saying box or label.
