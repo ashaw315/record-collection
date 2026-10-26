@@ -69,6 +69,12 @@ export function WallComposition({
           so §W.13's argument for the column does not hold and the band is
           correct there; the filter lines and the rule withdrawn.
 
+          **The far view takes what the band leaves (§W.28: "the fit stays to
+          height").** Its region was the window less the nav wherever it
+          stood, so beneath the band it ran past the window's foot by the
+          band's height and the fixture was cut (26 Oct). The composition is
+          held to the window here and the region is its second row.
+
           **Two rows, by Adam's ruling, superseding §W.24's one**: "search
           and the rest of the record page items should be on separate lines,
           it reads awkward." Search has the band's width; the three views and
@@ -101,7 +107,8 @@ export function WallComposition({
           paint and the settled view are all the same view.
         */
         <style data-narrow-shelf="">{`@media (max-width: ${nearViewMinWidth() - 1}px) {
-  [data-composition] { grid-template-columns: 1fr; }
+  [data-composition] { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); height: calc(100vh - var(--app-nav-height, 0px)); }
+  [data-composition] [data-region="far"] { height: 100%; }
 ${bandRules('')}
 }
 /*
