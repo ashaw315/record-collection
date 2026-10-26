@@ -38,12 +38,15 @@ export function PickControl({ ruled = false, pool, answers = 'cell' }: {
   answers?: 'cell' | 'far-view';
 }) {
   const [served, setServed] = useState<PickRecord | null>(null);
+  /* §P.4: "Where the answer is the record the cell already shows, the cell does not change and the slot says so." */
+  const [again, setAgain] = useState(false);
 
   const ask = () => {
     if (answers === 'far-view' && !isFarView(window.innerWidth)) return;
     const id = pickFrom(pool.map((record) => record.id), served?.id ?? null, Math.random);
     /* §P.6: "An ask the pool cannot answer draws nothing." */
     if (id === null) return;
+    setAgain(id === served?.id);
     setServed(pool.find((record) => record.id === id) ?? null);
   };
 
@@ -53,10 +56,13 @@ export function PickControl({ ruled = false, pool, answers = 'cell' }: {
       <button type="button" className={CONTROL_LABEL} onClick={ask}>
         Surprise me
       </button>
-      <p role="status" data-pick-slot="" className="min-h-[1lh] text-prose" />
-      {/* The cell's width and its 18 from the slot are not ruled: §T.5's 160 minimum, held for Design. */}
+      {/* §P.6's message, "as proposed there" (§P.4). */}
+      <p role="status" data-pick-slot="" className="min-h-[1lh] text-prose">
+        {again ? 'The only one.' : ''}
+      </p>
+      {/* §P.4: "drawn at §T.5's 160, the least a cover is, and 24 below the slot." */}
       {served !== null && (
-        <div data-pick-answer="" className="relative mt-[18px] w-[160px]">
+        <div data-pick-answer="" className="relative mt-[24px] w-[160px]">
           <GridCell id={served.id} title={served.title} artist={served.artist} cover={served.cover} />
         </div>
       )}

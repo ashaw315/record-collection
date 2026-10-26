@@ -67,6 +67,7 @@ const answer = (page: Page) =>
       cell: box(cell),
       button: box(control?.querySelector('button') ?? null),
       slot: box(control?.querySelector('[data-pick-slot]') ?? null),
+      message: control?.querySelector('[data-pick-slot]')?.textContent ?? null,
       linkCovers: link === null || cell === null ? false : (() => { const a = getComputedStyle(link, '::after'); return a.position === 'absolute' && a.content !== 'none'; })(),
     };
   });
@@ -87,6 +88,9 @@ test.describe('§P.4: the answer on the table and the grid', () => {
         expect(a.inControl, 'drawn as part of the control').toBe(true);
         if (a.cell === null || a.slot === null) throw new Error('no cell');
         expect(a.cell.top, 'beneath the control and its slot').toBeGreaterThanOrEqual(a.slot.bottom);
+        /* §P.4: "It is drawn at §T.5's 160, the least a cover is, and 24 below the slot." */
+        expect(a.cell.top - a.slot.bottom, '24 below the slot').toBeCloseTo(24, 0);
+        expect(a.cell.width, 'at §T.5’s 160').toBeCloseTo(160, 0);
         expect(a.title ?? '', 'a record the screen shows').toContain(suffix);
         expect(a.artist).toBe(`Pick-${suffix}`);
         expect(a.cover, 'the cover is the cell’s').toBe(true);
@@ -115,6 +119,7 @@ test.describe('§P.4: the answer on the table and the grid', () => {
         expect(a.count).toBe(1);
         if (a.href === null || a.cell === null) throw new Error('no answer');
         if (seen.length > 0) expect(a.href, `ask ${i + 1} is not ask ${i}'s record`).not.toBe(seen[seen.length - 1]);
+        expect(a.message, 'a new record, so the slot says nothing').toBe('');
         seen.push(a.href);
         if (top === null) top = a.cell.top;
         else expect(a.cell.top, 'replaced in place').toBeCloseTo(top, 1);
@@ -300,20 +305,24 @@ test.describe('§P.4: on the far view, the same cell beneath the control in the 
 });
 
 /*
-  §P.2: excluding the last-served record "would leave nothing", so the pick draws from the whole tier and serves it
-  again. Whether the table and the grid then say "The only one." is unruled (asked of Design, 26 Oct), so nothing
-  here reads the slot.
+  §P.4: "Where the answer is the record the cell already shows, the cell does not change and the slot says so... The
+  message is §P.6's, as proposed there", and by §P.2 SURPRISE ME serves it again "where what the screen shows holds
+  one". The first answer shows nothing yet, so it says nothing.
 */
-test('the grid at 1440 with one record showing: a second ask serves it again', async ({ page }) => {
+test('the grid at 1440 with one record showing: a second ask serves it again, the cell does not move, and the slot says "The only one."', async ({ page }) => {
   const { artistId } = await artistWith(page, [{ prefix: 'Only', count: 1 }]);
   try {
     await open(page, 1440, `?view=grid&artistId=${artistId}`);
     await press(page);
     const first = await answer(page);
+    expect(first.message, 'the first answer shows a record that was not shown').toBe('');
     await press(page);
     const second = await answer(page);
     expect(second.count).toBe(1);
     expect(second.href).toBe(first.href);
+    expect(second.message).toBe('The only one.');
+    if (first.cell === null || second.cell === null) throw new Error('no cell');
+    expect(second.cell.top, 'nothing on the page moves').toBeCloseTo(first.cell.top, 1);
   } finally {
     await removeRecordsFor(artistId);
   }
