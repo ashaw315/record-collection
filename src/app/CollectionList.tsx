@@ -2,7 +2,7 @@
 
 import type { ReactNode } from 'react';
 import Link from 'next/link';
-import { GridCover } from './GridCover';
+import { GridCell } from './GridCell';
 import { HAIRLINE, INK, LABEL, LABEL_TYPE } from './records/[id]/grid-type';
 import { toQueryString, withFacet, type CollectionParams } from './collection-params';
 import type { RecordSortField } from '@/lib/records/fields';
@@ -109,18 +109,7 @@ function Grid({ rows, covers }: { rows: CollectionRow[]; covers: Readonly<Record
     >
       {rows.map((row) => (
         <li key={row.id} className="relative min-w-0">
-          <GridCover url={covers[row.id] ?? null} />
-          <Link
-            data-grid-title=""
-            data-ring="after"
-            href={`/records/${row.id}`}
-            className="mt-2 block text-detail after:absolute after:inset-0 after:box-border after:content-['']"
-          >
-            {row.title}
-          </Link>
-          <div data-grid-artist="" className={LABEL}>
-            {row.artist.name}
-          </div>
+          <GridCell id={row.id} title={row.title} artist={row.artist.name} cover={covers[row.id] ?? null} />
         </li>
       ))}
     </ul>

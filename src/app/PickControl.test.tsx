@@ -9,7 +9,9 @@ import { CONTROL_LABEL } from './records/[id]/grid-type';
  * yet, so the control is SURPRISE ME and the slot. This is the permanent
  * control, not §P.6's nothing-tagged form, so nothing here reads the tags.
  */
-const html = renderToStaticMarkup(<PickControl />);
+/* Step 156 unit 3b gave the control its pool (§P.2); these assertions are of the first render and read none of it. */
+const POOL = [{ id: '00000000-0000-4000-8000-000000000001', title: 'Gaucho', artist: 'Steely Dan', cover: null }];
+const html = renderToStaticMarkup(<PickControl pool={POOL} />);
 
 describe('the pick control (§P.5)', () => {
   it('is SURPRISE ME as a §9.3 label, a button that submits nothing', () => {
@@ -30,5 +32,11 @@ describe('the pick control (§P.5)', () => {
   it('does not clip the slot, since a message that does not fit is rewritten rather than cut', () => {
     const slot = /<p[^>]*data-pick-slot=""[^>]*>/.exec(html)?.[0] ?? '';
     expect(slot).not.toMatch(/line-clamp|truncate|overflow-hidden/);
+  });
+
+  /* §P.4: the answer is drawn when the reader asks, never before. Fails against a control that draws its pool's first record on arrival. */
+  it('draws no answer before anything is asked, in either host', () => {
+    expect(html).not.toContain('data-pick-answer');
+    expect(renderToStaticMarkup(<PickControl pool={POOL} answers="far-view" />)).not.toContain('data-pick-answer');
   });
 });

@@ -9,7 +9,7 @@ import { CollectionList, type CollectionRow } from './CollectionList';
 import { WallUrlState } from './WallUrlState';
 import { wallSeats, wallSummaries } from './wall/producer';
 import { CollectionPagination } from './CollectionPagination';
-import { parseCollectionParams } from './collection-params';
+import { parseCollectionParams, toQueryString } from './collection-params';
 import { ShelfAddress } from './ShelfAddress';
 import { shelfOfferedQuery } from './wall/view-fork';
 import { listRecords, listRecordAges, recordFacets, countAllRecords, spineColoursOf } from '@/lib/db/queries/records';
@@ -22,7 +22,7 @@ import { newestCoverUrls } from '@/lib/db/queries/images';
 import { DEFAULT_PAGE_SIZE, type Offset } from '@/lib/api/query-params';
 import { CONTENT_INSET } from './screen-frame';
 import { EmptyFigure } from './EmptyFigure';
-import { PickControl } from './PickControl';
+import { PickControl, type PickRecord } from './PickControl';
 
 /**
  * SPEC.md §10 `/`: the collection.
@@ -137,6 +137,23 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
   */
   const covers = gridParams.view === 'grid' ? Object.fromEntries(await newestCoverUrls(records.rows.map((row) => row.id))) : {};
 
+  /*
+    Target §P.2: "The pool is what the screen shows. Under a filter or a search, an ask draws from the matches." So
+    every match, not this page's rows: a record on page two is not one the filter hid. The shelf's are its matching
+    seats. Each carries what §T.5's cell draws, because the answer is that cell (§P.4).
+  */
+  const listPool = records.total <= records.rows.length
+    ? records.rows
+    : (await listRecords({ limit: records.total, offset: 0 as Offset, sort: params.sort, filters: params.filters })).rows;
+  const poolOf = async (rows: ReadonlyArray<{ id: string; title: string; artist: string }>): Promise<PickRecord[]> => {
+    const urls = await newestCoverUrls(rows.map((row) => row.id));
+    return rows.map((row) => ({ ...row, cover: urls.get(row.id) ?? null }));
+  };
+  const pool = await poolOf(listPool.map((row) => ({ id: row.id, title: row.title, artist: row.artist.name })));
+  const shelfPool = shelf === null ? [] : await poolOf(shelf.filter((record) => record.matches).map((record) => ({ id: record.id, title: record.title, artist: record.artistName })));
+  /* §P.2: "a navigation clears them". The address is the page, so a control keyed on it starts empty on every one. */
+  const pickKey = toQueryString(params);
+
   return (
     <>
       <AppHeader />
@@ -178,7 +195,7 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
                 ? collectionCountLabel({ matched: shelf.filter((record) => record.matches).length, total: collectionTotal, filtered: true })
                 : null
             }
-            rail={<WallRail params={params} genres={facets.genres} pick={<PickControl />} />}
+            rail={<WallRail params={params} genres={facets.genres} pick={<PickControl key={pickKey} pool={shelfPool} answers="far-view" />} />}
           />
         </div>
       ) : null}
@@ -215,7 +232,7 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
 
               <CollectionFilters params={gridParams} undatedCount={records.undatedCount} options={facets} />
               {/* Target §P.5: "beneath the last filter line, after a hairline: in the sidebar above the sidebar fork, and in the band below it." */}
-              <PickControl ruled />
+              <PickControl key={pickKey} ruled pool={pool} />
             </div>
             {/*
               §T.6: "The second figure is a fragment of the same construction
