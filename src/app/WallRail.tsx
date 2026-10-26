@@ -59,6 +59,7 @@ export function WallRail({
   genres = [],
   searchGlyph = false,
   idPrefix = '',
+  pick = null,
 }: {
   params: CollectionParams;
   genres?: readonly FilterOption[];
@@ -76,6 +77,12 @@ export function WallRail({
    * first field of that name, which here is the hidden one.
    */
   idPrefix?: string;
+  /**
+   * Target §P.5: the pick control, "beneath the view names and above ADD
+   * RECORD". Given by the shelf's page only: the band below the fork draws
+   * this rail too, and there the control stands beneath the filter lines.
+   */
+  pick?: React.ReactNode;
 }) {
   const hidden = new URLSearchParams(
     toQueryString({
@@ -243,6 +250,8 @@ export function WallRail({
           );
         })}
       </ul>
+
+      {pick !== null && <div className="mt-[34px]">{pick}</div>}
 
       {/* The rule bleeds to both edges of the rail: it separates an action on the collection from the views of it. */}
       <hr

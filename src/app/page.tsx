@@ -22,6 +22,7 @@ import { newestCoverUrls } from '@/lib/db/queries/images';
 import { DEFAULT_PAGE_SIZE, type Offset } from '@/lib/api/query-params';
 import { CONTENT_INSET } from './screen-frame';
 import { EmptyFigure } from './EmptyFigure';
+import { PickControl } from './PickControl';
 
 /**
  * SPEC.md §10 `/`: the collection.
@@ -177,7 +178,7 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
                 ? collectionCountLabel({ matched: shelf.filter((record) => record.matches).length, total: collectionTotal, filtered: true })
                 : null
             }
-            rail={<WallRail params={params} genres={facets.genres} />}
+            rail={<WallRail params={params} genres={facets.genres} pick={<PickControl />} />}
           />
         </div>
       ) : null}
@@ -213,6 +214,8 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
               </header>
 
               <CollectionFilters params={gridParams} undatedCount={records.undatedCount} options={facets} />
+              {/* Target §P.5: "beneath the last filter line, after a hairline: in the sidebar above the sidebar fork, and in the band below it." */}
+              <PickControl ruled />
             </div>
             {/*
               §T.6: "The second figure is a fragment of the same construction

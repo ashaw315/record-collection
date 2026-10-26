@@ -35,6 +35,19 @@ describe('the rail (§W.13)', () => {
     expect(html).not.toContain('COLLECTION');
   });
 
+  /*
+    Target §P.5: "On the shelf it sits in the rail, beneath the view names and
+    above ADD RECORD, which stays at the foot." Passed in, because the band
+    below the fork draws this rail too and the control has its own place there.
+  */
+  it('places the pick control beneath the view names and above the rule and ADD RECORD, and only where it is given', () => {
+    const params = parseCollectionParams(new URLSearchParams(''));
+    const html = renderToStaticMarkup(<WallRail params={params} genres={GENRES} pick={<div data-pick-control="" />} />);
+    const order = ['>Grid<', 'data-pick-control=""', 'data-rail-rule=""', 'href="/records/new"'].map((m) => at(html, m));
+    expect([...order].sort((a, b) => a - b)).toEqual(order);
+    expect(render()).not.toContain('data-pick-control');
+  });
+
   it('marks the current view with aria-current and the 44 × 2 bar (§W.31), and no box, pill or field around any view', () => {
     const shelf = render();
     expect(shelf).toMatch(/aria-current="page"[^>]*>Shelf</);

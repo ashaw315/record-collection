@@ -74,6 +74,7 @@ const reading = (page: Page) =>
       fragment: box(q('[data-sidebar-fragment]')),
       fragmentFigure: box(q('[data-fragment-figure]')),
       fragmentRecord: q('[data-fragment-figure] svg')?.getAttribute('data-record') ?? null,
+      pick: box(q('[data-collection-sidebar] [data-pick-control]')),
       pager: box(q('main nav[aria-label="Pagination"], main [data-collection-pagination]')),
     };
   });
@@ -259,15 +260,22 @@ for (const view of VIEWS) {
         expect(r.headRecord, 'the drawing is the source record’s').toBe(figure.record);
       });
 
-      /* Fails against no fragment and no diagonal: nothing in the system drew either before the wireframe. */
-      test(`at ${width}: the fragment is the same record’s, 24 below the last filter line, off the window’s left edge and inside the sidebar; each figure carries two 1px diagonals at 30° that cross no type, control or list, one ending on the header’s rule and one on the sidebar’s`, async ({ page }) => {
+      /*
+        Fails against no fragment and no diagonal: nothing in the system drew either before the wireframe.
+        The 24 was from the last filter line until step 156: §P.5 puts the pick control beneath those lines, and
+        §T.6 now rules the fragment "24 below the last line the sidebar draws, whatever stands there; with the
+        mood pick that is its control" (drop a3168fe). Re-pinned for that ruling, agreed before the change.
+      */
+      test(`at ${width}: the fragment is the same record’s, 24 below the sidebar’s last line, the pick control, off the window’s left edge and inside the sidebar; each figure carries two 1px diagonals at 30° that cross no type, control or list, one ending on the header’s rule and one on the sidebar’s`, async ({ page }) => {
         await open(page, width, view);
         const r = await reading(page);
         const d = await drawing(page);
         if (r.head === null) { expect(r.fragment, 'no figure clears here, so no fragment').toBeNull(); expect(d.lines.length).toBe(0); return; }
         if (r.fragment === null || r.fragmentFigure === null || r.header === null) throw new Error('no fragment');
         const last = r.lines[r.lines.length - 1];
-        expect(r.fragment.top - (last?.bottom ?? 0), '24 below the last filter line').toBeCloseTo(24, 0);
+        if (r.pick === null) throw new Error('no pick control in the sidebar');
+        expect(r.pick.top, 'the precondition: the control stands below the filter lines, so it is the last line').toBeGreaterThanOrEqual((last?.bottom ?? 0) - 0.5);
+        expect(r.fragment.top - r.pick.bottom, '24 below the sidebar’s last line').toBeCloseTo(24, 0);
         expect(r.fragmentFigure.left, 'its drawing runs off the window’s left edge').toBeLessThan(0);
         expect([r.fragment.left, r.fragment.right], 'the fragment’s room is the sidebar’s, to its rule').toEqual([0, SIDEBAR.width]);
         expect(r.fragmentRecord, 'the same record’s construction').toBe(r.headRecord);
@@ -289,7 +297,8 @@ for (const view of VIEWS) {
 
 test.describe('§T.1: a filter in force above the fork', () => {
   /* Fails against Clear set as an underlined aside directly under the lines with no hairline. */
-  test('at 1440, a hairline follows the last filter line, then CLEAR FILTERS on a 44 line in the label’s type; no year line is drawn; the fragment is 24 below it', async ({ page }) => {
+  /* The fragment's 24 is re-pinned to the sidebar's last line, as in §T.6's test above, and CLEAR FILTERS is now above the pick control. */
+  test('at 1440, a hairline follows the last filter line, then CLEAR FILTERS on a 44 line in the label’s type; no year line is drawn; the pick control follows and the fragment is 24 below that', async ({ page }) => {
     await open(page, 1440, 'table');
     const first = page.locator('[data-filter="genreId"] [data-filter-trigger]');
     await first.click();
@@ -306,10 +315,12 @@ test.describe('§T.1: a filter in force above the fork', () => {
     expect([m.transform, m.size, m.line], '§9.3’s label').toEqual(['uppercase', '11px', 'none']);
     await expect(page.locator('[data-filter-clear]')).toHaveText(/^\s*Clear filters\s*$/i);
     expect(m.undated, 'no year line: no control sets a year filter').toBe(false);
-    if (r.fragment !== null) expect(r.fragment.top - r.clear.bottom, 'the fragment 24 below whichever line is last').toBeCloseTo(24, 0);
+    if (r.pick === null) throw new Error('no pick control in the sidebar');
+    expect(r.pick.top, 'the control follows CLEAR FILTERS').toBeGreaterThanOrEqual(r.clear.bottom - 0.5);
+    if (r.fragment !== null) expect(r.fragment.top - r.pick.bottom, 'the fragment 24 below the sidebar’s last line').toBeCloseTo(24, 0);
   });
 
-  test('at 1440 with a filter open, the fragment is 24 below the last line, which the container has pushed down', async ({ page }) => {
+  test('at 1440 with a filter open, the fragment is 24 below the sidebar’s last line, the pick control, which the open filter has pushed down', async ({ page }) => {
     await open(page, 1440, 'table', '', 1100);
     const before = await reading(page);
     await page.locator('[data-filter="genreId"] [data-filter-trigger]').click();
@@ -317,7 +328,9 @@ test.describe('§T.1: a filter in force above the fork', () => {
     const r = await reading(page);
     if (before.fragment === null) { expect(r.fragment).toBeNull(); return; }
     const last = r.lines[r.lines.length - 1];
-    expect((r.fragment?.top ?? 0) - Math.max(last?.bottom ?? 0, r.panel?.bottom ?? 0)).toBeCloseTo(24, 0);
+    if (r.pick === null) throw new Error('no pick control in the sidebar');
+    expect(r.pick.top, 'the control stands below the lines and the open panel').toBeGreaterThanOrEqual(Math.max(last?.bottom ?? 0, r.panel?.bottom ?? 0) - 0.5);
+    expect((r.fragment?.top ?? 0) - r.pick.bottom).toBeCloseTo(24, 0);
     expect(r.fragment?.top ?? 0, 'it moved down with the lines').toBeGreaterThan(before.fragment.top);
   });
 });
