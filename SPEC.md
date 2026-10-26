@@ -2215,6 +2215,12 @@ Mock the Discogs, MusicBrainz and Anthropic APIs in tests. Never hit live extern
        - **the probe route Adam pressed**, since its purpose ends with his choice.
 
        The step is not done while either remains. The report of his choice goes to Design, to edit §P.3's provisional paragraph.
+
+       **The answer in every view that cannot pull (§P.1) is the step's third unit, built as 3a then 3b (the coordinator, 26 Oct).** The views are the table, the grid and the far view. The near view's answer, the pull, is unit 4.
+       - **3a, the band host (§P.5), a correction to unit 2.** At the widths where the far view draws its rail as a band, the control takes its own row beneath the band's row, after a hairline, and never shares a row with the view names. Today that condition yields 1044 to 1273. 1044 is §14's and §W.24's fork; 1273 is the build's, the width below `nearViewMinWidth()`'s 1274, and §P.1 records that gap as an open question. The tests name the condition and read the figures from the code, so the host moves with the fork and nothing is rewritten when it does. 3a reports the height that row takes from the far view's drawing. If the control does not fit the rail, 3a stops and reports, since that changes what 3b builds.
+       - **3b, the answer (§P.4), built on 3a's host.** §T.5's cell beneath the control, in all three views. Nothing else changes and nothing scrolls. A later answer replaces it in place, and the step measures whether a different caption changes the cell's height. With it come the page-held last-served state and the first live press, the pool being what the screen shows. The far view is captured at the narrowest and widest widths where it draws its rail as a band, for Adam to judge.
+
+       **Until unit 4 the near view's SURPRISE ME is drawn and answers nothing.** That is accepted because nothing is pushed before unit 4's gate, so the inert control never leaves Adam's machine. Taking it out of the near view's rail and restoring it at unit 4 was rejected: nothing would check the restoration.
     3. **The tag-batch route (§5.10)** on the price refresh's terms, and a GitHub Action that calls it.
     4. **Want-list tagging**, optional, later: the same module over `want_list`, so a mood nothing on the shelf satisfies can answer with what is wanted.
 
