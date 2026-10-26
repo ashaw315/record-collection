@@ -16,14 +16,17 @@ import { nearViewMinWidth, shelfOfferedMinWidth } from '../src/app/wall/view-for
  */
 
 /*
-  §W.24: the shelf is offered from 1044 under a fine pointer, but from 1044
-  to 1273 the shelf offered is the far view, whose rail is drawn as a band
-  (§W.26 moved the near view's fork to the landing's 1274). So the rail is
-  drawn from 1274, and that is the narrowest window the rail can be measured
-  in. Written here, not read from the source, so a moved fork is noticed.
+  §W.24: the shelf is offered from shelfOfferedMinWidth() under a fine
+  pointer, but below nearViewMinWidth() the shelf offered is the far view,
+  whose rail is drawn as a band (§W.26 moved the near view's fork). So the
+  rail is drawn from nearViewMinWidth(), the narrowest window it can be
+  measured in. Read from the code, as every behaviour test here is: the
+  figures themselves (1044 and 1274 today) are pinned in one place,
+  src/app/wall/view-fork.test.ts, whose job that is. Don't hard-code them
+  here; a moved fork should fail there once, not in every spec.
 */
-const SHELF_FROM = 1044;
-const RAIL_FROM = 1274;
+const SHELF_FROM = shelfOfferedMinWidth();
+const RAIL_FROM = nearViewMinWidth();
 const RAIL = 148;
 const RAIL_INSET = 18;
 
@@ -155,7 +158,8 @@ test.describe('§P.5: on the table and the grid, beneath the last filter line af
   the views with ADD RECORD), so the control's row is beneath both (the
   coordinator, 26 Oct). The widths are the condition's, read from the code,
   so the host moves with the fork: today they are 1044 (§14, §W.24) to 1273
-  (one below nearViewMinWidth()'s 1274, an open question in §P.1).
+  (one below nearViewMinWidth()'s 1274, an open question in §P.1), pinned in
+  view-fork.test.ts.
 */
 const BAND_WIDTHS = [shelfOfferedMinWidth(), nearViewMinWidth() - 1];
 

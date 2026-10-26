@@ -31,7 +31,6 @@ describe('the fork between the near view and the far view (§W.24)', () => {
     expect(RAIL_WIDTH).toBe(148);
     expect(FACTS_WIDTH).toBe(420);
     expect(nearViewMinWidth()).toBe(Math.ceil(RAIL_WIDTH + FACTS_WIDTH + Math.max(fixtureWidth(), landingWidth()) + LANDING_PAD));
-    expect(nearViewMinWidth()).toBe(1274);
     expect(nearViewMinWidth()).toBeGreaterThan(1044);
   });
 
@@ -46,7 +45,22 @@ describe('the fork between the near view and the far view (§W.24)', () => {
 describe('the width from which the shelf is offered (§W.24, step 134)', () => {
   it('is the rail, the facts column and one shelf of twenty with the region’s pad: §W.24’s 1044, below the near view’s fork', () => {
     expect(shelfOfferedMinWidth()).toBe(Math.ceil(RAIL_WIDTH + FACTS_WIDTH + fixtureWidth() + LANDING_PAD));
-    expect(shelfOfferedMinWidth()).toBe(1044);
     expect(shelfOfferedMinWidth()).toBeLessThan(nearViewMinWidth());
+  });
+});
+
+/*
+  **The one place the forks' figures are written down, and pinning them is this test's job (26 Oct).**
+  Every other test of a fork, the e2e specs included, reads the figure from this module: a test that reads it
+  checks behaviour at whatever the figure is, and cannot catch a wrong figure. This one checks the figures
+  themselves, so a moved fork fails here, loudly and once, which is what is wanted: the near view's fork has
+  moved once already (§W.26, 1044 to 1274), and §14 would move it back. Do not harmonise the two kinds. A spec
+  that hard-codes a fork duplicates this test and goes stale with it; this test reading the module would check
+  nothing.
+*/
+describe('the forks pinned at their figures: a moved fork is meant to fail here', () => {
+  it('pins the shelf offered from 1044 (§W.24, §14) and the near view from 1274 (the build’s, §W.26)', () => {
+    expect(shelfOfferedMinWidth()).toBe(1044);
+    expect(nearViewMinWidth()).toBe(1274);
   });
 });
