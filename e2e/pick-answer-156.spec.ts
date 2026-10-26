@@ -133,7 +133,13 @@ test.describe('§P.4: the answer on the table and the grid', () => {
     const { artistId, suffix } = await artistWith(page, [{ prefix: 'Pick', count: 55 }]);
     try {
       await open(page, 1440, `?view=grid&artistId=${artistId}`);
-      /* Held only once the page is up: held from the first script, the page never drew an answer at all. */
+      /*
+        Held only once the page is up. React names its internal node keys from Math.random so two copies on one page
+        stay apart, and the dev server runs two: the page and Next's dev overlay, in nextjs-portal's shadow root. Held
+        constant from the first script, both took the same key (zzzybj7u3bs), and the page never drew an answer, even
+        with the real Math.random restored before the press. A varying stub did not do it (26 Oct). The app reads
+        Math.random only in the press.
+      */
       await page.evaluate(() => { Math.random = () => 0.999999; });
       const listed = await page.locator('[data-collection-grid] [data-grid-title]').allTextContents();
       expect(listed, 'the page shows fifty').toHaveLength(50);
