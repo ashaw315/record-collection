@@ -267,6 +267,26 @@ test.describe('§P.4: on the far view, the same cell beneath the control in the 
     });
   }
 
+  /*
+    The figure Adam judges (the coordinator, 26 Oct): unfiltered, so the count carries no "N of M records" line, and
+    with the count beside the drawing as §W.28 rules it. The tests above filter to their own records, which adds that
+    line and takes 25 from the drawing, so they are a worst case and not this. Reported, and held only to the window.
+  */
+  for (const [width, height] of BAND_WIDTHS.flatMap((w) => [768, 900].map((h) => [w, h] as const))) {
+    test(`at ${width}×${height}, unfiltered: the far drawing with and without an answer, measured and captured`, async ({ page }) => {
+      await open(page, width, '', height);
+      const before = await ink(page);
+      await press(page);
+      const a = await answer(page);
+      expect(a.count).toBe(1);
+      const after = await ink(page);
+      if (a.cell === null) throw new Error('no cell');
+      test.info().annotations.push({ type: 'far, unfiltered', description: `drawing ${before.height.toFixed(1)} tall without an answer, ${after.height.toFixed(1)} with one (cell ${a.cell.height.toFixed(1)}), in a ${height} window` });
+      expect(after.bottom).toBeLessThanOrEqual(height);
+      await page.screenshot({ path: `docs/captures/step156-3b-far-${width}x${height}-unfiltered-answer.png` });
+    });
+  }
+
   test('the near view at 1440 does not answer with a cell: its answer is the pull (unit 4)', async ({ page }) => {
     const { artistId } = await artistWith(page, [{ prefix: 'Pick', count: 2 }]);
     try {

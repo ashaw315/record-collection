@@ -9,7 +9,6 @@ import { OUT_MS, ROTATION_START, SWING_MS, gestureFaces, outTime, poseAt, settle
 import { wallLayout } from './wall-layout';
 import { clearanceShift } from './pan';
 import { arrivalSeat, nearView as arrivalView } from './route-view';
-import { nearViewMinWidth } from './view-fork';
 import { HAIRLINE, LABEL, LABEL_INK } from '../records/[id]/grid-type';
 import { DRAWN_PAPER } from './WallComposition';
 import { WallOverview } from './WallOverview';
@@ -272,19 +271,21 @@ export function WallStage({
     figures Design gives less the region's own 34px padding. The fixture is
     unchanged; the region is what grows.
 
-    BELOW §W.26's fork the column stacks above the drawing again, because
-    there is no width to put it beside: §W.24 makes the far view the whole
-    shelf at 390px, and a 420px column beside it leaves nothing to draw in.
+    At every width the far view draws (26 Oct). Below §W.26's fork the column
+    used to stack above the drawing, for a far view at 390px with no width to
+    put it beside; step 134 took the shelf away below 1044, so that branch
+    drew only from 1044 to 1273, where the drawing is bound by height and the
+    stacked count took 84 of it.
   */
   const farView = (
-    <div data-region="far" className={`flex h-[calc(100vh-var(--app-nav-height,0px))] flex-col overflow-hidden p-[34px] [@media(min-width:${nearViewMinWidth()}px)]:flex-row`}>
+    <div data-region="far" className="flex h-[calc(100vh-var(--app-nav-height,0px))] flex-row overflow-hidden p-[34px]">
       {/* §W.31: the count column, and the vertical between it and the drawing — the far view's second line. */}
-      <div className={`relative shrink-0 [@media(min-width:${nearViewMinWidth()}px)]:w-[420px]`}>
+      <div className="relative w-[420px] shrink-0">
         {count(true)}
         <div
           data-line="facts-drawing"
           aria-hidden="true"
-          className={`absolute inset-y-0 right-0 hidden h-full w-px [@media(min-width:${nearViewMinWidth()}px)]:block`}
+          className="absolute inset-y-0 right-0 h-full w-px"
           style={{ background: "oklch(0.72 0.004 80)" }}
         />
       </div>

@@ -108,11 +108,15 @@ describe('§W.28: the count beside the drawing, and the run is what the reader c
     */
     const html = render({ far: true });
     const region = /<div data-region="far"[^>]*class="([^"]*)"/.exec(html)?.[1] ?? '';
-    expect(region, 'a row above the fork: the count beside the drawing').toContain('flex-row');
-    /* And the fork's width is the one constant, not a literal restated here (§W.26). */
-    expect(region, 'the fork’s own width').toContain(`min-width:${nearViewMinWidth()}px`);
-    /* Below it the column stacks: §W.24 makes the far view the whole shelf, and a 420px column would leave nothing to draw in. */
-    expect(region).toContain('flex-col');
+    /*
+      A row wherever the far view draws, with no fork in it (26 Oct). This test asserted a stacked column below the
+      near view's fork, for a far view at 390 that step 134 removed: below 1044 the shelf is not offered, so that
+      branch drew only from 1044 to 1273, where the drawing is bound by height and §W.28's reason holds. It pinned
+      the build, not §W.28, which rules the count beside the drawing at no particular width.
+    */
+    expect(region, 'the count beside the drawing').toContain('flex-row');
+    expect(region, 'at every width the far view draws').not.toContain('flex-col');
+    expect(region).not.toContain(`min-width:${nearViewMinWidth()}px`);
     expect(region, 'and it still takes the full height under the nav').toContain('h-[calc(100vh-var(--app-nav-height,0px))]');
     /* The count comes first in the row, and the drawing takes the rest. */
     expect(html.indexOf('data-region="count-far"')).toBeLessThan(html.indexOf('data-wall="overview"'));

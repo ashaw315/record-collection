@@ -27,7 +27,10 @@ const measure = (page: Page) =>
     const svg = region?.querySelector('svg[data-wall="overview"]') ?? null;
     /* The ink, not the svg's box: `meet` fits the drawing inside it. */
     const ink = svg === null ? [] : Array.from(svg.querySelectorAll('[data-furniture], [data-far-seat]')).map((el) => el.getBoundingClientRect());
+    const count = region?.querySelector('[data-region="count-far"]') ?? null;
     return {
+      count: count === null ? null : { right: count.getBoundingClientRect().right, top: count.getBoundingClientRect().top, bottom: count.getBoundingClientRect().bottom },
+      svgLeft: svg === null ? null : svg.getBoundingClientRect().left,
       region: region === null ? null : { top: region.getBoundingClientRect().top, bottom: region.getBoundingClientRect().bottom },
       bandFoot: rail === null ? null : rail.getBoundingClientRect().bottom,
       inkTop: ink.length === 0 ? null : Math.min(...ink.map((b) => b.top)),
@@ -52,6 +55,10 @@ for (const width of BAND_WIDTHS) {
       expect(m.inkTop, 'the drawing starts inside the region').toBeGreaterThanOrEqual(m.region.top);
       expect(m.inkBottom, 'and ends above the window’s foot').toBeLessThanOrEqual(m.viewport);
       expect(m.scrollHeight, 'the page does not scroll (§W.28: fit-with-scroll is rejected)').toBeLessThanOrEqual(m.viewport);
+      /* §W.28: "The count moves beside the drawing", at no particular width; stacked above it, it took the drawing's height. */
+      if (m.count === null || m.svgLeft === null) throw new Error('no count or drawing');
+      expect(m.count.right, 'the count beside the drawing, not above it').toBeLessThanOrEqual(m.svgLeft + 0.5);
+      expect(m.inkTop, 'so the drawing is not beneath the count').toBeLessThan(m.count.bottom);
     });
   }
 }
