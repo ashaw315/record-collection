@@ -2,7 +2,7 @@
 /**
  * **docs/design as captured when a Design drop lands, before anything runs against it.**
  *
- *     node scripts/drop-ref.mjs    # on arrival, before the index
+ *     node scripts/drop-ref.mjs    # on arrival, before the index; exits 1 on the committed state
  *
  * Keeps docs/design as it stands on disk at capture, ignored files included, as a commit
  * under refs/drops/<date>-NN whose parent is the drop before it. It goes in
@@ -64,6 +64,26 @@ function treeOfDisk() {
   }
 }
 
+/** Each file under docs/design in a tree or commit, path to blob. */
+function blobs(ref) {
+  const entries = git(['ls-tree', '-r', '-z', ref, '--', DIR]).split('\0').filter(Boolean);
+  return new Map(entries.map((entry) => { const [meta, path] = entry.split('\t'); return [path, meta.split(' ')[2]]; }));
+}
+
+/*
+  The committed state is not a drop (26 Oct). Run to find out whether a drop had arrived, this once captured
+  the tree after an intake, whose differences from the last drop were Code's own restored lines. That state is
+  the one that matches HEAD: every tracked file as committed, and every file HEAD does not hold as the last drop
+  had it. "Nothing uncommitted" is not the test, because a drop that brings a file not yet allowlisted is
+  ignored and invisible to git status, as the Mood Pick target was when it arrived.
+*/
+function isCommittedState(tree, previous) {
+  const [disk, head, last] = [blobs(tree), blobs('HEAD'), blobs(previous)];
+  for (const [path, blob] of head) if (disk.get(path) !== blob) return false;
+  for (const [path, blob] of disk) if (!head.has(path) && last.get(path) !== blob) return false;
+  return true;
+}
+
 const isBinary = (ref, path) => git(['diff', '--numstat', `${ref.from}`, `${ref.to}`, '--', path]).startsWith('-\t-\t');
 
 /** What differs between two drops, as lines to print. */
@@ -92,6 +112,10 @@ function main() {
   if (previous !== undefined && git(['rev-parse', `${previous}^{tree}`]) === tree) {
     process.stdout.write(`The same as ${previous}: nothing new has arrived, and no ref was recorded.\n`);
     return 0;
+  }
+  if (previous !== undefined && isCommittedState(tree, previous)) {
+    process.stderr.write(`${DIR} matches HEAD, and nothing HEAD does not hold differs from ${previous}: this is the committed state after an intake, not a drop, and no ref was recorded.\n`);
+    return 1;
   }
   const now = new Date();
   const name = nextRefName(existing, localDate(now));

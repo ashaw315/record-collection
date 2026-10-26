@@ -37,8 +37,21 @@ function repo() {
   writeFileSync(join(dir, 'docs', 'design', 'Ignored.dc.html'), '<p>An ignored file is part of the drop.</p>\n');
   const write = (name: string, text: string) => writeFileSync(join(dir, 'docs', 'design', name), text);
   const run = () => execFileSync('node', [SCRIPT], { cwd: dir, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+  const attempt = () => {
+    try {
+      return { status: 0, output: execFileSync('node', [SCRIPT], { cwd: dir, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }) };
+    } catch (e) {
+      const err = e as { status: number; stdout: string; stderr: string };
+      return { status: err.status, output: `${err.stdout}${err.stderr}` };
+    }
+  };
+  /* The intake's shape: Code's own lines written into a tracked file, then committed. */
+  const intake = () => {
+    write('Target.dc.html', '<p>The fragment sits 24 below the last line. The slot is reserved.</p>\n<p>A line Code restores.</p>\n');
+    git('commit', '-q', '-am', 'intake');
+  };
   const drops = () => git('for-each-ref', '--format=%(refname)', 'refs/drops/').split('\n').filter(Boolean);
-  return { dir, git, write, run, drops, done: () => rmSync(dir, { recursive: true, force: true }) };
+  return { dir, git, write, run, attempt, intake, drops, done: () => rmSync(dir, { recursive: true, force: true }) };
 }
 
 describe('nextRefName', () => {
@@ -127,6 +140,79 @@ describe('drop-ref', () => {
       const out = r.run();
       expect(out).toMatch(/changed\s+docs\/design\/Target\.dc\.html/);
       expect(out).toMatch(/markup only/i);
+    } finally {
+      r.done();
+    }
+  });
+});
+
+/*
+  The guard (the coordinator, 26 Oct). Run to find out whether a drop had arrived, the script captured the
+  committed post-intake state as a drop, and the next real drop's report would have shown Code's own restored
+  lines as removed. Checking git status first would have prevented it, but a convention held by repetition is
+  the defect a check exists for. The post-intake state is the one that matches HEAD. "No uncommitted changes"
+  is not that test: a drop that brings a file not yet allowlisted is untracked and ignored, git status shows
+  nothing, and the Mood Pick target arrived exactly so.
+*/
+describe('drop-ref refuses the committed state, and only that', () => {
+  /* Fails against no guard: the post-intake tree differs from the last drop, so it was recorded. */
+  it('refuses when every tracked file matches HEAD and nothing else differs from the last drop, recording nothing', () => {
+    const r = repo();
+    try {
+      r.run();
+      r.intake();
+      const out = r.attempt();
+      expect(out.status, out.output).toBe(1);
+      expect(out.output).toMatch(/matches HEAD/);
+      expect(r.drops()).toHaveLength(1);
+    } finally {
+      r.done();
+    }
+  });
+
+  /* Fails against "refuse when git status is clean": an ignored file is invisible to it. */
+  it('records a drop that brings a file HEAD does not have, though every tracked file matches HEAD and git status is clean', () => {
+    const r = repo();
+    try {
+      r.run();
+      r.intake();
+      r.write('New target.dc.html', '<p>A target not yet let in.</p>\n');
+      expect(r.git('status', '--porcelain'), 'the precondition: git status shows nothing').toBe('');
+      const out = r.attempt();
+      expect(out.status, out.output).toBe(0);
+      expect(r.drops()).toHaveLength(2);
+      expect(out.output).toMatch(/added\s+docs\/design\/New target\.dc\.html/);
+    } finally {
+      r.done();
+    }
+  });
+
+  /* Fails against a guard that asks only whether some file is missing from HEAD: the ignored file is always missing from it. */
+  it('records a drop that changes only a file HEAD does not have', () => {
+    const r = repo();
+    try {
+      r.run();
+      r.intake();
+      r.write('Ignored.dc.html', '<p>An ignored file, sent again changed.</p>\n');
+      const out = r.attempt();
+      expect(out.status, out.output).toBe(0);
+      expect(r.drops()).toHaveLength(2);
+      expect(out.output).toMatch(/changed\s+docs\/design\/Ignored\.dc\.html/);
+    } finally {
+      r.done();
+    }
+  });
+
+  /* Fails against a guard that compares the whole directory with HEAD: a drop that changes a tracked file is a drop. */
+  it('records a drop that changes a tracked file', () => {
+    const r = repo();
+    try {
+      r.run();
+      r.intake();
+      r.write('Target.dc.html', '<p>A corrected target, neither the last drop nor HEAD.</p>\n');
+      const out = r.attempt();
+      expect(out.status, out.output).toBe(0);
+      expect(r.drops()).toHaveLength(2);
     } finally {
       r.done();
     }
