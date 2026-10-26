@@ -9,6 +9,10 @@ import { SCREEN } from '../screen-frame';
  * puts them inside its fork's media query, and the Collection's other views
  * put them under their own scope with no query.
  *
+ * The pick control, where the rail carries one, takes a third row of its own
+ * after a hairline (target §P.5): on the row of view names it read as a
+ * fourth view.
+ *
  * `scope` is a selector prefix ending in a space, or empty.
  */
 export function bandRules(scope: string): string {
@@ -24,5 +28,7 @@ export function bandRules(scope: string): string {
   ${rail} a::before { content: ''; position: absolute; left: -9px; right: -9px; top: 50%; height: 44px; transform: translateY(-50%); }
   ${rail} li > span { pointer-events: none; }
   ${scope}[data-rail-filter] { display: none; }
-  ${scope}[data-rail-rule] { display: none; }`;
+  ${scope}[data-rail-rule] { display: none; }
+  ${rail} > [data-pick-host] { order: 1; flex: 1 1 100%; margin-top: 0; }
+  ${rail} [data-pick-band-rule] { display: block; margin-bottom: 18px; }`;
 }

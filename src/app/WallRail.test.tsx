@@ -48,6 +48,19 @@ describe('the rail (§W.13)', () => {
     expect(render()).not.toContain('data-pick-control');
   });
 
+  /*
+    Step 156 unit 3a, §P.5: "Where the rail draws as a band, the control takes its own row beneath the band's row,
+    after a hairline." The hairline is the band's alone (the rail has no rule above the control), so it is drawn
+    hidden and the band's rules show it; it comes with the control and only with it.
+  */
+  it('gives the pick its own host, with a hairline above it that the rail hides and only the band shows', () => {
+    const params = parseCollectionParams(new URLSearchParams(''));
+    const html = renderToStaticMarkup(<WallRail params={params} genres={GENRES} pick={<div data-pick-control="" />} />);
+    expect(html).toMatch(/<div [^>]*data-pick-host=""[^>]*><hr [^>]*data-pick-band-rule=""[^>]*class="[^"]*\bhidden\b[^"]*"[^>]*\/><div data-pick-control="">/);
+    expect(render()).not.toContain('data-pick-host');
+    expect(render()).not.toContain('data-pick-band-rule');
+  });
+
   it('marks the current view with aria-current and the 44 × 2 bar (§W.31), and no box, pill or field around any view', () => {
     const shelf = render();
     expect(shelf).toMatch(/aria-current="page"[^>]*>Shelf</);

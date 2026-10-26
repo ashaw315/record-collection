@@ -48805,3 +48805,13 @@ coordinator, 25 Oct).
 
 Also held for Design: SURPRISE ME is built as a §9.3 label, like ADD RECORD,
 since §P.5 says "§9.3 controls" without saying box or label.
+
+## Step 156 unit 3a: the rail-to-facts vertical draws in the band (26 Oct)
+
+Seen in the 3a captures at 1044 and 1273 (`docs/captures/step156-3a-band-*`).
+Where the shelf's rail draws as a band, §W.31's vertical between the rail and
+the facts column (`data-line="rail-facts"`, in `WallComposition.tsx`) still
+draws, at the band's right edge, from the nav down to the band's foot. There
+is no column beside the band for it to separate, so it reads as a stray rule.
+It predates step 156: the band rules hide the rail's own rules but not this
+one, which is the composition's. Out of 3a's scope; not changed.

@@ -251,7 +251,13 @@ export function WallRail({
         })}
       </ul>
 
-      {pick !== null && <div className="mt-[34px]">{pick}</div>}
+      {pick !== null && (
+        <div data-pick-host="" className="mt-[34px]">
+          {/* §P.5: where the rail draws as a band the control has its own row "after a hairline"; the rail has none, so only the band shows it. */}
+          <hr data-pick-band-rule="" className={`hidden border-t ${HAIRLINE}`} />
+          {pick}
+        </div>
+      )}
 
       {/* The rule bleeds to both edges of the rail: it separates an action on the collection from the views of it. */}
       <hr

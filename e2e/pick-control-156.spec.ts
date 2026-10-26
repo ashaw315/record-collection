@@ -1,5 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { login } from './sign-in';
+import { wallMeasured } from './wall-measured';
+import { nearViewMinWidth, shelfOfferedMinWidth } from '../src/app/wall/view-fork';
 
 /**
  * Step 156 unit 2, target §P.5: the control in its three hosts, with the
@@ -144,6 +146,82 @@ test.describe('§P.5: on the table and the grid, beneath the last filter line af
     /* Not the rail: the aside holds the sidebar and the band alike, so which of the two is the fork's, read in the tests above. */
     expect(r.inRail).toBe(false);
   });
+});
+
+/*
+  Step 156 unit 3a, target §P.5: "Where the rail draws as a band, the control
+  takes its own row beneath the band's row, after a hairline, and never shares
+  a row with the view names." The band has two rows by ruling (search, then
+  the views with ADD RECORD), so the control's row is beneath both (the
+  coordinator, 26 Oct). The widths are the condition's, read from the code,
+  so the host moves with the fork: today they are 1044 (§14, §W.24) to 1273
+  (one below nearViewMinWidth()'s 1274, an open question in §P.1).
+*/
+const BAND_WIDTHS = [shelfOfferedMinWidth(), nearViewMinWidth() - 1];
+
+/** The far view's band: the views' row, the control's row and the drawing, as drawn. */
+const band = (page: Page) =>
+  page.evaluate(() => {
+    const drawn = (el: Element | null): el is HTMLElement => el !== null && (el as HTMLElement).getClientRects().length > 0;
+    const box = (el: Element | null) => {
+      if (!drawn(el)) return null;
+      const b = el.getBoundingClientRect();
+      return { left: b.left, right: b.right, top: b.top, bottom: b.bottom, height: b.height };
+    };
+    const rail = Array.from(document.querySelectorAll('[data-testid="wall-rail"]')).filter(drawn).find((el) => el.closest('[data-collection-band]') === null) ?? null;
+    const control = rail?.querySelector('[data-pick-control]') ?? null;
+    const row = rail === null ? [] : [...Array.from(rail.querySelectorAll('ul a')), rail.querySelector('a[href="/records/new"]')].filter(drawn).map((el) => el.getBoundingClientRect());
+    const svg = document.querySelector('[data-region="far"] svg[data-wall="overview"]');
+    /* The drawing is what the svg draws, fitted inside it with `meet`, not the svg's box. */
+    const marks = svg === null ? [] : Array.from(svg.children).map((el) => el.getBoundingClientRect()).filter((b) => b.width > 0 || b.height > 0);
+    const padding = rail === null ? 0 : parseFloat(getComputedStyle(rail).paddingLeft);
+    return {
+      inRail: control !== null && drawn(control),
+      control: box(control),
+      button: box(control?.querySelector('button') ?? null),
+      hairline: box(rail?.querySelector('[data-pick-band-rule]') ?? null),
+      rowTop: Math.min(...row.map((b) => b.top)),
+      rowBottom: Math.max(...row.map((b) => b.bottom)),
+      rail: box(rail),
+      padding,
+      drawingTop: marks.length === 0 ? null : Math.min(...marks.map((b) => b.top)),
+      drawingBottom: marks.length === 0 ? null : Math.max(...marks.map((b) => b.bottom)),
+      viewport: window.innerHeight,
+    };
+  });
+
+test.describe('§P.5: on the far view, where the rail draws as a band, the control has its own row', () => {
+  for (const width of BAND_WIDTHS) {
+    test(`at ${width}: beneath the row of view names and ADD RECORD, after a hairline, inside the band's insets`, async ({ page }) => {
+      await open(page, width, '');
+      /* It reads the fixture, so it waits for the wall to measure (test/repo/wall-measured.test.ts). */
+      await wallMeasured(page);
+      const r = await band(page);
+      expect(r.inRail, 'the control is drawn in the band').toBe(true);
+      if (r.control === null || r.button === null || r.rail === null) throw new Error(`not drawn: ${JSON.stringify(r)}`);
+      expect(r.control.top, 'never on the row of view names').toBeGreaterThanOrEqual(r.rowBottom);
+      if (r.hairline === null) throw new Error('no hairline drawn above the control');
+      expect(r.hairline.top, 'the hairline beneath the views’ row').toBeGreaterThanOrEqual(r.rowBottom);
+      expect(r.button.top, 'SURPRISE ME beneath the hairline').toBeGreaterThanOrEqual(r.hairline.bottom);
+      expect(r.button.left, 'on the band’s left inset').toBeCloseTo(r.rail.left + r.padding, 0);
+      expect(r.hairline.right, 'within the band’s right inset').toBeLessThanOrEqual(r.rail.right - r.padding + 0.5);
+      /*
+        §P.5: "the step reports the height the control's row takes from the far view's drawing." Since the region is
+        the height the band leaves (§W.28), the row is paid for in the drawing's size, so it is read as the drawing
+        with the row against the same page with the row taken out.
+      */
+      if (r.drawingTop === null || r.drawingBottom === null) throw new Error('no far drawing');
+      expect(r.drawingBottom, 'the far drawing still ends above the window’s foot').toBeLessThanOrEqual(r.viewport);
+      await page.addStyleTag({ content: '[data-pick-host] { display: none !important; }' });
+      const without = await band(page);
+      if (without.drawingTop === null || without.drawingBottom === null || without.rail === null) throw new Error('no far drawing without the row');
+      const [tall, tallWithout] = [r.drawingBottom - r.drawingTop, without.drawingBottom - without.drawingTop];
+      test.info().annotations.push({
+        type: 'control row',
+        description: `row ${(r.rail.bottom - without.rail.bottom).toFixed(1)} tall; drawing ${tall.toFixed(1)} tall with it, ${tallWithout.toFixed(1)} without, ${(100 * (1 - tall / tallWithout)).toFixed(1)}% smaller`,
+      });
+    });
+  }
 });
 
 /*
