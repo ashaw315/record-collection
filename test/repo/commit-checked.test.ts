@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { chmodSync, copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { chmodSync, copyFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -58,6 +58,27 @@ describe('a commit that depends on its check', () => {
     expect(result.output).toMatch(/not committed/i);
   });
 
+  /*
+   * **A refusal keeps its log (26 Oct).** The first run for ad6d429 refused
+   * with 1 of 573 document tests failed, and the output had gone to the
+   * terminal through a filter, so the test could not be named: the run whose
+   * log was needed was the one nothing kept. The log is kept under the
+   * repository's common git directory, which outlives the throwaway worktree
+   * commits are made in and is never committed. Fails against a script that
+   * only streams the check's output.
+   */
+  it('keeps the log of a refused check outside the working tree, and names where', () => {
+    const { dir, git } = repo();
+    writeFileSync(join(dir, 'second.txt'), 'second\n');
+    const result = run(dir, 'echo "573 tests, 1 failed: the-one.test.ts"; exit 1', ['-m', 'second', 'second.txt']);
+    expect(result.status).not.toBe(0);
+    const named = /kept at (\S+)/.exec(result.output)?.[1] ?? '';
+    expect(named, result.output).not.toBe('');
+    expect(readFileSync(named, 'utf8')).toContain('1 failed: the-one.test.ts');
+    expect(named.startsWith(join(git('rev-parse', '--path-format=absolute', '--git-common-dir'), '')), 'under the common git directory').toBe(true);
+    expect(git('status', '--porcelain', '--untracked-files=all').split('\n').sort(), 'and nothing new in the tree').toEqual(['?? commit-checked.sh', '?? second.txt']);
+  });
+
   /* The 9 Oct shape exactly: the failing check's output goes through a filter that itself succeeds. */
   it('does not commit when the check fails behind a pipe', () => {
     const { dir, git } = repo();
@@ -77,6 +98,9 @@ describe('a commit that depends on its check', () => {
     expect(git('log', '-1', '--format=%s')).toBe('second');
     expect(git('show', '--name-only', '--format=', 'HEAD')).toBe('second.txt');
     expect(git('status', '--porcelain'), 'the path not named is left alone').toContain('?? third.txt');
+    /* Only a refusal's log is worth keeping; fails against a script that keeps every run's. */
+    const logs = join(git('rev-parse', '--path-format=absolute', '--git-common-dir'), 'commit-checked');
+    expect(existsSync(logs) ? readdirSync(logs) : [], 'a passing run keeps no log').toEqual([]);
   });
 
   /* The check reads the tree; something staged beforehand is a tree the check was not asked about. */
