@@ -113,6 +113,16 @@ If you notice a genuine problem outside the current scope, **write it down and r
 
 If the spec is silent on something you need, do not invent a feature to fill the gap. Ask. The default answer to "should I also build X" is no.
 
+**Build to targets, not notes (the coordinator, 27 Oct).** A ruling is a
+sentence in a build target in the repo (`docs/design/*.dc.html`, SPEC.md).
+A change file or a FOR CODE note can say what a target says and can carry
+handoff edits; it cannot be the ruling. If a note describes a ruling the
+repo's target does not contain, there is no ruling yet: hold the build and
+say so. On 27 Oct a note described "an answer ends when its host changes"
+while the relayed target did not carry it; building from the note is how a
+target and the build diverge with nothing noticing, the class the index and
+the withdrawals exist to catch.
+
 ---
 
 ## 5. Dependencies
