@@ -33,6 +33,9 @@ const MOBILE_RED = ['  ✘  222 [mobile] › e2e/record-detail.spec.ts:831:7 ›
 const MOBILE_OK = ['  ✓  322 [mobile] › e2e/table-row-box-105.spec.ts:55:9 › at 1440, with the row not a containing block (1.9s)', '[projects] mobile 392', '  388 passed (27.1m)', '', '388 passed, 4 skipped, ledger clean, tree unchanged — OK'];
 const MOBILE_FLAKY = ['  ✘  159 [mobile] › e2e/manage.spec.ts:571:5 › a lineup walk reports what it is doing, not just that it is busy (30.1s)', '[projects] mobile 392', '  4 flaky', '  384 passed (29.0m)', '', '384 passed, 4 flaky, 4 skipped, ledger clean, tree unchanged — GREEN WITH FLAKES (4 flaky), not OK'];
 
+/* Cut from the gate on aa96f29 (27 Oct): the machine slept 10h 31m between the unit half and this one, and the half reported nothing. */
+const CHROMIUM_UNFINISHED = ['[margins] no test with a time limit ran', '', '0 passed, ledger ABSENT, tree unchanged, the machine SLEPT 10h 31m during the run — NOT OK — no summary line found — the run did not report'];
+
 type Logs = { unit: string | null; chromium: string[] | null; mobile: string[] | null };
 
 /** Writes the three logs as gate.sh names them, `<commit>-unit.log` and `<commit>-e2e-<project>-w1.log`, into one directory. */
@@ -144,5 +147,31 @@ describe('a report from one run only', () => {
     const result = report('414e121', { ...live, mobile: copied.mobile });
     expect(result.output).toMatch(/more than one run/i);
     expect(result.status, result.output).toBe(1);
+  });
+});
+
+/*
+  **A half that did not finish is not a half that failed (the coordinator, 27 Oct).** Both are NOT OK, and only one
+  says something is broken. The gate on aa96f29 read NOT OK for a chromium half the machine slept through, and the
+  sleep was worked out from timestamps; the report now says it. 4 is a gate with a half that did not finish and
+  none that failed; 1 stays any failure, which outranks an unfinished half beside it.
+*/
+describe('the verdict tells a half that did not finish from one that failed', () => {
+  it('exits 4, naming the half that did not finish and the sleep, when nothing failed', () => {
+    const result = report('aa96f29', logs('aa96f29', { unit: UNIT_OK, chromium: CHROMIUM_UNFINISHED, mobile: MOBILE_OK }));
+    expect(result.output).toMatch(/^verdict: DID NOT FINISH — chromium did not report; nothing failed$/m);
+    expect(result.output).not.toMatch(/^verdict: FAILED/m);
+    expect(result.status, result.output).toBe(4);
+  });
+
+  it('exits 1 when a half failed, and still names the one that did not finish', () => {
+    const result = report('aa96f29', logs('aa96f29', { unit: UNIT_OK, chromium: CHROMIUM_UNFINISHED, mobile: MOBILE_RED }));
+    expect(result.output).toMatch(/^verdict: FAILED — mobile failed; chromium did not report$/m);
+    expect(result.status, result.output).toBe(1);
+  });
+
+  it('says OK on a clean gate', () => {
+    const result = report('f4c265e', logs('f4c265e', { unit: UNIT_OK, chromium: CHROMIUM_OK, mobile: MOBILE_OK }));
+    expect(result.output).toMatch(/^verdict: OK$/m);
   });
 });

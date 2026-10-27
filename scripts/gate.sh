@@ -162,6 +162,11 @@ e2e_log() { echo "$LOGS/$COMMIT-e2e-$1${WORKERS:+-w$WORKERS}.log"; }
 # the gate had read around them (load, memory, swap) had gone to a stdout
 # nobody saw. A report with a start and no "ended" line is a run cut off.
 REPORT="$LOGS/$COMMIT-gate${WORKERS:+-w$WORKERS}.txt"
+# Sleep is held off for the gate's whole life, not left to its halves. Each half's runner holds its own
+# caffeinate (run-tests.ts), and on 26 Oct the unit half's died at 21:31:08 as it ended: with no user
+# activity since the evening the idle timer had long run out, so the machine slept in the gap before the
+# chromium half's began, for 10h 31m, and that half reported nothing (pmset -g log). Not a Mac: no hold.
+command -v caffeinate > /dev/null 2>&1 && { caffeinate -i -s -w $$ & }
 # The run's own processes, sampled once a minute beside it (scripts/memory-sample.sh), so a kill has a cause.
 SAMPLES="$LOGS/$COMMIT-memory${WORKERS:+-w$WORKERS}.log"
 "$ROOT/scripts/memory-sample.sh" "$SAMPLES" "${GATE_SAMPLE_EVERY:-60}" &

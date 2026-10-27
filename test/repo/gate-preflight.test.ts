@@ -64,12 +64,15 @@ esac
     `#!/usr/bin/env bash
 if [ "$1 $2" = "run build" ]; then
   for d in ${DEV_TYPES.join(' ')} .next-test/dev/cache; do [ -e "$d" ] && echo "present $d" || echo "absent $d"; done > "${seen}"
+  echo "gate pid $PPID" >> "${seen}"
+  [ -s "${seen}-caffeinate" ] && echo "caffeinated: $(cat "${seen}-caffeinate")" >> "${seen}"
   exit 1
 fi
 exit 0
 `,
   );
-  for (const stub of ['docker', 'npm']) chmodSync(join(bin, stub), 0o755);
+  writeFileSync(join(bin, 'caffeinate'), `#!/usr/bin/env bash\necho "$*" > '${seen}-caffeinate'\n`);
+  for (const stub of ['docker', 'npm', 'caffeinate']) chmodSync(join(bin, stub), 0o755);
   return { dir: repo, gate: join(dir, 'gate'), bin, seen };
 }
 
@@ -131,5 +134,32 @@ describe("the gate builds without a dev server's generated route types", () => {
     const seen = readFileSync(where.seen, 'utf8');
     for (const d of DEV_TYPES) expect(seen).toContain(`absent ${d}`);
     expect(seen, 'only the types go').toContain('present .next-test/dev/cache');
+  });
+});
+
+/*
+  **The gate holds sleep off for its whole life, not each half for its own
+  (27 Oct).** The gate on aa96f29 slept 10h 31m and its chromium half
+  reported nothing: `run-tests.ts` holds a caffeinate for each run it judges,
+  and the unit half's died at 21:31:08 as that half ended. With no user
+  activity since the evening the idle timer had long run out, so the machine
+  slept in the gap before the next half's caffeinate began, and woke at 08:02.
+  Read from the power log (`pmset -g log`). Fails against a gate that leaves
+  sleep to its halves.
+*/
+describe('the gate keeps the machine awake from its first run to its last', () => {
+  it('holds idle and system sleep for its own process before the build, the first thing it runs', { timeout: 30_000 }, () => {
+    const where = setup();
+    execFileSync('git', ['worktree', 'add', '-q', '--detach', where.gate, 'HEAD'], { cwd: where.dir, stdio: ['ignore', 'pipe', 'pipe'] });
+    mkdirSync(join(where.gate, 'node_modules'));
+    writeFileSync(join(where.gate, 'node_modules', '.gate-lock'), `${execFileSync('shasum', [join(where.gate, 'package-lock.json')], { encoding: 'utf8' }).split(' ')[0]}\n`);
+    const result = gate(where, 'up');
+    expect(result.output, 'the run reached the build').toMatch(/npm run build failed/);
+    const seen = readFileSync(where.seen, 'utf8');
+    const pid = /gate pid (\d+)/.exec(seen)?.[1] ?? '';
+    const held = /caffeinated: (.*)/.exec(seen)?.[1] ?? '';
+    expect(held, 'caffeinate was running before the build').not.toBe('');
+    expect(held.split(' '), 'idle and system sleep').toEqual(expect.arrayContaining(['-i', '-s']));
+    expect(held, 'for as long as the gate itself lives').toContain(`-w ${pid}`);
   });
 });
