@@ -76,10 +76,18 @@ test('the rail’s hidden Apply is not a Tab stop: Tab from the search field lan
   The figures changed by arithmetic under the ruling, not to pass code;
   Design's bullet still says 31 and 33 and is told so as text.
 */
-const EXPECTED = { 'as the shelf opens': 15, 'in the overview': 15, 'with a record pulled': 18 } as const;
+/*
+  Step 156 (§P.5, 27 Oct): SURPRISE ME is focusable by ruling, so it is a Tab
+  stop in the rail, and each count rises by one: 16, 16 and 19. Measured
+  first, all three on the seed alone, with the control the one stop added in
+  each walk; the figures follow by arithmetic under the ruling, as step 148's
+  did. Design's figures in its target still say 15, 15 and 18, and are
+  Design's to withdraw.
+*/
+const EXPECTED = { 'as the shelf opens': 16, 'in the overview': 16, 'with a record pulled': 19 } as const;
 const SEED = { 'as the shelf opens': 1, 'in the overview': 1, 'with a record pulled': 1 } as const;
 
-test('the Tab walk through the wall in its three states stops 15, 15 and 18 times, the spines one stop, and the Apply is never a stop', async ({ page }) => {
+test('the Tab walk through the wall in its three states stops 16, 16 and 19 times, the spines one stop, and the Apply is never a stop', async ({ page }) => {
   test.setTimeout(180_000);
   await login(page);
   await page.setViewportSize(WALL);
@@ -101,12 +109,12 @@ test('the Tab walk through the wall in its three states stops 15, 15 and 18 time
     The wall draws the whole collection, and under the full suites other
     specs' records are on it while this walks (a run of 14 Oct read more
     than seventeen spines). So the count is held in two parts: the chrome,
-    which is fixed (the header's six, the rail's seven, the zoom-out; pulled,
+    which is fixed (the header's six, the rail's eight with SURPRISE ME, the zoom-out; pulled,
     the panel's three and §W.9's arrows), and the composition, which is what
     is drawn. Design's figures are the seed's seventeen, and are asserted
     as such whenever the walk finds exactly those.
   */
-  const CHROME = 6 + 7 + 1;
+  const CHROME = 6 + 8 + 1;
   for (const [state, stops] of [['as the shelf opens', opens], ['in the overview', overview], ['with a record pulled', pulled]] as const) {
     const names = stops.map((s) => `${s.tag} ${s.name}`);
     /* The walked count on every run, so the figure is read from the report as a measurement and not inferred from the figure branch's silence (the reviewer, 15 Oct). */
