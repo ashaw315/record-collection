@@ -3,11 +3,10 @@
 import { useEffect, useState } from 'react';
 import { pickFrom } from '@/lib/moods/pick';
 import { GridCell } from './GridCell';
-import { usePickChannel } from './wall/pick-channel';
+import { usePickChannel, type CellHost, type PickRecord } from './wall/pick-channel';
 import { CONTROL_LABEL, HAIRLINE } from './records/[id]/grid-type';
 
-/** A record the pick can serve, with what §T.5's cell draws. */
-export type PickRecord = { id: string; title: string; artist: string; cover: string | null };
+export type { PickRecord };
 
 /**
  * Target §P.5, Phase 0 (step 156): the pick control with the moods not yet
@@ -41,6 +40,8 @@ export function PickControl({ ruled = false, pool, answers = 'cell' }: {
   /* §P.2's last-served record. Every answer sets it, and on the shelf so does a record pulled by its spine or the arrows; only an answer in a view that cannot pull draws the cell. */
   const [last, setLast] = useState<string | null>(null);
   const [served, setServed] = useState<PickRecord | null>(null);
+  /* §P.4: where the served record's cell stands, from the wall's answer: beneath the control, or in the far view's count column, which the wall draws. */
+  const [host, setHost] = useState<CellHost>('here');
   /* §P.4: "Where the answer is the record the cell already shows, the cell does not change and the slot says so." */
   const [again, setAgain] = useState(false);
   const channel = usePickChannel();
@@ -61,19 +62,24 @@ export function PickControl({ ruled = false, pool, answers = 'cell' }: {
       }),
     [channel],
   );
+  /* The column host's cell is the wall's to draw (`P.4/column-cell-drawing-pays`); it follows `served`, so ending the answer ends it there too. */
+  useEffect(() => {
+    if (answers === 'wall') channel?.showCell(host === 'count-column' ? served : null);
+  }, [answers, channel, host, served]);
 
   const ask = () => {
     const id = pickFrom(pool.map((record) => record.id), last, Math.random);
-    const did = answers === 'wall' ? (channel?.ask(id) ?? 'ignore') : 'cannot-pull';
-    if (did !== 'cannot-pull') {
+    const answer = answers === 'wall' ? (channel?.ask(id) ?? { did: 'ignore', host: null }) : { did: 'cannot-pull', host: 'here' as const };
+    if (answer.did !== 'cannot-pull') {
       /* §P.3: "Where the pick names the record already out, nothing moves", and the slot says so. */
-      if (did === 'stay') setAgain(true);
+      if (answer.did === 'stay') setAgain(true);
       return;
     }
     /* §P.6: "An ask the pool cannot answer draws nothing." */
     if (id === null) return;
     setAgain(id === served?.id);
     setLast(id);
+    setHost(answer.host ?? 'here');
     setServed(pool.find((record) => record.id === id) ?? null);
   };
 
@@ -88,7 +94,7 @@ export function PickControl({ ruled = false, pool, answers = 'cell' }: {
         {again ? 'The only one.' : ''}
       </p>
       {/* §P.4: "drawn at §T.5's 160, the least a cover is, and 24 below the slot." */}
-      {served !== null && (
+      {served !== null && host === 'here' && (
         <div data-pick-answer="" className="relative mt-[24px] w-[160px]">
           <GridCell id={served.id} title={served.title} artist={served.artist} cover={served.cover} />
         </div>

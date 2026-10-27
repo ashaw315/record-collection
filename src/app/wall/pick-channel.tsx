@@ -8,18 +8,33 @@ import type { PickAnswer } from './reroll';
  * siblings in `WallComposition`, and on the near view the answer is the
  * wall's pull. Each side registers its own half while mounted.
  */
+/** A record the pick can serve, with what §T.5's cell draws. */
+export type PickRecord = { id: string; title: string; artist: string; cover: string | null };
+
+/**
+ * Where the far view's cell stands (§P.4): `here`, beneath the control, in
+ * the band host; `count-column`, beneath the count, where the rail draws as
+ * a column (`P.4/column-cell-drawing-pays`). The wall knows which, so the
+ * answer carries it.
+ */
+export type CellHost = 'here' | 'count-column';
+
 /**
  * What the wall did with an ask: §P.3's answers where the view can pull, or
  * `cannot-pull` where the reader is on the far view, whose answer is §P.4's
- * cell and the control's own (§P.1).
+ * cell (§P.1), drawn at `host`.
  */
-export type WallAnswer = PickAnswer['kind'] | 'cannot-pull';
+export type WallAnswer = { did: PickAnswer['kind'] | 'cannot-pull'; host: CellHost | null };
 
 export type PickChannel = {
   /** The control asks for the record the pick names; the wall says what it did, and with no wall listening nothing moves. */
   ask: (named: string | null) => WallAnswer;
   /** The wall answers asks while mounted; the returned function stops it. */
   answerAsks: (answer: (named: string | null) => WallAnswer) => () => void;
+  /** The control hands the wall the cell to draw in the count column, or none; the wall draws it only on the far view. */
+  showCell: (record: PickRecord | null) => void;
+  /** The wall hears cells while mounted; the returned function stops it. */
+  hearCells: (hear: (record: PickRecord | null) => void) => () => void;
   /** The wall tells of every record that comes out, by an ask, its spine or the arrows, since §P.2 counts each as served. */
   pulled: (id: string) => void;
   /** The control hears what comes out while mounted; the returned function stops it. */
@@ -37,8 +52,9 @@ export function PickChannelProvider({ children }: { children: ReactNode }) {
     let answer: ((named: string | null) => WallAnswer) | null = null;
     let hear: ((id: string) => void) | null = null;
     let hearView: (() => void) | null = null;
+    let hearCell: ((record: PickRecord | null) => void) | null = null;
     return {
-      ask: (named) => answer?.(named) ?? 'ignore',
+      ask: (named) => answer?.(named) ?? { did: 'ignore', host: null },
       answerAsks: (next) => {
         answer = next;
         return () => {
@@ -50,6 +66,13 @@ export function PickChannelProvider({ children }: { children: ReactNode }) {
         hear = next;
         return () => {
           if (hear === next) hear = null;
+        };
+      },
+      showCell: (record) => hearCell?.(record),
+      hearCells: (next) => {
+        hearCell = next;
+        return () => {
+          if (hearCell === next) hearCell = null;
         };
       },
       viewChanged: () => hearView?.(),

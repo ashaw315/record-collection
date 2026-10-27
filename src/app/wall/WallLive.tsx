@@ -14,7 +14,7 @@ import { frameView, landedExtent, panFraction, panView, type Pan } from './pan';
 import { wallLayout } from './wall-layout';
 import { isFarView } from './view-fork';
 import { pickAnswer } from './reroll';
-import { usePickChannel } from './pick-channel';
+import { usePickChannel, type PickRecord } from './pick-channel';
 import { DEFAULT_ROUTE_VIEW, arrivalSeat, nearView, type RouteView } from './route-view';
 
 /** The view's top-left in the svg's px, from the region's scroll against the frame's originRef; the svg sits LANDING_PAD below the region's content top. */
@@ -446,17 +446,21 @@ if (offset !== null) offset.style.transform = '';
     if (channel === null) return;
     return channel.answerAsks((named) => {
       /* §P.1: the split is which view the reader is on, not the window's width (`P.1/split-on-shelf`). The far view cannot pull, so its answer is §P.4's cell; unmeasured, no view is settled yet. */
-      if (far === null) return 'ignore';
-      if (far) return 'cannot-pull';
+      if (far === null) return { did: 'ignore', host: null };
+      /* §P.4: in the band host (below the fork, where the shelf IS the far view) the cell stands beneath the control; in the column host, in the count column. */
+      if (far) return { did: 'cannot-pull', host: isFarView(viewport) ? 'here' : 'count-column' };
       const answer = pickAnswer(pullsRef.current, queued.current, named);
       if (answer.kind === 'pull') begin(answer.id, 'out');
       if (answer.kind === 'reroll') {
         queued.current = answer.pull;
         begin(answer.back, 'back');
       }
-      return answer.kind;
+      return { did: answer.kind, host: null };
     });
-  }, [channel, far, begin]);
+  }, [channel, far, viewport, begin]);
+  /* §P.4's column host: the cell the control serves, drawn by the wall in the count column (`P.4/column-cell-drawing-pays`). */
+  const [pickCell, setPickCell] = useState<PickRecord | null>(null);
+  useEffect(() => channel?.hearCells(setPickCell), [channel]);
   useEffect(() => {
     if (pulls.length > 0 || queued.current === null) return;
     const id = queued.current;
@@ -600,6 +604,7 @@ if (offset !== null) offset.style.transform = '';
         onZoomIn={viewport > 0 && !isFarView(viewport) ? zoomIn : undefined}
         onZoomOut={viewport > 0 && !isFarView(viewport) ? zoomOut : undefined}
         framed={framed}
+        pickCell={pickCell}
         onSeatClick={(id) => {
           if (pulls.length === 0 && queued.current === null) begin(id, 'out');
         }}

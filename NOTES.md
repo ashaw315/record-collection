@@ -48978,3 +48978,29 @@ measured: where it lands against the run clicked, and Escape on the far view
 with a record held. The coordinator rules.
 
 **4b, parked:** the 455px put back. Its Provisionals line stays open.
+
+## The column host: the cell in the count column (27 Oct)
+
+Design ruled (`P.4/column-cell-drawing-pays`): where the far view draws its
+rail as a column, the cell stands in the count column beneath COLLECTION and
+its count, at 160, and the drawing does not change. Built: the wall's answer
+to an ask carries where its view puts a cell (`here` beneath the control in
+the band host, `count-column` above the fork), the control hands the served
+record to the wall through the pick channel, and `WallStage` draws it in
+`count(true)`. Measured at 1440×900, 1440×768 and 1920×900: cell at x 182,
+160 wide, 24 below the column's last line (36.9 below the count figure with
+a filter's "N of M records" line between), the drawing's ink identical before
+and after (736.8 at 900 tall, 611.9 at 768), ADD RECORD in view. **The 24 is
+unruled**: the band's "24 below the slot" carried over, reported for Design.
+Staged: the `far` guard removed fails the near-view test; the cell moved to
+the drawing's head fails five clauses including "the drawing does not change".
+
+**Not ruled, not built: a resize across the fork with a cell drawn.** The
+host is read at ask time. A reader who asks at 1440 (count column) and then
+narrows past 1273 keeps the cell in the count column, which the band host
+rules beneath the control. No ruling covers resize; recorded, not acted on.
+
+**A flake, read as load:** `wall-route:146` failed its first attempt at load
+7.7 to 9.2 (`scrollLeft` 2408 against a limit of 1441, read after a fixed
+900ms wait), passed on retry, and passed 3 of 3 with no retries at load 4.3
+to 6.6. Nothing in this diff touches the near view's landing.

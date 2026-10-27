@@ -13,6 +13,8 @@ import { HAIRLINE, LABEL, LABEL_INK } from '../records/[id]/grid-type';
 import { DRAWN_PAPER } from './WallComposition';
 import { WallOverview } from './WallOverview';
 import { ShelfEmpty } from './ShelfEmpty';
+import { GridCell } from '../GridCell';
+import type { PickRecord } from './pick-channel';
 
 /**
  * The stage: two columns — facts left at 420px, drawing right with the rest
@@ -41,6 +43,7 @@ export function WallStage({
   far = false,
   onZoomIn,
   onZoomOut,
+  pickCell = null,
   arrivalInMarkup = true,
   framed,
   onSeatClick,
@@ -84,6 +87,8 @@ export function WallStage({
    */
   onZoomIn?: (id: string) => void;
   onZoomOut?: () => void;
+  /** §P.4's column host: the pick's answer, drawn in the count column beneath the count on the far view, or nothing. */
+  pickCell?: PickRecord | null;
   /**
    * §W.29: whether the composition carries its arrival offset in the markup.
    * True on the server and for the first client render, so hydration
@@ -248,6 +253,16 @@ export function WallStage({
           {countLine}
         </p>
       )}
+      {/*
+        §P.4, the column host (`P.4/column-cell-drawing-pays`): "the cell stands in the count column, beneath
+        COLLECTION and its count, at §T.5's 160, and the drawing does not change." The near view's answer is the
+        pull, so it draws none. 24 below, as the band's cell is below the slot: no ruling gives this figure.
+      */}
+      {far && pickCell !== null ? (
+        <div data-pick-answer="" className="relative mt-[24px] w-[160px]">
+          <GridCell id={pickCell.id} title={pickCell.title} artist={pickCell.artist} cover={pickCell.cover} />
+        </div>
+      ) : null}
     </div>
   );
 

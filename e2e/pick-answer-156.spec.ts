@@ -55,12 +55,16 @@ const answer = (page: Page) =>
     const drawn = (el: Element) => (el as HTMLElement).getClientRects().length > 0;
     const answers = Array.from(document.querySelectorAll('[data-pick-answer]')).filter(drawn);
     const control = Array.from(document.querySelectorAll('[data-pick-control]')).find(drawn) ?? null;
+    const count = Array.from(document.querySelectorAll('[data-region="count-far"]')).find(drawn) ?? null;
     const cell = answers[0] ?? null;
     const link = cell?.querySelector('a') ?? null;
     const box = (el: Element | null) => (el === null ? null : (({ top, bottom, left, right, height, width }) => ({ top, bottom, left, right, height, width }))(el.getBoundingClientRect()));
     return {
       count: answers.length,
       inControl: cell !== null && control !== null && control.contains(cell),
+      inCount: cell !== null && count !== null && count.contains(cell),
+      countColumn: box(count),
+      countFigure: box(count?.querySelector('[data-testid="wall-count-far"]') ?? null),
       href: link?.getAttribute('href') ?? null,
       title: cell?.querySelector('[data-grid-title]')?.textContent ?? null,
       artist: cell?.querySelector('[data-grid-artist]')?.textContent ?? null,
@@ -338,27 +342,45 @@ test.describe('§P.4: on the far view, the same cell beneath the control in the 
     where the near view is offered and they have not chosen it." The split is which view the reader is on, not the
     window's width (`P.1/split-on-shelf`): above the fork a reader who zooms out is on the far view, and its answer is
     §P.4's cell. The build split by width, so these windows answered nothing there.
+
+    §P.4, the column host (Design, 27 Oct, `P.4/column-cell-drawing-pays`): "the cell stands in the count column,
+    beneath COLLECTION and its count, at §T.5's 160, and the drawing does not change." Before it, the cell stood
+    beneath the control in the 148 rail, crossed the rail's rule by about 30, and at 768 tall cut its caption and
+    pushed ADD RECORD out of view; the assertion that the cell was in the control pinned that withdrawn placement.
   */
-  for (const width of [1440, 1920]) {
-    test(`at ${width}, zoomed out to the far view: the answer is the cell beneath the control, and nothing is pulled`, async ({ page }) => {
+  for (const [width, height] of [[1440, 900], [1440, 768], [1920, 900]] as const) {
+    test(`at ${width}×${height}, zoomed out to the far view: the cell in the count column beneath the count, the drawing unchanged, ADD RECORD in view, nothing pulled`, async ({ page }) => {
       const { artistId, suffix } = await artistWith(page, [{ prefix: 'Pick', count: 2 }]);
       try {
-        await open(page, width, `?artistId=${artistId}`);
+        await open(page, width, `?artistId=${artistId}`, height);
         await page.getByTestId('wall-zoom-out').click();
         await page.locator('[data-wall="overview"]').filter({ visible: true }).waitFor({ timeout: 30_000 });
         /*
-          The zoom is a navigation (§W.29 puts `wall=far` in the address), and the control is keyed on the address, so
-          a press before it lands is answered and then cleared. Waiting here keeps THIS test about the far view's
-          answer. It does not make the race go away for a reader who presses as the zoom lands; that is
-          `pick-zoom-race-156.spec.ts`'s, and Design's to rule (whether a zoom is a navigation for §P.2).
+          The zoom is a navigation (§W.29 puts `wall=far` in the address). Waiting here keeps THIS test about the far
+          view's answer; a press as the zoom lands is `pick-zoom-race-156.spec.ts`'s.
         */
         await expect(page).toHaveURL(/[?&]wall=far/);
+        const before = await ink(page);
         await press(page);
         await expect.poll(async () => (await answer(page)).count, { timeout: 10_000, message: 'one cell answers' }).toBe(1);
         const a = await answer(page);
-        expect(a.inControl, 'the cell is beneath the control').toBe(true);
-        expect(a.title ?? '').toContain(suffix);
+        if (a.cell === null || a.countColumn === null || a.countFigure === null) throw new Error('no cell, or no count column');
+        /* Soft, so a build that breaks several clauses reports each: a cell at the drawing's head fails the place AND the drawing's fit. */
+        expect.soft(a.inCount, 'the cell is in the count column').toBe(true);
+        expect.soft(a.inControl, 'and not in the rail’s control').toBe(false);
+        expect.soft(a.cell.top, 'beneath COLLECTION and its count').toBeGreaterThanOrEqual(a.countFigure.bottom);
+        expect.soft(a.cell.width, '§T.5’s 160').toBeCloseTo(160, 0);
+        expect.soft(a.cell.left, 'aligned with the column’s content').toBeCloseTo(a.countFigure.left, 0);
+        expect.soft(a.cell.right, 'inside the column, not across its rule').toBeLessThanOrEqual(a.countColumn.right);
+        expect.soft(a.cell.bottom, 'whole in the window: the 768 case cut the caption').toBeLessThanOrEqual(height);
+        expect.soft(a.title ?? '').toContain(suffix);
+        const after = await ink(page);
+        expect.soft(after, 'the drawing does not change').toEqual(before);
+        const add = await page.locator('[data-testid="wall-rail"]').filter({ visible: true }).getByRole('link', { name: /add record/i }).boundingBox();
+        expect.soft(add, 'ADD RECORD is drawn').not.toBeNull();
+        expect.soft(add?.y ?? Infinity, 'ADD RECORD keeps the rail’s foot, in view').toBeLessThanOrEqual(height - 44);
         expect(await page.locator('[data-pulled]').count(), 'the far view cannot pull').toBe(0);
+        test.info().annotations.push({ type: 'column host', description: `cell ${a.cell.height.toFixed(1)} tall at (${a.cell.left.toFixed(1)}, ${a.cell.top.toFixed(1)}), ${(a.cell.top - a.countFigure.bottom).toFixed(1)} below the count; drawing ${before.height.toFixed(1)} tall before and ${after.height.toFixed(1)} after` });
       } finally {
         await removeRecordsFor(artistId);
       }

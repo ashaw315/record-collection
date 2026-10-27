@@ -389,3 +389,38 @@ describe('Turn over shows the back on the same face (§W.7)', () => {
     expect(html).not.toContain('href="https://c/x.jpg"');
   });
 });
+
+/*
+  §P.4 (Design, 27 Oct, `P.4/column-cell-drawing-pays`): "Where the far view
+  draws its rail as a column, the cell stands in the count column, beneath
+  COLLECTION and its count, at §T.5's 160, and the drawing does not change."
+  The wall draws it, since the count column is the wall's; the rail's control
+  hands it over through the pick channel.
+*/
+describe('§P.4: the column host’s cell, in the count column', () => {
+  const cell = { id: 'z', title: 'Wired', artist: 'Jeff Beck', cover: 'https://c/wired.jpg' };
+  const countColumn = (html: string) => /<div data-region="count-far"[\s\S]*?<\/div>\s*<div\s+data-line="facts-drawing"/.exec(html)?.[0] ?? '';
+
+  it('draws the cell inside the count column, after the count, at 160 wide', () => {
+    const html = render({ far: true, pickCell: cell });
+    const column = countColumn(html);
+    expect(column, 'the count column was found').not.toBe('');
+    expect(column, 'the cell is in the count column').toContain('data-pick-answer=""');
+    expect(column.indexOf('data-pick-answer'), 'beneath COLLECTION and its count').toBeGreaterThan(column.indexOf('wall-count-far'));
+    expect(/<div data-pick-answer=""[^>]*class="([^"]*)"/.exec(column)?.[1] ?? '', '§T.5’s 160').toContain('w-[160px]');
+    expect(column).toContain('Wired');
+  });
+
+  /* The markup only: that the drawing's FIT is unchanged is a layout fact, measured by pick-answer-156's ink before and after. */
+  it('puts nothing in the overview’s svg: its markup is byte-identical with and without a cell', () => {
+    const svg = (html: string) => /<svg data-wall="overview"[\s\S]*?<\/svg>/.exec(html)?.[0] ?? '';
+    const without = svg(render({ far: true }));
+    expect(without, 'the precondition: the overview was found').not.toBe('');
+    expect(svg(render({ far: true, pickCell: cell }))).toBe(without);
+  });
+
+  it('draws no cell on the near view, whose answer is the pull, nor on the far view with nothing served', () => {
+    expect(render({ far: false, pickCell: cell })).not.toContain('data-pick-answer');
+    expect(render({ far: true, pickCell: null })).not.toContain('data-pick-answer');
+  });
+});
