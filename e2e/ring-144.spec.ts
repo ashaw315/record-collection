@@ -81,8 +81,8 @@ test('the rail’s hidden Apply is not a Tab stop: Tab from the search field lan
   stop in the rail, and each count rises by one: 16, 16 and 19. Measured
   first, all three on the seed alone, with the control the one stop added in
   each walk; the figures follow by arithmetic under the ruling, as step 148's
-  did. Design's figures in its target still say 15, 15 and 18, and are
-  Design's to withdraw.
+  did. Design's target still says 31, 15 and 33, false since step 148, and
+  they are Design's to withdraw.
 */
 const EXPECTED = { 'as the shelf opens': 16, 'in the overview': 16, 'with a record pulled': 19 } as const;
 const SEED = { 'as the shelf opens': 1, 'in the overview': 1, 'with a record pulled': 1 } as const;
@@ -102,7 +102,20 @@ test('the Tab walk through the wall in its three states stops 16, 16 and 19 time
   await page.locator('[data-pulled]').waitFor({ timeout: 30_000 });
   /* The arrows arrive once the pull has settled; the walk reads the settled state. */
   await page.locator('[data-testid="nav-next"], [data-testid="nav-previous"]').first().waitFor({ timeout: 30_000 });
-  const arrows = await page.locator('[data-testid="nav-next"], [data-testid="nav-previous"]').count();
+  /*
+    §W.9's arrows are drawn "only where there is somewhere to go", so how many
+    there should be is a fact about the pulled record's position, read from
+    the panel's `data-nav`, and not about what was drawn: counted from the
+    page, a middle record drawing one arrow lowered the expectation with it
+    and the walk stayed green (the coordinator, 27 Oct).
+  */
+  const nav = (await page.getByTestId('record-chrome').getAttribute('data-nav')) ?? '';
+  const [index, length] = nav.split('/').map(Number);
+  expect(Number.isInteger(index) && Number.isInteger(length) && index >= 0 && index < length, `the pulled record's position is read (data-nav "${nav}")`).toBe(true);
+  const arrows = (index > 0 ? 1 : 0) + (index < length - 1 ? 1 : 0);
+  const drawn = await page.locator('[data-testid="nav-next"], [data-testid="nav-previous"]').count();
+  test.info().annotations.push({ type: 'pulled', description: `record ${index + 1} of ${length}: ${arrows} of §W.9's arrows ruled, ${drawn} drawn` });
+  expect.soft(drawn, `§W.9's arrows for record ${index + 1} of ${length}`).toBe(arrows);
   const pulled = await walkTab(page);
 
   /*

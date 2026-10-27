@@ -48825,3 +48825,17 @@ artist's name in the database, so every view that draws the name draws it. Not
 the pick's to fix. Whether the name should carry it, and whether that changes
 the user's own entered data, is a §8 question (never overwrite user-entered
 data with Discogs data). Out of scope; not changed.
+
+## ring-144: §W.9's arrows derived from position, and the case a seed run cannot reach (27 Oct)
+
+The pulled walk now takes the arrow count from the panel's `data-nav`
+position, not from the arrows drawn, and annotates which record was pulled.
+On the seed that is record 1 of 17, confirming that `.first()` pulls the first
+record there. Staged against the build: a first record drawing a previous
+arrow fails the new spec and passes the old one. A middle record drawing one
+arrow passes both on the seed, because no middle record is pulled there; only
+a run with other records ahead of the first seat reaches it. Pulling a middle
+seat would aim the walk at that case. That is a change to which record the
+walk pulls, so it is held for the coordinator, not made. `data-nav` comes from
+the same `order` that `hasAdjacentSeat` reads, so it is independent of the
+arrows' rendering decision but not of the order itself.
