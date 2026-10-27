@@ -194,6 +194,18 @@ This app is about vinyl records. Several distinctions matter and are easy to fla
 - If you get stuck, stop and say so after two failed attempts at the same problem. Do not thrash, and do not start rewriting adjacent code hoping something shakes loose.
 - If an instruction from the developer conflicts with `SPEC.md`, flag the conflict rather than silently picking one.
 - Do not apologize repeatedly. Fix the thing and move on.
+- **Settle a mechanical question with Design directly, and tell the
+  coordinator after** (26 Oct). These questions already have written answers:
+  - whether a withdrawal is owed (`WITHDRAWALS.md`, "When an entry is owed";
+    over-filing costs nothing);
+  - whether something is a draft fix or a call (`scripts/ASSERTIONS-spec.md`,
+    assertion 12);
+  - where a withdrawal sentence goes (`scripts/ASSERTIONS-spec.md`, "Declared
+    withdrawal sentence").
+
+  Bring the coordinator only the cases where Design and Code disagree, or
+  where the written rule does not reach. Routing a question with a written
+  answer through four hops is the largest cost in the loop.
 
 ---
 
@@ -229,6 +241,26 @@ waiting — the matrix change passed `discogs-prefill.spec.ts` while
 `lookup-flows.spec.ts` failed deterministically on both projects. **Passing
 in isolation is not evidence a change is clean**; it is evidence about the
 step, and the gate is where the rest gets examined.
+
+**The gate does not block the push (the coordinator, 26 Oct, on Adam's
+trade-off).** Adam is the app's only user, so a bad deploy costs him
+noticing and saying so, while a gate that blocks the push let twelve
+finished commits queue for a day. So, after each unit:
+
+1. commit it through `scripts/commit-checked.sh`, with its step level green;
+2. push it;
+3. start the gate on the pushed commit in the background
+   (`scripts/gate.sh <commit>`, in its own worktree) and let it report;
+4. fix anything it finds forward, on top of the live deploy.
+
+Push first, then gate, never the reverse: a failure is then attributable to
+a known commit, and the fix lands on a deploy rather than on a queue.
+**Never let unpushed commits queue.** A gate over twelve commits that fails
+says almost nothing, and a gate over one says everything. Unchanged: every
+commit goes through `commit-checked.sh`, tests are written first and shown
+able to fail, and the stop conditions in §9 hold. Those are what have been
+catching defects. On 26 Oct, stopping at one overflow found three live bugs,
+and the gate caught none of them.
 
 **A step is done** when:
 
