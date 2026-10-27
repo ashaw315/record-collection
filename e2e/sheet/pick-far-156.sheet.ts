@@ -26,6 +26,13 @@ const WIDTHS = [shelfOfferedMinWidth(), nearViewMinWidth() - 1];
   it, a press there answered nothing, so this width could not be captured.
 */
 const ZOOMED = 1440;
+/*
+  §P.5's host, named in every file and row (Design, 27 Oct): below the near
+  view's width the rail draws as a band above the drawing; at 1440 the near
+  view is offered and the rail is a column beside it. A "1440×900" beside a
+  "1044×900" read as the same thing at a wider window, and it is not.
+*/
+const host = (width: number) => (width < nearViewMinWidth() ? 'band' : 'column');
 
 /** The far drawing's ink, as pick-answer-156 measures it: `meet` fits the drawing inside the svg's box. */
 const ink = (page: Page) =>
@@ -60,8 +67,8 @@ test('the far view in the band and zoomed out at 1440, with and without an answe
     '',
     'A bare `/`, unfiltered, read-only, desktop Chromium. The drawing is the far view\'s ink, measured as `e2e/pick-answer-156.spec.ts` measures it.',
     '',
-    '| window | drawing without | drawing with | cell | answer | title lines | cover (natural) | files |',
-    '|---|---|---|---|---|---|---|---|',
+    '| host | window | drawing without | drawing with | cell | answer | title lines | cover (natural) | files |',
+    '|---|---|---|---|---|---|---|---|---|',
   ];
   for (const width of [...WIDTHS, ZOOMED]) {
     for (const height of [768, 900]) {
@@ -76,7 +83,7 @@ test('the far view in the band and zoomed out at 1440, with and without an answe
       await page.evaluate(() => document.fonts.ready);
       await page.waitForTimeout(1500);
       const before = await ink(page);
-      const without = `pick-far-${width}x${height}-no-answer-d${Math.round(before.height)}.png`;
+      const without = `pick-far-${host(width)}-${width}x${height}-no-answer-d${Math.round(before.height)}.png`;
       await page.screenshot({ path: join(OUT, without) });
       await page.locator('[data-pick-control] button').filter({ visible: true }).click();
       await page.locator('[data-pick-answer]').filter({ visible: true }).waitFor({ timeout: 10_000 });
@@ -89,9 +96,9 @@ test('the far view in the band and zoomed out at 1440, with and without an answe
       const after = await ink(page);
       const c = await cell(page);
       if (c === null) throw new Error(`no answer drew at ${width}×${height}`);
-      const withFile = `pick-far-${width}x${height}-answer-d${Math.round(after.height)}-c${Math.round(c.height)}.png`;
+      const withFile = `pick-far-${host(width)}-${width}x${height}-answer-d${Math.round(after.height)}-c${Math.round(c.height)}.png`;
       await page.screenshot({ path: join(OUT, withFile) });
-      md.push(`| ${width}×${height} | ${before.height.toFixed(1)} | ${after.height.toFixed(1)} (foot ${after.bottom.toFixed(1)}) | ${c.height.toFixed(1)} | ${c.title}, ${c.artist} | ${c.titleLines} | ${c.cover} | ${without}, ${withFile} |`);
+      md.push(`| ${host(width)} | ${width}×${height} | ${before.height.toFixed(1)} | ${after.height.toFixed(1)} (foot ${after.bottom.toFixed(1)}) | ${c.height.toFixed(1)} | ${c.title}, ${c.artist} | ${c.titleLines} | ${c.cover} | ${without}, ${withFile} |`);
     }
   }
   writeFileSync(join(OUT, 'pick-far-156.md'), `${md.join('\n')}\n`);
@@ -140,7 +147,7 @@ test('the tallest answer the real collection gives, and what it leaves the drawi
     return { width: r.width, height: r.height, scrollWidth: t.scrollWidth, whiteSpace: cs.whiteSpace, lineHeight: cs.lineHeight, fontSize: cs.fontSize };
   });
   writeFileSync(join(OUT, 'pick-far-156-longest.json'), `${JSON.stringify({ longest, box }, null, 2)}\n`);
-  await page.screenshot({ path: join(OUT, `pick-far-${width}x${height}-longest-title-answer.png`) });
+  await page.screenshot({ path: join(OUT, `pick-far-${host(width)}-${width}x${height}-longest-title-answer.png`) });
   /* A record with no cover draws the grid's empty box, and the question is the shelf beside a real cover, so the tallest that has one. */
   const tallest = (rows.find(([, r]) => r.cover !== 'none' && r.height === rows[0]?.[1].height) ?? rows[0])?.[0];
   for (let i = 0; i < 300 && tallest !== undefined && (await cell(page))?.title !== tallest; i++) {

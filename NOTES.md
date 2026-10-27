@@ -48914,3 +48914,45 @@ now carry what was measured in place of "believed to follow".
 The real-collection captures of the far view's answer, owed since 26 Oct, are
 now owed at 1044, 1273 and 1440, after this fix. 1440 could not have been
 captured before it.
+
+## 27 Oct, afternoon: the far view's answer on the real collection, by host; three notes
+
+**The captures, labelled by §P.5's host** (Adam's run, 13:50, real collection,
+unfiltered). Files are in `docs/captures/pick-far-156/`, renamed to carry the
+host, and the sheet now names them that way itself.
+
+| host | window | drawing without | drawing with | cell |
+|---|---|---|---|---|
+| band | 1044×768 | 387.8 | 172.1 | 204.0 |
+| band | 1044×900 | 512.6 | 278.5 | 223.5 (two-line title) |
+| band | 1273×768 | 387.8 | 172.1 | 204.0 |
+| band | 1273×900 | 512.6 | 297.0 | 204.0 |
+| column | 1440×768 | 611.9 | 611.9 | 204.0 |
+| column | 1440×900 | 736.8 | 736.8 | 204.0 |
+
+In the band, the answer costs the far view's drawing 215.7 at 768 tall and
+215.6 or 234.1 at 900 (one-line or two-line title). That is §P.4's cost
+question. In the column, the drawing does not change, so there is no cost to
+the drawing. The cell instead fails §P.5's fit: 160 wide from an 18 inset in
+the 148 rail, so it crosses the rail-to-facts rule by about 30 at both heights.
+At 768 tall it also runs past the window's foot: the caption is cut and ADD
+RECORD is pushed below. The 1440 figures belong to §P.5's fit question, not
+§P.4's. Design is ruling where. The leftover
+`pick-far-band-1044x900-answer-d297-c204.png` is from 26 Oct's run, not this
+one.
+
+**The COMMIT_PATHS guard paid for itself.** The far-view fix's first commit was
+refused because CLAUDE.md held an uncommitted §9 edit the commit did not name
+(`claude-md-integrity.test.ts`). It was a real case, caught as designed.
+
+**The sheet's refused DELETE is the write probe.** `e2e/sheet/login.ts`
+calls `assertServerCannotWrite` on every login. The probe deletes a
+self-referencing influence on `PROBE_ID` (`5ee70000-…`), a row the database
+forbids, and the sheet proceeds only if the server refuses. The 25006 in
+Adam's log is that success. In the app, `deleteInfluence` is called only from
+the DELETE route, never on a page load.
+
+**Next's "middleware" convention is deprecated in favour of "proxy".** The dev
+server warns on every start. It will break on a Next upgrade, not warn
+forever, so the rename (`npx @next/codemod@canary middleware-to-proxy .`) is
+owed before upgrading Next. Not done today.
