@@ -17,15 +17,21 @@ import { SCREEN } from '../screen-frame';
  */
 export function bandRules(scope: string): string {
   const rail = `${scope}[data-testid="wall-rail"]`;
+  /*
+    The rail's own links. The pick's answer is §T.5's cell (§P.4: "the same
+    cell") and keeps its own type: reached by these, its title could not wrap,
+    lost its 8 above the cover, and held its covering ::after to itself.
+  */
+  const link = `${rail} a:not([data-pick-answer] a)`;
   return `  ${rail} { flex-direction: row; align-items: flex-end; flex-wrap: wrap; gap: 18px; width: auto !important; padding: 12px ${SCREEN.inset}px 16px !important; }
   ${rail} form { margin-bottom: 0; flex: 1 1 100%; min-width: 0; }
   ${rail} ul { flex-direction: row; flex: none; }
-  ${rail} a { margin-top: 0; white-space: nowrap; }
+  ${link} { margin-top: 0; white-space: nowrap; }
   ${rail} > a { margin-left: auto; }
   ${rail} > hr { display: none; }
   ${rail} { align-items: baseline; }
-  ${rail} a { position: relative; }
-  ${rail} a::before { content: ''; position: absolute; left: -9px; right: -9px; top: 50%; height: 44px; transform: translateY(-50%); }
+  ${link} { position: relative; }
+  ${link}::before { content: ''; position: absolute; left: -9px; right: -9px; top: 50%; height: 44px; transform: translateY(-50%); }
   ${rail} li > span { pointer-events: none; }
   ${scope}[data-rail-filter] { display: none; }
   ${scope}[data-rail-rule] { display: none; }

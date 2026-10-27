@@ -48815,3 +48815,13 @@ draws, at the band's right edge, from the nav down to the band's foot. There
 is no column beside the band for it to separate, so it reads as a stray rule.
 It predates step 156: the band rules hide the rail's own rules but not this
 one, which is the composition's. Out of 3a's scope; not changed.
+
+## Step 156 unit 3b: an artist drawn as "Darkside (22)" (27 Oct)
+
+Seen in the real-collection sheet (`e2e/sheet/pick-far-156.sheet.ts`): the
+answer's cell for Psychic captions its artist "DARKSIDE (22)". The " (22)" is
+Discogs' suffix for telling apart artists of the same name, and it reached the
+artist's name in the database, so every view that draws the name draws it. Not
+the pick's to fix. Whether the name should carry it, and whether that changes
+the user's own entered data, is a §8 question (never overwrite user-entered
+data with Discogs data). Out of scope; not changed.

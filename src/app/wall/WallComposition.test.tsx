@@ -95,7 +95,8 @@ describe('the rail collapses to one band below the fork (§W.24)', () => {
     expect(style).toMatch(/\[data-testid="wall-rail"\] form\s*\{[^}]*flex:\s*1 1 100%/);
     expect(style).toMatch(/\[data-testid="wall-rail"\] > a\s*\{[^}]*margin-left:\s*auto/);
     expect(style).toMatch(/\[data-testid="wall-rail"\] > hr\s*\{[^}]*display:\s*none/);
-    expect(style).toMatch(/\[data-testid="wall-rail"\] a\s*\{[^}]*white-space:\s*nowrap/);
+    /* The pick's answer is §T.5's cell (§P.4) and keeps its own type, so the rail's links are every link but the answer's (27 Oct). */
+    expect(style).toMatch(/\[data-testid="wall-rail"\] a:not\(\[data-pick-answer\] a\)\s*\{[^}]*white-space:\s*nowrap/);
     expect(style).toMatch(/\[data-testid="wall-rail"\] form\s*\{[^}]*min-width:\s*0/);
     /*
       The unmeasured first paint is the ROUTE's default at every width — far

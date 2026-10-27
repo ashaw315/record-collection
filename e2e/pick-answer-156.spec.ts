@@ -251,6 +251,45 @@ test.describe('§P.4: the answer on the table and the grid', () => {
 });
 
 test.describe('§P.4: on the far view, the same cell beneath the control in the band', () => {
+  /*
+    §P.4: "On the far view the answer is the same cell". Found on the real collection (26 Oct), not here: the band's
+    rules are written for the rail's own links, and `[data-testid="wall-rail"] a` reached the answer's title too,
+    so in the band the title could not wrap (On The Radio: Greatest Hits Vol. 1 & 2 ran 206 into the 160 cell), lost
+    its 8 above, and took `position: relative`, which held the link's covering ::after to the title alone. The test
+    above checked the ::after's position and not what it covers. Same record, the table's cell against the band's.
+  */
+  const geometry = (page: Page) =>
+    page.evaluate(() => {
+      const cell = Array.from(document.querySelectorAll('[data-pick-answer]')).find((el) => (el as HTMLElement).getClientRects().length > 0);
+      const title = cell?.querySelector('[data-grid-title]') as HTMLElement | null | undefined;
+      const cover = cell?.querySelector('[data-grid-cover]');
+      if (cell === undefined || title == null || cover == null) return null;
+      const [c, t, v] = [cell, title, cover].map((el) => el.getBoundingClientRect());
+      const hit = document.elementFromPoint(v.left + v.width / 2, v.top + v.height / 2);
+      return { height: c.height, gap: t.top - v.bottom, overflow: title.scrollWidth - title.clientWidth, coverIsTheLink: hit !== null && hit.closest('a') === title };
+    });
+  for (const width of BAND_WIDTHS) {
+    test(`at ${width}×900: the answer's cell is the table's cell, its title wrapping and the whole cell one link`, async ({ page }) => {
+      const { artistId } = await artistWith(page, [{ prefix: 'A title long enough to run onto a second and a third line at the cell', count: 1 }]);
+      try {
+        await open(page, 1440, `?view=table&artistId=${artistId}`);
+        await press(page);
+        const table = await geometry(page);
+        await open(page, width, `?artistId=${artistId}`);
+        await press(page);
+        const band = await geometry(page);
+        if (table === null || band === null) throw new Error('no cell');
+        expect(table.overflow, 'the table’s title wraps inside the cell').toBeLessThanOrEqual(0);
+        expect(band.overflow, 'and so does the band’s').toBeLessThanOrEqual(0);
+        expect(band.gap, 'the title as far below the cover').toBeCloseTo(table.gap, 1);
+        expect(band.height, 'the same cell').toBeCloseTo(table.height, 1);
+        expect(band.coverIsTheLink, 'the cover is part of the one link').toBe(true);
+      } finally {
+        await removeRecordsFor(artistId);
+      }
+    });
+  }
+
   for (const [width, height] of BAND_WIDTHS.flatMap((w) => [900, 768].map((h) => [w, h] as const))) {
     test(`at ${width}×${height}: the cell in the control's row, the drawing still whole in the window, what it costs the drawing measured and captured`, async ({ page }) => {
       const { artistId, suffix } = await artistWith(page, [{ prefix: 'Pick', count: 2 }]);
