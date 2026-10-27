@@ -13,8 +13,8 @@ import { RETURN_MS } from '../src/app/wall/gesture';
  * an ask or by its spine." "An ask while a record is moving is ignored."
  * "Where the pick names the record already out, nothing moves", and the slot
  * says "The only one." §P.2: "A record the reader pulled by its spine counts
- * as served too"; Code reads the arrows the same way, by §P.2's reason (the
- * same record twice in a row), and tells Design.
+ * as served too", and since 27 Oct §P.2 and §P.3 rule the same for a record
+ * brought out by §W.9's arrows.
  *
  * The re-roll's put back and pull run in sequence, which is what is built and
  * not what is ruled (`P.3/probe-judges`): Adam judges the order by using it.
