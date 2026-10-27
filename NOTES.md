@@ -48856,3 +48856,39 @@ in `docs/design/WITHDRAWALS.md` fails nothing. It has the same shape as index
 assertion 6 and is probably cheap to check. The coordinator has recorded it as
 a known gap, not a step, because Adam is pushing for speed. The citation will
 resolve when Design's list with 236 entries lands.
+
+## Step 156 unit 4a: SURPRISE ME pulls on the near view (27 Oct)
+
+Built as §P.3 rules it, with no motion probe (Adam, 27 Oct; `P.3/probe-judges`).
+A re-roll puts the record back and then pulls, in sequence: the pull waits until
+the put back lands, and the spec checks that the second record's swing begins at
+least a full return (`RETURN_MS`) after the first record's return began. Sequential
+is what is built, not what is ruled. Adam judges it in use.
+
+**Served includes the arrows.** §P.2 counts a record pulled by its spine as
+served. Code reads a record brought out by the arrows the same way, from §P.2's
+reason (the same record twice in a row). The coordinator agreed, and it has gone
+to Design. Changing it is one line: the effect in `WallLive` that reports
+`outId`.
+
+**The panel is not the settled signal.** `record-chrome` is drawn partway
+through the swing (`WallStage`'s `arrived`). An ask then is an ask while a
+record moves, and it is rightly ignored. A spec that waits on the panel and then
+asks is asking mid-motion. `data-phase="landed"` is the signal to wait on.
+
+**Observed, not acted on: the far view above the fork answers nothing.** By
+reading only, not run: `PickControl` chooses the cell path by width
+(`isFarView(window.innerWidth)`). So at 1440, zoomed out to the far view, a
+press goes to the wall, and the wall ignores it because the far view cannot pull
+(§P.1). §P.4 rules the far view's answer is the cell. Unit 3b tested the far
+view only where it draws its rail as a band, 1044 to 1273. 4a keeps the wall from
+pulling while the far view shows, and changes nothing else. It is 3b's, for a
+step of its own.
+
+**Why 4b is worth doing beyond the bug** (the coordinator's defect 8). The one
+observation of a put back leaving the wall 455px off was taken on
+`/wall/probe/labelled?count=N` by a probe outside the tree that was never
+committed. So the only evidence of that fault cannot be reproduced from the
+repo. 4b commits the 200-record harness with the pick in its rail, and the
+measurement with it. "Harness" names that route throughout. "Probe" here means
+only the motion probe Adam cut.

@@ -13,6 +13,8 @@ import { OUT_MS, RETURN_MS, SWING_MS, outTime, settled } from './gesture';
 import { frameView, landedExtent, panFraction, panView, type Pan } from './pan';
 import { wallLayout } from './wall-layout';
 import { isFarView } from './view-fork';
+import { pickAnswer } from './reroll';
+import { usePickChannel } from './pick-channel';
 import { DEFAULT_ROUTE_VIEW, arrivalSeat, nearView, type RouteView } from './route-view';
 
 /** The view's top-left in the svg's px, from the region's scroll against the frame's originRef; the svg sits LANDING_PAD below the region's content top. */
@@ -431,6 +433,41 @@ if (offset !== null) offset.style.transform = '';
     [visible, held],
   );
 
+  /*
+    §P.3, step 156 unit 4: on the near view SURPRISE ME's answer is this
+    pull. A re-roll puts the record back and then pulls, in sequence: the pull
+    waits in `queued` until the put back has landed (`P.3/probe-judges`:
+    sequential is what is built, not what is ruled).
+  */
+  const channel = usePickChannel();
+  const queued = useRef<string | null>(null);
+  const far = viewport === 0 ? null : isFarView(viewport) || routeView === 'far';
+  useEffect(() => {
+    if (channel === null) return;
+    return channel.answerAsks((named) => {
+      /* The far view cannot pull (§P.1); its answer is §P.4's cell, which is the control's own. */
+      if (far !== false) return 'ignore';
+      const answer = pickAnswer(pullsRef.current, queued.current, named);
+      if (answer.kind === 'pull') begin(answer.id, 'out');
+      if (answer.kind === 'reroll') {
+        queued.current = answer.pull;
+        begin(answer.back, 'back');
+      }
+      return answer.kind;
+    });
+  }, [channel, far, begin]);
+  useEffect(() => {
+    if (pulls.length > 0 || queued.current === null) return;
+    const id = queued.current;
+    queued.current = null;
+    begin(id, 'out');
+  }, [pulls, begin]);
+  /* §P.2: whatever comes out is served, by an ask, its spine or the arrows. */
+  const outId = held?.id ?? null;
+  useEffect(() => {
+    if (outId !== null) channel?.pulled(outId);
+  }, [outId, channel]);
+
   /* The arrows: the held record goes back and its neighbour comes out, on one clock. */
   const go = useCallback(
     (direction: Direction) => {
@@ -556,7 +593,7 @@ if (offset !== null) offset.style.transform = '';
         onZoomOut={viewport > 0 && !isFarView(viewport) ? zoomOut : undefined}
         framed={framed}
         onSeatClick={(id) => {
-          if (pulls.length === 0) begin(id, 'out');
+          if (pulls.length === 0 && queued.current === null) begin(id, 'out');
         }}
         onPulledClick={() => {
           /* The field is clickable once the record has settled. */

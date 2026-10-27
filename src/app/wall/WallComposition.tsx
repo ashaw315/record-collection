@@ -1,5 +1,6 @@
 import { bandRules } from "./band-rules";
 import { WallLive } from "./WallLive";
+import { PickChannelProvider } from "./pick-channel";
 import { PAPER_CSS } from '@/lib/colour/paper';
 import type { WallSeat } from "./shelf-runs";
 import type { RecordSummary } from "./summary";
@@ -53,6 +54,8 @@ export function WallComposition({
   rail?: React.ReactNode;
 }) {
   return (
+    /* §P.3: the rail's pick asks the wall to pull, and the wall tells the pick what came out (step 156 unit 4). */
+    <PickChannelProvider>
     <section
       data-composition=""
       data-testid="wall"
@@ -149,5 +152,6 @@ ${bandRules('')}
       )}
       <WallLive seats={seats} summaries={summaries} countLine={countLine} opens={opens} opensShelf={opensShelf} filter={filter} onView={onView} />
     </section>
+    </PickChannelProvider>
   );
 }
