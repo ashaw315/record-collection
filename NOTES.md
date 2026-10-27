@@ -48839,3 +48839,11 @@ seat would aim the walk at that case. That is a change to which record the
 walk pulls, so it is held for the coordinator, not made. `data-nav` comes from
 the same `order` that `hasAdjacentSeat` reads, so it is independent of the
 arrows' rendering decision but not of the order itself.
+
+Closed the same day on the coordinator's ruling: the walk pulls the first, a
+middle and the last record in seat order (1, 9 and 17 of 17 on the seed,
+arrows 1, 2 and 1), each asserting it reached the position asked for. Each
+branch was staged against the build: the first drawing PREVIOUS, the middle
+losing PREVIOUS, and the last drawing NEXT. Each failed this spec on its own
+record and passed the one before it. The seat-order residual stands, and it is
+the wall's own tests' job.

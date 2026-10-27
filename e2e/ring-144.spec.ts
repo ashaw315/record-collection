@@ -88,7 +88,7 @@ const EXPECTED = { 'as the shelf opens': 16, 'in the overview': 16, 'with a reco
 const SEED = { 'as the shelf opens': 1, 'in the overview': 1, 'with a record pulled': 1 } as const;
 
 test('the Tab walk through the wall in its three states stops 16, 16 and 19 times, the spines one stop, and the Apply is never a stop', async ({ page }) => {
-  test.setTimeout(180_000);
+  test.setTimeout(300_000);
   await login(page);
   await page.setViewportSize(WALL);
   await openShelf(page);
@@ -96,27 +96,39 @@ test('the Tab walk through the wall in its three states stops 16, 16 and 19 time
   await page.getByTestId('wall-zoom-out').click();
   await page.locator('[data-wall="overview"]').waitFor({ timeout: 30_000 });
   const overview = await walkTab(page);
-  await openShelf(page);
-  await page.locator('a[data-seat] [data-spine]').first().click();
-  await page.getByTestId('record-chrome').waitFor({ timeout: 30_000 });
-  await page.locator('[data-pulled]').waitFor({ timeout: 30_000 });
-  /* The arrows arrive once the pull has settled; the walk reads the settled state. */
-  await page.locator('[data-testid="nav-next"], [data-testid="nav-previous"]').first().waitFor({ timeout: 30_000 });
   /*
     §W.9's arrows are drawn "only where there is somewhere to go", so how many
     there should be is a fact about the pulled record's position, read from
     the panel's `data-nav`, and not about what was drawn: counted from the
     page, a middle record drawing one arrow lowered the expectation with it
-    and the walk stayed green (the coordinator, 27 Oct).
+    and the walk stayed green (the coordinator, 27 Oct). The rule has a branch
+    per end, so the walk pulls the first, a middle and the last record in
+    §W.23's seat order: pulling one position left the others unproven, and a
+    middle record drawing one arrow passed on the seed.
   */
-  const nav = (await page.getByTestId('record-chrome').getAttribute('data-nav')) ?? '';
-  const [index, length] = nav.split('/').map(Number);
-  expect(Number.isInteger(index) && Number.isInteger(length) && index >= 0 && index < length, `the pulled record's position is read (data-nav "${nav}")`).toBe(true);
-  const arrows = (index > 0 ? 1 : 0) + (index < length - 1 ? 1 : 0);
-  const drawn = await page.locator('[data-testid="nav-next"], [data-testid="nav-previous"]').count();
-  test.info().annotations.push({ type: 'pulled', description: `record ${index + 1} of ${length}: ${arrows} of §W.9's arrows ruled, ${drawn} drawn` });
-  expect.soft(drawn, `§W.9's arrows for record ${index + 1} of ${length}`).toBe(arrows);
-  const pulled = await walkTab(page);
+  const pulls: { state: string; stops: Stop[]; arrows: number }[] = [];
+  for (const position of ['first', 'middle', 'last'] as const) {
+    await openShelf(page);
+    const seats = await page.$$eval('a[data-seat]', (links) => links.map((a) => ({ id: a.getAttribute('data-seat') ?? '', order: Number(a.getAttribute('data-seat-order')) })).sort((x, y) => x.order - y.order).map((s) => s.id));
+    expect(seats.length, 'the precondition: a wall with a middle record').toBeGreaterThanOrEqual(3);
+    const seat = seats[position === 'first' ? 0 : position === 'last' ? seats.length - 1 : Math.floor(seats.length / 2)];
+    await page.locator(`a[data-seat="${seat}"] [data-spine]`).click();
+    await page.getByTestId('record-chrome').waitFor({ timeout: 30_000 });
+    await page.locator('[data-pulled]').waitFor({ timeout: 30_000 });
+    /* The arrows arrive once the pull has settled; the walk reads the settled state. */
+    await page.locator('[data-testid="nav-next"], [data-testid="nav-previous"]').first().waitFor({ timeout: 30_000 });
+    const nav = (await page.getByTestId('record-chrome').getAttribute('data-nav')) ?? '';
+    const [index, length] = nav.split('/').map(Number);
+    expect(Number.isInteger(index) && Number.isInteger(length) && index >= 0 && index < length, `the pulled record's position is read (data-nav "${nav}")`).toBe(true);
+    /* The precondition the branch needs: the record pulled is at the position asked for, or the walk proves a branch it did not reach. */
+    const at = index === 0 ? 'first' : index === length - 1 ? 'last' : 'middle';
+    expect(at, `the ${position} record is pulled (data-nav "${nav}")`).toBe(position);
+    const arrows = (index > 0 ? 1 : 0) + (index < length - 1 ? 1 : 0);
+    const drawn = await page.locator('[data-testid="nav-next"], [data-testid="nav-previous"]').count();
+    test.info().annotations.push({ type: `pulled the ${position}`, description: `record ${index + 1} of ${length}: ${arrows} of §W.9's arrows ruled, ${drawn} drawn` });
+    expect.soft(drawn, `§W.9's arrows for record ${index + 1} of ${length}`).toBe(arrows);
+    pulls.push({ state: `with the ${position} record pulled`, stops: await walkTab(page), arrows });
+  }
 
   /*
     The wall draws the whole collection, and under the full suites other
@@ -128,17 +140,22 @@ test('the Tab walk through the wall in its three states stops 16, 16 and 19 time
     as such whenever the walk finds exactly those.
   */
   const CHROME = 6 + 8 + 1;
-  for (const [state, stops] of [['as the shelf opens', opens], ['in the overview', overview], ['with a record pulled', pulled]] as const) {
+  const walks = [
+    { state: 'as the shelf opens', ruled: 'as the shelf opens', stops: opens, arrows: 0, pulled: false },
+    { state: 'in the overview', ruled: 'in the overview', stops: overview, arrows: 0, pulled: false },
+    ...pulls.map((p) => ({ ...p, ruled: 'with a record pulled' as const, pulled: true })),
+  ] as const;
+  for (const { state, ruled, stops, arrows, pulled } of walks) {
     const names = stops.map((s) => `${s.tag} ${s.name}`);
     /* The walked count on every run, so the figure is read from the report as a measurement and not inferred from the figure branch's silence (the reviewer, 15 Oct). */
     test.info().annotations.push({ type: `walked ${state}`, description: `${stops.length} stops: ${names.join(' · ')}` });
     expect.soft(names.filter((n) => n === 'button Apply'), `${state}: the Apply is reached`).toEqual([]);
     const composition = stops.filter((s) => s.composition).length;
-    const panel = state === 'with a record pulled' ? 3 + arrows : 0;
+    const panel = pulled ? 3 + arrows : 0;
     expect.soft(stops.length, `${state}: ${CHROME} of chrome${panel === 0 ? '' : `, the panel’s three and ${arrows} of §W.9’s arrows`}, and ${composition} of the composition (${names.join(' · ')})`).toBe(CHROME + panel + composition);
-    const seed = SEED[state];
-    if (composition === seed) expect.soft(stops.length, `${state}: Design’s ${EXPECTED[state]}${panel === 0 ? '' : ` plus ${arrows} of §W.9’s arrows`}, on the seed’s seventeen`).toBe(EXPECTED[state] + (state === 'with a record pulled' ? arrows : 0));
-    else test.info().annotations.push({ type: `${state}: not the seed alone`, description: `${composition} in the composition where the seed has ${seed}; Design’s ${EXPECTED[state]} not checked on this run` });
+    const seed = SEED[ruled];
+    if (composition === seed) expect.soft(stops.length, `${state}: Design’s ${EXPECTED[ruled]}${panel === 0 ? '' : ` plus ${arrows} of §W.9’s arrows`}, on the seed’s seventeen`).toBe(EXPECTED[ruled] + arrows);
+    else test.info().annotations.push({ type: `${state}: not the seed alone`, description: `${composition} in the composition where the seed has ${seed}; Design’s ${EXPECTED[ruled]} not checked on this run` });
     const clipped = stops.filter((s) => s.clipped !== null && !s.composition).map((s) => `${s.tag} ${s.name}: ${s.clipped}`);
     test.info().annotations.push({ type: `clipped ${state}`, description: clipped.length === 0 ? 'none outside the composition' : clipped.join('; ') });
   }
