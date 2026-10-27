@@ -3,6 +3,7 @@ import { registerCleanup, trackArtist } from './cleanup';
 import { removeRecordsFor, seedRecords } from './seed';
 import { login } from './sign-in';
 import { wallMeasured } from './wall-measured';
+import { WRITE_CAPTURES } from './write-captures';
 import { nearViewMinWidth, shelfOfferedMinWidth } from '../src/app/wall/view-fork';
 
 /**
@@ -265,7 +266,7 @@ test.describe('§P.4: on the far view, the same cell beneath the control in the 
         const after = await ink(page);
         test.info().annotations.push({ type: 'far', description: `cell ${a.cell.height.toFixed(1)} tall; the drawing ${before.height.toFixed(1)} tall before the ask and ${after.height.toFixed(1)} with the answer, ${after.top.toFixed(1)} to ${after.bottom.toFixed(1)} in a ${height} window` });
         expect(after.bottom, 'the drawing still ends above the window’s foot').toBeLessThanOrEqual(height);
-        await page.screenshot({ path: `docs/captures/step156-3b-far-${width}x${height}-answer.png` });
+        if (WRITE_CAPTURES) await page.screenshot({ path: `docs/captures/step156-3b-far-${width}x${height}-answer.png` });
       } finally {
         await removeRecordsFor(artistId);
       }
@@ -288,7 +289,8 @@ test.describe('§P.4: on the far view, the same cell beneath the control in the 
       if (a.cell === null) throw new Error('no cell');
       test.info().annotations.push({ type: 'far, unfiltered', description: `drawing ${before.height.toFixed(1)} tall without an answer, ${after.height.toFixed(1)} with one (cell ${a.cell.height.toFixed(1)}), in a ${height} window` });
       expect(after.bottom).toBeLessThanOrEqual(height);
-      await page.screenshot({ path: `docs/captures/step156-3b-far-${width}x${height}-unfiltered-answer.png` });
+      /* Adam's pictures are the real collection's now (e2e/sheet/pick-far-156.sheet.ts); these are the fixture's, on request. */
+      if (WRITE_CAPTURES) await page.screenshot({ path: `docs/captures/step156-3b-far-${width}x${height}-unfiltered-answer.png` });
     });
   }
 
