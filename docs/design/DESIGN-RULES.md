@@ -7,3 +7,4 @@
 - Specimens and sheets come from the build at a stated viewport, never drawn by hand. If one cannot be generated, say so.
 - Rulings about appearance are provisional until built. Each provisional gets a line in the handoff's Provisionals list, closed by the step report that returns it.
 - Claude never writes a file another author owns, including CLAUDE.md.
+- Every withdrawal entry's description ends with a Build clause, saying whether the build followed the withdrawn claim: followed, did not follow, believed to follow (with the source), or nothing to follow. When the entry is filed, I state only what Code has reported, and the intake confirms or corrects it. A withdrawal the build still follows is open work, not a closed record.
