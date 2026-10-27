@@ -1,6 +1,7 @@
 # Design rules: Claude's standing rules for these documents
 
 - Handoff and WITHDRAWALS.md changes go to Code as change files under `handoff-changes/`, marked prose-only. Never a whole copy of either. Both have two authors. In the handoff, Code writes the step bodies and Done marks. In WITHDRAWALS.md, Claude writes the entries and Code corrects the Build clauses and derives the machine-readable comment. A whole-file replace reverts whatever the other author has added since Claude's copy, and Claude's copy is always behind Code's last correction.
+- A ruling lives in its target, and the target travels with any note that names it. A change file can describe a target or carry handoff and WITHDRAWALS.md edits, but it is never the ruling. Code builds to targets, not notes, so a note sent without its target is one Code is right to hold. Each send lists the files it is meant to carry, so a relay that drops one is visible on arrival.
 - Anchor every change file on text already in the repo, never on text an earlier change file introduces. Still name the files assumed applied.
 - Settle mechanical questions with Code directly and report after: whether a withdrawal is owed, whether something is a draft fix, and where a withdrawal sentence goes. Bring to the user only disagreements with Code, or cases the written rules do not reach.
 - The channel to Code: requests to Code go in the change files. Code's requests to Claude arrive in a block headed FOR DESIGN in Code's reports. Neither waits on the user.
