@@ -245,18 +245,27 @@ step, and the gate is where the rest gets examined.
 **The gate does not block the push (the coordinator, 26 Oct, on Adam's
 trade-off).** Adam is the app's only user, so a bad deploy costs him
 noticing and saying so, while a gate that blocks the push let twelve
-finished commits queue for a day. So, after each unit:
+finished commits queue for a day. So:
 
-1. commit it through `scripts/commit-checked.sh`, with its step level green;
-2. push it;
-3. start the gate on the pushed commit in the background
-   (`scripts/gate.sh <commit>`, in its own worktree) and let it report;
+1. commit each unit through `scripts/commit-checked.sh`, with its step level green;
+2. push it immediately; the push never waits for a gate;
+3. when a unit that completes something lands, start ONE gate on the pushed
+   commit in the background (`scripts/gate.sh <commit>`, in its own
+   worktree), covering everything since the last green gate;
 4. fix anything it finds forward, on top of the live deploy.
 
-Push first, then gate, never the reverse: a failure is then attributable to
-a known commit, and the fix lands on a deploy rather than on a queue.
-**Never let unpushed commits queue.** A gate over twelve commits that fails
-says almost nothing, and a gate over one says everything. Unchanged: every
+**One gate per completed unit, not one per push (Adam, 27 Oct).** The 26 Oct
+version of this rule said one gate per push, and that over-corrected. Gates
+cannot run concurrently, because they share the gate's worktree, so gating
+every push back to back keeps the machine permanently loaded. A loaded
+machine is what made the 26 Oct wall-route timings unreadable: 29 to 37s,
+against 12 to 13s on the same code after a reboot. Each commit has also
+already passed `commit-checked.sh` and its step-level checks, so a gate is
+looking for cross-suite regressions, not first-pass errors. Three or four
+commits under one gate are still attributable if it fails. Twelve were not,
+and twelve was the actual objection.
+
+**Never let unpushed commits queue.** Unchanged: every
 commit goes through `commit-checked.sh`, tests are written first and shown
 able to fail, and the stop conditions in §9 hold. Those are what have been
 catching defects. On 26 Oct, stopping at one overflow found three live bugs,
