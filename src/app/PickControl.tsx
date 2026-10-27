@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { pickFrom } from '@/lib/moods/pick';
 import { GridCell } from './GridCell';
-import { isFarView } from './wall/view-fork';
 import { usePickChannel } from './wall/pick-channel';
 import { CONTROL_LABEL, HAIRLINE } from './records/[id]/grid-type';
 
@@ -32,11 +31,12 @@ export function PickControl({ ruled = false, pool, answers = 'cell' }: {
   ruled?: boolean;
   pool: readonly PickRecord[];
   /**
-   * The shelf's rail answers with the cell only on the far view (§P.4), which
-   * the rail draws as a band; on the near view the answer is the wall's pull
-   * (§P.3, step 156 unit 4), asked for through the pick channel.
+   * The shelf's rail asks the wall first, through the pick channel: where the
+   * reader is on a view that can pull, the answer is the wall's pull (§P.3);
+   * on the far view, at any width, the wall says it cannot pull and the
+   * answer is the cell (§P.1, §P.4).
    */
-  answers?: 'cell' | 'far-view';
+  answers?: 'cell' | 'wall';
 }) {
   /* §P.2's last-served record. Every answer sets it, and on the shelf so does a record pulled by its spine or the arrows; only an answer in a view that cannot pull draws the cell. */
   const [last, setLast] = useState<string | null>(null);
@@ -55,9 +55,10 @@ export function PickControl({ ruled = false, pool, answers = 'cell' }: {
 
   const ask = () => {
     const id = pickFrom(pool.map((record) => record.id), last, Math.random);
-    if (answers === 'far-view' && !isFarView(window.innerWidth)) {
+    const did = answers === 'wall' ? (channel?.ask(id) ?? 'ignore') : 'cannot-pull';
+    if (did !== 'cannot-pull') {
       /* §P.3: "Where the pick names the record already out, nothing moves", and the slot says so. */
-      if (channel?.ask(id) === 'stay') setAgain(true);
+      if (did === 'stay') setAgain(true);
       return;
     }
     /* §P.6: "An ask the pool cannot answer draws nothing." */

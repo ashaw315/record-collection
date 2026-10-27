@@ -333,6 +333,31 @@ test.describe('§P.4: on the far view, the same cell beneath the control in the 
     });
   }
 
+  /*
+    §P.1: "Every reader in a view that cannot pull is answered in place, on the view they are on, including a reader
+    where the near view is offered and they have not chosen it." The split is which view the reader is on, not the
+    window's width (`P.1/split-on-shelf`): above the fork a reader who zooms out is on the far view, and its answer is
+    §P.4's cell. The build split by width, so these windows answered nothing there.
+  */
+  for (const width of [1440, 1920]) {
+    test(`at ${width}, zoomed out to the far view: the answer is the cell beneath the control, and nothing is pulled`, async ({ page }) => {
+      const { artistId, suffix } = await artistWith(page, [{ prefix: 'Pick', count: 2 }]);
+      try {
+        await open(page, width, `?artistId=${artistId}`);
+        await page.getByTestId('wall-zoom-out').click();
+        await page.locator('[data-wall="overview"]').filter({ visible: true }).waitFor({ timeout: 30_000 });
+        await press(page);
+        await expect.poll(async () => (await answer(page)).count, { timeout: 10_000, message: 'one cell answers' }).toBe(1);
+        const a = await answer(page);
+        expect(a.inControl, 'the cell is beneath the control').toBe(true);
+        expect(a.title ?? '').toContain(suffix);
+        expect(await page.locator('[data-pulled]').count(), 'the far view cannot pull').toBe(0);
+      } finally {
+        await removeRecordsFor(artistId);
+      }
+    });
+  }
+
   test('the near view at 1440 does not answer with a cell: its answer is the pull (unit 4)', async ({ page }) => {
     const { artistId } = await artistWith(page, [{ prefix: 'Pick', count: 2 }]);
     try {

@@ -8,11 +8,18 @@ import type { PickAnswer } from './reroll';
  * siblings in `WallComposition`, and on the near view the answer is the
  * wall's pull. Each side registers its own half while mounted.
  */
+/**
+ * What the wall did with an ask: §P.3's answers where the view can pull, or
+ * `cannot-pull` where the reader is on the far view, whose answer is §P.4's
+ * cell and the control's own (§P.1).
+ */
+export type WallAnswer = PickAnswer['kind'] | 'cannot-pull';
+
 export type PickChannel = {
   /** The control asks for the record the pick names; the wall says what it did, and with no wall listening nothing moves. */
-  ask: (named: string | null) => PickAnswer['kind'];
+  ask: (named: string | null) => WallAnswer;
   /** The wall answers asks while mounted; the returned function stops it. */
-  answerAsks: (answer: (named: string | null) => PickAnswer['kind']) => () => void;
+  answerAsks: (answer: (named: string | null) => WallAnswer) => () => void;
   /** The wall tells of every record that comes out, by an ask, its spine or the arrows, since §P.2 counts each as served. */
   pulled: (id: string) => void;
   /** The control hears what comes out while mounted; the returned function stops it. */
@@ -23,7 +30,7 @@ const Channel = createContext<PickChannel | null>(null);
 
 export function PickChannelProvider({ children }: { children: ReactNode }) {
   const [channel] = useState<PickChannel>(() => {
-    let answer: ((named: string | null) => PickAnswer['kind']) | null = null;
+    let answer: ((named: string | null) => WallAnswer) | null = null;
     let hear: ((id: string) => void) | null = null;
     return {
       ask: (named) => answer?.(named) ?? 'ignore',

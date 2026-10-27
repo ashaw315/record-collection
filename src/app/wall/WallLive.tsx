@@ -445,8 +445,9 @@ if (offset !== null) offset.style.transform = '';
   useEffect(() => {
     if (channel === null) return;
     return channel.answerAsks((named) => {
-      /* The far view cannot pull (§P.1); its answer is §P.4's cell, which is the control's own. */
-      if (far !== false) return 'ignore';
+      /* §P.1: the split is which view the reader is on, not the window's width (`P.1/split-on-shelf`). The far view cannot pull, so its answer is §P.4's cell; unmeasured, no view is settled yet. */
+      if (far === null) return 'ignore';
+      if (far) return 'cannot-pull';
       const answer = pickAnswer(pullsRef.current, queued.current, named);
       if (answer.kind === 'pull') begin(answer.id, 'out');
       if (answer.kind === 'reroll') {

@@ -48892,3 +48892,25 @@ committed. So the only evidence of that fault cannot be reproduced from the
 repo. 4b commits the 200-record harness with the pick in its rail, and the
 measurement with it. "Harness" names that route throughout. "Probe" here means
 only the motion probe Adam cut.
+
+## The far view's answer at every width: a withdrawn split the build still made (27 Oct)
+
+Confirmed by running, after 4a's NOTES had it from reading only. Zoomed out to
+the far view at 1440 and 1920, SURPRISE ME drew no cell and pulled nothing.
+The two new `pick-answer-156` tests failed on that build with `Expected: 1,
+Received: 0`. `PickControl` split by window width, which is
+`P.1/split-on-shelf`'s withdrawn claim word for word. The entry was filed on
+the first day and paired, every assertion passed, and the build still did it.
+The record said the claim was gone while the build still made it. The guard
+is now a question asked at every intake (drop-ref memory).
+
+Fixed by asking the wall. It knows which view is showing, and its answer
+through the pick channel gains `cannot-pull` on the far view. The control then
+draws §P.4's cell. The width check is gone, so one rule covers the band widths
+(1044 to 1273) and the far view above the fork. The three Build clauses
+(`P.1/split-on-shelf`, `P.1/answer-on-shelf`, `P.3/first-answer-on-shelf`)
+now carry what was measured in place of "believed to follow".
+
+The real-collection captures of the far view's answer, owed since 26 Oct, are
+now owed at 1044, 1273 and 1440, after this fix. 1440 could not have been
+captured before it.

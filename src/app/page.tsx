@@ -195,7 +195,7 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
                 ? collectionCountLabel({ matched: shelf.filter((record) => record.matches).length, total: collectionTotal, filtered: true })
                 : null
             }
-            rail={<WallRail params={params} genres={facets.genres} pick={<PickControl key={pickKey} pool={shelfPool} answers="far-view" />} />}
+            rail={<WallRail params={params} genres={facets.genres} pick={<PickControl key={pickKey} pool={shelfPool} answers="wall" />} />}
           />
         </div>
       ) : null}

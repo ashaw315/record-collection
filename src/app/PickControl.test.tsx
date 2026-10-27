@@ -37,6 +37,6 @@ describe('the pick control (§P.5)', () => {
   /* §P.4: the answer is drawn when the reader asks, never before. Fails against a control that draws its pool's first record on arrival. */
   it('draws no answer before anything is asked, in either host', () => {
     expect(html).not.toContain('data-pick-answer');
-    expect(renderToStaticMarkup(<PickControl pool={POOL} answers="far-view" />)).not.toContain('data-pick-answer');
+    expect(renderToStaticMarkup(<PickControl pool={POOL} answers="wall" />)).not.toContain('data-pick-answer');
   });
 });
