@@ -33,6 +33,40 @@ async function clickFarRun(page: Page) {
   await page.locator('[data-run]').first().click();
 }
 
+const landings = (page: Page) => page.evaluate(() => (window as unknown as { __landings?: number }).__landings ?? 0);
+
+/**
+ * The landing SETTLED, by condition rather than clock: the pending landing
+ * consumed (`__landings` has reached what the caller expects), and then the
+ * region's scroll and extent unchanged over three animation frames, since
+ * the frame grows once the region is measured and the write lands on that
+ * frame. Fixed waits of 900 and 250ms flaked under load three times, read
+ * each time with the load named (27 Oct): load was the trigger, the fixed
+ * wait the defect.
+ */
+async function settled(page: Page, landed: number) {
+  await expect.poll(() => landings(page), { timeout: 15_000, message: `the landing is consumed (${landed})` }).toBeGreaterThanOrEqual(landed);
+  await page.waitForFunction(
+    () =>
+      new Promise<boolean>((resolve) => {
+        const el = document.querySelector('[data-region="wall"]') as HTMLElement | null;
+        if (el === null) return resolve(false);
+        const read = () => `${el.scrollLeft},${el.scrollTop},${el.scrollWidth},${el.scrollHeight},${el.clientWidth}`;
+        const first = read();
+        let frames = 0;
+        const tick = () => {
+          frames += 1;
+          if (read() !== first) return resolve(false);
+          if (frames >= 3) return resolve(true);
+          requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      }),
+    undefined,
+    { timeout: 15_000 },
+  );
+}
+
 /** Enough records to fill more than one shelf, so a zoom lands on a row that is not the first. */
 async function seed(page: Page, count: number): Promise<{ artistId: string; ids: string[] }> {
   const artist = await page.request.post('/api/artists', { data: { name: `Route-${suffix()}` } });
@@ -111,7 +145,7 @@ test('a bare / opens NEAR with the occupied shelf framed, and the far view is a 
   await expect(page.locator('[data-footprint]'), 'the precondition: no filter, so no seat is emptied').toHaveCount(0);
 
   /* Framed on the occupied shelf: the first seat is in the region, and so are its top faces. */
-  await page.waitForTimeout(900);
+  await settled(page, 1);
   const framed = await page.evaluate(() => {
     const rect = (q: string) => { const r = document.querySelector(q)?.getBoundingClientRect(); return r ? { left: r.left, top: r.top, right: r.right, bottom: r.bottom } : null; };
     return { region: rect('[data-region="wall"]'), seat: rect('a[data-seat][data-seat-order="1"] [data-spine]'), top: rect('a[data-seat][data-seat-order="1"] [data-face="top"]') };
@@ -159,8 +193,8 @@ test('clicking a run lands the near view on that run’s first seat, by the rule
   await page.evaluate(() => { (window as unknown as { __landings?: number }).__landings = 0; });
   await clickFarRun(page);
   await expect(page.locator('[data-wall="labelled"]')).toBeVisible();
-  /* Read after the wall settles: the frame grows once the region is measured, and the landing's count is what proves it was not undone. */
-  await page.waitForTimeout(900);
+  /* Read once the landing has settled: the frame grows once the region is measured, and the landing's count is what proves it was not undone. */
+  await settled(page, 1);
 
   const landed = await page.evaluate((id) => {
     const el = document.querySelector('[data-region="wall"]') as HTMLElement | null;
@@ -210,16 +244,17 @@ test('a wall that fits the region has no horizontal landing to make, and still p
   await expect(page.locator('[data-wall="labelled"]')).toBeVisible({ timeout: 30_000 });
   const wall = () => page.evaluate(() => { const el = document.querySelector('[data-region="wall"]') as HTMLElement; return { scroll: el.scrollWidth, client: el.clientWidth, count: (document.querySelector('[data-testid="wall-zoom-out"]')?.textContent ?? '').trim() }; });
   await expect.poll(async () => (await wall()).scroll, 'the wall has its measured width').toBeGreaterThan(0);
-  await page.waitForTimeout(900);
+  await settled(page, 1);
   const narrow = await wall();
   expect(narrow.scroll, `the precondition: at 1440 this wall is wider than its region (${narrow.count})`).toBeGreaterThan(narrow.client);
   await page.setViewportSize({ width: 1440 + (narrow.scroll - narrow.client) + 2 * LANDING_PAD, height: 900 });
   await expect.poll(async () => { const w = await wall(); return w.scroll - w.client; }, `widened by the measured excess, the wall fits (${narrow.count})`).toBe(0);
+  const before = await landings(page);
   await page.getByTestId('wall-zoom-out').click();
   await expect(page.locator('[data-wall="overview"]')).toBeVisible();
   await clickFarRun(page);
   await expect(page.locator('[data-wall="labelled"]')).toBeVisible();
-  await page.waitForTimeout(250);
+  await settled(page, before + 1);
   const got = await page.evaluate((id) => {
     const el = document.querySelector('[data-region="wall"]') as HTMLElement | null;
     const rect = (q: string) => { const r = document.querySelector(q)?.getBoundingClientRect(); return r ? { top: r.top } : null; };
@@ -373,7 +408,7 @@ test('the wall’s view and its shelf survive a reload, Back, Forward and a cold
     const fresh = await cold.newPage();
     await fresh.goto(nearUrl);
     await expect(fresh.locator('[data-wall="labelled"]')).toBeVisible({ timeout: 30_000 });
-    await fresh.waitForTimeout(900);
+    await settled(fresh, 1);
     const landed = await fresh.evaluate(() => {
       const el = document.querySelector('[data-region="wall"]') as HTMLElement | null;
       return el === null ? null : { left: Math.round(el.scrollLeft), top: Math.round(el.scrollTop) };
