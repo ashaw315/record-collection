@@ -346,6 +346,13 @@ test.describe('§P.4: on the far view, the same cell beneath the control in the 
         await open(page, width, `?artistId=${artistId}`);
         await page.getByTestId('wall-zoom-out').click();
         await page.locator('[data-wall="overview"]').filter({ visible: true }).waitFor({ timeout: 30_000 });
+        /*
+          The zoom is a navigation (§W.29 puts `wall=far` in the address), and the control is keyed on the address, so
+          a press before it lands is answered and then cleared. Waiting here keeps THIS test about the far view's
+          answer. It does not make the race go away for a reader who presses as the zoom lands; that is
+          `pick-zoom-race-156.spec.ts`'s, and Design's to rule (whether a zoom is a navigation for §P.2).
+        */
+        await expect(page).toHaveURL(/[?&]wall=far/);
         await press(page);
         await expect.poll(async () => (await answer(page)).count, { timeout: 10_000, message: 'one cell answers' }).toBe(1);
         const a = await answer(page);

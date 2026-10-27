@@ -24,6 +24,10 @@ export type PickChannel = {
   pulled: (id: string) => void;
   /** The control hears what comes out while mounted; the returned function stops it. */
   hearPulls: (hear: (id: string) => void) => () => void;
+  /** The wall tells when the reader moves between the near and far views: "an answer already drawn ends with the view it was drawn in" (§P.2, 27 Oct). */
+  viewChanged: () => void;
+  /** The control hears view changes while mounted; the returned function stops it. */
+  hearViews: (hear: () => void) => () => void;
 };
 
 const Channel = createContext<PickChannel | null>(null);
@@ -32,6 +36,7 @@ export function PickChannelProvider({ children }: { children: ReactNode }) {
   const [channel] = useState<PickChannel>(() => {
     let answer: ((named: string | null) => WallAnswer) | null = null;
     let hear: ((id: string) => void) | null = null;
+    let hearView: (() => void) | null = null;
     return {
       ask: (named) => answer?.(named) ?? 'ignore',
       answerAsks: (next) => {
@@ -45,6 +50,13 @@ export function PickChannelProvider({ children }: { children: ReactNode }) {
         hear = next;
         return () => {
           if (hear === next) hear = null;
+        };
+      },
+      viewChanged: () => hearView?.(),
+      hearViews: (next) => {
+        hearView = next;
+        return () => {
+          if (hearView === next) hearView = null;
         };
       },
     };

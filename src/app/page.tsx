@@ -153,6 +153,12 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
   const shelfPool = shelf === null ? [] : await poolOf(shelf.filter((record) => record.matches).map((record) => ({ id: record.id, title: record.title, artist: record.artistName })));
   /* §P.2: "a navigation clears them". The address is the page, so a control keyed on it starts empty on every one. */
   const pickKey = toQueryString(params);
+  /*
+    A zoom is not a navigation for §P.2 (Design, 27 Oct): `wall` and `shelf` are the zoom's place in the address, so the
+    shelf's control is keyed without them and survives a zoom with its last-served record. The answer it drew still
+    ends with its view, which the wall tells it through the pick channel.
+  */
+  const shelfPickKey = toQueryString({ ...params, wall: 'near', shelf: undefined });
 
   return (
     <>
@@ -195,7 +201,7 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
                 ? collectionCountLabel({ matched: shelf.filter((record) => record.matches).length, total: collectionTotal, filtered: true })
                 : null
             }
-            rail={<WallRail params={params} genres={facets.genres} pick={<PickControl key={pickKey} pool={shelfPool} answers="wall" />} />}
+            rail={<WallRail params={params} genres={facets.genres} pick={<PickControl key={shelfPickKey} pool={shelfPool} answers="wall" />} />}
           />
         </div>
       ) : null}

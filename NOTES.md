@@ -48956,3 +48956,25 @@ the DELETE route, never on a page load.
 server warns on every start. It will break on a Next upgrade, not warn
 forever, so the rename (`npx @next/codemod@canary middleware-to-proxy .`) is
 owed before upgrading Next. Not done today.
+
+## The pick survives a zoom; its drawn answer ends with the view (27 Oct)
+
+Design ruled that a zoom is not a navigation for §P.2: "An answer already drawn
+ends with the view it was drawn in, and the new view starts with none." In both
+directions the record stays last-served. Measured first (`pick-zoom-race-156`,
+five runs at 1440): the cell drew at 135 to 161ms, then 50 to 65ms later the
+zoom's address committed, the control remounted and the cell was wiped. All in
+one frame each time. Fixed: the shelf's control is keyed on the address without
+`wall` and `shelf`, and the wall tells it through the pick channel when the view
+changes, so it ends any drawn answer and keeps its last-served record. Staged:
+the control ignoring view changes fails "the near view starts with no answer".
+
+**§W, parked: a record out when the reader zooms out** (`zoom-out-pulled`,
+measured, not ruled). Spine and pick behave identically. The zoom-out control
+shows and works with a record out. The far view comes up at once, with nothing
+put back and nothing waited for. The record stays out, undrawn, phase `landed`.
+Zooming back in by a run shows the same record still out and drawn. Not
+measured: where it lands against the run clicked, and Escape on the far view
+with a record held. The coordinator rules.
+
+**4b, parked:** the 455px put back. Its Provisionals line stays open.

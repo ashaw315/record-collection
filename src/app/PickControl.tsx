@@ -52,6 +52,15 @@ export function PickControl({ ruled = false, pool, answers = 'cell' }: {
       }),
     [channel],
   );
+  /* §P.2 (Design, 27 Oct): "An answer already drawn ends with the view it was drawn in, and the new view starts with none." The record stays last-served. */
+  useEffect(
+    () =>
+      channel?.hearViews(() => {
+        setServed(null);
+        setAgain(false);
+      }),
+    [channel],
+  );
 
   const ask = () => {
     const id = pickFrom(pool.map((record) => record.id), last, Math.random);

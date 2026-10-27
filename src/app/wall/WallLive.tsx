@@ -463,6 +463,13 @@ if (offset !== null) offset.style.transform = '';
     queued.current = null;
     begin(id, 'out');
   }, [pulls, begin]);
+  /* §P.2 (27 Oct): a drawn answer ends with its view. The first measurement settles a view rather than changing one. */
+  const lastFar = useRef<boolean | null>(null);
+  useEffect(() => {
+    if (far === null) return;
+    if (lastFar.current !== null && lastFar.current !== far) channel?.viewChanged();
+    lastFar.current = far;
+  }, [far, channel]);
   /* §P.2: whatever comes out is served, by an ask, its spine or the arrows. */
   const outId = held?.id ?? null;
   useEffect(() => {
