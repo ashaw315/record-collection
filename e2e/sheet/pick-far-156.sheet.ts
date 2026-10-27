@@ -20,6 +20,12 @@ import { login } from './login';
  */
 const OUT = process.env.SHEET_OUT ?? join('docs', 'captures', 'pick-far-156');
 const WIDTHS = [shelfOfferedMinWidth(), nearViewMinWidth() - 1];
+/*
+  Above the fork the far view is the one the reader zooms out to, and since
+  the far-view step (27 Oct) its answer is the same cell (§P.1, §P.4); before
+  it, a press there answered nothing, so this width could not be captured.
+*/
+const ZOOMED = 1440;
 
 /** The far drawing's ink, as pick-answer-156 measures it: `meet` fits the drawing inside the svg's box. */
 const ink = (page: Page) =>
@@ -46,22 +52,26 @@ const cell = (page: Page) =>
     };
   });
 
-test('the far view in the band, with and without an answer, on the real collection', async ({ page }) => {
+test('the far view in the band and zoomed out at 1440, with and without an answer, on the real collection', async ({ page }) => {
   mkdirSync(OUT, { recursive: true });
   await login(page);
   const md = [
-    '# Step 156 unit 3b: the far view in the band, on the real collection',
+    '# Step 156: the far view\'s answer, on the real collection: in the band at 1044 and 1273, and zoomed out at 1440',
     '',
     'A bare `/`, unfiltered, read-only, desktop Chromium. The drawing is the far view\'s ink, measured as `e2e/pick-answer-156.spec.ts` measures it.',
     '',
     '| window | drawing without | drawing with | cell | answer | title lines | cover (natural) | files |',
     '|---|---|---|---|---|---|---|---|',
   ];
-  for (const width of WIDTHS) {
+  for (const width of [...WIDTHS, ZOOMED]) {
     for (const height of [768, 900]) {
       await page.setViewportSize({ width, height });
       await page.goto('/');
       await page.locator('[data-wall-container]:not([data-unmeasured])').waitFor({ timeout: 30_000 });
+      if (width === ZOOMED) {
+        await page.getByTestId('wall-zoom-out').click();
+        await page.locator('[data-wall="overview"]').filter({ visible: true }).waitFor({ timeout: 30_000 });
+      }
       await page.addStyleTag({ content: 'nextjs-portal{display:none!important}' });
       await page.evaluate(() => document.fonts.ready);
       await page.waitForTimeout(1500);
