@@ -179,6 +179,13 @@ This app is about vinyl records. Several distinctions matter and are easy to fla
   concurrently**; they share `record_collection_test` on port 5433. The guard
   will now stop you, but a refusal costs a run — so serialise them yourself.
 
+  **A timing carries its load (the coordinator, 27 Oct).** Committing during a
+  gate is allowed if it keeps work moving, but `commit-checked.sh` is 579 tests,
+  and that is load. State the load beside every timing reported, and never
+  compare timings from runs at different loads. On 27 Oct the same wall-route
+  tests ran at 12.1 and 13.2s at load 4, and at 14.6 and 14.1s at load 8 to 9
+  with two commits made during the gate.
+
   **A guard is not verified by reading it.** Three defects in this one were
   invisible to inspection and obvious the moment the scenario was staged for
   real. Stage it.
