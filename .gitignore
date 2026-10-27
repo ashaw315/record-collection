@@ -139,6 +139,9 @@ docs/design/*
 # The mood pick target (§P), the index's input P since 24 Oct. Same
 # reachability rule, and in the commit that makes it an input, as T's was.
 !docs/design/Mood Pick - build target.dc.html
+# Design's standing rules for its own documents (27 Oct), authored by Design
+# and never edited by Code: tracked so the rules survive a chat that will not open.
+!docs/design/DESIGN-RULES.md
 
 # The same artefacts' STALE root copies, from before they moved into
 # docs/design/. Each root file is smaller than its docs/design counterpart, so
