@@ -49004,3 +49004,37 @@ rules beneath the control. No ruling covers resize; recorded, not acted on.
 7.7 to 9.2 (`scrollLeft` 2408 against a limit of 1441, read after a fixed
 900ms wait), passed on retry, and passed 3 of 3 with no retries at load 4.3
 to 6.6. Nothing in this diff touches the near view's landing.
+
+## 27 Oct, late afternoon: a commit message nothing verifies, and the guard that caused it
+
+**1d69cb0's message claimed edits the commit did not carry.** Its edit script
+failed a guard before writing, and the chain ran on to the commit because the
+script was not `&&`-linked to it. Fixed forward at 924a867. **Nothing checks
+a commit message against its diff**, so a false claim of work would have
+stood; this sits beside the handoff-citation gap (an id pointing at no entry
+passes everything). Both are claims nothing verifies. Recorded, not built.
+
+**The guard was wrong, not unlucky.** It demanded exactly one match for a
+Build clause, and after `derive-withdrawals` every clause stands twice, in
+the bullet and in the machine-readable comment, so it refused every
+legitimate edit made after a derive. Replaced by `scripts/build-clause.mjs`
+(`test/repo/build-clause.test.ts`): Code's half of WITHDRAWALS.md, an entry's
+Build clause by id, edited in the bullet and re-derived, loud on an unknown
+id or an unfinished sentence. Design's entries arrive as change files from
+here (the coordinator, 27 Oct): the intake cannot tell a reverted clause
+from a corrected one without provenance, and a change file carries it.
+
+**wall-route's fixed waits were the defect, load the trigger.** Three
+sightings, load named each time; now a condition (the landing consumed, the
+region stable over three frames), 16 of 16 at load 14.6.
+
+## Step 157a: the lean and its data (27 Oct)
+
+`topTier` (`src/lib/moods/score.ts`): the records carrying the most of the
+selected moods, none carrying none; `pickFrom` draws from it under the
+last-served rule. Staged: a filter (requiring every selected mood) fails
+"four moods return records where requiring all four returns none" and
+nothing else, so that test is aimed at the thing the lean is for. Queries:
+`moodSetsFor` (the pool's sets by id, no entry for an untagged record, no
+query for an empty list), `untaggedCount` (over the whole collection, §P.6)
+and `carriedMoods` (for inertness), each against the real test database.
