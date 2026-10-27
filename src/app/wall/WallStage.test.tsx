@@ -398,7 +398,7 @@ describe('Turn over shows the back on the same face (§W.7)', () => {
   hands it over through the pick channel.
 */
 describe('§P.4: the column host’s cell, in the count column', () => {
-  const cell = { id: 'z', title: 'Wired', artist: 'Jeff Beck', cover: 'https://c/wired.jpg' };
+  const cell = { id: 'z', title: 'Wired', artist: 'Jeff Beck', cover: 'https://c/wired.jpg', moods: ['jacked up'] };
   const countColumn = (html: string) => /<div data-region="count-far"[\s\S]*?<\/div>\s*<div\s+data-line="facts-drawing"/.exec(html)?.[0] ?? '';
 
   it('draws the cell inside the count column, after the count, at 160 wide', () => {

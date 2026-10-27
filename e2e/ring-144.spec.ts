@@ -3,6 +3,7 @@ import { registerCleanup } from './cleanup';
 import { login } from './sign-in';
 import { errorScreen, ringRoutes, settled } from './ring-routes';
 import { drawnRing, expectedRing, walkTab, type Stop } from './ring-walk';
+import { MOODS } from '../src/lib/moods/moods';
 
 registerCleanup();
 
@@ -84,10 +85,78 @@ test('the rail’s hidden Apply is not a Tab stop: Tab from the search field lan
   did. Design's target still says 31, 15 and 33, false since step 148, and
   they are Design's to withdraw.
 */
-const EXPECTED = { 'as the shelf opens': 16, 'in the overview': 16, 'with a record pulled': 19 } as const;
-const SEED = { 'as the shelf opens': 1, 'in the overview': 1, 'with a record pulled': 1 } as const;
+/*
+  Step 157b (§P.5, §P.6, 27 Oct): the walk asserts the SEQUENCE of stops, not
+  a total. The rail's stops are "fixed by the control's list and not by the
+  tags": the moods come from code's list in its order (§P.5, "the control
+  draws whatever that list holds, in its order"), and an inert mood or an
+  inert ASK stays a stop (§P.6). A count passes on any N stops in any order
+  and moved every time the control changed (31, 15, 33; then 15, 15, 18;
+  then 16, 16, 19, each withdrawn in turn); the sequence fails on a missing
+  stop, an extra one or a wrong order, and the counts are derived for the
+  report. Expected from the list, actual from the DOM: expected from the
+  drawn moods would check the control against itself and miss a missing one.
+*/
+type Expected = readonly [tag: string, name: RegExp];
+const exact = (text: string) => new RegExp(`^${text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i');
+const HEADER: Expected[] = [['a', /^Record Collection$/], ['a', /^Collection$/], ['a', /^Want list$/], ['a', /^Look up$/], ['a', /^Stats$/], ['a', /^Manage$/]];
+/* §W.13's rail: the search field, the genre and sort selects, the three views, then §P.5's control in its order, then ADD RECORD at the foot. */
+const RAIL: Expected[] = [
+  ['input', /^rail-search$/],
+  ['select', /^Any/],
+  ['select', /^Default/],
+  ['a', /^Shelf$/],
+  ['a', /^Table$/],
+  ['a', /^Grid$/],
+  ...MOODS.map((m): Expected => ['button', exact(m)]),
+  ['button', /^Ask$/],
+  ['button', /^Surprise me$/],
+  ['a', /^Add record$/],
+];
+/* §W.12: the way out is the count, in whichever view is showing. */
+const ZOOM: Expected = ['button', /^Show the whole collection$/];
+/* §W.7's panel, pulled: its link, TURN OVER and PUT BACK, before the composition's stop. */
+const PANEL: Expected[] = [['a', /^Open the full record/], ['button', /^Turn over$/], ['button', /^Put back$/]];
+const ARROWS = (index: number, length: number): Expected[] => [
+  ...(index > 0 ? [['button', /^Previous record$/] as Expected] : []),
+  ...(index < length - 1 ? [['button', /^Next record$/] as Expected] : []),
+];
 
-test('the Tab walk through the wall in its three states stops 16, 16 and 19 times, the spines one stop, and the Apply is never a stop', async ({ page }) => {
+/**
+ * The walk against its expected shape: the chrome's stops positionally, then
+ * one or more composition stops (one spine under the roving index; a run per
+ * shelf in the overview, and other specs' shelves are on the wall under the
+ * full suites), then the arrows by position. Every departure is reported
+ * with the full walk, so a wrong order reads as what it is.
+ */
+function expectWalk(state: string, stops: Stop[], chrome: Expected[], arrows: Expected[]) {
+  const names = stops.map((s) => `${s.tag} ${s.name}`);
+  test.info().annotations.push({ type: `walked ${state}`, description: `${stops.length} stops: ${names.join(' · ')}` });
+  const show = (e: Expected) => `${e[0]} ${e[1].source}`;
+  const miss = (at: number, want: Expected | 'composition', got: Stop | undefined) =>
+    `${state}, stop ${at + 1}: expected ${want === 'composition' ? 'a composition stop' : show(want)}, walked ${got === undefined ? 'nothing (the walk ended)' : `${got.tag} ${got.name}${got.composition ? ' (composition)' : ''}`}\n  the walk: ${names.join(' · ')}`;
+  chrome.forEach((want, i) => {
+    const got = stops[i];
+    expect.soft(got !== undefined && got.tag === want[0] && want[1].test(got.name) && !got.composition, miss(i, want, got)).toBe(true);
+  });
+  const rest = stops.slice(chrome.length);
+  const firstTail = rest.findIndex((s) => !s.composition);
+  const composition = firstTail === -1 ? rest : rest.slice(0, firstTail);
+  const tail = firstTail === -1 ? [] : rest.slice(firstTail);
+  expect.soft(composition.length, miss(chrome.length, 'composition', rest[0])).toBeGreaterThanOrEqual(1);
+  arrows.forEach((want, i) => {
+    const got = tail[i];
+    expect.soft(got !== undefined && got.tag === want[0] && want[1].test(got.name), miss(chrome.length + composition.length + i, want, got)).toBe(true);
+  });
+  expect.soft(tail.slice(arrows.length).map((s) => `${s.tag} ${s.name}`), `${state}: stops after the last expected one`).toEqual([]);
+  expect.soft(names.filter((n) => n === 'button Apply'), `${state}: the Apply is reached`).toEqual([]);
+  const clipped = stops.filter((s) => s.clipped !== null && !s.composition).map((s) => `${s.tag} ${s.name}: ${s.clipped}`);
+  test.info().annotations.push({ type: `clipped ${state}`, description: clipped.length === 0 ? 'none outside the composition' : clipped.join('; ') });
+  /* The figures, derived and reported, never pinned: the chrome's count, the composition's, and the arrows'. */
+  test.info().annotations.push({ type: `counted ${state}`, description: `${chrome.length} of chrome, ${composition.length} of the composition${arrows.length === 0 ? '' : `, ${arrows.length} of §W.9's arrows`}: ${stops.length}${composition.length === 1 ? '' : ' (not the seed alone)'}` });
+}
+
+test('the Tab walk through the wall in its three states stops in order: the header, the rail with the control from code’s list, the zoom-out, pulled the panel, then the composition as one stop and §W.9’s arrows by position; the Apply never', async ({ page }) => {
   test.setTimeout(300_000);
   await login(page);
   await page.setViewportSize(WALL);
@@ -106,7 +175,7 @@ test('the Tab walk through the wall in its three states stops 16, 16 and 19 time
     §W.23's seat order: pulling one position left the others unproven, and a
     middle record drawing one arrow passed on the seed.
   */
-  const pulls: { state: string; stops: Stop[]; arrows: number }[] = [];
+  const pulls: { state: string; stops: Stop[]; arrows: Expected[] }[] = [];
   for (const position of ['first', 'middle', 'last'] as const) {
     await openShelf(page);
     const seats = await page.$$eval('a[data-seat]', (links) => links.map((a) => ({ id: a.getAttribute('data-seat') ?? '', order: Number(a.getAttribute('data-seat-order')) })).sort((x, y) => x.order - y.order).map((s) => s.id));
@@ -123,42 +192,16 @@ test('the Tab walk through the wall in its three states stops 16, 16 and 19 time
     /* The precondition the branch needs: the record pulled is at the position asked for, or the walk proves a branch it did not reach. */
     const at = index === 0 ? 'first' : index === length - 1 ? 'last' : 'middle';
     expect(at, `the ${position} record is pulled (data-nav "${nav}")`).toBe(position);
-    const arrows = (index > 0 ? 1 : 0) + (index < length - 1 ? 1 : 0);
+    const arrows = ARROWS(index, length);
     const drawn = await page.locator('[data-testid="nav-next"], [data-testid="nav-previous"]').count();
-    test.info().annotations.push({ type: `pulled the ${position}`, description: `record ${index + 1} of ${length}: ${arrows} of §W.9's arrows ruled, ${drawn} drawn` });
-    expect.soft(drawn, `§W.9's arrows for record ${index + 1} of ${length}`).toBe(arrows);
+    test.info().annotations.push({ type: `pulled the ${position}`, description: `record ${index + 1} of ${length}: ${arrows.length} of §W.9's arrows ruled, ${drawn} drawn` });
+    expect.soft(drawn, `§W.9's arrows for record ${index + 1} of ${length}`).toBe(arrows.length);
     pulls.push({ state: `with the ${position} record pulled`, stops: await walkTab(page), arrows });
   }
 
-  /*
-    The wall draws the whole collection, and under the full suites other
-    specs' records are on it while this walks (a run of 14 Oct read more
-    than seventeen spines). So the count is held in two parts: the chrome,
-    which is fixed (the header's six, the rail's eight with SURPRISE ME, the zoom-out; pulled,
-    the panel's three and §W.9's arrows), and the composition, which is what
-    is drawn. Design's figures are the seed's seventeen, and are asserted
-    as such whenever the walk finds exactly those.
-  */
-  const CHROME = 6 + 8 + 1;
-  const walks = [
-    { state: 'as the shelf opens', ruled: 'as the shelf opens', stops: opens, arrows: 0, pulled: false },
-    { state: 'in the overview', ruled: 'in the overview', stops: overview, arrows: 0, pulled: false },
-    ...pulls.map((p) => ({ ...p, ruled: 'with a record pulled' as const, pulled: true })),
-  ] as const;
-  for (const { state, ruled, stops, arrows, pulled } of walks) {
-    const names = stops.map((s) => `${s.tag} ${s.name}`);
-    /* The walked count on every run, so the figure is read from the report as a measurement and not inferred from the figure branch's silence (the reviewer, 15 Oct). */
-    test.info().annotations.push({ type: `walked ${state}`, description: `${stops.length} stops: ${names.join(' · ')}` });
-    expect.soft(names.filter((n) => n === 'button Apply'), `${state}: the Apply is reached`).toEqual([]);
-    const composition = stops.filter((s) => s.composition).length;
-    const panel = pulled ? 3 + arrows : 0;
-    expect.soft(stops.length, `${state}: ${CHROME} of chrome${panel === 0 ? '' : `, the panel’s three and ${arrows} of §W.9’s arrows`}, and ${composition} of the composition (${names.join(' · ')})`).toBe(CHROME + panel + composition);
-    const seed = SEED[ruled];
-    if (composition === seed) expect.soft(stops.length, `${state}: Design’s ${EXPECTED[ruled]}${panel === 0 ? '' : ` plus ${arrows} of §W.9’s arrows`}, on the seed’s seventeen`).toBe(EXPECTED[ruled] + arrows);
-    else test.info().annotations.push({ type: `${state}: not the seed alone`, description: `${composition} in the composition where the seed has ${seed}; Design’s ${EXPECTED[ruled]} not checked on this run` });
-    const clipped = stops.filter((s) => s.clipped !== null && !s.composition).map((s) => `${s.tag} ${s.name}: ${s.clipped}`);
-    test.info().annotations.push({ type: `clipped ${state}`, description: clipped.length === 0 ? 'none outside the composition' : clipped.join('; ') });
-  }
+  expectWalk('as the shelf opens', opens, [...HEADER, ...RAIL, ZOOM], []);
+  expectWalk('in the overview', overview, [...HEADER, ...RAIL, ZOOM], []);
+  for (const pull of pulls) expectWalk(pull.state, pull.stops, [...HEADER, ...RAIL, ZOOM, ...PANEL], pull.arrows);
 });
 
 /*

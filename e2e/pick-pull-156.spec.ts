@@ -60,7 +60,7 @@ async function openNear(page: Page, artistId: string) {
 }
 
 /** The drawn control's button: a bare `/` carries two copies and a media query hides one. */
-const press = (page: Page) => page.locator('[data-pick-control] button').filter({ visible: true }).click();
+const press = (page: Page) => page.locator('[data-pick-control]').filter({ visible: true }).getByRole('button', { name: /surprise me/i }).click();
 type Frame = { pulled: string; phase: string; t: number };
 const sampled = (page: Page) => page.evaluate(() => (window as unknown as { __frames: Frame[] }).__frames);
 /** The records out, in order, each run of frames counted once; '' is a frame with none. */

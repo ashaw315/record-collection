@@ -55,7 +55,7 @@ for (const source of ['spine', 'pick'] as const) {
       await page.goto(`/?artistId=${artist.id}`);
       await wallMeasured(page);
       if (source === 'spine') await page.locator('a[data-seat] [data-spine]').first().click();
-      else await page.locator('[data-pick-control] button').filter({ visible: true }).click();
+      else await page.locator('[data-pick-control]').filter({ visible: true }).getByRole('button', { name: /surprise me/i }).click();
       await expect.poll(() => page.locator('[data-wall-container]').getAttribute('data-phase'), { timeout: 30_000 }).toBe('landed');
       await sample(page);
       await mark(page, 'zoom out pressed');

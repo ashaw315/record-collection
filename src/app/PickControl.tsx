@@ -1,12 +1,17 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { pickFrom } from '@/lib/moods/pick';
+import { MOODS } from '@/lib/moods/moods';
+import { topTier } from '@/lib/moods/score';
 import { GridCell } from './GridCell';
 import { usePickChannel, type CellHost, type PickRecord } from './wall/pick-channel';
-import { CONTROL_LABEL, HAIRLINE } from './records/[id]/grid-type';
+import { CONTROL_LABEL, HAIRLINE, INK, LABEL_TYPE } from './records/[id]/grid-type';
 
 export type { PickRecord };
+
+/** A §9.3 label on the rail's own line (§P.5): the control label's type and underline, with no 44. */
+const RAIL_LABEL = `${LABEL_TYPE} ${INK} decoration-1 underline-offset-[3px] hover:underline`;
 
 /**
  * Target §P.5, Phase 0 (step 156): the pick control with the moods not yet
@@ -37,6 +42,16 @@ export function PickControl({ ruled = false, pool, answers = 'cell' }: {
    */
   answers?: 'cell' | 'wall';
 }) {
+  /*
+    §P.2: "The moods toggle, and a separate ASK asks." Held by the page only:
+    the control is keyed on the address, so a navigation clears them, and on
+    the shelf keyed without the zoom's place, so a zoom keeps them.
+  */
+  const [selected, setSelected] = useState<readonly string[]>([]);
+  const inert = selected.length === 0;
+  /* §P.6: an inert ASK's reason, as its description, for a reader who cannot see that no mood is in ink. */
+  const reasonId = useId();
+  const toggle = (m: string) => setSelected((current) => (current.includes(m) ? current.filter((x) => x !== m) : [...current, m]));
   /* §P.2's last-served record. Every answer sets it, and on the shelf so does a record pulled by its spine or the arrows; only an answer in a view that cannot pull draws the cell. */
   const [last, setLast] = useState<string | null>(null);
   const [served, setServed] = useState<PickRecord | null>(null);
@@ -67,8 +82,9 @@ export function PickControl({ ruled = false, pool, answers = 'cell' }: {
     if (answers === 'wall') channel?.showCell(host === 'count-column' ? served : null);
   }, [answers, channel, host, served]);
 
-  const ask = () => {
-    const id = pickFrom(pool.map((record) => record.id), last, Math.random);
+  /* One answer path for ASK and SURPRISE ME: the candidates differ, the draw, the last-served rule and the hosts do not. */
+  const serve = (candidates: readonly string[]) => {
+    const id = pickFrom(candidates, last, Math.random);
     const answer = answers === 'wall' ? (channel?.ask(id) ?? { did: 'ignore', host: null }) : { did: 'cannot-pull', host: 'here' as const };
     if (answer.did !== 'cannot-pull') {
       /* §P.3: "Where the pick names the record already out, nothing moves", and the slot says so. */
@@ -82,13 +98,85 @@ export function PickControl({ ruled = false, pool, answers = 'cell' }: {
     setHost(answer.host ?? 'here');
     setServed(pool.find((record) => record.id === id) ?? null);
   };
+  /* §P.2: "The ask leans; it does not filter": the tier is the records carrying the most of the selected moods. */
+  const ask = () => serve(topTier(pool, selected));
+  /* §P.2: "SURPRISE ME draws from the whole pool, tagged or not, ignoring the moods and leaving them selected". */
+  const surprise = () => serve(pool.map((record) => record.id));
 
   return (
     <div data-pick-control="">
       {ruled && <hr data-pick-rule="" className={`mb-[18px] border-t ${HAIRLINE}`} />}
-      <button type="button" className={CONTROL_LABEL} onClick={ask}>
-        Surprise me
-      </button>
+      {/*
+        §P.5: the eight moods from code's list, in its order, toggles "in the
+        label type, in the label colour when clear and in ink when selected,
+        with no bar, underline or box": a mood wearing a bar or an underline
+        would read as a view or a filter (§W.13, §W.32). 44 tall, the floor.
+      */}
+      {/*
+        §P.5 (27 Oct): "In the rail the moods take the rail's own label pitch,
+        as §W sets it for SHELF, TABLE and GRID, and not §T.6's 44": a column
+        of labels at their type's line, 18 apart, as WallRail's view list is
+        (band-rules lays the column as a wrapped row where the rail is a
+        band). "On the table and the grid the control stands with the
+        filters, and there it takes their 44."
+      */}
+      <ul data-moods="" aria-label="Moods" className={answers === 'wall' ? 'flex flex-col gap-[18px]' : 'flex flex-wrap gap-x-[18px]'}>
+        {MOODS.map((m) => {
+          const on = selected.includes(m);
+          /* A list item, as the view names are: in the rail its line is the rail's own, which is what sets the pitch; the label inside is the type's. */
+          return (
+            <li key={m} className="relative">
+              <button
+                type="button"
+                data-mood={m}
+                aria-pressed={on}
+                onClick={() => toggle(m)}
+                className={`${LABEL_TYPE} ${answers === 'wall' ? '' : 'inline-flex h-[44px] items-center '}${on ? INK : 'text-[oklch(0.44_0.008_70)]'}`}
+              >
+                {m}
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+      {/*
+        §P.5: ASK and SURPRISE ME are §9.3 labels; "ASK is inert while no mood
+        is selected." §P.6: "An inert mood stays a Tab stop, and so does ASK
+        while it is inert", so the rail's stops are fixed by the control's
+        list and not by the tags. `disabled` would leave the tab order;
+        `aria-disabled` keeps the stop and names it unavailable.
+      */}
+      {/*
+        §P.5 (27 Oct): "In the rail they take §W's one pitch with the moods,
+        so SURPRISE ME on a 44 line is a defect": each on the rail's line, 18
+        above, as the view names and the moods are. On the table and the grid
+        they are §9.3 labels on the filters' 44.
+      */}
+      {answers === 'wall' ? (
+        <>
+          <div className="relative mt-[18px]">
+            <button type="button" className={RAIL_LABEL} aria-disabled={inert} aria-describedby={inert ? reasonId : undefined} onClick={() => { if (!inert) ask(); }}>
+              Ask
+            </button>
+          </div>
+          <span id={reasonId} className="sr-only">Choose a mood first.</span>
+          <div className="relative mt-[18px]">
+            <button type="button" className={RAIL_LABEL} onClick={surprise}>
+              Surprise me
+            </button>
+          </div>
+        </>
+      ) : (
+        <>
+          <button type="button" className={CONTROL_LABEL} aria-disabled={inert} aria-describedby={inert ? reasonId : undefined} onClick={() => { if (!inert) ask(); }}>
+            Ask
+          </button>
+          <span id={reasonId} className="sr-only">Choose a mood first.</span>
+          <button type="button" className={CONTROL_LABEL} onClick={surprise}>
+            Surprise me
+          </button>
+        </>
+      )}
       {/* §P.6's message, "as proposed there" (§P.4). */}
       <p role="status" data-pick-slot="" className="min-h-[1lh] text-prose">
         {again ? 'The only one.' : ''}

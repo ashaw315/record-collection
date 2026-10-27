@@ -26,7 +26,8 @@ const BAND_WIDTHS = [shelfOfferedMinWidth(), nearViewMinWidth() - 1];
 const ink = (page: Page) =>
   page.evaluate(() => {
     const marks = Array.from(document.querySelectorAll('[data-region="far"] svg[data-wall="overview"] :is([data-furniture], [data-far-seat])')).map((el) => el.getBoundingClientRect());
-    const [top, bottom] = [Math.min(...marks.map((b) => b.top)), Math.max(...marks.map((b) => b.bottom))];
+    /* In the document's coordinates, not the window's: reaching a control below the fold scrolls the page, and that is not the drawing changing. */
+    const [top, bottom] = [Math.min(...marks.map((b) => b.top)) + window.scrollY, Math.max(...marks.map((b) => b.bottom)) + window.scrollY];
     return { top, bottom, height: bottom - top };
   });
 
@@ -48,7 +49,7 @@ async function open(page: Page, width: number, query: string, height = 900) {
 }
 
 /** The drawn control's button: a bare `/` carries two copies and a media query hides one. */
-const press = (page: Page) => page.locator('[data-pick-control] button').filter({ visible: true }).click();
+const press = (page: Page) => page.locator('[data-pick-control]').filter({ visible: true }).getByRole('button', { name: /surprise me/i }).click();
 
 const answer = (page: Page) =>
   page.evaluate(() => {
@@ -349,7 +350,7 @@ test.describe('§P.4: on the far view, the same cell beneath the control in the 
     pushed ADD RECORD out of view; the assertion that the cell was in the control pinned that withdrawn placement.
   */
   for (const [width, height] of [[1440, 900], [1440, 768], [1920, 900]] as const) {
-    test(`at ${width}×${height}, zoomed out to the far view: the cell in the count column beneath the count, the drawing unchanged, ADD RECORD in view, nothing pulled`, async ({ page }) => {
+    test(`at ${width}×${height}, zoomed out to the far view: the cell in the count column beneath the count, the drawing unchanged, ADD RECORD at the rail’s foot, nothing pulled`, async ({ page }) => {
       const { artistId, suffix } = await artistWith(page, [{ prefix: 'Pick', count: 2 }]);
       try {
         await open(page, width, `?artistId=${artistId}`, height);
@@ -375,10 +376,13 @@ test.describe('§P.4: on the far view, the same cell beneath the control in the 
         expect.soft(a.cell.bottom, 'whole in the window: the 768 case cut the caption').toBeLessThanOrEqual(height);
         expect.soft(a.title ?? '').toContain(suffix);
         const after = await ink(page);
-        expect.soft(after, 'the drawing does not change').toEqual(before);
+        /* To a tenth of a pixel: the layout's floats differ in their seventh decimal between reads of an unchanged drawing. */
+        expect.soft(after.top, 'the drawing does not change: its top').toBeCloseTo(before.top, 1);
+        expect.soft(after.height, 'the drawing does not change: its height').toBeCloseTo(before.height, 1);
         const add = await page.locator('[data-testid="wall-rail"]').filter({ visible: true }).getByRole('link', { name: /add record/i }).boundingBox();
         expect.soft(add, 'ADD RECORD is drawn').not.toBeNull();
-        expect.soft(add?.y ?? Infinity, 'ADD RECORD keeps the rail’s foot, in view').toBeLessThanOrEqual(height - 44);
+        /* "In view" was the fit, withdrawn (`P.5/control-must-fit`); ADD RECORD keeps the foot, below the control, and the page scrolls to it. */
+        expect.soft(add?.y ?? -Infinity, 'ADD RECORD keeps the rail’s foot, below the control').toBeGreaterThanOrEqual(a.button?.bottom ?? Infinity);
         expect(await page.locator('[data-pulled]').count(), 'the far view cannot pull').toBe(0);
         test.info().annotations.push({ type: 'column host', description: `cell ${a.cell.height.toFixed(1)} tall at (${a.cell.left.toFixed(1)}, ${a.cell.top.toFixed(1)}), ${(a.cell.top - a.countFigure.bottom).toFixed(1)} below the count; drawing ${before.height.toFixed(1)} tall before and ${after.height.toFixed(1)} after` });
       } finally {

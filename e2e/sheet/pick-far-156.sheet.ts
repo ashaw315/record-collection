@@ -85,7 +85,7 @@ test('the far view in the band and zoomed out at 1440, with and without an answe
       const before = await ink(page);
       const without = `pick-far-${host(width)}-${width}x${height}-no-answer-d${Math.round(before.height)}.png`;
       await page.screenshot({ path: join(OUT, without) });
-      await page.locator('[data-pick-control] button').filter({ visible: true }).click();
+      await page.locator('[data-pick-control]').filter({ visible: true }).getByRole('button', { name: /surprise me/i }).click();
       await page.locator('[data-pick-answer]').filter({ visible: true }).waitFor({ timeout: 10_000 });
       /* The cover is what Adam judges, so it must have arrived, not its box. */
       await page.waitForFunction(() => {
@@ -123,7 +123,7 @@ test('the tallest answer the real collection gives, and what it leaves the drawi
   const pool = await page.locator('[data-collection-count]').first().textContent().catch(() => null);
   const seen = new Map<string, { height: number; lines: number; drawing: number; cover: string }>();
   for (let i = 0; i < 150 && seen.size < 22; i++) {
-    await page.locator('[data-pick-control] button').filter({ visible: true }).click();
+    await page.locator('[data-pick-control]').filter({ visible: true }).getByRole('button', { name: /surprise me/i }).click();
     await page.waitForTimeout(80);
     const c = await cell(page);
     if (c === null) continue;
@@ -136,7 +136,7 @@ test('the tallest answer the real collection gives, and what it leaves the drawi
   /* All twenty-two measured one line on the first run, the 38-character title among them, so the longest title by characters is pictured too, with its box. */
   const longest = [...seen.keys()].sort((a, b) => b.length - a.length)[0];
   for (let i = 0; i < 300 && longest !== undefined && (await cell(page))?.title !== longest; i++) {
-    await page.locator('[data-pick-control] button').filter({ visible: true }).click();
+    await page.locator('[data-pick-control]').filter({ visible: true }).getByRole('button', { name: /surprise me/i }).click();
     await page.waitForTimeout(40);
   }
   const box = await page.evaluate(() => {
@@ -151,7 +151,7 @@ test('the tallest answer the real collection gives, and what it leaves the drawi
   /* A record with no cover draws the grid's empty box, and the question is the shelf beside a real cover, so the tallest that has one. */
   const tallest = (rows.find(([, r]) => r.cover !== 'none' && r.height === rows[0]?.[1].height) ?? rows[0])?.[0];
   for (let i = 0; i < 300 && tallest !== undefined && (await cell(page))?.title !== tallest; i++) {
-    await page.locator('[data-pick-control] button').filter({ visible: true }).click();
+    await page.locator('[data-pick-control]').filter({ visible: true }).getByRole('button', { name: /surprise me/i }).click();
     await page.waitForTimeout(40);
   }
   await page.waitForFunction(() => {

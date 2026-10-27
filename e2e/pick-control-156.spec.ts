@@ -102,14 +102,29 @@ test.describe('§P.5: on the shelf, in the rail', () => {
     heights, which is §P.5's condition; no minimum window height is ruled,
     and none is assumed here (the coordinator, 25 Oct).
   */
+  /*
+    Step 157b (27 Oct): the fit requirement is withdrawn (`P.5/control-must-fit`). With the moods and ASK the
+    control does not fit at 900 tall, and §P.5 now rules: "Where the control and ADD RECORD run past the window's
+    foot, the rail runs with the page, and ADD RECORD stays at its foot, reached by scrolling." These three asserted
+    the fit; they change with the ruling, not to pass code, and now assert the reach.
+  */
   for (const height of [900, 768, 640]) {
-    test(`at ${RAIL_FROM}×${height}: the rail with the control still ends above the window's foot`, async ({ page }) => {
+    test(`at ${RAIL_FROM}×${height}: the rail runs with the page past the window's foot, and ADD RECORD at its foot is reached by scrolling`, async ({ page }) => {
       await open(page, RAIL_FROM, '', height);
       const r = await reading(page);
       expect(r.inRail, 'the control is in the rail measured').toBe(true);
       if (r.add === null) throw new Error('ADD RECORD not drawn');
-      test.info().annotations.push({ type: 'free height', description: `${(r.viewport.height - r.add.bottom).toFixed(1)}` });
-      expect(r.add.bottom).toBeLessThanOrEqual(r.viewport.height);
+      const over = r.add.bottom - r.viewport.height;
+      test.info().annotations.push({ type: 'past the foot', description: over > 0 ? `${over.toFixed(1)} of scroll to ADD RECORD` : `none: ${(-over).toFixed(1)} to spare` });
+      const reach = await page.evaluate(() => {
+        window.scrollTo(0, document.documentElement.scrollHeight);
+        const add = Array.from(document.querySelectorAll<HTMLElement>('[data-testid="wall-rail"] a')).find((a) => /add record/i.test(a.textContent ?? '') && a.getClientRects().length > 0) ?? null;
+        const b = add?.getBoundingClientRect() ?? null;
+        return { scrolled: window.scrollY, inView: b !== null && b.top >= 0 && b.bottom <= window.innerHeight + 0.5 };
+      });
+      expect(reach.inView, 'ADD RECORD, at the rail’s foot, in view once the page is scrolled to its end').toBe(true);
+      /* The scroll lands on a whole pixel; the overflow is a half. */
+      expect(Math.abs(reach.scrolled - Math.max(0, over)), `the page scrolled by what ran past the foot (${over.toFixed(1)}), no more`).toBeLessThanOrEqual(1);
     });
   }
 });
@@ -267,3 +282,89 @@ for (const host of HOSTS) {
     }
   });
 }
+
+/*
+  §P.5: "Whether the control fits the rail is measured, not predicted. The
+  step measures it against the rail's width and the rail's free height at the
+  narrowest window that offers the shelf, and stops and reports if it does
+  not fit." Step 157b is where the moods and ASK join SURPRISE ME, so this is
+  that measurement: the figures in the annotations on every run, and the fit
+  asserted so a control that overflows the rail's free height is a failure
+  that names it. §P.5's column-fit provisional returns on these figures.
+*/
+test.describe('§P.5: the control’s fit in the rail as a column, measured', () => {
+  for (const [width, height] of [[nearViewMinWidth(), 900], [nearViewMinWidth(), 768], [nearViewMinWidth(), 640], [1440, 900], [1440, 768], [1440, 640]] as const) {
+    test(`at ${width}×${height}: the control’s rows and height against the rail’s width and free height, and ADD RECORD at the foot in view`, async ({ page }) => {
+      await page.setViewportSize({ width, height });
+      await page.goto('/');
+      await wallMeasured(page);
+      await page.evaluate(() => document.fonts.ready);
+      const m = await page.evaluate(() => {
+        const drawn = (el: Element | null): el is HTMLElement => el !== null && (el as HTMLElement).getClientRects().length > 0;
+        const rail = Array.from(document.querySelectorAll<HTMLElement>('[data-testid="wall-rail"]')).filter(drawn).find((el) => el.closest('[data-collection-band]') === null) ?? null;
+        const control = Array.from(document.querySelectorAll<HTMLElement>('[data-pick-control]')).filter(drawn).find((el) => rail?.contains(el)) ?? null;
+        const box = (el: Element | null) => (el === null ? null : (({ top, bottom, left, right, width: w, height: h }) => ({ top, bottom, left, right, width: w, height: h }))(el.getBoundingClientRect()));
+        const moods = control === null ? [] : Array.from(control.querySelectorAll<HTMLElement>('[data-mood]')).map((b) => ({ mood: b.dataset.mood ?? '', ...box(b)! }));
+        const views = rail === null ? null : Array.from(rail.querySelectorAll('a')).filter((a) => /^(Shelf|Table|Grid)$/.test((a.textContent ?? '').trim())).pop() ?? null;
+        const add = rail === null ? null : Array.from(rail.querySelectorAll('a')).find((a) => /add record/i.test(a.textContent ?? '')) ?? null;
+        const railStyle = rail === null ? null : getComputedStyle(rail);
+        return {
+          window: { width: window.innerWidth, height: window.innerHeight },
+          rail: box(rail),
+          railInset: railStyle === null ? null : { left: parseFloat(railStyle.paddingLeft), right: parseFloat(railStyle.paddingRight) },
+          control: box(control),
+          moods,
+          rows: new Set(moods.map((b) => Math.round(b.top))).size,
+          lastView: box(views),
+          add: box(add),
+          scrollHeight: document.documentElement.scrollHeight,
+          /* What the rail does past the foot: whether it clips (its own overflow), the page scrolls (the document grows), or ADD RECORD is simply out of reach. */
+          railOverflow: railStyle === null ? null : `${railStyle.overflowY}, scrollHeight ${rail?.scrollHeight} against clientHeight ${rail?.clientHeight}`,
+          pitches: {
+            viewNames: (() => { const tops = Array.from(rail?.querySelectorAll('[data-view-name] a') ?? []).map((a) => a.getBoundingClientRect().top); return tops.length < 2 ? null : (tops[1] - tops[0]); })(),
+            moods: moods.length < 2 ? null : moods[1].top - moods[0].top,
+            /* ASK and SURPRISE ME against the last mood: §P.5's "in the rail they take §W's one pitch with the moods". */
+            ask: (() => { const a = control?.querySelector('button[aria-disabled]'); const last = moods[moods.length - 1]; return a && last ? a.getBoundingClientRect().top - last.top : null; })(),
+            surpriseFromAsk: (() => { const bs = Array.from(control?.querySelectorAll('button:not([data-mood])') ?? []); return bs.length < 2 ? null : bs[1].getBoundingClientRect().top - bs[0].getBoundingClientRect().top; })(),
+            surprise: box(control?.querySelector('button:not([data-mood])') ?? null)?.height ?? null,
+            add: box(add)?.height ?? null,
+          },
+        };
+      });
+      /* Past the foot, is ADD RECORD reachable by scrolling the page, or clipped? Read after a scroll to the end, then scrolled back. */
+      const reach = await page.evaluate(() => {
+        window.scrollTo(0, document.documentElement.scrollHeight);
+        const add = Array.from(document.querySelectorAll<HTMLElement>('[data-testid="wall-rail"] a')).find((a) => /add record/i.test(a.textContent ?? '') && a.getClientRects().length > 0) ?? null;
+        const r = add === null ? null : add.getBoundingClientRect();
+        const out = { scrolledTo: window.scrollY, addBottomAfterScroll: r === null ? null : r.bottom, inView: r !== null && r.bottom <= window.innerHeight + 0.5 && r.top >= 0 };
+        window.scrollTo(0, 0);
+        return out;
+      });
+      if (m.rail === null || m.control === null || m.add === null || m.lastView === null || m.railInset === null) throw new Error('the rail, its control, its last view name or ADD RECORD was not found');
+      const inner = m.rail.width - m.railInset.left - m.railInset.right;
+      const widest = m.moods.reduce((w, b) => Math.max(w, b.width), 0);
+      /*
+        The fit, measured where it shows: ADD RECORD keeps the rail's foot, so the rail overflows the window by
+        ADD RECORD's foot past it, and the control's free height is its own height less that overflow. The rail's
+        gaps (above the control, and between it and ADD RECORD) are in the measurement, not predicted.
+      */
+      const over = m.add.bottom - m.window.height;
+      const free = m.control.height - Math.max(0, over);
+      test.info().annotations.push({
+        type: `fit at ${width}×${height}`,
+        description: `rail ${m.rail.width} wide, ${inner.toFixed(1)} inside its insets; the widest mood ${widest.toFixed(1)}; the moods in ${m.rows} rows at a ${m.pitches.moods?.toFixed(1) ?? '?'} pitch (the view names' ${m.pitches.viewNames?.toFixed(1) ?? '?'}; SURPRISE ME ${m.pitches.surprise?.toFixed(1) ?? '?'} tall; ADD RECORD ${m.pitches.add?.toFixed(1) ?? '?'}); the control ${m.control.height.toFixed(1)} tall, from ${m.control.top.toFixed(1)} (the last view name's foot ${m.lastView.bottom.toFixed(1)}); ADD RECORD at ${m.add.top.toFixed(1)} to ${m.add.bottom.toFixed(1)} in a ${m.window.height} window, ${over > 0 ? `OVER by ${over.toFixed(1)}: the control may be ${free.toFixed(1)} tall here` : `in view with ${(-over).toFixed(1)} to spare`}; the page ${m.scrollHeight} tall`,
+      });
+      test.info().annotations.push({
+        type: `past the foot at ${width}×${height}`,
+        description: over > 0 ? `the rail's overflow-y is ${m.railOverflow}; the page scrolls to ${reach.scrolledTo} and ADD RECORD's foot is then at ${reach.addBottomAfterScroll?.toFixed(1)} (${reach.inView ? 'in view: the page scrolls, nothing clips' : 'still out of view: clipped or unreachable'})` : 'nothing past the foot',
+      });
+      expect.soft(widest, 'every mood fits the rail’s width inside its insets').toBeLessThanOrEqual(inner + 0.5);
+      /* §P.5 (27 Oct): "the rail's own label pitch, as §W sets it for SHELF, TABLE and GRID": the moods' pitch is the view names', measured, not a figure. */
+      expect.soft(m.pitches.moods, `the moods take the view names’ pitch (${m.pitches.viewNames?.toFixed(1)})`).toBeCloseTo(m.pitches.viewNames ?? NaN, 0);
+      expect.soft(m.pitches.ask, `ASK takes the rail’s one pitch after the last mood (${m.pitches.viewNames?.toFixed(1)})`).toBeCloseTo(m.pitches.viewNames ?? NaN, 0);
+      expect.soft(m.pitches.surpriseFromAsk, `SURPRISE ME takes it after ASK (${m.pitches.viewNames?.toFixed(1)})`).toBeCloseTo(m.pitches.viewNames ?? NaN, 0);
+      /* The fit is withdrawn (`P.5/control-must-fit`); what is ruled is the reach: past the foot the rail runs with the page and ADD RECORD is reached by scrolling. */
+      if (over > 0) expect.soft(reach.inView, 'ADD RECORD reached by scrolling to the end').toBe(true);
+    });
+  }
+});

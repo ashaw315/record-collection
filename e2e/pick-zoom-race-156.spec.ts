@@ -59,7 +59,7 @@ test('a press as the zoom out lands keeps its answer: the cell stays drawn and t
       await page.getByTestId('wall-zoom-out').click();
       /* As soon as the far view shows, with nothing waited for: the reader's press, not the test's. */
       await page.locator('[data-wall="overview"]').filter({ visible: true }).waitFor({ timeout: 30_000 });
-      await page.locator('[data-pick-control] button').filter({ visible: true }).click();
+      await page.locator('[data-pick-control]').filter({ visible: true }).getByRole('button', { name: /surprise me/i }).click();
       await page.waitForTimeout(3_000);
       const frames = await page.evaluate(() => (window as unknown as { __frames: Frame[] }).__frames);
       expect(frames.length, 'the precondition: frames were recorded').toBeGreaterThan(0);
@@ -75,7 +75,7 @@ test('a press as the zoom out lands keeps its answer: the cell stays drawn and t
 });
 
 /** The drawn control's button: a bare `/` carries two copies and a media query hides one. */
-const press = (page: Page) => page.locator('[data-pick-control] button').filter({ visible: true }).click();
+const press = (page: Page) => page.locator('[data-pick-control]').filter({ visible: true }).getByRole('button', { name: /surprise me/i }).click();
 const cellTitle = (page: Page) =>
   page.evaluate(() => {
     const drawn = (el: Element) => (el as HTMLElement).getClientRects().length > 0;

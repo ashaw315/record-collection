@@ -23,6 +23,7 @@ import { DEFAULT_PAGE_SIZE, type Offset } from '@/lib/api/query-params';
 import { CONTENT_INSET } from './screen-frame';
 import { EmptyFigure } from './EmptyFigure';
 import { PickControl, type PickRecord } from './PickControl';
+import { moodSetsFor } from '@/lib/db/queries/record-moods';
 
 /**
  * SPEC.md §10 `/`: the collection.
@@ -145,9 +146,11 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
   const listPool = records.total <= records.rows.length
     ? records.rows
     : (await listRecords({ limit: records.total, offset: 0 as Offset, sort: params.sort, filters: params.filters })).rows;
+  /* Step 157, §P.2: each record carries its stored set, so the ask can score it; an untagged record carries none and is reached only by SURPRISE ME (§P.6). */
   const poolOf = async (rows: ReadonlyArray<{ id: string; title: string; artist: string }>): Promise<PickRecord[]> => {
-    const urls = await newestCoverUrls(rows.map((row) => row.id));
-    return rows.map((row) => ({ ...row, cover: urls.get(row.id) ?? null }));
+    const ids = rows.map((row) => row.id);
+    const [urls, sets] = await Promise.all([newestCoverUrls(ids), moodSetsFor(ids)]);
+    return rows.map((row) => ({ ...row, cover: urls.get(row.id) ?? null, moods: sets.get(row.id) ?? [] }));
   };
   const pool = await poolOf(listPool.map((row) => ({ id: row.id, title: row.title, artist: row.artist.name })));
   const shelfPool = shelf === null ? [] : await poolOf(shelf.filter((record) => record.matches).map((record) => ({ id: record.id, title: record.title, artist: record.artistName })));

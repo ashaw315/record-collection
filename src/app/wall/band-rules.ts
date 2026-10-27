@@ -36,5 +36,6 @@ export function bandRules(scope: string): string {
   ${scope}[data-rail-filter] { display: none; }
   ${scope}[data-rail-rule] { display: none; }
   ${rail} > [data-pick-host] { order: 1; flex: 1 1 100%; margin-top: 0; }
-  ${rail} [data-pick-band-rule] { display: block; margin-bottom: 18px; }`;
+  ${rail} [data-pick-band-rule] { display: block; margin-bottom: 18px; }
+  ${rail} [data-moods] { flex-direction: row; flex-wrap: wrap; }`;
 }

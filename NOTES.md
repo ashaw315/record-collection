@@ -49038,3 +49038,85 @@ nothing else, so that test is aimed at the thing the lean is for. Queries:
 `moodSetsFor` (the pool's sets by id, no entry for an untagged record, no
 query for an empty list), `untaggedCount` (over the whole collection, §P.6)
 and `carriedMoods` (for inertness), each against the real test database.
+
+## Step 157b: the moods and ASK (27 Oct)
+
+The eight moods from code's list as toggles ahead of ASK, then SURPRISE ME,
+then the slot, in every host; ASK inert with none selected. The ask draws
+from `topTier` over the pool's stored sets, through the same `serve` path
+the pull and the cell already use, so the hosts and the last-served rule are
+one code path for ASK and SURPRISE ME. Staged at the control: a filter
+requiring every selected mood fails only the four-moods test; SURPRISE ME
+honouring the moods fails only its test.
+
+**ASK is `aria-disabled`, never `disabled`.** §P.6 (17:16 target): "An inert
+mood stays a Tab stop, and so does ASK while it is inert", so the rail's
+stops are fixed by the control's list and not by the tags. `disabled` leaves
+the tab order and would break that; `aria-disabled` keeps the stop and names
+it unavailable. The component test's first version asserted `disabled` and
+was changed with the ruling, not to pass code.
+
+**ring-144 asserts the sequence, not a total.** The chrome positionally
+(header, rail with the moods from `MOODS`, zoom-out, pulled the panel), then
+one or more composition stops, then §W.9's arrows by position; counts are
+derived into the annotation. A count passed on any N stops in any order and
+was withdrawn three times today (31/15/33, 15/15/18, 16/16/19). Staged: ASK
+taken out of the tab order fails at stop 21 in every state; ASK and SURPRISE
+ME swapped fails at 21 and 22. Expected from the list, not the drawn moods,
+so a missing mood is a missing stop.
+
+**The control's single-button helper fanned out to nine sites** in five
+specs and the sheet: SURPRISE ME by name now. Mechanical, one decision.
+
+**Open for Design (the coordinator asked):** a keyboard reader lands on an
+inert ASK and hears "unavailable" with no reason; §P.6 names only the inert
+mood. One attribute once ruled.
+
+## 157b refit: the moods at the rail's pitch, measured (27 Oct, evening)
+
+§P.5 (19:01 target): "In the rail the moods take the rail's own label pitch,
+as §W sets it for SHELF, TABLE and GRID, and not §T.6's 44." The pitch is a
+mechanism, not a figure: the view list is `ul.flex-col.gap-[18px]` of list
+items, and a list item's line is the rail's 24 with the label's 16.5 inside
+it, so 42. The first refit copied the 18 gap onto bare buttons and measured
+34.5; the measurement test asserts the moods' pitch equals the view names',
+failed at 34.5, and passes at 42 with the moods as list items.
+
+At 42, six windows: the control 381.5 tall from 497.5; ADD RECORD at 932.0 to
+948.5. Over a 900 window by 48.5 (1274 and 1440 alike), 768 by 180.5, 640 by
+308.5. Width is unchanged: the widest mood 107.8 in 112, eight rows.
+
+**What the rail does past the foot:** nothing clips. The rail's overflow is
+visible, the document grows (949 tall at 900), the page scrolls, and ADD
+RECORD is reachable by scrolling to the end (its foot then at 899.5 in a 900
+window). Out of view at rest, in reach by scroll.
+
+**Three pitches in one rail:** the view names 42 (the rail's 24 line + 18,
+§W.31/§W.36, ruled); ADD RECORD 16.5 tall on an 18 (the label's own line, not
+the rail's 24: unruled, 7.5 short of the view names' line); SURPRISE ME on a
+44 line (CONTROL_LABEL, §T.6's unboxed-label line, which §P.5 now says does
+not reach the rail). ASK takes the same 44. Design to say which is a defect.
+
+ASK while inert now carries "Choose a mood first." as its description
+(§P.6, aria-describedby). In the band host the moods run as a wrapped row at
+the same 18 (band-rules).
+
+**The fit requirement is withdrawn (`P.5/control-must-fit`, 19:21 target),
+and ASK and SURPRISE ME take the rail's one pitch.** What a failure costs
+decided it: past the foot nothing clips, the page scrolls, ADD RECORD is
+reached. Built: ASK and SURPRISE ME each on the rail's line 18 apart, as the
+moods and the view names are. **The figures moved, and here is why:** the
+previous build had ASK and SURPRISE ME side by side on one 44 line, 141 wide
+inside a 112 inset (over the rail's right inset, which only the first
+button's test read). On their own lines they stack, so the control is 421.5
+and ADD RECORD's foot is at 988.5: over 900 by 88.5, 768 by 220.5, 640 by
+348.5, at 1274 and 1440 alike. The "buys about 4" assumed they were already
+stacked. At 768 and 640 the control itself runs past the fold: SURPRISE ME
+at about 919 and the slot below it, so pressing it needs a scroll there.
+The three tests that asserted the fit now assert the reach (the page scrolls
+by what ran past the foot and ADD RECORD is in view at the end), changed
+with the ruling. Three test corrections of my own on the way: a half-pixel
+overflow against a whole-pixel scroll (tolerance 1), the far drawing's ink
+read in document coordinates (reaching a control below the fold scrolls the
+page), and the drawing's before/after compared to a tenth (floats differed
+in the seventh decimal).
