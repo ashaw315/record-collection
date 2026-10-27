@@ -48847,3 +48847,12 @@ branch was staged against the build: the first drawing PREVIOUS, the middle
 losing PREVIOUS, and the last drawing NEXT. Each failed this spec on its own
 record and passed the one before it. The seat-order residual stands, and it is
 the wall's own tests' job.
+
+## A known gap: nothing checks a handoff citation against the withdrawal list (27 Oct)
+
+97985cd's step bodies cite `T.6/rail-seven-31-15-33` before the entry reached
+the repo, and every check passed. An id in the handoff that points at no entry
+in `docs/design/WITHDRAWALS.md` fails nothing. It has the same shape as index
+assertion 6 and is probably cheap to check. The coordinator has recorded it as
+a known gap, not a step, because Adam is pushing for speed. The citation will
+resolve when Design's list with 236 entries lands.
