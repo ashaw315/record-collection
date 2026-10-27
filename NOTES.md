@@ -48937,15 +48937,15 @@ the drawing. The cell instead fails §P.5's fit: 160 wide from an 18 inset in
 the 148 rail, so it crosses the rail-to-facts rule by about 30 at both heights.
 At 768 tall it also runs past the window's foot: the caption is cut and ADD
 RECORD is pushed below. The 1440 figures belong to §P.5's fit question, not
-§P.4's. Design is ruling where. The leftover
-`pick-far-band-1044x900-answer-d297-c204.png` is from 26 Oct's run, not this
-one.
+§P.4's. Design is ruling where. The leftover from 26 Oct's run is renamed
+`pick-far-band-1044x900-answer-d297-c204-run-26oct.png`, so its provenance is
+in its name.
 
 **The COMMIT_PATHS guard paid for itself.** The far-view fix's first commit was
 refused because CLAUDE.md held an uncommitted §9 edit the commit did not name
 (`claude-md-integrity.test.ts`). It was a real case, caught as designed.
 
-**The sheet's refused DELETE is the write probe.** `e2e/sheet/login.ts`
+**In a sheet run's log, `cannot execute DELETE in a read-only transaction (25006)` on `artist_influences` is the PASS, not a fault.** The sheet's refused DELETE is the write probe. `e2e/sheet/login.ts`
 calls `assertServerCannotWrite` on every login. The probe deletes a
 self-referencing influence on `PROBE_ID` (`5ee70000-…`), a row the database
 forbids, and the sheet proceeds only if the server refuses. The 25006 in
