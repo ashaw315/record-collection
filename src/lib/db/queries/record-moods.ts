@@ -1,5 +1,5 @@
 import 'server-only';
-import { asc, eq, isNull, or, sql } from 'drizzle-orm';
+import { asc, eq, inArray, isNull, or, sql } from 'drizzle-orm';
 import { getDb } from '@/db/client';
 import { artists, recordMoods, records } from '@/db/schema';
 import type { Mood } from '@/lib/moods/moods';
@@ -86,4 +86,41 @@ export async function overrideMoodSet(recordId: string, moods: Mood[]): Promise<
       target: recordMoods.recordId,
       set: { moods: row.moods, taggedAt: row.taggedAt, taggedByModel: null, overridden: true },
     });
+}
+
+/**
+ * Step 157 (§P.2): the pool's records with their stored sets, keyed by record
+ * id; a record with no row has no entry. An empty list asks nothing, since
+ * `IN ()` is not SQL.
+ */
+export async function moodSetsFor(recordIds: readonly string[]): Promise<Map<string, string[]>> {
+  if (recordIds.length === 0) return new Map();
+  const db = getDb();
+  const rows = await db
+    .select({ recordId: recordMoods.recordId, moods: recordMoods.moods })
+    .from(recordMoods)
+    .where(inArray(recordMoods.recordId, [...recordIds]));
+  return new Map(rows.map((row) => [row.recordId, row.moods]));
+}
+
+/**
+ * §P.6: how many records have no row, over the WHOLE collection, since
+ * "inertness is counted over the whole collection, not over what a filter
+ * leaves, so a filter never changes the control".
+ */
+export async function untaggedCount(): Promise<number> {
+  const db = getDb();
+  const [row] = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(records)
+    .leftJoin(recordMoods, eq(recordMoods.recordId, records.id))
+    .where(isNull(recordMoods.recordId));
+  return row?.n ?? 0;
+}
+
+/** §P.6: the moods any tagged record carries; a mood outside this set is inert. */
+export async function carriedMoods(): Promise<Set<string>> {
+  const db = getDb();
+  const rows = await db.execute<{ mood: string }>(sql`SELECT DISTINCT unnest(moods) AS mood FROM record_moods`);
+  return new Set(rows.rows.map((row) => row.mood));
 }
