@@ -40,7 +40,14 @@ const run = (args: string[]): { stdout: string; status: number } => {
   }
 };
 
-describe('the CLI cannot report success about nothing', () => {
+/*
+ * No clock on these (28 Oct): each spawns `npx tsx scripts/run-tests.ts`, and the
+ * spawn took over vitest's default 5s once today with a gate's chromium half
+ * beside it, refusing a commit at 11:06. The condition is the child exiting,
+ * which `execFileSync` waits on; a timeout of 0 is read by vitest's runner as
+ * none, so the tests end when the CLI does and not when a number says.
+ */
+describe('the CLI cannot report success about nothing', { timeout: 0 }, () => {
   /**
    * **The defect, staged.** With no command to run there is nothing to judge,
    * and the old failure was to treat that as a pass. Exiting non-zero with a
@@ -144,7 +151,7 @@ describe('the CLI cannot report success about nothing', () => {
  * asserting the verdict is unchanged would test the half that worked. These
  * tests watch the stream while the child is still alive.
  */
-describe('the CLI streams as the child writes', () => {
+describe('the CLI streams as the child writes', { timeout: 0 }, () => {
   /**
    * A child that prints, waits, then prints again. If output is buffered to
    * exit, the first line is invisible for the whole wait; if it is teed, it

@@ -2,7 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
-import { afterAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { Client } from 'pg';
 import { assertLocalTestDatabase } from '../helpers/db';
 import { readJournal, readLedger } from '@/lib/db/migration-state-io';
@@ -219,6 +219,39 @@ describe('the assertion against a genuinely drifted database', () => {
     }
   }
 
+  /*
+   * **No clock on the migrate (28 Oct).** The probe is created and migrated
+   * here once, and the hook's timeout is 0, which vitest's runner reads as no
+   * timeout at all (`withTimeout` returns the function bare): the hook ends
+   * when the spawned migrate exits, and the readiness condition is asserted,
+   * the ledger consistent with the journal. It was inside the test under
+   * vitest's default 5s, and `drizzle-kit migrate` over thirty-one migrations
+   * took longer than that twice on 28 Oct with a gate's chromium half beside
+   * it, refusing two commits (`.git/commit-checked/20261028-110656-62221.log`
+   * and the 14:49 run). A number raised is a number met at a higher load; a
+   * migrate that never returns is a hung child, which is loud, where a false
+   * refusal under load is noise everyone learns to retry.
+   */
+  beforeAll(async () => {
+    await withAdmin(async (c) => {
+      await c.query(`DROP DATABASE IF EXISTS ${PROBE}`);
+      await c.query(`CREATE DATABASE ${PROBE}`);
+    });
+    execFileSync('npx', ['drizzle-kit', 'migrate'], {
+      cwd: REPO_ROOT,
+      stdio: 'pipe',
+      env: { ...process.env, NODE_ENV: 'test', TEST_DATABASE_URL: probeUrl },
+    });
+    const probe = new Client({ connectionString: probeUrl });
+    await probe.connect();
+    try {
+      const ready = compareMigrationState({ journal: readJournal(REPO_ROOT), ledger: await readLedger(probe) });
+      if (!ready.consistent) throw new Error(`the probe database is not ready: ${ready.missing.length} migration(s) missing after the migrate`);
+    } finally {
+      await probe.end();
+    }
+  }, 0);
+
   afterAll(async () => {
     await withAdmin(async (c) => {
       await c.query(`DROP DATABASE IF EXISTS ${PROBE}`);
@@ -235,17 +268,6 @@ describe('the assertion against a genuinely drifted database', () => {
    * schema-versus-snapshot comparison would report this database clean.
    */
   it('fails on a database whose ledger is behind its schema', async () => {
-    await withAdmin(async (c) => {
-      await c.query(`DROP DATABASE IF EXISTS ${PROBE}`);
-      await c.query(`CREATE DATABASE ${PROBE}`);
-    });
-
-    execFileSync('npx', ['drizzle-kit', 'migrate'], {
-      cwd: REPO_ROOT,
-      stdio: 'pipe',
-      env: { ...process.env, NODE_ENV: 'test', TEST_DATABASE_URL: probeUrl },
-    });
-
     const probe = new Client({ connectionString: probeUrl });
     await probe.connect();
     try {
