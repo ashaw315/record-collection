@@ -29,6 +29,8 @@ const itemSchema = z
     instance_id: z.number().int().optional(),
     date_added: z.string().optional(),
     notes: z.array(noteSchema).optional(),
+    /* The page's own summary of the release, so an item is named even when its detail is never fetched (§T.6's failed line). */
+    basic_information: z.object({ title: z.string().optional(), artists: z.array(z.object({ name: z.string() }).passthrough()).optional() }).passthrough().optional(),
   })
   .passthrough();
 
@@ -47,9 +49,13 @@ export type CollectionItem = {
   conditionMedia: string | null;
   /** Field 2, the sleeve, read the same way. */
   conditionSleeve: string | null;
+  /** From the page's basic information: what the report calls the release when its detail was never fetched. */
+  title: string | null;
+  artist: string | null;
 };
 
-export type Collection = { username: string; items: CollectionItem[] };
+/** `total` is Discogs' own count of the collection, from its page, never recounted here: the report's lines are checked against it (§T.6). */
+export type Collection = { username: string; total: number; items: CollectionItem[] };
 
 /** "Mint (M)" → "M"; "Very Good Plus (VG+)" → "VG+"; a note that is not a grade stays as written. */
 function grade(note: string | undefined): string | null {
@@ -69,6 +75,8 @@ export function normalizeCollectionItem(raw: unknown): CollectionItem {
     dateAdded: item.date_added ?? null,
     conditionMedia: grade(note(1)),
     conditionSleeve: grade(note(2)),
+    title: item.basic_information?.title ?? null,
+    artist: item.basic_information?.artists?.[0]?.name ?? null,
   };
 }
 
@@ -77,10 +85,13 @@ export async function fetchCollection(client: DiscogsClient): Promise<Collection
   if (identity.username === undefined) throw new Error('the Discogs token carries no username, so there is no collection to read: it is not a personal access token');
   const username = identity.username;
   const items: CollectionItem[] = [];
+  let total: number | null = null;
   for (let pageNo = 1; ; pageNo += 1) {
     const page = pageSchema.parse(await client.get(`/users/${encodeURIComponent(username)}/collection/folders/0/releases`, { per_page: PAGE_SIZE, page: pageNo }));
+    if (total === null) total = page.pagination.items ?? null;
     for (const raw of page.releases) items.push(normalizeCollectionItem(raw));
     if (pageNo >= page.pagination.pages) break;
   }
-  return { username, items };
+  /* A page without Discogs' count is not seen in practice; the parsed count stands in, and the report then checks against itself, which is said here and nowhere hidden. */
+  return { username, total: total ?? items.length, items };
 }

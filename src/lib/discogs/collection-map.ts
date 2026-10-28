@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import type { CollectionItem } from './collection';
 import type { ImportOverrides } from '@/lib/db/queries/discogs-import';
-import { normalizeRelease, type NormalizedRelease } from './normalize-release';
+import { COLOUR_WORDS, normalizeRelease, type NormalizedRelease } from './normalize-release';
 
 /**
  * Step 18 unit B (SPEC §12 step 18, §6): one collection item and its release,
@@ -43,10 +43,12 @@ export type MappedItem = {
   dropped: Omission[];
 };
 
+const WEIGHT_PHRASE = /\b(\d{2,3})\s*(?:grams?|gm|g)\b/i;
+
 /** A number with g, gram, grams or gm, in any of the format texts; the first found. */
 export function parseWeightGrams(texts: readonly string[]): number | null {
   for (const text of texts) {
-    const m = /\b(\d{2,3})\s*(?:grams?|gm|g)\b/i.exec(text);
+    const m = WEIGHT_PHRASE.exec(text);
     if (m !== null) return Number(m[1]);
   }
   return null;
@@ -89,7 +91,21 @@ export function mapCollectionItem(raw: unknown, item: CollectionItem): MappedIte
   }
 
   const vinylWeightGrams = parseWeightGrams(texts);
-  if (texts.length > 0) blank.push({ field: 'color_variant', value: texts.join(' | '), reason: 'colour is never parsed' });
+  /*
+   * Adam's call of 28 Oct: the colour entry lists only a text carrying a colour descriptor
+   * (the form path's word list), the weight stays where it goes, and what remains of a text
+   * no column takes ("Gatefold", "RGB Edition") is listed as dropped, not as colour. Until
+   * then every text was listed under colour, so a text that gave its weight read as a colour
+   * left blank, and the report's blank line counted 9 of Adam's nine.
+   */
+  const distinct = [...new Set(texts)];
+  const coloured = distinct.filter((t) => COLOUR_WORDS.test(t));
+  if (coloured.length > 0) blank.push({ field: 'color_variant', value: coloured.join(' | '), reason: 'colour is never parsed' });
+  const remainder = distinct
+    .filter((t) => !COLOUR_WORDS.test(t))
+    .map((t) => t.replace(WEIGHT_PHRASE, '').replace(/^[\s,;]+|[\s,;]+$/g, '').replace(/\s*,\s*,/g, ','))
+    .filter((t) => t !== '');
+  if (remainder.length > 0) dropped.push({ field: 'format_text', value: remainder.join(' | '), reason: 'no column takes it' });
 
   const year = shape.year === 0 ? null : normalized.year;
   if (shape.year === 0) blank.push({ field: 'year_pressed', value: '0', reason: 'Discogs has no year' });

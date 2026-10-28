@@ -49339,3 +49339,57 @@ copy as the handoff, is for Design to write.
   is; neither is wrong, and a capture is a picture the suite does not read.
 - The dev server logged "The destination stream closed early" once during
   the e2e run, on the held import request; the tests passed. Not chased.
+
+## 28 Oct, late morning: step 159, the four-line report, and three rules it adds
+
+**The where-empty rule does not catch a wrong value (the coordinator, 28 Oct).**
+The import's safety rule for Discogs writes, only into an empty field and
+never over a value, passes a wrong value landing in an empty field. Step
+158's report listed every format text under colour, so "Gatefold, 180gm",
+whose weight was taken, read as a colour left blank; nothing was written
+to the column, but the class is the same, and a backfill that wrote would
+have written it. Whatever guards a backfill has to check that a value
+belongs in the column, not only that the column was empty. The colour fix
+(Adam): the colour entry lists only a text carrying a colour descriptor
+(`COLOUR_WORDS`, the form path's list), weight stays in
+`vinyl_weight_grams`, and the remainder of a text no column takes is listed
+as dropped text. On the nine: step 158 read 9 came in / 0 skipped / 9 blank;
+step 159 reads 4 complete / 5 blank / 0 skipped / 0 failed, 9 in all,
+checked against Discogs' own `pagination.items` and never against a total
+the import computed (§T.6's add-up, in the integration test on the real
+database and in the e2e on the drawn counts).
+
+**The instrument moved what it measured, again (the capture's pointer).**
+Step 158's captures showed IMPORT FROM DISCOGS underlined in one picture
+and "9 came in" in the next, and Design read a defect. Each was the element
+the tool had just pressed: Playwright's click leaves the pointer resting
+there, and `hover:underline` drew what it draws under a pointer. Not focus:
+a mouse press gives no focus ring here, and nothing styles `:focus` with an
+underline. The fix chosen is to move the pointer to the window's corner and
+clear focus before every picture (`rest()` in `import-159.capture.ts`),
+rather than to annotate what holds focus: a picture of the page at rest is
+what a reader wants, and an annotation is one more line to misread. The
+measures file says so. Family: the gate's judge reading its own verdict
+(CLAUDE.md §2's table), `wholePage` and the dropped touch emulation.
+
+**The capture's contrast read 1.35:1 for a 7:1 ink** on its first run:
+Chromium reports the page's oklch inks as `lab(...)`, and a parser written
+for `rgb(...)` took the lab channels as bytes. Now painted on a canvas and
+read back as sRGB. Same family.
+
+**Index assertion 12 refuses the drop of 10:23 and 10:31.** The target's
+sentence 'The line's wording is proposed: "Last import, 28 October, 14:05."
+The sentence this replaces left the question open and claimed nothing, so
+no entry is owed.' is read by the detector as a prose-form no-entry call,
+and the curly-quoted wording before it as the spared sentence, which occurs
+once in §T.6 and not twice. The target is Design's file, so the fix is
+Design's (FOR DESIGN in the report): any wording that is not one of the
+detector's four prose forms, or the quote moved out of the call's reach.
+Until it lands, the docs commit of those two drops is held, and the build
+commits with the uncommitted target and WITHDRAWALS stashed for the check's
+duration, which is said in the commit message.
+
+**Two e2e tests on one shared table race under `fullyParallel`.** The
+survival test's seeded run row was drawn in the first test's "before any
+run" at count 1, on one project; the file is `serial` now and the first
+test clears the table at its start. The gate runs one project at a time.

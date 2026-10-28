@@ -218,6 +218,13 @@
       "when": 1793155544229,
       "tag": "0030_zippy_eddie_brock",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1793198481022,
+      "tag": "0031_condemned_jocasta",
+      "breakpoints": true
     }
   ]
 }

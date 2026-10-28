@@ -202,7 +202,7 @@ const MANUFACTURING_ROLES = new Set([
  * conservative: a missed colour is a blank field the user fills in, while a
  * wrong one is data that looks entered.
  */
-const COLOUR_WORDS =
+export const COLOUR_WORDS =
   /\b(black|blue|red|green|yellow|orange|purple|pink|white|clear|gold|silver|grey|gray|brown|amber|marbled|splatter|translucent|transparent|coloured|colored)\b/i;
 
 /**

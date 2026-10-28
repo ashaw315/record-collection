@@ -27,6 +27,7 @@ import { HIT_ALONE } from '@/app/hit-area';
 import { LABEL_TYPE } from '@/app/records/[id]/grid-type';
 import { GenreTree } from './GenreTree';
 import { ImportFromDiscogs } from './ImportFromDiscogs';
+import type { ImportRun } from '@/lib/db/queries/import-runs';
 import { ParentProposal } from './ParentProposal';
 import type { Evidence, ProposedPairing } from './parent-proposal';
 import { buildTree, flattenTree, nameOf, validParents, type GenreRow } from './genre-tree';
@@ -424,11 +425,14 @@ export function ManageClient({
   rowsByResource,
   artistCounts,
   review = null,
+  lastImport = null,
 }: {
   rowsByResource: Record<string, Row[]>;
   artistCounts: ArtistCounts;
   /** The duplicate review, drawn between the heading and the section names (§T.6 part 2). */
   review?: ReactNode;
+  /** The last import run, so its report survives leaving Manage (§T.6, step 159). */
+  lastImport?: ImportRun | null;
 }) {
   const [activeKey, setActiveKey] = useState(RESOURCES[0].key);
   const resource = RESOURCES.find((entry) => entry.key === activeKey) as ResourceSpec;
@@ -445,7 +449,7 @@ export function ManageClient({
       {review}
 
       {/* Step 158, §T.6 (Design, 28 Oct): the Discogs import, "a section of its own between hairlines, below the duplicate review and above the section names". */}
-      <ImportFromDiscogs />
+      <ImportFromDiscogs lastRun={lastImport} />
 
       <div className="flex flex-col gap-5 md:flex-row md:gap-8">
         {/* Sidebar on desktop, horizontally scrolling rail on mobile — the same

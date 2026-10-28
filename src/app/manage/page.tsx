@@ -9,6 +9,7 @@ import { listLabels } from '@/lib/db/queries/labels';
 import { listFormats } from '@/lib/db/queries/formats';
 import { listStores } from '@/lib/db/queries/stores';
 import { listTags } from '@/lib/db/queries/tags';
+import { latestImportRun } from '@/lib/db/queries/import-runs';
 import type { Offset } from '@/lib/api/query-params';
 
 /**
@@ -64,7 +65,7 @@ export default async function ManagePage({
    */
   const showAllArtists = (await searchParams).artists === 'all';
 
-  const [artists, genres, labels, formats, stores, tags, matchCandidates] = await Promise.all([
+  const [artists, genres, labels, formats, stores, tags, matchCandidates, lastImport] = await Promise.all([
     listArtists({ ...PAGE, collectedOnly: !showAllArtists }),
     listGenres(PAGE),
     listLabels(PAGE),
@@ -73,6 +74,8 @@ export default async function ManagePage({
     listTags(PAGE),
     // §4.3: surfaced here rather than asked during the import walk.
     listOpenMatchCandidates(),
+    // §T.6 (step 159): the last import's report survives leaving Manage.
+    latestImportRun(),
   ]);
 
   /**
@@ -96,6 +99,7 @@ export default async function ManagePage({
       {/* The review goes below the heading (T.6 part 2: "set below Manage's heading and above its section names, not above the heading"), so the client places it. */}
       <ManageClient
         review={matchCandidates.length === 0 ? null : <MatchReview candidates={matchCandidates} />}
+        lastImport={lastImport}
         rowsByResource={rowsByResource}
         artistCounts={{
           shown: artists.total,

@@ -414,6 +414,20 @@ export const discogsCache = pgTable('discogs_cache', {
 });
 
 /**
+ * §4.2 `discogs_import_runs` (A77, step 18; §T.6, 28 Oct): what each
+ * collection import did, one row per run, append-only; Manage reads the
+ * latest. The report is the only record of a run, and its blank and failed
+ * lines are work done on other screens one record at a time, so it
+ * survives leaving Manage. `finished_at` is the one time that means
+ * anything, as `fetched_at` is for the caches.
+ */
+export const discogsImportRuns = pgTable('discogs_import_runs', {
+  id,
+  report: jsonb('report').notNull(),
+  finishedAt: timestamp('finished_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+/**
  * §10a: marketplace figures, cached separately from release detail.
  *
  * **Not `discogs_cache`.** That table is keyed by the same id but holds release

@@ -242,8 +242,8 @@ export default defineConfig({
         /lookup-flows\.spec\.ts$/,
         /nav-mobile\.spec\.ts$/,
         /manage\.spec\.ts$/,
-        /* Step 158: the import's section at the column's full width and its label at 44 a line under a coarse pointer, on the phone's engine. */
-        /import-158\.spec\.ts$/,
+        /* Steps 158 and 159: the import's section at the column's full width and its label at 44 a line under a coarse pointer, on the phone's engine. */
+        /import-159\.spec\.ts$/,
         /record-form\.spec\.ts$/,
         /discogs-prefill\.spec\.ts$/,
         /want-list\.spec\.ts$/,

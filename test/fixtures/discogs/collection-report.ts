@@ -9,11 +9,12 @@ import type { CollectionReport } from '@/lib/db/queries/collection-import';
  * mapping, so what the Manage section is tested and captured against is
  * Adam's own collection as Discogs describes it, not an invented report.
  * The record ids are the one invention: the test database is not written.
+ * `total` is Discogs' own count of the collection, from its page.
  */
 const fixture = (name: string): unknown => JSON.parse(readFileSync(`test/fixtures/discogs/${name}.json`, 'utf8'));
 
 export function collectionReportFromFixtures(): CollectionReport {
-  const page = fixture('collection-page-1') as { releases: unknown[] };
+  const page = fixture('collection-page-1') as { pagination: { items: number }; releases: unknown[] };
   const imported = page.releases.map((raw, i) => {
     const item = normalizeCollectionItem(raw);
     const mapped = mapCollectionItem(fixture(`collection-release-${item.releaseId}`), item);
@@ -27,7 +28,7 @@ export function collectionReportFromFixtures(): CollectionReport {
       cover: 'attached',
     };
   });
-  return { username: 'AdamPseudo', items: imported.length, imported, skipped: [], failed: [] };
+  return { username: 'AdamPseudo', total: page.pagination.items, imported, skipped: [], failed: [] };
 }
 
 /** The second run's report: every one of the nine already here. */

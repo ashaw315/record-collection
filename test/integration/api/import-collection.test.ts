@@ -50,10 +50,14 @@ describe('POST /api/discogs/import-collection', () => {
     spyClient();
     const res = await post();
     expect(res.status).toBe(200);
-    const report = (await res.json()) as { username: string; imported: Array<{ releaseId: number }>; skipped: unknown[]; failed: unknown[] };
-    expect(report.username).toBe('AdamPseudo');
-    expect(report.imported.length).toBe(9);
+    /* Step 159 (§T.6): the answer is the run, the report with when it finished, as Manage draws it on return. */
+    const run = (await res.json()) as { report: { username: string; total: number; imported: Array<{ releaseId: number }>; skipped: unknown[]; failed: unknown[] }; finishedAt: string };
+    expect(run.report.username).toBe('AdamPseudo');
+    expect(run.report.imported.length).toBe(9);
+    expect(run.report.total).toBe(9);
+    expect(Number.isNaN(new Date(run.finishedAt).getTime())).toBe(false);
     expect((await db.execute(`SELECT count(*)::int AS n FROM records`)).rows[0]).toEqual({ n: 9 });
+    expect((await db.execute(`SELECT count(*)::int AS n FROM discogs_import_runs`)).rows[0], 'the run is kept').toEqual({ n: 1 });
   });
 
   it('takes an empty object as its body and nothing else: an unknown key is a validation failure', async () => {

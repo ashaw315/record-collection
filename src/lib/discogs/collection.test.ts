@@ -54,6 +54,8 @@ describe('fetchCollection', () => {
     const got = await fetchCollection(c);
     expect(got.username).toBe('someone');
     expect(got.items.map((i) => i.releaseId)).toEqual([1, 2, 3]);
+    /* Discogs' own count of the collection, carried as its page gives it and never recounted here: the report's four lines are checked against it (§T.6). */
+    expect(got.total).toBe(4);
     expect(calls).toEqual(['/oauth/identity', '/users/someone/collection/folders/0/releases?per_page=100&page=1', '/users/someone/collection/folders/0/releases?per_page=100&page=2']);
   });
 
@@ -70,7 +72,9 @@ describe('fetchCollection', () => {
 
 describe('normalizeCollectionItem', () => {
   it('keeps the release id, the instance id, the date added, and the conditions from the notes’ fields 1 and 2 as their grades', () => {
-    expect(normalizeCollectionItem(item(5))).toEqual({ releaseId: 5, instanceId: 50, dateAdded: '2026-10-27T14:03:57-07:00', conditionMedia: 'M', conditionSleeve: 'VG+' });
+    /* The title and the artist from the page's basic information, so a release that fails before its detail is fetched is still named (§T.6's failed line). */
+    expect(normalizeCollectionItem(item(5))).toEqual({ releaseId: 5, instanceId: 50, dateAdded: '2026-10-27T14:03:57-07:00', conditionMedia: 'M', conditionSleeve: 'VG+', title: 'Title 5', artist: 'Artist' });
+    expect(normalizeCollectionItem(item(5, { basic_information: undefined }))).toMatchObject({ title: null, artist: null });
   });
 
   it('leaves a condition null when its note is absent, as the one item without a sleeve note was', () => {

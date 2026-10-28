@@ -9,6 +9,7 @@ import { fetchCollection, type CollectionItem } from '@/lib/discogs/collection';
 import { mapCollectionItem, type Omission } from '@/lib/discogs/collection-map';
 import { findFormatByName } from './formats';
 import { importRelease } from './discogs-import';
+import { recordImportRun, type ImportRun } from './import-runs';
 
 /**
  * Step 18 unit D (SPEC §5 `POST /api/discogs/import-collection`, §12 step 18):
@@ -25,8 +26,14 @@ import { importRelease } from './discogs-import';
 export type ImportedItem = { releaseId: number; recordId: string; title: string; artist: string; blank: Omission[]; dropped: Omission[]; cover: string };
 /** Named by the record that holds the release, so the report reads as records and not as ids. */
 export type SkippedItem = { releaseId: number; reason: 'already here'; title: string; artist: string };
-export type FailedItem = { releaseId: number; reason: string };
-export type CollectionReport = { username: string; items: number; imported: ImportedItem[]; skipped: SkippedItem[]; failed: FailedItem[] };
+/** Named from the page's basic information, since a release can fail before its detail is fetched. */
+export type FailedItem = { releaseId: number; title: string | null; artist: string | null; reason: string };
+/**
+ * `total` is Discogs' own count of the collection (its page's `pagination.items`), carried and
+ * never derived from the three lists: §T.6's four lines add up to it, and a check against a
+ * total computed from the same lists would pass whatever the partition did.
+ */
+export type CollectionReport = { username: string; total: number; imported: ImportedItem[]; skipped: SkippedItem[]; failed: FailedItem[] };
 
 /** The record holding the release, by title and artist, or null when no record does. */
 async function alreadyHeld(releaseId: number): Promise<{ title: string; artist: string } | null> {
@@ -73,7 +80,7 @@ async function importOne(client: DiscogsClient, item: CollectionItem): Promise<I
 
 export async function importCollection(client: DiscogsClient): Promise<CollectionReport> {
   const collection = await fetchCollection(client);
-  const report: CollectionReport = { username: collection.username, items: collection.items.length, imported: [], skipped: [], failed: [] };
+  const report: CollectionReport = { username: collection.username, total: collection.total, imported: [], skipped: [], failed: [] };
   for (const item of collection.items) {
     const held = await alreadyHeld(item.releaseId);
     if (held !== null) {
@@ -83,10 +90,15 @@ export async function importCollection(client: DiscogsClient): Promise<Collectio
     try {
       report.imported.push(await importOne(client, item));
     } catch (error) {
-      report.failed.push({ releaseId: item.releaseId, reason: error instanceof Error ? error.message : String(error) });
+      report.failed.push({ releaseId: item.releaseId, title: item.title, artist: item.artist, reason: error instanceof Error ? error.message : String(error) });
     }
   }
   return report;
+}
+
+/** The import as Manage asks for it: the run, recorded (§4.2 `discogs_import_runs`) and answered with when it finished. */
+export async function runImport(client: DiscogsClient): Promise<ImportRun> {
+  return recordImportRun(await importCollection(client));
 }
 
 /* Kept so a report can be checked against the database it describes: the count of records holding each release. */

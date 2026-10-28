@@ -4,7 +4,8 @@ import { eq, sql } from 'drizzle-orm';
 import { getTestDb, truncateAll, closeTestDb } from '../helpers/db';
 import { artists, artistMatchCandidates, genres, pressings, records } from '@/db/schema';
 import type { DiscogsClient } from '@/lib/discogs/client';
-import { importCollection } from '@/lib/db/queries/collection-import';
+import { importCollection, runImport } from '@/lib/db/queries/collection-import';
+import { latestImportRun } from '@/lib/db/queries/import-runs';
 
 /**
  * Step 18 unit D (SPEC §5 `POST /api/discogs/import-collection`, §12 step 18):
@@ -98,6 +99,44 @@ describe('importCollection', () => {
     expect(report.imported.find((i) => i.releaseId === 29900731)?.blank.find((b) => b.field === 'color_variant')?.value).toBe('Hot Pink [Opaque]');
   });
 
+  /*
+    §T.6 (Design, 28 Oct): "the four counts add up to what Discogs holds". The sum is checked against
+    Discogs' own count, read from its page here and not from anything the import computed, and on the
+    real database: a partition that double-counted a blank release, or a total derived from the four
+    parts, would pass a check against itself and fail this one.
+  */
+  it('partitions the run: complete, blank, skipped and failed add up to the count Discogs’ page carries, each release on one line', async () => {
+    const discogsHolds = (JSON.parse(readFileSync('test/fixtures/discogs/collection-page-1.json', 'utf8')) as { pagination: { items: number } }).pagination.items;
+    await db.insert(pressings).values([{ discogsReleaseId: 11029111, catalogNumber: 'WYR?0514', matrixRunout: 'ADAM READ THIS OFF THE WAX' }]);
+    await db.insert(records).values({ title: 'Sunbathing Animal', artistId: (await db.insert(artists).values({ name: 'Parquet Courts' }).returning())[0].id, pressingId: (await db.select().from(pressings))[0].id });
+    const report = await importCollection(fakeClient({ '/releases/15661267': () => { throw new Error('Discogs answered 500'); } }));
+    const complete = report.imported.filter((i) => i.blank.length === 0);
+    const blank = report.imported.filter((i) => i.blank.length > 0);
+    expect(report.total, 'Discogs’ own count, carried').toBe(discogsHolds);
+    expect([complete.length, blank.length, report.skipped.length, report.failed.length]).toEqual([3, 4, 1, 1]);
+    expect(complete.length + blank.length + report.skipped.length + report.failed.length).toBe(discogsHolds);
+    const ids = [...report.imported, ...report.skipped, ...report.failed].map((i) => i.releaseId);
+    expect(new Set(ids).size, 'each release once').toBe(discogsHolds);
+    /* What failed and what was skipped are named by record, not by id alone. */
+    expect(report.failed[0]).toMatchObject({ releaseId: 15661267, title: 'ATLiens', artist: 'OutKast', reason: expect.stringMatching(/500/) });
+    expect(report.skipped[0]).toMatchObject({ releaseId: 11029111, title: 'Sunbathing Animal', artist: 'Parquet Courts' });
+  });
+
+  it('records each run, and the latest is read back for Manage with when it finished', async () => {
+    const before = new Date();
+    const run = await runImport(fakeClient());
+    const first = await latestImportRun();
+    expect(first).not.toBeNull();
+    expect(first?.report.imported.length).toBe(9);
+    expect(first?.finishedAt, 'the run answered is the run stored').toBe(run.finishedAt);
+    expect(new Date(first?.finishedAt ?? 0).getTime()).toBeGreaterThanOrEqual(before.getTime() - 1000);
+    await runImport(fakeClient());
+    const second = await latestImportRun();
+    expect(second?.report.skipped.length, 'the next run replaces it').toBe(9);
+    expect(second?.finishedAt).not.toBe(first?.finishedAt);
+    expect(Number((await db.execute(sql`SELECT count(*)::int AS n FROM discogs_import_runs`)).rows[0]?.n), 'every run kept').toBe(2);
+  });
+
   it('is idempotent on release id: a second run imports nothing and reports the nine as already here', async () => {
     await importCollection(fakeClient());
     const again = await importCollection(fakeClient());
@@ -129,7 +168,7 @@ describe('importCollection', () => {
   it('reports a release that fails to fetch and imports the other eight', async () => {
     const report = await importCollection(fakeClient({ '/releases/15661267': () => { throw new Error('Discogs answered 500'); } }));
     expect(report.imported.length).toBe(8);
-    expect(report.failed).toEqual([{ releaseId: 15661267, reason: expect.stringMatching(/500/) }]);
+    expect(report.failed).toEqual([{ releaseId: 15661267, title: 'ATLiens', artist: 'OutKast', reason: expect.stringMatching(/500/) }]);
     expect(await count('records')).toBe(8);
   });
 

@@ -19,7 +19,7 @@ const fixture = (name: string): unknown => JSON.parse(readFileSync(`test/fixture
 const page = fixture('collection-page-1') as { releases: Array<{ id: number }> };
 const IDS = page.releases.map((r) => r.id);
 
-const item = (releaseId: number, over: Partial<CollectionItem> = {}): CollectionItem => ({ releaseId, instanceId: 1, dateAdded: '2026-10-27T14:03:57-07:00', conditionMedia: 'M', conditionSleeve: 'M', ...over });
+const item = (releaseId: number, over: Partial<CollectionItem> = {}): CollectionItem => ({ releaseId, instanceId: 1, dateAdded: '2026-10-27T14:03:57-07:00', conditionMedia: 'M', conditionSleeve: 'M', title: null, artist: null, ...over });
 
 /** A release payload with only what the rule under test reads, on top of a real one so normalization has its shape. */
 const release = (over: Record<string, unknown>) => ({ ...(fixture('collection-release-29613763') as Record<string, unknown>), ...over });
@@ -61,10 +61,29 @@ describe('mapCollectionItem, the rules', () => {
     expect(m.dropped).toContainEqual({ field: 'styles', value: 'Free Jazz, Spiritual Jazz', reason: 'styles are not taken' });
   });
 
-  it('never parses a colour, and lists the format text it left', () => {
-    const m = mapCollectionItem(release({ formats: [{ name: 'Vinyl', qty: '1', descriptions: ['LP', 'Album'], text: 'Hot Pink [Opaque]' }] }), item(29613763));
-    expect(m.release.colorVariant, 'the importer must not see a colour either').toBeNull();
-    expect(m.blank).toContainEqual({ field: 'color_variant', value: 'Hot Pink [Opaque]', reason: 'colour is never parsed' });
+  /*
+    Adam's call of 28 Oct, replacing the rule this test held until then (every format text listed
+    under colour): the colour entry lists only text carrying a colour descriptor; the weight stays
+    where it goes; what remains with no column is listed as dropped text, not as colour. Fails
+    against the old rule on the second and third cases.
+  */
+  it('never parses a colour; lists a text with a colour descriptor under colour, and the rest of a text with no column as dropped', () => {
+    const colour = mapCollectionItem(release({ formats: [{ name: 'Vinyl', qty: '1', descriptions: ['LP', 'Album'], text: 'Hot Pink [Opaque]' }] }), item(29613763));
+    expect(colour.release.colorVariant, 'the importer must not see a colour either').toBeNull();
+    expect(colour.blank).toContainEqual({ field: 'color_variant', value: 'Hot Pink [Opaque]', reason: 'colour is never parsed' });
+    expect(colour.dropped.some((d) => d.field === 'format_text')).toBe(false);
+
+    const weightAndSleeve = mapCollectionItem(release({ formats: [{ name: 'Vinyl', qty: '1', descriptions: ['LP', 'Album'], text: 'Gatefold, 180gm' }] }), item(29613763));
+    expect(weightAndSleeve.release.vinylWeightGrams).toBe(180);
+    expect(weightAndSleeve.blank.some((b) => b.field === 'color_variant'), 'a weight is not a colour').toBe(false);
+    expect(weightAndSleeve.dropped).toContainEqual({ field: 'format_text', value: 'Gatefold', reason: 'no column takes it' });
+
+    const weightOnly = mapCollectionItem(release({ formats: [{ name: 'Vinyl', qty: '1', descriptions: ['LP', 'Album'], text: '180g' }] }), item(29613763));
+    expect(weightOnly.blank.some((b) => b.field === 'color_variant')).toBe(false);
+    expect(weightOnly.dropped.some((d) => d.field === 'format_text'), 'a text the weight used up lists nothing').toBe(false);
+
+    const twice = mapCollectionItem(release({ formats: [{ name: 'Vinyl', qty: '1', descriptions: ['LP'], text: 'Silver' }, { name: 'Vinyl', qty: '1', descriptions: ['7"'], text: 'Silver' }] }), item(29613763));
+    expect(twice.blank.find((b) => b.field === 'color_variant')?.value, 'one text, listed once').toBe('Silver');
   });
 
   it('takes the weight from the format text, in g, gram or gm, and nothing from Discogs’ estimated_weight', () => {
@@ -111,10 +130,22 @@ describe('mapCollectionItem, the nine as captured', () => {
     expect(rows.filter((r) => r.m.release.vinylWeightGrams !== null).length).toBe(3);
   });
 
-  it('parses no colour anywhere, and lists the format text of every release that has one', () => {
+  /* Adam's call of 28 Oct: three of the nine carry a colour descriptor; three carry text no column takes; the rest list nothing. Fails against the rule that listed all eight texts under colour. */
+  it('parses no colour anywhere; lists Green, Silver and Hot Pink under colour, Gatefold twice and RGB Edition as dropped text, and nothing for a text that was its weight', () => {
     expect(rows.every((r) => r.m.release.colorVariant === null)).toBe(true);
-    expect(by(29900731)?.blank).toContainEqual({ field: 'color_variant', value: 'Hot Pink [Opaque]', reason: 'colour is never parsed' });
-    expect(by(27263532)?.blank.find((b) => b.field === 'color_variant')?.value).toBe('Green');
+    const colourOf = (id: number) => by(id)?.blank.find((b) => b.field === 'color_variant')?.value ?? null;
+    const textOf = (id: number) => by(id)?.dropped.find((d) => d.field === 'format_text')?.value ?? null;
+    expect(IDS.map((id) => [id, colourOf(id), textOf(id)])).toEqual([
+      [29613763, null, null],
+      [31126154, null, 'Gatefold'],
+      [15661267, null, null],
+      [32524380, 'Silver', null],
+      [29900731, 'Hot Pink [Opaque]', null],
+      [27263532, 'Green', null],
+      [36516553, null, 'RGB Edition'],
+      [33132765, null, null],
+      [11029111, null, 'Gatefold'],
+    ]);
   });
 
   it('leaves ATLiens’ year blank and listed, and takes the other eight', () => {

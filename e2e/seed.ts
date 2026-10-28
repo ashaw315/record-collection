@@ -267,3 +267,22 @@ export async function seedRecordWithId(input: {
 
   return input.id;
 }
+
+/**
+ * Step 159 (§T.6): a last import run, as the route stores one, so a spec or
+ * a capture can show the report surviving a return to Manage without the
+ * import itself running, which no test may do (CLAUDE.md §2). `report` is
+ * stored as the route stores it; `finishedAt` is the run's time.
+ */
+export async function seedImportRun(report: unknown, finishedAt: string): Promise<string> {
+  const db = getTestDb();
+  const row = await db.execute<{ id: string }>(
+    sql`INSERT INTO discogs_import_runs (report, finished_at) VALUES (${JSON.stringify(report)}::jsonb, ${finishedAt}::timestamptz) RETURNING id`,
+  );
+  return row.rows[0].id;
+}
+
+export async function removeImportRuns(): Promise<void> {
+  const db = getTestDb();
+  await db.execute(sql`DELETE FROM discogs_import_runs`);
+}

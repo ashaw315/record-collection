@@ -1,72 +1,69 @@
 import { describe, expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import '../../../test/component/next-navigation';
-import { collectionReportFromFixtures, reportAllSkipped } from '../../../test/fixtures/discogs/collection-report';
+import { collectionReportFromFixtures } from '../../../test/fixtures/discogs/collection-report';
 import { ImportFromDiscogs, ImportReport } from './ImportFromDiscogs';
 
 /**
- * §T.6 (Design, 28 Oct), the import on Manage, as first drawn: the control
- * IMPORT FROM DISCOGS, a §9.3 label with its longer reading reserved so
- * IMPORTING… keeps its drawn width; the report three lines, each list
- * opening on §T.1's + and starting closed, a part with nothing at 0 and no +.
- * The interaction, the width and the placement are the e2e spec's
- * (`import-158.spec.ts`); this is the markup the server sends.
+ * §T.6 (Design, 28 Oct, the rebuild), the import on Manage as first drawn:
+ * before any run the control and the reserved failure slot and no report;
+ * with a last run, its lines beneath the line naming when it finished,
+ * four in one form, each list closed under §T.1's + and a part with
+ * nothing at 0 and no +, the failed line a line and not an alert. The
+ * interaction and the placement are the e2e spec's (`import-159.spec.ts`).
  */
 const report = collectionReportFromFixtures();
-/** One line's markup: from its own opening tag to the next line's. */
+const run = { report, finishedAt: '2026-10-28T21:05:00.000Z' };
 const lineOf = (html: string, key: string) => {
   const chunk = html.split('<li data-import-line="').find((c) => c.startsWith(`${key}"`));
   if (chunk === undefined) throw new Error(`no line ${key} in ${html}`);
   return chunk;
 };
 
-describe('ImportFromDiscogs, before any import', () => {
-  /* Fails against a control drawn as a box, or one whose reading is not reserved: IMPORTING… would narrow it. */
-  it('draws IMPORT FROM DISCOGS as a label with its own reading reserved beneath, enabled, and no report', () => {
-    const html = renderToStaticMarkup(<ImportFromDiscogs />);
-    expect(html).toMatch(/<section[^>]*data-testid="discogs-import"[^>]*class="[^"]*border-y[^"]*"/);
+describe('ImportFromDiscogs', () => {
+  /* Fails against a report drawn before any run, or a failure slot that is not reserved. */
+  it('before any run draws the control, the reserved failure slot empty, and no report', () => {
+    const html = renderToStaticMarkup(<ImportFromDiscogs lastRun={null} />);
     expect(html.match(/Import from Discogs/g)).toHaveLength(2);
-    expect(html).toMatch(/<button[^>]*data-import-control=""[^>]*>/);
-    expect(html).not.toMatch(/<button[^>]*\sdisabled=""/);
-    /* The control itself draws no box: its classes carry no border, where a §9.3 box's do. */
-    const button = /<button[^>]*data-import-control=""[^>]*>/.exec(html)?.[0] ?? '';
-    expect(button).not.toContain('border');
+    expect(html).toMatch(/<p[^>]*role="status"[^>]*data-import-status=""[^>]*class="[^"]*min-h-\[1lh\][^"]*"[^>]*><\/p>/);
     expect(html).not.toContain('data-import-report');
-    expect(html).not.toContain('Importing…');
+    expect(html).not.toContain('Last import');
+  });
+
+  /* Fails against a last run not drawn on return, or drawn without the line that says which run it is. */
+  it('with a last run draws its lines beneath the line naming when it finished', () => {
+    const html = renderToStaticMarkup(<ImportFromDiscogs lastRun={run} />);
+    expect(html).toContain('data-import-report');
+    /* The wording is set in the browser's zone (`lastImportLine`, the e2e); the server sends the line's slot and the time it names. */
+    expect(html).toMatch(/data-import-when=""[^>]*>\s*<time dateTime="2026-10-28T21:05:00\.000Z">/);
+    expect([...html.matchAll(/data-import-line="(\w+)"/g)].map((m) => m[1])).toEqual(['complete', 'blank', 'skipped', 'failed']);
   });
 });
 
 describe('ImportReport', () => {
-  /* Fails against another order, a list drawn open, or a mark on the empty part. */
-  it('draws the three lines in order, each list closed under a + and the empty part at 0 with no +', () => {
-    const html = renderToStaticMarkup(<ImportReport report={report} />);
-    expect([...html.matchAll(/data-import-line="(\w+)"/g)].map((m) => m[1])).toEqual(['imported', 'skipped', 'blank']);
-    const imported = lineOf(html, 'imported');
-    expect(imported).toContain('9 came in');
-    expect(imported).toMatch(/<details(?![^>]*\sopen)[^>]*>/);
-    expect(imported).toMatch(/<svg[^>]*>[\s\S]*data-mark-line="down"/);
-    /* `<li[ >]`, not `<li`: the mark's `<line>` elements begin the same way. */
-    expect(imported.match(/<li[ >]/g)).toHaveLength(9);
-    const skipped = lineOf(html, 'skipped');
-    expect(skipped).toContain('0 skipped as already held');
-    expect(skipped).not.toContain('<details');
-    expect(skipped).not.toContain('<svg');
-    const blank = lineOf(html, 'blank');
-    expect(blank).toContain('9 imported blank');
-    expect(blank).toContain('MGMT — Loss Of Life: colour Hot Pink [Opaque]');
+  /* Fails against another order, a list drawn open, or a mark on an empty part. */
+  it('draws the four lines in order, each list closed under a + and the empty parts at 0 with no +', () => {
+    const html = renderToStaticMarkup(<ImportReport run={run} />);
+    const complete = lineOf(html, 'complete');
+    expect(complete).toContain('4 came in complete');
+    expect(complete).toMatch(/<details(?![^>]*\sopen)[^>]*>/);
+    expect(complete).toMatch(/<svg[^>]*>[\s\S]*data-mark-line="down"/);
+    expect(complete.match(/<li[ >]/g)).toHaveLength(4);
+    expect(lineOf(html, 'blank')).toContain('5 came in with a field blank');
+    for (const key of ['skipped', 'failed']) {
+      const line = lineOf(html, key);
+      expect(line).toContain(key === 'skipped' ? '0 skipped as already held' : '0 failed');
+      expect(line).not.toContain('<details');
+      expect(line).not.toContain('<svg');
+    }
   });
 
-  /* Fails against a second run drawn as a second report. */
-  it('draws a run with everything already held as its one report', () => {
-    const html = renderToStaticMarkup(<ImportReport report={reportAllSkipped(report)} />);
-    expect(html.match(/data-import-report=""/g)).toHaveLength(1);
-    expect(lineOf(html, 'imported')).toContain('0 came in');
-    expect(lineOf(html, 'skipped')).toContain('9 skipped as already held');
-  });
-
-  /* Fails against a failure silently dropped from the report. */
-  it('says what could not be imported, as an alert beneath the lines', () => {
-    const html = renderToStaticMarkup(<ImportReport report={{ ...report, failed: [{ releaseId: 15661267, reason: 'Discogs answered 500' }] }} />);
-    expect(html).toMatch(/role="alert"[^>]*>1 could not be imported: release 15661267 \(Discogs answered 500\)\./);
+  /* Fails against a failed item drawn as an alert, or dropped. */
+  it('draws what failed as a line naming each release and its reason, never as an alert', () => {
+    const html = renderToStaticMarkup(<ImportReport run={{ ...run, report: { ...report, imported: report.imported.slice(1), failed: [{ releaseId: 29613763, title: 'Great Doubt', artist: 'Astrid Sonne', reason: 'Discogs answered 500' }] } }} />);
+    const failed = lineOf(html, 'failed');
+    expect(failed).toContain('1 failed');
+    expect(failed).toContain('Astrid Sonne — Great Doubt: Discogs answered 500');
+    expect(html).not.toContain('role="alert"');
   });
 });
