@@ -49268,3 +49268,36 @@ Staged: the empty-matrix guard dropped, idempotency dropped, the per-item
 catch removed, candidates not recorded, each failing its test. Two of my
 own on the way: the cover field read a member the union lacks, and the test
 guessed the validation code (`VALIDATION_ERROR` is the app's).
+
+## 28 Oct, 00:40: the Discogs field inventory, and two things it turned up
+
+Adam asked for the inventory of what a Discogs release carries against what
+the collection import takes (the nine fixtures, every key, marked taken,
+dropped or not fetched; the untaken grouped by what storing them would cost;
+the columns that exist and sit empty while the cache holds the value). The
+inventory went to the coordinator as a report and is not a build list. Two
+observations from reading the nine against the importer, recorded here and
+not acted on (CLAUDE.md §4):
+
+- **"Manufactured By" names a label company as the plant on ATLiens.**
+  `PRESSING_ROLES` holds `pressed by`, `repressed by` and `manufactured by`,
+  first match wins. Release 15661267 lists no "Pressed By", so
+  `pressing_plant` takes "Arista Records, Inc." from "Manufactured By", while
+  Discogs' own notes say "Recent reissue pressed by MPO" and every runout
+  carries MPO. The other five of the nine with a plant are right (Rainbo,
+  MPO, Optimal, Pallas). A fact about the role list, not a defect in the
+  step: the form path has the same rule and the user sees the field.
+- **Variant runouts are joined as if one pressing carried them all.**
+  Mandy, Indiana (36516553) lists sides A and B twice, "variant 1" and
+  "variant 2", four values; Cindy Lee (33132765) nine values across two
+  variants. `matrixRunout.join(' / ')` writes every variant into one field,
+  and the descriptions that say which is which are not stored. Adam's copy
+  is one variant. The same join is the form path's, where the user edits
+  the field before saving; on the collection path nothing edits it, so the
+  seeded `discogs` matrix on these two is a union, which is one more reason
+  it is marked unverified.
+- **Every production cache row is past the 7-day TTL** (63 rows, fetched
+  10 Aug to 23 Oct). `readCachedRelease` reads each as a miss; the payloads
+  are still there and were what the inventory's "cache holds it" column
+  read. A backfill from the cache would read the stale rows directly or
+  refetch 22 releases.
