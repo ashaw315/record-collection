@@ -4,6 +4,7 @@ import { login } from './sign-in';
 import { errorScreen, ringRoutes, settled } from './ring-routes';
 import { drawnRing, expectedRing, walkTab, type Stop } from './ring-walk';
 import { MOODS } from '../src/lib/moods/moods';
+import { clickSpine } from './wall-ready';
 
 registerCleanup();
 
@@ -181,7 +182,7 @@ test('the Tab walk through the wall in its three states stops in order: the head
     const seats = await page.$$eval('a[data-seat]', (links) => links.map((a) => ({ id: a.getAttribute('data-seat') ?? '', order: Number(a.getAttribute('data-seat-order')) })).sort((x, y) => x.order - y.order).map((s) => s.id));
     expect(seats.length, 'the precondition: a wall with a middle record').toBeGreaterThanOrEqual(3);
     const seat = seats[position === 'first' ? 0 : position === 'last' ? seats.length - 1 : Math.floor(seats.length / 2)];
-    await page.locator(`a[data-seat="${seat}"] [data-spine]`).click();
+    await clickSpine(page, page.locator(`a[data-seat="${seat}"] [data-spine]`));
     await page.getByTestId('record-chrome').waitFor({ timeout: 30_000 });
     await page.locator('[data-pulled]').waitFor({ timeout: 30_000 });
     /* The arrows arrive once the pull has settled; the walk reads the settled state. */

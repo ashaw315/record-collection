@@ -3,6 +3,7 @@ import { getTestDb } from '../test/helpers/db';
 import { sql } from 'drizzle-orm';
 import { NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
 import { login } from './sign-in';
+import { clickSpine } from './wall-ready';
 
 /**
  * **The pulled record's panel expands in place and keeps generated/entered facts
@@ -20,7 +21,7 @@ import { login } from './sign-in';
  */
 
 async function pullTheRecord(page: Page) {
-  await page.locator('[data-seat] [data-spine]').first().click();
+  await clickSpine(page, page.locator('[data-seat] [data-spine]').first());
   /* The panel arrives at the slide's perceived end (~690ms), not before. */
   await expect(page.getByTestId('record-chrome')).toBeVisible({ timeout: 5000 });
 }

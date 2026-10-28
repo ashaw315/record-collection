@@ -6,6 +6,7 @@ import { unitRows } from '../src/app/wall/unit';
 import { SPINE_TEXT_BUDGET, spineLabel } from '../src/app/wall/spine-text';
 import { COLLECTION_SPINES } from '../test/fixtures/collection-spines';
 import { login } from './sign-in';
+import { clickSpine } from './wall-ready';
 
 /**
  * The 1:1 component (The Wall 5b §1, §4, §5; §W), on the real collection.
@@ -266,7 +267,8 @@ test('a spine navigates with JavaScript disabled — the fallback is exercised, 
     const plain = await noJs.newPage();
     await plain.goto('/wall/probe/labelled');
     await plain.locator('[data-wall="labelled"]').waitFor({ timeout: 15_000 });
-    await plain.locator('[data-seat="collection-7"] [data-spine]').click();
+    /* The fallback itself: no JavaScript, so no mark to wait for, and the anchor's own navigation is the claim. */
+    await plain.locator('[data-seat="collection-7"] [data-spine]').click(); /* spine-click: javascript disabled */
     await expect(plain).toHaveURL(/\/records\/collection-7$/);
   } finally {
     await noJs.close();
@@ -316,7 +318,7 @@ test('the record with no cover pulls to ink, not to a default colour', async ({ 
   await page.clock.install();
   await page.clock.pauseAt(Date.now() + 1000);
   const blues = COLLECTION_SPINES.findIndex((row) => row.resampled === null);
-  await page.locator(`[data-seat="collection-${blues}"] [data-spine]`).click();
+  await clickSpine(page, page.locator(`[data-seat="collection-${blues}"] [data-spine]`));
   await page.clock.runFor(OUT_MS + 40);
   await expect(page.locator('[data-pulled] [data-field]')).toHaveAttribute('fill', WALL_INK);
 });

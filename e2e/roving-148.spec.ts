@@ -3,6 +3,7 @@ import { sql } from 'drizzle-orm';
 import { getTestDb } from '../test/helpers/db';
 import { seedRecords, removeRecordsFor } from './seed';
 import { login } from './sign-in';
+import { clickSpine } from './wall-ready';
 
 /**
  * **§T.6, 14 Oct: the spines are one Tab stop with a roving index.** "The
@@ -107,7 +108,7 @@ test('an arrow with a record pulled moves focus and not the pull', async ({ page
   await openShelf(page);
   /* §W.23's order is the anchors' seat order, not their DOM order: read by `data-seat-order`, the channel step 148 added for exactly this. */
   const seats = await page.evaluate(() => Array.from(document.querySelectorAll<HTMLElement>('a[data-seat][data-seat-order]')).sort((a, b) => Number(a.dataset.seatOrder) - Number(b.dataset.seatOrder)).map((a) => a.getAttribute('data-seat')));
-  await page.locator(`a[data-seat="${seats[0]}"] [data-spine]`).click();
+  await clickSpine(page, page.locator(`a[data-seat="${seats[0]}"] [data-spine]`));
   await page.getByTestId('record-chrome').waitFor({ timeout: 5000 });
   await page.locator('[data-pulled]').waitFor({ timeout: 5000 });
   /* Settled: §W.9's arrows are drawn once the record has landed. */

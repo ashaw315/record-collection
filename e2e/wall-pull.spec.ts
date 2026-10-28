@@ -7,6 +7,7 @@ import { RETURN_FADE_END, WALL_PAPER_HEX, pullFill } from '../src/app/wall/pull-
 import { recordLadder } from '../src/lib/colour/record-ladder';
 import { COLLECTION_SPINES } from '../test/fixtures/collection-spines';
 import { login } from './sign-in';
+import { clickSpine } from './wall-ready';
 
 /**
  * The pull on the 1:1 wall, with colour arriving across it (8a §W.2, §W.3,
@@ -77,7 +78,7 @@ test('clicking a spine pulls it out on the gesture: the seat emptied from the fi
   expect(wired).not.toBeNull();
   const furnitureBefore = await page.locator('[data-wall="labelled"] [data-furniture]').count();
 
-  await page.locator(`[data-seat="${WIRED_ID}"] [data-spine]`).click();
+  await clickSpine(page, page.locator(`[data-seat="${WIRED_ID}"] [data-spine]`));
   await page.clock.runFor(1);
   /* Frame 0: the cover plane is the seated face's own; the seat's anchor is gone. */
   const start = parseMatrix((await landing(page)) ?? '');
@@ -111,7 +112,7 @@ test('colour arrives across the full out-span on one ease (§W.2) — paper at 0
   page,
 }) => {
   if (wired === null) throw new Error('fixture');
-  await page.locator(`[data-seat="${WIRED_ID}"] [data-spine]`).click();
+  await clickSpine(page, page.locator(`[data-seat="${WIRED_ID}"] [data-spine]`));
   await page.clock.runFor(1);
   expect((await pulled(page))?.fill, 'starts as paper').toBe(pullFill(0, wired));
 
@@ -139,7 +140,7 @@ test('on the return the fade completes before the spine lands — checked on the
 }) => {
   if (wired === null) throw new Error('fixture');
   const spine = page.locator(`[data-seat="${WIRED_ID}"] [data-spine]`);
-  await spine.click();
+  await clickSpine(page, spine);
   await page.clock.runFor(OUT_MS + TWO_FRAMES);
 
   /* Send it back: the whole gesture reversed on one clock. */

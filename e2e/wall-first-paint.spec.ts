@@ -3,6 +3,7 @@ import { registerCleanup, trackArtist } from './cleanup';
 import { wallMeasured } from './wall-measured';
 import { nearViewMinWidth } from '../src/app/wall/view-fork';
 import { login } from './sign-in';
+import { clickSpine } from './wall-ready';
 
 registerCleanup();
 
@@ -352,7 +353,7 @@ test('a client navigation lands without moving, and a put-back does not re-land 
   const before = await page.evaluate(() => { const el = document.querySelector('[data-region="wall"]') as HTMLElement; return { l: Math.round(el.scrollLeft), t: Math.round(el.scrollTop) }; });
 
   /* Pull and put back: the wall returns to rest, which is where the warning was repeating. */
-  await spine.click();
+  await clickSpine(page, spine);
   /* And nothing moved it between the reading and the pull: the click found its target where the reading left it. */
   await expect(page.getByTestId('record-chrome')).toBeVisible({ timeout: 10_000 });
   await page.getByRole('button', { name: 'Put back' }).click();

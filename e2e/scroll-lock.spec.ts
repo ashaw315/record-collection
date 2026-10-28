@@ -3,6 +3,7 @@ import { seedRecords, removeRecordsFor } from './seed';
 import { getTestDb } from '../test/helpers/db';
 import { sql } from 'drizzle-orm';
 import { login } from './sign-in';
+import { clickSpine } from './wall-ready';
 
 /**
  * **The page does not move when a record comes out, and nothing is locked.**
@@ -20,7 +21,7 @@ import { login } from './sign-in';
  */
 
 async function pullASpine(page: Page) {
-  await page.locator('[data-seat] [data-spine]').first().click();
+  await clickSpine(page, page.locator('[data-seat] [data-spine]').first());
   await expect(page.getByTestId('record-chrome')).toBeVisible({ timeout: 5000 });
 }
 

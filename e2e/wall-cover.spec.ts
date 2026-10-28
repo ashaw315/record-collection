@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test';
 import { OUT_MS } from '../src/app/wall/gesture';
 import { COLLECTION_SPINES } from '../test/fixtures/collection-spines';
 import { login } from './sign-in';
+import { clickSpine } from './wall-ready';
 
 /**
  * §W.3 on the rendering: the pulled record shows its cover at its own aspect
@@ -30,7 +31,7 @@ test('the pulled record shows its cover, fitted inside its face, at the end and 
 
   await expect(page.locator('[data-cover]'), 'no cover at rest').toHaveCount(0);
 
-  await page.locator(`[data-seat="${WIRED_ID}"] [data-spine]`).click();
+  await clickSpine(page, page.locator(`[data-seat="${WIRED_ID}"] [data-spine]`));
   await page.clock.runFor(400);
 
   const boxes = async () =>
@@ -95,7 +96,7 @@ test('the record with no cover arrives at type on its field, with the diagonal, 
 
   const blues = COLLECTION_SPINES.findIndex((row) => row.resampled === null);
   expect(blues, 'the fixture has one record without a cover').toBeGreaterThan(-1);
-  await page.locator(`[data-seat="collection-${blues}"] [data-spine]`).click();
+  await clickSpine(page, page.locator(`[data-seat="collection-${blues}"] [data-spine]`));
   await page.clock.runFor(OUT_MS + 40);
 
   const sleeve = page.locator('[data-pulled] [data-no-cover]');

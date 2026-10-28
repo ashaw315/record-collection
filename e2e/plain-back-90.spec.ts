@@ -11,6 +11,7 @@ import { sleeveSquare } from '../src/app/records/[id]/sleeve-modal';
 import { WALL_INK, WALL_PAPER_HEX, pullFill } from '../src/app/wall/pull-colour';
 import { recordLadder } from '../src/lib/colour/record-ladder';
 import { login } from './sign-in';
+import { clickSpine } from './wall-ready';
 
 registerCleanup();
 
@@ -112,7 +113,7 @@ test('the wall’s pulled record, turned over, is the same ground and the same i
   await page.emulateMedia({ reducedMotion: 'no-preference' });
   await page.goto('/');
   await expect(page.getByTestId('wall')).toBeAttached({ timeout: 30_000 });
-  await page.locator(`[data-seat="${record.id}"] [data-spine]`).click();
+  await clickSpine(page, page.locator(`[data-seat="${record.id}"] [data-spine]`));
   await expect(page.getByTestId('record-chrome')).toBeVisible({ timeout: 8000 });
   await page.getByTestId('record-chrome').getByTestId('action-turn').click();
   await expect(page.locator('[data-pulled] [data-back-plain]')).toHaveCount(1);

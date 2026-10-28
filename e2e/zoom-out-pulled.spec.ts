@@ -3,6 +3,7 @@ import { registerCleanup, trackArtist } from './cleanup';
 import { removeRecordsFor, seedRecords } from './seed';
 import { login } from './sign-in';
 import { wallMeasured } from './wall-measured';
+import { clickSpine } from './wall-ready';
 
 /**
  * §W's open question (27 Oct): with a record out on the near view, what does
@@ -56,7 +57,7 @@ for (const source of ['spine', 'pick'] as const) {
       await page.setViewportSize({ width: 1440, height: 900 });
       await page.goto(`/?artistId=${artist.id}`);
       await wallMeasured(page);
-      if (source === 'spine') await page.locator('a[data-seat] [data-spine]').first().click();
+      if (source === 'spine') await clickSpine(page, page.locator('a[data-seat] [data-spine]').first());
       else await page.locator('[data-pick-control]').filter({ visible: true }).getByRole('button', { name: /surprise me/i }).click();
       await expect.poll(() => page.locator('[data-wall-container]').getAttribute('data-phase'), { timeout: 30_000 }).toBe('landed');
       await sample(page);

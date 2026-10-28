@@ -5,6 +5,7 @@ import { sql } from 'drizzle-orm';
 import { wallMeasured } from './wall-measured';
 import { NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
 import { login } from './sign-in';
+import { clickSpine } from './wall-ready';
 
 /* Records and artists removed after each test — see e2e/cleanup.ts. */
 registerCleanup();
@@ -118,7 +119,7 @@ test('a spine is a link, so it survives without JavaScript', async ({ browser, p
     const link = plain.getByRole('link', { name: new RegExp(title) });
     await expect(link).toHaveAttribute('href', `/records/${id}`);
     /* The link's box spans its three faces and its centre falls on paper between them; the spine is the target. */
-    await link.locator('[data-spine]').click();
+    await clickSpine(page, link.locator('[data-spine]'));
     await expect(plain).toHaveURL(`/records/${id}`);
   } finally {
     await noJs.close();

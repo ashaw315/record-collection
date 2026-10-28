@@ -7,6 +7,7 @@ import { seedImage } from './seed';
 import { getTestDb } from '../test/helpers/db';
 import { GRID_FORK, NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
 import { login } from './sign-in';
+import { clickSpine } from './wall-ready';
 
 registerCleanup();
 
@@ -58,7 +59,7 @@ test('the wall’s pulled record, turned over, shows the newer of two backs', as
   await page.setViewportSize({ width: GRID_FORK, height: NO_SCROLL_HEIGHT });
   await page.goto('/');
   await expect(page.getByTestId('wall')).toBeAttached({ timeout: 30_000 });
-  await page.locator(`[data-seat="${id}"] [data-spine]`).click();
+  await clickSpine(page, page.locator(`[data-seat="${id}"] [data-spine]`));
   await expect(page.getByTestId('record-chrome')).toBeVisible({ timeout: 8000 });
   await page.getByTestId('record-chrome').getByTestId('action-turn').click();
   const back = page.locator('[data-pulled] image[data-back]');

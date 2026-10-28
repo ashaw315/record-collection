@@ -285,6 +285,8 @@ export function WallLive({
       const seat = layout.placed.find((p) => p.id === landing);
       if (seat !== undefined) {
         landOn.current = null;
+        /* Consumed, whichever path follows, the arrival applied or the person's scroll kept: the region is landed (the mark the specs' clickSpine waits on, 28 Oct). */
+        el.dataset.landed = 'true';
         /* Counted so the ordering can be asserted: consumed exactly once, on the commit whose frame is the region's own (§W.12). */
         const counter = window as unknown as { __landings?: number };
         counter.__landings = (counter.__landings ?? 0) + 1;
@@ -344,6 +346,16 @@ if (offset !== null) offset.style.transform = '';
         return;
       }
     }
+    /*
+      Landed: no landing pending on a frame that is the region's own. A
+      pending one, or a frame not yet the region's, is not at rest, and a
+      spec that clicked into it found no pull begun (the wall-route Escape
+      flake, 28 Oct). The mark and `data-hydrated` are what `e2e/wall-ready`
+      waits on before any spine is clicked; marks and not animation frames,
+      because the gesture specs freeze the page's clock.
+    */
+    if (landOn.current === null && width === el.clientWidth) el.dataset.landed = 'true';
+    else delete el.dataset.landed;
     /* The frame may have moved its origin in this commit: hold the view where it was — on the way into a gesture and out of it. */
     if (viewNowRef.current !== null) writeView(el, [frameX, frameY], viewNowRef.current);
     originRef.current = [frameX, frameY];

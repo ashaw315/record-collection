@@ -2,6 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist } from './cleanup';
 import { LANDING_PAD } from '../src/app/wall/landing';
 import { login } from './sign-in';
+import { clickSpine } from './wall-ready';
 
 registerCleanup();
 
@@ -46,6 +47,8 @@ const landings = (page: Page) => page.evaluate(() => (window as unknown as { __l
  */
 async function settled(page: Page, landed: number) {
   await expect.poll(() => landings(page), { timeout: 15_000, message: `the landing is consumed (${landed})` }).toBeGreaterThanOrEqual(landed);
+  /* The region's own mark of the same fact, which clickSpine waits on (28 Oct): held here where the count is also known. */
+  await expect(page.locator('[data-region="wall"][data-landed="true"]')).toHaveCount(1);
   await page.waitForFunction(
     () =>
       new Promise<boolean>((resolve) => {
@@ -111,7 +114,7 @@ test('the near view can be reached and used at desktop width, with no unmeasured
   await expect(page.locator('[data-wall-container][data-unmeasured]')).toHaveCount(0);
 
   /* ...and usable: a spine pulls. */
-  await page.locator('a[data-seat] [data-spine]').first().click();
+  await clickSpine(page, page.locator('a[data-seat] [data-spine]').first());
   await expect(page.getByTestId('record-chrome')).toBeVisible({ timeout: 10_000 });
   await expect(page.locator('[data-pulled]')).toHaveCount(1);
 });
@@ -354,9 +357,16 @@ test('Escape returns to the collection when nothing is pulled, and dismisses the
   const { artistId } = await seed(page, 12);
   await page.goto(`/?artistId=${artistId}`);
   await expect(page.locator('[data-wall="labelled"]')).toBeVisible({ timeout: 30_000 });
+  /*
+    The landing consumed and the region still, as the three landing tests above wait (27 Oct), and not
+    visibility alone: this test clicked as soon as the server's markup showed and flaked in two consecutive
+    gates with no pull begun (28 Oct). The arrival scrolls the region after the wall is visible, measured
+    in 9 of 16 probe runs, and a click dispatched across that scroll lands where the seat was.
+  */
+  await settled(page, 1);
 
   /* With a record out, Escape is the put-back it already was — the near view stays. */
-  await page.locator('[data-seat] [data-spine]').first().click();
+  await clickSpine(page, page.locator('[data-seat] [data-spine]').first());
   await expect(page.getByTestId('record-chrome')).toBeVisible({ timeout: 5000 });
   await page.keyboard.press('Escape');
   await expect(page.getByTestId('record-chrome')).toHaveCount(0, { timeout: 5000 });

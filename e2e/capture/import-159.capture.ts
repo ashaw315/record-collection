@@ -76,7 +76,6 @@ test('the import on Manage before a run, after a run closed and open, and after 
     const shoot = async (state: string) => {
       await rest(page);
       const m = await page.evaluate((script) => {
-        // eslint-disable-next-line no-new-func
         const { ratio } = new Function(`${script}; return { ratio };`)() as { ratio: (a: string, b: string) => number };
         const s = (document.querySelector('[data-testid="discogs-import"]') as HTMLElement).getBoundingClientRect();
         const lines = Array.from(document.querySelectorAll<HTMLElement>('[data-import-line]')).map((el) => el.getBoundingClientRect().top);

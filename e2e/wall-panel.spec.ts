@@ -5,6 +5,7 @@ import { seedRecords } from './seed';
 import { contrastRatio } from '../src/lib/colour/record-colour';
 import { login } from './sign-in';
 import { POINTERS, expectFloor } from './hit-area';
+import { clickSpine } from './wall-ready';
 
 /**
  * What the gesture arrives at (8a §W.7): the panel, flat on paper, right of
@@ -39,7 +40,7 @@ test('the panel arrives with the record — with the rotation, not before, in th
   await expect(page.getByTestId('wall')).toBeAttached({ timeout: 30_000 });
   await page.clock.pauseAt(Date.now() + 1000);
 
-  await page.locator('[data-seat] [data-spine]').first().click();
+  await clickSpine(page, page.locator('[data-seat] [data-spine]').first());
   await page.clock.runFor(400);
   await expect(page.getByTestId('record-chrome'), 'not there while the record is still visibly moving').toHaveCount(0);
 
@@ -97,14 +98,14 @@ test('Escape dismisses, and a record dismissed MID-TURN goes home with its chrom
   const firstId = await page.locator('[data-seat]').first().getAttribute('data-seat');
 
   /* Escape from settled. */
-  await first.click();
+  await clickSpine(page, first);
   await expect(page.getByTestId('record-chrome')).toBeVisible({ timeout: 5000 });
   await page.keyboard.press('Escape');
   await expect(page.getByTestId('record-chrome')).toHaveCount(0);
   await expect(page.locator(`[data-seat="${firstId}"] [data-spine]`), 'seated again').toHaveCount(1, { timeout: 5000 });
 
   /* Turn over, then Escape before anything else: the back shows on the same face, then it goes home. */
-  await page.locator(`[data-seat="${firstId}"] [data-spine]`).click();
+  await clickSpine(page, page.locator(`[data-seat="${firstId}"] [data-spine]`));
   await expect(page.getByTestId('record-chrome')).toBeVisible({ timeout: 5000 });
   await page.getByTestId('record-chrome').getByTestId('action-turn').click();
   await expect(page.locator('[data-pulled] [data-back-plain], [data-pulled] [data-back]')).toHaveCount(1);
@@ -124,7 +125,7 @@ test('the panel’s values are READABLE against the paper they sit on', async ({
   const artistId = await seed(page, 3);
   await page.goto(`/?artistId=${artistId}`);
   await expect(page.getByTestId('wall')).toBeAttached({ timeout: 30_000 });
-  await page.locator('[data-seat] [data-spine]').first().click();
+  await clickSpine(page, page.locator('[data-seat] [data-spine]').first());
   await expect(page.getByTestId('record-chrome')).toBeVisible({ timeout: 5000 });
 
   const colours = await page.evaluate(() => {
@@ -177,7 +178,7 @@ for (const pointer of ['fine'] as (typeof POINTERS)[number][]) test.describe(`th
     const pitch = await page.evaluate(() => { const tops = Array.from(document.querySelectorAll('[data-shelf-offered] [data-testid="wall-rail"] ul a')).map((a) => a.getBoundingClientRect().top); return [(tops[1] ?? 0) - (tops[0] ?? 0), (tops[2] ?? 0) - (tops[1] ?? 0)]; });
     expect.soft(pitch, `at ${width}: the view names are ${pointer === 'coarse' ? 44 : 42} apart`).toEqual(pointer === 'coarse' ? [44, 44] : [42, 42]);
 
-    await page.locator('[data-seat] [data-spine]').first().click();
+    await clickSpine(page, page.locator('[data-seat] [data-spine]').first());
     const chrome = page.getByTestId('record-chrome');
     await expect(chrome.getByTestId('record-panel')).toHaveAttribute('data-expanded', 'true', { timeout: 15_000 });
     await expect(chrome.getByTestId('action-turn')).toBeVisible();

@@ -4,6 +4,7 @@ import { seedRecords } from './seed';
 import { login } from './sign-in';
 import { wallMeasured } from './wall-measured';
 import { RETURN_MS } from '../src/app/wall/gesture';
+import { clickSpine } from './wall-ready';
 
 /**
  * Step 156 unit 4, target §P.3: on the near view SURPRISE ME answers with
@@ -142,7 +143,7 @@ test('a record pulled by its spine counts as served, and an ask with it out re-r
   const [spine, other] = ids;
   for (const draw of DRAWS) {
     await openNear(page, artistId);
-    await page.locator(`a[data-seat="${spine}"] [data-spine]`).click();
+    await clickSpine(page, page.locator(`a[data-seat="${spine}"] [data-spine]`));
     expect(await settledOut(page)).toBe(spine);
     await pin(page, draw);
     await press(page);
@@ -156,7 +157,7 @@ test('a record brought out by the arrows counts as served, as one pulled by its 
   const { artistId, ids } = await poolOf(page, 2);
   for (const draw of DRAWS) {
     await openNear(page, artistId);
-    await page.locator(`a[data-seat="${ids[0]}"] [data-spine]`).click();
+    await clickSpine(page, page.locator(`a[data-seat="${ids[0]}"] [data-spine]`));
     await settledOut(page);
     await page.locator('[data-testid="nav-next"], [data-testid="nav-previous"]').first().click();
     /* The arrows' slide has both moving on one clock (§W.8), so only the frames with one record out are compared. */

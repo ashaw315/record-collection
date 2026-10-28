@@ -49467,3 +49467,39 @@ that had been saying "you are running beside a gate", and the cause became
 invisible. Same family as the gate's judge reading its own verdict and the
 capture's resting pointer: an instrument changed so that it stops reporting
 the thing it was reporting.
+
+## 28 Oct, 15:40: the wall-route Escape flake, answered
+
+**The test, not the product; and neither of the two candidates named.** The
+probe (`escape-probe`, deleted after its reading) ran the Escape test's
+first click sixteen times: eight unthrottled, eight at a sixfold CPU
+throttle. Every run pulled the record and drew the chrome, the URL never
+changed, and at the throttle every click landed before hydration and before
+the arrival's landing (`__landings` 0, `data-hydrated` absent at the click).
+So a click before React attaches does not follow the seat's anchor: React
+replays the discrete event after hydration, and the handler's preventDefault
+holds. No ruling is owed on the pre-hydration path. What the probe measured
+beside that is the landing: it was consumed after the labelled wall was
+visible in 9 of 16 runs, and the arrival scrolls the region when it lands.
+A click dispatched across that scroll lands where the seat was, and the two
+gate failures showed exactly no pull begun. The three landing tests in the
+file wait for the landing consumed and the region still (27 Oct); the
+Escape test was left on the visibility wait, and nothing required the
+helper's use, which is the coordinator's point: the fourth test was the one
+that got found.
+
+**The fix.** The Escape test waits on `settled(page, 1)` as its siblings
+do, and every spine click in every spec goes through `clickSpine` in
+`e2e/wall-ready.ts`, which waits for the region hydrated and still over
+three frames before clicking (36 clicks in 17 files, converted). A repo
+test refuses a spec that clicks a `[data-spine]` locator any other way, a
+click on its own line or on a name assigned from one; its first draft read
+a window of lines and flagged the turn control two lines after a spine.
+Not raised: the 5-second chrome wait stands, and the condition before the
+click is what changed.
+
+**What stays unproven.** The probe never produced the failure, so the
+landing race is the explanation consistent with the evidence, not one
+reproduced on demand. If the test flakes again under the helper, the next
+read is the gate's retained trace, which neither failed gate left behind
+(the following run cleared the output directory).
