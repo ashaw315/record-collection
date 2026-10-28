@@ -49140,3 +49140,13 @@ since 155. 156 is owed its body when 4b lands or is withdrawn.
 
 **For Adam:** the 640 captures, `e2e/sheet/rail-157.sheet.ts`, on the real
 collection, for §P.5's overflow line.
+
+## 27 Oct, 20:00: a pipeline hid the intake's status, again
+
+The chain that committed 157c ran `apply-code-region.mjs | tail -1 && commit-checked.sh`.
+The pipe's status is `tail`'s, so INTAKE NOT OK did not stop the chain and the commit was
+attempted; only `commit-checked.sh`'s own check refused it. That is the 9 Oct shape §9
+names ("a pipeline reporting tail's status"), repeated with the intake's status in place of
+the test runner's. The rerun captured the intake's output to a file and tested its exit and
+its summary line before the commit. Nothing landed wrongly, because the second guard held;
+the first one, the chain, did not.
