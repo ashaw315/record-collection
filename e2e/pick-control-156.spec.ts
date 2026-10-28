@@ -321,11 +321,18 @@ test.describe('§P.5: the control’s fit in the rail as a column, measured', ()
           /* What the rail does past the foot: whether it clips (its own overflow), the page scrolls (the document grows), or ADD RECORD is simply out of reach. */
           railOverflow: railStyle === null ? null : `${railStyle.overflowY}, scrollHeight ${rail?.scrollHeight} against clientHeight ${rail?.clientHeight}`,
           pitches: {
-            viewNames: (() => { const tops = Array.from(rail?.querySelectorAll('[data-view-name] a') ?? []).map((a) => a.getBoundingClientRect().top); return tops.length < 2 ? null : (tops[1] - tops[0]); })(),
-            moods: moods.length < 2 ? null : moods[1].top - moods[0].top,
-            /* ASK and SURPRISE ME against the last mood: §P.5's "in the rail they take §W's one pitch with the moods". */
-            ask: (() => { const a = control?.querySelector('button[aria-disabled]'); const last = moods[moods.length - 1]; return a && last ? a.getBoundingClientRect().top - last.top : null; })(),
-            surpriseFromAsk: (() => { const bs = Array.from(control?.querySelectorAll('button:not([data-mood])') ?? []); return bs.length < 2 ? null : bs[1].getBoundingClientRect().top - bs[0].getBoundingClientRect().top; })(),
+            /*
+              The rail's pitch, block to block: a line is the block that holds it (the view name's and the mood's list
+              item, the untagged line's paragraph, ASK's and SURPRISE ME's wrapper), each on the rail's own line. Inline
+              controls sit at different offsets inside their blocks, so measuring them would read half-leadings as pitch.
+            */
+            viewNames: (() => { const tops = Array.from(rail?.querySelectorAll('[data-view-name]') ?? []).map((li) => li.getBoundingClientRect().top); return tops.length < 2 ? null : (tops[1] - tops[0]); })(),
+            moods: (() => { const tops = Array.from(control?.querySelectorAll('[data-moods] > li') ?? []).map((li) => li.getBoundingClientRect().top); return tops.length < 2 ? null : tops[1] - tops[0]; })(),
+            /* §P.6's untagged line, beneath the moods, on the rail's pitch too (157c); absent with every record tagged. */
+            line: (() => { const l = control?.querySelector('[data-untagged]'); const lis = Array.from(control?.querySelectorAll('[data-moods] > li') ?? []); const last = lis[lis.length - 1]; return l && last ? l.getBoundingClientRect().top - last.getBoundingClientRect().top : null; })(),
+            /* ASK's block against the block above it, the untagged line where drawn, else the last mood's item: §P.5's "in the rail they take §W's one pitch with the moods". */
+            ask: (() => { const a = control?.querySelector('button[aria-disabled]:not([data-mood])')?.parentElement ?? null; const lis = Array.from(control?.querySelectorAll('[data-moods] > li') ?? []); const above = control?.querySelector('[data-untagged]') ?? lis[lis.length - 1] ?? null; return a && above ? a.getBoundingClientRect().top - above.getBoundingClientRect().top : null; })(),
+            surpriseFromAsk: (() => { const bs = Array.from(control?.querySelectorAll('button:not([data-mood])') ?? []).map((b) => b.parentElement ?? b); return bs.length < 2 ? null : bs[1].getBoundingClientRect().top - bs[0].getBoundingClientRect().top; })(),
             surprise: box(control?.querySelector('button:not([data-mood])') ?? null)?.height ?? null,
             add: box(add)?.height ?? null,
           },
@@ -352,7 +359,7 @@ test.describe('§P.5: the control’s fit in the rail as a column, measured', ()
       const free = m.control.height - Math.max(0, over);
       test.info().annotations.push({
         type: `fit at ${width}×${height}`,
-        description: `rail ${m.rail.width} wide, ${inner.toFixed(1)} inside its insets; the widest mood ${widest.toFixed(1)}; the moods in ${m.rows} rows at a ${m.pitches.moods?.toFixed(1) ?? '?'} pitch (the view names' ${m.pitches.viewNames?.toFixed(1) ?? '?'}; SURPRISE ME ${m.pitches.surprise?.toFixed(1) ?? '?'} tall; ADD RECORD ${m.pitches.add?.toFixed(1) ?? '?'}); the control ${m.control.height.toFixed(1)} tall, from ${m.control.top.toFixed(1)} (the last view name's foot ${m.lastView.bottom.toFixed(1)}); ADD RECORD at ${m.add.top.toFixed(1)} to ${m.add.bottom.toFixed(1)} in a ${m.window.height} window, ${over > 0 ? `OVER by ${over.toFixed(1)}: the control may be ${free.toFixed(1)} tall here` : `in view with ${(-over).toFixed(1)} to spare`}; the page ${m.scrollHeight} tall`,
+        description: `rail ${m.rail.width} wide, ${inner.toFixed(1)} inside its insets; the widest mood ${widest.toFixed(1)}; the moods in ${m.rows} rows at a ${m.pitches.moods?.toFixed(1) ?? '?'} pitch (the view names' ${m.pitches.viewNames?.toFixed(1) ?? '?'}; the untagged line ${m.pitches.line?.toFixed(1) ?? 'absent'} after the last mood, ASK ${m.pitches.ask?.toFixed(1) ?? '?'} after the line above; SURPRISE ME ${m.pitches.surprise?.toFixed(1) ?? '?'} tall; ADD RECORD ${m.pitches.add?.toFixed(1) ?? '?'}); the control ${m.control.height.toFixed(1)} tall, from ${m.control.top.toFixed(1)} (the last view name's foot ${m.lastView.bottom.toFixed(1)}); ADD RECORD at ${m.add.top.toFixed(1)} to ${m.add.bottom.toFixed(1)} in a ${m.window.height} window, ${over > 0 ? `OVER by ${over.toFixed(1)}: the control may be ${free.toFixed(1)} tall here` : `in view with ${(-over).toFixed(1)} to spare`}; the page ${m.scrollHeight} tall`,
       });
       test.info().annotations.push({
         type: `past the foot at ${width}×${height}`,
@@ -361,7 +368,8 @@ test.describe('§P.5: the control’s fit in the rail as a column, measured', ()
       expect.soft(widest, 'every mood fits the rail’s width inside its insets').toBeLessThanOrEqual(inner + 0.5);
       /* §P.5 (27 Oct): "the rail's own label pitch, as §W sets it for SHELF, TABLE and GRID": the moods' pitch is the view names', measured, not a figure. */
       expect.soft(m.pitches.moods, `the moods take the view names’ pitch (${m.pitches.viewNames?.toFixed(1)})`).toBeCloseTo(m.pitches.viewNames ?? NaN, 0);
-      expect.soft(m.pitches.ask, `ASK takes the rail’s one pitch after the last mood (${m.pitches.viewNames?.toFixed(1)})`).toBeCloseTo(m.pitches.viewNames ?? NaN, 0);
+      if (m.pitches.line !== null) expect.soft(m.pitches.line, `the untagged line takes the rail’s pitch after the last mood (${m.pitches.viewNames?.toFixed(1)})`).toBeCloseTo(m.pitches.viewNames ?? NaN, 0);
+      expect.soft(m.pitches.ask, `ASK takes the rail’s one pitch after the line above it (${m.pitches.viewNames?.toFixed(1)})`).toBeCloseTo(m.pitches.viewNames ?? NaN, 0);
       expect.soft(m.pitches.surpriseFromAsk, `SURPRISE ME takes it after ASK (${m.pitches.viewNames?.toFixed(1)})`).toBeCloseTo(m.pitches.viewNames ?? NaN, 0);
       /* The fit is withdrawn (`P.5/control-must-fit`); what is ruled is the reach: past the foot the rail runs with the page and ADD RECORD is reached by scrolling. */
       if (over > 0) expect.soft(reach.inView, 'ADD RECORD reached by scrolling to the end').toBe(true);

@@ -30,7 +30,7 @@ const RAIL_LABEL = `${LABEL_TYPE} ${INK} decoration-1 underline-offset-[3px] hov
  * is what the screen shows, and the last-served record is held here, by the
  * page only; the page keys this on its address, so a navigation clears it.
  */
-export function PickControl({ ruled = false, pool, answers = 'cell' }: {
+export function PickControl({ ruled = false, pool, answers = 'cell', inert = [], untagged = 0 }: {
   /** §P.5: on the table and the grid it stands "after a hairline", which separates it from the filters it sits with. The rail has no rule above it. */
   ruled?: boolean;
   pool: readonly PickRecord[];
@@ -41,6 +41,10 @@ export function PickControl({ ruled = false, pool, answers = 'cell' }: {
    * answer is the cell (§P.1, §P.4).
    */
   answers?: 'cell' | 'wall';
+  /** §P.6: the moods no tagged record carries, over the whole collection; drawn, unavailable, a Tab stop. */
+  inert?: readonly string[];
+  /** §P.6: how many records are not yet tagged, over the whole collection; the line is drawn while it is more than none. */
+  untagged?: number;
 }) {
   /*
     §P.2: "The moods toggle, and a separate ASK asks." Held by the page only:
@@ -48,10 +52,16 @@ export function PickControl({ ruled = false, pool, answers = 'cell' }: {
     the shelf keyed without the zoom's place, so a zoom keeps them.
   */
   const [selected, setSelected] = useState<readonly string[]>([]);
-  const inert = selected.length === 0;
+  const askInert = selected.length === 0;
   /* §P.6: an inert ASK's reason, as its description, for a reader who cannot see that no mood is in ink. */
   const reasonId = useId();
-  const toggle = (m: string) => setSelected((current) => (current.includes(m) ? current.filter((x) => x !== m) : [...current, m]));
+  const toggle = (m: string) => {
+    /* §P.6: an inert mood "cannot be selected". */
+    if (inert.includes(m)) return;
+    setSelected((current) => (current.includes(m) ? current.filter((x) => x !== m) : [...current, m]));
+  };
+  /* §P.6: "there is no pull and no cell, and the slot says none of these records carries the moods." Cleared by the next answer, and with the view. */
+  const [none, setNone] = useState(false);
   /* §P.2's last-served record. Every answer sets it, and on the shelf so does a record pulled by its spine or the arrows; only an answer in a view that cannot pull draws the cell. */
   const [last, setLast] = useState<string | null>(null);
   const [served, setServed] = useState<PickRecord | null>(null);
@@ -74,6 +84,7 @@ export function PickControl({ ruled = false, pool, answers = 'cell' }: {
       channel?.hearViews(() => {
         setServed(null);
         setAgain(false);
+        setNone(false);
       }),
     [channel],
   );
@@ -85,6 +96,7 @@ export function PickControl({ ruled = false, pool, answers = 'cell' }: {
   /* One answer path for ASK and SURPRISE ME: the candidates differ, the draw, the last-served rule and the hosts do not. */
   const serve = (candidates: readonly string[]) => {
     const id = pickFrom(candidates, last, Math.random);
+    setNone(false);
     const answer = answers === 'wall' ? (channel?.ask(id) ?? { did: 'ignore', host: null }) : { did: 'cannot-pull', host: 'here' as const };
     if (answer.did !== 'cannot-pull') {
       /* §P.3: "Where the pick names the record already out, nothing moves", and the slot says so. */
@@ -99,7 +111,15 @@ export function PickControl({ ruled = false, pool, answers = 'cell' }: {
     setServed(pool.find((record) => record.id === id) ?? null);
   };
   /* §P.2: "The ask leans; it does not filter": the tier is the records carrying the most of the selected moods. */
-  const ask = () => serve(topTier(pool, selected));
+  const ask = () => {
+    const tier = topTier(pool, selected);
+    /* The selected moods have records somewhere, since an inert mood cannot be selected; none among what the filters and the search leave. */
+    if (tier.length === 0) {
+      setNone(true);
+      return;
+    }
+    serve(tier);
+  };
   /* §P.2: "SURPRISE ME draws from the whole pool, tagged or not, ignoring the moods and leaving them selected". */
   const surprise = () => serve(pool.map((record) => record.id));
 
@@ -123,6 +143,7 @@ export function PickControl({ ruled = false, pool, answers = 'cell' }: {
       <ul data-moods="" aria-label="Moods" className={answers === 'wall' ? 'flex flex-col gap-[18px]' : 'flex flex-wrap gap-x-[18px]'}>
         {MOODS.map((m) => {
           const on = selected.includes(m);
+          const off = inert.includes(m);
           /* A list item, as the view names are: in the rail its line is the rail's own, which is what sets the pitch; the label inside is the type's. */
           return (
             <li key={m} className="relative">
@@ -130,6 +151,7 @@ export function PickControl({ ruled = false, pool, answers = 'cell' }: {
                 type="button"
                 data-mood={m}
                 aria-pressed={on}
+                aria-disabled={off || undefined}
                 onClick={() => toggle(m)}
                 className={`${LABEL_TYPE} ${answers === 'wall' ? '' : 'inline-flex h-[44px] items-center '}${on ? INK : 'text-[oklch(0.44_0.008_70)]'}`}
               >
@@ -139,6 +161,18 @@ export function PickControl({ ruled = false, pool, answers = 'cell' }: {
           );
         })}
       </ul>
+      {/*
+        §P.6: "While any record is untagged, a line beneath the moods gives how
+        many are not yet tagged, and every inert mood reads under it as
+        possibly waiting. With every record tagged the line is absent." Drawn
+        on load, never in answer to a press, so it moves nothing. 18 above, as
+        the rail's lines are: no ruling gives the figure.
+      */}
+      {untagged > 0 ? (
+        <p data-untagged="" className="relative mt-[18px]">
+          <span className="text-prose">{untagged} not tagged yet.</span>
+        </p>
+      ) : null}
       {/*
         §P.5: ASK and SURPRISE ME are §9.3 labels; "ASK is inert while no mood
         is selected." §P.6: "An inert mood stays a Tab stop, and so does ASK
@@ -155,7 +189,7 @@ export function PickControl({ ruled = false, pool, answers = 'cell' }: {
       {answers === 'wall' ? (
         <>
           <div className="relative mt-[18px]">
-            <button type="button" className={RAIL_LABEL} aria-disabled={inert} aria-describedby={inert ? reasonId : undefined} onClick={() => { if (!inert) ask(); }}>
+            <button type="button" className={RAIL_LABEL} aria-disabled={askInert} aria-describedby={askInert ? reasonId : undefined} onClick={() => { if (!askInert) ask(); }}>
               Ask
             </button>
           </div>
@@ -168,7 +202,7 @@ export function PickControl({ ruled = false, pool, answers = 'cell' }: {
         </>
       ) : (
         <>
-          <button type="button" className={CONTROL_LABEL} aria-disabled={inert} aria-describedby={inert ? reasonId : undefined} onClick={() => { if (!inert) ask(); }}>
+          <button type="button" className={CONTROL_LABEL} aria-disabled={askInert} aria-describedby={askInert ? reasonId : undefined} onClick={() => { if (!askInert) ask(); }}>
             Ask
           </button>
           <span id={reasonId} className="sr-only">Choose a mood first.</span>
@@ -179,7 +213,7 @@ export function PickControl({ ruled = false, pool, answers = 'cell' }: {
       )}
       {/* §P.6's message, "as proposed there" (§P.4). */}
       <p role="status" data-pick-slot="" className="min-h-[1lh] text-prose">
-        {again ? 'The only one.' : ''}
+        {again ? 'The only one.' : none ? 'None among these.' : ''}
       </p>
       {/* §P.4: "drawn at §T.5's 160, the least a cover is, and 24 below the slot." */}
       {served !== null && host === 'here' && (

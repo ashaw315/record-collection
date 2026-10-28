@@ -116,18 +116,115 @@ test('a one-record tier re-serves it, the cell does not change, and the slot say
   }
 });
 
-test('a record carrying none of the selected moods is never drawn: a mood nothing carries answers nothing', async ({ page }) => {
+/*
+  §P.6: "A mood is inert when no tagged record carries it… Inertness is
+  counted over the whole collection, not over what a filter leaves, so a
+  filter never changes the control." No E2E fixture tags "zone out", so it is
+  inert here; "showing off" is tagged on a second artist, so it is selectable
+  and, under a filter to the first, carried by nothing in the pool: §P.6's
+  "the selected moods have records but none among what the filters and the
+  search leave", and the slot says "None among these."
+*/
+async function second(page: Page): Promise<string> {
+  const suffix = `pm157b${Date.now().toString(36)}${Math.floor(Math.random() * 1e4)}`;
+  const artist = (await (await page.request.post('/api/artists', { data: { name: `Other-${suffix}` } })).json()) as { id: string };
+  trackArtist(artist.id);
+  await seedRecords(artist.id, 'Other', suffix, 1);
+  const listed = (await (await page.request.get(`/api/records?artistId=${artist.id}&pageSize=100`)).json()) as { data: Array<{ id: string }> };
+  await getTestDb().execute(sql`INSERT INTO record_moods (record_id, moods, tagged_at, tagged_by_model) VALUES (${listed.data[0].id}, ARRAY['showing off']::text[], now(), 'test')`);
+  return artist.id;
+}
+const line = (page: Page) => control(page).locator('[data-untagged]');
+
+test('an inert mood cannot be selected and leaves ASK inert, and it is still a Tab stop', async ({ page }) => {
   const { artistId } = await fixture(page);
   try {
     await openGrid(page, artistId);
-    await mood(page, 'jacked up').click();
-    await ask(page).click();
-    await page.waitForTimeout(500);
-    expect(await cellTitle(page)).toBeNull();
+    await expect(mood(page, 'zone out')).toHaveAttribute('aria-disabled', 'true');
+    await mood(page, 'zone out').click({ force: true });
+    await expect(mood(page, 'zone out')).toHaveAttribute('aria-pressed', 'false');
+    await expect(ask(page)).toBeDisabled();
+    await mood(page, 'zone out').focus();
+    expect(await page.evaluate(() => document.activeElement?.getAttribute('data-mood')), 'focusable').toBe('zone out');
   } finally {
     await removeRecordsFor(artistId);
   }
 });
+
+test('the untagged line counts the whole collection on load, and a filter does not change it', async ({ page }) => {
+  const { artistId } = await fixture(page);
+  try {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/?view=grid');
+    await page.locator('[data-collection-filters][data-hydrated="true"]').first().waitFor({ timeout: 30_000 });
+    const whole = (await line(page).textContent()) ?? '';
+    expect(whole, 'the seventeen are untagged, so the line is drawn').toMatch(/^\d+ not tagged yet\.$/);
+    const n = Number(/^(\d+)/.exec(whole)?.[1]);
+    expect(n).toBeGreaterThanOrEqual(17);
+    await openGrid(page, artistId);
+    expect(await line(page).textContent(), 'every record in this filter is tagged, and the line still counts the collection').toBe(whole);
+  } finally {
+    await removeRecordsFor(artistId);
+  }
+});
+
+test('where the selected mood has records but none in the pool, there is no cell and the slot says "None among these."', async ({ page }) => {
+  const { artistId } = await fixture(page);
+  const other = await second(page);
+  try {
+    await openGrid(page, artistId);
+    await expect(mood(page, 'showing off'), 'selectable: a record elsewhere carries it').not.toHaveAttribute('aria-disabled', 'true');
+    await mood(page, 'showing off').click();
+    await ask(page).click();
+    await expect(control(page).locator('[data-pick-slot]')).toHaveText('None among these.');
+    expect(await cellTitle(page)).toBeNull();
+    /* The next answer clears it. */
+    await mood(page, 'showing off').click();
+    await mood(page, 'dancing').click();
+    await ask(page).click();
+    await expect.poll(() => cellTitle(page), { timeout: 10_000 }).not.toBeNull();
+    await expect(control(page).locator('[data-pick-slot]')).toHaveText('');
+  } finally {
+    await removeRecordsFor(artistId);
+    await removeRecordsFor(other);
+  }
+});
+
+/* §P.6: "The slot's messages are written to fit it… The step checks each at the rail's width and at 320 and 1280." One line, nothing cut. */
+for (const [width, query] of [[1274, ''], [320, '?view=grid'], [1280, '?view=grid']] as const) {
+  test(`at ${width}: "The only one.", "None among these." and the untagged line each take one line, nothing cut`, async ({ page }) => {
+    const { artistId } = await fixture(page);
+    const other = await second(page);
+    try {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto(`/${query}${query === '' ? '?' : '&'}artistId=${artistId}`);
+      if (query === '') await wallMeasured(page);
+      else await page.locator('[data-collection-filters][data-hydrated="true"]').first().waitFor({ timeout: 30_000 });
+      const fits = (sel: string) =>
+        page.evaluate((s) => {
+          const el = Array.from(document.querySelectorAll<HTMLElement>(s)).find((e) => e.getClientRects().length > 0);
+          if (!el) return null;
+          const lh = parseFloat(getComputedStyle(el).lineHeight);
+          return { text: el.textContent ?? '', lines: Math.round(el.getBoundingClientRect().height / lh), cut: el.scrollWidth > el.clientWidth + 0.5 };
+        }, sel);
+      expect(await fits('[data-pick-control] [data-untagged]'), 'the untagged line').toMatchObject({ lines: 1, cut: false });
+      await mood(page, 'showing off').click();
+      await ask(page).click();
+      await expect(control(page).locator('[data-pick-slot]')).toHaveText('None among these.');
+      expect(await fits('[data-pick-control] [data-pick-slot]'), '"None among these."').toMatchObject({ lines: 1, cut: false });
+      await mood(page, 'showing off').click();
+      await mood(page, 'dancing').click();
+      await ask(page).click();
+      if (query === '') await expect.poll(() => page.locator('[data-wall-container]').getAttribute('data-phase'), { timeout: 30_000 }).toBe('landed');
+      await ask(page).click();
+      await expect(control(page).locator('[data-pick-slot]')).toHaveText('The only one.');
+      expect(await fits('[data-pick-control] [data-pick-slot]'), '"The only one."').toMatchObject({ lines: 1, cut: false });
+    } finally {
+      await removeRecordsFor(artistId);
+      await removeRecordsFor(other);
+    }
+  });
+}
 
 test('SURPRISE ME ignores the moods and leaves them selected, under the same last-served rule', async ({ page }) => {
   const { artistId } = await fixture(page);

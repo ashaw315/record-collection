@@ -135,3 +135,33 @@ describe('ASK and SURPRISE ME on the rail’s pitch (§P.5)', () => {
     for (const name of ['Ask', 'Surprise me']) expect(new RegExp(`<button[^>]*>${name}<\\/button>`).exec(html)?.[0] ?? '', name).toContain('h-[44px]');
   });
 });
+
+/*
+  Step 157c, §P.6: "A mood is inert when no tagged record carries it. It stays
+  drawn at its size in the label colour, cannot be selected, and is named as
+  unavailable to assistive technology." It stays a Tab stop. "While any record
+  is untagged, a line beneath the moods gives how many are not yet tagged…
+  With every record tagged the line is absent." Both are facts about the
+  whole collection, handed to the control by the page.
+*/
+describe('the states (§P.6, step 157c)', () => {
+  const withStates = renderToStaticMarkup(<PickControl pool={POOL} inert={['zone out']} untagged={4} />);
+  const tagOf = (h: string, mood: string) => new RegExp(`<button[^>]*data-mood="${mood}"[^>]*>`).exec(h)?.[0] ?? '';
+
+  it('draws an inert mood in the label colour, unavailable and not pressed, still in the tab order', () => {
+    const inert = tagOf(withStates, 'zone out');
+    expect(inert).toContain('aria-disabled="true"');
+    expect(inert).toContain('aria-pressed="false"');
+    expect(inert).toContain(LABEL_COLOUR);
+    expect(inert, 'a Tab stop: never disabled').not.toMatch(/\sdisabled(=""|\s|>)/);
+    expect(tagOf(withStates, 'sleepy'), 'a carried mood is not').not.toContain('aria-disabled');
+  });
+
+  it('draws the untagged line beneath the moods while any record is untagged, and not with every record tagged', () => {
+    const line = /<p[^>]*data-untagged=""[^>]*>(?:<span[^>]*>)?([^<]*)/.exec(withStates);
+    expect(line?.[1]).toBe('4 not tagged yet.');
+    expect(withStates.indexOf('data-untagged'), 'beneath the moods').toBeGreaterThan(withStates.lastIndexOf('data-mood='));
+    expect(withStates.indexOf('data-untagged'), 'above ASK').toBeLessThan(withStates.indexOf('>Ask<'));
+    expect(renderToStaticMarkup(<PickControl pool={POOL} inert={[]} untagged={0} />)).not.toContain('data-untagged');
+  });
+});

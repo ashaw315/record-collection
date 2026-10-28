@@ -49120,3 +49120,23 @@ overflow against a whole-pixel scroll (tolerance 1), the far drawing's ink
 read in document coordinates (reaching a control below the fold scrolls the
 page), and the drawing's before/after compared to a tenth (floats differed
 in the seventh decimal).
+
+## Step 157c: the states (27 Oct, evening)
+
+Inert moods (none in the whole collection carries them: `carriedMoods`),
+aria-disabled in the label colour, unselectable, still a stop; the untagged
+line beneath the moods on load, `untaggedCount` over the whole collection,
+and a filter does not change it; "None among these." where the selected
+moods have records but none in the pool, cleared by the next answer and
+with the view. Each message one line, nothing cut, at 1274, 320 and 1280.
+Staged: an inert mood made selectable, the line counting the pool, and the
+empty tier saying nothing each fail the test aimed at them. The line's 18
+above is unruled (the rail's lines'). In the E2E database no fixture tags
+"zone out" or "showing off", which the inertness tests rely on.
+
+**Step 156 has no code-region entry**: the handoff's "Phase 0, surprise me"
+bullet was never numbered and has no Done body. 157's entry is the first
+since 155. 156 is owed its body when 4b lands or is withdrawn.
+
+**For Adam:** the 640 captures, `e2e/sheet/rail-157.sheet.ts`, on the real
+collection, for §P.5's overflow line.
