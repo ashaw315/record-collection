@@ -55,13 +55,38 @@ describe('exportText', () => {
 });
 
 describe('the script', () => {
+  /*
+    DESIGN-RULES is the one file of Design's with neither an index checking it nor a receiving copy
+    Design can read (Design, 28 Oct), so the export carries it beside the handoff: HEAD's text under
+    the same note. Fails against the export of the handoff alone: one file written, not two.
+  */
+  it('writes the committed DESIGN-RULES beside the handoff, under the same note, named by the date and the commit', () => {
+    const out = mkdtempSync(join(tmpdir(), 'export-rules-'));
+    try {
+      const sha = execFileSync('git', ['rev-parse', '--short', 'HEAD'], { encoding: 'utf8' }).trim();
+      const stdout = execFileSync('node', [SCRIPT, '--out', out], { encoding: 'utf8' });
+      const files = readdirSync(out).sort();
+      expect(files).toHaveLength(2);
+      const rules = files.find((f) => f.startsWith('DESIGN-RULES'));
+      expect(rules).toBe(`DESIGN-RULES — export for Design, ${new Date().toISOString().slice(0, 10)} at ${sha}.md`);
+      const written = readFileSync(join(out, rules ?? ''), 'utf8');
+      const committed = execFileSync('git', ['show', 'HEAD:docs/design/DESIGN-RULES.md'], { encoding: 'utf8' });
+      expect(written.endsWith(committed)).toBe(true);
+      expect(written.split('\n')[0]).toMatch(/DESIGN-RULES\.md as committed at/);
+      expect(stdout).toContain(rules ?? 'DESIGN-RULES');
+    } finally {
+      rmSync(out, { recursive: true, force: true });
+    }
+  });
+
   /* Fails against the committed state before the script existed: no file is written. */
   it('writes the committed handoff with every code-region block into the directory asked for, and says so', () => {
     const out = mkdtempSync(join(tmpdir(), 'export-handoff-'));
     try {
       const sha = execFileSync('git', ['rev-parse', '--short', 'HEAD'], { encoding: 'utf8' }).trim();
       const stdout = execFileSync('node', [SCRIPT, '--out', out], { encoding: 'utf8' });
-      const files = readdirSync(out);
+      /* The handoff's file; DESIGN-RULES stands beside it (the test above). */
+      const files = readdirSync(out).filter((f) => f.startsWith('HANDOFF'));
       expect(files).toHaveLength(1);
       expect(files[0]).toContain(sha);
       const written = readFileSync(join(out, files[0]), 'utf8');

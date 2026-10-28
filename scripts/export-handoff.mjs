@@ -26,6 +26,7 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 const HANDOFF = 'docs/design/HANDOFF-wall-and-pull.md';
+const RULES = 'docs/design/DESIGN-RULES.md';
 
 /** The export's name: the date and the commit, so two exports never overwrite each other and a relay names its generation. */
 export function fileName(date, sha) {
@@ -73,4 +74,13 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   const path = join(outDir, fileName(date, sha));
   writeFileSync(path, text);
   process.stdout.write(`${path}\n${blocks.length} of ${blocks.length} code-region blocks carried, ${committed.split('\n').length} lines, at ${sha}${treeDiffers ? '; the working tree differs from HEAD and the export is HEAD' : ''}\n`);
+  /*
+    DESIGN-RULES beside it (Design, 28 Oct): the one file of Design's with
+    neither an index checking it nor a receiving copy Design can read, so
+    it drifts the same way. HEAD's text under the same note.
+  */
+  const rules = git('show', `HEAD:${RULES}`);
+  const rulesPath = join(outDir, `DESIGN-RULES — export for Design, ${date} at ${sha}.md`);
+  writeFileSync(rulesPath, `Export note, not part of the file: this is the repository's DESIGN-RULES.md as committed at ${sha} on ${date}. It is read-only for Design: changes come back as change files anchored on this text, and this file never comes back whole.\n\n${rules}`);
+  process.stdout.write(`${rulesPath}\n`);
 }
