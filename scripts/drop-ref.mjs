@@ -24,7 +24,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { diffProse } from './export-diff.mjs';
+import { blocksOf, diffProse, sentencesOf } from './export-diff.mjs';
 
 const DIR = 'docs/design';
 const PREFIX = 'refs/drops/';
@@ -105,6 +105,66 @@ function report(from, to) {
   return lines;
 }
 
+/*
+  A section's governs row follows its target, or the drop says it stands
+  (the coordinator, 28 Oct). Thirteen of 59 rows were stale, six because a
+  withdrawal moved a ruling between sections and seven because a ruling was
+  added to a section whose row never mentioned it; both happen when a change
+  file is written, so this reads at arrival. For every §-section whose
+  sentences differ between the last drop and this one, a change file in the
+  drop (a .md that is not the handoff, WITHDRAWALS or DESIGN-RULES) must edit
+  the row ("§T.2, description:" or "§T.2, title:") or say it stands ("§T.2"
+  in a sentence with "row stands", "row unchanged" or "no change"). A
+  section unaddressed is named and the run exits 1, which stops the intake.
+*/
+const OWN_FILES = new Set(['HANDOFF-wall-and-pull.md', 'WITHDRAWALS.md', 'DESIGN-RULES.md']);
+
+function sentencesBySection(html) {
+  const out = new Map();
+  for (const { section, block } of blocksOf(html)) {
+    const id = /^([A-Z]\.\d+)\b/.exec(section)?.[1];
+    if (id === undefined) continue;
+    out.set(id, [...(out.get(id) ?? []), ...sentencesOf(block)]);
+  }
+  return out;
+}
+
+export function changedSections(before, after) {
+  const [was, now] = [sentencesBySection(before), sentencesBySection(after)];
+  const ids = new Set([...was.keys(), ...now.keys()]);
+  return [...ids].filter((id) => JSON.stringify([...(was.get(id) ?? [])].sort()) !== JSON.stringify([...(now.get(id) ?? [])].sort())).sort();
+}
+
+/** How a change file addresses a section's row: 'edited', 'stands' or null. */
+export function rowAddressed(changeFile, id) {
+  const escaped = id.replace('.', '\\.');
+  if (new RegExp(`§${escaped}, (description|title):`).test(changeFile)) return 'edited';
+  const stands = sentencesOf(changeFile).some((s) => new RegExp(`§${escaped}(?![\\d.])`).test(s) && /\brow (stands|unchanged)\b|\bno change\b/i.test(s));
+  return stands ? 'stands' : null;
+}
+
+function governs(from, to) {
+  const changes = git(['diff', '--name-status', '--no-renames', from, to]).split('\n').filter(Boolean).map((c) => c.split('\t'));
+  const changeFiles = changes
+    .filter(([status, path]) => status !== 'D' && path.endsWith('.md') && !OWN_FILES.has(path.split('/').pop()))
+    .map(([, path]) => ({ path, text: git(['show', `${to}:${path}`]) }));
+  const lines = [];
+  let unaddressed = 0;
+  for (const [status, path] of changes) {
+    if (status !== 'M' || !path.endsWith('.dc.html')) continue;
+    for (const id of changedSections(git(['show', `${from}:${path}`]), git(['show', `${to}:${path}`]))) {
+      const found = changeFiles.map((f) => ({ ...f, how: rowAddressed(f.text, id) })).find((f) => f.how !== null);
+      if (found === undefined) {
+        unaddressed += 1;
+        lines.push(`  governs: §${id} changed in ${path}, and no change file in the drop edits its governs row or says it stands`);
+      } else {
+        lines.push(`  governs: §${id} changed in ${path}; its row is ${found.how === 'edited' ? 'edited' : 'said to stand'} in ${found.path}`);
+      }
+    }
+  }
+  return { lines, unaddressed };
+}
+
 function main() {
   const existing = git(['for-each-ref', '--format=%(refname)', PREFIX]).split('\n').filter(Boolean).sort();
   const previous = existing.at(-1);
@@ -130,6 +190,12 @@ function main() {
   }
   const lines = report(previous, name);
   process.stdout.write(`${captured} It differs from ${previous}, captured at ${capturedAt(previous)}, in ${lines.filter((l) => /^ {2}\S/.test(l)).length} file(s):\n${lines.join('\n')}\n`);
+  const rows = governs(previous, name);
+  if (rows.lines.length > 0) process.stdout.write(`${rows.lines.join('\n')}\n`);
+  if (rows.unaddressed > 0) {
+    process.stdout.write(`${rows.unaddressed} changed section(s) with the governs row unaddressed: the drop ref stands, and the intake waits for a change file that edits the row or says it stands.\n`);
+    return 1;
+  }
   return 0;
 }
 

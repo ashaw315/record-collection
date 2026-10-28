@@ -49426,3 +49426,44 @@ and no report, then running the import again, which skips them as already
 held and says so. A known gap, not a surprise. If it is ever built, the
 row is written at the run's start with the report filled at its end, and
 the exemption above stops holding, since the row is then updated once.
+
+## 28 Oct, afternoon: a changed section's governs row is checked at arrival
+
+Thirteen of the handoff's 59 governs rows were stale (Design's audit from
+the export): six because a withdrawal moved a ruling between sections,
+seven because a ruling was added to a section whose row never mentioned
+it. Both happen when a change file is written, so the check is mechanical
+and lives in `drop-ref.mjs`, the arrival instrument: for every §-section
+whose sentences differ between the last drop and this one, a change file
+in the drop must edit the row (`§T.2, description:` or `§T.2, title:`) or
+say it stands (`§T.2` in a sentence with "row stands", "row unchanged" or
+"no change"). A section unaddressed is named and drop-ref exits 1, which
+stops the intake; the ref is still recorded. Not a convention: the drop
+cannot be taken in until the row is spoken for. The rule's other half, that
+Design's change files carry the row or the sentence, is for DESIGN-RULES
+(Design's file). Staged in `drop-ref.test.ts`: a changed section with no
+change file exits 1 naming it; an edited row and a "row stands" sentence
+each pass; a second drop that reverts one section while addressing another
+is refused for the reverted one, which the first draft of the test did by
+accident and the check caught.
+
+## 28 Oct, 15:10: nothing runs beside a gate (the coordinator), and a signal removed
+
+**The rule, adopted.** While a gate runs, the machine runs the gate and
+nothing else: no commit chains, no e2e runs, no probes, no captures. The
+day's cost of running beside one: the first flake gate ran at load 34 to
+53 under my e2e runs, which made the wall-route flake look explainable and
+got it dismissed; the morning's chromium half stretched to 66 minutes; two
+commits were refused by 5-second timeouts under load; and the 15:00 mobile
+half ran at load 79 beside a four-commit chain. A gate whose timings and
+flake counts cannot be compared with the last one is a gate that has lost
+most of its purpose. The chain was stopped between its first and second
+commits; the rest waits for the gate.
+
+**A signal removed makes a problem quieter, not smaller (a family member).**
+The two timeout tests were fixed to survive load, and a commit chain was
+started beside the gate in the next breath. The fix removed the symptom
+that had been saying "you are running beside a gate", and the cause became
+invisible. Same family as the gate's judge reading its own verdict and the
+capture's resting pointer: an instrument changed so that it stops reporting
+the thing it was reporting.

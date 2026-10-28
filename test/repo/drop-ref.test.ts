@@ -218,3 +218,95 @@ describe('drop-ref refuses the committed state, and only that', () => {
     }
   });
 });
+
+/**
+ * **A section's governs row follows its target, or the drop says it stands
+ * (the coordinator, 28 Oct).** Thirteen of 59 governs rows were stale: six
+ * because a withdrawal moved a ruling between sections, seven because a
+ * ruling was added to a section whose row never mentioned it. Both happen at
+ * the moment a change file is written, so the check is at arrival: for
+ * every section whose sentences differ between this drop and the last, a
+ * change file in the drop must edit that section's governs row (`§T.2,
+ * description:` or `§T.2, title:`) or say the row stands (`§T.2` in a
+ * sentence with "row stands", "row unchanged" or "no change"). Otherwise
+ * drop-ref names the section and exits 1, which stops the intake.
+ */
+describe('drop-ref: a changed section’s governs row is edited or said to stand', () => {
+  const TARGET = '<p style="font-size:11px;text-transform:uppercase">T.1 · The first</p><p>The first rules its thing.</p><p style="font-size:11px;text-transform:uppercase">T.2 · The second</p><p>The second rules its own thing.</p>\n';
+  const sectioned = () => {
+    const r = repo();
+    r.write('Target.dc.html', TARGET);
+    r.git('add', '--force', 'docs/design/Target.dc.html');
+    r.git('commit', '-q', '-m', 'sectioned');
+    r.run();
+    return r;
+  };
+
+  /* Fails against a drop-ref that reports sentences only: the row's drift is invisible until an audit. */
+  it('exits 1 naming the section when a target’s section changed and no change file addresses its row', () => {
+    const r = sectioned();
+    try {
+      r.write('Target.dc.html', TARGET.replace('The second rules its own thing.', 'The second rules its own thing, and a new thing besides.'));
+      const { status, output } = r.attempt();
+      expect(status).toBe(1);
+      expect(output).toMatch(/governs: §T\.2 changed in docs\/design\/Target\.dc\.html, and no change file in the drop edits its governs row or says it stands/);
+      expect(output).not.toMatch(/governs: §T\.1 /);
+    } finally {
+      r.done();
+    }
+  });
+
+  /* Fails against a check that reads the row's edit only: Design's "no change needed" is the other half of the rule. */
+  it('passes when a change file in the drop edits the row, or says it stands', () => {
+    const r = sectioned();
+    try {
+      r.write('Target.dc.html', TARGET.replace('The second rules its own thing.', 'The second rules its own thing, and a new thing besides.'));
+      r.write('Rows - for Code to apply.md', '## The table and grid\n\n- **§T.2, description:** The second, and its new thing.\n');
+      const edited = r.attempt();
+      expect(edited.status, edited.output).toBe(0);
+      expect(edited.output).toMatch(/governs: §T\.2 changed in docs\/design\/Target\.dc\.html; its row is edited in docs\/design\/Rows - for Code to apply\.md/);
+
+      /* On top of the second's change, which drop 02 holds: only §T.1 differs between 02 and 03. */
+      r.write('Target.dc.html', TARGET.replace('The second rules its own thing.', 'The second rules its own thing, and a new thing besides.').replace('The first rules its thing.', 'The first rules its thing, reworded.'));
+      r.write('Rows - for Code to apply.md', 'The §T.1 governs row stands: the rewording changes nothing it names.\n');
+      const stands = r.attempt();
+      expect(stands.status, stands.output).toBe(0);
+      expect(stands.output).toMatch(/governs: §T\.1 changed in docs\/design\/Target\.dc\.html; its row is said to stand in docs\/design\/Rows - for Code to apply\.md/);
+    } finally {
+      r.done();
+    }
+  });
+});
+
+/*
+  The coordinator, 28 Oct: the staleness the check has to catch is a
+  withdrawal in §T.2 that withdraws part of §T.1, where the row needing a
+  pointer is §T.1's. That holds because the withdrawal sentence is filed in
+  the section where the claim stood (the §T.1 re-filing, and what index
+  assertion 7 requires of every entry), so §T.1's sentences change and the
+  check names §T.1 as well as §T.2. Fails against a check that read only the
+  section carrying the new ruling: §T.1 would go unnamed, the record page's
+  26 stale rows exactly.
+*/
+describe('drop-ref: a withdrawal filed where the claim stood names that section’s row too', () => {
+  it('names §T.1 when §T.2’s new ruling withdraws part of §T.1 and the withdrawal sentence is filed in §T.1', () => {
+    const r = repo();
+    try {
+      const target = '<p style="font-size:11px;text-transform:uppercase">T.1 · The first</p><p>The first rules its thing. The first also rules a second thing.</p><p style="font-size:11px;text-transform:uppercase">T.2 · The second</p><p>The second rules its own thing.</p>\n';
+      r.write('Target.dc.html', target);
+      r.git('add', '--force', 'docs/design/Target.dc.html');
+      r.git('commit', '-q', '-m', 'sectioned');
+      r.run();
+      r.write('Target.dc.html', target
+        .replace('The first also rules a second thing.', 'Withdrawn by §T.2: the first also rules a second thing.')
+        .replace('The second rules its own thing.', 'The second rules its own thing, and the second thing the first ruled.'));
+      r.write('Rows - for Code to apply.md', '- **§T.2, description:** The second, and the second thing.\n');
+      const { status, output } = r.attempt();
+      expect(status).toBe(1);
+      expect(output).toMatch(/governs: §T\.1 changed in docs\/design\/Target\.dc\.html, and no change file in the drop edits its governs row or says it stands/);
+      expect(output).toMatch(/governs: §T\.2 changed in docs\/design\/Target\.dc\.html; its row is edited in/);
+    } finally {
+      r.done();
+    }
+  });
+});

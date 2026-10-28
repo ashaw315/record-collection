@@ -114,7 +114,7 @@ export function diffProse(before, after) {
  * lead is a block that opens with `<strong>` or `**`. A block with neither
  * inherits the lead before it.
  */
-function blocksOf(source) {
+export function blocksOf(source) {
   const isHtml = /<p\b/i.test(source);
   const raw = isHtml ? source.split(/(?<=<\/p>)/i) : source.split(/\n[ \t]*\n/);
   const out = [];
