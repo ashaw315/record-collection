@@ -24,7 +24,6 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { readRegion } from './apply-code-region.mjs';
 
 const HANDOFF = 'docs/design/HANDOFF-wall-and-pull.md';
 
@@ -59,7 +58,13 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   const committed = git('show', `HEAD:${HANDOFF}`);
   const treeDiffers = existsSync(HANDOFF) && readFileSync(HANDOFF, 'utf8') !== committed;
   const date = new Date().toISOString().slice(0, 10);
-  const blocks = readRegion();
+  /*
+    HEAD's region, as HEAD's handoff: a step entered in the tree and not yet
+    committed is not in the handoff HEAD holds either, and reading the tree's
+    region against HEAD's handoff refused every commit that adds a step
+    (found by the first such commit, step 158).
+  */
+  const blocks = JSON.parse(git('show', 'HEAD:scripts/handoff-code-region.json'));
   const { text, missing } = exportText(committed, blocks, { sha, date, treeDiffers });
   if (missing.length > 0) {
     process.stderr.write(`export-handoff: NOT exported. HEAD's handoff lacks ${missing.length} code-region block(s): ${missing.join(', ')}. Run node scripts/apply-code-region.mjs and commit first.\n`);

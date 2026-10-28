@@ -49301,3 +49301,41 @@ not acted on (CLAUDE.md §4):
   are still there and were what the inventory's "cache holds it" column
   read. A backfill from the cache would read the stale rows directly or
   refetch 22 releases.
+
+## 28 Oct, morning: the export, step 158, and what the commit path cannot carry
+
+**Design's handoff copy drifts by rule, so the export is one-directional.**
+Design never receives a current handoff under the change-file rule, only
+sends changes to one, and on 28 Oct it lacked step 133's body (a code-region
+block, which Design's source has never held) and ruled §T.6's placement of
+the import against §T.6's own Manage layout. Step 133 puts nothing else
+between the heading and the section names, so the ruling stood. The fix
+is `scripts/export-handoff.mjs`: HEAD's handoff with every code-region
+block, headed by a note naming the commit and the date and saying it comes
+back as change files and never whole, written to Downloads for Adam to
+relay. The first export is 3cd5a42. DESIGN-RULES is Design's file; the
+rule's other half, that Design reads an export and does not keep its own
+copy as the handoff, is for Design to write.
+
+**Step 158 (unit E) built.** Observations, not acted on:
+
+- **On Adam's nine the blank line reads 9 of 9.** `mapCollectionItem`
+  lists every format text under `color_variant` as "the text that would
+  have been read" (unit B's rule), so Parquet Courts' "Gatefold, 180gm",
+  whose weight was taken, is listed as colour not parsed, and only ATLiens
+  (no text, year 0) and Cindy Lee (no text, 3xLP) are listed for another
+  reason. The line says what the report says; whether a text that gave its
+  weight should be listed is Adam's rule to revise, in unit B.
+- **The report does not survive leaving Manage**, measured at 1280 and 390:
+  it is the section's state. §T.6 leaves it unruled; reported.
+- **A failed item is not one of the three lines.** Built as the section's
+  alert beneath them (§9: reported plainly), for Design to place or keep.
+- **`commit-checked.sh` cannot carry a new capture.** Its intent-add puts
+  the capture in the index, and `captures-unchanged` reads `git diff HEAD`,
+  which lists an intent-added file as changed: the check refused 0ad4445's
+  first attempt on `docs/captures/import-158/import-158.md`. Step 150's
+  captures were "committed alone" with plain git for the same reason, and
+  36bebc1 follows that. The two guards disagree about what an added capture
+  is; neither is wrong, and a capture is a picture the suite does not read.
+- The dev server logged "The destination stream closed early" once during
+  the e2e run, on the held import request; the tests passed. Not chased.

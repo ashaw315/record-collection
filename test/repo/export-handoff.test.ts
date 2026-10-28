@@ -4,7 +4,6 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { exportText, fileName } from '../../scripts/export-handoff.mjs';
-import { readRegion } from '../../scripts/apply-code-region.mjs';
 
 /**
  * **Design reads the current handoff; it never sends one back whole (the
@@ -68,8 +67,9 @@ describe('the script', () => {
       const written = readFileSync(join(out, files[0]), 'utf8');
       const committed = execFileSync('git', ['show', `HEAD:${HANDOFF}`], { encoding: 'utf8' });
       expect(written.endsWith(committed)).toBe(true);
-      /* Step 133 is a code-region block, the one Design's copy lacked on 28 Oct. */
-      const step133 = readRegion().find((block: { id: string }) => block.id === 'step-133') as { text: string };
+      /* Step 133 is a code-region block, the one Design's copy lacked on 28 Oct; read at HEAD, as the script reads. */
+      const region = JSON.parse(execFileSync('git', ['show', 'HEAD:scripts/handoff-code-region.json'], { encoding: 'utf8' })) as Array<{ id: string; text: string }>;
+      const step133 = region.find((block) => block.id === 'step-133') as { text: string };
       expect(written).toContain(step133.text);
       expect(stdout).toContain(files[0]);
       expect(stdout).toMatch(/\d+ of \d+ code-region blocks carried/);
@@ -90,8 +90,11 @@ describe('the script', () => {
       git('config', 'user.name', 'Test');
       git('config', 'commit.gpgsign', 'false');
       mkdirSync(join(dir, 'docs', 'design'), { recursive: true });
+      mkdirSync(join(dir, 'scripts'), { recursive: true });
       writeFileSync(join(dir, HANDOFF), '70. Build the disc.\n\n72. Build the nav.\n');
-      git('add', HANDOFF);
+      /* The region is read at HEAD, as the handoff is, so a step entered in the tree does not refuse the commit that enters it. */
+      writeFileSync(join(dir, 'scripts', 'handoff-code-region.json'), `${JSON.stringify(blocks, null, 2)}\n`);
+      git('add', HANDOFF, 'scripts/handoff-code-region.json');
       git('commit', '-q', '-m', 'a handoff without Code’s lines');
       let status = 0;
       let output = '';
