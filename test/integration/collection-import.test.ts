@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { eq, sql } from 'drizzle-orm';
 import { getTestDb, truncateAll, closeTestDb } from '../helpers/db';
-import { artists, artistMatchCandidates, genres, labels, pressings, records } from '@/db/schema';
+import { artists, artistMatchCandidates, genres, pressings, records } from '@/db/schema';
 import type { DiscogsClient } from '@/lib/discogs/client';
 import { importCollection } from '@/lib/db/queries/collection-import';
 
