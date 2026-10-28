@@ -1,0 +1,294 @@
+{
+  "id": 27263532,
+  "status": "Accepted",
+  "year": 2023,
+  "resource_url": "https://api.discogs.com/releases/27263532",
+  "uri": "https://www.discogs.com/release/27263532-999-The-Biggest-Prize-In-Sport",
+  "artists": [
+    {
+      "name": "999",
+      "anv": "",
+      "join": "",
+      "role": "",
+      "tracks": "",
+      "id": 262135,
+      "resource_url": "https://api.discogs.com/artists/262135",
+      "thumbnail_url": "https://i.discogs.com/zbTWhggUfb2oJPuHhnqHxvm3H4oWys7euhkhE9et25Y/rs:fit/g:sm/q:90/h:431/w:500/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9BLTI2MjEz/NS0xMjU1Mjg2MjYx/LmpwZWc.jpeg"
+    }
+  ],
+  "artists_sort": "999",
+  "labels": [
+    {
+      "name": "Radiation Reissues",
+      "catno": "RRS204",
+      "entity_type": "1",
+      "entity_type_name": "Label",
+      "id": 338455,
+      "resource_url": "https://api.discogs.com/labels/338455",
+      "thumbnail_url": "https://i.discogs.com/Kqdr6BwJAFaCILUstV7zpdsyerQSk5YRtK9I7QE_wD4/rs:fit/g:sm/q:90/h:233/w:510/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTMzODQ1/NS0xMzI2NjI3MjE5/LmdpZg.jpeg"
+    }
+  ],
+  "series": [],
+  "companies": [
+    {
+      "name": "Radiation Records (3)",
+      "catno": "",
+      "entity_type": "13",
+      "entity_type_name": "Phonographic Copyright (p)",
+      "id": 132214,
+      "resource_url": "https://api.discogs.com/labels/132214",
+      "thumbnail_url": "https://i.discogs.com/Vj3HIwrs3S0Cw1mVVcnqxl1u-VqiTkQAjjvXvyxHP9s/rs:fit/g:sm/q:90/h:539/w:536/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTEzMjIx/NC0xNjA4NjcwMjU5/LTUxODIuanBlZw.jpeg"
+    },
+    {
+      "name": "Polydor",
+      "catno": "",
+      "entity_type": "14",
+      "entity_type_name": "Copyright (c)",
+      "id": 1610,
+      "resource_url": "https://api.discogs.com/labels/1610",
+      "thumbnail_url": "https://i.discogs.com/aNZfcLSVMW8xdCMyTxY3PspGfkoD4lsz8_uyffeyRcw/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTE2MTAt/MTU4ODY3Mzk0Ny0x/NjI2LmpwZWc.jpeg"
+    },
+    {
+      "name": "Cherry Red Ltd",
+      "catno": "",
+      "entity_type": "5",
+      "entity_type_name": "Licensed To",
+      "id": 2122039,
+      "resource_url": "https://api.discogs.com/labels/2122039"
+    }
+  ],
+  "formats": [
+    {
+      "name": "Vinyl",
+      "qty": "1",
+      "descriptions": [
+        "LP",
+        "Album",
+        "Limited Edition",
+        "Reissue"
+      ],
+      "text": "Green"
+    }
+  ],
+  "data_quality": "Needs Vote",
+  "community": {
+    "have": 150,
+    "want": 31,
+    "rating": {
+      "count": 12,
+      "average": 4.58
+    },
+    "submitter": {
+      "username": "williamwoo2000",
+      "resource_url": "https://api.discogs.com/users/williamwoo2000"
+    },
+    "contributors": [
+      {
+        "username": "williamwoo2000",
+        "resource_url": "https://api.discogs.com/users/williamwoo2000"
+      },
+      {
+        "username": "mjk37",
+        "resource_url": "https://api.discogs.com/users/mjk37"
+      }
+    ],
+    "data_quality": "Needs Vote",
+    "status": "Accepted"
+  },
+  "format_quantity": 1,
+  "date_added": "2023-06-02T04:05:26-07:00",
+  "date_changed": "2023-06-19T16:33:25-07:00",
+  "num_for_sale": 44,
+  "lowest_price": 11.57,
+  "master_id": 264592,
+  "master_url": "https://api.discogs.com/masters/264592",
+  "title": "The Biggest Prize In Sport",
+  "country": "Italy",
+  "released": "2023",
+  "notes": "Limited to 500 copies on green vinyl.\n\nTimes not on release.",
+  "released_formatted": "2023",
+  "identifiers": [
+    {
+      "type": "Barcode",
+      "value": "8055515234503"
+    },
+    {
+      "type": "Barcode",
+      "value": "8 055515 234503",
+      "description": "Text on hype on shrink"
+    },
+    {
+      "type": "Matrix / Runout",
+      "value": "010961211 - A - 1"
+    },
+    {
+      "type": "Matrix / Runout",
+      "value": "010961211 - B - 1"
+    }
+  ],
+  "videos": [
+    {
+      "uri": "https://www.youtube.com/watch?v=kLaERziw3OE",
+      "title": "999 - Biggest Prize in Sport - Full Album (1980) - PUNK ROCK 100%",
+      "description": "1. Boys In The Gang 00:00\n2. Inside Out 02:50\n3. Trouble 05:00\n4. So Long 07:31\n5. Fun Thing 10:15\n6. The Biggest Prize In Sport 13:50\n7. Hollywood 16:49\n8. Stranger 19:50\n9. Stop! Stop! 23:03\n10. English Wipeout 25:07\n11. Shake 28:33\n12. Boiler 30:58\n13.",
+      "duration": 2675,
+      "embed": true
+    }
+  ],
+  "genres": [
+    "Rock"
+  ],
+  "styles": [
+    "Pop Punk",
+    "New Wave"
+  ],
+  "tracklist": [
+    {
+      "position": "A1",
+      "type_": "track",
+      "title": "Boys In The Gang",
+      "duration": "2:45"
+    },
+    {
+      "position": "A2",
+      "type_": "track",
+      "title": "Inside Out",
+      "duration": "2:02"
+    },
+    {
+      "position": "A3",
+      "type_": "track",
+      "title": "Trouble",
+      "duration": "2:32"
+    },
+    {
+      "position": "A4",
+      "type_": "track",
+      "title": "So Long",
+      "duration": "2:44"
+    },
+    {
+      "position": "A5",
+      "type_": "track",
+      "title": "Fun Thing",
+      "duration": "3:35"
+    },
+    {
+      "position": "A6",
+      "type_": "track",
+      "title": "The Biggest Prize In Sport",
+      "duration": "3:00"
+    },
+    {
+      "position": "B1",
+      "type_": "track",
+      "title": "Hollywood",
+      "duration": "3:01"
+    },
+    {
+      "position": "B2",
+      "type_": "track",
+      "title": "Stranger",
+      "duration": "3:13"
+    },
+    {
+      "position": "B3",
+      "type_": "track",
+      "title": "Stop! Stop!",
+      "duration": "2:04"
+    },
+    {
+      "position": "B4",
+      "type_": "track",
+      "title": "English Wipeout",
+      "duration": "3:27"
+    },
+    {
+      "position": "B5",
+      "type_": "track",
+      "title": "Shake",
+      "duration": "2:26"
+    },
+    {
+      "position": "B6",
+      "type_": "track",
+      "title": "Boiler",
+      "duration": "3:47"
+    }
+  ],
+  "extraartists": [
+    {
+      "name": "Malcolm Garrett",
+      "anv": "",
+      "join": "",
+      "role": "Artwork",
+      "tracks": "",
+      "id": 1807379,
+      "resource_url": "https://api.discogs.com/artists/1807379"
+    },
+    {
+      "name": "Chris Gabrin",
+      "anv": "",
+      "join": "",
+      "role": "Photography",
+      "tracks": "",
+      "id": 0,
+      "resource_url": ""
+    },
+    {
+      "name": "Vic Maile",
+      "anv": "",
+      "join": "",
+      "role": "Producer",
+      "tracks": "",
+      "id": 259930,
+      "resource_url": "https://api.discogs.com/artists/259930"
+    }
+  ],
+  "images": [
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/VUpVVc4F9trb_R41eLOtiOOIJhxWupwyHnO4GDaqU8Q/rs:fit/g:sm/q:90/h:594/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI3MjYz/NTMyLTE2ODU3MDM5/MjctMTA2My5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/VUpVVc4F9trb_R41eLOtiOOIJhxWupwyHnO4GDaqU8Q/rs:fit/g:sm/q:90/h:594/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI3MjYz/NTMyLTE2ODU3MDM5/MjctMTA2My5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/7Jjz9jFdOezMbUHVV2k7h0rj_HLeaF8ERkoCj-FPg-A/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI3MjYz/NTMyLTE2ODU3MDM5/MjctMTA2My5qcGVn.jpeg",
+      "width": 600,
+      "height": 594
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/VBJZtyYn0Oo94yfUA0MvzAWrwrHZzSTPFvg2YSb77NA/rs:fit/g:sm/q:90/h:593/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI3MjYz/NTMyLTE2ODU3MDM5/MzQtNDMyNC5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/VBJZtyYn0Oo94yfUA0MvzAWrwrHZzSTPFvg2YSb77NA/rs:fit/g:sm/q:90/h:593/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI3MjYz/NTMyLTE2ODU3MDM5/MzQtNDMyNC5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/tUx0qcyKw6HJJLFZ6tLirr_9RJQG-Ra_oATQETdiTv8/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI3MjYz/NTMyLTE2ODU3MDM5/MzQtNDMyNC5qcGVn.jpeg",
+      "width": 600,
+      "height": 593
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/W25O4NUmOTL860STsGSg6RVd6yBEgyFS3tut3AxuND4/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI3MjYz/NTMyLTE2ODU3MDM5/NDItNDQxNy5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/W25O4NUmOTL860STsGSg6RVd6yBEgyFS3tut3AxuND4/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI3MjYz/NTMyLTE2ODU3MDM5/NDItNDQxNy5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/Z_HZQAUw-A6ILpDB9TGJQyINIAk57xdFmTn9BDdfpHI/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI3MjYz/NTMyLTE2ODU3MDM5/NDItNDQxNy5qcGVn.jpeg",
+      "width": 600,
+      "height": 600
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/S9AqIpUhP8ko_Oqfd5XdDoP186NbkQ6wf1g3GZkuQTY/rs:fit/g:sm/q:90/h:592/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI3MjYz/NTMyLTE2ODU3MDM5/NDktMjA3MC5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/S9AqIpUhP8ko_Oqfd5XdDoP186NbkQ6wf1g3GZkuQTY/rs:fit/g:sm/q:90/h:592/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI3MjYz/NTMyLTE2ODU3MDM5/NDktMjA3MC5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/cHzoSyi5iSQW7VEHoK4c-xZT91jYtP17KxHck9W4rRY/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI3MjYz/NTMyLTE2ODU3MDM5/NDktMjA3MC5qcGVn.jpeg",
+      "width": 600,
+      "height": 592
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/Lcfhu1C6sx_fjQ5PdfrTyFclasej_enCfeeoFkATlis/rs:fit/g:sm/q:90/h:600/w:456/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI3MjYz/NTMyLTE2ODU3MDM5/NTYtMjM5NC5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/Lcfhu1C6sx_fjQ5PdfrTyFclasej_enCfeeoFkATlis/rs:fit/g:sm/q:90/h:600/w:456/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI3MjYz/NTMyLTE2ODU3MDM5/NTYtMjM5NC5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/zD4gWz5In8qw5WCz5vGtLs2jxgBo3qSlcUxSH0oBHgY/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI3MjYz/NTMyLTE2ODU3MDM5/NTYtMjM5NC5qcGVn.jpeg",
+      "width": 456,
+      "height": 600
+    }
+  ],
+  "thumb": "https://i.discogs.com/7Jjz9jFdOezMbUHVV2k7h0rj_HLeaF8ERkoCj-FPg-A/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI3MjYz/NTMyLTE2ODU3MDM5/MjctMTA2My5qcGVn.jpeg",
+  "estimated_weight": 230,
+  "blocked_from_sale": false,
+  "is_offensive": false
+}

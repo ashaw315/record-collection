@@ -1,0 +1,649 @@
+{
+  "id": 29613763,
+  "status": "Accepted",
+  "year": 2024,
+  "resource_url": "https://api.discogs.com/releases/29613763",
+  "uri": "https://www.discogs.com/release/29613763-Astrid-Sonne-Great-Doubt",
+  "artists": [
+    {
+      "name": "Astrid Sonne",
+      "anv": "",
+      "join": "",
+      "role": "",
+      "tracks": "",
+      "id": 6253832,
+      "resource_url": "https://api.discogs.com/artists/6253832",
+      "thumbnail_url": "https://i.discogs.com/GXbRm8GM1IWK-yvkh7-ZnjVlLh7MFc3EkE54RLd_jro/rs:fit/g:sm/q:90/h:399/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9BLTYyNTM4/MzItMTcxNzI0MDEx/Mi02MjEzLmpwZWc.jpeg"
+    }
+  ],
+  "artists_sort": "Astrid Sonne",
+  "labels": [
+    {
+      "name": "Escho",
+      "catno": "ESC192",
+      "entity_type": "1",
+      "entity_type_name": "Label",
+      "id": 79184,
+      "resource_url": "https://api.discogs.com/labels/79184",
+      "thumbnail_url": "https://i.discogs.com/V-FkmxMl_TuQJq7AURHJV4rTxiV86UXam5fIBulONEc/rs:fit/g:sm/q:90/h:322/w:500/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTc5MTg0/LTE0MTk1NDI2MTMt/NzU2Mi5qcGVn.jpeg"
+    }
+  ],
+  "series": [],
+  "companies": [
+    {
+      "name": "Escho",
+      "catno": "",
+      "entity_type": "13",
+      "entity_type_name": "Phonographic Copyright (p)",
+      "id": 79184,
+      "resource_url": "https://api.discogs.com/labels/79184",
+      "thumbnail_url": "https://i.discogs.com/V-FkmxMl_TuQJq7AURHJV4rTxiV86UXam5fIBulONEc/rs:fit/g:sm/q:90/h:322/w:500/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTc5MTg0/LTE0MTk1NDI2MTMt/NzU2Mi5qcGVn.jpeg"
+    },
+    {
+      "name": "Escho",
+      "catno": "",
+      "entity_type": "14",
+      "entity_type_name": "Copyright (c)",
+      "id": 79184,
+      "resource_url": "https://api.discogs.com/labels/79184",
+      "thumbnail_url": "https://i.discogs.com/V-FkmxMl_TuQJq7AURHJV4rTxiV86UXam5fIBulONEc/rs:fit/g:sm/q:90/h:322/w:500/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTc5MTg0/LTE0MTk1NDI2MTMt/NzU2Mi5qcGVn.jpeg"
+    },
+    {
+      "name": "Spitfire Studios, London",
+      "catno": "",
+      "entity_type": "23",
+      "entity_type_name": "Recorded At",
+      "id": 3226340,
+      "resource_url": "https://api.discogs.com/labels/3226340"
+    },
+    {
+      "name": "Young Space",
+      "catno": "",
+      "entity_type": "23",
+      "entity_type_name": "Recorded At",
+      "id": 3632567,
+      "resource_url": "https://api.discogs.com/labels/3632567"
+    },
+    {
+      "name": "Mayhem, Copenhagen",
+      "catno": "",
+      "entity_type": "23",
+      "entity_type_name": "Recorded At",
+      "id": 794156,
+      "resource_url": "https://api.discogs.com/labels/794156",
+      "thumbnail_url": "https://i.discogs.com/NAr_0-7XyXBDVY2VCrah3k5PNGnGLuefBpomq0z7FaY/rs:fit/g:sm/q:90/h:449/w:494/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTc5NDE1/Ni0xNDM4ODU3NzEz/LTk4OTguanBlZw.jpeg"
+    },
+    {
+      "name": "Otto Busses Vej CPH",
+      "catno": "",
+      "entity_type": "23",
+      "entity_type_name": "Recorded At",
+      "id": 3646214,
+      "resource_url": "https://api.discogs.com/labels/3646214"
+    },
+    {
+      "name": "Hither Green Studios",
+      "catno": "",
+      "entity_type": "23",
+      "entity_type_name": "Recorded At",
+      "id": 3632570,
+      "resource_url": "https://api.discogs.com/labels/3632570"
+    },
+    {
+      "name": "Rytmisk Musikkonservatorium, Copenhagen",
+      "catno": "",
+      "entity_type": "23",
+      "entity_type_name": "Recorded At",
+      "id": 1396035,
+      "resource_url": "https://api.discogs.com/labels/1396035",
+      "thumbnail_url": "https://i.discogs.com/Zki8zz0bjvACFH63xcgFuZ9T1QF2Ldd6XRduuRPN9IE/rs:fit/g:sm/q:90/h:74/w:158/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTEzOTYw/MzUtMTYxMjQ4NDIw/Ny0yMjQ5LmpwZWc.jpeg"
+    },
+    {
+      "name": "Elektronmusikstudion",
+      "catno": "",
+      "entity_type": "23",
+      "entity_type_name": "Recorded At",
+      "id": 271283,
+      "resource_url": "https://api.discogs.com/labels/271283",
+      "thumbnail_url": "https://i.discogs.com/m87Jd-bSmHPdUEWTScZD0lfd4c55Nl8TYHq79NGT2fg/rs:fit/g:sm/q:90/h:500/w:500/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTI3MTI4/My0xNzYwMTgxOTM0/LTM0NjEuanBlZw.jpeg"
+    },
+    {
+      "name": "Erlanger LDN",
+      "catno": "",
+      "entity_type": "23",
+      "entity_type_name": "Recorded At",
+      "id": 3646217,
+      "resource_url": "https://api.discogs.com/labels/3646217"
+    },
+    {
+      "name": "Grapehouse Studio",
+      "catno": "",
+      "entity_type": "27",
+      "entity_type_name": "Mixed At",
+      "id": 330466,
+      "resource_url": "https://api.discogs.com/labels/330466",
+      "thumbnail_url": "https://i.discogs.com/ViyWHx8tt0Iri5-n3iGAU3a3MNv8KBF4c-Je22akWZ0/rs:fit/g:sm/q:90/h:435/w:350/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTMzMDQ2/Ni0xNTY5MTgxODk0/LTkyMzIuanBlZw.jpeg"
+    }
+  ],
+  "formats": [
+    {
+      "name": "Vinyl",
+      "qty": "1",
+      "descriptions": [
+        "LP",
+        "Album"
+      ],
+      "text": "180g"
+    }
+  ],
+  "data_quality": "Needs Vote",
+  "community": {
+    "have": 389,
+    "want": 294,
+    "rating": {
+      "count": 32,
+      "average": 4.34
+    },
+    "submitter": {
+      "username": "Brianodd",
+      "resource_url": "https://api.discogs.com/users/Brianodd"
+    },
+    "contributors": [
+      {
+        "username": "Brianodd",
+        "resource_url": "https://api.discogs.com/users/Brianodd"
+      },
+      {
+        "username": "StigNygaard",
+        "resource_url": "https://api.discogs.com/users/StigNygaard"
+      },
+      {
+        "username": "angelcotallo",
+        "resource_url": "https://api.discogs.com/users/angelcotallo"
+      },
+      {
+        "username": "Arthit",
+        "resource_url": "https://api.discogs.com/users/Arthit"
+      },
+      {
+        "username": "noremacham",
+        "resource_url": "https://api.discogs.com/users/noremacham"
+      },
+      {
+        "username": "theslutbunny",
+        "resource_url": "https://api.discogs.com/users/theslutbunny"
+      }
+    ],
+    "data_quality": "Needs Vote",
+    "status": "Accepted"
+  },
+  "format_quantity": 1,
+  "date_added": "2024-01-27T03:16:13-08:00",
+  "date_changed": "2025-10-13T16:00:48-07:00",
+  "num_for_sale": 29,
+  "lowest_price": 24,
+  "master_id": 3387466,
+  "master_url": "https://api.discogs.com/masters/3387466",
+  "title": "Great Doubt",
+  "country": "Denmark",
+  "released": "2024",
+  "released_formatted": "2024",
+  "identifiers": [
+    {
+      "type": "Barcode",
+      "value": "5056321695956"
+    }
+  ],
+  "videos": [
+    {
+      "uri": "https://www.youtube.com/watch?v=5qxQ3LcBK-c",
+      "title": "Light and heavy",
+      "description": "Provided to YouTube by Escho\n\nLight and heavy · Astrid Sonne · Astrid Sonne · Astrid Sonne\n\nGreat Doubt\n\n℗ Escho\n\nReleased on: 2024-01-26\n\nAuto-generated by YouTube.",
+      "duration": 62,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=LRMEOtcpd_s",
+      "title": "Do you wanna",
+      "description": "Provided to YouTube by Escho\n\nDo you wanna · Astrid Sonne\n\nGreat Doubt\n\n℗ Escho\n\nReleased on: 2024-01-26\n\nProducer: Astrid Sonne\nComposer: Astrid Sonne\nLyricist: Astrid Sonne\n\nAuto-generated by YouTube.",
+      "duration": 202,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=_xTzIxlqeSA",
+      "title": "Give my all",
+      "description": "Provided to YouTube by Escho\n\nGive my all · Astrid Sonne · Astrid Sonne · Mariah Carey · Astrid Sonne\n\nGreat Doubt\n\n℗ Escho\n\nReleased on: 2024-01-26\n\nAuto-generated by YouTube.",
+      "duration": 240,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=bhl5Uqt99Lw",
+      "title": "Almost",
+      "description": "Provided to YouTube by Escho\n\nAlmost · Astrid Sonne\n\nGreat Doubt\n\n℗ Escho\n\nReleased on: 2024-01-26\n\nProducer: Astrid Sonne\nComposer: Astrid Sonne\nLyricist: Astrid Sonne\n\nAuto-generated by YouTube.",
+      "duration": 173,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=5EZbesT_Z5c",
+      "title": "Boost",
+      "description": "Provided to YouTube by Escho\n\nBoost · Astrid Sonne\n\nGreat Doubt\n\n℗ Escho\n\nReleased on: 2024-01-26\n\nProducer: Astrid Sonne\nComposer: Astrid Sonne\n\nAuto-generated by YouTube.",
+      "duration": 216,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=kUYo7UaFmgc",
+      "title": "Everything is unreal",
+      "description": "Provided to YouTube by Escho\n\nEverything is unreal · Astrid Sonne · Astrid Sonne · Astrid Sonne · Astrid Sonne\n\nGreat Doubt\n\n℗ Escho\n\nReleased on: 2024-01-26\n\nAuto-generated by YouTube.",
+      "duration": 244,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=4uN-t93yVv8",
+      "title": "Staying here",
+      "description": "Provided to YouTube by Escho\n\nStaying here · Astrid Sonne\n\nGreat Doubt\n\n℗ Escho\n\nReleased on: 2024-01-26\n\nProducer: Astrid Sonne\nComposer: Astrid Sonne\nLyricist: Astrid Sonne\n\nAuto-generated by YouTube.",
+      "duration": 148,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=qBVEsd6wx68",
+      "title": "Overture",
+      "description": "Provided to YouTube by Escho\n\nOverture · Astrid Sonne\n\nGreat Doubt\n\n℗ Escho\n\nReleased on: 2024-01-26\n\nProducer: Astrid Sonne\nComposer: Astrid Sonne\n\nAuto-generated by YouTube.",
+      "duration": 82,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=RTPiJqVgh78",
+      "title": "Say you love me",
+      "description": "Provided to YouTube by Escho\n\nSay you love me · Astrid Sonne · Astrid Sonne · Astrid Sonne · Astrid Sonne\n\nGreat Doubt\n\n℗ Escho\n\nReleased on: 2024-01-26\n\nAuto-generated by YouTube.",
+      "duration": 248,
+      "embed": true
+    }
+  ],
+  "genres": [
+    "Electronic",
+    "Pop",
+    "Classical"
+  ],
+  "styles": [
+    "Ambient",
+    "Minimal",
+    "Experimental",
+    "Contemporary",
+    "Alt-Pop",
+    "Vocal"
+  ],
+  "tracklist": [
+    {
+      "position": "A1",
+      "type_": "track",
+      "title": "Light And Heavy",
+      "extraartists": [
+        {
+          "name": "Astrid Sonne",
+          "anv": "",
+          "join": "",
+          "role": "Mixed By",
+          "tracks": "",
+          "id": 6253832,
+          "resource_url": "https://api.discogs.com/artists/6253832"
+        }
+      ],
+      "duration": ""
+    },
+    {
+      "position": "A2",
+      "type_": "track",
+      "title": "Do You Wanna",
+      "extraartists": [
+        {
+          "name": "Astrid Sonne",
+          "anv": "",
+          "join": "",
+          "role": "Drums, Vocals",
+          "tracks": "",
+          "id": 6253832,
+          "resource_url": "https://api.discogs.com/artists/6253832"
+        },
+        {
+          "name": "Jasper Marsalis",
+          "anv": "",
+          "join": "",
+          "role": "Guitar",
+          "tracks": "",
+          "id": 7546912,
+          "resource_url": "https://api.discogs.com/artists/7546912"
+        },
+        {
+          "name": "Astrid Sonne",
+          "anv": "",
+          "join": "",
+          "role": "Mixed By",
+          "tracks": "",
+          "id": 6253832,
+          "resource_url": "https://api.discogs.com/artists/6253832"
+        },
+        {
+          "name": "Nis Bysted",
+          "anv": "",
+          "join": "",
+          "role": "Mixed By",
+          "tracks": "",
+          "id": 904296,
+          "resource_url": "https://api.discogs.com/artists/904296"
+        }
+      ],
+      "duration": ""
+    },
+    {
+      "position": "A3",
+      "type_": "track",
+      "title": "Give My All",
+      "extraartists": [
+        {
+          "name": "Mariah Carey",
+          "anv": "",
+          "join": "",
+          "role": "Lyrics By",
+          "tracks": "",
+          "id": 33534,
+          "resource_url": "https://api.discogs.com/artists/33534"
+        },
+        {
+          "name": "Astrid Sonne",
+          "anv": "",
+          "join": "",
+          "role": "Mixed By",
+          "tracks": "",
+          "id": 6253832,
+          "resource_url": "https://api.discogs.com/artists/6253832"
+        },
+        {
+          "name": "Nis Bysted",
+          "anv": "",
+          "join": "",
+          "role": "Mixed By",
+          "tracks": "",
+          "id": 904296,
+          "resource_url": "https://api.discogs.com/artists/904296"
+        },
+        {
+          "name": "Astrid Sonne",
+          "anv": "",
+          "join": "",
+          "role": "Vocals, Viola",
+          "tracks": "",
+          "id": 6253832,
+          "resource_url": "https://api.discogs.com/artists/6253832"
+        }
+      ],
+      "duration": ""
+    },
+    {
+      "position": "A4",
+      "type_": "track",
+      "title": "Almost",
+      "extraartists": [
+        {
+          "name": "Alvilda Reiter",
+          "anv": "Alvilda Reiter Jakobsen",
+          "join": "",
+          "role": "Guitar",
+          "tracks": "",
+          "id": 10312639,
+          "resource_url": "https://api.discogs.com/artists/10312639"
+        },
+        {
+          "name": "Astrid Sonne",
+          "anv": "",
+          "join": "",
+          "role": "Mixed By",
+          "tracks": "",
+          "id": 6253832,
+          "resource_url": "https://api.discogs.com/artists/6253832"
+        },
+        {
+          "name": "Nis Bysted",
+          "anv": "",
+          "join": "",
+          "role": "Mixed By",
+          "tracks": "",
+          "id": 904296,
+          "resource_url": "https://api.discogs.com/artists/904296"
+        },
+        {
+          "name": "Astrid Sonne",
+          "anv": "",
+          "join": "",
+          "role": "Vocals, Viola",
+          "tracks": "",
+          "id": 6253832,
+          "resource_url": "https://api.discogs.com/artists/6253832"
+        }
+      ],
+      "duration": ""
+    },
+    {
+      "position": "B1",
+      "type_": "track",
+      "title": "Boost",
+      "extraartists": [
+        {
+          "name": "Astrid Sonne",
+          "anv": "",
+          "join": "",
+          "role": "Drums, Bass Guitar",
+          "tracks": "",
+          "id": 6253832,
+          "resource_url": "https://api.discogs.com/artists/6253832"
+        },
+        {
+          "name": "Astrid Sonne",
+          "anv": "",
+          "join": "",
+          "role": "Mixed By",
+          "tracks": "",
+          "id": 6253832,
+          "resource_url": "https://api.discogs.com/artists/6253832"
+        },
+        {
+          "name": "Nis Bysted",
+          "anv": "",
+          "join": "",
+          "role": "Mixed By",
+          "tracks": "",
+          "id": 904296,
+          "resource_url": "https://api.discogs.com/artists/904296"
+        }
+      ],
+      "duration": ""
+    },
+    {
+      "position": "B2",
+      "type_": "track",
+      "title": "Everything Is Unreal",
+      "extraartists": [
+        {
+          "name": "Emma Barnaby",
+          "anv": "",
+          "join": "",
+          "role": "Cello",
+          "tracks": "",
+          "id": 6770384,
+          "resource_url": "https://api.discogs.com/artists/6770384"
+        },
+        {
+          "name": "Astrid Sonne",
+          "anv": "",
+          "join": "",
+          "role": "Mixed By",
+          "tracks": "",
+          "id": 6253832,
+          "resource_url": "https://api.discogs.com/artists/6253832"
+        },
+        {
+          "name": "Astrid Sonne",
+          "anv": "",
+          "join": "",
+          "role": "Mixed By",
+          "tracks": "",
+          "id": 6253832,
+          "resource_url": "https://api.discogs.com/artists/6253832"
+        }
+      ],
+      "duration": ""
+    },
+    {
+      "position": "B3",
+      "type_": "track",
+      "title": "Staying Here",
+      "extraartists": [
+        {
+          "name": "Astrid Sonne",
+          "anv": "",
+          "join": "",
+          "role": "Mixed By",
+          "tracks": "",
+          "id": 6253832,
+          "resource_url": "https://api.discogs.com/artists/6253832"
+        },
+        {
+          "name": "Astrid Sonne",
+          "anv": "",
+          "join": "",
+          "role": "Vocals",
+          "tracks": "",
+          "id": 6253832,
+          "resource_url": "https://api.discogs.com/artists/6253832"
+        }
+      ],
+      "duration": ""
+    },
+    {
+      "position": "B4",
+      "type_": "track",
+      "title": "Overture",
+      "extraartists": [
+        {
+          "name": "Astrid Sonne",
+          "anv": "",
+          "join": "",
+          "role": "Bass Guitar",
+          "tracks": "",
+          "id": 6253832,
+          "resource_url": "https://api.discogs.com/artists/6253832"
+        },
+        {
+          "name": "Astrid Sonne",
+          "anv": "",
+          "join": "",
+          "role": "Mixed By",
+          "tracks": "",
+          "id": 6253832,
+          "resource_url": "https://api.discogs.com/artists/6253832"
+        },
+        {
+          "name": "Ben Vince",
+          "anv": "",
+          "join": "",
+          "role": "Saxophone",
+          "tracks": "",
+          "id": 4935785,
+          "resource_url": "https://api.discogs.com/artists/4935785"
+        }
+      ],
+      "duration": ""
+    },
+    {
+      "position": "B5",
+      "type_": "track",
+      "title": "Say You Love Me",
+      "extraartists": [
+        {
+          "name": "Ben Vince",
+          "anv": "",
+          "join": "",
+          "role": "Saxophone",
+          "tracks": "",
+          "id": 4935785,
+          "resource_url": "https://api.discogs.com/artists/4935785"
+        },
+        {
+          "name": "Astrid Sonne",
+          "anv": "",
+          "join": "",
+          "role": "Vocals, Bass Guitar",
+          "tracks": "",
+          "id": 6253832,
+          "resource_url": "https://api.discogs.com/artists/6253832"
+        }
+      ],
+      "duration": ""
+    }
+  ],
+  "extraartists": [
+    {
+      "name": "Conrad Pack",
+      "anv": "",
+      "join": "",
+      "role": "Photography By, Design",
+      "tracks": "",
+      "id": 6865146,
+      "resource_url": "https://api.discogs.com/artists/6865146"
+    },
+    {
+      "name": "Astrid Sonne",
+      "anv": "",
+      "join": "",
+      "role": "Written-By, Producer",
+      "tracks": "",
+      "id": 6253832,
+      "resource_url": "https://api.discogs.com/artists/6253832"
+    }
+  ],
+  "images": [
+    {
+      "type": "primary",
+      "uri": "https://i.discogs.com/SpWEt71BFH-BtMzkVTMLt4GSVS0DBtb_jOUCjA5ZuUs/rs:fit/g:sm/q:90/h:589/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI5NjEz/NzYzLTE3MDc3Mjk5/NTYtNzQyNS5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/SpWEt71BFH-BtMzkVTMLt4GSVS0DBtb_jOUCjA5ZuUs/rs:fit/g:sm/q:90/h:589/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI5NjEz/NzYzLTE3MDc3Mjk5/NTYtNzQyNS5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/YdPNXmJ_KpnYuYo-mS5n-Jwcq6CR2B3IvjVuFmRMbgM/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI5NjEz/NzYzLTE3MDc3Mjk5/NTYtNzQyNS5qcGVn.jpeg",
+      "width": 600,
+      "height": 589
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/1JKx7SjLDUo1pVFZlgz6KfqFPO4E8toLDmp8ahM4TPo/rs:fit/g:sm/q:90/h:600/w:595/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI5NjEz/NzYzLTE3MDc3Mjk5/NjMtNjUxMC5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/1JKx7SjLDUo1pVFZlgz6KfqFPO4E8toLDmp8ahM4TPo/rs:fit/g:sm/q:90/h:600/w:595/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI5NjEz/NzYzLTE3MDc3Mjk5/NjMtNjUxMC5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/S_IieIoAEpuQv9NvLkTuDdeo3u1XodTMFIrsjg8ZrS8/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI5NjEz/NzYzLTE3MDc3Mjk5/NjMtNjUxMC5qcGVn.jpeg",
+      "width": 595,
+      "height": 600
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/nzFAi1buVJp4VGnerwvyny_yPviuSc3rTcHlZ6PV_R4/rs:fit/g:sm/q:90/h:600/w:574/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI5NjEz/NzYzLTE3MDc3Mjk5/NjMtODk1NS5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/nzFAi1buVJp4VGnerwvyny_yPviuSc3rTcHlZ6PV_R4/rs:fit/g:sm/q:90/h:600/w:574/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI5NjEz/NzYzLTE3MDc3Mjk5/NjMtODk1NS5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/KxsL04C-U7ddXXT49JPaYROxCtPZOeWmRubG-cgg9W8/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI5NjEz/NzYzLTE3MDc3Mjk5/NjMtODk1NS5qcGVn.jpeg",
+      "width": 574,
+      "height": 600
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/a9JQRqJAPDbZzP6cZ-ozDDZjAjAnpvbXLoqZHWH0WIM/rs:fit/g:sm/q:90/h:600/w:593/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI5NjEz/NzYzLTE3MDc3Mjk5/NjMtNjQwOS5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/a9JQRqJAPDbZzP6cZ-ozDDZjAjAnpvbXLoqZHWH0WIM/rs:fit/g:sm/q:90/h:600/w:593/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI5NjEz/NzYzLTE3MDc3Mjk5/NjMtNjQwOS5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/PZZqAqhCbsdfS99UCjGHh58lOB4jMCU4flrsahj2SrM/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI5NjEz/NzYzLTE3MDc3Mjk5/NjMtNjQwOS5qcGVn.jpeg",
+      "width": 593,
+      "height": 600
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/3mBSD7k96hXe-qCBOqJEiqnn1F3k0nEjGlmwACbiFhg/rs:fit/g:sm/q:90/h:450/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI5NjEz/NzYzLTE3MDYzNTkw/ODEtNTEyOS5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/3mBSD7k96hXe-qCBOqJEiqnn1F3k0nEjGlmwACbiFhg/rs:fit/g:sm/q:90/h:450/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI5NjEz/NzYzLTE3MDYzNTkw/ODEtNTEyOS5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/lRUoUMqUIWVOW91Dzx7zUc2T3BFGEMs_XTTmtbsph1g/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI5NjEz/NzYzLTE3MDYzNTkw/ODEtNTEyOS5qcGVn.jpeg",
+      "width": 600,
+      "height": 450
+    }
+  ],
+  "thumb": "https://i.discogs.com/YdPNXmJ_KpnYuYo-mS5n-Jwcq6CR2B3IvjVuFmRMbgM/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI5NjEz/NzYzLTE3MDc3Mjk5/NTYtNzQyNS5qcGVn.jpeg",
+  "estimated_weight": 230,
+  "blocked_from_sale": false,
+  "is_offensive": false
+}

@@ -1,0 +1,1485 @@
+{
+  "id": 15661267,
+  "status": "Accepted",
+  "year": 0,
+  "resource_url": "https://api.discogs.com/releases/15661267",
+  "uri": "https://www.discogs.com/release/15661267-OutKast-ATLiens",
+  "artists": [
+    {
+      "name": "OutKast",
+      "anv": "",
+      "join": "",
+      "role": "",
+      "tracks": "",
+      "id": 38561,
+      "resource_url": "https://api.discogs.com/artists/38561",
+      "thumbnail_url": "https://i.discogs.com/4dPQedPP7YrZBQXX4tyrxDJ0pmTQlq3Afgqau7kzN4c/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9BLTM4NTYx/LTE2NjE4MzU4NjUt/NTY5Ni5qcGVn.jpeg"
+    }
+  ],
+  "artists_sort": "OutKast",
+  "labels": [
+    {
+      "name": "LaFace Records",
+      "catno": "73008-26029-1",
+      "entity_type": "1",
+      "entity_type_name": "Label",
+      "id": 2927,
+      "resource_url": "https://api.discogs.com/labels/2927",
+      "thumbnail_url": "https://i.discogs.com/IJ008OhRH62IWKaG9wbS3WPM4383DhcKS3PPRV1vZK4/rs:fit/g:sm/q:90/h:525/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTI5Mjct/MTYzOTYzMTU3MS01/NDEzLmpwZWc.jpeg"
+    }
+  ],
+  "series": [],
+  "companies": [
+    {
+      "name": "LaFace Records",
+      "catno": "",
+      "entity_type": "13",
+      "entity_type_name": "Phonographic Copyright (p)",
+      "id": 2927,
+      "resource_url": "https://api.discogs.com/labels/2927",
+      "thumbnail_url": "https://i.discogs.com/IJ008OhRH62IWKaG9wbS3WPM4383DhcKS3PPRV1vZK4/rs:fit/g:sm/q:90/h:525/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTI5Mjct/MTYzOTYzMTU3MS01/NDEzLmpwZWc.jpeg"
+    },
+    {
+      "name": "LaFace Records",
+      "catno": "",
+      "entity_type": "14",
+      "entity_type_name": "Copyright (c)",
+      "id": 2927,
+      "resource_url": "https://api.discogs.com/labels/2927",
+      "thumbnail_url": "https://i.discogs.com/IJ008OhRH62IWKaG9wbS3WPM4383DhcKS3PPRV1vZK4/rs:fit/g:sm/q:90/h:525/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTI5Mjct/MTYzOTYzMTU3MS01/NDEzLmpwZWc.jpeg"
+    },
+    {
+      "name": "Arista Records, Inc.",
+      "catno": "",
+      "entity_type": "10",
+      "entity_type_name": "Manufactured By",
+      "id": 264254,
+      "resource_url": "https://api.discogs.com/labels/264254",
+      "thumbnail_url": "https://i.discogs.com/75q_nROo1ZC2axF1w5wykMRjZvZouOKGCt_x2ieQwiA/rs:fit/g:sm/q:90/h:107/w:337/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTI2NDI1/NC0xMzcyMDQ4NTY3/LTYzMzUuanBlZw.jpeg"
+    },
+    {
+      "name": "Arista Records, Inc.",
+      "catno": "",
+      "entity_type": "9",
+      "entity_type_name": "Distributed By",
+      "id": 264254,
+      "resource_url": "https://api.discogs.com/labels/264254",
+      "thumbnail_url": "https://i.discogs.com/75q_nROo1ZC2axF1w5wykMRjZvZouOKGCt_x2ieQwiA/rs:fit/g:sm/q:90/h:107/w:337/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTI2NDI1/NC0xMzcyMDQ4NTY3/LTYzMzUuanBlZw.jpeg"
+    },
+    {
+      "name": "BMG Entertainment",
+      "catno": "",
+      "entity_type": "4",
+      "entity_type_name": "Record Company",
+      "id": 113857,
+      "resource_url": "https://api.discogs.com/labels/113857",
+      "thumbnail_url": "https://i.discogs.com/hr502a1Aj5dFjQfLXRFYvHxu7UJF5AZqsAWW8awK8kE/rs:fit/g:sm/q:90/h:220/w:312/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTExMzg1/Ny0xNjQwMDU5MTYx/LTUzNzcuanBlZw.jpeg"
+    },
+    {
+      "name": "Arista Records, Inc.",
+      "catno": "",
+      "entity_type": "38",
+      "entity_type_name": "Manufactured For",
+      "id": 264254,
+      "resource_url": "https://api.discogs.com/labels/264254",
+      "thumbnail_url": "https://i.discogs.com/75q_nROo1ZC2axF1w5wykMRjZvZouOKGCt_x2ieQwiA/rs:fit/g:sm/q:90/h:107/w:337/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTI2NDI1/NC0xMzcyMDQ4NTY3/LTYzMzUuanBlZw.jpeg"
+    }
+  ],
+  "formats": [
+    {
+      "name": "Vinyl",
+      "qty": "2",
+      "descriptions": [
+        "LP",
+        "Album",
+        "Reissue"
+      ]
+    }
+  ],
+  "data_quality": "Needs Vote",
+  "community": {
+    "have": 1159,
+    "want": 526,
+    "rating": {
+      "count": 53,
+      "average": 4.62
+    },
+    "submitter": {
+      "username": "ziir",
+      "resource_url": "https://api.discogs.com/users/ziir"
+    },
+    "contributors": [
+      {
+        "username": "ziir",
+        "resource_url": "https://api.discogs.com/users/ziir"
+      },
+      {
+        "username": "Rck32",
+        "resource_url": "https://api.discogs.com/users/Rck32"
+      },
+      {
+        "username": "dancriel",
+        "resource_url": "https://api.discogs.com/users/dancriel"
+      },
+      {
+        "username": "ajt77",
+        "resource_url": "https://api.discogs.com/users/ajt77"
+      }
+    ],
+    "data_quality": "Needs Vote",
+    "status": "Accepted"
+  },
+  "format_quantity": 2,
+  "date_added": "2020-07-22T11:01:23-07:00",
+  "date_changed": "2022-08-28T07:04:08-07:00",
+  "num_for_sale": 15,
+  "lowest_price": 27.58,
+  "master_id": 25965,
+  "master_url": "https://api.discogs.com/masters/25965",
+  "title": "ATLiens",
+  "country": "US",
+  "notes": "Recent reissue pressed by MPO\nGlossy sleeve with plain paper inners\nYellow labels",
+  "identifiers": [
+    {
+      "type": "Matrix / Runout",
+      "value": "15-0393NL 73008260291 - A Kt SST MPO",
+      "description": "Side A Engraved"
+    },
+    {
+      "type": "Matrix / Runout",
+      "value": "15-0393NL 73008260291 B MPO Kt SST",
+      "description": "Side B Engraved"
+    },
+    {
+      "type": "Barcode",
+      "value": "7 73008-26029-1 4"
+    },
+    {
+      "type": "Matrix / Runout",
+      "value": "MPO 15-0393NL 73008260291 C KT SST",
+      "description": "Side C Engraved"
+    },
+    {
+      "type": "Matrix / Runout",
+      "value": "15-0393NL 73008260291 - D2 MPO KT SST",
+      "description": "Side D Engraved"
+    }
+  ],
+  "videos": [
+    {
+      "uri": "https://www.youtube.com/watch?v=ktc9hsSfUck",
+      "title": "Outkast - ATliens (Official HD Video)",
+      "description": "Official HD video for \"ATliens\" by OutKast\nListen to OutKast: https://Outkast.lnk.to/listenYD\n\nSubscribe to the official Outkast YouTube channel: https://Outkast.lnk.to/subscribeYD\n\nWatch more videos by OutKast: https://OutKast.lnk.to/listenID/youtube\n\nFo",
+      "duration": 230,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=uqB_UVlhlPA",
+      "title": "Outkast - Elevators (Me & You) (Official HD Video)",
+      "description": "Official HD video for \"Elevators (Me & You)\" by OutKast\nListen to OutKast: https://Outkast.lnk.to/listenYD\n\nSubscribe to the official Outkast YouTube channel: https://Outkast.lnk.to/subscribeYD\n\nWatch more videos by OutKast: https://OutKast.lnk.to/listenI",
+      "duration": 276,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=8p8CWpoOOdE",
+      "title": "Outkast - Jazzy Belle (Official HD Video)",
+      "description": "The 25th Anniversary edition of Stankonia is out now 💥 Stream and get it on vinyl!\n https://outkast.lnk.to/StankoniaAnniversary\n\nOfficial HD video for \"Jazzy Belle\" by OutKast \nListen to OutKast: https://Outkast.lnk.to/listenYD\nSubscribe to the official O",
+      "duration": 248,
+      "embed": true
+    }
+  ],
+  "genres": [
+    "Hip Hop"
+  ],
+  "styles": [
+    "Conscious"
+  ],
+  "tracklist": [
+    {
+      "position": "A1",
+      "type_": "track",
+      "title": "You May Die (Intro)",
+      "extraartists": [
+        {
+          "name": "Marvin \"Chanz\" Parkman",
+          "anv": "Chanz",
+          "join": "",
+          "role": "Keyboards",
+          "tracks": "",
+          "id": 172237,
+          "resource_url": "https://api.discogs.com/artists/172237"
+        },
+        {
+          "name": "Kerren Berz",
+          "anv": "",
+          "join": "",
+          "role": "Violin",
+          "tracks": "",
+          "id": 361003,
+          "resource_url": "https://api.discogs.com/artists/361003"
+        },
+        {
+          "name": "Joi (3)",
+          "anv": "",
+          "join": "",
+          "role": "Vocals [Additional]",
+          "tracks": "",
+          "id": 140804,
+          "resource_url": "https://api.discogs.com/artists/140804"
+        },
+        {
+          "name": "Trina Powell",
+          "anv": "Trina",
+          "join": "",
+          "role": "Vocals [Additional]",
+          "tracks": "",
+          "id": 1186310,
+          "resource_url": "https://api.discogs.com/artists/1186310"
+        },
+        {
+          "name": "Whild Peach",
+          "anv": "",
+          "join": "",
+          "role": "Vocals [Additional]",
+          "tracks": "",
+          "id": 276777,
+          "resource_url": "https://api.discogs.com/artists/276777"
+        }
+      ],
+      "duration": "1:05"
+    },
+    {
+      "position": "A2",
+      "type_": "track",
+      "title": "Two Dope Boyz (In A Cadillac)",
+      "extraartists": [
+        {
+          "name": "Peaches (5)",
+          "anv": "",
+          "join": "",
+          "role": "Backing Vocals",
+          "tracks": "",
+          "id": 361005,
+          "resource_url": "https://api.discogs.com/artists/361005"
+        },
+        {
+          "name": "LaMarquis Jefferson",
+          "anv": "Marq Jefferson",
+          "join": "",
+          "role": "Bass",
+          "tracks": "",
+          "id": 190318,
+          "resource_url": "https://api.discogs.com/artists/190318"
+        },
+        {
+          "name": "Edward Stroud",
+          "anv": "Ed Stroud",
+          "join": "",
+          "role": "Guitar",
+          "tracks": "",
+          "id": 352881,
+          "resource_url": "https://api.discogs.com/artists/352881"
+        },
+        {
+          "name": "Five Stairsteps",
+          "anv": "The 5 Stairsteps",
+          "join": "",
+          "role": "Performer [Sample]",
+          "tracks": "",
+          "id": 353481,
+          "resource_url": "https://api.discogs.com/artists/353481"
+        },
+        {
+          "name": "Clarence Burke",
+          "anv": "Clarence Burke, Jr.",
+          "join": "",
+          "role": "Written-By [Sample]",
+          "tracks": "",
+          "id": 236006,
+          "resource_url": "https://api.discogs.com/artists/236006"
+        },
+        {
+          "name": "Curtis Mayfield",
+          "anv": "",
+          "join": "",
+          "role": "Written-By [Sample]",
+          "tracks": "",
+          "id": 17589,
+          "resource_url": "https://api.discogs.com/artists/17589"
+        },
+        {
+          "name": "Gregory Fowler (2)",
+          "anv": "G.Fowler",
+          "join": "",
+          "role": "Written-By [Sample]",
+          "tracks": "",
+          "id": 1059662,
+          "resource_url": "https://api.discogs.com/artists/1059662"
+        }
+      ],
+      "duration": "2:46"
+    },
+    {
+      "position": "A3",
+      "type_": "track",
+      "title": "ATLiens",
+      "extraartists": [
+        {
+          "name": "Dee Simmons",
+          "anv": "",
+          "join": "",
+          "role": "Drums",
+          "tracks": "",
+          "id": 176934,
+          "resource_url": "https://api.discogs.com/artists/176934"
+        },
+        {
+          "name": "Kenneth Wright",
+          "anv": "Kenny Wright",
+          "join": "",
+          "role": "Keyboards",
+          "tracks": "",
+          "id": 189278,
+          "resource_url": "https://api.discogs.com/artists/189278"
+        }
+      ],
+      "duration": "3:50"
+    },
+    {
+      "position": "A4",
+      "type_": "track",
+      "title": "Wheelz Of Steel",
+      "extraartists": [
+        {
+          "name": "Craig Love",
+          "anv": "",
+          "join": "",
+          "role": "Guitar",
+          "tracks": "",
+          "id": 170142,
+          "resource_url": "https://api.discogs.com/artists/170142"
+        },
+        {
+          "name": "Marvin \"Chanz\" Parkman",
+          "anv": "Chanz",
+          "join": "",
+          "role": "Organ",
+          "tracks": "",
+          "id": 172237,
+          "resource_url": "https://api.discogs.com/artists/172237"
+        }
+      ],
+      "duration": "4:03"
+    },
+    {
+      "position": "B1",
+      "type_": "track",
+      "title": "Jazzy Belle",
+      "extraartists": [
+        {
+          "name": "Arlynn Page",
+          "anv": "Arlynn",
+          "join": "",
+          "role": "Backing Vocals",
+          "tracks": "",
+          "id": 289374,
+          "resource_url": "https://api.discogs.com/artists/289374"
+        },
+        {
+          "name": "Dawn Beckman",
+          "anv": "Dawn",
+          "join": "",
+          "role": "Backing Vocals",
+          "tracks": "",
+          "id": 175386,
+          "resource_url": "https://api.discogs.com/artists/175386"
+        },
+        {
+          "name": "Debra Killings",
+          "anv": "",
+          "join": "",
+          "role": "Backing Vocals",
+          "tracks": "",
+          "id": 170169,
+          "resource_url": "https://api.discogs.com/artists/170169"
+        },
+        {
+          "name": "Jazzyfatnastees",
+          "anv": "Jazzy Phat Nastee's",
+          "join": "",
+          "role": "Backing Vocals",
+          "tracks": "",
+          "id": 79986,
+          "resource_url": "https://api.discogs.com/artists/79986"
+        },
+        {
+          "name": "Tracey Moore",
+          "anv": "Tracy",
+          "join": "",
+          "role": "Backing Vocals",
+          "tracks": "",
+          "id": 257154,
+          "resource_url": "https://api.discogs.com/artists/257154"
+        }
+      ],
+      "duration": "4:12"
+    },
+    {
+      "position": "B2",
+      "type_": "track",
+      "title": "Elevators (Me & You)",
+      "extraartists": [
+        {
+          "name": "Debra Killings",
+          "anv": "",
+          "join": "",
+          "role": "Backing Vocals",
+          "tracks": "",
+          "id": 170169,
+          "resource_url": "https://api.discogs.com/artists/170169"
+        },
+        {
+          "name": "Sleepy Brown",
+          "anv": "",
+          "join": "",
+          "role": "Backing Vocals",
+          "tracks": "",
+          "id": 53127,
+          "resource_url": "https://api.discogs.com/artists/53127"
+        },
+        {
+          "name": "Neal Pogue",
+          "anv": "NealHPogue",
+          "join": "",
+          "role": "Mixed By",
+          "tracks": "",
+          "id": 147027,
+          "resource_url": "https://api.discogs.com/artists/147027"
+        },
+        {
+          "name": "Ricciano Lumpkins",
+          "anv": "Rico Lumpkin",
+          "join": "",
+          "role": "Mixed By [Assisted By]",
+          "tracks": "",
+          "id": 245823,
+          "resource_url": "https://api.discogs.com/artists/245823"
+        }
+      ],
+      "duration": "4:25"
+    },
+    {
+      "position": "B3",
+      "type_": "track",
+      "title": "Ova Da Wudz",
+      "extraartists": [
+        {
+          "name": "Witchdoctor",
+          "anv": "EJ Tha Witch Doctor",
+          "join": "",
+          "role": "Vocals [Additional]",
+          "tracks": "",
+          "id": 143582,
+          "resource_url": "https://api.discogs.com/artists/143582"
+        }
+      ],
+      "duration": "3:48"
+    },
+    {
+      "position": "C1",
+      "type_": "track",
+      "title": "Babylon",
+      "extraartists": [
+        {
+          "name": "Carlos Glover",
+          "anv": "",
+          "join": "",
+          "role": "Acoustic Guitar",
+          "tracks": "",
+          "id": 187658,
+          "resource_url": "https://api.discogs.com/artists/187658"
+        },
+        {
+          "name": "Martin Terry",
+          "anv": "",
+          "join": "",
+          "role": "Guitar [Wahwah]",
+          "tracks": "",
+          "id": 182136,
+          "resource_url": "https://api.discogs.com/artists/182136"
+        },
+        {
+          "name": "Andrea Martin",
+          "anv": "",
+          "join": "",
+          "role": "Vocals [Additional]",
+          "tracks": "",
+          "id": 137978,
+          "resource_url": "https://api.discogs.com/artists/137978"
+        }
+      ],
+      "duration": "4:24"
+    },
+    {
+      "position": "C2",
+      "type_": "track",
+      "title": "Wailin'",
+      "extraartists": [
+        {
+          "name": "Skinny Miracles",
+          "anv": "",
+          "join": "",
+          "role": "Piano",
+          "tracks": "",
+          "id": 187665,
+          "resource_url": "https://api.discogs.com/artists/187665"
+        },
+        {
+          "name": "Cee-Lo",
+          "anv": "Cee-Lo Green",
+          "join": "",
+          "role": "Vocals [Additional]",
+          "tracks": "",
+          "id": 57770,
+          "resource_url": "https://api.discogs.com/artists/57770"
+        }
+      ],
+      "duration": "2:00"
+    },
+    {
+      "position": "C3",
+      "type_": "track",
+      "title": "Mainstream",
+      "extraartists": [
+        {
+          "name": "Martin Terry",
+          "anv": "",
+          "join": "",
+          "role": "Guitar [Wahwah]",
+          "tracks": "",
+          "id": 182136,
+          "resource_url": "https://api.discogs.com/artists/182136"
+        },
+        {
+          "name": "Marvin \"Chanz\" Parkman",
+          "anv": "Chanz",
+          "join": "",
+          "role": "Keyboards",
+          "tracks": "",
+          "id": 172237,
+          "resource_url": "https://api.discogs.com/artists/172237"
+        },
+        {
+          "name": "Khujo Goodie",
+          "anv": "Khujo",
+          "join": "",
+          "role": "Vocals [Additional]",
+          "tracks": "",
+          "id": 147024,
+          "resource_url": "https://api.discogs.com/artists/147024"
+        },
+        {
+          "name": "T-Mo Goodie",
+          "anv": "T-Bu",
+          "join": "",
+          "role": "Vocals [Additional]",
+          "tracks": "",
+          "id": 53124,
+          "resource_url": "https://api.discogs.com/artists/53124"
+        }
+      ],
+      "duration": "5:18"
+    },
+    {
+      "position": "D1",
+      "type_": "track",
+      "title": "Decatur Psalm",
+      "extraartists": [
+        {
+          "name": "Joi (3)",
+          "anv": "",
+          "join": "",
+          "role": "Backing Vocals",
+          "tracks": "",
+          "id": 140804,
+          "resource_url": "https://api.discogs.com/artists/140804"
+        },
+        {
+          "name": "Tamara Powell",
+          "anv": "Tamara",
+          "join": "",
+          "role": "Backing Vocals",
+          "tracks": "",
+          "id": 714515,
+          "resource_url": "https://api.discogs.com/artists/714515"
+        },
+        {
+          "name": "Trina Powell",
+          "anv": "Trina",
+          "join": "",
+          "role": "Backing Vocals",
+          "tracks": "",
+          "id": 1186310,
+          "resource_url": "https://api.discogs.com/artists/1186310"
+        },
+        {
+          "name": "Whild Peach",
+          "anv": "",
+          "join": "",
+          "role": "Backing Vocals",
+          "tracks": "",
+          "id": 276777,
+          "resource_url": "https://api.discogs.com/artists/276777"
+        },
+        {
+          "name": "Big Gipp",
+          "anv": "",
+          "join": "",
+          "role": "Vocals [Additional]",
+          "tracks": "",
+          "id": 53121,
+          "resource_url": "https://api.discogs.com/artists/53121"
+        },
+        {
+          "name": "Cool Breeze (2)",
+          "anv": "",
+          "join": "",
+          "role": "Vocals [Additional]",
+          "tracks": "",
+          "id": 187660,
+          "resource_url": "https://api.discogs.com/artists/187660"
+        }
+      ],
+      "duration": "3:58"
+    },
+    {
+      "position": "D2",
+      "type_": "track",
+      "title": "Millenium",
+      "extraartists": [
+        {
+          "name": "Jay Nicholas",
+          "anv": "James \"Jay\" Nicholas",
+          "join": "",
+          "role": "Bass",
+          "tracks": "",
+          "id": 272097,
+          "resource_url": "https://api.discogs.com/artists/272097"
+        },
+        {
+          "name": "Craig Love",
+          "anv": "",
+          "join": "",
+          "role": "Guitar, Rhythm Guitar",
+          "tracks": "",
+          "id": 170142,
+          "resource_url": "https://api.discogs.com/artists/170142"
+        },
+        {
+          "name": "ShaJuanna Edghill",
+          "anv": "",
+          "join": "",
+          "role": "Vocals [Additional]",
+          "tracks": "",
+          "id": 301233,
+          "resource_url": "https://api.discogs.com/artists/301233"
+        }
+      ],
+      "duration": "3:09"
+    },
+    {
+      "position": "D3",
+      "type_": "track",
+      "title": "E.T. (Extraterrestrial)",
+      "extraartists": [
+        {
+          "name": "Witchdoctor",
+          "anv": "EJ Tha Witch Doctor",
+          "join": "",
+          "role": "Vocals [Additional]",
+          "tracks": "",
+          "id": 143582,
+          "resource_url": "https://api.discogs.com/artists/143582"
+        }
+      ],
+      "duration": "3:07"
+    },
+    {
+      "position": "D4",
+      "type_": "track",
+      "title": "13th Floor / Growing Old",
+      "extraartists": [
+        {
+          "name": "Debra Killings",
+          "anv": "",
+          "join": "",
+          "role": "Backing Vocals",
+          "tracks": "",
+          "id": 170169,
+          "resource_url": "https://api.discogs.com/artists/170169"
+        },
+        {
+          "name": "Marvin \"Chanz\" Parkman",
+          "anv": "Chanz",
+          "join": "",
+          "role": "Piano",
+          "tracks": "",
+          "id": 172237,
+          "resource_url": "https://api.discogs.com/artists/172237"
+        }
+      ],
+      "duration": "7:50"
+    },
+    {
+      "position": "D5",
+      "type_": "track",
+      "title": "Elevators (ONP 86 Mix)",
+      "extraartists": [
+        {
+          "name": "Kenneth Wright",
+          "anv": "Kenny Wright",
+          "join": "",
+          "role": "Keyboards",
+          "tracks": "",
+          "id": 189278,
+          "resource_url": "https://api.discogs.com/artists/189278"
+        },
+        {
+          "name": "Kevin Parker",
+          "anv": "",
+          "join": "",
+          "role": "Mixed By [Assisted By]",
+          "tracks": "",
+          "id": 377962,
+          "resource_url": "https://api.discogs.com/artists/377962"
+        },
+        {
+          "name": "Organized Noize",
+          "anv": "Organized Noize Productions",
+          "join": "",
+          "role": "Producer [Additional Production], Remix",
+          "tracks": "",
+          "id": 78193,
+          "resource_url": "https://api.discogs.com/artists/78193"
+        },
+        {
+          "name": "Blake Eiseman",
+          "anv": "",
+          "join": "",
+          "role": "Recorded By",
+          "tracks": "",
+          "id": 292092,
+          "resource_url": "https://api.discogs.com/artists/292092"
+        },
+        {
+          "name": "Alex Lowe",
+          "anv": "",
+          "join": "",
+          "role": "Recorded By [Assisted By]",
+          "tracks": "",
+          "id": 309080,
+          "resource_url": "https://api.discogs.com/artists/309080"
+        },
+        {
+          "name": "Mike Wilson",
+          "anv": "",
+          "join": "",
+          "role": "Recorded By [Assisted By]",
+          "tracks": "",
+          "id": 57059,
+          "resource_url": "https://api.discogs.com/artists/57059"
+        }
+      ],
+      "duration": "4:36"
+    }
+  ],
+  "extraartists": [
+    {
+      "name": "Dee Dee Hibbler",
+      "anv": "",
+      "join": "",
+      "role": "A&R [A&R Coordinator]",
+      "tracks": "",
+      "id": 1904670,
+      "resource_url": "https://api.discogs.com/artists/1904670"
+    },
+    {
+      "name": "Kawan Prather",
+      "anv": "Kawan \"KP\" Prather",
+      "join": "",
+      "role": "A&R [A&R Direction]",
+      "tracks": "",
+      "id": 671973,
+      "resource_url": "https://api.discogs.com/artists/671973"
+    },
+    {
+      "name": "Tomi Martin",
+      "anv": "",
+      "join": "",
+      "role": "Acoustic Guitar",
+      "tracks": "1, 3, 10, 12",
+      "id": 192484,
+      "resource_url": "https://api.discogs.com/artists/192484"
+    },
+    {
+      "name": "D.L. Warfield",
+      "anv": "",
+      "join": "",
+      "role": "Art Direction, Design Concept [Creative Concept]",
+      "tracks": "",
+      "id": 1904623,
+      "resource_url": "https://api.discogs.com/artists/1904623"
+    },
+    {
+      "name": "Moog (6)",
+      "anv": "",
+      "join": "",
+      "role": "Bass",
+      "tracks": "13",
+      "id": 1529677,
+      "resource_url": "https://api.discogs.com/artists/1529677"
+    },
+    {
+      "name": "Preston Crump",
+      "anv": "",
+      "join": "",
+      "role": "Bass",
+      "tracks": "4, 6, 7, 9 to 11, 13",
+      "id": 172239,
+      "resource_url": "https://api.discogs.com/artists/172239"
+    },
+    {
+      "name": "Davett Singletary",
+      "anv": "",
+      "join": "",
+      "role": "Creative Director",
+      "tracks": "",
+      "id": 1904662,
+      "resource_url": "https://api.discogs.com/artists/1904662"
+    },
+    {
+      "name": "Liwaza Green",
+      "anv": "",
+      "join": "",
+      "role": "Creative Director",
+      "tracks": "",
+      "id": 1905538,
+      "resource_url": "https://api.discogs.com/artists/1905538"
+    },
+    {
+      "name": "OutKast",
+      "anv": "",
+      "join": "",
+      "role": "Creative Director",
+      "tracks": "",
+      "id": 38561,
+      "resource_url": "https://api.discogs.com/artists/38561"
+    },
+    {
+      "name": "Nigel Sawyer",
+      "anv": "",
+      "join": "",
+      "role": "Design",
+      "tracks": "",
+      "id": 1904632,
+      "resource_url": "https://api.discogs.com/artists/1904632"
+    },
+    {
+      "name": "Organized Noize",
+      "anv": "Organized Noize Productions",
+      "join": "",
+      "role": "Drum Programming, Programmed By [Keyboard Programming]",
+      "tracks": "1, 2, 4, 5, 8 to 13, 15",
+      "id": 78193,
+      "resource_url": "https://api.discogs.com/artists/78193"
+    },
+    {
+      "name": "OutKast",
+      "anv": "",
+      "join": "",
+      "role": "Drum Programming, Programmed By [Keyboard Programming]",
+      "tracks": "3, 4, 6, 7, 13",
+      "id": 38561,
+      "resource_url": "https://api.discogs.com/artists/38561"
+    },
+    {
+      "name": "Bernasky Wall",
+      "anv": "John \"Bernasky\" Wall",
+      "join": "",
+      "role": "Engineer",
+      "tracks": "2, 5, 6, 9, 14",
+      "id": 414223,
+      "resource_url": "https://api.discogs.com/artists/414223"
+    },
+    {
+      "name": "Blake Eiseman",
+      "anv": "",
+      "join": "",
+      "role": "Engineer",
+      "tracks": "8, 9, 14",
+      "id": 292092,
+      "resource_url": "https://api.discogs.com/artists/292092"
+    },
+    {
+      "name": "Brian Frye",
+      "anv": "",
+      "join": "",
+      "role": "Engineer",
+      "tracks": "1, 3, 4, 13",
+      "id": 382017,
+      "resource_url": "https://api.discogs.com/artists/382017"
+    },
+    {
+      "name": "Derrick Williams",
+      "anv": "",
+      "join": "",
+      "role": "Engineer",
+      "tracks": "5 to 7, 10, 11",
+      "id": 242729,
+      "resource_url": "https://api.discogs.com/artists/242729"
+    },
+    {
+      "name": "Dexter Simmons",
+      "anv": "",
+      "join": "",
+      "role": "Engineer",
+      "tracks": "2, 8, 12",
+      "id": 136549,
+      "resource_url": "https://api.discogs.com/artists/136549"
+    },
+    {
+      "name": "Jarvis Blackshear",
+      "anv": "",
+      "join": "",
+      "role": "Engineer",
+      "tracks": "5 to 7, 9 to 11, 14",
+      "id": 407033,
+      "resource_url": "https://api.discogs.com/artists/407033"
+    },
+    {
+      "name": "John Frye",
+      "anv": "",
+      "join": "",
+      "role": "Engineer",
+      "tracks": "1 to 7, 9, 11, 13, 14",
+      "id": 147021,
+      "resource_url": "https://api.discogs.com/artists/147021"
+    },
+    {
+      "name": "John Wydrycs",
+      "anv": "",
+      "join": "",
+      "role": "Engineer",
+      "tracks": "3",
+      "id": 249438,
+      "resource_url": "https://api.discogs.com/artists/249438"
+    },
+    {
+      "name": "Mike Wilson",
+      "anv": "",
+      "join": "",
+      "role": "Engineer",
+      "tracks": "12",
+      "id": 57059,
+      "resource_url": "https://api.discogs.com/artists/57059"
+    },
+    {
+      "name": "Alex Lowe",
+      "anv": "",
+      "join": "",
+      "role": "Engineer [Assisted By]",
+      "tracks": "1, 3, 4, 6, 8, 11, 13",
+      "id": 309080,
+      "resource_url": "https://api.discogs.com/artists/309080"
+    },
+    {
+      "name": "Allen Parker",
+      "anv": "",
+      "join": "",
+      "role": "Engineer [Assisted By]",
+      "tracks": "2, 5, 9, 14",
+      "id": 664478,
+      "resource_url": "https://api.discogs.com/artists/664478"
+    },
+    {
+      "name": "Brian Frye",
+      "anv": "",
+      "join": "",
+      "role": "Engineer [Assisted By]",
+      "tracks": "2, 5 to 7, 9, 11, 14",
+      "id": 382017,
+      "resource_url": "https://api.discogs.com/artists/382017"
+    },
+    {
+      "name": "Derrick Williams",
+      "anv": "",
+      "join": "",
+      "role": "Engineer [Assisted By]",
+      "tracks": "9, 14",
+      "id": 242729,
+      "resource_url": "https://api.discogs.com/artists/242729"
+    },
+    {
+      "name": "Jay Nicholas",
+      "anv": "James \"Jay\" Nicholas",
+      "join": "",
+      "role": "Engineer [Assisted By]",
+      "tracks": "12",
+      "id": 272097,
+      "resource_url": "https://api.discogs.com/artists/272097"
+    },
+    {
+      "name": "Manuel K. Morris",
+      "anv": "",
+      "join": "",
+      "role": "Engineer [Assisted By]",
+      "tracks": "5 to 7, 10, 11",
+      "id": 483260,
+      "resource_url": "https://api.discogs.com/artists/483260"
+    },
+    {
+      "name": "Mike Wilson",
+      "anv": "",
+      "join": "",
+      "role": "Engineer [Assisted By]",
+      "tracks": "1, 3, 4, 8, 9, 13, 14",
+      "id": 57059,
+      "resource_url": "https://api.discogs.com/artists/57059"
+    },
+    {
+      "name": "Rawle Gittens",
+      "anv": "",
+      "join": "",
+      "role": "Engineer [Assisted By]",
+      "tracks": "2, 3, 12",
+      "id": 545060,
+      "resource_url": "https://api.discogs.com/artists/545060"
+    },
+    {
+      "name": "Tsumoru Kume",
+      "anv": "Tsumoru \"T.K.\" Kume",
+      "join": "",
+      "role": "Engineer [Assisted By]",
+      "tracks": "8",
+      "id": 481797,
+      "resource_url": "https://api.discogs.com/artists/481797"
+    },
+    {
+      "name": "Alex Olsson",
+      "anv": "",
+      "join": "",
+      "role": "Engineer [Mix Engineer Assisted By]",
+      "tracks": "3, 5",
+      "id": 588087,
+      "resource_url": "https://api.discogs.com/artists/588087"
+    },
+    {
+      "name": "Bart Cennamo",
+      "anv": "",
+      "join": "",
+      "role": "Engineer [Mix Engineer Assisted By]",
+      "tracks": "2",
+      "id": 362246,
+      "resource_url": "https://api.discogs.com/artists/362246"
+    },
+    {
+      "name": "Jay Nicholas",
+      "anv": "James \"Jay\" Nicholas",
+      "join": "",
+      "role": "Engineer [Mix Engineer Assisted By]",
+      "tracks": "12",
+      "id": 272097,
+      "resource_url": "https://api.discogs.com/artists/272097"
+    },
+    {
+      "name": "Kevin Parker",
+      "anv": "",
+      "join": "",
+      "role": "Engineer [Mix Engineer Assisted By]",
+      "tracks": "4, 10, 11, 13",
+      "id": 377962,
+      "resource_url": "https://api.discogs.com/artists/377962"
+    },
+    {
+      "name": "Paul Thompson (5)",
+      "anv": "",
+      "join": "",
+      "role": "Engineer [Mix Engineer Assisted By]",
+      "tracks": "11",
+      "id": 664479,
+      "resource_url": "https://api.discogs.com/artists/664479"
+    },
+    {
+      "name": "Rawle Gittens",
+      "anv": "",
+      "join": "",
+      "role": "Engineer [Mix Engineer Assisted By]",
+      "tracks": "1, 12",
+      "id": 545060,
+      "resource_url": "https://api.discogs.com/artists/545060"
+    },
+    {
+      "name": "Steve Sisco",
+      "anv": "",
+      "join": "",
+      "role": "Engineer [Mix Engineer Assisted By]",
+      "tracks": "2, 5, 9, 14",
+      "id": 344702,
+      "resource_url": "https://api.discogs.com/artists/344702"
+    },
+    {
+      "name": "Tsumoru Kume",
+      "anv": "Tsumoru \"T.K.\" Kume",
+      "join": "",
+      "role": "Engineer [Mix Engineer Assisted By]",
+      "tracks": "8",
+      "id": 481797,
+      "resource_url": "https://api.discogs.com/artists/481797"
+    },
+    {
+      "name": "Victor Bruno",
+      "anv": "",
+      "join": "",
+      "role": "Engineer [Mix Engineer Assisted By]",
+      "tracks": "7",
+      "id": 214790,
+      "resource_url": "https://api.discogs.com/artists/214790"
+    },
+    {
+      "name": "Alvin Speights",
+      "anv": "",
+      "join": "",
+      "role": "Engineer [Mix Engineer]",
+      "tracks": "4, 10, 11, 13",
+      "id": 133646,
+      "resource_url": "https://api.discogs.com/artists/133646"
+    },
+    {
+      "name": "Dexter Simmons",
+      "anv": "",
+      "join": "",
+      "role": "Engineer [Mix Engineer]",
+      "tracks": "1 to 3, 5, 7 to 9, 12, 14",
+      "id": 136549,
+      "resource_url": "https://api.discogs.com/artists/136549"
+    },
+    {
+      "name": "Leslie Brathwaite",
+      "anv": "",
+      "join": "",
+      "role": "Engineer [Mix Engineer]",
+      "tracks": "11",
+      "id": 134617,
+      "resource_url": "https://api.discogs.com/artists/134617"
+    },
+    {
+      "name": "Kenneth Edmonds",
+      "anv": "Kenneth B. Edmonds",
+      "join": "",
+      "role": "Executive-Producer",
+      "tracks": "",
+      "id": 664506,
+      "resource_url": "https://api.discogs.com/artists/664506"
+    },
+    {
+      "name": "L.A. Reid",
+      "anv": "Antonio M. Reid",
+      "join": "",
+      "role": "Executive-Producer",
+      "tracks": "",
+      "id": 51281,
+      "resource_url": "https://api.discogs.com/artists/51281"
+    },
+    {
+      "name": "Organized Noize",
+      "anv": "Organized Noize Productions, Inc.",
+      "join": "",
+      "role": "Executive-Producer",
+      "tracks": "",
+      "id": 78193,
+      "resource_url": "https://api.discogs.com/artists/78193"
+    },
+    {
+      "name": "Frank Gomez (2)",
+      "anv": "",
+      "join": "",
+      "role": "Illustration [Cover Illustration]",
+      "tracks": "",
+      "id": 2486368,
+      "resource_url": "https://api.discogs.com/artists/2486368"
+    },
+    {
+      "name": "Vince Robinson",
+      "anv": "",
+      "join": "",
+      "role": "Illustration [Interior Illustration And All Coloring]",
+      "tracks": "",
+      "id": 2216138,
+      "resource_url": "https://api.discogs.com/artists/2216138"
+    },
+    {
+      "name": "Gwynnis Mosby",
+      "anv": "",
+      "join": "",
+      "role": "Make-Up",
+      "tracks": "",
+      "id": 11602895,
+      "resource_url": "https://api.discogs.com/artists/11602895"
+    },
+    {
+      "name": "Flavor Unit Management",
+      "anv": "",
+      "join": "",
+      "role": "Management",
+      "tracks": "",
+      "id": 1854750,
+      "resource_url": "https://api.discogs.com/artists/1854750"
+    },
+    {
+      "name": "Carlton Batts",
+      "anv": "",
+      "join": "",
+      "role": "Mastered By",
+      "tracks": "",
+      "id": 345131,
+      "resource_url": "https://api.discogs.com/artists/345131"
+    },
+    {
+      "name": "Alvin Speights",
+      "anv": "",
+      "join": "",
+      "role": "Mixed By",
+      "tracks": "4, 10, 11, 13, 15",
+      "id": 133646,
+      "resource_url": "https://api.discogs.com/artists/133646"
+    },
+    {
+      "name": "Dexter Simmons",
+      "anv": "",
+      "join": "",
+      "role": "Mixed By",
+      "tracks": "1 to 3, 5, 7 to 9, 12, 14",
+      "id": 136549,
+      "resource_url": "https://api.discogs.com/artists/136549"
+    },
+    {
+      "name": "Leslie Brathwaite",
+      "anv": "",
+      "join": "",
+      "role": "Mixed By",
+      "tracks": "11",
+      "id": 134617,
+      "resource_url": "https://api.discogs.com/artists/134617"
+    },
+    {
+      "name": "Organized Noize",
+      "anv": "Organized Noize Productions",
+      "join": "",
+      "role": "Mixed By",
+      "tracks": "1 to 3, 5, 7 to 12, 14, 15",
+      "id": 78193,
+      "resource_url": "https://api.discogs.com/artists/78193"
+    },
+    {
+      "name": "OutKast",
+      "anv": "",
+      "join": "",
+      "role": "Mixed By",
+      "tracks": "3, 4, 7, 13",
+      "id": 38561,
+      "resource_url": "https://api.discogs.com/artists/38561"
+    },
+    {
+      "name": "John Halpern",
+      "anv": "",
+      "join": "",
+      "role": "Photography By [Photographer]",
+      "tracks": "",
+      "id": 2267095,
+      "resource_url": "https://api.discogs.com/artists/2267095"
+    },
+    {
+      "name": "Organized Noize",
+      "anv": "Organized Noize Productions",
+      "join": "",
+      "role": "Producer",
+      "tracks": "1, 2, 5, 8 to 12, 14",
+      "id": 78193,
+      "resource_url": "https://api.discogs.com/artists/78193"
+    },
+    {
+      "name": "OutKast",
+      "anv": "",
+      "join": "",
+      "role": "Producer",
+      "tracks": "3, 4, 6, 7, 13",
+      "id": 38561,
+      "resource_url": "https://api.discogs.com/artists/38561"
+    },
+    {
+      "name": "Mr. DJ",
+      "anv": "",
+      "join": "",
+      "role": "Scratches",
+      "tracks": "4, 5, 7, 10",
+      "id": 147022,
+      "resource_url": "https://api.discogs.com/artists/147022"
+    },
+    {
+      "name": "Andre Benjamin",
+      "anv": "",
+      "join": "",
+      "role": "Written-By",
+      "tracks": "2 to 15",
+      "id": 187668,
+      "resource_url": "https://api.discogs.com/artists/187668"
+    },
+    {
+      "name": "Andrea Martin",
+      "anv": "Andrea",
+      "join": "",
+      "role": "Written-By",
+      "tracks": "8",
+      "id": 137978,
+      "resource_url": "https://api.discogs.com/artists/137978"
+    },
+    {
+      "name": "Antwan Patton",
+      "anv": "",
+      "join": "",
+      "role": "Written-By",
+      "tracks": "2 to 15",
+      "id": 654348,
+      "resource_url": "https://api.discogs.com/artists/654348"
+    },
+    {
+      "name": "Cameron Gipp",
+      "anv": "",
+      "join": "",
+      "role": "Written-By",
+      "tracks": "11",
+      "id": 888281,
+      "resource_url": "https://api.discogs.com/artists/888281"
+    },
+    {
+      "name": "Erin Johnson",
+      "anv": "",
+      "join": "",
+      "role": "Written-By",
+      "tracks": "7, 13",
+      "id": 654349,
+      "resource_url": "https://api.discogs.com/artists/654349"
+    },
+    {
+      "name": "Frederick Bell",
+      "anv": "",
+      "join": "",
+      "role": "Written-By",
+      "tracks": "11",
+      "id": 664480,
+      "resource_url": "https://api.discogs.com/artists/664480"
+    },
+    {
+      "name": "Ivan Matias",
+      "anv": "Ivan",
+      "join": "",
+      "role": "Written-By",
+      "tracks": "8",
+      "id": 52934,
+      "resource_url": "https://api.discogs.com/artists/52934"
+    },
+    {
+      "name": "Joi Gilliam",
+      "anv": "",
+      "join": "",
+      "role": "Written-By",
+      "tracks": "1",
+      "id": 276781,
+      "resource_url": "https://api.discogs.com/artists/276781"
+    },
+    {
+      "name": "Marqueze Ethridge",
+      "anv": "",
+      "join": "",
+      "role": "Written-By",
+      "tracks": "14",
+      "id": 664481,
+      "resource_url": "https://api.discogs.com/artists/664481"
+    },
+    {
+      "name": "Myrna \"Skreechy Peach\" Crenshaw",
+      "anv": "Myrna Crenshaw",
+      "join": "",
+      "role": "Written-By",
+      "tracks": "1",
+      "id": 189277,
+      "resource_url": "https://api.discogs.com/artists/189277"
+    },
+    {
+      "name": "Organized Noize",
+      "anv": "",
+      "join": "",
+      "role": "Written-By",
+      "tracks": "1, 2, 5, 8 to 12, 14",
+      "id": 78193,
+      "resource_url": "https://api.discogs.com/artists/78193"
+    },
+    {
+      "name": "Robert Barnett",
+      "anv": "Robert T. Barnett",
+      "join": "",
+      "role": "Written-By",
+      "tracks": "10",
+      "id": 654347,
+      "resource_url": "https://api.discogs.com/artists/654347"
+    },
+    {
+      "name": "Willie Knighton",
+      "anv": "",
+      "join": "",
+      "role": "Written-By",
+      "tracks": "10",
+      "id": 654336,
+      "resource_url": "https://api.discogs.com/artists/654336"
+    },
+    {
+      "name": "Ruben Bailey",
+      "anv": "",
+      "join": "",
+      "role": "Written-By [Comic Book Storyline]",
+      "tracks": "",
+      "id": 3200062,
+      "resource_url": "https://api.discogs.com/artists/3200062"
+    }
+  ],
+  "images": [
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/NyoEKzm_NHsRLeYZ6V8YuVsCS-y0M_58Mu6XSKIOXV4/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE1NjYx/MjY3LTE1OTU0NDEx/MDQtNTU3NC5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/NyoEKzm_NHsRLeYZ6V8YuVsCS-y0M_58Mu6XSKIOXV4/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE1NjYx/MjY3LTE1OTU0NDEx/MDQtNTU3NC5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/-qvUUC1eywVed0Ber1abJ6J9r1hRFkg-9gVMABnhHCM/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE1NjYx/MjY3LTE1OTU0NDEx/MDQtNTU3NC5qcGVn.jpeg",
+      "width": 600,
+      "height": 600
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/hECex4SbBTZMjbnU24MT2hqKeYI2HnMuXzGQaHFqVKU/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE1NjYx/MjY3LTE1OTU0NDEx/MDQtNDg5Mi5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/hECex4SbBTZMjbnU24MT2hqKeYI2HnMuXzGQaHFqVKU/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE1NjYx/MjY3LTE1OTU0NDEx/MDQtNDg5Mi5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/lVzUiLfkMSCedhgbCo-KSvX7hnMSxSLNAVnM9oG1Wso/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE1NjYx/MjY3LTE1OTU0NDEx/MDQtNDg5Mi5qcGVn.jpeg",
+      "width": 600,
+      "height": 600
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/ZYj-NctRQYwZdpPWFvNQLA04mZe8Xg10cCst3Ol9u1M/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE1NjYx/MjY3LTE1OTU0NDEx/MDQtNjU4Mi5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/ZYj-NctRQYwZdpPWFvNQLA04mZe8Xg10cCst3Ol9u1M/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE1NjYx/MjY3LTE1OTU0NDEx/MDQtNjU4Mi5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/4DWgo8TO7jI1YTEwqBK952VkYOdgb6Uti-Yj5KGZA9k/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE1NjYx/MjY3LTE1OTU0NDEx/MDQtNjU4Mi5qcGVn.jpeg",
+      "width": 600,
+      "height": 600
+    }
+  ],
+  "thumb": "https://i.discogs.com/-qvUUC1eywVed0Ber1abJ6J9r1hRFkg-9gVMABnhHCM/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTE1NjYx/MjY3LTE1OTU0NDEx/MDQtNTU3NC5qcGVn.jpeg",
+  "estimated_weight": 460,
+  "blocked_from_sale": false,
+  "is_offensive": false
+}

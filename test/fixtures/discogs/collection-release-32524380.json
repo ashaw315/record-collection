@@ -1,0 +1,1112 @@
+{
+  "id": 32524380,
+  "status": "Accepted",
+  "year": 2024,
+  "resource_url": "https://api.discogs.com/releases/32524380",
+  "uri": "https://www.discogs.com/release/32524380-Kim-Gordon-The-Collective",
+  "artists": [
+    {
+      "name": "Kim Gordon",
+      "anv": "",
+      "join": "",
+      "role": "",
+      "tracks": "",
+      "id": 187676,
+      "resource_url": "https://api.discogs.com/artists/187676",
+      "thumbnail_url": "https://i.discogs.com/Y9d9tLLzBcBKRZaZ6fDcE86rYjCdgv4FRbyhGQRbMbQ/rs:fit/g:sm/q:90/h:600/w:436/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9BLTE4NzY3/Ni0xNjE5NjI3OTUx/LTY0ODAuanBlZw.jpeg"
+    }
+  ],
+  "artists_sort": "Kim Gordon",
+  "labels": [
+    {
+      "name": "Matador",
+      "catno": "OLE2029LPX",
+      "entity_type": "1",
+      "entity_type_name": "Label",
+      "id": 194,
+      "resource_url": "https://api.discogs.com/labels/194",
+      "thumbnail_url": "https://i.discogs.com/BXx1GLELN1GiNBIVLpXcEsZifPrM5741hFy7Egl1f7A/rs:fit/g:sm/q:90/h:215/w:340/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTE5NC0x/NDE0NzA5NzkzLTQ1/NzkuanBlZw.jpeg"
+    },
+    {
+      "name": "Matador",
+      "catno": "OLE2095SE",
+      "entity_type": "1",
+      "entity_type_name": "Label",
+      "id": 194,
+      "resource_url": "https://api.discogs.com/labels/194",
+      "thumbnail_url": "https://i.discogs.com/BXx1GLELN1GiNBIVLpXcEsZifPrM5741hFy7Egl1f7A/rs:fit/g:sm/q:90/h:215/w:340/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTE5NC0x/NDE0NzA5NzkzLTQ1/NzkuanBlZw.jpeg"
+    }
+  ],
+  "series": [],
+  "companies": [
+    {
+      "name": "Matador Records (2)",
+      "catno": "",
+      "entity_type": "5",
+      "entity_type_name": "Licensed To",
+      "id": 333555,
+      "resource_url": "https://api.discogs.com/labels/333555"
+    },
+    {
+      "name": "Kim Gordon",
+      "catno": "",
+      "entity_type": "13",
+      "entity_type_name": "Phonographic Copyright (p)",
+      "id": 1141977,
+      "resource_url": "https://api.discogs.com/labels/1141977"
+    },
+    {
+      "name": "Optimal Media GmbH",
+      "catno": "BN02612",
+      "entity_type": "17",
+      "entity_type_name": "Pressed By",
+      "id": 313190,
+      "resource_url": "https://api.discogs.com/labels/313190",
+      "thumbnail_url": "https://i.discogs.com/VHruzHmKvGgDvoWX6iI_4n5eC7mKyVei1mNz573rJtk/rs:fit/g:sm/q:90/h:500/w:500/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTMxMzE5/MC0xNTE2MzgxNjk2/LTIzMTgucG5n.jpeg"
+    },
+    {
+      "name": "Optimal Media GmbH",
+      "catno": "BO18843",
+      "entity_type": "17",
+      "entity_type_name": "Pressed By",
+      "id": 313190,
+      "resource_url": "https://api.discogs.com/labels/313190",
+      "thumbnail_url": "https://i.discogs.com/VHruzHmKvGgDvoWX6iI_4n5eC7mKyVei1mNz573rJtk/rs:fit/g:sm/q:90/h:500/w:500/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTMxMzE5/MC0xNTE2MzgxNjk2/LTIzMTgucG5n.jpeg"
+    },
+    {
+      "name": "Forgetful Songs",
+      "catno": "",
+      "entity_type": "21",
+      "entity_type_name": "Published By",
+      "id": 1512206,
+      "resource_url": "https://api.discogs.com/labels/1512206"
+    },
+    {
+      "name": "Heavy Duty (3)",
+      "catno": "",
+      "entity_type": "21",
+      "entity_type_name": "Published By",
+      "id": 632250,
+      "resource_url": "https://api.discogs.com/labels/632250"
+    },
+    {
+      "name": "Heavy Duty Music Publishing",
+      "catno": "",
+      "entity_type": "21",
+      "entity_type_name": "Published By",
+      "id": 667438,
+      "resource_url": "https://api.discogs.com/labels/667438"
+    },
+    {
+      "name": "Anthony Paul Lopez Publishing",
+      "catno": "",
+      "entity_type": "21",
+      "entity_type_name": "Published By",
+      "id": 3619627,
+      "resource_url": "https://api.discogs.com/labels/3619627"
+    },
+    {
+      "name": "Van Cortlandt Music",
+      "catno": "",
+      "entity_type": "21",
+      "entity_type_name": "Published By",
+      "id": 3619630,
+      "resource_url": "https://api.discogs.com/labels/3619630"
+    },
+    {
+      "name": "Justin Raisen",
+      "catno": "",
+      "entity_type": "23",
+      "entity_type_name": "Recorded At",
+      "id": 1659806,
+      "resource_url": "https://api.discogs.com/labels/1659806"
+    },
+    {
+      "name": "Beggars Group",
+      "catno": "",
+      "entity_type": "9",
+      "entity_type_name": "Distributed By",
+      "id": 114971,
+      "resource_url": "https://api.discogs.com/labels/114971",
+      "thumbnail_url": "https://i.discogs.com/A5GUOmCm-0Y6pIvIwXMUeJcLDePBy03RKuKNSyPvmKE/rs:fit/g:sm/q:90/h:310/w:310/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTExNDk3/MS0xMzMyNDkzNjMy/LmpwZWc.jpeg"
+    },
+    {
+      "name": "Matador Records (2)",
+      "catno": "",
+      "entity_type": "13",
+      "entity_type_name": "Phonographic Copyright (p)",
+      "id": 333555,
+      "resource_url": "https://api.discogs.com/labels/333555"
+    },
+    {
+      "name": "Matador Records (2)",
+      "catno": "",
+      "entity_type": "14",
+      "entity_type_name": "Copyright (c)",
+      "id": 333555,
+      "resource_url": "https://api.discogs.com/labels/333555"
+    }
+  ],
+  "formats": [
+    {
+      "name": "Vinyl",
+      "qty": "1",
+      "descriptions": [
+        "LP",
+        "Album",
+        "Stereo"
+      ],
+      "text": "Silver"
+    },
+    {
+      "name": "Vinyl",
+      "qty": "1",
+      "descriptions": [
+        "7\"",
+        "45 RPM",
+        "Stereo"
+      ],
+      "text": "Silver"
+    },
+    {
+      "name": "All Media",
+      "qty": "1",
+      "descriptions": [
+        "Deluxe Edition",
+        "Reissue"
+      ]
+    }
+  ],
+  "data_quality": "Needs Vote",
+  "community": {
+    "have": 560,
+    "want": 161,
+    "rating": {
+      "count": 28,
+      "average": 4.61
+    },
+    "submitter": {
+      "username": "redmuseum",
+      "resource_url": "https://api.discogs.com/users/redmuseum"
+    },
+    "contributors": [
+      {
+        "username": "redmuseum",
+        "resource_url": "https://api.discogs.com/users/redmuseum"
+      },
+      {
+        "username": "marcozambon",
+        "resource_url": "https://api.discogs.com/users/marcozambon"
+      },
+      {
+        "username": "J.Ohm",
+        "resource_url": "https://api.discogs.com/users/J.Ohm"
+      },
+      {
+        "username": "obsoleterecords",
+        "resource_url": "https://api.discogs.com/users/obsoleterecords"
+      },
+      {
+        "username": "MuzikJunky",
+        "resource_url": "https://api.discogs.com/users/MuzikJunky"
+      },
+      {
+        "username": "idratherbereading",
+        "resource_url": "https://api.discogs.com/users/idratherbereading"
+      },
+      {
+        "username": "stonebeliever",
+        "resource_url": "https://api.discogs.com/users/stonebeliever"
+      },
+      {
+        "username": "supwrman",
+        "resource_url": "https://api.discogs.com/users/supwrman"
+      }
+    ],
+    "data_quality": "Needs Vote",
+    "status": "Accepted"
+  },
+  "format_quantity": 3,
+  "date_added": "2024-12-09T18:48:48-08:00",
+  "date_changed": "2026-02-15T09:11:45-08:00",
+  "num_for_sale": 37,
+  "lowest_price": 19.65,
+  "master_id": 3419233,
+  "master_url": "https://api.discogs.com/masters/3419233",
+  "title": "The Collective",
+  "country": "US",
+  "released": "2024-12-09",
+  "notes": "Deluxe edition on silver vinyl with bonus 7-inch. Includes obi strip and printed inner sleeve.",
+  "released_formatted": "09 Dec 2024",
+  "identifiers": [
+    {
+      "type": "Rights Society",
+      "value": "ASCAP"
+    },
+    {
+      "type": "Rights Society",
+      "value": "BMI"
+    },
+    {
+      "type": "Rights Society",
+      "value": "SESAC"
+    },
+    {
+      "type": "Barcode",
+      "value": "191401202916",
+      "description": "Scan"
+    },
+    {
+      "type": "Barcode",
+      "value": "1 91401 20291 6",
+      "description": "Text"
+    },
+    {
+      "type": "Matrix / Runout",
+      "value": "OLE 2029 LP IV BN02612-01 A1 HL",
+      "description": "Side A"
+    },
+    {
+      "type": "Matrix / Runout",
+      "value": "OLE 2029 LP IV BN02612-01 B1 HL",
+      "description": "Side B"
+    },
+    {
+      "type": "Barcode",
+      "value": "191401202909",
+      "description": "Scan, obi strip"
+    },
+    {
+      "type": "Barcode",
+      "value": "1 91401 20290 9",
+      "description": "Text, obi strip"
+    },
+    {
+      "type": "Matrix / Runout",
+      "value": "OLE2095SE BO18843-01 A1",
+      "description": "Side C"
+    },
+    {
+      "type": "Matrix / Runout",
+      "value": "OLE2095SE Stratty BO18843-01 B1",
+      "description": "Side D"
+    }
+  ],
+  "videos": [
+    {
+      "uri": "https://www.youtube.com/watch?v=IZ3i80B0qKg",
+      "title": "Kim Gordon - \"BYE BYE\" (Official Music Video)",
+      "description": "Featured on 'The Collective,' the new album from Kim Gordon out March 8th. Preorder and pre-save the album here: https://kimgordon.ffm.to/thecollective\n\nStream \"BYE BYE\": https://kimgordon.ffm.to/byebye\n\nSee Kim Gordon live: https://kimaltheagordon.com/\n\n",
+      "duration": 276,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=Q_3KJkezWOs",
+      "title": "Kim Gordon - \"The Candy House\" (Official Audio)",
+      "description": "Featured on 'The Collective,' the new album from Kim Gordon out now. Purchase and stream the album here: https://kimgordon.ffm.to/thecollective\n\nSee Kim Gordon live: https://kimaltheagordon.com/\n\nhttps://www.instagram.com/kimletgordon/\nhttps://www.faceboo",
+      "duration": 142,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=wjyktFqiOZc",
+      "title": "Kim Gordon - \"I Don't Miss My Mind\" (Official Audio)",
+      "description": "Featured on 'The Collective,' the new album from Kim Gordon out now. Purchase and stream the album here: https://kimgordon.ffm.to/thecollective\n\nSee Kim Gordon live: https://kimaltheagordon.com/\n\nhttps://www.instagram.com/kimletgordon/\nhttps://www.faceboo",
+      "duration": 206,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=ioKP3ORu0QY",
+      "title": "Kim Gordon- \"I'm a Man\" (Official Music Video)",
+      "description": "Featured on 'The Collective,' the new album from Kim Gordon out March 8th. Preorder and pre-save the album here: https://kimgordon.ffm.to/thecollective\n\nStream \"I'm a Man\": https://kimgordon.ffm.to/imaman\nStream \"BYE BYE\": https://kimgordon.ffm.to/byebye\n",
+      "duration": 271,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=YECXEjt4lNQ",
+      "title": "Kim Gordon - \"Trophies\" (Official Audio)",
+      "description": "Featured on 'The Collective,' the new album from Kim Gordon out now. Purchase and stream the album here: https://kimgordon.ffm.to/thecollective\n\nSee Kim Gordon live: https://kimaltheagordon.com/\n\nhttps://www.instagram.com/kimletgordon/\nhttps://www.faceboo",
+      "duration": 157,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=RVndycw2Sng",
+      "title": "Kim Gordon - \"It's Dark Inside\" (Official Audio)",
+      "description": "Featured on 'The Collective,' the new album from Kim Gordon out now. Purchase and stream the album here: https://kimgordon.ffm.to/thecollective\n\nSee Kim Gordon live: https://kimaltheagordon.com/\n\nhttps://www.instagram.com/kimletgordon/\nhttps://www.faceboo",
+      "duration": 216,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=cdn2A3MVnfE",
+      "title": "Kim Gordon- \"Psychedelic Orgasm\" (Official Music Video)",
+      "description": "Featured on 'The Collective,' the new album from Kim Gordon out March 8th. Preorder and pre-save the album here: https://kimgordon.ffm.to/thecollective\n\nStream \"Psychedelic Orgasm\": https://kimgordon.ffm.to/psychorg\nStream \"I'm a Man\": https://kimgordon.f",
+      "duration": 223,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=GkGuOz7toz0",
+      "title": "Kim Gordon - \"Tree House\" (Official Audio)",
+      "description": "Featured on 'The Collective,' the new album from Kim Gordon out now. Purchase and stream the album here: https://kimgordon.ffm.to/thecollective\n\nSee Kim Gordon live: https://kimaltheagordon.com/\n\nhttps://www.instagram.com/kimletgordon/\nhttps://www.faceboo",
+      "duration": 247,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=pzCPToX5PyU",
+      "title": "Kim Gordon - \"Shelf Warmer\" (Official Audio)",
+      "description": "Featured on 'The Collective,' the new album from Kim Gordon out now. Purchase and stream the album here: https://kimgordon.ffm.to/thecollective\n\nSee Kim Gordon live: https://kimaltheagordon.com/\n\nhttps://www.instagram.com/kimletgordon/\nhttps://www.faceboo",
+      "duration": 252,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=aZ32GjG7jPs",
+      "title": "Kim Gordon - \"The Believers\" (Official Audio)",
+      "description": "Featured on 'The Collective,' the new album from Kim Gordon out now. Purchase and stream the album here: https://kimgordon.ffm.to/thecollective\n\nSee Kim Gordon live: https://kimaltheagordon.com/\n\nhttps://www.instagram.com/kimletgordon/\nhttps://www.faceboo",
+      "duration": 296,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=OKo0ilO01YQ",
+      "title": "Kim Gordon - \"Dream Dollar\" (Official Audio)",
+      "description": "Featured on 'The Collective,' the new album from Kim Gordon out now. Purchase and stream the album here: https://kimgordon.ffm.to/thecollective\n\nSee Kim Gordon live: https://kimaltheagordon.com/\n\nhttps://www.instagram.com/kimletgordon/\nhttps://www.faceboo",
+      "duration": 181,
+      "embed": true
+    }
+  ],
+  "genres": [
+    "Electronic",
+    "Hip Hop",
+    "Rock"
+  ],
+  "styles": [
+    "Noise Rock",
+    "No Wave",
+    "Trap",
+    "Illbient",
+    "Leftfield"
+  ],
+  "tracklist": [
+    {
+      "position": "A1",
+      "type_": "track",
+      "title": "Bye Bye",
+      "extraartists": [
+        {
+          "name": "Justin Raisen",
+          "anv": "",
+          "join": "",
+          "role": "Drum Programming, Synthesizer",
+          "tracks": "",
+          "id": 3560152,
+          "resource_url": "https://api.discogs.com/artists/3560152"
+        },
+        {
+          "name": "Jeremiah Raisen",
+          "anv": "",
+          "join": "",
+          "role": "Written-By",
+          "tracks": "",
+          "id": 3560156,
+          "resource_url": "https://api.discogs.com/artists/3560156"
+        }
+      ],
+      "duration": "4:14"
+    },
+    {
+      "position": "A2",
+      "type_": "track",
+      "title": "The Candy House",
+      "extraartists": [
+        {
+          "name": "Justin Raisen",
+          "anv": "",
+          "join": "",
+          "role": "Programmed By [Programming], Sampler [ASR10], Effects [Filters]",
+          "tracks": "",
+          "id": 3560152,
+          "resource_url": "https://api.discogs.com/artists/3560152"
+        },
+        {
+          "name": "YBG",
+          "anv": "",
+          "join": "",
+          "role": "Vocals [Additional]",
+          "tracks": "",
+          "id": 9048715,
+          "resource_url": "https://api.discogs.com/artists/9048715"
+        }
+      ],
+      "duration": "2:21"
+    },
+    {
+      "position": "A3",
+      "type_": "track",
+      "title": "I Don't Miss My Mind",
+      "extraartists": [
+        {
+          "name": "Ainjel Emme",
+          "anv": "",
+          "join": "",
+          "role": "Producer [Vocal Production]",
+          "tracks": "",
+          "id": 956242,
+          "resource_url": "https://api.discogs.com/artists/956242"
+        },
+        {
+          "name": "Justin Raisen",
+          "anv": "",
+          "join": "",
+          "role": "Programmed By [Programming], Synthesizer, Sampler [ASR10], Effects [Boxes], Producer [Vocal Production], Guitar",
+          "tracks": "",
+          "id": 3560152,
+          "resource_url": "https://api.discogs.com/artists/3560152"
+        }
+      ],
+      "duration": "3:26"
+    },
+    {
+      "position": "A4",
+      "type_": "track",
+      "title": "I'm A Man",
+      "extraartists": [
+        {
+          "name": "Anthony Paul Lopez",
+          "anv": "",
+          "join": "",
+          "role": "Programmed By [Programming]",
+          "tracks": "",
+          "id": 7316681,
+          "resource_url": "https://api.discogs.com/artists/7316681"
+        },
+        {
+          "name": "Justin Raisen",
+          "anv": "",
+          "join": "",
+          "role": "Programmed By [Programming], Synthesizer, Sampler [ASR10], Guitar",
+          "tracks": "",
+          "id": 3560152,
+          "resource_url": "https://api.discogs.com/artists/3560152"
+        },
+        {
+          "name": "Anthony Paul Lopez",
+          "anv": "",
+          "join": "",
+          "role": "Written-By",
+          "tracks": "",
+          "id": 7316681,
+          "resource_url": "https://api.discogs.com/artists/7316681"
+        }
+      ],
+      "duration": "4:32"
+    },
+    {
+      "position": "A5",
+      "type_": "track",
+      "title": "Trophies",
+      "extraartists": [
+        {
+          "name": "Anthony Paul Lopez",
+          "anv": "",
+          "join": "",
+          "role": "Programmed By [Programming], Sound Designer, Drums, Sounds [Foley]",
+          "tracks": "",
+          "id": 7316681,
+          "resource_url": "https://api.discogs.com/artists/7316681"
+        },
+        {
+          "name": "Justin Raisen",
+          "anv": "",
+          "join": "",
+          "role": "Programmed By [Programming], Sound Designer, Synthesizer, Sampler [ASR10], Guitar",
+          "tracks": "",
+          "id": 3560152,
+          "resource_url": "https://api.discogs.com/artists/3560152"
+        },
+        {
+          "name": "Anthony Paul Lopez",
+          "anv": "",
+          "join": "",
+          "role": "Written-By",
+          "tracks": "",
+          "id": 7316681,
+          "resource_url": "https://api.discogs.com/artists/7316681"
+        }
+      ],
+      "duration": "2:36"
+    },
+    {
+      "position": "A6",
+      "type_": "track",
+      "title": "It's Dark Inside",
+      "extraartists": [
+        {
+          "name": "Justin Raisen",
+          "anv": "",
+          "join": "",
+          "role": "Programmed By [Programming], Sound Designer, Drum Machine, Synthesizer, Sampler [ASR10]",
+          "tracks": "",
+          "id": 3560152,
+          "resource_url": "https://api.discogs.com/artists/3560152"
+        },
+        {
+          "name": "Anthony Paul Lopez",
+          "anv": "",
+          "join": "",
+          "role": "Written-By, Programmed By [Programming], Sounds [Foley]",
+          "tracks": "",
+          "id": 7316681,
+          "resource_url": "https://api.discogs.com/artists/7316681"
+        }
+      ],
+      "duration": "3:36"
+    },
+    {
+      "position": "B1",
+      "type_": "track",
+      "title": "Psychedelic Orgasm",
+      "extraartists": [
+        {
+          "name": "Justin Raisen",
+          "anv": "",
+          "join": "",
+          "role": "Programmed By [Programming], Sound Designer, Drum Machine, Synthesizer, Sampler [ASR10], Guitar",
+          "tracks": "",
+          "id": 3560152,
+          "resource_url": "https://api.discogs.com/artists/3560152"
+        },
+        {
+          "name": "Anthony Paul Lopez",
+          "anv": "",
+          "join": "",
+          "role": "Written-By, Programmed By [Programming], Sounds [Foley]",
+          "tracks": "",
+          "id": 7316681,
+          "resource_url": "https://api.discogs.com/artists/7316681"
+        }
+      ],
+      "duration": "3:40"
+    },
+    {
+      "position": "B2",
+      "type_": "track",
+      "title": "Tree House",
+      "extraartists": [
+        {
+          "name": "Sarah Register",
+          "anv": "",
+          "join": "",
+          "role": "Guitar",
+          "tracks": "",
+          "id": 376576,
+          "resource_url": "https://api.discogs.com/artists/376576"
+        },
+        {
+          "name": "Anthony Paul Lopez",
+          "anv": "",
+          "join": "",
+          "role": "Programmed By [Programming]",
+          "tracks": "",
+          "id": 7316681,
+          "resource_url": "https://api.discogs.com/artists/7316681"
+        },
+        {
+          "name": "Justin Raisen",
+          "anv": "",
+          "join": "",
+          "role": "Programmed By [Programming], Sound Designer, Sounds [Foley], Drum Machine, Synthesizer, Sampler [ASR10]",
+          "tracks": "",
+          "id": 3560152,
+          "resource_url": "https://api.discogs.com/artists/3560152"
+        }
+      ],
+      "duration": "4:06"
+    },
+    {
+      "position": "B3",
+      "type_": "track",
+      "title": "Shelf Warmer",
+      "extraartists": [
+        {
+          "name": "Sarah Register",
+          "anv": "",
+          "join": "",
+          "role": "Guitar",
+          "tracks": "",
+          "id": 376576,
+          "resource_url": "https://api.discogs.com/artists/376576"
+        },
+        {
+          "name": "Anthony Paul Lopez",
+          "anv": "",
+          "join": "",
+          "role": "Programmed By [Programmer]",
+          "tracks": "",
+          "id": 7316681,
+          "resource_url": "https://api.discogs.com/artists/7316681"
+        },
+        {
+          "name": "Justin Raisen",
+          "anv": "",
+          "join": "",
+          "role": "Programmed By [Programming], Drums, Sound Designer, Sounds [Foley], Synthesizer, Sampler [ASR10]",
+          "tracks": "",
+          "id": 3560152,
+          "resource_url": "https://api.discogs.com/artists/3560152"
+        }
+      ],
+      "duration": "4:11"
+    },
+    {
+      "position": "B4",
+      "type_": "track",
+      "title": "The Believers",
+      "extraartists": [
+        {
+          "name": "Ainjel Emme",
+          "anv": "",
+          "join": "",
+          "role": "Bass Guitar",
+          "tracks": "",
+          "id": 956242,
+          "resource_url": "https://api.discogs.com/artists/956242"
+        },
+        {
+          "name": "Justin Raisen",
+          "anv": "",
+          "join": "",
+          "role": "Programmed By [Programmer], Drums, Sound Designer, Sounds [Foley], Sampler [ASR10], Synthesizer, Guitar",
+          "tracks": "",
+          "id": 3560152,
+          "resource_url": "https://api.discogs.com/artists/3560152"
+        },
+        {
+          "name": "Anthony Paul Lopez",
+          "anv": "",
+          "join": "",
+          "role": "Programmed By [Programming]",
+          "tracks": "",
+          "id": 7316681,
+          "resource_url": "https://api.discogs.com/artists/7316681"
+        },
+        {
+          "name": "SADPONY",
+          "anv": "",
+          "join": "",
+          "role": "Programmed By [Programming], Synthesizer",
+          "tracks": "",
+          "id": 8106330,
+          "resource_url": "https://api.discogs.com/artists/8106330"
+        }
+      ],
+      "duration": "4:55"
+    },
+    {
+      "position": "B5",
+      "type_": "track",
+      "title": "Dream Dollar",
+      "extraartists": [
+        {
+          "name": "Joe Kennedy (5)",
+          "anv": "",
+          "join": "",
+          "role": "Programmed By [Programming], Drum Machine, Bass Guitar",
+          "tracks": "",
+          "id": 2112561,
+          "resource_url": "https://api.discogs.com/artists/2112561"
+        },
+        {
+          "name": "Justin Raisen",
+          "anv": "",
+          "join": "",
+          "role": "Programmed By [Programming], Sound Designer, Sounds [Foley], Synthesizer, Sampler [ASR10], Guitar",
+          "tracks": "",
+          "id": 3560152,
+          "resource_url": "https://api.discogs.com/artists/3560152"
+        },
+        {
+          "name": "Joe Kennedy (5)",
+          "anv": "",
+          "join": "",
+          "role": "Written-By",
+          "tracks": "",
+          "id": 2112561,
+          "resource_url": "https://api.discogs.com/artists/2112561"
+        }
+      ],
+      "duration": "3:01"
+    },
+    {
+      "position": "C",
+      "type_": "track",
+      "title": "Bangin' On The Freeway",
+      "extraartists": [
+        {
+          "name": "Eva Gardner (2)",
+          "anv": "",
+          "join": "",
+          "role": "Bass Guitar, Bass [Sub Bass]",
+          "tracks": "",
+          "id": 771839,
+          "resource_url": "https://api.discogs.com/artists/771839"
+        },
+        {
+          "name": "Justin Raisen",
+          "anv": "",
+          "join": "",
+          "role": "Guitar, Sampler",
+          "tracks": "",
+          "id": 3560152,
+          "resource_url": "https://api.discogs.com/artists/3560152"
+        },
+        {
+          "name": "Kim Gordon",
+          "anv": "",
+          "join": "",
+          "role": "Guitar, Vocals",
+          "tracks": "",
+          "id": 187676,
+          "resource_url": "https://api.discogs.com/artists/187676"
+        },
+        {
+          "name": "Mike Bozzi",
+          "anv": "",
+          "join": "",
+          "role": "Mastered By",
+          "tracks": "",
+          "id": 401309,
+          "resource_url": "https://api.discogs.com/artists/401309"
+        },
+        {
+          "name": "Anthony Paul Lopez",
+          "anv": "",
+          "join": "",
+          "role": "Mixed By, Engineer",
+          "tracks": "",
+          "id": 7316681,
+          "resource_url": "https://api.discogs.com/artists/7316681"
+        },
+        {
+          "name": "Justin Raisen",
+          "anv": "",
+          "join": "",
+          "role": "Mixed By, Engineer",
+          "tracks": "",
+          "id": 3560152,
+          "resource_url": "https://api.discogs.com/artists/3560152"
+        },
+        {
+          "name": "Justin Raisen",
+          "anv": "",
+          "join": "",
+          "role": "Producer",
+          "tracks": "",
+          "id": 3560152,
+          "resource_url": "https://api.discogs.com/artists/3560152"
+        },
+        {
+          "name": "SADPONY",
+          "anv": "",
+          "join": "",
+          "role": "Producer",
+          "tracks": "",
+          "id": 8106330,
+          "resource_url": "https://api.discogs.com/artists/8106330"
+        },
+        {
+          "name": "Anthony Paul Lopez",
+          "anv": "",
+          "join": "",
+          "role": "Producer [Additional production]",
+          "tracks": "",
+          "id": 7316681,
+          "resource_url": "https://api.discogs.com/artists/7316681"
+        },
+        {
+          "name": "Eva Gardner (2)",
+          "anv": "",
+          "join": "",
+          "role": "Written-By",
+          "tracks": "",
+          "id": 771839,
+          "resource_url": "https://api.discogs.com/artists/771839"
+        },
+        {
+          "name": "Jeremiah Raisen",
+          "anv": "",
+          "join": "",
+          "role": "Written-By",
+          "tracks": "",
+          "id": 3560156,
+          "resource_url": "https://api.discogs.com/artists/3560156"
+        },
+        {
+          "name": "Justin Raisen",
+          "anv": "",
+          "join": "",
+          "role": "Written-By",
+          "tracks": "",
+          "id": 3560152,
+          "resource_url": "https://api.discogs.com/artists/3560152"
+        },
+        {
+          "name": "Kim Gordon",
+          "anv": "",
+          "join": "",
+          "role": "Written-By",
+          "tracks": "",
+          "id": 187676,
+          "resource_url": "https://api.discogs.com/artists/187676"
+        }
+      ],
+      "duration": "3:36"
+    },
+    {
+      "position": "D",
+      "type_": "track",
+      "title": "ECRP",
+      "extraartists": [
+        {
+          "name": "Kim Gordon",
+          "anv": "",
+          "join": "",
+          "role": "Guitar, Vocals",
+          "tracks": "",
+          "id": 187676,
+          "resource_url": "https://api.discogs.com/artists/187676"
+        },
+        {
+          "name": "Mike Bozzi",
+          "anv": "",
+          "join": "",
+          "role": "Mastered By",
+          "tracks": "",
+          "id": 401309,
+          "resource_url": "https://api.discogs.com/artists/401309"
+        },
+        {
+          "name": "Anthony Paul Lopez",
+          "anv": "",
+          "join": "",
+          "role": "Producer, Mixed By, Engineer",
+          "tracks": "",
+          "id": 7316681,
+          "resource_url": "https://api.discogs.com/artists/7316681"
+        },
+        {
+          "name": "Justin Raisen",
+          "anv": "",
+          "join": "",
+          "role": "Producer, Mixed By, Engineer",
+          "tracks": "",
+          "id": 3560152,
+          "resource_url": "https://api.discogs.com/artists/3560152"
+        },
+        {
+          "name": "Anthony Paul Lopez",
+          "anv": "",
+          "join": "",
+          "role": "Written-By",
+          "tracks": "",
+          "id": 7316681,
+          "resource_url": "https://api.discogs.com/artists/7316681"
+        },
+        {
+          "name": "Justin Raisen",
+          "anv": "",
+          "join": "",
+          "role": "Written-By",
+          "tracks": "",
+          "id": 3560152,
+          "resource_url": "https://api.discogs.com/artists/3560152"
+        },
+        {
+          "name": "Kim Gordon",
+          "anv": "",
+          "join": "",
+          "role": "Written-By",
+          "tracks": "",
+          "id": 187676,
+          "resource_url": "https://api.discogs.com/artists/187676"
+        }
+      ],
+      "duration": "3:56"
+    }
+  ],
+  "extraartists": [
+    {
+      "name": "Mike Zimmerman (2)",
+      "anv": "",
+      "join": "",
+      "role": "Art Direction",
+      "tracks": "",
+      "id": 3767088,
+      "resource_url": "https://api.discogs.com/artists/3767088"
+    },
+    {
+      "name": "SADPONY",
+      "anv": "",
+      "join": "",
+      "role": "Co-producer",
+      "tracks": "A1, B4",
+      "id": 8106330,
+      "resource_url": "https://api.discogs.com/artists/8106330"
+    },
+    {
+      "name": "Brad Lauchert",
+      "anv": "",
+      "join": "",
+      "role": "Engineer",
+      "tracks": "",
+      "id": 5906196,
+      "resource_url": "https://api.discogs.com/artists/5906196"
+    },
+    {
+      "name": "Heino Leja",
+      "anv": "HL",
+      "join": "",
+      "role": "Lacquer Cut By",
+      "tracks": "A1 to B5",
+      "id": 4567417,
+      "resource_url": "https://api.discogs.com/artists/4567417"
+    },
+    {
+      "name": "Scott Stratton",
+      "anv": "Stratty",
+      "join": "",
+      "role": "Lacquer Cut By",
+      "tracks": "C, D",
+      "id": 6660841,
+      "resource_url": "https://api.discogs.com/artists/6660841"
+    },
+    {
+      "name": "Mike Bozzi",
+      "anv": "",
+      "join": "",
+      "role": "Mastered By",
+      "tracks": "",
+      "id": 401309,
+      "resource_url": "https://api.discogs.com/artists/401309"
+    },
+    {
+      "name": "James Twig Harper",
+      "anv": "Twig Harper",
+      "join": "",
+      "role": "Photography By [Photos]",
+      "tracks": "",
+      "id": 203326,
+      "resource_url": "https://api.discogs.com/artists/203326"
+    },
+    {
+      "name": "Anthony Paul Lopez",
+      "anv": "",
+      "join": "",
+      "role": "Producer [Additional Production], Engineer, Mixed By",
+      "tracks": "",
+      "id": 7316681,
+      "resource_url": "https://api.discogs.com/artists/7316681"
+    },
+    {
+      "name": "Justin Raisen",
+      "anv": "",
+      "join": "",
+      "role": "Producer, Engineer, Mixed By, Written-By",
+      "tracks": "",
+      "id": 3560152,
+      "resource_url": "https://api.discogs.com/artists/3560152"
+    },
+    {
+      "name": "Kim Gordon",
+      "anv": "",
+      "join": "",
+      "role": "Vocals, Guitar, Lyrics By, Written-By",
+      "tracks": "A1, A3 to B5",
+      "id": 187676,
+      "resource_url": "https://api.discogs.com/artists/187676"
+    },
+    {
+      "name": "Kim Gordon",
+      "anv": "",
+      "join": "",
+      "role": "Vocals, Lyrics By, Written-By",
+      "tracks": "A2",
+      "id": 187676,
+      "resource_url": "https://api.discogs.com/artists/187676"
+    }
+  ],
+  "images": [
+    {
+      "type": "primary",
+      "uri": "https://i.discogs.com/Ag5dTil0Hq30QHAvxhKY9LozMfUXRvq80aoSF8s5XqY/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMyNTI0/MzgwLTE3MzM3OTkx/NTUtMjc4NS5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/Ag5dTil0Hq30QHAvxhKY9LozMfUXRvq80aoSF8s5XqY/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMyNTI0/MzgwLTE3MzM3OTkx/NTUtMjc4NS5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/NLOEH3iGTyCg9DFZNtRnqOSjL4qi_7e_zdPxstunYBY/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMyNTI0/MzgwLTE3MzM3OTkx/NTUtMjc4NS5qcGVn.jpeg",
+      "width": 600,
+      "height": 600
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/xamDcDLbspUkIHB-s6hnTG4OzSRtO1cK5-AHxTVJdr8/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMyNTI0/MzgwLTE3MzM3OTkx/NjctODUzMi5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/xamDcDLbspUkIHB-s6hnTG4OzSRtO1cK5-AHxTVJdr8/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMyNTI0/MzgwLTE3MzM3OTkx/NjctODUzMi5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/zBu3mFYWuSYEDkWHYncRUwIESDD0uXgILtFZ5kuicec/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMyNTI0/MzgwLTE3MzM3OTkx/NjctODUzMi5qcGVn.jpeg",
+      "width": 600,
+      "height": 600
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/3ZBbI1z-BNMOdzpIwj3RtYlM0hj1mqU-JguLVOIuwdk/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMyNTI0/MzgwLTE3MzM3OTkx/OTctODcyOC5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/3ZBbI1z-BNMOdzpIwj3RtYlM0hj1mqU-JguLVOIuwdk/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMyNTI0/MzgwLTE3MzM3OTkx/OTctODcyOC5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/BkPEPoYlD_3VoDUGp78bQdD1vPq8QxLSlgNqyXWK-QM/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMyNTI0/MzgwLTE3MzM3OTkx/OTctODcyOC5qcGVn.jpeg",
+      "width": 600,
+      "height": 600
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/dd0Oqb_RFMvypKVmoZImBhUyJEAWuP7uanhKE97PNAM/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMyNTI0/MzgwLTE3MzM3OTkx/NzctMjI5MS5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/dd0Oqb_RFMvypKVmoZImBhUyJEAWuP7uanhKE97PNAM/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMyNTI0/MzgwLTE3MzM3OTkx/NzctMjI5MS5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/N9Hmbk8CR-DRRKbYZn_4_F9CC5BgGbF7vfeqjP3QEz8/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMyNTI0/MzgwLTE3MzM3OTkx/NzctMjI5MS5qcGVn.jpeg",
+      "width": 600,
+      "height": 600
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/dHH_HU5WdkMxQqAaIOwuUzoakb9nziyaTiJetIA46CI/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMyNTI0/MzgwLTE3MzM3OTkx/ODMtMTc1My5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/dHH_HU5WdkMxQqAaIOwuUzoakb9nziyaTiJetIA46CI/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMyNTI0/MzgwLTE3MzM3OTkx/ODMtMTc1My5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/4lnTB5JleJEmScd9RUkLKydU7fLjHvlaVankm76vTak/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMyNTI0/MzgwLTE3MzM3OTkx/ODMtMTc1My5qcGVn.jpeg",
+      "width": 600,
+      "height": 600
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/AUAkuF8dMnnWHsFo_HHpbzhT8ni3f5KY8hHnKX-klDs/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMyNTI0/MzgwLTE3MzM3OTky/MTItODI0MC5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/AUAkuF8dMnnWHsFo_HHpbzhT8ni3f5KY8hHnKX-klDs/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMyNTI0/MzgwLTE3MzM3OTky/MTItODI0MC5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/NT_mzi28nit-sKmC13s2pqt8L2TaarNjwKlk-MLkkyI/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMyNTI0/MzgwLTE3MzM3OTky/MTItODI0MC5qcGVn.jpeg",
+      "width": 600,
+      "height": 600
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/CAqofvvhMwm_8_FP3jplU27hFRN7Ko3K4F8KhWEm5K0/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMyNTI0/MzgwLTE3MzM3OTky/MjAtNTE0My5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/CAqofvvhMwm_8_FP3jplU27hFRN7Ko3K4F8KhWEm5K0/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMyNTI0/MzgwLTE3MzM3OTky/MjAtNTE0My5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/ovsP_wmTwlTqVS-d9Ln0wvTBwQ_bWfge7cEXS18o2Yk/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMyNTI0/MzgwLTE3MzM3OTky/MjAtNTE0My5qcGVn.jpeg",
+      "width": 600,
+      "height": 600
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/T98jOhj_bclOUVaka4MqkMqWN7l1OQe9oKwDShAsAO4/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMyNTI0/MzgwLTE3MzM3OTky/MzAtNjg5Ni5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/T98jOhj_bclOUVaka4MqkMqWN7l1OQe9oKwDShAsAO4/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMyNTI0/MzgwLTE3MzM3OTky/MzAtNjg5Ni5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/tAkNqwMQZ8txFEFKVaqYDrwbuFw8B3-PpLWKKVyc_fM/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMyNTI0/MzgwLTE3MzM3OTky/MzAtNjg5Ni5qcGVn.jpeg",
+      "width": 600,
+      "height": 600
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/-6BBFyVv_RW4DkMFiFV9fYYoki2qaoYpBYEj_jXi41M/rs:fit/g:sm/q:90/h:235/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMyNTI0/MzgwLTE3MzM3OTky/MzctMTg4OS5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/-6BBFyVv_RW4DkMFiFV9fYYoki2qaoYpBYEj_jXi41M/rs:fit/g:sm/q:90/h:235/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMyNTI0/MzgwLTE3MzM3OTky/MzctMTg4OS5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/qtc8fO3SqvrzAXAGTlv7ueruoTcOrcaXXupu4Ir697o/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMyNTI0/MzgwLTE3MzM3OTky/MzctMTg4OS5qcGVn.jpeg",
+      "width": 600,
+      "height": 235
+    }
+  ],
+  "thumb": "https://i.discogs.com/NLOEH3iGTyCg9DFZNtRnqOSjL4qi_7e_zdPxstunYBY/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMyNTI0/MzgwLTE3MzM3OTkx/NTUtMjc4NS5qcGVn.jpeg",
+  "estimated_weight": 690,
+  "blocked_from_sale": false,
+  "is_offensive": false
+}

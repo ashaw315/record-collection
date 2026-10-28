@@ -1,0 +1,367 @@
+{
+  "id": 29900731,
+  "status": "Accepted",
+  "year": 2024,
+  "resource_url": "https://api.discogs.com/releases/29900731",
+  "uri": "https://www.discogs.com/release/29900731-MGMT-Loss-Of-Life",
+  "artists": [
+    {
+      "name": "MGMT",
+      "anv": "",
+      "join": "",
+      "role": "",
+      "tracks": "",
+      "id": 985480,
+      "resource_url": "https://api.discogs.com/artists/985480",
+      "thumbnail_url": "https://i.discogs.com/oMasdPApG1SBG1PbSXq4VmgfdGgL6b0Y4MdHsxR3gHE/rs:fit/g:sm/q:90/h:276/w:460/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9BLTk4NTQ4/MC0xNzUwNTQxMTYy/LTYzNzkuanBlZw.jpeg"
+    }
+  ],
+  "artists_sort": "MGMT",
+  "labels": [
+    {
+      "name": "Mom + Pop",
+      "catno": "MP731",
+      "entity_type": "1",
+      "entity_type_name": "Label",
+      "id": 194365,
+      "resource_url": "https://api.discogs.com/labels/194365",
+      "thumbnail_url": "https://i.discogs.com/MnnbHjLKHfKTTvpasuaNHR32_VbC6-EnGRW_mR7sO7U/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTE5NDM2/NS0xNDk3NTIwNzk2/LTk4NjguanBlZw.jpeg"
+    }
+  ],
+  "series": [],
+  "companies": [
+    {
+      "name": "Urban Outfitters",
+      "catno": "",
+      "entity_type": "42",
+      "entity_type_name": "Exclusive Retailer",
+      "id": 109593,
+      "resource_url": "https://api.discogs.com/labels/109593",
+      "thumbnail_url": "https://i.discogs.com/y2ZTu36Kbs5pYeZk2Mgp8h0f0VWd87vIqaTFKED-6u8/rs:fit/g:sm/q:90/h:339/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTEwOTU5/My0xNjI2ODA0MzIw/LTQ5MjYuanBlZw.jpeg"
+    }
+  ],
+  "formats": [
+    {
+      "name": "Vinyl",
+      "qty": "1",
+      "descriptions": [
+        "LP",
+        "Album",
+        "Limited Edition"
+      ],
+      "text": "Hot Pink [Opaque]"
+    }
+  ],
+  "data_quality": "Needs Vote",
+  "community": {
+    "have": 372,
+    "want": 87,
+    "rating": {
+      "count": 14,
+      "average": 4.5
+    },
+    "submitter": {
+      "username": "jaredmarino_",
+      "resource_url": "https://api.discogs.com/users/jaredmarino_"
+    },
+    "contributors": [
+      {
+        "username": "jaredmarino_",
+        "resource_url": "https://api.discogs.com/users/jaredmarino_"
+      },
+      {
+        "username": "dj_pleb",
+        "resource_url": "https://api.discogs.com/users/dj_pleb"
+      },
+      {
+        "username": "danBLOO",
+        "resource_url": "https://api.discogs.com/users/danBLOO"
+      },
+      {
+        "username": "drukepple",
+        "resource_url": "https://api.discogs.com/users/drukepple"
+      },
+      {
+        "username": "Gonzo611982",
+        "resource_url": "https://api.discogs.com/users/Gonzo611982"
+      },
+      {
+        "username": "zero.street",
+        "resource_url": "https://api.discogs.com/users/zero.street"
+      }
+    ],
+    "data_quality": "Needs Vote",
+    "status": "Accepted"
+  },
+  "format_quantity": 1,
+  "date_added": "2024-02-23T12:57:17-08:00",
+  "date_changed": "2025-06-08T19:34:34-07:00",
+  "num_for_sale": 11,
+  "lowest_price": 16.02,
+  "master_id": 3403591,
+  "master_url": "https://api.discogs.com/masters/3403591",
+  "title": "Loss Of Life",
+  "country": "Worldwide",
+  "released": "2024-02-23",
+  "notes": "Limited to 1500 copies.",
+  "released_formatted": "23 Feb 2024",
+  "identifiers": [
+    {
+      "type": "Barcode",
+      "value": "810090094144",
+      "description": "on jacket"
+    },
+    {
+      "type": "Barcode",
+      "value": "000088562186",
+      "description": "sticker on shrinkwrap"
+    },
+    {
+      "type": "Barcode",
+      "value": "000088562186",
+      "description": "sticker on shrinkwrap, scanned"
+    }
+  ],
+  "videos": [
+    {
+      "uri": "https://www.youtube.com/watch?v=fIRRHU_D8CE",
+      "title": "MGMT - Dancing In Babylon (feat. Christine and the Queens) [Official Video]",
+      "description": "MGMT - Dancing In Babylon (feat. Christine and the Queens) [Official Video]\n\nListen to Loss Of Life, MGMT’s fifth studio album: https://mgmt.lnk.to/LossOfLife\nShop the MGMT store for exclusive bundle, vinyl and merch offerings: https://mgmt.lnk.to/LossOfL",
+      "duration": 293,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=CHQrIMo0xak",
+      "title": "MGMT - Nothing To Declare (Official Music Video)",
+      "description": "MGMT - Nothing To Declare (Official Music Video)\n\nListen to Loss Of Life, MGMT’s fifth studio album: https://mgmt.lnk.to/LossOfLife\nShop the MGMT store for exclusive bundle, vinyl and merch offerings: https://mgmt.lnk.to/LossOfLife/officialstore\nLoss Of L",
+      "duration": 213,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=eX5NIs8bV54",
+      "title": "MGMT - Bubblegum Dog (Official Music Video)",
+      "description": "MGMT - Bubblegum Dog (Official Music Video)\n\nListen to Loss Of Life, MGMT’s fifth studio album: https://mgmt.lnk.to/LossOfLife\nShop the MGMT store for exclusive bundle, vinyl and merch offerings: https://mgmt.lnk.to/LossOfLife/officialstore\nLoss Of Life Y",
+      "duration": 267,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=AID-2vDJEvo",
+      "title": "MGMT - People In The Streets (Official Music Video)",
+      "description": "MGMT - People In The Streets (Official Music Video)\n\nListen to Loss Of Life, MGMT’s fifth studio album: https://mgmt.lnk.to/LossOfLife\nShop the MGMT store for exclusive bundle, vinyl and merch offerings: https://mgmt.lnk.to/LossOfLife/officialstore\nLoss O",
+      "duration": 348,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=2opLyRtkXdQ",
+      "title": "Loss Of Life",
+      "description": "Provided to YouTube by DISTRO NATION, INC\n\nLoss Of Life · MGMT\n\nLoss Of Life\n\n℗ MGMT records under exclusive license to Mom+Pop\n\nReleased on: 2024-02-23\n\nProducer: MGMT\nProducer: Patrick Wimberly\nComposer, Lyricist: Ben Goldwasser\nComposer, Lyricist: Andr",
+      "duration": 339,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=HTwZ7R8lb5A",
+      "title": "Loss Of Life (Part 2)",
+      "description": "Provided to YouTube by DISTRO NATION, INC\n\nLoss Of Life (Part 2) · MGMT\n\nLoss Of Life\n\n℗ MGMT records under exclusive license to Mom+Pop\n\nReleased on: 2024-02-23\n\nProducer: MGMT\nProducer: Patrick Wimberly\nComposer, Lyricist: Ben Goldwasser\nComposer, Lyric",
+      "duration": 119,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=CDSh3iyTq5A",
+      "title": "Phradie's Song",
+      "description": "Provided to YouTube by DISTRO NATION, INC\n\nPhradie's Song · MGMT\n\nLoss Of Life\n\n℗ MGMT records under exclusive license to Mom+Pop\n\nReleased on: 2024-02-23\n\nProducer: Daniel Lopatin\nProducer: Patrick Wimberly\nProducer: MGMT\nComposer, Lyricist: Ben Goldwass",
+      "duration": 295,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=6z_k36L9CuQ",
+      "title": "I Wish I Was Joking",
+      "description": "Provided to YouTube by DISTRO NATION, INC\n\nI Wish I Was Joking · MGMT\n\nLoss Of Life\n\n℗ MGMT records under exclusive license to Mom+Pop\n\nReleased on: 2024-02-23\n\nProducer: MGMT\nProducer: Patrick Wimberly\nComposer, Lyricist: Ben Goldwasser\nComposer, Lyricis",
+      "duration": 227,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=BSdPk0WB29o",
+      "title": "Nothing Changes",
+      "description": "Provided to YouTube by DISTRO NATION, INC\n\nNothing Changes · MGMT\n\nLoss Of Life\n\n℗ MGMT records under exclusive license to Mom+Pop\n\nReleased on: 2024-02-23\n\nProducer: MGMT\nProducer: Patrick Wimberly\nComposer, Lyricist: Ben Goldwasser\nComposer, Lyricist: A",
+      "duration": 396,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=SZ_qYFWWmf4",
+      "title": "People In The Streets",
+      "description": "Provided to YouTube by DISTRO NATION, INC\n\nPeople In The Streets · MGMT\n\nLoss Of Life\n\n℗ MGMT records under exclusive license to Mom+Pop\n\nReleased on: 2024-02-23\n\nProducer: MGMT\nProducer: Patrick Wimberly\nComposer, Lyricist: Ben Goldwasser\nComposer, Lyric",
+      "duration": 337,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=EsgkXgsBC3g",
+      "title": "Mother Nature",
+      "description": "Provided to YouTube by DISTRO NATION, INC\n\nMother Nature · MGMT\n\nMother Nature\n\n℗ MGMT records under exclusive license to Mom+Pop\n\nReleased on: 2023-10-31\n\nProducer: MGMT\nProducer: Patrick Wimberly\nComposer, Lyricist: Ben Goldwasser\nComposer, Lyricist: An",
+      "duration": 237,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=sLy46m46g8o",
+      "title": "MGMT - Loss Of Life (Full Album)",
+      "description": "Year : 2024\n\n0:00 Loss Of Life (part 2)\n1:58 Mother Nature\n5:55 Dancing In Babylon (feat. Christine and the Queens)\n10:47 People In The Streets\n16:24 Bubblegum Dog\n20:46 Nothing To Declare\n24:19 Nothing Changes(Explicit)\n30:54 Phradie’s Song\n35:48 I Wish ",
+      "duration": 0,
+      "embed": true
+    }
+  ],
+  "genres": [
+    "Electronic",
+    "Rock",
+    "Pop"
+  ],
+  "styles": [
+    "Psychedelic Rock"
+  ],
+  "tracklist": [
+    {
+      "position": "A1",
+      "type_": "track",
+      "title": "Loss Of Life (Part 2)",
+      "duration": "1:59"
+    },
+    {
+      "position": "A2",
+      "type_": "track",
+      "title": "Mother Nature",
+      "duration": "3:56"
+    },
+    {
+      "position": "A3",
+      "type_": "track",
+      "title": "Dancing In Babylon",
+      "duration": "4:52"
+    },
+    {
+      "position": "A4",
+      "type_": "track",
+      "title": "People In The Streets",
+      "duration": "5:37"
+    },
+    {
+      "position": "A5",
+      "type_": "track",
+      "title": "Bubblegum Dog",
+      "duration": "4:22"
+    },
+    {
+      "position": "B1",
+      "type_": "track",
+      "title": "Nothing To Declare",
+      "duration": "3:33"
+    },
+    {
+      "position": "B2",
+      "type_": "track",
+      "title": "Nothing Changes",
+      "duration": "6:35"
+    },
+    {
+      "position": "B3",
+      "type_": "track",
+      "title": "Phradie’s Song",
+      "duration": "4:54"
+    },
+    {
+      "position": "B4",
+      "type_": "track",
+      "title": "I Wish I Was Joking",
+      "duration": "3:46"
+    },
+    {
+      "position": "B5",
+      "type_": "track",
+      "title": "Loss Of Life",
+      "duration": "5:39"
+    }
+  ],
+  "images": [
+    {
+      "type": "primary",
+      "uri": "https://i.discogs.com/_MfE5vbmOX5wDnmSuDlVXRG9SQMJbSd6LLbgs5xFBjQ/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI5OTAw/NzMxLTE3MDg3MjYw/MDEtMTgzMi5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/_MfE5vbmOX5wDnmSuDlVXRG9SQMJbSd6LLbgs5xFBjQ/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI5OTAw/NzMxLTE3MDg3MjYw/MDEtMTgzMi5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/UGU-FlN4LN6yVhWscIpeJ0h1rfgK3qfDI3A_Em3hpgY/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI5OTAw/NzMxLTE3MDg3MjYw/MDEtMTgzMi5qcGVn.jpeg",
+      "width": 600,
+      "height": 600
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/OZk4_-4HDb3eMpYaKfnaxW_Fl3XjP6X8ccGppQtRs1k/rs:fit/g:sm/q:90/h:294/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI5OTAw/NzMxLTE3MzM2ODU4/MDgtMTczMC5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/OZk4_-4HDb3eMpYaKfnaxW_Fl3XjP6X8ccGppQtRs1k/rs:fit/g:sm/q:90/h:294/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI5OTAw/NzMxLTE3MzM2ODU4/MDgtMTczMC5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/rwMpCoISBj2TlZVZm1IdzjrGyDQ4dStaDeAN7sBm06g/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI5OTAw/NzMxLTE3MzM2ODU4/MDgtMTczMC5qcGVn.jpeg",
+      "width": 600,
+      "height": 294
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/2lrJq3JH0Zua51-uhI0bHeSsP4E_6zCBnxONc1_y248/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI5OTAw/NzMxLTE3MzM2ODU4/MDctNjU0MC5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/2lrJq3JH0Zua51-uhI0bHeSsP4E_6zCBnxONc1_y248/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI5OTAw/NzMxLTE3MzM2ODU4/MDctNjU0MC5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/WszK3GKREnrwFPytoFeedl9j6pyFjA15T_Lr3bO_4CY/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI5OTAw/NzMxLTE3MzM2ODU4/MDctNjU0MC5qcGVn.jpeg",
+      "width": 600,
+      "height": 600
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/jJq0X8sYJE2UrdHpWfAUvH5VGx9SLTne2L6eYk8lCZc/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI5OTAw/NzMxLTE3MDg3MjYw/MDItMTM0NS5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/jJq0X8sYJE2UrdHpWfAUvH5VGx9SLTne2L6eYk8lCZc/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI5OTAw/NzMxLTE3MDg3MjYw/MDItMTM0NS5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/67Z_5erPUmYM_GpksGaTzewi68wuTfCBltX2hdIJwNk/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI5OTAw/NzMxLTE3MDg3MjYw/MDItMTM0NS5qcGVn.jpeg",
+      "width": 600,
+      "height": 600
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/op8HByyySW_x-V5gODwSriu3KecrAiKjfdZiX9t6A-o/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI5OTAw/NzMxLTE3MDg3MjYw/MDItMzI5Ny5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/op8HByyySW_x-V5gODwSriu3KecrAiKjfdZiX9t6A-o/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI5OTAw/NzMxLTE3MDg3MjYw/MDItMzI5Ny5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/itBIKfjevI0xPmEl9n7WcfyTl0I10ZZ1k0j2lmm79uA/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI5OTAw/NzMxLTE3MDg3MjYw/MDItMzI5Ny5qcGVn.jpeg",
+      "width": 600,
+      "height": 600
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/ctqg5UhGXYp12w9ZtimVudHWILRHOPVmN7P6lvCQKBs/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI5OTAw/NzMxLTE3MDg3MjYw/MDItMzA4OC5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/ctqg5UhGXYp12w9ZtimVudHWILRHOPVmN7P6lvCQKBs/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI5OTAw/NzMxLTE3MDg3MjYw/MDItMzA4OC5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/IvHZW9jND4bkTccpLB-KOa6gWJaL9BQPN_wSx3OhgVI/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI5OTAw/NzMxLTE3MDg3MjYw/MDItMzA4OC5qcGVn.jpeg",
+      "width": 600,
+      "height": 600
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/E-SyMafNIZWGEM_2dFDq-E7OCM9xWk6Psed4DTW61Gw/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI5OTAw/NzMxLTE3MDg3MjYw/MDItOTg0Mi5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/E-SyMafNIZWGEM_2dFDq-E7OCM9xWk6Psed4DTW61Gw/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI5OTAw/NzMxLTE3MDg3MjYw/MDItOTg0Mi5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/XEaFI5thM3GJ_p6etNn5yEbrX9VPm86_ae_Wmwa2yFc/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI5OTAw/NzMxLTE3MDg3MjYw/MDItOTg0Mi5qcGVn.jpeg",
+      "width": 600,
+      "height": 600
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/iAsAZiDwLMqWOjIZQ9TACXefAhxbkZutDk2KVhjW3GI/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI5OTAw/NzMxLTE3MDg3MjYw/MDItMjIyNS5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/iAsAZiDwLMqWOjIZQ9TACXefAhxbkZutDk2KVhjW3GI/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI5OTAw/NzMxLTE3MDg3MjYw/MDItMjIyNS5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/aUH0OleznN2nZgdDxDXyQJuCDIGMri_xPSVNzo9WaiM/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI5OTAw/NzMxLTE3MDg3MjYw/MDItMjIyNS5qcGVn.jpeg",
+      "width": 600,
+      "height": 600
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/_7XzX3csBjlfa7Ievj8ug_lK9XO1kP8vAFWbA2513WI/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI5OTAw/NzMxLTE3MDg3MjYw/MDEtMTkwNS5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/_7XzX3csBjlfa7Ievj8ug_lK9XO1kP8vAFWbA2513WI/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI5OTAw/NzMxLTE3MDg3MjYw/MDEtMTkwNS5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/UrOtNAZ-Or_F3xDNf5fabWaaRyHdBubld60HTpCZNF0/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI5OTAw/NzMxLTE3MDg3MjYw/MDEtMTkwNS5qcGVn.jpeg",
+      "width": 600,
+      "height": 600
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/WdN89qCyeRh_onZe3M2cg8Pt3hDgpR8fiJs7vdbTdMc/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI5OTAw/NzMxLTE3MzM2ODU4/MDctMTMwMy5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/WdN89qCyeRh_onZe3M2cg8Pt3hDgpR8fiJs7vdbTdMc/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI5OTAw/NzMxLTE3MzM2ODU4/MDctMTMwMy5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/W82Y_UvoGDJt98BJrLBi8p9zTnCfaSZxFpRXaTCTlns/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI5OTAw/NzMxLTE3MzM2ODU4/MDctMTMwMy5qcGVn.jpeg",
+      "width": 600,
+      "height": 600
+    }
+  ],
+  "thumb": "https://i.discogs.com/UGU-FlN4LN6yVhWscIpeJ0h1rfgK3qfDI3A_Em3hpgY/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTI5OTAw/NzMxLTE3MDg3MjYw/MDEtMTgzMi5qcGVn.jpeg",
+  "estimated_weight": 230,
+  "blocked_from_sale": false,
+  "is_offensive": false
+}

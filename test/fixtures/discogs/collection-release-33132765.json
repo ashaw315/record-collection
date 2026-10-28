@@ -1,0 +1,888 @@
+{
+  "id": 33132765,
+  "status": "Accepted",
+  "year": 2025,
+  "resource_url": "https://api.discogs.com/releases/33132765",
+  "uri": "https://www.discogs.com/release/33132765-Cindy-Lee-Diamond-Jubilee",
+  "artists": [
+    {
+      "name": "Cindy Lee",
+      "anv": "",
+      "join": "",
+      "role": "",
+      "tracks": "",
+      "id": 1409072,
+      "resource_url": "https://api.discogs.com/artists/1409072",
+      "thumbnail_url": "https://i.discogs.com/CxZqQJAUPJnV_QmhsAaaEPpaytvjdSagynnhOIUQF_o/rs:fit/g:sm/q:90/h:450/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9BLTE0MDkw/NzItMTc2MjY4NzU5/My02OTk4LmpwZWc.jpeg"
+    }
+  ],
+  "artists_sort": "Cindy Lee",
+  "labels": [
+    {
+      "name": "W.25th",
+      "catno": "W25-18",
+      "entity_type": "1",
+      "entity_type_name": "Label",
+      "id": 1023001,
+      "resource_url": "https://api.discogs.com/labels/1023001",
+      "thumbnail_url": "https://i.discogs.com/TC-SFEyTlIRNfBI8qygoExYZCcX41V3RTUzIonOHqOU/rs:fit/g:sm/q:90/h:300/w:300/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTEwMjMw/MDEtMTQ2NTU4NTg0/My0zMjkwLmpwZWc.jpeg"
+    }
+  ],
+  "series": [],
+  "companies": [
+    {
+      "name": "Cindy Lee",
+      "catno": "",
+      "entity_type": "13",
+      "entity_type_name": "Phonographic Copyright (p)",
+      "id": 4018458,
+      "resource_url": "https://api.discogs.com/labels/4018458"
+    },
+    {
+      "name": "Cindy Lee",
+      "catno": "",
+      "entity_type": "14",
+      "entity_type_name": "Copyright (c)",
+      "id": 4018458,
+      "resource_url": "https://api.discogs.com/labels/4018458"
+    },
+    {
+      "name": "W.25th",
+      "catno": "",
+      "entity_type": "5",
+      "entity_type_name": "Licensed To",
+      "id": 1023001,
+      "resource_url": "https://api.discogs.com/labels/1023001",
+      "thumbnail_url": "https://i.discogs.com/TC-SFEyTlIRNfBI8qygoExYZCcX41V3RTUzIonOHqOU/rs:fit/g:sm/q:90/h:300/w:300/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTEwMjMw/MDEtMTQ2NTU4NTg0/My0zMjkwLmpwZWc.jpeg"
+    },
+    {
+      "name": "Superior Viaduct",
+      "catno": "",
+      "entity_type": "5",
+      "entity_type_name": "Licensed To",
+      "id": 287559,
+      "resource_url": "https://api.discogs.com/labels/287559",
+      "thumbnail_url": "https://i.discogs.com/4Yfc9nxxQi7xfjM_V0cGPSWHNNiwcvvYF1r1QqvMv5o/rs:fit/g:sm/q:90/h:352/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTI4NzU1/OS0xNjA1NzgzNTY4/LTQxMDIuanBlZw.jpeg"
+    },
+    {
+      "name": "Realistik Studios",
+      "catno": "",
+      "entity_type": "24",
+      "entity_type_name": "Engineered At",
+      "id": 3659000,
+      "resource_url": "https://api.discogs.com/labels/3659000"
+    },
+    {
+      "name": "Realistik Studios",
+      "catno": "",
+      "entity_type": "26",
+      "entity_type_name": "Produced At",
+      "id": 3659000,
+      "resource_url": "https://api.discogs.com/labels/3659000"
+    },
+    {
+      "name": "Center Of The Universe Montreal, QC",
+      "catno": "",
+      "entity_type": "24",
+      "entity_type_name": "Engineered At",
+      "id": 4037867,
+      "resource_url": "https://api.discogs.com/labels/4037867"
+    },
+    {
+      "name": "Center Of The Universe Montreal, QC",
+      "catno": "",
+      "entity_type": "26",
+      "entity_type_name": "Produced At",
+      "id": 4037867,
+      "resource_url": "https://api.discogs.com/labels/4037867"
+    },
+    {
+      "name": "Otic Sound",
+      "catno": "",
+      "entity_type": "29",
+      "entity_type_name": "Mastered At",
+      "id": 430331,
+      "resource_url": "https://api.discogs.com/labels/430331"
+    },
+    {
+      "name": "Material Group",
+      "catno": "",
+      "entity_type": "33",
+      "entity_type_name": "Designed At",
+      "id": 4037870,
+      "resource_url": "https://api.discogs.com/labels/4037870"
+    },
+    {
+      "name": "Dubplates & Mastering",
+      "catno": "",
+      "entity_type": "30",
+      "entity_type_name": "Lacquer Cut At",
+      "id": 264266,
+      "resource_url": "https://api.discogs.com/labels/264266",
+      "thumbnail_url": "https://i.discogs.com/u60bKcxzGDPPgmjEuEl2Ek1l3rGi9HcfO7xuNJCRlRI/rs:fit/g:sm/q:90/h:33/w:281/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTI2NDI2/Ni0xMzE0Njg2NjQy/LmdpZg.jpeg"
+    },
+    {
+      "name": "Schallplattenfabrik Pallas GmbH",
+      "catno": "65390",
+      "entity_type": "17",
+      "entity_type_name": "Pressed By",
+      "id": 271440,
+      "resource_url": "https://api.discogs.com/labels/271440",
+      "thumbnail_url": "https://i.discogs.com/1oEfQath40RFwuPMf5klufULyv1EzUZh8XH2ptL07o4/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTI3MTQ0/MC0xNjk1MTExNzMw/LTkwMzguanBlZw.jpeg"
+    }
+  ],
+  "formats": [
+    {
+      "name": "Vinyl",
+      "qty": "3",
+      "descriptions": [
+        "LP",
+        "Album",
+        "Stereo"
+      ]
+    }
+  ],
+  "data_quality": "Correct",
+  "community": {
+    "have": 7342,
+    "want": 1681,
+    "rating": {
+      "count": 528,
+      "average": 4.75
+    },
+    "submitter": {
+      "username": "dlyon217",
+      "resource_url": "https://api.discogs.com/users/dlyon217"
+    },
+    "contributors": [
+      {
+        "username": "dlyon217",
+        "resource_url": "https://api.discogs.com/users/dlyon217"
+      },
+      {
+        "username": "idratherbereading",
+        "resource_url": "https://api.discogs.com/users/idratherbereading"
+      },
+      {
+        "username": "kickmutant1000",
+        "resource_url": "https://api.discogs.com/users/kickmutant1000"
+      },
+      {
+        "username": "sheenabella",
+        "resource_url": "https://api.discogs.com/users/sheenabella"
+      },
+      {
+        "username": "camerondelrosario",
+        "resource_url": "https://api.discogs.com/users/camerondelrosario"
+      },
+      {
+        "username": "plingplong",
+        "resource_url": "https://api.discogs.com/users/plingplong"
+      },
+      {
+        "username": "d_faultuser",
+        "resource_url": "https://api.discogs.com/users/d_faultuser"
+      },
+      {
+        "username": "noremacham",
+        "resource_url": "https://api.discogs.com/users/noremacham"
+      },
+      {
+        "username": "travis.daedalus",
+        "resource_url": "https://api.discogs.com/users/travis.daedalus"
+      },
+      {
+        "username": "Opdiner",
+        "resource_url": "https://api.discogs.com/users/Opdiner"
+      },
+      {
+        "username": "velutinous",
+        "resource_url": "https://api.discogs.com/users/velutinous"
+      },
+      {
+        "username": "Disc_Station",
+        "resource_url": "https://api.discogs.com/users/Disc_Station"
+      },
+      {
+        "username": "acorsi",
+        "resource_url": "https://api.discogs.com/users/acorsi"
+      },
+      {
+        "username": "renansimoes",
+        "resource_url": "https://api.discogs.com/users/renansimoes"
+      }
+    ],
+    "data_quality": "Correct",
+    "status": "Accepted"
+  },
+  "format_quantity": 3,
+  "date_added": "2025-02-13T16:09:42-08:00",
+  "date_changed": "2026-01-25T16:39:32-08:00",
+  "num_for_sale": 86,
+  "lowest_price": 41.71,
+  "master_id": 3751686,
+  "master_url": "https://api.discogs.com/masters/3751686",
+  "title": "Diamond Jubilee",
+  "country": "US",
+  "released": "2025-02-21",
+  "notes": "Black vinyl edition. \n\nIssued with a 24\" x 36\" fold-out poster and a download card.\n\nRunouts are etched apart from \"-65390-,\" which is stamped.\n\nOn the back cover:\nAll tracks engineered and produced at Realistik Studios Toronto, ON / Calgary, AB / Durham, NC / Montreal QC and at Center of the Universe Montreal, QC\nMastering at Otic Sound Vancouver, BC\nDedicated to Erwin Flegel and Johnny Flegel\n© & ℗ 2025 Cindy Lee\nReleased under license to W.25TH / Superior Viaduct\n\nOn the poster:\nDedicated to Erwin Flegel and Johnny Flegel\nSpecial thanks to the Flegel Family, Leslie R Butler, Morgan Cook, JG, Fons Raedschelders, Morgan Greenwood, Chad Vangaalen, William Schmeichen, Robert Di Ninno, Beatrice Scharf-Pierzchala, David Rodden-Shortt and Oliv Howe\nPoster Photo + Set Design (Material Group) © 2024",
+  "released_formatted": "21 Feb 2025",
+  "identifiers": [
+    {
+      "type": "Barcode",
+      "value": "857661008629",
+      "description": "Scanned"
+    },
+    {
+      "type": "Barcode",
+      "value": "8 57661 00862 9",
+      "description": "Text"
+    },
+    {
+      "type": "Matrix / Runout",
+      "value": "W25-18 - A Kassian - D&M -65390-I",
+      "description": "Side A runout variant 1"
+    },
+    {
+      "type": "Matrix / Runout",
+      "value": "W25-18 - B Kassian - D&M -65390-I",
+      "description": "Side B runout variant 1"
+    },
+    {
+      "type": "Matrix / Runout",
+      "value": "W25-18 - C Kassian - D&M -65390-II",
+      "description": "Side C runout variant 1"
+    },
+    {
+      "type": "Matrix / Runout",
+      "value": "W25-18 - D Kassian - D&M -65390-II",
+      "description": "Side D runout variant 1"
+    },
+    {
+      "type": "Matrix / Runout",
+      "value": "W25-18 - E Kassian - D&M -65390-I",
+      "description": "Side E runout variant 1"
+    },
+    {
+      "type": "Matrix / Runout",
+      "value": "W25-18 - F Kassian - D&M -65390-I",
+      "description": "Side F runout variant 1"
+    },
+    {
+      "type": "Matrix / Runout",
+      "value": "W25-18 - A Kassian - D&M -65390-I",
+      "description": "Side A runout variant 2"
+    },
+    {
+      "type": "Matrix / Runout",
+      "value": "W25-18 - B Kassian - D&M -65390-III",
+      "description": "Side B runout variant 2"
+    },
+    {
+      "type": "Matrix / Runout",
+      "value": "W25-18 - C Kassian - D&M -65391-II",
+      "description": "Side C runout variant 2"
+    },
+    {
+      "type": "Matrix / Runout",
+      "value": "W25-18 - D Kassian - D&M -65391-II",
+      "description": "Side D runout variant 2"
+    },
+    {
+      "type": "Matrix / Runout",
+      "value": "W25-18 - E Kassian - D&M -65392-IV",
+      "description": "Side E runout variant 2"
+    },
+    {
+      "type": "Matrix / Runout",
+      "value": "W25-18 - F Kassian - D&M -65392-I",
+      "description": "Side F runout variant 2"
+    },
+    {
+      "type": "Matrix / Runout",
+      "value": "W25-18 - A Kassian - D&M -65390-III",
+      "description": "Side A runout variant 3"
+    },
+    {
+      "type": "Matrix / Runout",
+      "value": "W25-18 - B Kassian - D&M -65390-III",
+      "description": "Side B runout variant 3"
+    },
+    {
+      "type": "Matrix / Runout",
+      "value": "W25-18 - C Kassian - D&M -65390-IV",
+      "description": "Side C runout variant 3"
+    },
+    {
+      "type": "Matrix / Runout",
+      "value": "W25-18 - D Kassian - D&M -65390-II",
+      "description": "Side D runout variant 3"
+    },
+    {
+      "type": "Matrix / Runout",
+      "value": "W25-18 - E Kassian - D&M -65390-IV",
+      "description": "Side E runout variant 3"
+    },
+    {
+      "type": "Matrix / Runout",
+      "value": "W25-18 - F Kassian - D&M -65390-I",
+      "description": "Side F runout variant 3"
+    }
+  ],
+  "videos": [
+    {
+      "uri": "https://www.youtube.com/watch?v=_LJi5na897Y",
+      "title": "Cindy Lee - Diamond Jubilee (2024) Full Album HQ",
+      "description": "PRE ORDER 3XLP/2CD: https://www.superiorviaduct.com/diamond-jubilee\nDOWLOAD DIGITAL/PREORDER VIA BANDCAMP: \nhttps://cindylee.bandcamp.com/album/diamond-jubilee\nCINDY LEE WEBSITE: www.geocities.ws/ccqsk\nCD1\nI DIAMOND JUBILEE\nII GLITZ\nIII BABY BLUE * # ^&\nI",
+      "duration": 7342,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=TVIwYEigSlU",
+      "title": "Cindy Lee in Realistik Land (official video) diamond jubilee",
+      "description": "Video made for the Lawnya Vawnya Fest 2021. \nWe created the city during the start of the pandemic and it was quite fun.\nCheck out the album DIAMOND JUBILEE here on the official CINDY LEE website.\nhttps://www.geocities.ws/ccqsk/\nand download some music her",
+      "duration": 0,
+      "embed": true
+    }
+  ],
+  "genres": [
+    "Rock",
+    "Pop"
+  ],
+  "styles": [
+    "Hypnagogic pop",
+    "Indie Rock",
+    "Psychedelic Rock"
+  ],
+  "tracklist": [
+    {
+      "position": "A1",
+      "type_": "track",
+      "title": "Diamond Jubilee",
+      "duration": ""
+    },
+    {
+      "position": "A2",
+      "type_": "track",
+      "title": "Glitz",
+      "duration": ""
+    },
+    {
+      "position": "A3",
+      "type_": "track",
+      "title": "Baby Blue",
+      "extraartists": [
+        {
+          "name": "Steven Lind",
+          "anv": "",
+          "join": "",
+          "role": "Guitar, Drums, Synthesizer, Handclaps [Claps]",
+          "tracks": "",
+          "id": 14430248,
+          "resource_url": "https://api.discogs.com/artists/14430248"
+        },
+        {
+          "name": "Steven Lind",
+          "anv": "",
+          "join": "",
+          "role": "Written-By",
+          "tracks": "",
+          "id": 14430248,
+          "resource_url": "https://api.discogs.com/artists/14430248"
+        }
+      ],
+      "duration": ""
+    },
+    {
+      "position": "A4",
+      "type_": "track",
+      "title": "Dreams Of You",
+      "duration": ""
+    },
+    {
+      "position": "A5",
+      "type_": "track",
+      "title": "All I Want Is You",
+      "duration": ""
+    },
+    {
+      "position": "B1",
+      "type_": "track",
+      "title": "Dallas",
+      "duration": ""
+    },
+    {
+      "position": "B2",
+      "type_": "track",
+      "title": "Olive Drab",
+      "duration": ""
+    },
+    {
+      "position": "B3",
+      "type_": "track",
+      "title": "Always Dreaming",
+      "extraartists": [
+        {
+          "name": "Steven Lind",
+          "anv": "",
+          "join": "",
+          "role": "Synthesizer",
+          "tracks": "",
+          "id": 14430248,
+          "resource_url": "https://api.discogs.com/artists/14430248"
+        }
+      ],
+      "duration": ""
+    },
+    {
+      "position": "B4",
+      "type_": "track",
+      "title": "Wild One",
+      "extraartists": [
+        {
+          "name": "Steven Lind",
+          "anv": "",
+          "join": "",
+          "role": "Drums",
+          "tracks": "",
+          "id": 14430248,
+          "resource_url": "https://api.discogs.com/artists/14430248"
+        }
+      ],
+      "duration": ""
+    },
+    {
+      "position": "B5",
+      "type_": "track",
+      "title": "Flesh And Blood",
+      "extraartists": [
+        {
+          "name": "Steven Lind",
+          "anv": "",
+          "join": "",
+          "role": "Synthesizer",
+          "tracks": "",
+          "id": 14430248,
+          "resource_url": "https://api.discogs.com/artists/14430248"
+        }
+      ],
+      "duration": ""
+    },
+    {
+      "position": "B6",
+      "type_": "track",
+      "title": "Le Machiniste Fantome",
+      "duration": ""
+    },
+    {
+      "position": "C1",
+      "type_": "track",
+      "title": "Kingdom Come",
+      "duration": ""
+    },
+    {
+      "position": "C2",
+      "type_": "track",
+      "title": "Demon Bitch",
+      "extraartists": [
+        {
+          "name": "Steven Lind",
+          "anv": "",
+          "join": "",
+          "role": "Bass [Sections On Bass]",
+          "tracks": "",
+          "id": 14430248,
+          "resource_url": "https://api.discogs.com/artists/14430248"
+        }
+      ],
+      "duration": ""
+    },
+    {
+      "position": "C3",
+      "type_": "track",
+      "title": "I Have My Doubts",
+      "duration": ""
+    },
+    {
+      "position": "C4",
+      "type_": "track",
+      "title": "Til Polaritys End",
+      "extraartists": [
+        {
+          "name": "Steven Lind",
+          "anv": "",
+          "join": "",
+          "role": "Bass [Sections On Bass]",
+          "tracks": "",
+          "id": 14430248,
+          "resource_url": "https://api.discogs.com/artists/14430248"
+        }
+      ],
+      "duration": ""
+    },
+    {
+      "position": "C5",
+      "type_": "track",
+      "title": "Realistik Heaven",
+      "duration": ""
+    },
+    {
+      "position": "D1",
+      "type_": "track",
+      "title": "Stone Faces",
+      "duration": ""
+    },
+    {
+      "position": "D2",
+      "type_": "track",
+      "title": "Gayblevision",
+      "duration": ""
+    },
+    {
+      "position": "D3",
+      "type_": "track",
+      "title": "Dracula",
+      "extraartists": [
+        {
+          "name": "Steven Lind",
+          "anv": "",
+          "join": "",
+          "role": "Synthesizer",
+          "tracks": "",
+          "id": 14430248,
+          "resource_url": "https://api.discogs.com/artists/14430248"
+        }
+      ],
+      "duration": ""
+    },
+    {
+      "position": "D4",
+      "type_": "track",
+      "title": "Lockstepp",
+      "extraartists": [
+        {
+          "name": "Steven Lind",
+          "anv": "",
+          "join": "",
+          "role": "Synthesizer",
+          "tracks": "",
+          "id": 14430248,
+          "resource_url": "https://api.discogs.com/artists/14430248"
+        }
+      ],
+      "duration": ""
+    },
+    {
+      "position": "D5",
+      "type_": "track",
+      "title": "Government Cheque",
+      "duration": ""
+    },
+    {
+      "position": "E1",
+      "type_": "track",
+      "title": "Deepest Blue",
+      "duration": ""
+    },
+    {
+      "position": "E2",
+      "type_": "track",
+      "title": "To Heal This Wounded Heart",
+      "duration": ""
+    },
+    {
+      "position": "E3",
+      "type_": "track",
+      "title": "Golden Microphone",
+      "duration": ""
+    },
+    {
+      "position": "E4",
+      "type_": "track",
+      "title": "If You Hear Me Crying",
+      "duration": ""
+    },
+    {
+      "position": "E5",
+      "type_": "track",
+      "title": "Darling Of The Diskoteque",
+      "duration": ""
+    },
+    {
+      "position": "E6",
+      "type_": "track",
+      "title": "Dont Tell Me Im Wrong",
+      "duration": ""
+    },
+    {
+      "position": "F1",
+      "type_": "track",
+      "title": "Whats It Going To Take",
+      "duration": ""
+    },
+    {
+      "position": "F2",
+      "type_": "track",
+      "title": "Wild Rose",
+      "extraartists": [
+        {
+          "name": "Steven Lind",
+          "anv": "",
+          "join": "",
+          "role": "Handclaps [Claps]",
+          "tracks": "",
+          "id": 14430248,
+          "resource_url": "https://api.discogs.com/artists/14430248"
+        }
+      ],
+      "duration": ""
+    },
+    {
+      "position": "F3",
+      "type_": "track",
+      "title": "Durham City Limit",
+      "extraartists": [
+        {
+          "name": "Steven Lind",
+          "anv": "",
+          "join": "",
+          "role": "Guitar",
+          "tracks": "",
+          "id": 14430248,
+          "resource_url": "https://api.discogs.com/artists/14430248"
+        }
+      ],
+      "duration": ""
+    },
+    {
+      "position": "F4",
+      "type_": "track",
+      "title": "Crime Of Passion",
+      "duration": ""
+    },
+    {
+      "position": "F5",
+      "type_": "track",
+      "title": "24/7 Heaven",
+      "duration": ""
+    }
+  ],
+  "extraartists": [
+    {
+      "name": "Pat Flegel",
+      "anv": "Patrick Flegel",
+      "join": "",
+      "role": "Cover [Cover Image]",
+      "tracks": "",
+      "id": 3799172,
+      "resource_url": "https://api.discogs.com/artists/3799172"
+    },
+    {
+      "name": "Pat Flegel",
+      "anv": "Patrick Flegel",
+      "join": "",
+      "role": "Engineer, Producer",
+      "tracks": "",
+      "id": 3799172,
+      "resource_url": "https://api.discogs.com/artists/3799172"
+    },
+    {
+      "name": "Steven Lind",
+      "anv": "",
+      "join": "",
+      "role": "Engineer, Producer",
+      "tracks": "",
+      "id": 14430248,
+      "resource_url": "https://api.discogs.com/artists/14430248"
+    },
+    {
+      "name": "Kassian Troyer",
+      "anv": "Kassian",
+      "join": "",
+      "role": "Lacquer Cut By",
+      "tracks": "",
+      "id": 793598,
+      "resource_url": "https://api.discogs.com/artists/793598"
+    },
+    {
+      "name": "Joshua Stevenson",
+      "anv": "",
+      "join": "",
+      "role": "Mastered By",
+      "tracks": "",
+      "id": 651702,
+      "resource_url": "https://api.discogs.com/artists/651702"
+    },
+    {
+      "name": "Steven Lind",
+      "anv": "",
+      "join": "",
+      "role": "Mixed By",
+      "tracks": "",
+      "id": 14430248,
+      "resource_url": "https://api.discogs.com/artists/14430248"
+    },
+    {
+      "name": "Pat Flegel",
+      "anv": "Patrick Flegel",
+      "join": "",
+      "role": "Performer, Written By",
+      "tracks": "",
+      "id": 3799172,
+      "resource_url": "https://api.discogs.com/artists/3799172"
+    },
+    {
+      "name": "Mounir Al Shami",
+      "anv": "",
+      "join": "",
+      "role": "Photography By [Back Photo]",
+      "tracks": "",
+      "id": 15680226,
+      "resource_url": "https://api.discogs.com/artists/15680226"
+    },
+    {
+      "name": "Phil Osborne (3)",
+      "anv": "",
+      "join": "",
+      "role": "Photography By [Front Photo]",
+      "tracks": "",
+      "id": 5511559,
+      "resource_url": "https://api.discogs.com/artists/5511559"
+    },
+    {
+      "name": "JG (12)",
+      "anv": "",
+      "join": "",
+      "role": "Photography By [Poster Photo], Set Designer",
+      "tracks": "",
+      "id": 6332637,
+      "resource_url": "https://api.discogs.com/artists/6332637"
+    }
+  ],
+  "images": [
+    {
+      "type": "primary",
+      "uri": "https://i.discogs.com/hCb-HjuOQC1DupeYfYxehMkIVuvRJQKdbQgYsdKqWX0/rs:fit/g:sm/q:90/h:595/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMzMTMy/NzY1LTE3NDI0NDg3/NzMtMjE4Mi5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/hCb-HjuOQC1DupeYfYxehMkIVuvRJQKdbQgYsdKqWX0/rs:fit/g:sm/q:90/h:595/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMzMTMy/NzY1LTE3NDI0NDg3/NzMtMjE4Mi5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/C-n6-OhCqmGmbj-zkfXMNaCOT52aFCBxEe4X7fsVXWw/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMzMTMy/NzY1LTE3NDI0NDg3/NzMtMjE4Mi5qcGVn.jpeg",
+      "width": 600,
+      "height": 595
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/mUrDASyQDBoDE_Bmxbw4q8w19eQ5vAQS3Xfgu8sqXuI/rs:fit/g:sm/q:90/h:595/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMzMTMy/NzY1LTE3NDI0NDg3/NzMtNzAwMC5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/mUrDASyQDBoDE_Bmxbw4q8w19eQ5vAQS3Xfgu8sqXuI/rs:fit/g:sm/q:90/h:595/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMzMTMy/NzY1LTE3NDI0NDg3/NzMtNzAwMC5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/MpQH-4HQLw70es9Z8JbPXww_mY3muTCl7Xy7JmEIipY/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMzMTMy/NzY1LTE3NDI0NDg3/NzMtNzAwMC5qcGVn.jpeg",
+      "width": 600,
+      "height": 595
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/_ls7hiRHaJiNMk8Yjc57ok9pqSs40pA4x4-7VLL9qoE/rs:fit/g:sm/q:90/h:600/w:597/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMzMTMy/NzY1LTE3NDEzMjI3/NjMtNDY2Ni5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/_ls7hiRHaJiNMk8Yjc57ok9pqSs40pA4x4-7VLL9qoE/rs:fit/g:sm/q:90/h:600/w:597/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMzMTMy/NzY1LTE3NDEzMjI3/NjMtNDY2Ni5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/Yxp2Wg83QPx9TEZP9GSb5KBt8gwuJz5Gf-QgzVX2r3c/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMzMTMy/NzY1LTE3NDEzMjI3/NjMtNDY2Ni5qcGVn.jpeg",
+      "width": 597,
+      "height": 600
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/-M_U8iwrlMTW-kt6lDeK0CbCpAZqgX77rkyFZOavGUU/rs:fit/g:sm/q:90/h:600/w:597/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMzMTMy/NzY1LTE3NDEzMjI3/NjQtMTU3Ny5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/-M_U8iwrlMTW-kt6lDeK0CbCpAZqgX77rkyFZOavGUU/rs:fit/g:sm/q:90/h:600/w:597/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMzMTMy/NzY1LTE3NDEzMjI3/NjQtMTU3Ny5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/OpNBdcmJI9JQAngiQ26a7d-cyOqoWUdxLer-mR0lVe8/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMzMTMy/NzY1LTE3NDEzMjI3/NjQtMTU3Ny5qcGVn.jpeg",
+      "width": 597,
+      "height": 600
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/IORi8RqaKoU70D7HYSB9A25uWUp11WZbmJ-kmOMreDA/rs:fit/g:sm/q:90/h:600/w:597/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMzMTMy/NzY1LTE3NDEzMjI3/NjQtMzAyMi5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/IORi8RqaKoU70D7HYSB9A25uWUp11WZbmJ-kmOMreDA/rs:fit/g:sm/q:90/h:600/w:597/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMzMTMy/NzY1LTE3NDEzMjI3/NjQtMzAyMi5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/RnJIcTrQ5Kj6pOGfl4zDw9qlmpcqT1fpxOLQAxEjOKo/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMzMTMy/NzY1LTE3NDEzMjI3/NjQtMzAyMi5qcGVn.jpeg",
+      "width": 597,
+      "height": 600
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/JFXluUIMnfALzM7q9cfAMs57Ij8cu0rFYk8M-4rVpzI/rs:fit/g:sm/q:90/h:600/w:598/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMzMTMy/NzY1LTE3NDEzMjI3/NjQtNzUxNS5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/JFXluUIMnfALzM7q9cfAMs57Ij8cu0rFYk8M-4rVpzI/rs:fit/g:sm/q:90/h:600/w:598/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMzMTMy/NzY1LTE3NDEzMjI3/NjQtNzUxNS5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/WpdFtZnzDPiF6D4fWPkMPkabotfPfPFvW0KZWfhcsdU/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMzMTMy/NzY1LTE3NDEzMjI3/NjQtNzUxNS5qcGVn.jpeg",
+      "width": 598,
+      "height": 600
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/THwmWYwpLLjDZN8J_ATIz3lbTdOWDNsWzeF8YtLQXn8/rs:fit/g:sm/q:90/h:600/w:598/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMzMTMy/NzY1LTE3NDEzMjI3/NjQtNjU5OC5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/THwmWYwpLLjDZN8J_ATIz3lbTdOWDNsWzeF8YtLQXn8/rs:fit/g:sm/q:90/h:600/w:598/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMzMTMy/NzY1LTE3NDEzMjI3/NjQtNjU5OC5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/jAcRFNfshfvbqK4kP5ynzpt62N19UnCouPHhoBG3Tzw/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMzMTMy/NzY1LTE3NDEzMjI3/NjQtNjU5OC5qcGVn.jpeg",
+      "width": 598,
+      "height": 600
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/C0JAKQ3fyhXR3dijgi05sCupgD4MIOoi7SeFbWGyw54/rs:fit/g:sm/q:90/h:600/w:596/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMzMTMy/NzY1LTE3NDEzMjI3/NjMtODQ1OC5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/C0JAKQ3fyhXR3dijgi05sCupgD4MIOoi7SeFbWGyw54/rs:fit/g:sm/q:90/h:600/w:596/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMzMTMy/NzY1LTE3NDEzMjI3/NjMtODQ1OC5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/VxgNFiAfqynnItcMdPi8AaLXc592dHZfb9yFTF5p8Bo/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMzMTMy/NzY1LTE3NDEzMjI3/NjMtODQ1OC5qcGVn.jpeg",
+      "width": 596,
+      "height": 600
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/c22yRJriaNzan-OMAXUuYu4EA-CJ9ZyH-35_1gOWdio/rs:fit/g:sm/q:90/h:600/w:398/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMzMTMy/NzY1LTE3NDI0NDg3/NzMtNDIyMC5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/c22yRJriaNzan-OMAXUuYu4EA-CJ9ZyH-35_1gOWdio/rs:fit/g:sm/q:90/h:600/w:398/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMzMTMy/NzY1LTE3NDI0NDg3/NzMtNDIyMC5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/oHOrPXeyjP4MN65Y0YwKYN_0X8oSsahtuRyzZXz_xdo/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMzMTMy/NzY1LTE3NDI0NDg3/NzMtNDIyMC5qcGVn.jpeg",
+      "width": 398,
+      "height": 600
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/01R29Rg3SEh9QGH2WtDxIj4thhvRHuhqgN8tR_AitiY/rs:fit/g:sm/q:90/h:600/w:398/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMzMTMy/NzY1LTE3NDI0NDg3/NzMtODE0OC5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/01R29Rg3SEh9QGH2WtDxIj4thhvRHuhqgN8tR_AitiY/rs:fit/g:sm/q:90/h:600/w:398/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMzMTMy/NzY1LTE3NDI0NDg3/NzMtODE0OC5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/h-aga6-zDDNubk-bXUy0VjoFgMIAmtyX1Ye2axwtJV0/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMzMTMy/NzY1LTE3NDI0NDg3/NzMtODE0OC5qcGVn.jpeg",
+      "width": 398,
+      "height": 600
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/puV0Nsiy0gTZEuJm-gUiiJzc0aY3hbKxTm60TI9Nxxw/rs:fit/g:sm/q:90/h:341/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMzMTMy/NzY1LTE3NDEzMjI3/NjMtODA5OS5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/puV0Nsiy0gTZEuJm-gUiiJzc0aY3hbKxTm60TI9Nxxw/rs:fit/g:sm/q:90/h:341/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMzMTMy/NzY1LTE3NDEzMjI3/NjMtODA5OS5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/QAvhGk1jb2mm7SvwjK_MIFfYvVzi3g1w22qdQahDbkM/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMzMTMy/NzY1LTE3NDEzMjI3/NjMtODA5OS5qcGVn.jpeg",
+      "width": 600,
+      "height": 341
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/b7tBV530h6g3WEg8KMx5_eFeQLoUEkzVz7CKSZI-dXQ/rs:fit/g:sm/q:90/h:142/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMzMTMy/NzY1LTE3NjkzODc5/NjMtMzIxMS5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/b7tBV530h6g3WEg8KMx5_eFeQLoUEkzVz7CKSZI-dXQ/rs:fit/g:sm/q:90/h:142/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMzMTMy/NzY1LTE3NjkzODc5/NjMtMzIxMS5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/LrfR5YL0Xm3WCqPiWznVQaMASW-DVhYddAEJfarcJ-g/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMzMTMy/NzY1LTE3NjkzODc5/NjMtMzIxMS5qcGVn.jpeg",
+      "width": 600,
+      "height": 142
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/BCoY3xM_RxCsNek04Fk4mErXki98M_tp7USGjEEOAKo/rs:fit/g:sm/q:90/h:141/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMzMTMy/NzY1LTE3NjkzODc5/NjMtMzIwMC5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/BCoY3xM_RxCsNek04Fk4mErXki98M_tp7USGjEEOAKo/rs:fit/g:sm/q:90/h:141/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMzMTMy/NzY1LTE3NjkzODc5/NjMtMzIwMC5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/ZH1YN-twENFGHPou7AlAXqZeJ3eB9JoB9wTsAsoP_ag/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMzMTMy/NzY1LTE3NjkzODc5/NjMtMzIwMC5qcGVn.jpeg",
+      "width": 600,
+      "height": 141
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/7yxwhPDmRUb-dTWm2zR11IEaIwLU4V2PRWU4cZ8EXI8/rs:fit/g:sm/q:90/h:216/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMzMTMy/NzY1LTE3NjkzODc5/NjMtNTc2Ni5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/7yxwhPDmRUb-dTWm2zR11IEaIwLU4V2PRWU4cZ8EXI8/rs:fit/g:sm/q:90/h:216/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMzMTMy/NzY1LTE3NjkzODc5/NjMtNTc2Ni5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/AyTojndzM1kUsu9RM_x1s16A2ZlG4H2PkVW_Vt84zBM/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMzMTMy/NzY1LTE3NjkzODc5/NjMtNTc2Ni5qcGVn.jpeg",
+      "width": 600,
+      "height": 216
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/wdMqBaOFQcCu7VUu4ImG_RfdXjPP80wJL5WVFh3rdWM/rs:fit/g:sm/q:90/h:65/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMzMTMy/NzY1LTE3NjkzODc5/NjMtODcyOS5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/wdMqBaOFQcCu7VUu4ImG_RfdXjPP80wJL5WVFh3rdWM/rs:fit/g:sm/q:90/h:65/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMzMTMy/NzY1LTE3NjkzODc5/NjMtODcyOS5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/w-iL5mrT8XN5LUa-h1QVoxhcy-ESqTPuJhO56DdVq6g/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMzMTMy/NzY1LTE3NjkzODc5/NjMtODcyOS5qcGVn.jpeg",
+      "width": 600,
+      "height": 65
+    }
+  ],
+  "thumb": "https://i.discogs.com/C-n6-OhCqmGmbj-zkfXMNaCOT52aFCBxEe4X7fsVXWw/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMzMTMy/NzY1LTE3NDI0NDg3/NzMtMjE4Mi5qcGVn.jpeg",
+  "estimated_weight": 690,
+  "blocked_from_sale": false,
+  "is_offensive": false
+}

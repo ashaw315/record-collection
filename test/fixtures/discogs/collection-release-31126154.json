@@ -1,0 +1,433 @@
+{
+  "id": 31126154,
+  "status": "Accepted",
+  "year": 2024,
+  "resource_url": "https://api.discogs.com/releases/31126154",
+  "uri": "https://www.discogs.com/release/31126154-Pharoah-Sanders-Jewels-Of-Thought",
+  "artists": [
+    {
+      "name": "Pharoah Sanders",
+      "anv": "",
+      "join": "",
+      "role": "",
+      "tracks": "",
+      "id": 21147,
+      "resource_url": "https://api.discogs.com/artists/21147",
+      "thumbnail_url": "https://i.discogs.com/tsSSV1kuXJS-ORQZJosjq76BZtQ7W_vnSXJBC-Qa-qA/rs:fit/g:sm/q:90/h:600/w:575/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9BLTIxMTQ3/LTE3NjA3ODk4NDIt/ODU5Mi5qcGVn.jpeg"
+    }
+  ],
+  "artists_sort": "Pharoah Sanders",
+  "labels": [
+    {
+      "name": "Impulse!",
+      "catno": "700217",
+      "entity_type": "1",
+      "entity_type_name": "Label",
+      "id": 26557,
+      "resource_url": "https://api.discogs.com/labels/26557",
+      "thumbnail_url": "https://i.discogs.com/VxE3oj0Ev8PD2LXI_QobC-ZHHKY0y4oNkIQ4DwsAxEY/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTI2NTU3/LTE1ODkxNTM2MDUt/NzgzNS5qcGVn.jpeg"
+    },
+    {
+      "name": "Elemental Music",
+      "catno": "700217",
+      "entity_type": "1",
+      "entity_type_name": "Label",
+      "id": 58690,
+      "resource_url": "https://api.discogs.com/labels/58690",
+      "thumbnail_url": "https://i.discogs.com/Nq2-VJPTpeWUktB4xOoEKmdj-v6ZI1DzL82MjCoIj-0/rs:fit/g:sm/q:90/h:300/w:300/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTU4Njkw/LTE0MzAyMjI4OTkt/OTYzOC5wbmc.jpeg"
+    }
+  ],
+  "series": [],
+  "companies": [
+    {
+      "name": "Plaza Sound Studios",
+      "catno": "",
+      "entity_type": "23",
+      "entity_type_name": "Recorded At",
+      "id": 272683,
+      "resource_url": "https://api.discogs.com/labels/272683",
+      "thumbnail_url": "https://i.discogs.com/L26UY7VRty-Jnn0--1I1UznYTImAyuwchCqQzyINtQk/rs:fit/g:sm/q:90/h:397/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTI3MjY4/My0xNzQzMjUyODIw/LTk3MjgucG5n.jpeg"
+    },
+    {
+      "name": "Pharoah Sanders Music Co.",
+      "catno": "",
+      "entity_type": "21",
+      "entity_type_name": "Published By",
+      "id": 601959,
+      "resource_url": "https://api.discogs.com/labels/601959"
+    },
+    {
+      "name": "Amosis Leontopolis Thomas Music",
+      "catno": "",
+      "entity_type": "21",
+      "entity_type_name": "Published By",
+      "id": 601960,
+      "resource_url": "https://api.discogs.com/labels/601960"
+    },
+    {
+      "name": "MPO",
+      "catno": "",
+      "entity_type": "17",
+      "entity_type_name": "Pressed By",
+      "id": 56025,
+      "resource_url": "https://api.discogs.com/labels/56025",
+      "thumbnail_url": "https://i.discogs.com/ESRU3eTUmc1632Us6_7LBipnaQGV6lJe-D5nyFxssyw/rs:fit/g:sm/q:90/h:336/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTU2MDI1/LTEzMTQ2OTg5ODQu/anBlZw.jpeg"
+    }
+  ],
+  "formats": [
+    {
+      "name": "Vinyl",
+      "qty": "1",
+      "descriptions": [
+        "LP",
+        "Album",
+        "Limited Edition",
+        "Reissue",
+        "Stereo"
+      ],
+      "text": "Gatefold, 180 gram"
+    }
+  ],
+  "data_quality": "Needs Vote",
+  "community": {
+    "have": 245,
+    "want": 172,
+    "rating": {
+      "count": 15,
+      "average": 4.47
+    },
+    "submitter": {
+      "username": "grahamexeter10",
+      "resource_url": "https://api.discogs.com/users/grahamexeter10"
+    },
+    "contributors": [
+      {
+        "username": "grahamexeter10",
+        "resource_url": "https://api.discogs.com/users/grahamexeter10"
+      },
+      {
+        "username": "fabiofabius.",
+        "resource_url": "https://api.discogs.com/users/fabiofabius."
+      },
+      {
+        "username": "ThyPnoom",
+        "resource_url": "https://api.discogs.com/users/ThyPnoom"
+      },
+      {
+        "username": "blackertai",
+        "resource_url": "https://api.discogs.com/users/blackertai"
+      },
+      {
+        "username": "mosariot",
+        "resource_url": "https://api.discogs.com/users/mosariot"
+      }
+    ],
+    "data_quality": "Needs Vote",
+    "status": "Accepted"
+  },
+  "format_quantity": 1,
+  "date_added": "2024-07-03T10:00:11-07:00",
+  "date_changed": "2024-11-08T08:04:40-08:00",
+  "num_for_sale": 26,
+  "lowest_price": 23,
+  "master_id": 54114,
+  "master_url": "https://api.discogs.com/masters/54114",
+  "title": "Jewels Of Thought",
+  "country": "Worldwide",
+  "released": "2024",
+  "notes": "Recorded at Plaza Sound Studios, New York City, October 20, 1969.\nFrom hype sticker: 180g Virgin Vinyl. Limited edition\n\nRunouts etched, except for \"MPO®## ######\" which is stamped.",
+  "released_formatted": "2024",
+  "identifiers": [
+    {
+      "type": "Barcode",
+      "value": "0600753982815"
+    },
+    {
+      "type": "Matrix / Runout",
+      "value": "LP 0600753982815 A MPO®24 338949 -LvC-",
+      "description": "Side 1"
+    },
+    {
+      "type": "Matrix / Runout",
+      "value": "LP 0600753988815 B MPO®24 338948 -LvC-",
+      "description": "Side 2"
+    },
+    {
+      "type": "Pressing Plant ID",
+      "value": "MPO®"
+    }
+  ],
+  "videos": [
+    {
+      "uri": "https://www.youtube.com/watch?v=jr3TGXDnnOs",
+      "title": "Hum Allah Hum Allah Hum Allah",
+      "description": "Provided to YouTube by Universal Music Group\n\nHum Allah Hum Allah Hum Allah · Pharoah Sanders\n\nJewels Of Thought\n\n℗ A Verve Label Group Release; ℗ 1969 UMG Recordings, Inc.\n\nReleased on: 1998-01-01\n\nProducer: Ed Michel\nAssociated  Performer, Tenor  Saxoph",
+      "duration": 0,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=tjSO6B7u0Ak",
+      "title": "Sun In Aquarius",
+      "description": "Provided to YouTube by Universal Music Group\n\nSun In Aquarius · Pharoah Sanders\n\nJewels Of Thought\n\n℗ 1969 UMG Recordings, Inc.\n\nReleased on: 1998-01-01\n\nProducer: Ed Michel\nStudio  Personnel, Recording  Engineer: George Sawtelle\nComposer  Lyricist: Lonni",
+      "duration": 0,
+      "embed": true
+    }
+  ],
+  "genres": [
+    "Jazz"
+  ],
+  "styles": [
+    "Free Jazz"
+  ],
+  "tracklist": [
+    {
+      "position": "A",
+      "type_": "track",
+      "title": "Hum-Allah-Hum-Allah-Hum-Allah",
+      "extraartists": [
+        {
+          "name": "Roy Haynes",
+          "anv": "",
+          "join": "",
+          "role": "Drums [Right Channel]",
+          "tracks": "",
+          "id": 255556,
+          "resource_url": "https://api.discogs.com/artists/255556"
+        },
+        {
+          "name": "Amosis Leontopolis Thomas",
+          "anv": "",
+          "join": "",
+          "role": "Lyrics By",
+          "tracks": "",
+          "id": 785224,
+          "resource_url": "https://api.discogs.com/artists/785224"
+        },
+        {
+          "name": "Lonnie Liston Smith",
+          "anv": "",
+          "join": "",
+          "role": "Music By",
+          "tracks": "",
+          "id": 15438,
+          "resource_url": "https://api.discogs.com/artists/15438"
+        },
+        {
+          "name": "Pharoah Sanders",
+          "anv": "",
+          "join": "",
+          "role": "Music By",
+          "tracks": "",
+          "id": 21147,
+          "resource_url": "https://api.discogs.com/artists/21147"
+        }
+      ],
+      "duration": "15:04"
+    },
+    {
+      "position": "B",
+      "type_": "track",
+      "title": "Sun In Aquarius ",
+      "extraartists": [
+        {
+          "name": "Richard Davis (2)",
+          "anv": "",
+          "join": "",
+          "role": "Bass, Percussion [Left Channel]",
+          "tracks": "",
+          "id": 263441,
+          "resource_url": "https://api.discogs.com/artists/263441"
+        },
+        {
+          "name": "Lonnie Liston Smith",
+          "anv": "",
+          "join": "",
+          "role": "Music By",
+          "tracks": "",
+          "id": 15438,
+          "resource_url": "https://api.discogs.com/artists/15438"
+        },
+        {
+          "name": "Pharoah Sanders",
+          "anv": "",
+          "join": "",
+          "role": "Music By",
+          "tracks": "",
+          "id": 21147,
+          "resource_url": "https://api.discogs.com/artists/21147"
+        }
+      ],
+      "duration": "27:51"
+    }
+  ],
+  "extraartists": [
+    {
+      "name": "Cecil McBee",
+      "anv": "",
+      "join": "",
+      "role": "Bass, Percussion",
+      "tracks": "",
+      "id": 258511,
+      "resource_url": "https://api.discogs.com/artists/258511"
+    },
+    {
+      "name": "George Whiteman",
+      "anv": "",
+      "join": "",
+      "role": "Design",
+      "tracks": "",
+      "id": 1805460,
+      "resource_url": "https://api.discogs.com/artists/1805460"
+    },
+    {
+      "name": "Idris Muhammad",
+      "anv": "",
+      "join": "",
+      "role": "Drums, Percussion",
+      "tracks": "",
+      "id": 42195,
+      "resource_url": "https://api.discogs.com/artists/42195"
+    },
+    {
+      "name": "George Sawtelle",
+      "anv": "",
+      "join": "",
+      "role": "Engineer",
+      "tracks": "",
+      "id": 785225,
+      "resource_url": "https://api.discogs.com/artists/785225"
+    },
+    {
+      "name": "Lex van Coeverden",
+      "anv": "LvC",
+      "join": "",
+      "role": "Lacquer Cut By",
+      "tracks": "",
+      "id": 53971,
+      "resource_url": "https://api.discogs.com/artists/53971"
+    },
+    {
+      "name": "Chuck Stewart",
+      "anv": "",
+      "join": "",
+      "role": "Photography By [Cover & Liner]",
+      "tracks": "",
+      "id": 547170,
+      "resource_url": "https://api.discogs.com/artists/547170"
+    },
+    {
+      "name": "Lonnie Liston Smith",
+      "anv": "",
+      "join": "",
+      "role": "Piano, Flute [African], Piano [African Thumb Piano], Percussion",
+      "tracks": "",
+      "id": 15438,
+      "resource_url": "https://api.discogs.com/artists/15438"
+    },
+    {
+      "name": "Ed Michel",
+      "anv": "",
+      "join": "",
+      "role": "Producer",
+      "tracks": "",
+      "id": 166631,
+      "resource_url": "https://api.discogs.com/artists/166631"
+    },
+    {
+      "name": "Pharoah Sanders",
+      "anv": "",
+      "join": "",
+      "role": "Tenor Saxophone, Contrabass Clarinet, Flute [Reed], Piano [African Thumb Piano], Chimes [Orchestra], Percussion",
+      "tracks": "",
+      "id": 21147,
+      "resource_url": "https://api.discogs.com/artists/21147"
+    },
+    {
+      "name": "Leon Thomas",
+      "anv": "",
+      "join": "",
+      "role": "Vocals, Percussion",
+      "tracks": "",
+      "id": 181208,
+      "resource_url": "https://api.discogs.com/artists/181208"
+    }
+  ],
+  "images": [
+    {
+      "type": "primary",
+      "uri": "https://i.discogs.com/h1UrZyrDRSrYCf-prwPIrcGy8Paen71Up-mjNKf6ZIo/rs:fit/g:sm/q:90/h:598/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMxMTI2/MTU0LTE3MzEwNDk0/MTUtNjM0MS5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/h1UrZyrDRSrYCf-prwPIrcGy8Paen71Up-mjNKf6ZIo/rs:fit/g:sm/q:90/h:598/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMxMTI2/MTU0LTE3MzEwNDk0/MTUtNjM0MS5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/s8K3ZM-S1IdCkywUxU6rHgrv_Iek_pI1bazJrCkgmsM/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMxMTI2/MTU0LTE3MzEwNDk0/MTUtNjM0MS5qcGVn.jpeg",
+      "width": 600,
+      "height": 598
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/xA7KWExRm11w1Yh4vKrVpA4MJZsjCZbTGVE5snhkncE/rs:fit/g:sm/q:90/h:596/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMxMTI2/MTU0LTE3MzEwNDk0/MTYtMTMyNi5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/xA7KWExRm11w1Yh4vKrVpA4MJZsjCZbTGVE5snhkncE/rs:fit/g:sm/q:90/h:596/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMxMTI2/MTU0LTE3MzEwNDk0/MTYtMTMyNi5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/Swq-JDwfucNX7MVHrHXLsiEIEdkElwR_bYYOozHnPRY/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMxMTI2/MTU0LTE3MzEwNDk0/MTYtMTMyNi5qcGVn.jpeg",
+      "width": 600,
+      "height": 596
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/D1Vgb8T2WIO0kR8VhI9EhGRKxpsTGKWYOPmddmSOppo/rs:fit/g:sm/q:90/h:586/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMxMTI2/MTU0LTE3MzEwNDk0/MTUtNTk5OC5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/D1Vgb8T2WIO0kR8VhI9EhGRKxpsTGKWYOPmddmSOppo/rs:fit/g:sm/q:90/h:586/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMxMTI2/MTU0LTE3MzEwNDk0/MTUtNTk5OC5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/U6Y8rEQ5EdlBeTYMPhJHBdRygiw4GveRvSnokatiX4o/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMxMTI2/MTU0LTE3MzEwNDk0/MTUtNTk5OC5qcGVn.jpeg",
+      "width": 600,
+      "height": 586
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/YR969rDFJB7am5I4lb-3aMChsTAqJwfHvSoerlnwgOs/rs:fit/g:sm/q:90/h:587/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMxMTI2/MTU0LTE3MzEwNDk0/MTYtOTgzMS5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/YR969rDFJB7am5I4lb-3aMChsTAqJwfHvSoerlnwgOs/rs:fit/g:sm/q:90/h:587/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMxMTI2/MTU0LTE3MzEwNDk0/MTYtOTgzMS5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/dj5KuYVC0G7i7Lc0oAUHot6vRM7UOj_GIiMoZ6vbXTA/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMxMTI2/MTU0LTE3MzEwNDk0/MTYtOTgzMS5qcGVn.jpeg",
+      "width": 600,
+      "height": 587
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/ijpMgiPRvl8746opyfZlSoqHcvCgBDTMwETrq0XQUVo/rs:fit/g:sm/q:90/h:597/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMxMTI2/MTU0LTE3MzEwNDk0/MTUtNzgyNy5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/ijpMgiPRvl8746opyfZlSoqHcvCgBDTMwETrq0XQUVo/rs:fit/g:sm/q:90/h:597/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMxMTI2/MTU0LTE3MzEwNDk0/MTUtNzgyNy5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/pQPhWWwepjEBVqIvnLTEw295FM3N-bBo7GbQTA9ntS4/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMxMTI2/MTU0LTE3MzEwNDk0/MTUtNzgyNy5qcGVn.jpeg",
+      "width": 600,
+      "height": 597
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/b9RIkcsFpIGxJ8ECih_tPLDJy5MmnpdliL-H5XaxKok/rs:fit/g:sm/q:90/h:600/w:590/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMxMTI2/MTU0LTE3MzEwNDk0/MTUtNTY2NS5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/b9RIkcsFpIGxJ8ECih_tPLDJy5MmnpdliL-H5XaxKok/rs:fit/g:sm/q:90/h:600/w:590/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMxMTI2/MTU0LTE3MzEwNDk0/MTUtNTY2NS5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/KmLNITqcZ8oIt3oqf3NEelvNMOX5hpickTK69A2xY84/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMxMTI2/MTU0LTE3MzEwNDk0/MTUtNTY2NS5qcGVn.jpeg",
+      "width": 590,
+      "height": 600
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/6bcbua-fsmswuNDrjPeUd_C-vpXlNMNe_i0c5cbKytU/rs:fit/g:sm/q:90/h:600/w:599/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMxMTI2/MTU0LTE3MzEwODE4/NTUtNzc5My5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/6bcbua-fsmswuNDrjPeUd_C-vpXlNMNe_i0c5cbKytU/rs:fit/g:sm/q:90/h:600/w:599/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMxMTI2/MTU0LTE3MzEwODE4/NTUtNzc5My5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/8dXcJQxdSJEmVntr672shEgx-EC-UCDRrddNHanipCs/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMxMTI2/MTU0LTE3MzEwODE4/NTUtNzc5My5qcGVn.jpeg",
+      "width": 599,
+      "height": 600
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/ZGXDxeZDCwSiA5Q3zSAghO-8DZaZLVPvQLmsT6iFW0M/rs:fit/g:sm/q:90/h:599/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMxMTI2/MTU0LTE3MzEwODE4/NjAtNzkxNC5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/ZGXDxeZDCwSiA5Q3zSAghO-8DZaZLVPvQLmsT6iFW0M/rs:fit/g:sm/q:90/h:599/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMxMTI2/MTU0LTE3MzEwODE4/NjAtNzkxNC5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/qVrf2GfHiwqmdNw7vACGdyZkmnxulcX8b5fMQWq6uuE/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMxMTI2/MTU0LTE3MzEwODE4/NjAtNzkxNC5qcGVn.jpeg",
+      "width": 600,
+      "height": 599
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/XkN3zewLnTIRyNe-IOSA8Fo60cjgAG-wmhjKBncDCKA/rs:fit/g:sm/q:90/h:600/w:178/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMxMTI2/MTU0LTE3MzEwNDk5/NjAtNjQ5MS5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/XkN3zewLnTIRyNe-IOSA8Fo60cjgAG-wmhjKBncDCKA/rs:fit/g:sm/q:90/h:600/w:178/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMxMTI2/MTU0LTE3MzEwNDk5/NjAtNjQ5MS5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/Mca6oufEjomnoP4m8e9E7f1ZPc-DnQq-BQ0xjoj7JhQ/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMxMTI2/MTU0LTE3MzEwNDk5/NjAtNjQ5MS5qcGVn.jpeg",
+      "width": 178,
+      "height": 600
+    }
+  ],
+  "thumb": "https://i.discogs.com/s8K3ZM-S1IdCkywUxU6rHgrv_Iek_pI1bazJrCkgmsM/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTMxMTI2/MTU0LTE3MzEwNDk0/MTUtNjM0MS5qcGVn.jpeg",
+  "estimated_weight": 230,
+  "blocked_from_sale": false,
+  "is_offensive": false
+}

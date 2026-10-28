@@ -49221,3 +49221,15 @@ fail their test. **The shape tests wait on fixtures a person captures:**
 `scripts/capture-discogs-fixtures.mjs collection` now captures the identity,
 the page and each release, verified at each step; it is run by hand, never
 by an agent, so tonight's curl payloads stay in the scratchpad.
+
+**Unit B:** `src/lib/discogs/collection-map.ts`, pure: a release and its
+collection item into what the importer takes, under the eight rules; the
+nine captured fixtures checked against the table reported before the rules
+were set (six LPs, one 2xLP, two blank; 180 in three spellings; no colour
+anywhere; ATLiens' year blank; every release's styles dropped). Staged:
+styles kept, "gm" dropped from the weight parse, colour passed through, and
+the list grown with a 3xLP each fail their test. The fixtures were captured
+by Adam with the script's collection mode (identity, page, nine releases,
+verified at capture) and reviewed: a pseudonymous username and user id, the
+instance ids, dates added and "Mint (M)" conditions, public release data,
+no token, no email.

@@ -1,0 +1,461 @@
+{
+  "id": 11029111,
+  "status": "Accepted",
+  "year": 2014,
+  "resource_url": "https://api.discogs.com/releases/11029111",
+  "uri": "https://www.discogs.com/release/11029111-Parquet-Courts-Sunbathing-Animal",
+  "artists": [
+    {
+      "name": "Parquet Courts",
+      "anv": "",
+      "join": "",
+      "role": "",
+      "tracks": "",
+      "id": 2544241,
+      "resource_url": "https://api.discogs.com/artists/2544241",
+      "thumbnail_url": "https://i.discogs.com/d5PRdjcvSrSvDJll7DmwIf7nmux-H0IplaLTlMN7nIM/rs:fit/g:sm/q:90/h:337/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9BLTI1NDQy/NDEtMTU3NTU3NTI5/MS0yNjM2LmpwZWc.jpeg"
+    }
+  ],
+  "artists_sort": "Parquet Courts",
+  "labels": [
+    {
+      "name": "What's Your Rupture?",
+      "catno": "WYR?0514",
+      "entity_type": "1",
+      "entity_type_name": "Label",
+      "id": 59278,
+      "resource_url": "https://api.discogs.com/labels/59278",
+      "thumbnail_url": "https://i.discogs.com/LbaN2kf7Da_si9_HDYVJgdrBB95W8XBdgddEiGE5gIs/rs:fit/g:sm/q:90/h:245/w:599/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTU5Mjc4/LTEzNzEzODUzMTAt/MTk5MC5qcGVn.jpeg"
+    }
+  ],
+  "series": [],
+  "companies": [
+    {
+      "name": "Coo-Songs",
+      "catno": "",
+      "entity_type": "14",
+      "entity_type_name": "Copyright (c)",
+      "id": 698628,
+      "resource_url": "https://api.discogs.com/labels/698628"
+    },
+    {
+      "name": "Rainbo Records",
+      "catno": "S-91949",
+      "entity_type": "17",
+      "entity_type_name": "Pressed By",
+      "id": 100643,
+      "resource_url": "https://api.discogs.com/labels/100643",
+      "thumbnail_url": "https://i.discogs.com/GDxBM719av0V7oyemxiMhYGX5m9qoMvtuwrtIvyLlS4/rs:fit/g:sm/q:90/h:141/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTEwMDY0/My0xNDk2ODM3MzMz/LTYxMTAuanBlZw.jpeg"
+    },
+    {
+      "name": "Rainbo Records",
+      "catno": "S-91950",
+      "entity_type": "17",
+      "entity_type_name": "Pressed By",
+      "id": 100643,
+      "resource_url": "https://api.discogs.com/labels/100643",
+      "thumbnail_url": "https://i.discogs.com/GDxBM719av0V7oyemxiMhYGX5m9qoMvtuwrtIvyLlS4/rs:fit/g:sm/q:90/h:141/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTEwMDY0/My0xNDk2ODM3MzMz/LTYxMTAuanBlZw.jpeg"
+    },
+    {
+      "name": "Seaside Lounge",
+      "catno": "",
+      "entity_type": "23",
+      "entity_type_name": "Recorded At",
+      "id": 289395,
+      "resource_url": "https://api.discogs.com/labels/289395",
+      "thumbnail_url": "https://i.discogs.com/SN-gtu49pViksUfXlneGva3QTEJp-0KhdWkcp3sdlu8/rs:fit/g:sm/q:90/h:399/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTI4OTM5/NS0xNTUzODc3ODc4/LTc0NjUuanBlZw.jpeg"
+    },
+    {
+      "name": "Outlier Inn",
+      "catno": "",
+      "entity_type": "23",
+      "entity_type_name": "Recorded At",
+      "id": 696995,
+      "resource_url": "https://api.discogs.com/labels/696995"
+    },
+    {
+      "name": "Dr. Wu Records",
+      "catno": "",
+      "entity_type": "27",
+      "entity_type_name": "Mixed At",
+      "id": 250539,
+      "resource_url": "https://api.discogs.com/labels/250539",
+      "thumbnail_url": "https://i.discogs.com/OdKg-iXXvxfRML6r1f7pmXo7GWZTcH0_TCuIb9AWotM/rs:fit/g:sm/q:90/h:74/w:200/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTI1MDUz/OS0xNzM5NTU4OTI2/LTc4NTMuanBlZw.jpeg"
+    },
+    {
+      "name": "Sterling Sound",
+      "catno": "",
+      "entity_type": "29",
+      "entity_type_name": "Mastered At",
+      "id": 264060,
+      "resource_url": "https://api.discogs.com/labels/264060",
+      "thumbnail_url": "https://i.discogs.com/Z8f0gMBrt5jLL4TAcCYDGXmMPOLi9V0UW593WXP6BUU/rs:fit/g:sm/q:90/h:118/w:400/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTI2NDA2/MC0xNTAwMjgzMzYy/LTMyMTguanBlZw.jpeg"
+    }
+  ],
+  "formats": [
+    {
+      "name": "Vinyl",
+      "qty": "1",
+      "descriptions": [
+        "Album",
+        "LP"
+      ],
+      "text": "Gatefold, 180gm"
+    }
+  ],
+  "data_quality": "Needs Vote",
+  "community": {
+    "have": 464,
+    "want": 145,
+    "rating": {
+      "count": 19,
+      "average": 4.53
+    },
+    "submitter": {
+      "username": "maxdesignco",
+      "resource_url": "https://api.discogs.com/users/maxdesignco"
+    },
+    "contributors": [
+      {
+        "username": "maxdesignco",
+        "resource_url": "https://api.discogs.com/users/maxdesignco"
+      },
+      {
+        "username": "booker-t",
+        "resource_url": "https://api.discogs.com/users/booker-t"
+      },
+      {
+        "username": "Otis_T_Wren",
+        "resource_url": "https://api.discogs.com/users/Otis_T_Wren"
+      }
+    ],
+    "data_quality": "Needs Vote",
+    "status": "Accepted"
+  },
+  "format_quantity": 1,
+  "date_added": "2017-10-20T15:20:29-07:00",
+  "date_changed": "2021-08-25T06:09:19-07:00",
+  "num_for_sale": 7,
+  "lowest_price": 12.46,
+  "master_id": 694785,
+  "master_url": "https://api.discogs.com/masters/694785",
+  "title": "Sunbathing Animal",
+  "country": "US",
+  "released": "2014-06-03",
+  "notes": "Comes with a download card. White paper inner sleeve with black printed lyrics and jailhouse bars drawings. ",
+  "released_formatted": "03 Jun 2014",
+  "identifiers": [
+    {
+      "type": "Matrix / Runout",
+      "value": " [etched smiley face] WYR?0514-A RJ [STERLING] S-91949",
+      "description": "Runout, side A, etched, [STERLING] stamped"
+    },
+    {
+      "type": "Matrix / Runout",
+      "value": "[etched smiley face] WYR?0514-B RJ [STERLING] S-91950",
+      "description": "Runout, side B, etched, [STERLING] stamped"
+    }
+  ],
+  "videos": [
+    {
+      "uri": "https://www.youtube.com/watch?v=mhPOZXLmTKA",
+      "title": "Parquet Courts - \"Sunbathing Animal\" (Official Video)",
+      "description": "You Should Subscribe Here Now: http://bit.ly/VErZkw\nHere's the new video for \"Sunbathing Animal,\" taken from the album of the same name by Parquet Courts, out June 3rd on Whats Your Rupture? /Mom and Pop (US) and\nJune 2nd on Rough Trade (UK).\n\nhttp://www.",
+      "duration": 239,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=hbFp1Q_Z8mM",
+      "title": "Parquet Courts \"Black and White\"",
+      "description": "Parquet Courts \"Sunbathing Animal\" out June 3 on What's Your Rupture?/Mom+Pop (US), June 2 on Rough Trade (UK/EU).\n\nPre-order on iTunes: http://smarturl.it/sunbathing\nPre-order on CD/LP: http://sunbathinganimal.com\n\nAll pre-orders come with an immediate d",
+      "duration": 231,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=JCrEMGj6Inw",
+      "title": "Parquet Courts - Ducking & Dodging",
+      "description": "from their new album \" Sunbathing Animal\"",
+      "duration": 270,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=SMfNAJS8oq0",
+      "title": "Parquet Courts - Raw Milk [2014]",
+      "description": "from \"Sunbathing Animal\"\nBuy their album when it's released!!!",
+      "duration": 241,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=Sw40lQKu0jY",
+      "title": "PARQUET COURTS - SUNBATHING ANIMAL [FULL ALBUM]",
+      "description": "PARQUET COURTS - SUNBATHING ANIMAL [FULL ALBUM]\n00:00 Bodies Made of \n03:20 Black & White\n06:24 Dear Ramona\n08:58 What Color Is Blood?\n12:22 Vienna II\n13:25 Always Back In Town\n16:03 She's Rolling\n22:36 Sunbathing Animal\n26:28 Up All Night\n27:30 Instant D",
+      "duration": 2774,
+      "embed": true
+    }
+  ],
+  "genres": [
+    "Rock"
+  ],
+  "styles": [
+    "Rock & Roll",
+    "Punk",
+    "Indie Rock",
+    "Garage Rock"
+  ],
+  "tracklist": [
+    {
+      "position": "A1",
+      "type_": "track",
+      "title": "Bodies Made Of",
+      "duration": ""
+    },
+    {
+      "position": "A2",
+      "type_": "track",
+      "title": "Black & White",
+      "duration": ""
+    },
+    {
+      "position": "A3",
+      "type_": "track",
+      "title": "Dear Ramona",
+      "duration": ""
+    },
+    {
+      "position": "A4",
+      "type_": "track",
+      "title": "What Color Is Blood?",
+      "duration": ""
+    },
+    {
+      "position": "A5",
+      "type_": "track",
+      "title": "Vienna II",
+      "duration": ""
+    },
+    {
+      "position": "A6",
+      "type_": "track",
+      "title": "Always Back In Town",
+      "duration": ""
+    },
+    {
+      "position": "A7",
+      "type_": "track",
+      "title": "She's Rolling",
+      "extraartists": [
+        {
+          "name": "Lea Cho",
+          "anv": "",
+          "join": "",
+          "role": "Harmonica",
+          "tracks": "",
+          "id": 657798,
+          "resource_url": "https://api.discogs.com/artists/657798"
+        }
+      ],
+      "duration": ""
+    },
+    {
+      "position": "B1",
+      "type_": "track",
+      "title": "Sunbathing Animal",
+      "duration": ""
+    },
+    {
+      "position": "B2",
+      "type_": "track",
+      "title": "Up All Night",
+      "duration": ""
+    },
+    {
+      "position": "B3",
+      "type_": "track",
+      "title": "Instant Disassembly",
+      "duration": ""
+    },
+    {
+      "position": "B4",
+      "type_": "track",
+      "title": "Ducking & Dodging",
+      "extraartists": [
+        {
+          "name": "Traditional",
+          "anv": "",
+          "join": "",
+          "role": "Lyrics By",
+          "tracks": "",
+          "id": 151641,
+          "resource_url": "https://api.discogs.com/artists/151641"
+        },
+        {
+          "name": "Traditional",
+          "anv": "",
+          "join": "",
+          "role": "Music By",
+          "tracks": "",
+          "id": 151641,
+          "resource_url": "https://api.discogs.com/artists/151641"
+        }
+      ],
+      "duration": ""
+    },
+    {
+      "position": "B5",
+      "type_": "track",
+      "title": "Raw Milk",
+      "duration": ""
+    },
+    {
+      "position": "B6",
+      "type_": "track",
+      "title": "Into The Garden",
+      "duration": ""
+    }
+  ],
+  "extraartists": [
+    {
+      "name": "Andrew Savage (3)",
+      "anv": "A. Savage",
+      "join": "",
+      "role": "Artwork",
+      "tracks": "",
+      "id": 1658913,
+      "resource_url": "https://api.discogs.com/artists/1658913"
+    },
+    {
+      "name": "Sean Yeaton",
+      "anv": "",
+      "join": "",
+      "role": "Bass",
+      "tracks": "",
+      "id": 1133960,
+      "resource_url": "https://api.discogs.com/artists/1133960"
+    },
+    {
+      "name": "Andrew Savage (3)",
+      "anv": "A. Savage",
+      "join": "",
+      "role": "Guitar, Vocals",
+      "tracks": "",
+      "id": 1658913,
+      "resource_url": "https://api.discogs.com/artists/1658913"
+    },
+    {
+      "name": "Austin Brown (6)",
+      "anv": "",
+      "join": "",
+      "role": "Guitar, Vocals",
+      "tracks": "",
+      "id": 3497931,
+      "resource_url": "https://api.discogs.com/artists/3497931"
+    },
+    {
+      "name": "Ray Janos",
+      "anv": "RJ",
+      "join": "",
+      "role": "Lacquer Cut By",
+      "tracks": "",
+      "id": 339229,
+      "resource_url": "https://api.discogs.com/artists/339229"
+    },
+    {
+      "name": "Joe LaPorta",
+      "anv": "",
+      "join": "",
+      "role": "Mastered By",
+      "tracks": "",
+      "id": 600237,
+      "resource_url": "https://api.discogs.com/artists/600237"
+    },
+    {
+      "name": "Jonathan Schenke",
+      "anv": "",
+      "join": "",
+      "role": "Mixed By",
+      "tracks": "",
+      "id": 570644,
+      "resource_url": "https://api.discogs.com/artists/570644"
+    },
+    {
+      "name": "Max Savage",
+      "anv": "M. Savage",
+      "join": "",
+      "role": "Percussion",
+      "tracks": "",
+      "id": 3104923,
+      "resource_url": "https://api.discogs.com/artists/3104923"
+    },
+    {
+      "name": "Jonathan Schenke",
+      "anv": "",
+      "join": "",
+      "role": "Recorded By",
+      "tracks": "",
+      "id": 570644,
+      "resource_url": "https://api.discogs.com/artists/570644"
+    }
+  ],
+  "images": [
+    {
+      "type": "primary",
+      "uri": "https://i.discogs.com/_aw7U_-p1Y5TvkuVEYXIeCfdfumO2YxKQ2Ykf1b1lCs/rs:fit/g:sm/q:90/h:585/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTExMDI5/MTExLTE1MDg1Mzg1/NzItNzc3OC5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/_aw7U_-p1Y5TvkuVEYXIeCfdfumO2YxKQ2Ykf1b1lCs/rs:fit/g:sm/q:90/h:585/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTExMDI5/MTExLTE1MDg1Mzg1/NzItNzc3OC5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/awyY3CMfKmXD2oymsNLyemhsi8Cua5cpSxTxuiZ6UD4/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTExMDI5/MTExLTE1MDg1Mzg1/NzItNzc3OC5qcGVn.jpeg",
+      "width": 600,
+      "height": 585
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/swjQXOBEqKDwM8jaTw6H-Bfh3ZUU43bDRk9rcnb5TeQ/rs:fit/g:sm/q:90/h:305/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTExMDI5/MTExLTE1MDg1Mzg1/ODMtNjQyOC5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/swjQXOBEqKDwM8jaTw6H-Bfh3ZUU43bDRk9rcnb5TeQ/rs:fit/g:sm/q:90/h:305/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTExMDI5/MTExLTE1MDg1Mzg1/ODMtNjQyOC5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/_MPyuA-sfeNarmslKGoXKpdnGcRW8aHpIbRu1FXIcAQ/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTExMDI5/MTExLTE1MDg1Mzg1/ODMtNjQyOC5qcGVn.jpeg",
+      "width": 600,
+      "height": 305
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/Bv8jRPjQTQ8zw4_Gmr94_T8ztY7o2C4BrfFyIx4WpZk/rs:fit/g:sm/q:90/h:600/w:593/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTExMDI5/MTExLTE1MDg1Mzg1/NzUtOTg3OC5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/Bv8jRPjQTQ8zw4_Gmr94_T8ztY7o2C4BrfFyIx4WpZk/rs:fit/g:sm/q:90/h:600/w:593/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTExMDI5/MTExLTE1MDg1Mzg1/NzUtOTg3OC5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/vYpl2uOvxWqFxijPPVWu-XPVnzMNyU8ZPyzc3sJr1ak/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTExMDI5/MTExLTE1MDg1Mzg1/NzUtOTg3OC5qcGVn.jpeg",
+      "width": 593,
+      "height": 600
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/s1NpHc7pN__am48oHu34wIei96Et55RwJD6QSmYX7iA/rs:fit/g:sm/q:90/h:593/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTExMDI5/MTExLTE1MDg1Mzg1/NzgtMzU1OS5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/s1NpHc7pN__am48oHu34wIei96Et55RwJD6QSmYX7iA/rs:fit/g:sm/q:90/h:593/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTExMDI5/MTExLTE1MDg1Mzg1/NzgtMzU1OS5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/bYel7yYWAR4LbCgLSssWNGWnD64PIWuyzYppoe7EdXo/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTExMDI5/MTExLTE1MDg1Mzg1/NzgtMzU1OS5qcGVn.jpeg",
+      "width": 600,
+      "height": 593
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/AR9wC2ppipMUq1vBNPOTrs6R0eqxqU-yNg5g_RTNaH0/rs:fit/g:sm/q:90/h:594/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTExMDI5/MTExLTE1MDg1Mzg1/ODEtNzM1OS5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/AR9wC2ppipMUq1vBNPOTrs6R0eqxqU-yNg5g_RTNaH0/rs:fit/g:sm/q:90/h:594/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTExMDI5/MTExLTE1MDg1Mzg1/ODEtNzM1OS5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/eiUZat6eLW0Gj1ir_ipeLj4_ak_wsIDRzO1Q977b-lQ/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTExMDI5/MTExLTE1MDg1Mzg1/ODEtNzM1OS5qcGVn.jpeg",
+      "width": 600,
+      "height": 594
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/6YBtgW48S53DuASXwEMKgiEfhYc8ebAO48nBJ6Cx6Is/rs:fit/g:sm/q:90/h:589/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTExMDI5/MTExLTE1MDg1Mzk0/MTktNzU0OC5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/6YBtgW48S53DuASXwEMKgiEfhYc8ebAO48nBJ6Cx6Is/rs:fit/g:sm/q:90/h:589/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTExMDI5/MTExLTE1MDg1Mzk0/MTktNzU0OC5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/DYyIBV5kEAfDlMP4UO65WKAebFY-lPvd0mpVTJ6BiwU/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTExMDI5/MTExLTE1MDg1Mzk0/MTktNzU0OC5qcGVn.jpeg",
+      "width": 600,
+      "height": 589
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/rRdKcIdHtC0LOd3hjOUwkakPVG9x-vsdRhOdIGfs0RU/rs:fit/g:sm/q:90/h:584/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTExMDI5/MTExLTE1MDg1Mzk0/MjMtNDY3MC5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/rRdKcIdHtC0LOd3hjOUwkakPVG9x-vsdRhOdIGfs0RU/rs:fit/g:sm/q:90/h:584/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTExMDI5/MTExLTE1MDg1Mzk0/MjMtNDY3MC5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/obG779c15hKKRIIvy-15JgsA9liO3QlPdwM5S2Q99KI/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTExMDI5/MTExLTE1MDg1Mzk0/MjMtNDY3MC5qcGVn.jpeg",
+      "width": 600,
+      "height": 584
+    }
+  ],
+  "thumb": "https://i.discogs.com/awyY3CMfKmXD2oymsNLyemhsi8Cua5cpSxTxuiZ6UD4/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTExMDI5/MTExLTE1MDg1Mzg1/NzItNzc3OC5qcGVn.jpeg",
+  "estimated_weight": 230,
+  "blocked_from_sale": false,
+  "is_offensive": false
+}

@@ -1,0 +1,477 @@
+{
+  "id": 36516553,
+  "status": "Accepted",
+  "year": 2026,
+  "resource_url": "https://api.discogs.com/releases/36516553",
+  "uri": "https://www.discogs.com/release/36516553-Mandy-Indiana-URGH",
+  "artists": [
+    {
+      "name": "Mandy, Indiana",
+      "anv": "",
+      "join": "",
+      "role": "",
+      "tracks": "",
+      "id": 10409722,
+      "resource_url": "https://api.discogs.com/artists/10409722",
+      "thumbnail_url": "https://i.discogs.com/LO-PXEJ89ZGs4vivddKAr-XI1yApQ187qgLacCt7dls/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9BLTEwNDA5/NzIyLTE3Njk2OTkz/NjctMzU0MC5qcGVn.jpeg"
+    }
+  ],
+  "artists_sort": "Mandy, Indiana",
+  "labels": [
+    {
+      "name": "Sacred Bones Records",
+      "catno": "SBR-373",
+      "entity_type": "1",
+      "entity_type_name": "Label",
+      "id": 98317,
+      "resource_url": "https://api.discogs.com/labels/98317",
+      "thumbnail_url": "https://i.discogs.com/0gW2iLWE57BCcsGqvvEwGO3qhV_zXke8Yrcjs6ohCw0/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTk4MzE3/LTE1MDA3MzYwODUt/NjgzMi5qcGVn.jpeg"
+    }
+  ],
+  "series": [],
+  "companies": [
+    {
+      "name": "Just Isn't Music",
+      "catno": "",
+      "entity_type": "21",
+      "entity_type_name": "Published By",
+      "id": 264672,
+      "resource_url": "https://api.discogs.com/labels/264672",
+      "thumbnail_url": "https://i.discogs.com/pHh4IfGEOl7Qg7gPsTzSsF2o-lpctqN6GW_5ftZOZRM/rs:fit/g:sm/q:90/h:273/w:400/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTI2NDY3/Mi0xMzM1MjU4MDQz/LmpwZWc.jpeg"
+    },
+    {
+      "name": "Greenmount Studios",
+      "catno": "",
+      "entity_type": "23",
+      "entity_type_name": "Recorded At",
+      "id": 465390,
+      "resource_url": "https://api.discogs.com/labels/465390",
+      "thumbnail_url": "https://i.discogs.com/em2o3XAFpLmrmgmE6jymzvoU2VcBj783uOuXi2u4QvI/rs:fit/g:sm/q:90/h:280/w:210/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTQ2NTM5/MC0xMzk5NDM5MTE3/LTc0MDIuanBlZw.jpeg"
+    },
+    {
+      "name": "Airtight Studios",
+      "catno": "",
+      "entity_type": "23",
+      "entity_type_name": "Recorded At",
+      "id": 311685,
+      "resource_url": "https://api.discogs.com/labels/311685",
+      "thumbnail_url": "https://i.discogs.com/ePgJz5R2RuT8SaB3eM3I8oS75sg3QxjTgf7sIQx5LnE/rs:fit/g:sm/q:90/h:79/w:400/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTMxMTY4/NS0xMzM1MjQwNDk5/LmpwZWc.jpeg"
+    },
+    {
+      "name": "Flow Studios, Berlin",
+      "catno": "",
+      "entity_type": "23",
+      "entity_type_name": "Recorded At",
+      "id": 4437985,
+      "resource_url": "https://api.discogs.com/labels/4437985"
+    },
+    {
+      "name": "GZ Media",
+      "catno": "306656E",
+      "entity_type": "29",
+      "entity_type_name": "Mastered At",
+      "id": 430654,
+      "resource_url": "https://api.discogs.com/labels/430654",
+      "thumbnail_url": "https://i.discogs.com/tsQO8Fa5vPMtcFal_YMkjrAm8fO6g9lwwTSN64t0mo8/rs:fit/g:sm/q:90/h:600/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9MLTQzMDY1/NC0xNzUzMTExMDY1/LTM2ODcucG5n.jpeg"
+    }
+  ],
+  "formats": [
+    {
+      "name": "Vinyl",
+      "qty": "1",
+      "descriptions": [
+        "LP",
+        "Album"
+      ],
+      "text": "RGB Edition"
+    }
+  ],
+  "data_quality": "Needs Vote",
+  "community": {
+    "have": 669,
+    "want": 62,
+    "rating": {
+      "count": 53,
+      "average": 4.7
+    },
+    "submitter": {
+      "username": "wafoli",
+      "resource_url": "https://api.discogs.com/users/wafoli"
+    },
+    "contributors": [
+      {
+        "username": "wafoli",
+        "resource_url": "https://api.discogs.com/users/wafoli"
+      },
+      {
+        "username": "oceanographer",
+        "resource_url": "https://api.discogs.com/users/oceanographer"
+      },
+      {
+        "username": "follow_me_around",
+        "resource_url": "https://api.discogs.com/users/follow_me_around"
+      },
+      {
+        "username": "andrenafulva",
+        "resource_url": "https://api.discogs.com/users/andrenafulva"
+      },
+      {
+        "username": "CD_WAREHOUSE_817",
+        "resource_url": "https://api.discogs.com/users/CD_WAREHOUSE_817"
+      }
+    ],
+    "data_quality": "Needs Vote",
+    "status": "Accepted"
+  },
+  "format_quantity": 1,
+  "date_added": "2026-02-15T16:06:28-08:00",
+  "date_changed": "2026-06-26T09:01:22-07:00",
+  "num_for_sale": 50,
+  "lowest_price": 17.8,
+  "master_id": 4126185,
+  "master_url": "https://api.discogs.com/masters/4126185",
+  "title": "URGH",
+  "country": "US",
+  "released": "2026-02-06",
+  "notes": "RGB edition - random translucent red, green or blue vinyl\n\nMade in Czech Republic\n\nDrums recorded at Greenmount Studios, Leeds. Synths recorded at Airtight Studios, Manchester. Vocals recorded at Flow Studios, Berlin.\nSample on \"Try Saying\" from \"[url=https://www.discogs.com/master/214559-The-Rising-Storm-Calm-Before]Frozen Laughter[/url]\", used with permission from [a=Rising Storm]",
+  "released_formatted": "06 Feb 2026",
+  "identifiers": [
+    {
+      "type": "Barcode",
+      "value": "8 43563 19772 1",
+      "description": "Printed (Stickered)"
+    },
+    {
+      "type": "Barcode",
+      "value": "843563197721",
+      "description": "Scanned (Stickered)"
+    },
+    {
+      "type": "Matrix / Runout",
+      "value": "SBR373 A 306656E1/A 02385497",
+      "description": "Runout side A, variant 1"
+    },
+    {
+      "type": "Matrix / Runout",
+      "value": "SBR373 B 306656E2/A 02385498",
+      "description": "Runout side B, variant 1"
+    },
+    {
+      "type": "Matrix / Runout",
+      "value": "SBR373 A 306656E1/A 02499645",
+      "description": "Runout side A, variant 2"
+    },
+    {
+      "type": "Matrix / Runout",
+      "value": "SBR373 B 306656E2/A 02503115",
+      "description": "Runout side B, variant 2"
+    }
+  ],
+  "videos": [
+    {
+      "uri": "https://www.youtube.com/watch?v=QLhd_TRMgM0",
+      "title": "Mandy, Indiana feat. billy woods - Sicko! (Official Video)",
+      "description": "From the album \"URGH\" out now on Sacred Bones Records.   \n\nBuy / Listen URGH: https://lnk.to/URGHMandy\nListen to \"Sicko!\" (feat. billy woods): https://lnk.to/SickoMandy\n\n\"Social media has changed the way we consume art and music, often meaning that we rar",
+      "duration": 212,
+      "embed": true
+    },
+    {
+      "uri": "https://www.youtube.com/watch?v=BUn7Cu74pWI",
+      "title": "Mandy, Indiana - Cursive (Official Video)",
+      "description": "From the album \"URGH\" out now on Sacred Bones Records.   \n\nListen / Buy URGH: https://lnk.to/URGHMandy\nListen to \"Cursive\": https://lnk.to/CursiveMandy\n\nCreative Direction: Stephen Agnew @__agnew__\nChristie Lau 3d + blender artist @lau_christie\nVittoria B",
+      "duration": 267,
+      "embed": true
+    }
+  ],
+  "genres": [
+    "Electronic",
+    "Rock"
+  ],
+  "styles": [
+    "Experimental",
+    "Noise"
+  ],
+  "tracklist": [
+    {
+      "position": "A1",
+      "type_": "track",
+      "title": "Sevastopol",
+      "duration": ""
+    },
+    {
+      "position": "A2",
+      "type_": "track",
+      "title": "Magazine",
+      "duration": ""
+    },
+    {
+      "position": "A3",
+      "type_": "track",
+      "title": "Try Staying",
+      "duration": ""
+    },
+    {
+      "position": "A4",
+      "type_": "track",
+      "title": "Dodecahedron",
+      "duration": ""
+    },
+    {
+      "position": "A5",
+      "type_": "track",
+      "title": "A Brighter Tomorrow",
+      "duration": ""
+    },
+    {
+      "position": "B1",
+      "type_": "track",
+      "title": "Life Hex",
+      "duration": ""
+    },
+    {
+      "position": "B2",
+      "type_": "track",
+      "title": "Ist Halt So",
+      "duration": ""
+    },
+    {
+      "position": "B3",
+      "type_": "track",
+      "title": "Sicko!",
+      "duration": ""
+    },
+    {
+      "position": "B4",
+      "type_": "track",
+      "title": "Cursive",
+      "duration": ""
+    },
+    {
+      "position": "B5",
+      "type_": "track",
+      "title": "I'll Ask Her",
+      "duration": ""
+    }
+  ],
+  "extraartists": [
+    {
+      "name": "Carnovsky",
+      "anv": "",
+      "join": "",
+      "role": "Artwork [Cover Art]",
+      "tracks": "",
+      "id": 6769497,
+      "resource_url": "https://api.discogs.com/artists/6769497"
+    },
+    {
+      "name": "Robert Slater",
+      "anv": "Rob Slater",
+      "join": "",
+      "role": "Engineer [Drums]",
+      "tracks": "",
+      "id": 456314,
+      "resource_url": "https://api.discogs.com/artists/456314"
+    },
+    {
+      "name": "Seadna McPhail",
+      "anv": "",
+      "join": "",
+      "role": "Engineer [Synths]",
+      "tracks": "",
+      "id": 1077407,
+      "resource_url": "https://api.discogs.com/artists/1077407"
+    },
+    {
+      "name": "Mandy, Indiana",
+      "anv": "",
+      "join": "",
+      "role": "Layout",
+      "tracks": "",
+      "id": 10409722,
+      "resource_url": "https://api.discogs.com/artists/10409722"
+    },
+    {
+      "name": "Mercy Charlotte Reise",
+      "anv": "",
+      "join": "",
+      "role": "Layout",
+      "tracks": "",
+      "id": 17283286,
+      "resource_url": "https://api.discogs.com/artists/17283286"
+    },
+    {
+      "name": "Heba Kadry",
+      "anv": "",
+      "join": "",
+      "role": "Mastered By",
+      "tracks": "",
+      "id": 1338550,
+      "resource_url": "https://api.discogs.com/artists/1338550"
+    },
+    {
+      "name": "Jacob Clements",
+      "anv": "",
+      "join": "",
+      "role": "Mastered By [Mastering Assistant]",
+      "tracks": "",
+      "id": 16888879,
+      "resource_url": "https://api.discogs.com/artists/16888879"
+    },
+    {
+      "name": "BFTT",
+      "anv": "",
+      "join": "",
+      "role": "Producer [Additional]",
+      "tracks": "A5",
+      "id": 6344409,
+      "resource_url": "https://api.discogs.com/artists/6344409"
+    },
+    {
+      "name": "Daniel Fox (4)",
+      "anv": "",
+      "join": "",
+      "role": "Producer, Mixed By",
+      "tracks": "",
+      "id": 3645040,
+      "resource_url": "https://api.discogs.com/artists/3645040"
+    },
+    {
+      "name": "Scott Fair (2)",
+      "anv": "",
+      "join": "",
+      "role": "Producer, Mixed By",
+      "tracks": "",
+      "id": 10697704,
+      "resource_url": "https://api.discogs.com/artists/10697704"
+    },
+    {
+      "name": "Steel Tipped Dove",
+      "anv": "",
+      "join": "",
+      "role": "Recorded By [Billy Woods Vocals]",
+      "tracks": "B3",
+      "id": 3553515,
+      "resource_url": "https://api.discogs.com/artists/3553515"
+    },
+    {
+      "name": "Daniel Fox (4)",
+      "anv": "",
+      "join": "",
+      "role": "Recorded By [Drums]",
+      "tracks": "",
+      "id": 3645040,
+      "resource_url": "https://api.discogs.com/artists/3645040"
+    },
+    {
+      "name": "Daniel Fox (4)",
+      "anv": "",
+      "join": "",
+      "role": "Recorded By [Vocals]",
+      "tracks": "",
+      "id": 3645040,
+      "resource_url": "https://api.discogs.com/artists/3645040"
+    },
+    {
+      "name": "Beth Townsend",
+      "anv": "",
+      "join": "",
+      "role": "Vocals [Additional]",
+      "tracks": "B1",
+      "id": 17283289,
+      "resource_url": "https://api.discogs.com/artists/17283289"
+    },
+    {
+      "name": "Erika Cervantes",
+      "anv": "",
+      "join": "",
+      "role": "Vocals [Additional]",
+      "tracks": "B1",
+      "id": 17283292,
+      "resource_url": "https://api.discogs.com/artists/17283292"
+    },
+    {
+      "name": "Kara Hart",
+      "anv": "",
+      "join": "",
+      "role": "Vocals [Additional]",
+      "tracks": "B1",
+      "id": 17283295,
+      "resource_url": "https://api.discogs.com/artists/17283295"
+    },
+    {
+      "name": "Niko Van Eimeren",
+      "anv": "",
+      "join": "",
+      "role": "Vocals [Additional]",
+      "tracks": "B1",
+      "id": 17283298,
+      "resource_url": "https://api.discogs.com/artists/17283298"
+    },
+    {
+      "name": "Alex Macdougall (7)",
+      "anv": "",
+      "join": "",
+      "role": "Written-By, Performer",
+      "tracks": "",
+      "id": 13077174,
+      "resource_url": "https://api.discogs.com/artists/13077174"
+    },
+    {
+      "name": "Scott Fair (2)",
+      "anv": "",
+      "join": "",
+      "role": "Written-By, Performer",
+      "tracks": "",
+      "id": 10697704,
+      "resource_url": "https://api.discogs.com/artists/10697704"
+    },
+    {
+      "name": "Simon Catling",
+      "anv": "",
+      "join": "",
+      "role": "Written-By, Performer",
+      "tracks": "",
+      "id": 7655271,
+      "resource_url": "https://api.discogs.com/artists/7655271"
+    },
+    {
+      "name": "Valentine Caulfield",
+      "anv": "",
+      "join": "",
+      "role": "Written-By, Performer",
+      "tracks": "",
+      "id": 10697710,
+      "resource_url": "https://api.discogs.com/artists/10697710"
+    }
+  ],
+  "images": [
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/hf02ytnZdJ2mNfYxUC7c4lJeYzppF9z2i-SvOPjeUUU/rs:fit/g:sm/q:90/h:600/w:593/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTM2NTE2/NTUzLTE3NzEyMDEw/MjItNTA4MS5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/hf02ytnZdJ2mNfYxUC7c4lJeYzppF9z2i-SvOPjeUUU/rs:fit/g:sm/q:90/h:600/w:593/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTM2NTE2/NTUzLTE3NzEyMDEw/MjItNTA4MS5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/8qPk5VZLdqwojdam4OXPXBobOfbg8KTAbg7RqrO0gTU/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTM2NTE2/NTUzLTE3NzEyMDEw/MjItNTA4MS5qcGVn.jpeg",
+      "width": 593,
+      "height": 600
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/vVPeSsXOiXHHrRV9AI40n47ZafV90QBtJujnZ_xxPHQ/rs:fit/g:sm/q:90/h:595/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTM2NTE2/NTUzLTE3NzEyMDEw/MjItMzEyNi5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/vVPeSsXOiXHHrRV9AI40n47ZafV90QBtJujnZ_xxPHQ/rs:fit/g:sm/q:90/h:595/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTM2NTE2/NTUzLTE3NzEyMDEw/MjItMzEyNi5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/AU3PnlRihn5gxx9QeUWm1RcXHVE3CBZnyJgocjsVgIw/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTM2NTE2/NTUzLTE3NzEyMDEw/MjItMzEyNi5qcGVn.jpeg",
+      "width": 600,
+      "height": 595
+    },
+    {
+      "type": "secondary",
+      "uri": "https://i.discogs.com/PCKGwNg4fpjbr0OikHfUzHU3yH3qHCAsMXMPaWNcZ5E/rs:fit/g:sm/q:90/h:592/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTM2NTE2/NTUzLTE3NzEyMDEw/MjItMTg2NC5qcGVn.jpeg",
+      "resource_url": "https://i.discogs.com/PCKGwNg4fpjbr0OikHfUzHU3yH3qHCAsMXMPaWNcZ5E/rs:fit/g:sm/q:90/h:592/w:600/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTM2NTE2/NTUzLTE3NzEyMDEw/MjItMTg2NC5qcGVn.jpeg",
+      "uri150": "https://i.discogs.com/chXLSA2se58ex1kFDTxSpT5aarqKaKwQ3q13Q4oVYIA/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTM2NTE2/NTUzLTE3NzEyMDEw/MjItMTg2NC5qcGVn.jpeg",
+      "width": 600,
+      "height": 592
+    }
+  ],
+  "thumb": "https://i.discogs.com/8qPk5VZLdqwojdam4OXPXBobOfbg8KTAbg7RqrO0gTU/rs:fit/g:sm/q:40/h:150/w:150/czM6Ly9kaXNjb2dz/LWRhdGFiYXNlLWlt/YWdlcy9SLTM2NTE2/NTUzLTE3NzEyMDEw/MjItNTA4MS5qcGVn.jpeg",
+  "estimated_weight": 230,
+  "blocked_from_sale": false,
+  "is_offensive": false
+}
