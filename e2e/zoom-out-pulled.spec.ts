@@ -10,10 +10,12 @@ import { wallMeasured } from './wall-measured';
  * §P.2 rules that the pick holds no pulled state across a zoom; the motion is
  * §W's, and no §W sentence covers it.
  *
- * MEASURED, NOT RULED. The coordinator rules from this report. It records
- * frame by frame, for a record pulled by its spine and one pulled by the
- * pick, and asserts only that it recorded something. When §W rules, the
- * ruling's assertion goes here and the name changes with it.
+ * Measured first (27 Oct), and then ruled from the measurement: §W.12, "A
+ * record that is out stays out across a zoom and across a resize, whatever
+ * pulled it. The wall holds it, the far view does not draw it, and it is
+ * there again when the reader zooms back in." §P.2: the pick's claim on the
+ * record ends with the host, not the record's place
+ * (`P.2/pick-pulled-not-held`). The frames are still recorded for the report.
  */
 registerCleanup();
 test.beforeEach(async ({ page }) => login(page));
@@ -44,7 +46,7 @@ async function sample(page: Page) {
 const mark = (page: Page, label: string) => page.evaluate((l) => { (window as unknown as { __frames: Array<Frame | { t: number; mark: string }> }).__frames.push({ t: -1, mark: l }); }, label);
 
 for (const source of ['spine', 'pick'] as const) {
-  test(`measured, not ruled: a record out by its ${source}, the reader zooms out and back in, at 1440`, async ({ page }) => {
+  test(`a record out by its ${source} stays out across a zoom out and back in: held by the wall, undrawn on the far view, drawn again on the near (§W.12), at 1440`, async ({ page }) => {
     test.setTimeout(120_000);
     const suffix = `zo156${Date.now().toString(36)}${Math.floor(Math.random() * 1e4)}`;
     const artist = (await (await page.request.post('/api/artists', { data: { name: `Zoom-${suffix}` } })).json()) as { id: string };
@@ -68,6 +70,13 @@ for (const source of ['spine', 'pick'] as const) {
       await page.waitForTimeout(2_500);
       const frames = await page.evaluate(() => (window as unknown as { __frames: Array<Frame | { t: number; mark: string }> }).__frames);
       expect(frames.length, 'the precondition: frames were recorded').toBeGreaterThan(1);
+      const seen = frames.filter((f): f is Frame => !('mark' in f));
+      const far = seen.filter((f) => f.view.startsWith('far'));
+      expect(far.length, 'the far view showed').toBeGreaterThan(0);
+      expect(far.every((f) => f.out === 'none'), '§W.12: on the far view the record is not drawn').toBe(true);
+      const last = seen[seen.length - 1];
+      expect(last?.view.startsWith('near') && last.out === 'drawn', '§W.12: zoomed back in, the record is out and drawn').toBe(true);
+      expect(seen.some((f) => f.phase === 'return'), 'nothing put the record back').toBe(false);
       test.info().annotations.push({ type: `zoom-out control visible with the record out`, description: String(reachable) });
       test.info().annotations.push({ type: 'frames', description: frames.map((f) => ('mark' in f ? `[${f.mark}]` : `${f.t}ms ${f.view} ${f.phase} out:${f.out}`)).join(' → ') });
     } finally {

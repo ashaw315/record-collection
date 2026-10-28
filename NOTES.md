@@ -49092,10 +49092,12 @@ RECORD is reachable by scrolling to the end (its foot then at 899.5 in a 900
 window). Out of view at rest, in reach by scroll.
 
 **Three pitches in one rail:** the view names 42 (the rail's 24 line + 18,
-§W.31/§W.36, ruled); ADD RECORD 16.5 tall on an 18 (the label's own line, not
-the rail's 24: unruled, 7.5 short of the view names' line); SURPRISE ME on a
-44 line (CONTROL_LABEL, §T.6's unboxed-label line, which §P.5 now says does
-not reach the rail). ASK takes the same 44. Design to say which is a defect.
+§W.31/§W.36, ruled); ADD RECORD 16.5 tall on an 18, which §W.24 states ("Add
+record's box is taller, 16.5 against 14.3") and rules that the line of type
+aligns, not the box: a ruled box height, not an inconsistency (I had read
+§W.13, which places it and gives no height, and called it unruled: wrong);
+SURPRISE ME on a 44 line (CONTROL_LABEL, §T.6's unboxed-label line), ruled a
+defect by §P.5 and fixed in 157b, ASK with it.
 
 ASK while inert now carries "Choose a mood first." as its description
 (§P.6, aria-describedby). In the band host the moods run as a wrapped row at
