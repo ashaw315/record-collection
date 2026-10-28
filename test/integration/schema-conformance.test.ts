@@ -308,6 +308,12 @@ describe('§4 conformance — NOT NULL where the spec requires it', () => {
       // §4.3's MusicBrainz cache, same reasoning again — three columns, and
       // `fetched_at` is what freshness is measured from.
       'musicbrainz_cache',
+      // §4.2's `discogs_import_runs` (step 159): one row per run, append-only,
+      // and `finished_at` is the one time that means anything, as the spec says
+      // in the same words it uses for `discogs_cache`. Found by the gate on
+      // 43f029e, which is what a gate is for: the migration passed its own
+      // tests and this file encodes the rule it has to be exempt from.
+      'discogs_import_runs',
       // §4.3's `llm_requests`, specified with exactly three columns. It is a LOG
       // rather than a cache, but the reasoning lands the same way: `requested_at`
       // is the only time this table has an opinion about, and it is the column

@@ -49393,3 +49393,22 @@ duration, which is said in the commit message.
 survival test's seeded run row was drawn in the first test's "before any
 run" at count 1, on one project; the file is `serial` now and the first
 test clears the table at its start. The gate runs one project at a time.
+
+## 28 Oct, afternoon: the gate on 43f029e, and a flake that has now shown twice
+
+**Unit half, one failure, fixed forward.** `schema-conformance` asks every
+table for both timestamp columns except a named list; `discogs_import_runs`
+(migration 0031) has `finished_at` alone, as SPEC §4.2 exempts it in the
+words it uses for `discogs_cache`. The list now names it. The step's own
+tests passed because none of them encodes §4's rule; the gate's cross-file
+read is what caught it, which is the case §10 describes.
+
+**`wall-route.spec.ts:353`, "Escape returns to the collection when nothing
+is pulled…", flaky in two consecutive gates** (4184863 at 9.6s, 43f029e at
+11.4s on the failed attempt, both passing on retry), the same failure each
+time: after the first spine's click, `getByTestId('record-chrome')` is not
+visible within 5s. The first gate ran at load 34 to 53 beside my e2e runs,
+which explained it; the second ran at load 7 to 11 with nothing beside it,
+which does not. A finding, not fixed here: the step 156 pull's chrome after
+a spine click, under the gate's parallel workers. For the next wall step,
+or on request.
