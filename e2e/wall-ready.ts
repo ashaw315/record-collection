@@ -15,6 +15,13 @@ import { expect, type Locator, type Page } from '@playwright/test';
  * waited on this with their own helper; the Escape test was the one left on
  * the visibility wait, and nothing required the helper's use.
  *
+ * **Not shown to address the flake (17:40).** A second probe forced the race
+ * with the point read before hydration and the landing moving the region by
+ * 471 afterwards, and the stale point still hit a spine and pulled, 10 of
+ * 10: on this layout the shift lands on another seat, not on a gap. So the
+ * two conditions here are real and worth waiting for, and the flake's cause
+ * is not known. The next occurrence needs the gate's retained trace.
+ *
  * So this is the one way a spec clicks a spine, and `test/repo/
  * spine-click-helper.test.ts` refuses a spec that clicks one any other way.
  * It waits for the region's two marks, hydrated and landed: `data-landed`

@@ -49503,3 +49503,124 @@ landing race is the explanation consistent with the evidence, not one
 reproduced on demand. If the test flakes again under the helper, the next
 read is the gate's retained trace, which neither failed gate left behind
 (the following run cleared the output directory).
+
+## 28 Oct, 16:15: two self-catches, a count corrected, and what the fix's evidence is worth
+
+**The three-animation-frame wait (fixed-count family).** `wallAtRest`'s
+first draft waited for the region's scroll and extent unchanged over three
+animation frames, copied from wall-route's `settled`. Eighteen tests hung
+on it for 30s each: the gesture, cover, pull, panel and navigation specs
+install a fake clock (`page.clock.install`, paused), under which no
+animation frame ever fires. A wait on a count of frames is a wait on a
+clock, and a clock the page does not own is a number by another name. The
+helper now waits on two marks the product sets on the region, hydrated and
+landed, which hold under any clock.
+
+**The line-window guard.** The spine-click guard's first draft flagged any
+`.click(` within three lines of `data-spine`, and named the turn control
+clicked two lines after a spine (`back-newest-82:63`) and three more like
+it. It now reads the click's own line, or a name assigned from a spine.
+Same shape as the governs-row vocabulary check: a detector aimed near the
+thing instead of at it.
+
+**The count, corrected.** The report of 16:00 said twelve spec files click
+spines. That number was a grep cut by `head -12`: twelve lines in eight
+files. The guard found 36 clicks in 17 files, 24 more in 9 more files than
+the manual read, five of them through a named locator (`const spine =
+…data-spine…; await spine.click()`) that a one-line grep cannot see. The
+guard doing its job, beside drop-ref's governs-row check finding what a
+vocabulary check had passed.
+
+**The step-level green did not close.** 92 of 93 passed with the mark in
+its first place, then 32 of 32 after the mark moved to the landing's
+consumption; 61 of the 93 were not rerun after the move. They run after
+the gate on the fix reports, before that gate's verdict is read as
+covering them.
+
+**What the fix's evidence is worth.** The first probe never produced the
+failure; the landing-scroll diagnosis is consistent with everything seen
+and reproduced by nothing. A second probe forces the race's two halves in
+order, the click's point read before the landing and dispatched after it,
+under the old wait and the new, and runs after the gate. If it cannot show
+a before and after, the only evidence the fix worked is the absence of a
+flake that appeared in two gates out of many, which is weak, and the next
+few green gates are not confirmation.
+
+## 28 Oct, 16:30: a number that is a fact about the command's limit (a family member)
+
+**"Twelve spec files click spines" was a cap, not a count.** The grep that
+produced it ended in `head -12`, so twelve was the instrument's own flag read
+back as the thing measured; the guard later found 36 clicks in 17 files. The
+family already holds a green that is a fact about what ran beside it (§9);
+this is a number that is a fact about the command's limit. The shape: a
+pipeline whose last stage bounds its output, and a reader who takes the
+bound as the total. Counts from vitest, Playwright, the index and the
+gate's judge are their own instruments' totals and not at risk; counts
+assembled from grep, `ls`, `find` or `head` are, and this project decides
+things on them.
+
+**The narrow check (the coordinator): the counts reported recently that
+came from a shell pipeline rather than a runner.** Traced back:
+
+- "twelve spec files click spines" (16:00): capped, by `head -12`. The one.
+- "36 clicks in 17 files": the guard's full list, uncapped.
+- "30 spine-click lines" (the second grep): no `head`, and 30 direct lines
+  plus 5 named plus the probe's one is the guard's 36. Consistent.
+- the field inventory's counts (139 credits, 116 tracks, 66 images, 62
+  companies, 56 identifiers, 47 videos): computed by node over the nine
+  fixtures and printed as totals; `head` on those commands cut the display
+  of lists, never the totals.
+- the production reads (22 records, 86 image rows, 56 covers, 21 newest
+  covers, 63 cache rows): node over SQL, totals printed whole.
+- the gate's progress figures (233, 578, 696, 917, 950 of 1004): `grep -c`,
+  which counts every match.
+- "13 of 59 governs rows stale", "39 of 110", "26 on the record page":
+  Design's counts, not mine.
+
+One capped count, the one already found. The rule from here: a count that
+passes through `head` is a display, and the number reported is taken from
+the command before it or from the instrument that owns the total.
+
+## 28 Oct, 17:40: the forced race disconfirms the landing diagnosis
+
+**Pre-registered: if the old wait did not fail on demand, the diagnosis was
+not confirmed. It did not fail.** The second probe forced the race's two
+halves in order. First draft: read the first spine's point, poll for the
+landing, click at the point; in 9 of 10 runs the landing had already been
+consumed before the box was read, the ordering of the probe's own reads
+and not the race, so the point was not stale. Second draft: the app's
+scripts held at the network until the point was read, so the page was the
+server's markup, unhydrated and unlanded, then released; the landing
+waited for; the click dispatched at the stale point. Forty records of
+scenery sorting first put the filtered shelf past the origin, so the
+landing moved the region on every run. Result, 10 of 10 under the old
+wait: landings 0 at the read, the landing moved the region by 471 down,
+the stale point hit a `polygon[data-spine]`, and a pull began. The new
+wait, 10 of 10: the region already landed at the read, no movement, a
+pull. On this layout a 471 shift lands the point on another seat's spine,
+not on a gap, and a pull of the wrong record still draws the chrome. So
+the landing scroll does not produce "no pull begun in 5s", which is what
+both gates showed, and the cause of the flake is not known.
+
+**What the fix is, then.** `clickSpine` waits for two real conditions,
+hydration and the landing consumed, that the old visibility wait did not,
+and the guard makes every spec wait for them; that is hygiene against a
+class of race the probe shows exists (the landing moves the wall by 471
+after it is visible). It is not shown to address the flake. The only
+evidence it worked will be the absence of a flake that appeared in two
+gates out of many, which is weak, and the next few green gates are not
+confirmation. The helper's and the guard's comments say so.
+
+**The next occurrence needs the trace, and no gate keeps one.** Both failed
+gates ran with `trace: 'retain-on-failure'` and the following run cleared
+`test-results` before anyone looked. The gate should keep a run's failed
+and flaky attempts' artifacts beside its logs; that is a `gate.sh` change,
+shared infrastructure, its own unit. Until it is built, read a flaky
+gate's artifacts before starting the next one.
+
+**What the probe also measured, worth keeping:** the arrival's landing on
+`/?artistId=` with scenery before the shelf moves the region by 471; the
+server's markup is clickable before hydration and React replays the click
+after it, with no navigation; `__landings` and the landed mark are set in
+the commit that applies the scroll (the first draft's "landing after the
+count" was its own read order).
