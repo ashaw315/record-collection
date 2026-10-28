@@ -79,6 +79,41 @@ describe('the script', () => {
     }
   });
 
+  /*
+    Captures were the one thing still hand-carried to Design (the coordinator, 28 Oct): the step-158
+    captures never reached it and the step-159 captures had not either, and the import's Provisionals
+    line was held open twice by a folder upload. `--captures <step>` writes that folder as committed at
+    HEAD, measures table and pictures, beside the handoff under the same name. Fails against the export
+    of the two files alone: no folder is written, and an unknown folder is not refused.
+  */
+  it('writes a step’s captures folder as committed, named the same way, and refuses a folder HEAD does not hold', () => {
+    const out = mkdtempSync(join(tmpdir(), 'export-captures-'));
+    try {
+      const sha = execFileSync('git', ['rev-parse', '--short', 'HEAD'], { encoding: 'utf8' }).trim();
+      const stdout = execFileSync('node', [SCRIPT, '--out', out, '--captures', 'import-159'], { encoding: 'utf8' });
+      const folder = `captures import-159 — export for Design, ${new Date().toISOString().slice(0, 10)} at ${sha}`;
+      expect(readdirSync(out)).toContain(folder);
+      const files = readdirSync(join(out, folder)).sort();
+      const committed = execFileSync('git', ['ls-tree', '--name-only', 'HEAD', 'docs/captures/import-159/'], { encoding: 'utf8' }).trim().split('\n').map((p) => p.split('/').pop()).sort();
+      expect(files).toEqual(committed);
+      expect(readFileSync(join(out, folder, 'import-159.md'), 'utf8')).toBe(execFileSync('git', ['show', 'HEAD:docs/captures/import-159/import-159.md'], { encoding: 'utf8' }));
+      expect(stdout).toContain(folder);
+      let status = 0;
+      let output = '';
+      try {
+        output = execFileSync('node', [SCRIPT, '--out', out, '--captures', 'no-such-step'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+      } catch (e) {
+        const err = e as { status: number; stdout: string; stderr: string };
+        status = err.status;
+        output = `${err.stdout}${err.stderr}`;
+      }
+      expect(status).toBe(1);
+      expect(output).toMatch(/no-such-step/);
+    } finally {
+      rmSync(out, { recursive: true, force: true });
+    }
+  });
+
   /* Fails against the committed state before the script existed: no file is written. */
   it('writes the committed handoff with every code-region block into the directory asked for, and says so', () => {
     const out = mkdtempSync(join(tmpdir(), 'export-handoff-'));

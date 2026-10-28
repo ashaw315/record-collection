@@ -4,6 +4,7 @@
  *
  *     node scripts/export-handoff.mjs              # into ~/Downloads
  *     node scripts/export-handoff.mjs --out DIR
+ *     node scripts/export-handoff.mjs --captures import-159   # the step's captures folder too
  *
  * One-directional, by the coordinator's rule of 28 Oct: Code exports the
  * handoff to Design on request, and Design never sends one back whole.
@@ -20,7 +21,7 @@
  * handoff without Code's lines is the thing Design already has.
  */
 import { execFileSync } from 'node:child_process';
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -83,4 +84,27 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   const rulesPath = join(outDir, `DESIGN-RULES — export for Design, ${date} at ${sha}.md`);
   writeFileSync(rulesPath, `Export note, not part of the file: this is the repository's DESIGN-RULES.md as committed at ${sha} on ${date}. It is read-only for Design: changes come back as change files anchored on this text, and this file never comes back whole.\n\n${rules}`);
   process.stdout.write(`${rulesPath}\n`);
+  /*
+    A step's captures beside them (the coordinator, 28 Oct): captures were
+    the one thing still hand-carried, and the import's Provisionals line was
+    held open twice by a folder upload rather than by anything left to do.
+    `--captures <step>` writes `docs/captures/<step>` as committed at HEAD,
+    measures table and pictures, under the same name. A folder, not a zip:
+    nothing to add, and Adam uploads files from it as he does the two above.
+  */
+  const capAt = process.argv.indexOf('--captures');
+  if (capAt !== -1) {
+    const step = process.argv[capAt + 1];
+    const tracked = step === undefined ? '' : execFileSync('git', ['ls-tree', '-r', '--name-only', 'HEAD', `docs/captures/${step}/`], { encoding: 'utf8' }).trim();
+    if (step === undefined || tracked === '') {
+      process.stderr.write(`export-handoff: NOT exported. HEAD holds no captures folder docs/captures/${step ?? '(none given after --captures)'}.\n`);
+      process.exit(1);
+    }
+    const folder = join(outDir, `captures ${step} — export for Design, ${date} at ${sha}`);
+    mkdirSync(folder, { recursive: true });
+    for (const file of tracked.split('\n')) {
+      writeFileSync(join(folder, file.split('/').pop()), execFileSync('git', ['show', `HEAD:${file}`]));
+    }
+    process.stdout.write(`${folder}\n${tracked.split('\n').length} file(s) of docs/captures/${step} at ${sha}\n`);
+  }
 }
