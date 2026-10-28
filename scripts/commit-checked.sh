@@ -42,6 +42,21 @@ if ! git diff --cached --quiet; then
   exit 1
 fi
 
+# A named path that is untracked is intent-added for the check's duration.
+# The fresh-clone migration test copies `git ls-files`, so a new migration
+# failed it on three units while the journal already named it (NOTES 4137,
+# 5433, 5951; a fourth on 27 Oct), and staging its content would trip the
+# refusal above. intent-to-add puts the path in the index with no content,
+# which `git diff --cached --quiet` does not count (verified on 27 Oct), so
+# the check reads the tree it was asked about and sees every path it will
+# commit. Undone on a refusal, so the tree is as it was.
+intent=()
+for p in "${paths[@]}"; do
+  if [ -e "$p" ] && [ -z "$(git ls-files -- "$p")" ]; then intent+=("$p"); fi
+done
+if [ ${#intent[@]} -gt 0 ]; then git add --intent-to-add -- "${intent[@]}"; fi
+undo_intent() { if [ ${#intent[@]} -gt 0 ]; then git reset -q -- "${intent[@]}"; fi; }
+
 # The test set is the intake's (scripts/document-suite.mjs), so the two ways
 # into a commit cannot drift apart. An empty list would run every suite and
 # say nothing about why, so it is refused.
@@ -49,6 +64,7 @@ if [ -z "${COMMIT_CHECK:-}" ]; then
   suite="$(node scripts/document-suite.mjs | tr '\n' ' ')"
   if [ -z "${suite// /}" ]; then
     echo "NOT COMMITTED: scripts/document-suite.mjs named no tests. Nothing was staged." >&2
+    undo_intent
     exit 1
   fi
 fi
@@ -66,6 +82,7 @@ mkdir -p "$logs"
 log="$logs/$(date +%Y%m%d-%H%M%S)-$$.log"
 if ! bash -o pipefail -c "$check" 2>&1 | tee "$log"; then
   echo "NOT COMMITTED: the check failed. Nothing was staged. Its output is kept at $log" >&2
+  undo_intent
   exit 1
 fi
 rm -f "$log"

@@ -115,6 +115,34 @@ describe('a commit that depends on its check', () => {
     expect(result.output).toMatch(/already staged/i);
   });
 
+  /*
+    A new migration failed the fresh-clone test three times (NOTES 4137, 5433,
+    5951, 27 Oct): that test copies `git ls-files`, so an untracked file named
+    in the journal is invisible to it, while staging the file's content trips
+    the refusal above. The path is intent-added for the check's duration: in
+    the index, so `ls-files` lists it; no content staged, so `git diff
+    --cached --quiet` stays quiet. Undone on a refusal, so the tree is as it was.
+  */
+  it('intent-adds an untracked named path for the check, so a check that reads git ls-files sees it, then commits it', () => {
+    const { dir, git } = repo();
+    writeFileSync(join(dir, 'new.txt'), 'new\n');
+    const result = run(dir, 'test -n "$(git ls-files -- new.txt)" && echo "1 passed"', ['-m', 'new', 'new.txt']);
+    expect(result.status, result.output).toBe(0);
+    expect(git('show', '--stat', '--format=', 'HEAD')).toContain('new.txt');
+  });
+
+  it('lets the check see the intent-added path and undoes it when the check fails, leaving the path untracked', () => {
+    const { dir, git } = repo();
+    writeFileSync(join(dir, 'new.txt'), 'new\n');
+    const before = git('rev-parse', 'HEAD');
+    const result = run(dir, 'git ls-files -- new.txt > seen.txt; false', ['-m', 'new', 'new.txt']);
+    expect(result.status).not.toBe(0);
+    expect(git('rev-parse', 'HEAD')).toBe(before);
+    expect(readFileSync(join(dir, 'seen.txt'), 'utf8').trim(), 'the check saw the path in the index').toBe('new.txt');
+    expect(git('ls-files', '--', 'new.txt'), 'and after the refusal it is not in the index').toBe('');
+    expect(git('status', '--porcelain', '--', 'new.txt')).toBe('?? new.txt');
+  });
+
   it('refuses with no message or no paths', () => {
     const { dir } = repo();
     expect(run(dir, 'true', ['second.txt']).status).not.toBe(0);
