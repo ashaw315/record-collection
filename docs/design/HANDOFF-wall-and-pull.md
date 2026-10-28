@@ -714,6 +714,7 @@ The provisionals in force, for the note in Maintaining this file that a provisio
 - **§T.6 · where the fragment stops drawing.** "The control leaves less room, so the fragment may stop drawing at windows where it drew, which the step measures and reports." Unit 2's report did not give these windows, and Code folded the measurement into 3b. Closed by unit 3b: with the control and an answer in place the fragment draws from 1054 and at 1280, 1440 and 1920, and its draw condition is width alone. The sentence quoted here is withdrawn, `T.6/control-may-stop-fragment`.
 - **§P.5 · the control's fit in the rail as a column.** Closed by the moods step's measurement. At the rail's pitch the control doesn't fit at 900 tall, and the fit requirement is withdrawn (`P.5/control-must-fit`). The rail runs with the page, and ADD RECORD is reached by scrolling.
 - **§P.5 · the overflow at short windows.** "640 is provisional, for Adam to judge from a capture." Captured at 1274 by 640 and 1440 by 640, scrolled to the top and to ADD RECORD, labelled by host. If Adam judges it too far, a height condition on the shelf is §W's to rule. Returns from Adam's judgement of the moods step's captures. Open.
+- **§T.6 · the Discogs import on Manage.** "Where it falls and how a long open list reads are provisional until Code captures it at 1280 and 390 on Adam's real import." Captures at 1280 fine and 390 coarse, with the report closed and with its longest list open. Returns from the import's trigger step. Open.
 
 ## Findings for screens without a pass
 
