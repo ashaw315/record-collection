@@ -469,6 +469,29 @@ describe('assertion 12 holds a no-entry call to its spared sentence', () => {
   });
 
   /*
+    28 Oct: §T.6 wrote 'The line’s wording is proposed: “Last import, 28
+    October, 14:05.” The sentence this replaces claimed nothing, so no entry
+    is owed.' A quoted sentence does not end the sentence it sits in, so the
+    two read as one prose-form call, and the detector took the proposed
+    wording as the sentence spared, which stands once, and failed the run.
+    Design proposes quoted wordings routinely, so the next paragraph that
+    does both in one breath would trip it again (the coordinator). A
+    prose-form call's spared sentence comes only from the “The sentence
+    spared is” line after it; a quote in the call's own sentence names
+    nothing, and the call is reported unnamed. Fails against the detector
+    that read the quote: FAIL 12 with spared-count=1.
+  */
+  it('does not take a quoted wording in a prose-form call’s own sentence as the sentence it spares: the call is unnamed, report-only', () => {
+    const { out, code, moved } = overThirdForm('The line’s wording is proposed: “Last import, 28 October, 14:05.” The sentence this replaces claimed nothing, so no entry is owed.');
+    expect(code).toBe(0);
+    expect(out).toMatch(/^PASS 12$/m);
+    expect(out).not.toContain('spared-count=1 "Last import, 28 October, 14:05"');
+    expect(moved, 'the third-form call becomes one unnamed call').toEqual({ fresh: -1, unnamed: 1 });
+    /* The reported line is cut at 80 characters. */
+    expect(out).toMatch(/^12 §W\.29 unnamed "The line’s wording is proposed: “Last import, 28 October, 14:05\.” The sent/m);
+  });
+
+  /*
     The reviewer, 15 Oct, after Design's save: §W.29 holds three calls and 12
     read two, because its detector keyed on the literal `No entry:` while
     Design's two newer calls read "no entry is owed. The sentence spared is

@@ -694,8 +694,19 @@ function sentencesOf(plain) {
           continue;
         }
         calls += 1;
-        /* The quote sits in the call's own sentence, or in the spared-sentence line that follows a prose-form call; that pair is one call. */
-        let source = sentence;
+        /*
+          The quote sits in a `No entry:` call's own sentence, or in the
+          spared-sentence line that follows a prose-form call; that pair is
+          one call. A prose-form call takes its quote from that line ONLY
+          (28 Oct): §T.6 wrote a proposed wording in curly quotes and "so no
+          entry is owed" in one breath, a quoted sentence does not end the
+          sentence it sits in, and the detector read the proposal as the
+          sentence spared, standing once, and failed the run. Design proposes
+          quoted wordings routinely, so a quote in a prose-form call's own
+          sentence names nothing, and the call is reported unnamed.
+        */
+        const headForm = /^No entry:/.test(sentence);
+        let source = headForm ? sentence : null;
         if (i + 1 < sentences.length && SPARED.test(sentences[i + 1])) {
           source = sentences[i + 1];
           i += 1;
@@ -705,7 +716,7 @@ function sentencesOf(plain) {
           newRulings.push(`12 §${h.id} new-ruling "${sentence.slice(0, 120)}"`);
           continue;
         }
-        const q = /“([^”]+)”/.exec(source);
+        const q = source === null ? null : /“([^”]+)”/.exec(source);
         if (q === null) {
           unnamed.push(`12 §${h.id} unnamed "${sentence.slice(0, 80)}"`);
           continue;
