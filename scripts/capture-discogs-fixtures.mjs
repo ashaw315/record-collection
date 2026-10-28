@@ -808,6 +808,46 @@ if (wanted('release-collision-clay-lp-3-a') && wanted('release-collision-clay-lp
   }
 }
 
+
+/**
+ * Step 18 (A77): the token owner's OWN collection, for the import's fixtures.
+ * Three captures whose paths come from the answers before them rather than
+ * from a list, which is why they are not entries above: the identity says
+ * whose collection it is, the page says which releases are in it, and each
+ * release is fetched by the id the page gave. Verified at each step, so a
+ * token that is not a personal access token (no username), an empty
+ * collection, or a release that is not the one asked for writes nothing.
+ *
+ *   node scripts/capture-discogs-fixtures.mjs collection
+ */
+if (wanted('collection')) {
+  try {
+    const identity = await get('/oauth/identity');
+    if (typeof identity.username !== 'string' || identity.username === '') {
+      throw new Error('identity carries no username: not a personal access token, so there is no collection to capture');
+    }
+    save('collection-identity', identity);
+    console.log(`  ✓ collection-identity (${identity.username})`);
+    const page = await get(`/users/${encodeURIComponent(identity.username)}/collection/folders/0/releases?per_page=100&page=1`);
+    const items = Array.isArray(page.releases) ? page.releases : [];
+    if (items.length === 0) throw new Error('the collection is empty: a page with no items cannot exercise the import');
+    for (const item of items) {
+      if (typeof item.id !== 'number' || item.basic_information?.id !== item.id) throw new Error(`an item without a release id, or whose basic_information disagrees: ${JSON.stringify(item).slice(0, 80)}`);
+    }
+    save('collection-page-1', page);
+    console.log(`  ✓ collection-page-1 (${items.length} items, ${page.pagination?.pages ?? '?'} page(s))`);
+    for (const item of items) {
+      const release = await get(`/releases/${item.id}`);
+      if (release.id !== item.id) throw new Error(`release ${item.id} answered as ${release.id}`);
+      save(`collection-release-${item.id}`, release);
+      console.log(`  ✓ collection-release-${item.id} (${release.artists_sort} — ${release.title})`);
+    }
+  } catch (error) {
+    failures.push(`collection: ${error.message}`);
+    console.log(`  ✗ collection — ${error.message}`);
+  }
+}
+
 if (failures.length > 0) {
   console.error(`\n${failures.length} capture(s) FAILED verification:`);
   for (const failure of failures) console.error(`  - ${failure}`);

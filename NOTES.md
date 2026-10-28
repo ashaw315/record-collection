@@ -49200,3 +49200,24 @@ provisional is how a figure gets withdrawn; this one names its own.
 and ASK, where the markup has it, a full-width line breaks the control's
 one row in two, which is the defect. After the row, before the slot, is the
 only reading of §P.6's "beneath the moods" that keeps §P.5's row.
+
+## Step 18, the Discogs collection import: measured, then unit A (27 Oct, night)
+
+Read-only first, on the coordinator's instruction: the token is AdamPseudo's
+personal access token and reaches his own collection (9 items, one page);
+none of the 22 match by release id; MGMT's Loss Of Life matches by album as a
+different pressing (29875018 Orange here, 29900731 Hot Pink there); the same
+release's Discogs matrix differs from Adam's by stamper number, which is §8's
+case. The nine rows in the app's shape, with the blanks and parse flags, were
+reported; Adam's eight rules came back and the plan was approved. SPEC takes
+§4.2's `matrix_runout_source`, §5's `POST /api/discogs/import-collection` and
+§12's step 18.
+
+**Unit A:** `src/lib/discogs/collection.ts`, the identity, the paged folder
+0, the item's instance, date added and conditions (the grade out of "Mint
+(M)"), through the one client. Mechanics tested on synthetic responses (no
+network); staged, paging dropped and the no-username refusal dropped each
+fail their test. **The shape tests wait on fixtures a person captures:**
+`scripts/capture-discogs-fixtures.mjs collection` now captures the identity,
+the page and each release, verified at each step; it is run by hand, never
+by an agent, so tonight's curl payloads stay in the scratchpad.
