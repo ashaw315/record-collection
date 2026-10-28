@@ -96,7 +96,8 @@ export function mapCollectionItem(raw: unknown, item: CollectionItem): MappedIte
 
   if (normalized.styles.length > 0) dropped.push({ field: 'styles', value: normalized.styles.join(', '), reason: 'styles are not taken' });
 
-  const release: NormalizedRelease = { ...normalized, year, vinylWeightGrams, colorVariant: null };
+  /* No styles on the release the importer sees: its genre find-or-create reads styles and genres alike, and styles are dropped (rule 2). */
+  const release: NormalizedRelease = { ...normalized, year, vinylWeightGrams, colorVariant: null, styles: [] };
   const matrixRunout = normalized.matrixRunout.length === 0 ? null : normalized.matrixRunout.join(' / ');
 
   const overrides: ImportOverrides = {

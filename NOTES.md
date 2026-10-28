@@ -49248,3 +49248,23 @@ for the check's duration (in the index, no content, which `git diff --cached
 --quiet` does not count, verified first) and undoes it on a refusal; two
 tests hold it. That test is also the empty-database proof: a fresh
 database, every migration from a clone of the tracked files.
+
+**Unit D:** the import route and query layer. `importCollection` reads the
+collection (A), skips any release a record already holds, maps each release
+(B) through the cache, resolves the format name to its row, imports through
+`importRelease` with two additions (a pressing it creates carries
+`matrix_runout_source = 'discogs'`; a pressing found by release id with an
+empty matrix is filled and marked, the guard `matrix_runout IS NULL` in the
+statement), attaches the cover, and reports: imported with blanks and drops,
+skipped as already here, failed with the reason, one item's failure costing
+nothing but itself. `POST /api/discogs/import-collection`: a strict empty
+body, the report, 502 `DISCOGS_NO_USERNAME` for a token with no collection;
+the 401 is the middleware's and documented, not asserted. **§4.3 settled by
+quotation:** its bullets are the MusicBrainz walk's, keyed on MBIDs; the
+Discogs importer reuses an exact name (§4.1), so the only new case is
+Discogs' numbered suffix, which the collection path records as a candidate,
+reason `name_match_no_mbid`; §4.3 now names it; the form path is unchanged.
+Staged: the empty-matrix guard dropped, idempotency dropped, the per-item
+catch removed, candidates not recorded, each failing its test. Two of my
+own on the way: the cover field read a member the union lacks, and the test
+guessed the validation code (`VALIDATION_ERROR` is the app's).

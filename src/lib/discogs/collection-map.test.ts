@@ -57,6 +57,7 @@ describe('mapCollectionItem, the rules', () => {
   it('takes Discogs’ genres and drops its styles, listing them', () => {
     const m = mapCollectionItem(release({ genres: ['Jazz', 'Funk / Soul'], styles: ['Free Jazz', 'Spiritual Jazz'] }), item(29613763));
     expect(m.genres).toEqual(['Jazz', 'Funk / Soul']);
+    expect(m.release.styles, 'the importer reads the release’s styles into genres, so the release it sees has none').toEqual([]);
     expect(m.dropped).toContainEqual({ field: 'styles', value: 'Free Jazz, Spiritual Jazz', reason: 'styles are not taken' });
   });
 

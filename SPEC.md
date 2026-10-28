@@ -298,6 +298,8 @@ A table rather than a column on `artists`, because a column holds one candidate 
 
 Surface accumulated possible matches as a review afterwards, in `/manage`, where the user can merge deliberately with both artists in front of them. Asking once, later, with context beats asking thirty times during a walk.
 
+**The Discogs collection import records one more case (A77, 2026-10-27).** The bullets above are the MusicBrainz walk's, keyed on MBIDs; the Discogs importer finds an artist by `discogs_artist_id`, then by exact name (§4.1's find-or-create), and reuses the row, so an exact name is never duplicated and no candidate arises. Discogs disambiguates same-named artists with a numbered suffix ("Darkside (22)"), which the exact match never meets: when the collection import creates an artist whose name is a local name with that suffix, it records the local row as a candidate, reason `name_match_no_mbid`, for the same review. The form path is unchanged.
+
 **`musicbrainz_cache`** — artist relation payloads, keyed by MBID. Not `discogs_cache` or `market_cache`: both are keyed by `discogs_release_id`, and this holds a different entity type under a different key.
 
 | Column | Type | Notes |

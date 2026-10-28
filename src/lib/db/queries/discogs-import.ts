@@ -1,19 +1,10 @@
 import 'server-only';
 import { and, eq, isNull, sql } from 'drizzle-orm';
 import { getDb } from '@/db/client';
-import {
-  artists,
-  genres,
-  labels,
-  pressings,
-  recordGenres,
-  recordTags,
-  records,
-  wantList,
-  wantListGenres,
-} from '@/db/schema';
+import { artistMatchCandidates, artists, genres, labels, pressings, recordGenres, recordTags, records, wantList, wantListGenres } from '@/db/schema';
 import { contradictsDiscogs } from '@/app/records/pressing-identity';
 import type { NormalizedRelease } from '@/lib/discogs/normalize-release';
+import { NAME_MATCH_NO_MBID } from './artist-match-candidates';
 
 /**
  * SPEC.md §5.7 `POST /api/discogs/import` — the transactional write.
@@ -78,6 +69,22 @@ export type ImportInput = {
   release: NormalizedRelease;
   target: 'record' | 'want_list';
   overrides?: ImportOverrides;
+  /**
+   * Step 18 (§4.2, §7.8): the collection import seeds a matrix the user has
+   * not settled, so a pressing it creates carries `discogs`, and a pressing it
+   * finds by release id with an empty matrix is filled and marked. A matrix
+   * already there is never written over. The form path leaves this unset:
+   * its matrix is the user's, settled on the form, and the column's default.
+   */
+  matrixRunoutSource?: 'discogs';
+  /**
+   * Step 18 (§4.3): record a match candidate when the artist created here is
+   * a local name with Discogs' disambiguating suffix ("Darkside (22)" beside
+   * a local "Darkside"): the exact-name reuse above never meets that case,
+   * and nothing but the MusicBrainz walk recorded candidates before. The
+   * collection path asks for it; the form path is unchanged.
+   */
+  recordNameCollisions?: boolean;
 };
 
 /** `undefined` means the caller expressed no opinion; `null` means clear it. */
@@ -98,6 +105,7 @@ async function findOrCreateArtist(
   tx: Tx,
   name: string,
   discogsArtistId: number | null,
+  recordNameCollisions = false,
 ): Promise<string> {
   if (discogsArtistId !== null) {
     const [byId] = await tx
@@ -119,6 +127,19 @@ async function findOrCreateArtist(
     .insert(artists)
     .values({ name, discogsArtistId })
     .returning({ id: artists.id });
+  if (recordNameCollisions) {
+    /* Discogs disambiguates same-named artists with a numbered suffix; the local name has none, so the match is on the name without it. */
+    const bare = name.replace(/\s*\(\d+\)\s*$/, '');
+    if (bare !== name) {
+      const same = await tx.select({ id: artists.id }).from(artists).where(sql`lower(${artists.name}) = lower(${bare})`);
+      if (same.length > 0) {
+        await tx
+          .insert(artistMatchCandidates)
+          .values(same.map((row) => ({ artistId: created.id, candidateArtistId: row.id, reason: NAME_MATCH_NO_MBID })))
+          .onConflictDoNothing();
+      }
+    }
+  }
   return created.id;
 }
 
@@ -255,7 +276,7 @@ export async function importRelease(
 
   return db.transaction(async (tx) => {
     const artistName = release.artist ?? 'Unknown Artist';
-    const artistId = await findOrCreateArtist(tx, artistName, release.artistDiscogsId);
+    const artistId = await findOrCreateArtist(tx, artistName, release.artistDiscogsId, input.recordNameCollisions === true);
 
     const labelId =
       release.label === null
@@ -311,11 +332,25 @@ export async function importRelease(
       countryPressed: pick(overrides.countryPressed, release.country),
       yearPressed: pick(overrides.yearPressed, release.year),
       matrixRunout: pick(overrides.matrixRunout, discogsMatrix),
+      /* §4.2: a matrix the collection import seeds is Discogs', not the owner's; a pressing with no matrix keeps the column's default. */
+      ...(input.matrixRunoutSource === 'discogs' && discogsMatrix !== null && overrides.matrixRunout === undefined ? { matrixRunoutSource: 'discogs' as const } : {}),
       pressingPlant: pick(overrides.pressingPlant, release.pressingPlant),
       vinylWeightGrams: release.vinylWeightGrams,
       colorVariant: release.colorVariant,
       isReissue: release.isReissue,
     });
+    /*
+     * §7.8 with §4.2: a pressing found by release id is never updated, except
+     * that an EMPTY matrix takes Discogs' reading, marked as such. The guard is
+     * in the statement, `matrix_runout IS NULL`, so a value that arrived
+     * between the find and this write survives too.
+     */
+    if (pressingId !== null && input.matrixRunoutSource === 'discogs' && discogsMatrix !== null) {
+      await tx
+        .update(pressings)
+        .set({ matrixRunout: discogsMatrix, matrixRunoutSource: 'discogs' })
+        .where(and(eq(pressings.id, pressingId), isNull(pressings.matrixRunout)));
+    }
 
     /**
      * Styles first: §6 prefers them, and the order is what a UI showing the
