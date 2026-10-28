@@ -198,7 +198,14 @@ const band = (page: Page) =>
       inRail: control !== null && drawn(control),
       control: box(control),
       button: box(control?.querySelector('button') ?? null),
+      /* §P.5: "the control takes its own row", singular: every button of the control, the moods, ASK and SURPRISE ME, on one row. */
+      buttonRows: new Set(Array.from(control?.querySelectorAll('button') ?? []).map((b) => Math.round(b.getBoundingClientRect().top))).size,
+      surprise: box(Array.from(control?.querySelectorAll('button') ?? []).find((b) => /surprise me/i.test(b.textContent ?? '')) ?? null),
       hairline: box(rail?.querySelector('[data-pick-band-rule]') ?? null),
+      /* The rail's own rules are hidden in the band, so the hairline above the control is the control's and not the rail's. */
+      railRulesDrawn: Array.from(rail?.querySelectorAll('[data-rail-rule], [data-line="rail-views"]') ?? []).filter(drawn).length,
+      /* For the report: how the band lays the control out, read from computed style, so a rule that does not reach the page is named. */
+      controlLayout: control === null ? null : `${getComputedStyle(control).display} ${getComputedStyle(control).flexWrap}; the control ${control.getBoundingClientRect().height.toFixed(1)} tall; button tops ${Array.from(control.querySelectorAll('button')).map((b) => `${(b.textContent ?? '').trim().slice(0, 8)}@${b.getBoundingClientRect().top.toFixed(1)}`).join(' ')}`,
       rowTop: Math.min(...row.map((b) => b.top)),
       rowBottom: Math.max(...row.map((b) => b.bottom)),
       rail: box(rail),
@@ -216,12 +223,16 @@ test.describe('§P.5: on the far view, where the rail draws as a band, the contr
       /* It reads the fixture, so it waits for the wall to measure (test/repo/wall-measured.test.ts). */
       await wallMeasured(page);
       const r = await band(page);
+      test.info().annotations.push({ type: 'layout', description: r.controlLayout ?? 'no control' });
       expect(r.inRail, 'the control is drawn in the band').toBe(true);
       if (r.control === null || r.button === null || r.rail === null) throw new Error(`not drawn: ${JSON.stringify(r)}`);
       expect(r.control.top, 'never on the row of view names').toBeGreaterThanOrEqual(r.rowBottom);
       if (r.hairline === null) throw new Error('no hairline drawn above the control');
       expect(r.hairline.top, 'the hairline beneath the views’ row').toBeGreaterThanOrEqual(r.rowBottom);
-      expect(r.button.top, 'SURPRISE ME beneath the hairline').toBeGreaterThanOrEqual(r.hairline.bottom);
+      expect(r.railRulesDrawn, 'and it is the control’s own: the rail’s rules are not drawn in the band').toBe(0);
+      if (r.surprise === null) throw new Error('SURPRISE ME not drawn');
+      expect(r.surprise.top, 'SURPRISE ME beneath the hairline').toBeGreaterThanOrEqual(r.hairline.bottom);
+      expect(r.buttonRows, '§P.5: "the control takes its own row": the moods, ASK and SURPRISE ME on one row, not a column in the band (Adam, 27 Oct, at 1273)').toBe(1);
       expect(r.button.left, 'on the band’s left inset').toBeCloseTo(r.rail.left + r.padding, 0);
       expect(r.hairline.right, 'within the band’s right inset').toBeLessThanOrEqual(r.rail.right - r.padding + 0.5);
       /*

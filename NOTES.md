@@ -49152,3 +49152,51 @@ names ("a pipeline reporting tail's status"), repeated with the intake's status 
 the test runner's. The rerun captured the intake's output to a file and tested its exit and
 its summary line before the commit. Nothing landed wrongly, because the second guard held;
 the first one, the chain, did not.
+
+## 27 Oct, late: the band host drew the control as three rows (Adam, at 1273)
+
+§P.5: "the control takes its own row beneath the band's row, after a
+hairline". The build drew three: the moods on one, ASK on its own, SURPRISE
+ME on its own, the column host's stacking inside the band's row, and the
+band's foot at 318 took two rows from the far view's drawing (ink 486.1 at
+900 against 508.8 fixed). Fixed in band-rules: the control a wrapped flex
+row with baseline alignment; the untagged line and the slot ordered after
+the row. The first fix laid the row out and still measured two, because the
+untagged line stands between the moods and ASK in the markup and, given a
+full row, broke the control's row in two wherever a record is untagged,
+which in the test database is always; the computed-style annotation found
+it. The line's place in the band, after the row and before the slot, is
+Code's reading of §P.6's "beneath the moods" (FOR DESIGN).
+
+**The weak guard.** The band test asserted the control beneath the views'
+row, the hairline beneath that row, the first button beneath the hairline
+and on the left inset, and the drawing above the foot. Three rows satisfy
+every one of those, so the test could not fail on §P.5's singular "row". It
+now asserts every button of the control on one row (one distinct top), the
+SURPRISE ME it names found by name (it had read the first button, now
+"sleepy"), and the rail's own rules not drawn in the band, so the hairline
+above the control is the control's own. Same class as ring-144's count: a
+guard aimed below the sentence.
+
+**The band's cost, re-measured** (test database, both widths alike): the
+band's foot at 294.0; the far drawing 508.8 tall at 900 and 384.0 at 768
+without an answer, 293.2 and 168.4 with one (the cell 204.0), so an answer
+costs 215.6 at either height, which is 3b's one-line figure (a cross-check,
+not a comparison: the baselines differ). An earlier reading of 338.6 and
+213.8 was taken with the cell misplaced before the slot by the row rule's
+first form, and is withdrawn here. **These are facts about the region, not the
+collection:** §W.28 fits the drawing to the region's height, so the band's
+and the answer's cost is the same whatever records are seated, and that is
+why a test-database figure can stand here where 52/counts-on-fixture,
+50/twelve-outweighed and 50/thirteen-draw could not. What Adam judges from a
+capture is different, whether 338.6 of shelf still reads as a shelf beside
+a real cover, and that is a fact about spines and covers, so his captures
+must be real-collection (`pick-far-156.sheet.ts`). **Not comparable with
+3a or 3b:** 3a's figures predate the moods and the §W.28 fix; 3b's 215.6
+to 234.1 were real-collection and unfiltered. Two baselines in one
+provisional is how a figure gets withdrawn; this one names its own.
+
+**The line's place in the band is forced, not chosen.** Between the moods
+and ASK, where the markup has it, a full-width line breaks the control's
+one row in two, which is the defect. After the row, before the slot, is the
+only reading of §P.6's "beneath the moods" that keeps §P.5's row.

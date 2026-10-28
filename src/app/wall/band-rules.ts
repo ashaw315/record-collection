@@ -11,7 +11,15 @@ import { SCREEN } from '../screen-frame';
  *
  * The pick control, where the rail carries one, takes a third row of its own
  * after a hairline (target §P.5): on the row of view names it read as a
- * fourth view.
+ * fourth view. ONE row: the moods, ASK and SURPRISE ME laid out as a wrapped
+ * row with the untagged line and the slot beneath, since the control's
+ * markup is the column host's and at 1273 it drew three rows in the band
+ * (Adam, 27 Oct), two rows of the far view's drawing lost. The untagged line
+ * stands between the moods and ASK in the markup (§P.6, "beneath the
+ * moods"), and as a full-width item it broke the row in two wherever a
+ * record was untagged; in the band it follows the row, and the slot follows
+ * it (Code's reading: §P.6 places the line beneath the moods, not inside a
+ * band's row).
  *
  * `scope` is a selector prefix ending in a space, or empty.
  */
@@ -37,5 +45,11 @@ export function bandRules(scope: string): string {
   ${scope}[data-rail-rule] { display: none; }
   ${rail} > [data-pick-host] { order: 1; flex: 1 1 100%; margin-top: 0; }
   ${rail} [data-pick-band-rule] { display: block; margin-bottom: 18px; }
-  ${rail} [data-moods] { flex-direction: row; flex-wrap: wrap; }`;
+  ${rail} [data-moods] { flex-direction: row; flex-wrap: wrap; }
+  ${rail} [data-pick-control] { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 18px; }
+  ${rail} [data-pick-control] > div { margin-top: 0; }
+  ${rail} [data-pick-control] > p { flex: 1 1 100%; margin-top: 0; }
+  ${rail} [data-pick-control] > [data-untagged] { order: 1; }
+  ${rail} [data-pick-control] > [data-pick-slot] { order: 2; }
+  ${rail} [data-pick-control] > [data-pick-answer] { order: 3; margin-top: 24px; }`;
 }
