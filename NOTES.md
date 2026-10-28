@@ -49412,3 +49412,17 @@ which explained it; the second ran at load 7 to 11 with nothing beside it,
 which does not. A finding, not fixed here: the step 156 pull's chrome after
 a spine click, under the gate's parallel workers. For the next wall step,
 or on request.
+
+## 28 Oct, afternoon: a run that dies part way leaves no report (known gap)
+
+`discogs_import_runs` takes a row once, at the end of a run, with `report`
+and `finished_at` both not-null. A run that dies part way, the server
+restarting under it or a thrown error outside the per-item catch, writes no
+row: the records it had already imported are in the collection, each in its
+own transaction, and nothing records how they got there, while §T.6 says the
+report is the only record of what an import did. Not built for (the
+coordinator, 28 Oct): one user, and the cost is Adam seeing new records
+and no report, then running the import again, which skips them as already
+held and says so. A known gap, not a surprise. If it is ever built, the
+row is written at the run's start with the report filled at its end, and
+the exemption above stops holding, since the row is then updated once.
