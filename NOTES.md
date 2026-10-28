@@ -49682,3 +49682,57 @@ it. Said in the report; Design's if it wants ruling.
 the condition the trace shows missing, and for `data-landed`, which is
 harmless and real; the guard makes every spec wait. The helper's comment
 now says this and not the landing story. The chrome wait stays 5s.
+
+## 28 Oct, 19:00: a note that says evidence does not exist (the day's most expensive defect)
+
+**The sentence.** The 17:40 entry said "no gate keeps one": that both
+failed gates' traces had been cleared before anyone looked. The gate had
+kept both, in `<logs>/<commit>-test-results`, since the first failure. On
+that one sentence both halves of the loop built instruments to manufacture
+evidence that already existed: two probes, a forced-race design, an
+argument about run counts, six probe runs, and a day. The trace, once
+opened, answered in a quarter of an hour.
+
+**The rule.** A note recording that evidence does not exist is a claim that
+needs verifying like any other, and it is worse than most, because it stops
+anyone looking again. Before building an instrument to produce evidence,
+establish what the failing run already captured: the gate's `test-results`
+copy, Playwright's `error-context.md`, the screenshot, the trace's actions,
+network and DOM snapshots. The instrument comes after that read, if at all.
+
+**Both halves.** Code wrote the sentence without checking the logs
+directory, and reasoned from it for the rest of the day. The coordinator
+pushed for forcing the race twice and never asked whether the failed run's
+artifacts were kept: reasoned from the note rather than the primary source,
+recorded here at the coordinator's own request, because the whole system is
+built on noticing exactly that.
+
+## 28 Oct, 19:00: a true number about the wrong thing (a shape of its own)
+
+The landing-scroll measurement was accurate: the region's `scrollTop`
+changed by 471 when the arrival landed, in 10 of 10 runs with scenery
+before the shelf. It answered a different question from the one asked.
+What was asked was whether anything under the pointer moved; nothing did,
+because the composition is painted pre-translated and the landing swaps
+the translation for the same scroll. Distinct from a guard aimed one layer
+below the sentence it protects: this is a measurement, correct, of a
+quantity that does not bear on the claim, read as if it did. The tell was
+available in the same probe: the stale point hit a spine every time.
+
+## 28 Oct, 19:00: the suite is now blind to the defect it found
+
+`clickSpine` and its guard mean no spec can click inside the unhydrated
+window, across 36 call sites. That is the right stability fix and it
+removes the only instrument that has ever detected this behaviour: the
+green gate on 74d59db says nothing about whether the product's behaviour
+in the window is right, and is not to be read as if it did. Once Design
+rules what a click in that window does, a test clicks inside it
+deliberately and asserts the ruling, one marked exception to the guard as
+the no-JavaScript fallback test is. The window can be held open from inside
+the page: React attaches its root listeners synchronously in `hydrateRoot`
+and schedules the hydration work through the Scheduler's `MessageChannel`;
+an init script that delays that channel's messages until the test releases
+them holds the page in the attached-but-unhydrated state for as long as the
+test needs, without touching the product. Until the ruling, the behaviour
+is measured and unruled: a click before any script follows the anchor; a
+click in the window is blocked and dropped; a click after hydration pulls.
