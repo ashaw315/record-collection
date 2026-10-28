@@ -49233,3 +49233,18 @@ by Adam with the script's collection mode (identity, page, nine releases,
 verified at capture) and reviewed: a pseudonymous username and user id, the
 instance ids, dates added and "Mint (M)" conditions, public release data,
 no token, no email.
+
+**Unit C:** `pressings.matrix_runout_source`, migration 0030: text, default
+`user` (Postgres backfills every existing row on ADD COLUMN, which is §4.2's
+"the migration sets them `user`"), a check holding it to `user` or `discogs`
+or null. Three integration tests on the database's own promises, failed
+first on the missing column. **The untracked-migration failure, a fourth
+time** (4137, 5433, 5951 above): the fresh-clone test copies `git ls-files`,
+so a new migration is invisible to it until indexed, while commit-checked
+refuses content already staged. A convention rediscovered from NOTES on
+every migration is a check held by repetition, so it is now the script's:
+`commit-checked.sh` intent-adds every untracked path it is told to commit
+for the check's duration (in the index, no content, which `git diff --cached
+--quiet` does not count, verified first) and undoes it on a refusal; two
+tests hold it. That test is also the empty-database proof: a fresh
+database, every migration from a clone of the tracked files.

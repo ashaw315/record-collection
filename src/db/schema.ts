@@ -216,6 +216,16 @@ export const pressings = pgTable(
     discogsMasterId: integer('discogs_master_id'),
     isReissue: boolean('is_reissue').notNull().default(false),
     notes: text('notes'),
+    /**
+     * §4.2 (A77, step 18): who wrote the matrix. `user` for a value entered or
+     * settled by hand, which the default gives every row that exists before
+     * the column and every row a hand path writes after it; `discogs` for a
+     * value the collection import seeded into an empty field, unverified
+     * against the dead wax (§7.8: a `discogs` value is never written over a
+     * `user` one). Two words, not provenance in general: one user, one field
+     * whose source matters.
+     */
+    matrixRunoutSource: text('matrix_runout_source').default('user'),
     ...timestamps,
   },
   (t) => [
@@ -225,6 +235,7 @@ export const pressings = pgTable(
     uniqueIndex('pressings_discogs_release_id_key')
       .on(t.discogsReleaseId)
       .where(sql`${t.discogsReleaseId} IS NOT NULL`),
+    check('pressings_matrix_runout_source_known', sql`${t.matrixRunoutSource} IS NULL OR ${t.matrixRunoutSource} IN ('user', 'discogs')`),
   ],
 );
 

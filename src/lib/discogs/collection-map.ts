@@ -21,8 +21,8 @@ import { normalizeRelease, type NormalizedRelease } from './normalize-release';
  * What is reported back is the point: each item's `blank` and `dropped`
  * lists are the report Adam reads, so nothing is silently lost.
  */
-const FORMAT_NAMES = ['LP', '2xLP', '7"', '10"', '12" Single', 'Box Set', 'Picture Disc'] as const;
-export type FormatName = (typeof FORMAT_NAMES)[number];
+/** The seven seeded formats (migration 0000), the only names the mapping may give: the list is not grown. */
+export type FormatName = 'LP' | '2xLP' | '7"' | '10"' | '12" Single' | 'Box Set' | 'Picture Disc';
 
 const rawFormat = z.object({ name: z.string(), qty: z.string().optional(), descriptions: z.array(z.string()).optional(), text: z.string().optional() }).passthrough();
 const rawFormats = z.object({ id: z.number().int(), formats: z.array(rawFormat).optional(), year: z.number().optional() }).passthrough();

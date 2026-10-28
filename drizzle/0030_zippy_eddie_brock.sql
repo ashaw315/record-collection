@@ -1,0 +1,2 @@
+ALTER TABLE "pressings" ADD COLUMN "matrix_runout_source" text DEFAULT 'user';--> statement-breakpoint
+ALTER TABLE "pressings" ADD CONSTRAINT "pressings_matrix_runout_source_known" CHECK ("pressings"."matrix_runout_source" IS NULL OR "pressings"."matrix_runout_source" IN ('user', 'discogs'));
