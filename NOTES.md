@@ -49624,3 +49624,61 @@ server's markup is clickable before hydration and React replays the click
 after it, with no navigation; `__landings` and the landed mark are set in
 the commit that applies the scroll (the first draft's "landing after the
 count" was its own read order).
+
+## 28 Oct, 18:45: the Escape flake, read from its own trace; two earlier entries corrected
+
+**Correction 1: the gate does keep every run's artifacts.** `gate.sh` copies
+`test-results` to `<logs>/<commit>-test-results` after each half; the 17:40
+entry's "no gate keeps one" was wrong, and the two failed attempts' traces,
+snapshots and screenshots were there to be read all day. Read them first.
+
+**Correction 2: the landing-scroll diagnosis was wrong by design.** The
+server paints the composition translated to the arrival, and the landing
+swaps the translation for the same scroll in one layout pass, so nothing
+under the pointer moves when the region "scrolls by 471". Three probes
+showed the same spine under a point read before the landing and clicked
+after it, and under a mousedown before and a mouseup after. The 16:00 and
+17:40 entries' mechanism never existed.
+
+**What the first failed attempt's trace shows (4184863, chromium test
+957).** The wall page's document at 0ms; the chunks from 345ms, the last
+done by 465ms; the labelled wall visible at 1.02s; the click issued at
+1.10s. The click's `input` snapshot (3904369) has no `data-hydrated` on
+the region; the `after` snapshot, 160ms later, has it. No request for a
+record page follows, and no pull begins; five seconds later the failure
+snapshot is the wall, 12 of 60 records, nothing pulled. So the input was
+dispatched after React's root listener was attached (the anchor did not
+navigate) and before the wall's subtree had hydrated (no handler ran), and
+React, which no longer replays a discrete event on an unhydrated target,
+blocked it. The second attempt (43f029e) has the same shape: visible at
+1.22s after its document, click at 1.30s, no request, no pull. Both ran in
+a gate whose dev server was serving three workers; neither probe machine
+was.
+
+**Six probes, what each measured.** (1) Clicks read as pre-hydration at a
+sixfold throttle pulled: Playwright's click dispatches after its own
+actionability wait, by which time hydration had completed. (2, 3) The
+landing moves nothing under the pointer. (4) With every script held, a
+click follows the anchor to the record page: the no-JavaScript fallback,
+exercised. (5) With only the app's chunk held the same, since that chunk
+carries the root listener. (6) At a thirtyfold throttle from visibility,
+the click itself took five to seven seconds and dispatched after
+hydration, 6 of 6 pulls. The window is React attached and the wall not
+yet hydrated, inside one bundle's execution, and nothing from outside the
+page holds it open on demand. That is why the before-and-after the
+coordinator asked for is the trace's and not a probe's: the old wait
+allowed a click in that window and the trace shows one; the new wait
+cannot issue one, because it waits for the mark the trace shows absent at
+the input.
+
+**Three behaviours around hydration, measured, for the coordinator.** A
+click before any script follows the seat's anchor to the record page
+(probe 4). A click after React attaches and before the wall hydrates is
+blocked and dropped (the trace). A click after hydration pulls. A person
+on a slow connection can hit the middle one and get nothing; nothing rules
+it. Said in the report; Design's if it wants ruling.
+
+**The fix as it stands.** `clickSpine` waits for `data-hydrated`, which is
+the condition the trace shows missing, and for `data-landed`, which is
+harmless and real; the guard makes every spec wait. The helper's comment
+now says this and not the landing story. The chrome wait stays 5s.
