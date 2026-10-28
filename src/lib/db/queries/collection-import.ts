@@ -1,7 +1,7 @@
 import 'server-only';
 import { eq, sql } from 'drizzle-orm';
 import { getDb } from '@/db/client';
-import { pressings, records } from '@/db/schema';
+import { artists, pressings, records } from '@/db/schema';
 import { attachDiscogsCover } from '@/lib/discogs/attach-cover';
 import { readCachedRelease, writeCachedRelease } from '@/lib/discogs/cache';
 import type { DiscogsClient } from '@/lib/discogs/client';
@@ -23,19 +23,22 @@ import { importRelease } from './discogs-import';
  * import does, and its outcome is reported, never fatal.
  */
 export type ImportedItem = { releaseId: number; recordId: string; title: string; artist: string; blank: Omission[]; dropped: Omission[]; cover: string };
-export type SkippedItem = { releaseId: number; reason: 'already here' };
+/** Named by the record that holds the release, so the report reads as records and not as ids. */
+export type SkippedItem = { releaseId: number; reason: 'already here'; title: string; artist: string };
 export type FailedItem = { releaseId: number; reason: string };
 export type CollectionReport = { username: string; items: number; imported: ImportedItem[]; skipped: SkippedItem[]; failed: FailedItem[] };
 
-async function alreadyHeld(releaseId: number): Promise<boolean> {
+/** The record holding the release, by title and artist, or null when no record does. */
+async function alreadyHeld(releaseId: number): Promise<{ title: string; artist: string } | null> {
   const db = getDb();
   const [row] = await db
-    .select({ id: records.id })
+    .select({ title: records.title, artist: artists.name })
     .from(records)
     .innerJoin(pressings, eq(pressings.id, records.pressingId))
+    .innerJoin(artists, eq(artists.id, records.artistId))
     .where(eq(pressings.discogsReleaseId, releaseId))
     .limit(1);
-  return row !== undefined;
+  return row ?? null;
 }
 
 async function releasePayload(client: DiscogsClient, releaseId: number): Promise<unknown> {
@@ -72,8 +75,9 @@ export async function importCollection(client: DiscogsClient): Promise<Collectio
   const collection = await fetchCollection(client);
   const report: CollectionReport = { username: collection.username, items: collection.items.length, imported: [], skipped: [], failed: [] };
   for (const item of collection.items) {
-    if (await alreadyHeld(item.releaseId)) {
-      report.skipped.push({ releaseId: item.releaseId, reason: 'already here' });
+    const held = await alreadyHeld(item.releaseId);
+    if (held !== null) {
+      report.skipped.push({ releaseId: item.releaseId, reason: 'already here', ...held });
       continue;
     }
     try {

@@ -26,6 +26,7 @@ import { ResourceList } from './ResourceList';
 import { HIT_ALONE } from '@/app/hit-area';
 import { LABEL_TYPE } from '@/app/records/[id]/grid-type';
 import { GenreTree } from './GenreTree';
+import { ImportFromDiscogs } from './ImportFromDiscogs';
 import { ParentProposal } from './ParentProposal';
 import type { Evidence, ProposedPairing } from './parent-proposal';
 import { buildTree, flattenTree, nameOf, validParents, type GenreRow } from './genre-tree';
@@ -442,6 +443,9 @@ export function ManageClient({
       </header>
 
       {review}
+
+      {/* Step 158, §T.6 (Design, 28 Oct): the Discogs import, "a section of its own between hairlines, below the duplicate review and above the section names". */}
+      <ImportFromDiscogs />
 
       <div className="flex flex-col gap-5 md:flex-row md:gap-8">
         {/* Sidebar on desktop, horizontally scrolling rail on mobile — the same

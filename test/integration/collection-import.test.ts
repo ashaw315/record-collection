@@ -104,6 +104,8 @@ describe('importCollection', () => {
     expect(again.imported).toEqual([]);
     expect(again.skipped.map((s) => s.releaseId).sort()).toEqual([...IDS].sort());
     expect(again.skipped.every((s) => s.reason === 'already here')).toBe(true);
+    /* The report names what was skipped by the record that holds it, so Manage's list reads as records and not ids. */
+    expect(again.skipped.find((s) => s.releaseId === 29613763)).toMatchObject({ title: 'Great Doubt', artist: 'Astrid Sonne' });
     expect(await count('records')).toBe(9);
     expect(await count('pressings')).toBe(9);
   });
