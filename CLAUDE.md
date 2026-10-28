@@ -282,6 +282,14 @@ looking for cross-suite regressions, not first-pass errors. Three or four
 commits under one gate are still attributable if it fails. Twelve were not,
 and twelve was the actual objection.
 
+**Nothing runs beside a gate (the coordinator, 28 Oct).** While a gate
+runs, the machine runs the gate and nothing else: no commit chains, no e2e
+runs, no probes, no captures. A gate's timings and flake counts are only
+readable against the last gate's when both ran alone; on 28 Oct a flake
+gate at load 34 to 53 under e2e runs got a real flake dismissed as load,
+two commits were refused by 5-second timeouts beside a gate, and a mobile
+half ran at load 79 beside a commit chain. Commits wait the twenty minutes.
+
 **Never let unpushed commits queue.** Unchanged: every
 commit goes through `commit-checked.sh`, tests are written first and shown
 able to fail, and the stop conditions in §9 hold. Those are what have been

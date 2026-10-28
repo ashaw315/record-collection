@@ -45,7 +45,9 @@ const run = (args: string[]): { stdout: string; status: number } => {
  * spawn took over vitest's default 5s once today with a gate's chromium half
  * beside it, refusing a commit at 11:06. The condition is the child exiting,
  * which `execFileSync` waits on; a timeout of 0 is read by vitest's runner as
- * none, so the tests end when the CLI does and not when a number says.
+ * none, so the tests end when the CLI does and not when a number says. A child
+ * that never exits hangs the file: inside a gate that is caught by gate.sh's
+ * did-not-finish verdict at exit 4; a local run has no outer clock, accepted.
  */
 describe('the CLI cannot report success about nothing', { timeout: 0 }, () => {
   /**

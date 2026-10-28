@@ -229,7 +229,10 @@ describe('the assertion against a genuinely drifted database', () => {
    * took longer than that twice on 28 Oct with a gate's chromium half beside
    * it, refusing two commits (`.git/commit-checked/20261028-110656-62221.log`
    * and the 14:49 run). A number raised is a number met at a higher load; a
-   * migrate that never returns is a hung child, which is loud, where a false
+   * migrate that never returns is a hung child, which is loud where something
+   * is listening: inside a gate, `gate.sh` has a did-not-finish verdict at exit
+   * 4, so a hang cannot pass unnoticed there. A local run has no outer clock,
+   * which is accepted and written down here (the coordinator, 28 Oct). A false
    * refusal under load is noise everyone learns to retry.
    */
   beforeAll(async () => {
