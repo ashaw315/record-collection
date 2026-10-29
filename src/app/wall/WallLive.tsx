@@ -437,10 +437,17 @@ if (offset !== null) offset.style.transform = '';
     observer.observe(el);
     return () => observer.disconnect();
   }, [routeView]);
+  /*
+    Pull starts, counted and drawn on the container (29 Oct): `begin` replaces the pull list with one
+    entry, so a record started twice still draws one pulled record, and only a count of starts can tell
+    one pull from two. The hold's test reads it.
+  */
+  const [pullStarts, setPullStarts] = useState(0);
   const begin = useCallback(
     (id: string, direction: PullState['direction']) => {
       started.current = null;
       if (direction === 'out') {
+        setPullStarts((n) => n + 1);
         setSide('front');
         setView(visible());
         base.current.set(id, 0);
@@ -623,7 +630,7 @@ if (offset !== null) offset.style.transform = '';
         : 'return';
 
   return (
-    <div data-wall-container="" data-phase={phase} {...(viewport === 0 ? { 'data-unmeasured': '' } : {})}>
+    <div data-wall-container="" data-phase={phase} data-pull-starts={pullStarts} {...(viewport === 0 ? { 'data-unmeasured': '' } : {})}>
       <WallStage
         seats={seats}
         summaries={summaries}

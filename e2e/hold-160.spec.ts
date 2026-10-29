@@ -143,10 +143,13 @@ test(`past the bound (${HOLD_BOUND_MS}ms) with hydration not landed, the held pr
   the record pulls once, with no navigation and no second chrome. The mark's history is recorded because
   the hold is applied and cleared before any assertion could look at the region.
 
-  What fails it, staged 29 Oct: the consume effect in WallLive ignoring the hold (no chrome: in this state
-  an Enter the hold does not apply is dropped). What does not: removing the keydown's preventDefault, the
-  hold's second-pull refusal, or both at once, all still one pull. So the one-pull count is the cost as
-  observed, and no line has been identified that it fails against.
+  One pull is counted as pull STARTS, from the counter WallLive keeps on the wall's container, not as
+  pulled records: `begin` replaces the pull list with one entry, so a record started twice still draws
+  one pulled record, and that count could fail against no change (staged 29 Oct, NOTES 15:30). On Enter
+  in this state one source fires, the hold's application; the anchor's activation click never reaches the
+  document. Fails against the hold's application starting the pull twice (staged 29 Oct: 2 starts). Not
+  against `holdConsumed` removed: the script clears the held press when it is applied, so a second run of
+  the effect finds nothing to apply.
 */
 async function recordHeldMarks(page: Page): Promise<void> {
   await page.addInitScript(() => {
@@ -157,7 +160,7 @@ async function recordHeldMarks(page: Page): Promise<void> {
   });
 }
 
-test('where React hydrates on the press itself, Enter is still held and applied, and the record pulls once', async ({ page }) => {
+test('where React hydrates on the press itself, Enter is still held and applied, and one pull starts', async ({ page }) => {
   await login(page);
   const { artistId, ids } = await seed(page, 12);
   await recordHeldMarks(page);
@@ -174,8 +177,8 @@ test('where React hydrates on the press itself, Enter is still held and applied,
   expect(marks, 'the hold engaged on the seat pressed, and was cleared when applied').toEqual([ids[6], null]);
   await page.waitForTimeout(1800);
   await expect(page.getByTestId('record-chrome')).toHaveCount(1);
-  await expect(page.locator('[data-pulled]')).toHaveCount(1);
   await expect(page.locator(`[data-pulled="${ids[6]}"]`)).toHaveCount(1);
+  await expect(region(page), 'one pull started, not one record drawn').toHaveAttribute('data-pull-starts', '1');
   expect(page.url()).toContain('/?artistId=');
 });
 
