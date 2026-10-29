@@ -22,7 +22,7 @@
  * stop a commit: a `git commit` typed without it is not refused here, and
  * `commit-checked.sh` is the path that runs the same suite before one.
  */
-import { spawnSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 
@@ -42,18 +42,41 @@ export function readRegion() {
   return JSON.parse(readFileSync(REGION, 'utf8'));
 }
 
-/** `handoff` with every absent block inserted as a paragraph in front of the first line starting with its anchor. */
-export function applyRegion(handoff, blocks) {
+/**
+ * `handoff` with every absent block inserted as a paragraph in front of the
+ * first line starting with its anchor. A block whose text changed replaces
+ * its old line in place (29 Oct): "present" is the whole line, so a restated
+ * step 160 was inserted beside its old text. `earlier` maps a block's id to
+ * the texts it has had before, and only those are replaced, so a line that
+ * merely shares a step's number is never overwritten.
+ */
+export function applyRegion(handoff, blocks, earlier = new Map()) {
   let lines = handoff.split('\n');
-  const [restored, present, unanchored] = [[], [], []];
+  const [restored, replaced, present, unanchored] = [[], [], [], []];
   for (const block of blocks) {
     if (lines.includes(block.text)) { present.push(block.id); continue; }
+    const old = earlier.get(block.id);
+    const was = old === undefined ? -1 : lines.findIndex((line) => old.has(line));
+    if (was !== -1) { lines[was] = block.text; replaced.push(block.id); continue; }
     const at = lines.findIndex((line) => line.startsWith(block.before));
     if (at === -1) { unanchored.push(block.id); continue; }
     lines = [...lines.slice(0, at), block.text, '', ...lines.slice(at)];
     restored.push(block.id);
   }
-  return { text: lines.join('\n'), restored, present, unanchored };
+  return { text: lines.join('\n'), restored, replaced, present, unanchored };
+}
+
+/** Every text each block has had in the commits that changed the region, by id; `git` runs a git command and returns its output. */
+export function regionHistory(git) {
+  const history = new Map();
+  const commits = git('log', '--format=%H', '--', 'scripts/handoff-code-region.json').split('\n').filter(Boolean);
+  for (const sha of commits) {
+    for (const block of JSON.parse(git('show', `${sha}:scripts/handoff-code-region.json`))) {
+      if (!history.has(block.id)) history.set(block.id, new Set());
+      history.get(block.id).add(block.text);
+    }
+  }
+  return history;
 }
 
 /** check-index's run: exit 0, a RESULT line, at least one assertion, every one passing and none absent. */
@@ -87,9 +110,10 @@ const spawned = (command, args) => {
 };
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
-  const result = applyRegion(readFileSync(HANDOFF, 'utf8'), readRegion());
-  if (result.restored.length > 0) writeFileSync(HANDOFF, result.text);
-  process.stdout.write(`code region: ${result.restored.length} restored (${result.restored.join(', ') || 'none'}), ${result.present.length} already present, ${result.unanchored.length} with no anchor${result.unanchored.length > 0 ? ` (${result.unanchored.join(', ')})` : ''}\n`);
+  const earlier = regionHistory((...args) => execFileSync('git', args, { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }));
+  const result = applyRegion(readFileSync(HANDOFF, 'utf8'), readRegion(), earlier);
+  if (result.restored.length + result.replaced.length > 0) writeFileSync(HANDOFF, result.text);
+  process.stdout.write(`code region: ${result.restored.length} restored (${result.restored.join(', ') || 'none'}), ${result.replaced.length} replaced (${result.replaced.join(', ') || 'none'}), ${result.present.length} already present, ${result.unanchored.length} with no anchor${result.unanchored.length > 0 ? ` (${result.unanchored.join(', ')})` : ''}\n`);
   const checks = intake(spawned);
   const ok = result.unanchored.length === 0 && checks.ok;
   process.stdout.write(`${checks.lines.join('\n')}\n${ok ? 'INTAKE OK' : 'INTAKE NOT OK: do not commit this drop until what failed above is read'}\n`);

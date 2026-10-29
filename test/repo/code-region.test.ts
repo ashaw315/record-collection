@@ -1,8 +1,9 @@
-import { spawnSync } from 'node:child_process';
-import { readdirSync, readFileSync } from 'node:fs';
+import { execFileSync, spawnSync } from 'node:child_process';
+import { mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { applyRegion, intake, judgeIndex, judgeSuite, readRegion } from '../../scripts/apply-code-region.mjs';
+import { applyRegion, intake, judgeIndex, judgeSuite, readRegion, regionHistory } from '../../scripts/apply-code-region.mjs';
 import { DOCUMENT_SUITE } from '../../scripts/document-suite.mjs';
 
 /**
@@ -58,6 +59,59 @@ describe('applyRegion', () => {
     expect(result.text.indexOf('71. ')).toBeGreaterThan(result.text.indexOf('70. '));
     expect(result.text.indexOf('71. ')).toBeLessThan(result.text.indexOf('\n72. '));
   });
+
+  /*
+    **A restated block replaces its old line (29 Oct).** Step 160's block was
+    restated, and the intake inserted the new text beside the old, because
+    "present" is the whole line and the old line is not the new one. The
+    index's duplicate-number check caught it, after the handoff was written.
+    A line is replaced only when it is a text the same block has had before,
+    so a Design line that happens to share a number is never overwritten.
+    Fails against an apply that ignores the earlier texts: both lines stand.
+  */
+  it('replaces, in place, a line that is an earlier text of the same block', () => {
+    const old = '71. **Done.** The tile’s first control.';
+    const handoff = `70. Build the disc.\n\n${old}\n\n72. Build the nav.\n`;
+    const result = applyRegion(handoff, [block], new Map([['step-71', new Set([old])]]));
+    expect(result.text).toBe('70. Build the disc.\n\n71. **Done.** The tile’s Delete control.\n\n72. Build the nav.\n');
+    expect(result).toMatchObject({ restored: [], replaced: ['step-71'], present: [], unanchored: [] });
+  });
+
+  /* Fails against a replacement that matches any block's history: step 72's old text is not step 71's to take. */
+  it('does not replace an earlier text of a different block', () => {
+    const other = '72. **Done.** An older nav.';
+    const handoff = `70. Build the disc.\n\n${other}\n\n72. Build the nav.\n`;
+    const result = applyRegion(handoff, [block], new Map([['step-72', new Set([other])]]));
+    expect(result.text).toContain(other);
+    expect(result).toMatchObject({ restored: ['step-71'], replaced: [] });
+  });
+});
+
+/*
+  The earlier texts come from the region's committed history, so a block's
+  old line is recognised by what Code actually committed, not by its number.
+  Staged in a throwaway repository with the region committed twice. Fails
+  against a history that reads only HEAD, which holds the new text alone.
+*/
+describe('regionHistory', () => {
+  it('collects every text each block has had in the commits that changed the region', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'region-history-'));
+    const git = (...args: string[]) => execFileSync('git', args, { cwd: dir, encoding: 'utf8' });
+    git('init', '-q');
+    git('config', 'user.email', 'test@example.invalid');
+    git('config', 'user.name', 'Test');
+    git('config', 'commit.gpgsign', 'false');
+    mkdirSync(join(dir, 'scripts'));
+    const commit = (text: string) => {
+      writeFileSync(join(dir, 'scripts', 'handoff-code-region.json'), JSON.stringify([{ id: 'step-160', before: 'No step', text }]));
+      git('add', '.');
+      git('commit', '-q', '-m', text);
+    };
+    commit('160. **Done: built.** First.');
+    commit('160. **Done: narrowed.** Second.');
+    const history = regionHistory((...args: string[]) => git(...args));
+    expect([...(history.get('step-160') ?? [])].sort()).toEqual(['160. **Done: built.** First.', '160. **Done: narrowed.** Second.']);
+  });
 });
 
 describe('Code’s region of the handoff', () => {
@@ -68,6 +122,19 @@ describe('Code’s region of the handoff', () => {
     const step = region.find((entry) => entry.id === 'step-71');
     expect(step?.before).toBe('72. ');
     expect(step?.text).toMatch(/^71\. /);
+  });
+
+  /*
+    The backstop to replacement: a block restated twice between commits has
+    an old line no committed text matches, and is inserted beside it. Every
+    block being a step numbered as its id is what makes the index's
+    duplicate-number check (assertion 3) see that, rather than leave two
+    paragraphs of one block standing. Fails against a block that is not a
+    numbered step, or whose number is not its id's.
+  */
+  it('is every block a step numbered as its id, so a duplicate is a duplicate number', () => {
+    const off = region.filter((entry) => !new RegExp(`^${entry.id.replace(/^step-/, '')}\\. `).test(entry.text) || !/^step-\d+$/.test(entry.id));
+    expect(off.map((entry) => entry.id)).toEqual([]);
   });
 
   /* The guard. Fails on a tree whose handoff is a raw export: run `node scripts/apply-code-region.mjs`. */
