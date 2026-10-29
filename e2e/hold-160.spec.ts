@@ -1,27 +1,54 @@
 import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist, trackRecord } from './cleanup';
-import { holdHydration, holdScheduler, inTheWindow, releaseHydration, releaseScheduler } from './hold-window';
+import { holdDocumentTail, type DocumentTail } from './document-tail';
+import { deliverPayload, holdHydration, holdScheduler, inTheWindow, releaseScheduler } from './hold-window';
 import { login } from './sign-in';
 import { HOLD_BOUND_MS } from '@/app/wall/hold-script';
 
 /**
- * Step 160, §W.8 (Design, 28 Oct): "A press on a spine before the wall has
- * hydrated is held, and applied as a pull when it hydrates. ... Only the
- * last press on a spine is held, a keyboard Enter on a spine as well as a
- * click: a press on a second spine replaces the first, and the second pulls.
- * Any other input before hydration lands cancels the hold, such as a scroll,
- * a press anywhere off the spines or leaving the page, so a record never
- * pulls after the reader has moved on. If hydration has not landed within a
- * bound, the held press navigates as the anchor would, so the fallback is
- * never lost to a script that fails. ... The far view's run is a button and
- * has no anchor, so its press is held the same way."
+ * Step 160, §W.8 as ruled on 29 Oct ("Hold observed"): "A press on a spine
+ * while the page is still loading is held, and applied as a pull when the
+ * wall hydrates. ... Once the page has loaded, the press pulls and is not
+ * held." The last press is held, a second spine replacing the first; any
+ * other input cancels; past the bound the held press navigates as its anchor
+ * would (the bound is provisional on whether the window occurs on
+ * production).
  *
- * The window is held open by `hold-window.ts`, which holds the page's server
- * payload from an init script, so React is attached and cannot hydrate the
- * wall on a press; its coupling to Next is written there. Every click here is inside the
- * window on purpose, the one exception the spine-click guard allows, marked
- * on its line. Fails against the build before the hold: with the window
- * held, a press is dropped by React and nothing pulls after release.
+ * **Three instruments, one state each (29 Oct).** Each test names the state
+ * it constructs, and the instrument is the one that constructs that state:
+ *
+ * - **Still loading, press held:** `holdDocumentTail` (`document-tail.ts`), a
+ *   proxy that streams the document to the first payload chunk after the wall
+ *   and holds the rest. The scripts load and readyState is `loading`: the
+ *   state itself, with nothing of Next's reached into.
+ * - **Loaded, React able to hydrate, press not held and pulled:**
+ *   `holdScheduler`. The document is complete and React holds the payload;
+ *   only its scheduled hydration waits, so a press hydrates the wall.
+ * - **Parsed, Next's stream close held:** `holdHydration` then
+ *   `deliverPayload`, for the condition's premise that "still loading" may end
+ *   before Next's close. With the feed held and nothing delivered, the page
+ *   is loaded while the wall cannot hydrate, a state no real page reaches
+ *   (the payload arrives inside the document), where an unheld press is
+ *   dropped; no test uses that state.
+ *
+ * **The instruments sit on a scale of reachability.** `holdHydration` with
+ * nothing delivered makes a state production never reaches. `holdScheduler`
+ * makes one it reaches on every load: the page complete and the wall not yet
+ * hydrated (a production build, 29 Oct: interactive at 94ms, hydrated at
+ * 148ms, cold). The proxy makes one whose reachability on production is
+ * exactly the open question.
+ *
+ * **So a green test here is not evidence the state occurs.** As a TEST
+ * INSTRUMENT the proxy constructs the still-loading state so the hold can be
+ * asserted: green proves the hold works when the state occurs. As a
+ * MEASUREMENT the same proxy would answer whether production infrastructure
+ * ever reaches that state, and only that answer says whether the hold and
+ * its bound are needed. The bound's Provisionals line waits on the
+ * measurement, never on this spec. The measurement on production has not
+ * run: it needs signed-in loads of the production wall (NOTES, 29 Oct 16:40).
+ *
+ * Every press before hydration here is on purpose, the one exception the
+ * spine-click guard allows, marked on its line.
  */
 registerCleanup();
 
@@ -40,44 +67,51 @@ async function seed(page: Page, count: number): Promise<{ artistId: string; ids:
   return { artistId, ids };
 }
 
-/** The wall's markup visible and the window open: React attached, nothing hydrated. */
-async function openWindow(page: Page, artistId: string): Promise<void> {
-  await page.goto(`/?artistId=${artistId}`);
+const tails: DocumentTail[] = [];
+test.afterEach(async () => { for (const t of tails.splice(0)) await t.close(); });
+
+/** State: still loading. The wall's markup and the hold script read, the rest of the document held by the proxy. */
+async function openLoading(page: Page, artistId: string): Promise<DocumentTail> {
+  const base = test.info().project.use.baseURL;
+  if (base === undefined) throw new Error('the hold spec needs the project baseURL');
+  const tail = await holdDocumentTail(base);
+  tails.push(tail);
+  await page.goto(`${tail.origin}/?artistId=${artistId}`, { waitUntil: 'commit' });
   await expect(page.locator('[data-wall="labelled"]')).toBeVisible({ timeout: 30_000 });
-  await expect.poll(async () => (await inTheWindow(page)).posted, { timeout: 30_000, message: 'React has posted to the held channel' }).toBeGreaterThan(0);
-  expect((await inTheWindow(page)).hydrated, 'not in the window: the wall hydrated while the payload was held, which is the instrument (hold-window.ts, its coupling to Next) and not the hold').toBe(false);
+  expect(tail.holding(), 'the proxy found the split after the wall and is holding the tail (document-tail.ts)').toBe(true);
+  expect(await page.evaluate(() => document.readyState), 'the page is still loading').toBe('loading');
+  return tail;
 }
 
 const spine = (page: Page, id: string) => page.locator(`a[data-seat="${id}"] [data-spine]`);
 /* The wall's container carries the marks for both views. */
 const region = (page: Page) => page.locator('[data-wall-container]').first();
 
-test('a click in the window is held, marks the region, prevents the anchor, and pulls when hydration lands', async ({ page }) => {
+test('a click while the page is loading is held, marks the region, prevents the anchor, and pulls when hydration lands', async ({ page }) => {
   await login(page);
   const { artistId, ids } = await seed(page, 12);
-  await holdHydration(page);
-  await openWindow(page, artistId);
+  const tail = await openLoading(page, artistId);
   await spine(page, ids[2]).click(); /* spine-click: before hydration, §W.8 */
   await expect(region(page)).toHaveAttribute('data-held', ids[2]);
   await page.waitForTimeout(300);
   expect(page.url(), 'the anchor did not navigate').toContain('/?artistId=');
   await expect(page.getByTestId('record-chrome')).toHaveCount(0);
-  await releaseHydration(page);
+  tail.release();
   await expect(region(page)).toHaveAttribute('data-hydrated', 'true', { timeout: 30_000 });
   await expect(page.getByTestId('record-chrome')).toBeVisible({ timeout: 5000 });
   await expect(page.locator(`[data-pulled="${ids[2]}"]`)).toBeAttached({ timeout: 5000 });
   await expect(region(page)).not.toHaveAttribute('data-held', /./);
+  await expect(region(page), 'the held press started one pull').toHaveAttribute('data-pull-starts', '1');
 });
 
-test('Enter on a focused spine in the window is held and pulls when hydration lands', async ({ page }) => {
+test('Enter on a focused spine while the page is loading is held and pulls when hydration lands', async ({ page }) => {
   await login(page);
   const { artistId, ids } = await seed(page, 12);
-  await holdHydration(page);
-  await openWindow(page, artistId);
+  const tail = await openLoading(page, artistId);
   await page.locator(`a[data-seat="${ids[0]}"]`).focus();
   await page.keyboard.press('Enter'); /* spine-click: before hydration, §W.8 */
   await expect(region(page)).toHaveAttribute('data-held', ids[0]);
-  await releaseHydration(page);
+  tail.release();
   await expect(page.getByTestId('record-chrome')).toBeVisible({ timeout: 5000 });
   expect(page.url()).toContain('/?artistId=');
 });
@@ -85,12 +119,11 @@ test('Enter on a focused spine in the window is held and pulls when hydration la
 test('a press on a second spine replaces the first, and the second pulls', async ({ page }) => {
   await login(page);
   const { artistId, ids } = await seed(page, 12);
-  await holdHydration(page);
-  await openWindow(page, artistId);
+  const tail = await openLoading(page, artistId);
   await spine(page, ids[1]).click(); /* spine-click: before hydration, §W.8 */
   await spine(page, ids[4]).click(); /* spine-click: before hydration, §W.8 */
   await expect(region(page)).toHaveAttribute('data-held', ids[4]);
-  await releaseHydration(page);
+  tail.release();
   await expect(page.getByTestId('record-chrome')).toBeVisible({ timeout: 5000 });
   await expect(page.locator(`[data-pulled="${ids[4]}"]`)).toBeAttached({ timeout: 5000 });
   await expect(page.locator(`[data-pulled="${ids[1]}"]`)).toHaveCount(0);
@@ -102,29 +135,28 @@ for (const [name, cancel] of [
   ['a key that moves focus', async (page: Page) => { await page.keyboard.press('Tab'); }],
   ['leaving the page', async (page: Page) => { await page.evaluate(() => window.dispatchEvent(new Event('pagehide'))); }],
 ] as const) {
-  test(`${name} before hydration lands cancels the hold, and nothing pulls`, async ({ page }) => {
+  test(`${name} while the page is loading cancels the hold, and nothing pulls`, async ({ page }) => {
     await login(page);
     const { artistId, ids } = await seed(page, 12);
-    await holdHydration(page);
-    await openWindow(page, artistId);
+    const tail = await openLoading(page, artistId);
     await spine(page, ids[3]).click(); /* spine-click: before hydration, §W.8 */
     await expect(region(page)).toHaveAttribute('data-held', ids[3]);
     /* After the press's own moments: a scroll in its first 150ms is the browser's scroll-into-view for the click, not the reader's. */
     await page.waitForTimeout(250);
     await cancel(page);
     await expect(region(page)).not.toHaveAttribute('data-held', /./);
-    await releaseHydration(page);
+    tail.release();
     await expect(region(page)).toHaveAttribute('data-hydrated', 'true', { timeout: 30_000 });
     await page.waitForTimeout(800);
     await expect(page.getByTestId('record-chrome')).toHaveCount(0);
   });
 }
 
-test(`past the bound (${HOLD_BOUND_MS}ms) with hydration not landed, the held press navigates as the anchor would`, async ({ page }) => {
+test(`past the bound (${HOLD_BOUND_MS}ms) with the page still loading, the held press navigates as the anchor would`, async ({ page }) => {
   await login(page);
   const { artistId, ids } = await seed(page, 12);
-  await holdHydration(page);
-  await openWindow(page, artistId);
+  /* The tail is never released: the page stays loading past the bound. */
+  await openLoading(page, artistId);
   await spine(page, ids[5]).click(); /* spine-click: before hydration, §W.8 */
   await expect(region(page)).toHaveAttribute('data-held', ids[5]);
   /* The record's page, reached by the anchor's own navigation; not built as a path, since this spec does not drive that screen. */
@@ -133,23 +165,13 @@ test(`past the bound (${HOLD_BOUND_MS}ms) with hydration not landed, the held pr
 });
 
 /*
-  The cost of the hold engaging where React would have coped (the coordinator, 29 Oct). With only the
-  Scheduler's channel held, React is attached and hydrates synchronously on a discrete event. A click's
-  pointerdown hydrates the wall before the click arrives, so the script finds it hydrated and never holds
-  (traced 29 Oct: hydrated at pointerdown + 141ms, click 2ms later, no data-held). Enter is the one press
-  the hold takes in this state: the script holds on keydown and prevents the anchor's activation, React
-  hydrates off the same keydown, and its first commit applies the hold and clears the mark, in that one
-  task (traced: held at 561ms, hydrated and cleared at 706ms). The cost, asserted: the hold engaged, and
-  the record pulls once, with no navigation and no second chrome. The mark's history is recorded because
-  the hold is applied and cleared before any assertion could look at the region.
-
-  One pull is counted as pull STARTS, from the counter WallLive keeps on the wall's container, not as
-  pulled records: `begin` replaces the pull list with one entry, so a record started twice still draws
-  one pulled record, and that count could fail against no change (staged 29 Oct, NOTES 15:30). On Enter
-  in this state one source fires, the hold's application; the anchor's activation click never reaches the
-  document. Fails against the hold's application starting the pull twice (staged 29 Oct: 2 starts). Not
-  against `holdConsumed` removed: the script clears the held press when it is applied, so a second run of
-  the effect finds nothing to apply.
+  State: loaded, React able to hydrate (holdScheduler). Once the page has loaded, the press pulls and is
+  not held (§W.8, 29 Oct). With the Scheduler's channel
+  held the document is complete and the wall unhydrated: React is attached and hydrates the wall on the
+  press. Enter is the case the build before this condition held (traced 29 Oct: held on keydown, applied
+  in hydration's own commit). Fails against that build: the held mark's history is [id, null], not [].
+  One pull is counted as starts, since `begin` replaces the pull list and a record started twice still
+  draws one pulled record.
 */
 async function recordHeldMarks(page: Page): Promise<void> {
   await page.addInitScript(() => {
@@ -160,7 +182,7 @@ async function recordHeldMarks(page: Page): Promise<void> {
   });
 }
 
-test('where React hydrates on the press itself, Enter is still held and applied, and one pull starts', async ({ page }) => {
+test('Enter on an unhydrated wall whose page has loaded is not held, and React pulls it: one start', async ({ page }) => {
   await login(page);
   const { artistId, ids } = await seed(page, 12);
   await recordHeldMarks(page);
@@ -168,18 +190,39 @@ test('where React hydrates on the press itself, Enter is still held and applied,
   await page.goto(`/?artistId=${artistId}`);
   await expect(page.locator('[data-wall="labelled"]')).toBeVisible({ timeout: 30_000 });
   await expect.poll(() => page.evaluate(() => (window as unknown as { __heldPosts?: number }).__heldPosts ?? 0), { timeout: 30_000 }).toBeGreaterThan(0);
-  expect((await inTheWindow(page)).hydrated, 'React attached, nothing hydrated').toBe(false);
+  expect(await page.evaluate(() => document.readyState), 'the page has loaded').toBe('complete');
+  expect((await inTheWindow(page)).hydrated, 'the wall is not hydrated').toBe(false);
   await page.locator(`a[data-seat="${ids[6]}"]`).focus();
   await page.keyboard.press('Enter'); /* spine-click: before hydration, §W.8 */
   await releaseScheduler(page);
   await expect(page.getByTestId('record-chrome')).toBeVisible({ timeout: 5000 });
   const marks = await page.evaluate(() => (window as unknown as { __heldMarks: Array<string | null> }).__heldMarks);
-  expect(marks, 'the hold engaged on the seat pressed, and was cleared when applied').toEqual([ids[6], null]);
+  expect(marks, 'the hold never engaged').toEqual([]);
   await page.waitForTimeout(1800);
   await expect(page.getByTestId('record-chrome')).toHaveCount(1);
   await expect(page.locator(`[data-pulled="${ids[6]}"]`)).toHaveCount(1);
-  await expect(region(page), 'one pull started, not one record drawn').toHaveAttribute('data-pull-starts', '1');
+  await expect(region(page), 'one pull started').toHaveAttribute('data-pull-starts', '1');
   expect(page.url()).toContain('/?artistId=');
+});
+
+/*
+  State: parsed, Next's stream close held (holdHydration, then deliverPayload). The condition's premise
+  (29 Oct): "still loading" ends when the parser has read the last payload chunk,
+  and Next closes its stream later, 50 to 600ms on the dev server. A press in that gap is not held, so
+  the wall must be able to hydrate without the close. With the chunks fed to Next and its close held,
+  the wall hydrates. Fails if Next ever requires the close before hydrating, which would leave that gap's
+  presses dropped; the instrument is `holdHydration`, coupled to Next's internals as its file says.
+*/
+test('with the payload delivered and Next’s stream close held, the wall hydrates', async ({ page }) => {
+  await login(page);
+  const { artistId } = await seed(page, 12);
+  await holdHydration(page);
+  await page.goto(`/?artistId=${artistId}`);
+  await expect(page.locator('[data-wall="labelled"]')).toBeVisible({ timeout: 30_000 });
+  await expect.poll(async () => (await inTheWindow(page)).posted, { timeout: 30_000 }).toBeGreaterThan(0);
+  expect((await inTheWindow(page)).hydrated, 'not hydrated while the payload is held').toBe(false);
+  await deliverPayload(page);
+  await expect(region(page)).toHaveAttribute('data-hydrated', 'true', { timeout: 5000 });
 });
 
 /*
@@ -205,27 +248,4 @@ test('a press on the hydrated far view is not held, and its zoom lands exactly o
   await expect(region(page)).not.toHaveAttribute('data-held', /./);
   await page.waitForTimeout(900);
   expect(await page.evaluate(() => (window as unknown as { __landings?: number }).__landings), 'the landing is applied exactly once').toBe(1);
-});
-
-/*
-  No subject before hydration (28 Oct): the far view's run is drawn as a button only once the
-  wall is measured on the client (`WallStage` passes the overview `onSeatClick={onZoomIn}`, which
-  is undefined until `viewport > 0`), so the server's markup carries no `[data-run]` and a press
-  in the window lands on nothing. §W.8's hold for the run has nothing to hold; for Design, whether
-  the run is a button in the markup. The script's run branch stands ready for it.
-*/
-test.fixme('a press on the far view’s run in the window is held and zooms to that shelf when hydration lands', async ({ page }) => {
-  await login(page);
-  const { artistId } = await seed(page, 12);
-  await holdHydration(page);
-  /* The far view is what the shelf route draws from 1044 to §W.26's fork at 1274 (step 134); below 1044 the route draws the grid. 1100 shows the far view, with its runs, from the first paint. */
-  await page.setViewportSize({ width: 1100, height: 844 });
-  await page.goto(`/?artistId=${artistId}`);
-  await expect(page.locator('[data-wall="overview"]')).toBeVisible({ timeout: 30_000 });
-  await expect(page.locator('[data-run]').first()).toBeVisible({ timeout: 30_000 });
-  await expect.poll(async () => (await inTheWindow(page)).posted, { timeout: 30_000 }).toBeGreaterThan(0);
-  await page.locator('[data-run]').first().click();
-  await expect(region(page)).toHaveAttribute('data-held', /./);
-  await releaseHydration(page);
-  await expect(page.locator('[data-wall="labelled"]')).toBeVisible({ timeout: 10_000 });
 });

@@ -1,37 +1,41 @@
 /**
- * §W.8 (Design, 28 Oct): "A press on a spine before the wall has hydrated is
- * held, and applied as a pull when it hydrates."
+ * §W.8 (Design, 29 Oct, "Hold observed"): "A press on a spine while the page
+ * is still loading is held, and applied as a pull when the wall hydrates."
+ * Once the page has loaded the press pulls and is not held.
  *
- * The window is after React's root listener attaches and before the wall's
- * subtree hydrates, where React drops a discrete event and the build dropped
- * the press (the wall-route Escape flake, read from its trace). The press
- * has to be caught AHEAD of React, so this is an inline script in the wall's
- * server markup, run as soon as it is parsed: a capture listener on the
- * document holds the last press on a seat's anchor (a click, or Enter on the
- * focused seat) or on the far view's run, prevents the anchor's navigation,
- * and marks the region `data-held`. `WallLive` applies the hold when its
+ * "Still loading" is `document.readyState === 'loading'`: the parser has not
+ * yet read the document's end, where the page's payload arrives inline, so
+ * React may be attached and unable to hydrate the wall on a press. It is not
+ * `complete` or the load event, which wait for every cover. When the parser
+ * has read the last chunk the wall can hydrate without Next closing its
+ * stream (measured 29 Oct: 116ms with the close held), so a press after that
+ * hydrates the wall through React and pulls, measured before.
+ *
+ * The press has to be caught AHEAD of React, so this is an inline script in
+ * the wall's server markup, run as soon as it is parsed: a capture listener
+ * on the document holds the last press on a seat's anchor (a click, or Enter
+ * on the focused seat), prevents the anchor's navigation, and marks the
+ * wall's container `data-held`. `WallLive` applies the hold when its
  * hydration effect runs. A press on a second spine replaces the first; any
  * other input cancels: a scroll, a press off the spines, a key that moves
- * focus, or leaving the page.
+ * focus, or leaving the page. The far view's run is not held: it is drawn
+ * only on the measured, hydrated wall (W.8/run-held-before-hydration).
  *
- * **The bound lives here and not in React (the coordinator, 28 Oct).** The
- * bound exists for a script that fails; if the bundle never runs, React can
- * fire no timer, and a press held with its navigation already prevented
- * would be held for ever. So the timer and the fallback are in this script:
- * past `HOLD_BOUND_MS` a held seat press navigates as the anchor would, and
- * a held run press loads the near view's address for that run (§W.8, 28
- * Oct: a page load, which §P.2's rule on zooms does not reach).
+ * **The bound lives here and not in React (the coordinator, 28 Oct).** If
+ * the bundle never runs, React can fire no timer, and a press held with its
+ * navigation already prevented would be held for ever. So the timer and the
+ * fallback are in this script: past `HOLD_BOUND_MS` a held press navigates as
+ * the anchor would.
  *
  * Before any script runs, a seat's anchor navigates to the record's page,
  * as §W.8 says; that stays, since this script is the first to run.
  */
 
 /**
- * The bound, one place (28 Oct). The widest window measured is 1244ms (cpu
- * ×8, NOTES 20:15); 2000 sits 756ms, 61%, above it, so ordinary slow
- * hydration never reaches it and only a script that fails does, which is
- * what the target asks of the basis. The coordinator's recommendation to
- * Adam; Adam judges it (the Provisionals line).
+ * The bound, one place. Provisional (§W.8, 29 Oct): it stays if the window
+ * occurs on production and its figure comes from that window's widest run;
+ * if it does not, the bound and its navigation come out. The 2000 was set
+ * against the broader window of 28 Oct and is unbased (the Provisionals line).
  */
 export const HOLD_BOUND_MS = 2000;
 
@@ -79,27 +83,21 @@ export const HOLD_SCRIPT = `(function () {
     if (!(target instanceof Element)) return null;
     var seat = target.closest('a[data-seat]');
     if (seat !== null) return { kind: 'seat', id: seat.getAttribute('data-seat'), href: seat.getAttribute('href') };
-    var run = target.closest('[data-run]');
-    if (run !== null) {
-      /* §W.8: a run's fallback is the near view's address for that run, the page the zoom would have reached (a page load, not a zoom the script performs, so §P.2 does not reach it). */
-      var q = new URLSearchParams(w.location.search);
-      q.set('wall', 'near');
-      q.set('shelf', run.getAttribute('data-run') || '0');
-      return { kind: 'run', id: run.getAttribute('data-run-first') || '', href: '/?' + q.toString() };
-    }
     return null;
   }
+  /* §W.8: held only while the page is still loading; once it has loaded, React answers the press. */
+  function loading() { return document.readyState === 'loading'; }
   document.addEventListener('click', function (event) {
     var p = pressTarget(event.target);
     if (p === null) { if (hold !== null) clear(); return; }
-    if (hydratedWall(event.target)) return;
+    if (hydratedWall(event.target) || !loading()) return;
     event.preventDefault();
     take(p.kind, p.id, p.href, wallOf(event.target));
   }, true);
   document.addEventListener('keydown', function (event) {
     if (event.key === 'Enter' || event.key === ' ') {
       var p = pressTarget(event.target);
-      if (p !== null && !hydratedWall(event.target)) { event.preventDefault(); take(p.kind, p.id, p.href, wallOf(event.target)); return; }
+      if (p !== null && !hydratedWall(event.target) && loading()) { event.preventDefault(); take(p.kind, p.id, p.href, wallOf(event.target)); return; }
     }
     /* A key that moves focus: Tab and the arrows walk the seats; the reader has moved on. */
     if (hold !== null && (event.key === 'Tab' || event.key.indexOf('Arrow') === 0 || event.key === 'Escape')) clear();

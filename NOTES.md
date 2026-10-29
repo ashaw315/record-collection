@@ -49912,3 +49912,78 @@ neither guard was what held the count. **So one pull is held in fact by a
 browser or React behaviour not located, and unguarded in test.** A test
 that could fail would count `begin` calls, which needs a hook the build
 does not have.
+
+## 29 Oct, 16:40: the window on a production build, the hold's signal, and ISRCs
+
+**On a production build the narrower window opens, briefly, when the
+scripts are cached.** `next build` and `next start` in a worktree with no
+`.env.local`, so only `.env.test` (both URLs on localhost:5433), 12 records,
+eight loads a level cold and eight warm, load 13.8 at the start (the build
+had just run) and 7.1 at the end (`prod-window.mjs` in the session's
+scratchpad, not committed). Minified names broke both of the dev probe's
+marks, the instrument coupling written in `e2e/hold-window.ts`, so the
+marks here are public or positional: React attached is the second `click`
+listener on the document (the hold script's is the first, inline, ahead of
+React), and the payload is complete when the document reaches
+`interactive`, every inline chunk parsed. Medians in ms from navigation
+start:
+
+| level | cache | interactive | attached | hydrated | load | attached before interactive | by how much |
+|---|---|---|---|---|---|---|---|
+| unthrottled | cold | 94 | 113 | 148 | 122 | 0 of 8 | |
+| unthrottled | warm | 74 | 74 | 130 | 85 | 3 of 8 | 0 to 1 |
+| fast-3G-like | cold | 642 | 2002 | 2322 | 2302 | 0 of 8 | |
+| fast-3G-like | warm | 314 | 307 | 337 | 314 | 8 of 8 | 6 to 7 |
+| slow-3G-like | cold | 2334 | 7910 | 8916 | 8900 | 0 of 8 | |
+| slow-3G-like | warm | 1008 | 1001 | 1033 | 1008 | 8 of 8 | 6 to 7 |
+| slow-3G-like + cpu ×4 | cold | 2404 | 7910 | 8993 | 8904 | 0 of 8 | |
+| slow-3G-like + cpu ×4 | warm | 1024 | 1015 | 1135 | 1024 | 8 of 8 | 8 to 15 |
+
+So with cached scripts React attaches up to 15ms before the document
+finishes, and a press there would wait at most 151ms (attach to hydrated,
+warm, cpu ×4). This is a local production build: the test pages are small,
+carry no covers, and the server answers from a local database. Whether
+Vercel's server sends the document's tail later, waiting on Neon, is not
+measured; that needs signed-in loads of the production wall, which is
+Adam's to allow.
+
+**The signal is `document.readyState === 'loading'`, and its span is the
+payload's.** It ends when the parser has read the last inline chunk. On the
+dev server that was 50ms before Next closed the stream unthrottled and about
+600ms before at cpu ×4 with slow 3G (DOMContentLoaded at about 265 and 1230
+against the close at 318 and 1827). Not `complete` or the load event, which
+wait for every cover. Whether the gap to Next's close matters was measured:
+with the payload chunks fed and Next's close held, the wall hydrated 116ms
+later (a probe built on `holdHydration`, to become the condition's test).
+So once the document has parsed, React needs nothing more to hydrate, and a
+press in that gap is answered as measured before: it hydrates the wall and
+pulls.
+
+**ISRCs from the six records' MusicBrainz recordings.** On the edition that
+matched best, 57 of 67 tracks carry an ISRC. By record: Kim Gordon 13 of 13,
+The Doors 11 of 11, Cindy Lee 32 of 32, Pharoah Sanders 1 of 2, Buddy Rich
+0 of 6 (one release, no ISRCs), Paul Whiteman 0 of 3 (no release found).
+Every Doors track and 12 of Kim Gordon's carry more than one ISRC on the
+same recording, so an ISRC does not pick a master by itself. Most tracks,
+half the records: the records without one are the old and obscure ones.
+
+**A pattern for Design, with the hold step's test bullet: the instrument
+follows the condition.** Three instruments in two days, each brought by a
+restated condition, not by a fault in the one before. The Scheduler's
+channel (28 Oct) made "React attached, wall unhydrated", which stopped
+being the dropping state once Code measured React hydrating on a press;
+Next's feed held (28 Oct) made "payload still arriving", which the 29 Oct
+condition, "still loading", replaced with the document's own state; the
+proxy holding the document's tail (29 Oct) makes that. None was discarded:
+each now constructs a different state, named in `e2e/hold-160.spec.ts`. A
+step that names an instrument could re-derive it whenever its condition is
+restated.
+
+**The proxy's first run, on the build before the condition (fail-first, load
+3 to 15).** Every test that released the tail timed out waiting for
+hydration: the page's dev client opened its HMR socket through the proxy,
+which had no upgrade handler, and on the dev server the page never hydrated
+without it. With upgrades piped raw, 10 passed and the one test meant to
+fail failed, the old build recording `[id, null]` for a press on a loaded
+page. A dev-server dependency of the instrument, not of the hold; a
+production build has no HMR socket.

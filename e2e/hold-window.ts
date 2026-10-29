@@ -87,6 +87,11 @@ export async function holdHydration(page: Page): Promise<void> {
       if (w.__flightHeld && type === 'DOMContentLoaded' && typeof fn === 'function' && (fn as { name?: string }).name === 'DOMContentLoaded') { heldLoaded = fn as () => void; return; }
       return (realAdd as unknown as (...a: unknown[]) => void)(type, fn, ...rest);
     }) as typeof document.addEventListener;
+    (w as unknown as { __deliverPayload: () => void }).__deliverPayload = () => {
+      w.__flightHeld = false;
+      const items = buffered.splice(0);
+      if (callback !== null) for (const c of items) callback(c);
+    };
     w.__releaseFlight = () => {
       w.__flightHeld = false;
       const items = buffered.splice(0);
@@ -100,6 +105,11 @@ export async function holdHydration(page: Page): Promise<void> {
 
 export async function releaseHydration(page: Page): Promise<void> {
   await page.evaluate(() => (window as unknown as { __releaseFlight?: () => void }).__releaseFlight?.());
+}
+
+/** The payload's chunks fed to Next, with its stream's close still held: the document parsed, and nothing more. */
+export async function deliverPayload(page: Page): Promise<void> {
+  await page.evaluate(() => (window as unknown as { __deliverPayload?: () => void }).__deliverPayload?.());
 }
 
 /** Whether the page is in the window: payload chunks held (so React is attached to a root waiting on them) and the wall not hydrated. */

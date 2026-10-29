@@ -231,7 +231,6 @@ export function WallOverview({
                 data-run={run.row}
                 data-run-count={run.seats.length}
                 /* §W.8: the seat a held press on this run zooms to once the wall hydrates, read by the hold script, which runs before React. */
-                data-run-first={run.seats[0].id}
                 aria-label={`${run.seats.length} records — zoom to this shelf`}
                 onClick={() => onSeatClick(run.seats[0].id)}
                 onKeyDown={(event) => {

@@ -583,17 +583,16 @@ if (offset !== null) offset.style.transform = '';
     /* Once, at the first commit after hydration: the deps change on every zoom and seat change, and a hold read again later would apply twice (the gate on 41cceaf, a landing applied twice). */
     if (holdConsumed.current) return;
     holdConsumed.current = true;
-    const w = window as unknown as { __wallHold?: { kind: 'seat' | 'run'; id: string } | null; __wallHoldClear?: () => void };
+    const w = window as unknown as { __wallHold?: { kind: 'seat'; id: string } | null; __wallHoldClear?: () => void };
     const held = w.__wallHold ?? null;
     if (held === null) return;
     w.__wallHoldClear?.();
     if (held.id === '') return;
     /* Applied on the microtask after this commit: once, not a cascade, and not a state change inside the effect's own run. */
     queueMicrotask(() => {
-      if (held.kind === 'run') zoomIn(held.id);
-      else if (pullsRef.current.length === 0 && queued.current === null) begin(held.id, 'out');
+      if (pullsRef.current.length === 0 && queued.current === null) begin(held.id, 'out');
     });
-  }, [begin, zoomIn]);
+  }, [begin]);
   const zoomOut = useCallback(() => {
     landOn.current = null;
     setRouteView('far');
