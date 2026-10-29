@@ -220,3 +220,78 @@ describe('the default check is the document suite', () => {
     expect(existsSync(record), 'and nothing ran').toBe(false);
   });
 });
+
+/**
+ * **The export follows the commit (the coordinator, 29 Oct).** Design rules
+ * against the handoff Code exports, and an export taken at the intake is
+ * taken before the commit it describes, so a relay named a commit that did
+ * not yet exist or carried a tree that was not one. A commit that touches
+ * `docs/design/` or the code region writes the export after the commit is
+ * made. A failed export does not undo the commit, and says so on a line of
+ * its own and a status of its own. Staged with the export replaced by a
+ * command that records it ran (`COMMIT_EXPORT`), so nothing reaches
+ * ~/Downloads. Each fails against a script that never exports.
+ */
+describe('the export follows a commit that touches the shared documents', () => {
+  const runExport = (dir: string, exportCommand: string, args: string[]) => {
+    try {
+      const output = execFileSync('bash', [join(dir, 'commit-checked.sh'), ...args], { cwd: dir, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], env: { ...process.env, COMMIT_CHECK: 'echo "1 passed"', COMMIT_EXPORT: exportCommand } });
+      return { status: 0, output };
+    } catch (error) {
+      const failure = error as { status?: number; stdout?: string; stderr?: string };
+      return { status: failure.status ?? 1, output: `${failure.stdout ?? ''}${failure.stderr ?? ''}` };
+    }
+  };
+  /* The export records the commit it saw, so the test can tell an export after the commit from one before it. */
+  const recorder = (dir: string) => `git -C '${dir}' rev-parse HEAD > '${join(dir, 'exported-at')}'`;
+
+  for (const path of ['docs/design/HANDOFF-wall-and-pull.md', 'scripts/handoff-code-region.json']) {
+    it(`exports after a commit that touches ${path}, at the commit just made`, () => {
+      const { dir, git } = repo();
+      mkdirSync(join(dir, path, '..'), { recursive: true });
+      writeFileSync(join(dir, path), 'changed\n');
+      const result = runExport(dir, recorder(dir), ['-m', 'docs', path]);
+      expect(result.status, result.output).toBe(0);
+      expect(readFileSync(join(dir, 'exported-at'), 'utf8').trim(), 'the export ran after the commit').toBe(git('rev-parse', 'HEAD'));
+    });
+  }
+
+  /*
+    Found staging the guard below: `grep -q` leaves at its first match, and
+    under the script's pipefail a list of changed paths longer than the
+    pipe's buffer ends the writer on SIGPIPE, failing the condition. Such a
+    commit skipped its export silently. Fails against the piped test.
+  */
+  it('exports after a commit whose changed paths overrun a pipe, the shared document listed first', () => {
+    const { dir, git } = repo();
+    mkdirSync(join(dir, 'docs', 'design'), { recursive: true });
+    writeFileSync(join(dir, 'docs', 'design', 'a.md'), 'a\n');
+    const many = join(dir, 'z');
+    mkdirSync(many);
+    for (let i = 0; i < 1500; i += 1) writeFileSync(join(many, `a-long-enough-file-name-to-fill-the-pipe-${String(i).padStart(4, '0')}.txt`), `${i}\n`);
+    const result = runExport(dir, recorder(dir), ['-m', 'many', 'docs/design/a.md', 'z']);
+    expect(result.status, result.output).toBe(0);
+    expect(git('diff-tree', '--no-commit-id', '--name-only', '-r', 'HEAD').length, 'more than a pipe holds').toBeGreaterThan(65_536);
+    expect(existsSync(join(dir, 'exported-at')), 'the export ran').toBe(true);
+  }, 60_000);
+
+  it('does not export after a commit that touches neither', () => {
+    const { dir } = repo();
+    mkdirSync(join(dir, 'docs'));
+    writeFileSync(join(dir, 'docs', 'other.md'), 'other\n');
+    const result = runExport(dir, recorder(dir), ['-m', 'other', 'docs/other.md']);
+    expect(result.status, result.output).toBe(0);
+    expect(existsSync(join(dir, 'exported-at'))).toBe(false);
+  });
+
+  it('keeps the commit when the export fails, and says so with a status of its own', () => {
+    const { dir, git } = repo();
+    mkdirSync(join(dir, 'docs', 'design'), { recursive: true });
+    writeFileSync(join(dir, 'docs', 'design', 'x.md'), 'x\n');
+    const before = git('rev-parse', 'HEAD');
+    const result = runExport(dir, 'echo "export-handoff: NOT exported." >&2; exit 1', ['-m', 'docs', 'docs/design/x.md']);
+    expect(git('rev-parse', 'HEAD'), 'the commit stands').not.toBe(before);
+    expect(result.status, 'neither a pass nor the refusal status').toBe(3);
+    expect(result.output).toMatch(/COMMITTED, but the export was NOT written/);
+  });
+});

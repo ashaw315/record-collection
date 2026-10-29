@@ -87,4 +87,21 @@ if ! bash -o pipefail -c "$check" 2>&1 | tee "$log"; then
 fi
 rm -f "$log"
 
-git add -- "${paths[@]}" && git commit -q -m "$message" && git log --oneline -1
+git add -- "${paths[@]}" && git commit -q -m "$message" && git log --oneline -1 || exit 1
+
+# The export follows the commit (the coordinator, 29 Oct). Design rules
+# against the handoff Code exports, and an export taken at the intake is
+# taken before the commit it names. A commit touching the shared documents
+# exports HEAD as just committed. A failed export leaves the commit made,
+# and says so with status 3, neither a pass nor a refusal.
+# `COMMIT_EXPORT` replaces the command, which is how
+# `test/repo/commit-checked.test.ts` stages it without writing to ~/Downloads.
+# Read whole before matching: `grep -q` leaves at its first match, and under
+# pipefail a writer cut off by SIGPIPE fails the condition.
+changed="$(git diff-tree --no-commit-id --name-only -r HEAD)"
+if grep -qE '^(docs/design/|scripts/handoff-code-region\.json$)' <<<"$changed"; then
+  if ! bash -o pipefail -c "${COMMIT_EXPORT:-node scripts/export-handoff.mjs}"; then
+    echo "COMMITTED, but the export was NOT written: run node scripts/export-handoff.mjs and read why." >&2
+    exit 3
+  fi
+fi
