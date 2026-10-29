@@ -104,6 +104,11 @@ describe('mapCollectionItem, the rules', () => {
     expect(m.matrixRunout).toMatch(/WYR\?0514-B/);
   });
 
+  /* From production, 28 Oct: a payload without its fields failed with Zod's issues as JSON, which the report's failed line then rendered as a blob. A sentence, naming the field. */
+  it('refuses a payload it cannot read with a sentence naming the field, not Zod’s issues', () => {
+    expect(() => mapCollectionItem({ payload: { id: 29613763 }, fetchedAt: new Date() }, item(29613763))).toThrow(/release payload could not be read: id/);
+  });
+
   it('refuses an item whose release is not the release given', () => {
     expect(() => mapCollectionItem(fixture('collection-release-11029111'), item(29613763))).toThrow(/release/);
   });

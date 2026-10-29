@@ -27,11 +27,18 @@ const seats = (count: number): WallSeat[] =>
   }));
 
 const render = (count: number) => renderToStaticMarkup(<WallComposition seats={seats(count)} />);
+/*
+  A region's ELEMENT, by its tag's start, not the first occurrence of the attribute's text: the
+  wall's markup carries §W.8's inline hold script (step 160), whose source names the regions it
+  reads, so a substring search finds the script before the element and reads the composition's
+  order against text that is not markup. Found by the gate on 41cceaf.
+*/
+const regionAt = (html: string, name: string) => html.search(new RegExp(`<[a-z]+[^>]*data-region="${name}"`));
 
 describe('the wall composition', () => {
   it('sets COLLECTION as a field label and the count at the display size, at the facts column’s head', () => {
     const html = render(17);
-    const left = html.slice(html.indexOf('data-region="count"'), html.indexOf('data-region="wall"'));
+    const left = html.slice(regionAt(html, 'count'), regionAt(html, 'wall'));
     expect(left).toContain('COLLECTION');
     /* The record screen's own label vocabulary, by import — not a second 11px. */
     for (const cls of LABEL.split(' ')) expect(left, cls).toContain(cls);
@@ -46,7 +53,7 @@ describe('the wall composition', () => {
     /* D1: 1:1 and pans — the region scrolls the drawing rather than scaling it. */
     expect(html).toMatch(/data-region="wall"[^>]*overflow-auto/);
     /* §W.9: facts left, drawing right — the panel's region below the count. */
-    expect(html.indexOf('data-region="facts"')).toBeLessThan(html.indexOf('data-region="wall"'));
+    expect(regionAt(html, 'facts')).toBeLessThan(regionAt(html, 'wall'));
     expect(html).toContain('data-testid="panel-region"');
     expect(html).toMatch(/data-composition[^>]*oklch\(0\.925 0\.004 80\)/);
     /* The svg owns no ground of its own: one paper, the page's. */

@@ -59,6 +59,14 @@ describe('fetchCollection', () => {
     expect(calls).toEqual(['/oauth/identity', '/users/someone/collection/folders/0/releases?per_page=100&page=1', '/users/someone/collection/folders/0/releases?per_page=100&page=2']);
   });
 
+  /* The fallback no synthetic page reached (the audit of 28 Oct): a page without Discogs' count gives the parsed count, said so in the code. */
+  it('falls back to the parsed count when a page carries no pagination.items', async () => {
+    const page1 = page([item(1), item(2)], 1, 1) as { pagination: Record<string, unknown> };
+    delete page1.pagination.items;
+    const c = client({ '/oauth/identity': { username: 'u' }, '/users/u/collection/folders/0/releases?per_page=100&page=1': page1 });
+    expect((await fetchCollection(c)).total).toBe(2);
+  });
+
   it('reads an empty collection as no items and one page', async () => {
     const c = client({ '/oauth/identity': { username: 'u' }, '/users/u/collection/folders/0/releases?per_page=100&page=1': page([], 1, 1) });
     expect((await fetchCollection(c)).items).toEqual([]);

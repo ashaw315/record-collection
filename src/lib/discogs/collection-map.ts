@@ -77,7 +77,13 @@ export function pickFormatName(formats: readonly RawFormat[]): FormatName | null
 }
 
 export function mapCollectionItem(raw: unknown, item: CollectionItem): MappedItem {
-  const shape = rawFormats.parse(raw);
+  const read = rawFormats.safeParse(raw);
+  /* A sentence naming the field, not Zod's issues as JSON: the report's failed line names each release and its reason (§T.6), and a reason is what a person can act on. */
+  if (!read.success) {
+    const fields = read.error.issues.map((issue) => `${issue.path.join('.') || 'the payload'} ${issue.code === 'invalid_type' && /undefined/.test(issue.message) ? 'is missing' : `is not what was expected: ${issue.message.toLowerCase()}`}`);
+    throw new Error(`Discogs' release payload could not be read: ${fields.join('; ')}`);
+  }
+  const shape = read.data;
   if (shape.id !== item.releaseId) throw new Error(`the release given is ${shape.id}, and the collection item is release ${item.releaseId}`);
   const normalized = normalizeRelease(raw);
   const formats = shape.formats ?? [];

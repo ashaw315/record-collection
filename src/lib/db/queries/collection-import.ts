@@ -10,6 +10,10 @@ import { mapCollectionItem, type Omission } from '@/lib/discogs/collection-map';
 import { findFormatByName } from './formats';
 import { importRelease } from './discogs-import';
 import { recordImportRun, type ImportRun } from './import-runs';
+import { writeMoodSets } from './record-moods';
+import { runTagging, type Tagger } from '@/lib/moods/tagging';
+import { describeError } from '@/lib/errors/describe';
+import { logger } from '@/lib/logger';
 
 /**
  * Step 18 unit D (SPEC §5 `POST /api/discogs/import-collection`, §12 step 18):
@@ -50,7 +54,8 @@ async function alreadyHeld(releaseId: number): Promise<{ title: string; artist: 
 
 async function releasePayload(client: DiscogsClient, releaseId: number): Promise<unknown> {
   const cached = await readCachedRelease(releaseId);
-  if (cached !== null) return cached;
+  /* The payload, not the cache's row: the row went to the mapper once, in production, on the one release whose record had been deleted between two runs, and Zod refused it at `id` (28 Oct). */
+  if (cached !== null) return cached.payload;
   const payload = await client.get(`/releases/${releaseId}`);
   await writeCachedRelease(releaseId, payload);
   return payload;
@@ -96,9 +101,31 @@ export async function importCollection(client: DiscogsClient): Promise<Collectio
   return report;
 }
 
-/** The import as Manage asks for it: the run, recorded (§4.2 `discogs_import_runs`) and answered with when it finished. */
-export async function runImport(client: DiscogsClient): Promise<ImportRun> {
-  return recordImportRun(await importCollection(client));
+/**
+ * The import as Manage asks for it: the run, recorded (§4.2 `discogs_import_runs`)
+ * and answered with when it finished. Then its own records tagged (the
+ * coordinator, 28 Oct): the import creates the untagged state, so the import
+ * resolves it, through the one tagging module (§7.12), after the commit and
+ * never fatal, as the cover is attached. Logged and not drawn: §T.6's four
+ * lines partition the run and a tagged count would be a fifth element; a run
+ * that fails stays visible where it matters, in the rail's untagged count.
+ */
+export async function runImport(client: DiscogsClient, options: { tagger?: Tagger } = {}): Promise<ImportRun> {
+  const report = await importCollection(client);
+  const run = await recordImportRun(report);
+  if (options.tagger !== undefined && report.imported.length > 0) await tagImported(report, options.tagger);
+  return run;
+}
+
+async function tagImported(report: CollectionReport, tagger: Tagger): Promise<void> {
+  try {
+    const records = report.imported.map((item) => ({ id: item.recordId, artist: item.artist, title: item.title }));
+    const run = await runTagging(records, tagger);
+    const written = run.verdict === 'refused-flat' ? 0 : await writeMoodSets(run.sets, tagger.model);
+    logger.info('collection-import.tag', `Tagged ${written} of ${records.length} imported records${run.verdict === 'refused-flat' ? ' (refused: every record given the same count)' : ''}${run.failed.length > 0 ? `; ${run.failed.length} not answered` : ''}.`);
+  } catch (cause) {
+    logger.warn('collection-import.tag', `The imported records were not tagged: ${describeError(cause)}. The rail's untagged count shows them.`);
+  }
 }
 
 /* Kept so a report can be checked against the database it describes: the count of records holding each release. */

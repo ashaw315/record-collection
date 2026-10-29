@@ -285,8 +285,9 @@ export function WallLive({
       const seat = layout.placed.find((p) => p.id === landing);
       if (seat !== undefined) {
         landOn.current = null;
-        /* Consumed, whichever path follows, the arrival applied or the person's scroll kept: the region is landed (the mark the specs' clickSpine waits on, 28 Oct). */
+        /* Consumed, whichever path follows, the arrival applied or the person's scroll kept: the wall is landed (the mark the specs' clickSpine waits on, 28 Oct), on the container both views share. */
         el.dataset.landed = 'true';
+        el.closest('[data-wall-container]')?.setAttribute('data-landed', 'true');
         /* Counted so the ordering can be asserted: consumed exactly once, on the commit whose frame is the region's own (§W.12). */
         const counter = window as unknown as { __landings?: number };
         counter.__landings = (counter.__landings ?? 0) + 1;
@@ -354,8 +355,9 @@ if (offset !== null) offset.style.transform = '';
       waits on before any spine is clicked; marks and not animation frames,
       because the gesture specs freeze the page's clock.
     */
-    if (landOn.current === null && width === el.clientWidth) el.dataset.landed = 'true';
-    else delete el.dataset.landed;
+    const container = el.closest('[data-wall-container]');
+    if (landOn.current === null && width === el.clientWidth) { el.dataset.landed = 'true'; container?.setAttribute('data-landed', 'true'); }
+    else { delete el.dataset.landed; container?.removeAttribute('data-landed'); }
     /* The frame may have moved its origin in this commit: hold the view where it was — on the way into a gesture and out of it. */
     if (viewNowRef.current !== null) writeView(el, [frameX, frameY], viewNowRef.current);
     originRef.current = [frameX, frameY];
@@ -407,6 +409,15 @@ if (offset !== null) offset.style.transform = '';
     el.addEventListener('scroll', onScroll);
     /* From here the region hears the person: the mark the specs stage a post-hydration scroll against (§W.29). */
     el.dataset.hydrated = 'true';
+    /*
+      And on the wall's container, which both views share: before measurement
+      both regions are in the markup and this ref holds one, and when the far
+      view is then drawn its region never carried the mark, so the hold script
+      read a hydrated page as unhydrated and a zoom landed twice (the gate on
+      41cceaf). A press is held or applied by the wall it is in, and the
+      container is that wall whichever region is shown.
+    */
+    el.closest('[data-wall-container]')?.setAttribute('data-hydrated', 'true');
     return () => el.removeEventListener('scroll', onScroll);
   }, []);
 
@@ -560,7 +571,11 @@ if (offset !== null) offset.style.transform = '';
     run's as the zoom to its shelf, and the script's bound cleared with it.
     The hold is cleared on the first read, so a re-run applies nothing.
   */
+  const holdConsumed = useRef(false);
   useEffect(() => {
+    /* Once, at the first commit after hydration: the deps change on every zoom and seat change, and a hold read again later would apply twice (the gate on 41cceaf, a landing applied twice). */
+    if (holdConsumed.current) return;
+    holdConsumed.current = true;
     const w = window as unknown as { __wallHold?: { kind: 'seat' | 'run'; id: string } | null; __wallHoldClear?: () => void };
     const held = w.__wallHold ?? null;
     if (held === null) return;

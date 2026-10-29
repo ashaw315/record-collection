@@ -5,6 +5,7 @@ import { withErrorHandling } from '@/lib/api/handler';
 import { DiscogsError, getDiscogsClient } from '@/lib/discogs/client';
 import { discogsErrorResponse } from '@/lib/discogs/errors';
 import { runImport } from '@/lib/db/queries/collection-import';
+import { getMoodTagger } from '@/lib/llm/mood-tagger-client';
 
 /**
  * SPEC.md §5 `POST /api/discogs/import-collection` (A77, step 18): the token
@@ -33,7 +34,7 @@ export const POST = withErrorHandling('api.discogs.import-collection.POST', asyn
 
   try {
     /* The run, recorded and answered with when it finished: §T.6's report survives leaving Manage, read back from §4.2's `discogs_import_runs`. */
-    const run = await runImport(getDiscogsClient());
+    const run = await runImport(getDiscogsClient(), { tagger: getMoodTagger() });
     return NextResponse.json(run, { status: 200 });
   } catch (error) {
     if (error instanceof DiscogsError) return discogsErrorResponse(error);

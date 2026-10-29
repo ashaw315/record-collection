@@ -27,7 +27,7 @@ import { expect, type Locator, type Page } from '@playwright/test';
  * The landing's count stays the caller's to assert where the route lands.
  */
 export async function wallAtRest(page: Page): Promise<void> {
-  await expect(page.locator('[data-region="wall"][data-hydrated="true"][data-landed="true"]'), 'the wall is hydrated and landed').toHaveCount(1, { timeout: 30_000 });
+  await expect(page.locator('[data-wall-container][data-hydrated="true"][data-landed="true"]').first(), 'the wall is hydrated and landed').toBeAttached({ timeout: 30_000 });
 }
 
 /** The spine's click, after the wall is at rest. `spine` is the caller's locator for the spine or its seat. */

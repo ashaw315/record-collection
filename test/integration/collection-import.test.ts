@@ -1,11 +1,14 @@
 import { readFileSync } from 'node:fs';
-import { afterAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { eq, sql } from 'drizzle-orm';
 import { getTestDb, truncateAll, closeTestDb } from '../helpers/db';
 import { artists, artistMatchCandidates, genres, pressings, records } from '@/db/schema';
 import type { DiscogsClient } from '@/lib/discogs/client';
 import { importCollection, runImport } from '@/lib/db/queries/collection-import';
 import { latestImportRun } from '@/lib/db/queries/import-runs';
+import { writeCachedRelease } from '@/lib/discogs/cache';
+import * as storage from '@/lib/storage/blob';
+import { logger } from '@/lib/logger';
 
 /**
  * Step 18 unit D (SPEC §5 `POST /api/discogs/import-collection`, §12 step 18):
@@ -19,6 +22,10 @@ const db = getTestDb();
 
 beforeEach(async () => {
   await truncateAll();
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
 });
 
 afterAll(async () => {
@@ -135,6 +142,98 @@ describe('importCollection', () => {
     expect(second?.report.skipped.length, 'the next run replaces it').toBe(9);
     expect(second?.finishedAt).not.toBe(first?.finishedAt);
     expect(Number((await db.execute(sql`SELECT count(*)::int AS n FROM discogs_import_runs`)).rows[0]?.n), 'every run kept').toBe(2);
+  });
+
+  /*
+    From production, 28 Oct, 21:51: a release in the cache and not held failed with a Zod error naming
+    a missing `id`, because the importer handed the mapper the cache's wrapper, `{ payload, fetchedAt }`,
+    and not the payload. Every run before it fetched fresh, and the idempotency test's second run holds
+    every release, so the cache's read path into the mapper had never run. Fails against the wrapper.
+  */
+  it('imports a release the cache already holds, reading the cached payload and not the cache row', async () => {
+    await writeCachedRelease(29900731, fixture('collection-release-29900731'));
+    const client = fakeClient();
+    const report = await importCollection(client);
+    expect(report.failed).toEqual([]);
+    expect(report.imported.map((i) => i.releaseId)).toContain(29900731);
+    expect(client.calls, 'the cached release was not fetched again').not.toContain('/releases/29900731');
+  });
+
+  /*
+    §T.6's promise is that the four counts add up to what Discogs holds, which both production runs met
+    while reconciling against the source and never the effect (the coordinator, 28 Oct). This holds the
+    effect: the records after a run are the records before plus the imported line, on the real database.
+  */
+  it('writes exactly as many records as it reports imported, counted against the database', async () => {
+    await db.insert(pressings).values([{ discogsReleaseId: 11029111, catalogNumber: 'WYR?0514' }]);
+    const artist = (await db.insert(artists).values({ name: 'Parquet Courts' }).returning())[0];
+    await db.insert(records).values({ title: 'Sunbathing Animal', artistId: artist.id, pressingId: (await db.select().from(pressings))[0].id });
+    const before = await count('records');
+    const report = await importCollection(fakeClient({ '/releases/15661267': () => { throw new Error('Discogs answered 500'); } }));
+    expect(report.imported.length).toBe(7);
+    expect(await count('records')).toBe(before + report.imported.length);
+  });
+
+  /*
+    The import creates the untagged state, so the import resolves it (the coordinator, 28 Oct): after
+    the run, its own records are tagged through the one tagging module, as the cover is attached, after
+    the commit and never fatal. Logged, not drawn: §T.6's four lines partition the run and a tagged count
+    would be a fifth element. Fails against the import before it: no mood rows after a run.
+  */
+  it('tags the records it imported through the tagger it is given, after the run, and reports the run the same', async () => {
+    const asked: string[] = [];
+    /* One record a call, `{ moods }` back; the counts vary, since a run in which every record gets the same count is refused as flat (§7.12). */
+    const sets = [['sleepy', 'sunny'], ['dancing'], ['zone out', 'smooth', 'loud and dirty']];
+    const tagger = {
+      model: 'fake-tagger',
+      async tag(record: { id: string; artist: string; title: string }) {
+        asked.push(record.id);
+        return { ok: true as const, payload: { moods: sets[asked.length % 3] } };
+      },
+    };
+    const run = await runImport(fakeClient(), { tagger });
+    expect(run.report.imported.length).toBe(9);
+    const rows = await db.execute(sql`SELECT record_id, tagged_by_model FROM record_moods`);
+    expect(new Set((rows.rows as Array<{ record_id: string }>).map((r) => r.record_id)).size, 'every imported record has a mood row').toBe(9);
+    expect((rows.rows as Array<{ tagged_by_model: string }>).every((r) => r.tagged_by_model === 'fake-tagger')).toBe(true);
+    expect(new Set(asked)).toEqual(new Set(run.report.imported.map((i) => i.recordId)));
+  });
+
+  it('a tagger that fails leaves the run and its report as they were, and tags nothing', async () => {
+    const tagger = { model: 'broken', async tag() { throw new Error('the model is down'); } };
+    const run = await runImport(fakeClient(), { tagger });
+    expect(run.report.imported.length).toBe(9);
+    expect(run.report.failed).toEqual([]);
+    expect(Number((await db.execute(sql`SELECT count(*)::int AS n FROM record_moods`)).rows[0]?.n)).toBe(0);
+  });
+
+  /*
+    The branches the audit of 28 Oct found reachable and never executed (NOTES 22:30), closed while it
+    was fresh (the coordinator). The cover's outcomes inside the import flow first: that path runs on
+    every imported record in production and settled tonight's orphan question, and the import's tests
+    had left the blob store unconfigured, so the attach returned before any fetch. Fails against the
+    import before the cover's report was read from the attach's own outcome.
+  */
+  it('reports the cover failed when the store is configured and the fetch refuses, and none when the release has no image', async () => {
+    vi.spyOn(storage, 'isBlobConfigured').mockReturnValue(true);
+    vi.spyOn(storage, 'getBlobStorage').mockReturnValue({ put: async () => { throw new Error('never reached'); }, delete: async () => undefined });
+    const warn = vi.spyOn(logger, 'warn').mockImplementation(() => {});
+    const bare = { ...(fixture('collection-release-29613763') as Record<string, unknown>), images: [] };
+    const report = await importCollection(fakeClient({ '/releases/29613763': bare }));
+    expect(report.failed).toEqual([]);
+    const covers = Object.fromEntries(report.imported.map((i) => [i.releaseId, i.cover]));
+    expect(covers[29613763]).toBe('not attached: none');
+    expect(covers[29900731]).toBe('not attached: failed');
+    expect(warn, 'the fetch failure is logged, once per record with an image').toHaveBeenCalledTimes(8);
+    expect(await count('records'), 'a cover that fails costs no record').toBe(9);
+  });
+
+  it('creates a suffixed artist with no candidate when no local artist bears the bare name', async () => {
+    const suffixed = fixture('collection-release-29613763') as { artists: Array<{ name: string; id: number }> };
+    const report = await importCollection(fakeClient({ '/releases/29613763': { ...suffixed, artists: [{ ...suffixed.artists[0], name: 'Weezer (3)', id: 9999999 }] } }));
+    expect(report.failed).toEqual([]);
+    expect((await db.select().from(artists).where(eq(artists.name, 'Weezer (3)'))).length).toBe(1);
+    expect(await db.select().from(artistMatchCandidates)).toEqual([]);
   });
 
   it('is idempotent on release id: a second run imports nothing and reports the nine as already here', async () => {

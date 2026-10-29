@@ -48,7 +48,8 @@ async function openWindow(page: Page, artistId: string): Promise<void> {
 }
 
 const spine = (page: Page, id: string) => page.locator(`a[data-seat="${id}"] [data-spine]`);
-const region = (page: Page) => page.locator('[data-region="wall"]');
+/* The wall's container carries the marks for both views. */
+const region = (page: Page) => page.locator('[data-wall-container]').first();
 
 test('a click in the window is held, marks the region, prevents the anchor, and pulls when hydration lands', async ({ page }) => {
   await login(page);
@@ -128,6 +129,31 @@ test(`past the bound (${HOLD_BOUND_MS}ms) with hydration not landed, the held pr
   /* The record's page, reached by the anchor's own navigation; not built as a path, since this spec does not drive that screen. */
   await expect(page).toHaveURL(/\/records\/[0-9a-f-]{36}$/, { timeout: HOLD_BOUND_MS + 5000 });
   expect(page.url().endsWith(ids[5])).toBe(true);
+});
+
+/*
+  The regression the gate on 41cceaf found, asserted where it belongs (the coordinator, 28 Oct): on
+  the hydrated far view a press is React's to apply, not the script's to hold. The hydrated mark had
+  been set on one region's node at mount and the far view's region never carried it, so the script
+  held a press React also handled and the zoom landed twice, which an arrival test noticed two steps
+  downstream. Fails against a mark on a per-view node: `data-held` appears, and the landing count is 2.
+*/
+test('a press on the hydrated far view is not held, and its zoom lands exactly once', async ({ page }) => {
+  await login(page);
+  const { artistId } = await seed(page, 12);
+  /* The far view as the arrival spec reaches it: the near view at the default width, hydrated, then the zoom out. */
+  await page.goto(`/?artistId=${artistId}`);
+  await expect(page.locator('[data-wall="labelled"]')).toBeVisible({ timeout: 30_000 });
+  await expect(region(page)).toHaveAttribute('data-hydrated', 'true', { timeout: 30_000 });
+  await page.getByTestId('wall-zoom-out').click();
+  await expect(page.locator('[data-wall="overview"]')).toBeVisible({ timeout: 30_000 });
+  await expect(page.locator('[data-run]').first()).toBeVisible({ timeout: 30_000 });
+  await page.evaluate(() => { (window as unknown as { __landings?: number }).__landings = 0; });
+  await page.locator('[data-run]').first().click();
+  await expect(page.locator('[data-wall="labelled"]')).toBeVisible({ timeout: 10_000 });
+  await expect(region(page)).not.toHaveAttribute('data-held', /./);
+  await page.waitForTimeout(900);
+  expect(await page.evaluate(() => (window as unknown as { __landings?: number }).__landings), 'the landing is applied exactly once').toBe(1);
 });
 
 /*

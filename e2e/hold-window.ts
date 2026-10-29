@@ -83,6 +83,6 @@ export async function releaseHydration(page: Page): Promise<void> {
 export async function inTheWindow(page: Page): Promise<{ posted: number; hydrated: boolean }> {
   return page.evaluate(() => ({
     posted: (window as unknown as { __heldChunks?: number }).__heldChunks ?? 0,
-    hydrated: (document.querySelector('[data-region="wall"]') as HTMLElement | null)?.dataset.hydrated === 'true',
+    hydrated: (document.querySelector('[data-wall-container]') as HTMLElement | null)?.dataset.hydrated === 'true',
   }));
 }

@@ -49800,3 +49800,56 @@ the seat's anchor and the run's near-view address; `WallLive` applies a
 held press once the region is marked hydrated. A scroll in the first 150ms
 after a press is the browser's scroll-into-view for the click and does not
 cancel. The §T.6 slot-width test waits on Design's sentence.
+
+## 28 Oct, 22:30: a test whose shape makes a path unreachable (a family member), and the import's unreachable branches
+
+**The lesson, not the bug.** The importer handed the mapper the cache's
+row instead of its payload, and the first run of that path was in
+production, on the one release whose record Adam had deleted between two
+imports. The idempotency test's second run holds every release, so the
+cached-but-not-held path could not execute under any test: not a missing
+assertion but a test shape that keeps a branch from ever running, so its
+first execution is live. Family: a green that examined nothing (§9), a
+guard aimed one layer below the sentence, a note that says evidence does
+not exist. The tell is a branch whose precondition no test constructs.
+
+**The narrow audit (the coordinator): which branches of the import have
+never executed under any test, and which of those only a state no test
+constructs can reach.**
+
+- Never executed, reachable by a test that constructs the state:
+  `fetchCollection`'s fallback to the parsed count when a page carries no
+  `pagination.items` (every synthetic page carries one); the suffix branch
+  of `findOrCreateArtist` when no local artist bears the bare name (the
+  nine have no suffixes, and the one test gives Weezer a local Weezer);
+  the cover's `failed` and `none` outcomes inside the import flow (the
+  import's tests run with the blob store unconfigured, so the attach
+  returns `unconfigured` before any fetch, and the fetch-failure path is
+  exercised only by the cover module's own tests with a fake store).
+- Unreachable from the collection path by construction, exercised by the
+  form path's tests: `importRelease`'s `corrected` pressing (the collection
+  sends no overrides, so nothing contradicts Discogs) and the pressing
+  found by tuple with no release id (the collection always has one).
+- Now executed: the cache's read into the mapper, by the test written
+  tonight, with the fetched count asserted not to include the cached
+  release.
+
+**Orphaned pressings are intended (§4).** Pressings are shared, found or
+created, and never cascade-deleted, so a deleted record leaves its
+pressing for a later record or want to find by release id. Ten stand
+today: eight from August and October, 6200836 from a record deleted on
+28 Oct, and 29900731, whose record the import wrote at 16:09 and Adam
+deleted after. They cost rows and nothing else; the import's idempotency
+asks records, not pressings, and finds an orphan by id rather than
+duplicating it. Leaving 29900731 is right for that reason; it was Adam's
+deletion and his call.
+
+**Tagging after the import: logged, not drawn, and why that is safe (the
+coordinator, 28 Oct).** The import tags its own records after the run
+through the one tagging module, after the commit and never fatal, as the
+cover is attached. Nothing enters the report: §T.6's four lines partition
+the run and a tagged count would be a fifth element. A never-fatal step
+that is only logged is normally how a failure goes unnoticed; this one is
+not, because the rail already draws the untagged count ("N not tagged
+yet.", §P.6), so a tagging run that fails stays visible in the place that
+matters. The reason it is safe is the existing untagged line, not the log.

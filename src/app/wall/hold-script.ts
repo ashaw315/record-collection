@@ -42,21 +42,29 @@ export const HOLD_SCRIPT = `(function () {
   var BOUND = ${HOLD_BOUND_MS};
   var hold = null;
   var timer = null;
-  function region() { return document.querySelector('[data-region="wall"]'); }
-  function hydrated() { var r = region(); return r !== null && r.getAttribute('data-hydrated') === 'true'; }
+  /*
+    The wall containing the press: its container carries the hydrated mark
+    for both views (WallLive), where a region's own mark was on whichever
+    node the ref held at mount and the far view's region never had it (a
+    zoom landed twice, the gate on 41cceaf). Nothing else on the page is
+    asked, so a press on a wall that is not hydrated is held whatever
+    another wall's state is.
+  */
+  function wallOf(target) { return target instanceof Element ? target.closest('[data-wall-container]') : null; }
+  function hydratedWall(target) { var c = wallOf(target); return c !== null && c.getAttribute('data-hydrated') === 'true'; }
+  function hydrated() { return hold !== null && hold.wall !== null && hold.wall.getAttribute('data-hydrated') === 'true'; }
   function clear() {
     if (timer !== null) { clearTimeout(timer); timer = null; }
+    if (hold !== null && hold.wall !== null) hold.wall.removeAttribute('data-held');
     hold = null;
     w.__wallHold = null;
-    var r = region();
-    if (r !== null) r.removeAttribute('data-held');
   }
-  function take(kind, id, href) {
+  function take(kind, id, href, wall) {
     if (timer !== null) clearTimeout(timer);
-    hold = { kind: kind, id: id, href: href, at: Date.now() };
+    if (hold !== null && hold.wall !== null) hold.wall.removeAttribute('data-held');
+    hold = { kind: kind, id: id, href: href, at: Date.now(), wall: wall };
     w.__wallHold = hold;
-    var r = region();
-    if (r !== null) r.setAttribute('data-held', id);
+    if (wall !== null) wall.setAttribute('data-held', id);
     /* Past the bound, unhydrated: the seat's anchor navigates as it would have; the run loads the near view's address for it. */
     timer = setTimeout(function () {
       timer = null;
@@ -82,17 +90,16 @@ export const HOLD_SCRIPT = `(function () {
     return null;
   }
   document.addEventListener('click', function (event) {
-    if (hydrated()) return;
     var p = pressTarget(event.target);
     if (p === null) { if (hold !== null) clear(); return; }
+    if (hydratedWall(event.target)) return;
     event.preventDefault();
-    take(p.kind, p.id, p.href);
+    take(p.kind, p.id, p.href, wallOf(event.target));
   }, true);
   document.addEventListener('keydown', function (event) {
-    if (hydrated()) return;
     if (event.key === 'Enter' || event.key === ' ') {
       var p = pressTarget(event.target);
-      if (p !== null) { event.preventDefault(); take(p.kind, p.id, p.href); return; }
+      if (p !== null && !hydratedWall(event.target)) { event.preventDefault(); take(p.kind, p.id, p.href, wallOf(event.target)); return; }
     }
     /* A key that moves focus: Tab and the arrows walk the seats; the reader has moved on. */
     if (hold !== null && (event.key === 'Tab' || event.key.indexOf('Arrow') === 0 || event.key === 'Escape')) clear();

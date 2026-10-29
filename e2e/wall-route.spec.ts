@@ -48,7 +48,7 @@ const landings = (page: Page) => page.evaluate(() => (window as unknown as { __l
 async function settled(page: Page, landed: number) {
   await expect.poll(() => landings(page), { timeout: 15_000, message: `the landing is consumed (${landed})` }).toBeGreaterThanOrEqual(landed);
   /* The region's own mark of the same fact, which clickSpine waits on (28 Oct): held here where the count is also known. */
-  await expect(page.locator('[data-region="wall"][data-landed="true"]')).toHaveCount(1);
+  await expect(page.locator('[data-wall-container][data-landed="true"]').first()).toBeAttached();
   await page.waitForFunction(
     () =>
       new Promise<boolean>((resolve) => {
