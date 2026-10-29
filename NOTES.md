@@ -49853,3 +49853,62 @@ that is only logged is normally how a failure goes unnoticed; this one is
 not, because the rail already draws the untagged count ("N not tagged
 yet.", §P.6), so a tagging run that fails stays visible in the place that
 matters. The reason it is safe is the existing untagged line, not the log.
+
+## 29 Oct, 15:30: the narrower window measured, and what produces one pull
+
+**The narrower window, React attached with the page's payload still
+arriving, did not occur at any connection level measured.** Read from
+inside the page by an init script, as on 28 Oct at 20:15: `attach` is the
+first React dispatch listener for `click` on the document, `closed` is
+Next's handler named `DOMContentLoaded` returning (it closes the payload
+stream once the document has parsed), `hydrated` is the wall's mark. On
+`/?artistId=` with 12 records, eight runs a level, browser cache on,
+network shaped through Chrome's DevTools protocol, on the Playwright dev
+server, load 3.3 before and 3.0 after (`zz-narrow-window-probe`, deleted
+after the reading). Times are medians from navigation start, in ms.
+
+| level | stream closed | React attached | attach after close | runs in the narrow window | attach to hydrated, median / p90 / max |
+|---|---|---|---|---|---|
+| unthrottled | 318 | 370 | 49 to 56 | 0 of 8 | 158 / 163 / 176 |
+| fast-3G-like: 150ms, 1.6Mbps | 726 | 1635 | 901 to 979 | 0 of 8 | 126 / 128 / 143 |
+| slow-3G-like: 400ms, 400kbps | 1730 | 5169 | 3434 to 3446 | 0 of 8 | 123 / 130 / 130 |
+| slow-3G-like + cpu ×4 (the 28 Oct level) | 1827 | 5232 | 3384 to 3649 | 0 of 8 | 612 / 678 / 680 |
+
+The payload is inline in the document, and the scripts are separate and
+larger files, so a slower connection delays React more than the payload:
+the gap widens from 50ms to 3.4s, and the window stays at zero width. **So
+§W.8's "the window is set by the payload's arrival, which the connection
+governs" is not what these levels show.** The state needs the document to
+finish after the scripts are ready, which is a server finishing late:
+scripts cached from an earlier visit and the server still streaming the
+page. The gate's failures were on a dev server serving three workers, which
+is that shape. Not measured here, because no connection profile stages it;
+a level that does needs the document's tail held open, by a proxy that
+streams the head and holds the rest, which is also an instrument for the
+real state. **No bound can be proposed from these runs:** the widest
+narrow-window run is 0.
+
+**The condition, if built, has a public form.** The payload is still
+arriving exactly while the document is still parsing, so "React attached
+and the payload still arriving" is `document.readyState === 'loading'` on
+an unhydrated wall, with no Next internals. The current instrument cannot
+stage that: it holds Next's chunk feed after the document has parsed, a
+state a real page does not reach. A condition built on the public form
+would fail every hold test until the instrument holds the document's tail
+instead.
+
+**What produces one pull on Enter, where React hydrates on the press
+(staged 29 Oct, a temporary log in `begin`, the seat's click handler and
+the hold script, reverted after).** One source fires. The hold script
+holds the keydown, React hydrates off it, and the hold's application calls
+`begin` once. The anchor's activation click, React's own path to a pull,
+never reaches the document: with the keydown's `preventDefault` removed and
+the seat handler's guard removed, the log shows one Enter keydown, no click
+at all, and one `begin`. Why the click is lost was not identified. Two
+further facts bound the test: `begin` replaces the pull list with one entry,
+so a second `begin` of the same record still draws one pulled record, and
+the test's count of pulled records cannot fail on a double begin; and
+neither guard was what held the count. **So one pull is held in fact by a
+browser or React behaviour not located, and unguarded in test.** A test
+that could fail would count `begin` calls, which needs a hook the build
+does not have.
