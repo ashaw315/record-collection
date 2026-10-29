@@ -17,6 +17,8 @@ import { exportText, fileName } from '../../scripts/export-handoff.mjs';
  * come back whole. Reading is safe; writing is what caused the problem.
  */
 const SCRIPT = join(process.cwd(), 'scripts', 'export-handoff.mjs');
+/* The local date, as the script and drop-ref name things; UTC named an evening export for tomorrow. */
+const localDate = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
 const HANDOFF = join('docs', 'design', 'HANDOFF-wall-and-pull.md');
 const blocks = [{ id: 'step-71', before: '72. ', text: '71. **Done.** The tile’s Delete control.' }];
 const handoff = '70. Build the disc.\n\n71. **Done.** The tile’s Delete control.\n\n72. Build the nav.\n';
@@ -68,7 +70,7 @@ describe('the script', () => {
       const files = readdirSync(out).sort();
       expect(files).toHaveLength(2);
       const rules = files.find((f) => f.startsWith('DESIGN-RULES'));
-      expect(rules).toBe(`DESIGN-RULES — export for Design, ${new Date().toISOString().slice(0, 10)} at ${sha}.md`);
+      expect(rules).toBe(`DESIGN-RULES — export for Design, ${localDate()} at ${sha}.md`);
       const written = readFileSync(join(out, rules ?? ''), 'utf8');
       const committed = execFileSync('git', ['show', 'HEAD:docs/design/DESIGN-RULES.md'], { encoding: 'utf8' });
       expect(written.endsWith(committed)).toBe(true);
@@ -91,7 +93,7 @@ describe('the script', () => {
     try {
       const sha = execFileSync('git', ['rev-parse', '--short', 'HEAD'], { encoding: 'utf8' }).trim();
       const stdout = execFileSync('node', [SCRIPT, '--out', out, '--captures', 'import-159'], { encoding: 'utf8' });
-      const folder = `captures import-159 — export for Design, ${new Date().toISOString().slice(0, 10)} at ${sha}`;
+      const folder = `captures import-159 — export for Design, ${localDate()} at ${sha}`;
       expect(readdirSync(out)).toContain(folder);
       const files = readdirSync(join(out, folder)).sort();
       const committed = execFileSync('git', ['ls-tree', '--name-only', 'HEAD', 'docs/captures/import-159/'], { encoding: 'utf8' }).trim().split('\n').map((p) => p.split('/').pop()).sort();

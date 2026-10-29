@@ -59,7 +59,9 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   const sha = git('rev-parse', '--short', 'HEAD').trim();
   const committed = git('show', `HEAD:${HANDOFF}`);
   const treeDiffers = existsSync(HANDOFF) && readFileSync(HANDOFF, 'utf8') !== committed;
-  const date = new Date().toISOString().slice(0, 10);
+  /* The local date, as drop-ref names its refs: an export taken after 20:00 was named for tomorrow by UTC. */
+  const d = new Date();
+  const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   /*
     HEAD's region, as HEAD's handoff: a step entered in the tree and not yet
     committed is not in the handoff HEAD holds either, and reading the tree's
