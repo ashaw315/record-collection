@@ -49987,3 +49987,68 @@ without it. With upgrades piped raw, 10 passed and the one test meant to
 fail failed, the old build recording `[id, null]` for a press on a loaded
 page. A dev-server dependency of the instrument, not of the hold; a
 production build has no HMR socket.
+
+## 29 Oct, 18:30: the production measurement's stopping rule, stated before any load
+
+Stated before the first load, as the coordinator asked, so that a result
+cannot shape the rule.
+
+**What is measured.** Real loads of the production wall, signed in as Adam,
+watched rather than constructed: the proxy builds the still-loading state for
+tests and cannot say whether production reaches it. An init script records
+when the wall's container first holds a spine, the first frame painted after
+that and `document.readyState` in it, `readystatechange` to interactive, and
+the wall's hydrated mark.
+
+**The window occurs** in a load where a frame with spines is painted while
+the document is still `loading`, the first moment a press is possible. Its
+width is that frame to interactive. Every load's width is reported, zeros
+included.
+
+**Conditions.** Chromium at 1440×900, the shelf's fine-pointer width.
+- 8 cells of 30 loads, 240 in all, taken round-robin across the cells: cache
+  cold (a new context per load) or warm (a reload in the same context), by
+  network none, fast 3G, slow 3G, or slow 3G with the CPU at ×4 (the presets
+  of 29 Oct 15:30).
+- After a deploy: 2 cold loads, unthrottled and slow 3G, within 2 minutes of
+  each of the next 3 production deploys. 6 loads.
+- Idle-cold: the first load after at least 20 minutes without a request, on
+  5 occasions.
+- The machine's load beside each run; nothing beside it.
+
+**Stopping.** The counts are fixed. No early stop either way: on a positive
+the run completes, since the bound is built from the widest run. More loads
+are a new run, stated separately, never a top-up.
+
+**What a positive licenses:** the bound kept, above the widest width; Code
+proposes the figure and Adam judges it.
+
+**What a null licenses**, and the only claim available: "In 240 loads of
+the production wall at 1440×900 in Chromium across 8 cache and network
+conditions, plus 6 after-deploy and 5 idle-cold loads, no frame with spines
+was painted while the document was loading; per condition, below 10% of
+loads at 95% (3/30)." That supports removing the bound and its fallback
+under the conditional ruling, as a decision on stated evidence, not a proof.
+The removal's line carries it and what was not measured: Safari and Firefox,
+real devices and lossy networks (browser throttling does not model loss),
+other regions, a larger collection. A null also means the hold itself never
+engaged in those loads; the ruling keeps the hold, and that is Design's to
+weigh.
+
+**Not yet run:** the sign-in route is Adam's choice (a password he puts in
+`.env.local` under a key read without printing, or a session minted with
+`SESSION_SECRET`, which forges his and needs his yes).
+
+## 29 Oct, 18:30: the intake's duplicate step was caught incidentally
+
+Step 160's restated block was inserted beside its old text because the
+intake's "present" is the whole line. The index caught it as a duplicate
+number only because every block happens to begin with its step number and to
+sit in the build order, neither enforced, and only after the handoff was
+written. Now the intake replaces, in place, a line that is a text the same
+block has had in the region's committed history, so a line that merely
+shares a number is never overwritten; and a guard requires every block to be
+a step numbered as its id, so a block restated twice between commits, whose
+old text no commit holds, is still a duplicate number to assertion 3.
+Staged on the real handoff: step 160's text at 38a8ba0 put back, the intake
+reported "1 replaced (step-160)" and the index passed.
