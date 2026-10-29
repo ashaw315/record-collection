@@ -23,6 +23,29 @@ import type { Page } from '@playwright/test';
  * `push` is an accessor so Next's reassignment is captured rather than
  * bypassing the hold; `forEach` yields nothing while held, since that is
  * the one-time drain.
+ *
+ * **Coupling, written down (the coordinator, 29 Oct).** Four things here are
+ * Next's internals and not its API, read from `node_modules/next/dist/client/
+ * app-index.js` on 28 Oct: (1) the payload arrives as `self.__next_f.push`
+ * calls in the document; (2) the client drains that array once with
+ * `forEach` and clears `length`; (3) it then reassigns `push` to its own
+ * callback; (4) it closes the payload stream in a handler whose function is
+ * named `DOMContentLoaded`, registered on the document while loading or on a
+ * zero timeout after. A Next upgrade can change any of them, and the failure
+ * will look like the hold being broken rather than the instrument. The
+ * symptoms, so they are read right: if the chunks are no longer buffered,
+ * the wall hydrates before the press and `openWindow`'s precondition fails,
+ * "not in the window"; if the handler's name changes, the stream closes at
+ * load and the release never hydrates, so the wait for the hydrated mark
+ * after `releaseHydration` times out; if the drain changes shape, the page
+ * hydrates with no wall or errors in the console. All three fail before any
+ * hold assertion runs, and the fix is this file, not the hold.
+ *
+ * **The state this holds is the one that drops a press, and the first
+ * instrument's is not.** Holding the Scheduler's channel leaves React able
+ * to hydrate synchronously when a press arrives, and it does. `holdScheduler`
+ * keeps that first instrument for the one test of the hold engaging where
+ * React would have coped.
  */
 export async function holdHydration(page: Page): Promise<void> {
   await page.addInitScript(() => {
@@ -85,4 +108,31 @@ export async function inTheWindow(page: Page): Promise<{ posted: number; hydrate
     posted: (window as unknown as { __heldChunks?: number }).__heldChunks ?? 0,
     hydrated: (document.querySelector('[data-wall-container]') as HTMLElement | null)?.dataset.hydrated === 'true',
   }));
+}
+
+/**
+ * The first instrument, kept for one test: the Scheduler's message channel
+ * held, so React is attached and its hydration scheduled but not run, the
+ * state in which React hydrates synchronously on a discrete event. A click
+ * never engages the hold there, since its pointerdown hydrates the wall
+ * first; Enter does, and is applied in hydration's own commit (traced 29
+ * Oct; the test is in hold-160.spec.ts).
+ */
+export async function holdScheduler(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    const w = window as unknown as { __holdScheduler: boolean; __releaseScheduler: () => void; __heldPosts: number };
+    w.__holdScheduler = true;
+    w.__heldPosts = 0;
+    const pending: Array<() => void> = [];
+    const orig = MessagePort.prototype.postMessage;
+    MessagePort.prototype.postMessage = function (this: MessagePort, ...args: unknown[]) {
+      if (w.__holdScheduler) { w.__heldPosts += 1; pending.push(() => (orig as (...a: unknown[]) => void).apply(this, args)); return; }
+      return (orig as (...a: unknown[]) => void).apply(this, args);
+    } as typeof MessagePort.prototype.postMessage;
+    w.__releaseScheduler = () => { w.__holdScheduler = false; for (const f of pending.splice(0)) f(); };
+  });
+}
+
+export async function releaseScheduler(page: Page): Promise<void> {
+  await page.evaluate(() => (window as unknown as { __releaseScheduler?: () => void }).__releaseScheduler?.());
 }

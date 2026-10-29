@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist, trackRecord } from './cleanup';
-import { holdHydration, inTheWindow, releaseHydration } from './hold-window';
+import { holdHydration, holdScheduler, inTheWindow, releaseHydration, releaseScheduler } from './hold-window';
 import { login } from './sign-in';
 import { HOLD_BOUND_MS } from '@/app/wall/hold-script';
 
@@ -16,8 +16,9 @@ import { HOLD_BOUND_MS } from '@/app/wall/hold-script';
  * never lost to a script that fails. ... The far view's run is a button and
  * has no anchor, so its press is held the same way."
  *
- * The window is held open by `hold-window.ts`, which delays the Scheduler's
- * message channel from an init script. Every click here is inside the
+ * The window is held open by `hold-window.ts`, which holds the page's server
+ * payload from an init script, so React is attached and cannot hydrate the
+ * wall on a press; its coupling to Next is written there. Every click here is inside the
  * window on purpose, the one exception the spine-click guard allows, marked
  * on its line. Fails against the build before the hold: with the window
  * held, a press is dropped by React and nothing pulls after release.
@@ -44,7 +45,7 @@ async function openWindow(page: Page, artistId: string): Promise<void> {
   await page.goto(`/?artistId=${artistId}`);
   await expect(page.locator('[data-wall="labelled"]')).toBeVisible({ timeout: 30_000 });
   await expect.poll(async () => (await inTheWindow(page)).posted, { timeout: 30_000, message: 'React has posted to the held channel' }).toBeGreaterThan(0);
-  expect((await inTheWindow(page)).hydrated, 'the wall is not hydrated while the channel is held').toBe(false);
+  expect((await inTheWindow(page)).hydrated, 'not in the window: the wall hydrated while the payload was held, which is the instrument (hold-window.ts, its coupling to Next) and not the hold').toBe(false);
 }
 
 const spine = (page: Page, id: string) => page.locator(`a[data-seat="${id}"] [data-spine]`);
@@ -129,6 +130,53 @@ test(`past the bound (${HOLD_BOUND_MS}ms) with hydration not landed, the held pr
   /* The record's page, reached by the anchor's own navigation; not built as a path, since this spec does not drive that screen. */
   await expect(page).toHaveURL(/\/records\/[0-9a-f-]{36}$/, { timeout: HOLD_BOUND_MS + 5000 });
   expect(page.url().endsWith(ids[5])).toBe(true);
+});
+
+/*
+  The cost of the hold engaging where React would have coped (the coordinator, 29 Oct). With only the
+  Scheduler's channel held, React is attached and hydrates synchronously on a discrete event. A click's
+  pointerdown hydrates the wall before the click arrives, so the script finds it hydrated and never holds
+  (traced 29 Oct: hydrated at pointerdown + 141ms, click 2ms later, no data-held). Enter is the one press
+  the hold takes in this state: the script holds on keydown and prevents the anchor's activation, React
+  hydrates off the same keydown, and its first commit applies the hold and clears the mark, in that one
+  task (traced: held at 561ms, hydrated and cleared at 706ms). The cost, asserted: the hold engaged, and
+  the record pulls once, with no navigation and no second chrome. The mark's history is recorded because
+  the hold is applied and cleared before any assertion could look at the region.
+
+  What fails it, staged 29 Oct: the consume effect in WallLive ignoring the hold (no chrome: in this state
+  an Enter the hold does not apply is dropped). What does not: removing the keydown's preventDefault, the
+  hold's second-pull refusal, or both at once, all still one pull. So the one-pull count is the cost as
+  observed, and no line has been identified that it fails against.
+*/
+async function recordHeldMarks(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    const seen: Array<string | null> = [];
+    (window as unknown as { __heldMarks: Array<string | null> }).__heldMarks = seen;
+    new MutationObserver((ms) => { for (const m of ms) seen.push((m.target as Element).getAttribute('data-held')); })
+      .observe(document, { subtree: true, attributes: true, attributeFilter: ['data-held'] });
+  });
+}
+
+test('where React hydrates on the press itself, Enter is still held and applied, and the record pulls once', async ({ page }) => {
+  await login(page);
+  const { artistId, ids } = await seed(page, 12);
+  await recordHeldMarks(page);
+  await holdScheduler(page);
+  await page.goto(`/?artistId=${artistId}`);
+  await expect(page.locator('[data-wall="labelled"]')).toBeVisible({ timeout: 30_000 });
+  await expect.poll(() => page.evaluate(() => (window as unknown as { __heldPosts?: number }).__heldPosts ?? 0), { timeout: 30_000 }).toBeGreaterThan(0);
+  expect((await inTheWindow(page)).hydrated, 'React attached, nothing hydrated').toBe(false);
+  await page.locator(`a[data-seat="${ids[6]}"]`).focus();
+  await page.keyboard.press('Enter'); /* spine-click: before hydration, §W.8 */
+  await releaseScheduler(page);
+  await expect(page.getByTestId('record-chrome')).toBeVisible({ timeout: 5000 });
+  const marks = await page.evaluate(() => (window as unknown as { __heldMarks: Array<string | null> }).__heldMarks);
+  expect(marks, 'the hold engaged on the seat pressed, and was cleared when applied').toEqual([ids[6], null]);
+  await page.waitForTimeout(1800);
+  await expect(page.getByTestId('record-chrome')).toHaveCount(1);
+  await expect(page.locator('[data-pulled]')).toHaveCount(1);
+  await expect(page.locator(`[data-pulled="${ids[6]}"]`)).toHaveCount(1);
+  expect(page.url()).toContain('/?artistId=');
 });
 
 /*

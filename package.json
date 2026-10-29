@@ -22,6 +22,8 @@
     "db:test:up": "docker compose up -d --wait postgres",
     "db:test:reset": "docker compose down postgres && docker compose up -d --wait postgres && NODE_ENV=test drizzle-kit migrate && NODE_ENV=test npm run db:verify:state",
     "db:verify:state": "node --experimental-strip-types --no-warnings scripts/verify-migration-state.mjs",
+    "moods:tag": "node --env-file=.env.local --conditions=react-server --import tsx scripts/tag-moods.mts",
+    "moods:override": "node --env-file=.env.local --conditions=react-server --import tsx scripts/override-moods.mts",
     "_test:exit-code": "RUNNERS EXIT NON-ZERO ON FAILURE, AND MUST SURVIVE A PIPE. Playwright and vitest both exit 1 correctly on their own; what concealed five runs was `| tail`, since a pipeline's status is its LAST command's. `set -o pipefail` keeps the runner's status when the output is piped, which is how anyone reads a 500-spec run. .npmrc sets script-shell=bash because sh does not guarantee pipefail. Held by test/repo/test-commands-fail-loudly.test.ts, which stages a real failing suite rather than grepping for the flag."
   },
   "dependencyNotes": {
