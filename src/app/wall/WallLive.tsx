@@ -553,6 +553,25 @@ if (offset !== null) offset.style.transform = '';
     },
     [onView, seats],
   );
+  /*
+    §W.8: a press held by the inline script while the wall was not yet
+    hydrated is applied once the region is marked hydrated (the effect above,
+    which runs first in the same commit): a seat's as the pull it was, a
+    run's as the zoom to its shelf, and the script's bound cleared with it.
+    The hold is cleared on the first read, so a re-run applies nothing.
+  */
+  useEffect(() => {
+    const w = window as unknown as { __wallHold?: { kind: 'seat' | 'run'; id: string } | null; __wallHoldClear?: () => void };
+    const held = w.__wallHold ?? null;
+    if (held === null) return;
+    w.__wallHoldClear?.();
+    if (held.id === '') return;
+    /* Applied on the microtask after this commit: once, not a cascade, and not a state change inside the effect's own run. */
+    queueMicrotask(() => {
+      if (held.kind === 'run') zoomIn(held.id);
+      else if (pullsRef.current.length === 0 && queued.current === null) begin(held.id, 'out');
+    });
+  }, [begin, zoomIn]);
   const zoomOut = useCallback(() => {
     landOn.current = null;
     setRouteView('far');

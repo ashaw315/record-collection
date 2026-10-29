@@ -1,5 +1,6 @@
 import { bandRules } from "./band-rules";
 import { WallLive } from "./WallLive";
+import { HOLD_SCRIPT } from "./hold-script";
 import { PickChannelProvider } from "./pick-channel";
 import { PAPER_CSS } from '@/lib/colour/paper';
 import type { WallSeat } from "./shelf-runs";
@@ -150,6 +151,13 @@ ${bandRules('')}
           />
         </div>
       )}
+      {/*
+        §W.8: a press before the wall has hydrated is held. The script runs as
+        soon as it is parsed, ahead of React's bundle, so it sees the window
+        React's listener drops a press in; it carries its own bound and
+        fallback, because the case the bound exists for is React never running.
+      */}
+      <script dangerouslySetInnerHTML={{ __html: HOLD_SCRIPT }} />
       <WallLive seats={seats} summaries={summaries} countLine={countLine} opens={opens} opensShelf={opensShelf} filter={filter} onView={onView} />
     </section>
     </PickChannelProvider>

@@ -22,8 +22,8 @@ export function directSpineClicksIn(text: string, file: string): string[] {
   const spineNames = new Set(lines.flatMap((line) => { const m = /\b(?:const|let)\s+(\w+)\s*=.*data-spine/.exec(line); return m === null ? [] : [m[1]]; }));
   const found: string[] = [];
   lines.forEach((line, i) => {
-    /* The one allowed exception says so on its line: the fallback with JavaScript disabled, where no mark can be set. */
-    if (!/\.click\(/.test(line) || /clickSpine\(/.test(line) || /spine-click: javascript disabled/.test(line)) return;
+    /* The allowed exceptions say so on their line: the fallback with JavaScript disabled, where no mark can be set, and §W.8's hold tests, which click inside the window on purpose. */
+    if (!/\.click\(/.test(line) || /clickSpine\(/.test(line) || /spine-click: (javascript disabled|before hydration, §W\.8)/.test(line)) return;
     const receiver = /\b(\w+)(?:\.(?:first|last|nth)\([^)]*\))?\.click\(/.exec(line)?.[1];
     if (/data-spine/.test(line) || (receiver !== undefined && spineNames.has(receiver))) found.push(`${file}:${i + 1}`);
   });
@@ -48,5 +48,6 @@ describe('a spec clicks a spine only through clickSpine', () => {
     expect(directSpineClicksIn("await clickSpine(page, page.locator('[data-seat] [data-spine]').first());\n", 'x.spec.ts')).toEqual([]);
     expect(directSpineClicksIn("await page.getByRole('button').click();\n", 'x.spec.ts')).toEqual([]);
     expect(directSpineClicksIn("await plain.locator('[data-seat] [data-spine]').click(); /* spine-click: javascript disabled */\n", 'x.spec.ts')).toEqual([]);
+    expect(directSpineClicksIn("await spine(page, ids[2]).click(); /* spine-click: before hydration, §W.8 */\n", 'x.spec.ts')).toEqual([]);
   });
 });

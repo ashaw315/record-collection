@@ -49766,3 +49766,37 @@ held press would reach a given bound: the window's max at the slowest
 level measured here is 1.24s (cpu ×8); any bound above that is never
 reached by hydration finishing late on these levels, and would be reached
 only by a script that fails.
+
+## 28 Oct, 21:20: step 160, the hold; two findings for Design
+
+**The instrument the target names does not hold the window.** Holding the
+Scheduler's message channel from an init script keeps the wall unhydrated
+for as long as asked (3.7s measured), but a press in that state is a
+discrete event, and React flushes the root's hydration synchronously for
+it; the press then pulls through React and the hold script never engages.
+The state the gate's trace showed, React attached and a press that cannot
+hydrate the wall, is the page's server payload still arriving: Next streams
+it as `self.__next_f.push` chunks, its client drains them once and reassigns
+`push`, and the root hydrates around a page boundary waiting on them. The
+instrument built holds those chunks with an accessor `push`, and holds
+Next's own `DOMContentLoaded` handler by name until release, because that
+handler closes the payload stream and chunks released after it go into a
+closed stream ("Connection closed", the first run). With it the hold
+engages: eight tests pass, the held pull, Enter, the second spine, each
+cancel, and the bound's navigation. A draft fix for §W.8's test sentence.
+
+**The far view's run has no subject before hydration.** The run is a
+button only once the wall is measured on the client; the server's markup
+carries no `[data-run]`, so a press in the window lands on nothing and the
+hold has nothing to hold. The script's run branch is built and the test is
+recorded as a gap (`test.fixme`), with the question for Design whether the
+run is a button in the markup.
+
+**Built as ruled otherwise.** The inline script (`hold-script.ts`) in the
+wall's server markup, ahead of React, carries the capture, the hold, the
+second-spine replacement, the four cancels, the bound (`HOLD_BOUND_MS`,
+2000, one place, 61% above the widest window measured) and both fallbacks,
+the seat's anchor and the run's near-view address; `WallLive` applies a
+held press once the region is marked hydrated. A scroll in the first 150ms
+after a press is the browser's scroll-into-view for the click and does not
+cancel. The §T.6 slot-width test waits on Design's sentence.

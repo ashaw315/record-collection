@@ -36,7 +36,15 @@ function runMigrate(env: Record<string, string | undefined>): {
   }
 }
 
-describe('drizzle.config.ts shares one schema with the app', () => {
+/*
+ * No clock on these (28 Oct, the third of the family): each spawns drizzle-kit
+ * or node, and one took 5.25s at load 4 with nothing beside it, refusing step
+ * 160's commit. The condition is the child exiting, which execFileSync waits
+ * on; a timeout of 0 is read by vitest's runner as none. A child that never
+ * exits hangs the file: inside a gate that is caught by gate.sh's
+ * did-not-finish verdict at exit 4; a local run has no outer clock, accepted.
+ */
+describe('drizzle.config.ts shares one schema with the app', { timeout: 0 }, () => {
   /**
    * **Removed: an assertion that `drizzle.config.ts` contains two import
    * statements.**
