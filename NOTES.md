@@ -49736,3 +49736,33 @@ them holds the page in the attached-but-unhydrated state for as long as the
 test needs, without touching the product. Until the ruling, the behaviour
 is measured and unruled: a click before any script follows the anchor; a
 click in the window is blocked and dropped; a click after hydration pulls.
+
+## 28 Oct, 20:15: the hydration window measured (for §W.8's bound, whichever job it has)
+
+The time from React's root listener attaching to the wall's region taking
+`data-hydrated`, read from inside the page by an init script (the first
+`click` listener on the document's root marks the attach; a mutation
+observer marks the hydrated attribute), on `/?artistId=` with 12 records
+and 40 of scenery before them, eight runs a level, the machine otherwise
+idle (`hydration-window-probe`, deleted after the reading):
+
+| level | window, median | p90 | max | min | attach at | hydrated at (max) |
+|---|---|---|---|---|---|---|
+| unthrottled | 167ms | 188 | 190 | 160 | 295ms | 458ms (813) |
+| cpu ×4 | 524ms | 566 | 590 | 502 | 557ms | 1125ms (1182) |
+| cpu ×8 | 1075ms | 1116 | 1244 | 1054 | 946ms | 2038ms (4111) |
+| slow-3G-like net, 400ms latency, 400kbps, cpu ×4 | 452ms | 463 | 465 | 435 | 5075ms | 5535ms (5736) |
+
+Times from navigation start. The window scales with the CPU, not the
+network: a slow connection moves the whole thing later (the scripts arrive
+at five seconds) and leaves the window itself at the CPU's width, because
+once React's chunk has run the wall's hydration is local work. So a press
+lands in the window only if it is issued inside roughly half a second at
+the moment the page becomes interactive, which on a slow connection is
+five seconds after the markup was readable. The two gate failures were
+clicks issued 80ms after the markup was visible on a dev server serving
+three workers, inside an unthrottled window of about 160ms. How often a
+held press would reach a given bound: the window's max at the slowest
+level measured here is 1.24s (cpu ×8); any bound above that is never
+reached by hydration finishing late on these levels, and would be reached
+only by a script that fails.

@@ -135,12 +135,21 @@ export function changedSections(before, after) {
   return [...ids].filter((id) => JSON.stringify([...(was.get(id) ?? [])].sort()) !== JSON.stringify([...(now.get(id) ?? [])].sort())).sort();
 }
 
-/** How a change file addresses a section's row: 'edited', 'stands' or null. */
+/**
+ * How a change file addresses a section's row: 'edited', 'stands' or null.
+ * Read in Design's own phrasings, not one form (28 Oct, when the first
+ * detector refused "Anchored on the row's first cell, `| §W.8 |`. Append to
+ * its description" and "The §T.6 governs row is unchanged, because"): a
+ * paragraph that names the section and the row, its description or its
+ * title is an edit; a sentence that names the section and says the row
+ * stands, is unchanged or needs no change is a standing.
+ */
 export function rowAddressed(changeFile, id) {
-  const escaped = id.replace('.', '\\.');
-  if (new RegExp(`§${escaped}, (description|title):`).test(changeFile)) return 'edited';
-  const stands = sentencesOf(changeFile).some((s) => new RegExp(`§${escaped}(?![\\d.])`).test(s) && /\brow (stands|unchanged)\b|\bno change\b/i.test(s));
-  return stands ? 'stands' : null;
+  const names = new RegExp(`§${id.replace('.', '\\.')}(?![\\d.])`);
+  const stands = sentencesOf(changeFile).some((s) => names.test(s) && /\brow (?:is |was )?(?:stands|unchanged)\b|\bno change\b/i.test(s));
+  if (stands) return 'stands';
+  const edited = changeFile.split(/\n[ \t]*\n/).some((para) => names.test(para) && /\b(?:description|title|governs row)\b/i.test(para));
+  return edited ? 'edited' : null;
 }
 
 function governs(from, to) {

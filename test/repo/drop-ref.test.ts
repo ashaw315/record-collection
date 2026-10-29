@@ -3,7 +3,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { nextRefName } from '../../scripts/drop-ref.mjs';
+import { nextRefName, rowAddressed } from '../../scripts/drop-ref.mjs';
 
 /**
  * **A copy of each drop as it arrived, and a word that a new one has (25 Oct).**
@@ -308,5 +308,24 @@ describe('drop-ref: a withdrawal filed where the claim stood names that section�
     } finally {
       r.done();
     }
+  });
+});
+
+/*
+  Design's own phrasings, 28 Oct, which the first detector did not read and refused: a row edit
+  written as "Anchored on the row's first cell, `| §W.8 |`. Append to its description: …", and a
+  row left alone as "The §T.6 governs row is unchanged, because …". A check that reads only the
+  form it was written against is the narrow-detector family; the forms the rule names are a
+  section's row edited, in whatever words name the row, or said to stand.
+*/
+describe('drop-ref: the row’s edit and its standing in Design’s own phrasings', () => {
+  it('reads an edit anchored on the row’s first cell, and "row is unchanged, because"', () => {
+    expect(rowAddressed("## Change 1 — the §W.8 governs row\n\nAnchored on the row's first cell, `| §W.8 |`. Append to its description:\n\n> And a press on a spine.\n", 'W.8')).toBe('edited');
+    expect(rowAddressed('The §T.6 governs row is unchanged, because it already names manage with its Discogs import.\n', 'T.6')).toBe('stands');
+    expect(rowAddressed('- **§T.2, description:** The second.\n', 'T.2')).toBe('edited');
+    expect(rowAddressed('The §T.1 governs row stands: nothing it names changed.\n', 'T.1')).toBe('stands');
+    /* Not the section: §W.80's row, or a mention with no row in it. */
+    expect(rowAddressed("Anchored on the row's first cell, `| §W.80 |`. Append to its description: x.\n", 'W.8')).toBeNull();
+    expect(rowAddressed('§W.8 rules the press; nothing here about rows.\n', 'W.8')).toBeNull();
   });
 });
