@@ -50115,3 +50115,37 @@ The supplement's modes keep the session in memory across their wait, since
 signing in is itself a request that would warm the function: idle-cold signs
 in and then makes no request for 20 minutes; after-deploy signs in before
 the deploy and waits for Enter once it is Ready.
+
+## 29 Oct, 23:30: the first production matrix, aborted at load 11 of 240
+
+Adam's run (docs/measurements/window-160/matrix-2026-10-30T00-06-56-751Z.jsonl,
+load 1.2 to 4 throughout). The window occurred in every cell that
+completed: warm/none 29ms, cold/none 61, warm/fast-3g 196, cold/fast-3g
+366, warm/slow-3g-cpu4 805, warm/slow-3g 821, one load each; the second
+round's cold/none and cold/fast-3g showed none. Every cold/slow-3g and
+cold/slow-3g-cpu4 attempt hit the 180s goto timeout. This overturns the
+15:30 local measurement (no occurrence at any level): locally the chunks and
+the document come from one process; on Vercel the chunks come from a CDN
+while the HTML streams, the shape the local server does not reproduce.
+
+**The abort's count was of attempts, not loads.** "10 broken loads" fired
+on 3 loads retaken twice each (9 attempts) and the first attempt of a
+fourth: `broken += 1` ran on every failed attempt, while the stopping rule
+said loads. A stopping condition that fires on a number the printed output
+does not show is not a stopping rule.
+
+**The 180s timeouts were classed broken, which they are not.** A load the
+app does not finish in the time allowed is a result about the app; broken
+is for an instrument fault. And the timeout was on goto's `load` event,
+which waits for every subresource, while the window needs only the painted
+spine and interactive; on a timeout the marks were discarded, so whether
+those loads painted spines while loading, or reached interactive, is not
+known.
+
+**A timing estimate does not cross environments.** The matrix was sized at
+50 to 90 minutes from a round of 86s on the local dev server; on production
+one round took 1312s, about 11 hours for the matrix. This is the second
+estimate this week to cross from one environment to another and be wrong
+by an order of magnitude. An estimate is stated with the environment it was
+measured in, and a run on another environment is sized from that
+environment's own first round, not from the estimate.
