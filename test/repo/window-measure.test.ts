@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MARGIN, RUN_A, RUN_B, projection, runPlan, schedule, verdict, windowOf, type Load, type Window } from '../../scripts/window-measure';
+import { MARGIN, RUN_A, RUN_B, loadsOfLog, projection, runPlan, schedule, verdict, windowOf, type Load, type Window } from '../../scripts/window-measure';
 
 /**
  * **The production measurement's judgement, restated before a load is taken
@@ -107,6 +107,16 @@ describe('runPlan', () => {
   });
 });
 
+describe('loadsOfLog', () => {
+  const line = (cell: string, i: number, window: Window) => JSON.stringify({ label: 'run-a', cell, i, at: 'x', load: [1, 1], window, ms: 1 });
+
+  /* Fails against reading every line as a load: the log has one line per attempt, and a retaken load is its last attempt, as runPlan keeps it. */
+  it('reads a log of attempts as its loads, a retaken load as its last attempt', () => {
+    const log = [line('a', 0, { kind: 'broken', reason: 'x' }), line('a', 0, { kind: 'occurred', widthMs: 5 }), line('b', 1, { kind: 'none' }), ''].join('\n');
+    expect(loadsOfLog(log)).toEqual([{ cell: 'a', window: { kind: 'occurred', widthMs: 5 } }, { cell: 'b', window: { kind: 'none' } }]);
+  });
+});
+
 describe('projection', () => {
   /* Fails against a projection from the local estimate rather than this run's own first round. */
   it('projects the rest of the run from its first round and says when it passes two hours', () => {
@@ -152,6 +162,55 @@ describe('verdict', () => {
   it('names the loads that did not complete with the window open longer than the bound', () => {
     const v = verdict([load('warm/slow-3g', occurred(821)), load('cold/slow-3g', { kind: 'incomplete', limitMs: 600_000, stage: 'spine-while-loading', openAtLeastMs: 412_000 })], 20);
     expect(v.sentence).toContain('1 load that did not complete had the window open at least 412000ms, longer than the bound: the bound does not cover it.');
+  });
+
+  /* Fails against a cell reported by its median and widest alone, which cannot tell a tail from one load (the coordinator, 30 Oct). */
+  it('gives each cell its full spread and its second-widest beside the widest', () => {
+    const v = verdict([load('warm/slow-3g', occurred(900)), load('warm/slow-3g', occurred(700)), load('warm/slow-3g', occurred(800)), load('warm/slow-3g', { kind: 'none' })], 20);
+    expect(v.sentence).toContain('warm/slow-3g widths, ascending: 700, 800, 900ms; second-widest 800ms.');
+  });
+
+  /* Fails against a spread line for a cell with one width, which has no second-widest to state. */
+  it('states no second-widest for a cell with one width', () => {
+    const v = verdict([load('cold/none', occurred(61))], 20);
+    expect(v.sentence).toContain('cold/none widths, ascending: 61ms.');
+    expect(v.sentence).not.toContain('second-widest');
+  });
+
+  /* Fails against a cell's outlier named only when it decides the bound: warm/fast-3g here does not, and is still said. */
+  it('says when a cell\'s widest stands past the margin above everything else in it, in any cell', () => {
+    const v = verdict([
+      load('warm/fast-3g', occurred(200)), load('warm/fast-3g', occurred(1267)),
+      load('warm/slow-3g', occurred(5000)), load('warm/slow-3g', occurred(4900)),
+    ], 20);
+    expect(v.sentence).toContain('warm/fast-3g widths, ascending: 200, 1267ms; second-widest 200ms. The widest stands far above the rest of this cell, 6.3 times the second-widest.');
+    expect(v.sentence).not.toContain('warm/slow-3g widths, ascending: 4900, 5000ms; second-widest 4900ms. The widest stands');
+    expect(v.sentence).not.toContain('Adam judges against both');
+  });
+
+  /* Fails against a threshold other than the margin: at exactly 1.5 the second-widest's bound already covers the widest, so it is not far above. */
+  it('does not call a widest exactly the margin above the second-widest far above it', () => {
+    const v = verdict([load('warm/slow-3g', occurred(1000)), load('warm/slow-3g', occurred(1500))], 20);
+    expect(v.sentence).not.toContain('stands far above');
+  });
+
+  /* Fails against the formula applied to one load: 1.5 times an outlier is an outlier, and the margin's reason assumes the widest under-reads its cell. */
+  it('gives the bound from the second-widest beside the formula when the deciding load stands alone', () => {
+    const v = verdict([load('warm/slow-3g', occurred(800)), load('warm/slow-3g', occurred(900)), load('warm/slow-3g', occurred(9000)), load('cold/none', occurred(61))], 20);
+    expect(v.boundMs).toBe(13500);
+    expect(v.sentence).toContain('The widest, 9000ms, stands far above the rest of warm/slow-3g, where the second-widest is 900ms, so it may over-read its cell, and the margin\'s reason assumes it under-reads. From the second-widest the bound would be 1400ms. Adam judges against both.');
+  });
+
+  /* Fails against the second-widest of the deciding cell alone: a bound below another cell's widest covers neither. */
+  it('takes the alternative from the widest left in the run when another cell stands above the second-widest', () => {
+    const v = verdict([load('warm/slow-3g', occurred(800)), load('warm/slow-3g', occurred(9000)), load('warm/slow-3g-cpu4', occurred(2000))], 20);
+    expect(v.sentence).toContain('From the second-widest the bound would be 1200ms, but warm/slow-3g-cpu4 reached 2000ms, so without that load the bound would be 3000ms. Adam judges against both.');
+  });
+
+  /* Fails against the alternative stated for a run with one width, where there is nothing to take it from. */
+  it('states no alternative bound for a lone load, the only width in the run', () => {
+    const v = verdict([load('cold/none', occurred(61))], 20);
+    expect(v.sentence).not.toContain('Adam judges against both');
   });
 
   /* Fails against a verdict that reads a run with no occurrence as a null on the question 29 Oct settled. */

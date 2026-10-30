@@ -50207,3 +50207,41 @@ timings, under the old end condition at the load event: cold/none 4 to 34s,
 cold/fast-3g 79s, the warm cells about 36s each with their warm-up, so a
 round of Run A at most about 260s and the run at most about 85 minutes.
 Run B at most 50 minutes. The first round's projection is the figure.
+
+## 30 Oct, 11:30: Run A's verdict, and the 29 Oct and 30 Oct loads compared
+
+Adam's Run A (docs/measurements/window-160/run-a-2026-10-30T15-07-04-848Z.jsonl,
+120 loads, none broken, none past the limit, load 2.5 to 5.9). Re-judged with
+`npm run window:verdict`, since the run printed the verdict of the code it
+started with. The formula gives 25200ms, from 16743ms in warm/slow-3g.
+
+**The verdict now reports each cell's spread and second-widest** (the
+coordinator, 30 Oct). Far above means past the margin: over 1.5 times the
+second-widest, the point where the second-widest's own bound stops reaching
+the widest. No cell in Run A reaches it, and that does not make warm/slow-3g
+well behaved: 786 to 16743ms, median 2663, with seven loads at 8489 or more
+and thirteen at 3721 or less. The two widest are 16687 and 16743, so the
+outlier test cannot see it. A bimodal cell's top is a mode, not one load, and
+only the spread shows that.
+
+**The window is measured the same way on both days; the warm cells are not the
+same cell.** The recorder and `windowOf`'s width are unchanged between a5090d3
+and 8cbf381, and ending the measured load earlier cannot move interactive,
+which comes first. So cold/none and cold/fast-3g compare directly: 61 against
+16 to 38, and 366 inside 244 to 732. But 8cbf381 also moved the warm-up onto
+`takeLoad`, which the restated rule did not ask for: on 29 Oct the warm-up
+waited for the load event, so every cover was cached (the measured load's own
+load event came within 1516ms); on 30 Oct it stops at interactive and the
+hydrated mark, with covers unfetched. **821ms against 8489ms is not a
+comparison of one cell.**
+
+**The likely cause of the upper mode, not shown:** on a warm/slow-3g load the
+covers that the warm-up did not cache now download beside the document's tail
+through one throttled 400kbps, and the window closes only when that tail has
+arrived. It fits: the frame is steady at 750ms, the width alone varies, and
+the lower mode's 786 to 1931ms sits where 29 Oct's 821 did. The log holds no
+resource timing and the warm-up's length was not recorded, so nothing here
+proves it. What resolves it: warm/slow-3g on production with the warm-up
+restored to the load event. If the upper mode goes, Run A's warm cells measured
+a partly filled cache, and the bound's proposed figure falls with them.
+Run B is cold and takes no warm-up.
