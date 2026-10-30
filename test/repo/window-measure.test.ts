@@ -1,7 +1,7 @@
 import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { CANDIDATES_MS, COVER_BLOCK, DELAYS_MS, PRESS_LATE_MS, RUN_A, RUN_B, RUN_CAUSE, cellName, closePlan, conditionMade, coverSummary, coverSizes, heldWaits, loadsOfLog, pressOutcome, pressesOfLog, projection, runPlan, schedule, verdict, windowOf, type Load, type Window } from '../../scripts/window-measure';
+import { CANDIDATES_MS, COVER_BLOCK, PULL_SEATS, frameStats, pullPlan, DELAYS_MS, PRESS_LATE_MS, RUN_A, RUN_B, RUN_CAUSE, cellName, closePlan, conditionMade, coverSummary, coverSizes, heldWaits, loadsOfLog, pressOutcome, pressesOfLog, projection, runPlan, schedule, verdict, windowOf, type Load, type Window } from '../../scripts/window-measure';
 
 /**
  * **The production measurement's judgement, restated before a load is taken
@@ -166,6 +166,29 @@ describe('coverSummary', () => {
   /* Fails against a null document end read as zero: a load that ended before the last byte has no figure. */
   it('gives no document end when the load ended first', () => {
     expect(coverSummary({ ...net, documentEndTs: null }, marks).documentEndMs).toBeNull();
+  });
+});
+
+describe('frameStats', () => {
+  /* Fails against a mean: an animation dropping frames has an unremarkable mean and a bad tail. */
+  it('states the intervals: median, 95th, worst, and those past 33 and 50ms', () => {
+    expect(frameStats([0, 16, 33, 50, 100, 116, 133, 200])).toEqual({ frames: 8, durationMs: 200, medianMs: 17, p95Ms: 67, worstMs: 67, past33: 2, past50: 1 });
+  });
+
+  /* Fails against a stall read as a short clean run: no frames at all is not a smooth animation. */
+  it('gives nothing to read from fewer than two frames', () => {
+    expect(frameStats([5])).toEqual({ frames: 1, durationMs: 0, medianMs: null, p95Ms: null, worstMs: null, past33: 0, past50: 0 });
+  });
+});
+
+describe('the pull run', () => {
+  /* Fails against the second seat alone, which is what missed Adam's Chuck Mangione: the first seat of the top row is the corner in both axes. */
+  it('takes the top row\'s first and second seats and a lower seat, each with covers fetching, blocked and settled, 3 of each', () => {
+    expect(PULL_SEATS).toEqual([{ name: 'top-first', order: 1 }, { name: 'top-second', order: 2 }, { name: 'lower-second', order: 22 }]);
+    const plan = pullPlan(3);
+    expect(plan).toHaveLength(27);
+    expect(new Set(plan.map((p) => p.covers))).toEqual(new Set(['fetching', 'blocked', 'settled']));
+    expect(plan.slice(0, 3).map((p) => p.seat.name)).toEqual(['top-first', 'top-second', 'lower-second']);
   });
 });
 

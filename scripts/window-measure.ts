@@ -448,3 +448,75 @@ export async function takePress(page: Page, url: string, limitMs: number, { pres
     await page.waitForTimeout(100);
   }
 }
+
+/**
+ * **The pull's motion, in real time (the coordinator, 30 Oct).** Stills every
+ * 300ms on a frozen clock show position and cannot see frame delivery, so every
+ * animation frame is logged here with its phase, the record's box, the cover's
+ * box and opacity, the panel, and the wall's scroll.
+ */
+export const PULL_SEATS = [{ name: 'top-first', order: 1 }, { name: 'top-second', order: 2 }, { name: 'lower-second', order: 22 }] as const;
+export type PullCovers = 'fetching' | 'blocked' | 'settled';
+export type PullCell = { seat: (typeof PULL_SEATS)[number]; covers: PullCovers };
+
+export function pullPlan(rounds: number): PullCell[] {
+  const covers: PullCovers[] = ['fetching', 'blocked', 'settled'];
+  return Array.from({ length: rounds }, () => covers.flatMap((c) => PULL_SEATS.map((seat) => ({ seat, covers: c })))).flat();
+}
+
+export function frameStats(times: number[]): { frames: number; durationMs: number; medianMs: number | null; p95Ms: number | null; worstMs: number | null; past33: number; past50: number } {
+  const gaps = times.slice(1).map((t, i) => t - times[i]).sort((a, b) => a - b);
+  const durationMs = times.length < 2 ? 0 : times[times.length - 1] - times[0];
+  if (gaps.length === 0) return { frames: times.length, durationMs, medianMs: null, p95Ms: null, worstMs: null, past33: 0, past50: 0 };
+  return {
+    frames: times.length,
+    durationMs,
+    medianMs: gaps[Math.floor(gaps.length / 2)],
+    p95Ms: gaps[Math.min(gaps.length - 1, Math.floor(gaps.length * 0.95))],
+    worstMs: gaps[gaps.length - 1],
+    past33: gaps.filter((g) => g > 33).length,
+    past50: gaps.filter((g) => g > 50).length,
+  };
+}
+
+/** A string, as RECORDER is: tsx names a function's inner functions with a helper the page does not have. */
+const PULL_SAMPLER = (ms: number) => `(() => {
+  const log = { frames: [], longTasks: [] };
+  window.__pull = log;
+  new PerformanceObserver((list) => { for (const e of list.getEntries()) log.longTasks.push({ at: e.startTime, ms: e.duration }); }).observe({ entryTypes: ['longtask'] });
+  const box = (el) => { const b = el ? el.getBoundingClientRect() : null; return b === null ? null : [Math.round(b.x), Math.round(b.y), Math.round(b.width), Math.round(b.height)]; };
+  const start = performance.now();
+  const tick = (now) => {
+    const pulled = document.querySelector('[data-pulled]');
+    const cover = pulled ? pulled.querySelector('image[data-cover]') : null;
+    const region = document.querySelector('[data-region="wall"]');
+    const panel = document.querySelector('[data-testid="panel-region"]');
+    log.frames.push({
+      t: Math.round(now * 10) / 10,
+      phase: document.querySelector('[data-wall-container]')?.getAttribute('data-phase'),
+      record: box(pulled ? pulled.querySelector('[data-landing]') : null),
+      cover: box(cover),
+      coverOpacity: cover ? cover.getAttribute('opacity') : null,
+      coverHref: cover ? cover.getAttribute('href') : null,
+      panel: panel ? panel.textContent.length : null,
+      scroll: region ? [Math.round(region.scrollLeft), Math.round(region.scrollTop)] : null,
+    });
+    if (now - start < ${ms}) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+})()`;
+
+/** Starts logging, then a real click on the seat; resolves with every frame for `forMs`, and the long tasks. */
+export async function takePull(page: Page, order: number, forMs: number): Promise<{ frames: unknown[]; longTasks: Array<{ at: number; ms: number }>; seat: unknown }> {
+  const spine = page.locator(`a[data-seat][data-seat-order="${order}"] [data-spine]`).first();
+  await spine.scrollIntoViewIfNeeded();
+  const box = await spine.boundingBox();
+  if (box === null) throw new Error('no spine could be pressed');
+  const point = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+  await page.evaluate(PULL_SAMPLER(forMs));
+  await page.mouse.click(point.x, point.y);
+  await page.waitForTimeout(forMs + 200);
+  const seat = await spine.evaluate((el) => el.closest('a')?.getAttribute('aria-label')).catch(() => null);
+  const { frames, longTasks } = await page.evaluate(() => (window as unknown as { __pull: { frames: unknown[]; longTasks: Array<{ at: number; ms: number }> } }).__pull);
+  return { frames, longTasks, seat };
+}

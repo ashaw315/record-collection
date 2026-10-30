@@ -50566,3 +50566,23 @@ turned out to be the pull looking wrong, and the hypothesis behind it was reject
 from the code the same hour (engage is `readyState === 'loading'`, and a hydrated
 wall is never held). Removed for a reason that did not hold; its measured cost is
 nothing; and production and `e2e/hold-160` should not disagree for days.
+
+## 30 Oct, 17:00: stills cannot see motion
+
+**A capture interval of 300ms cannot see a frame-rate defect** (the coordinator,
+30 Oct). The 16:00 table measured position on a frozen clock, on a dev server
+with test data and no covers. It answered a different question from the one
+asked, the shape the landing-scroll figure had: Adam says the captures look right
+and production does not, and nothing in them could tell the two apart. It also
+took the second seat of each row, and his report is the first seat of the top row.
+That table is good for the pan's direction. It is not an account of his report.
+
+`npm run window:measure:pull`, Adam's, in a headed Chrome so frame delivery is his
+machine's: 27 real pulls, the top row's first and second seats and a lower seat,
+with covers fetching, blocked and settled. Each has a video, and every frame's
+time, phase, record box, cover box and opacity, panel and scroll. The stall his
+screenshot may show would read as a phase that never reaches `landed`.
+
+From the code, not yet from production: the cover's `<image>` has explicit size
+and `meet`, so natural size cannot show, and its opacity is the swing's arrival,
+so it is a pale ghost early in a pull. The panel arrives with the rotation.
