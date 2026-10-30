@@ -50302,3 +50302,29 @@ changes that too.
 seven new-ruling calls), so §W.8's two `No entry: nothing was ruled here before`
 calls each pass alone. It reads plain text, so bold changes nothing. Nothing
 checks that such a call is true.
+
+## 30 Oct, 12:15: the candidate table released, and a held press's wait is not the window
+
+**Released from Run A with its caveat (the coordinator, 30 Oct):** the warm
+cells' cache state was a race, so their counts will move if the retake changes
+them, and the judgement they inform will not. `verdict` now gives counts and no
+figure; `npm run window:verdict` reads them from a log, and takes Run B's too.
+
+**The count is on the wait, not the width.** The hold's timer runs from the
+press to hydration, and the window's width stops at interactive. On warm cells
+the two differ by 28 to 228ms; on cold/fast-3g hydration lands 15.3 to 15.7s
+after interactive, so every one of its 20 loads waits about 16s. By width 4000ms
+navigates 10 of 120, all slow-3g; by wait, 30 of the 89 that held a press, the
+10 and cold/fast-3g's 20. Each count takes a press at the first frame with
+spines, the longest wait the load offers, so a later press waits less.
+
+**That gap is a state the handoff calls unreachable.** For 15s on cold/fast-3g
+the page has loaded and the wall has not hydrated: a press is not held there,
+since `loading()` is false, and goes to whatever the anchor or React does. Step
+160's instruments call a loaded page whose wall cannot hydrate "a state
+production never reaches". The marks do not say whether React had attached, so
+what such a press does on production is not known. The 40-load retake is warm
+and does not reach it. For Design and the coordinator.
+
+**Assertion 12 confirms a no-entry call's form and never its claim:** nothing
+checks whether a call is TRUE. The narrow-detector family again; not urgent.

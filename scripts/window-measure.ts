@@ -32,7 +32,8 @@ export type Window =
 
 export type Cell = { cache: 'cold' | 'warm'; network: 'none' | 'fast-3g' | 'slow-3g' | 'slow-3g-cpu4' };
 
-export type Load = { cell: string; window: Window };
+/** `waitMs` is the first frame with spines to the hydrated mark, or how long a load past its limit stood open. */
+export type Load = { cell: string; window: Window; waitMs?: number | null };
 
 /** The presets of the 29 Oct 15:30 local measurement, so the two can be read side by side. */
 export const NETWORK: Record<Cell['network'], { latency: number; kbps: number | null; cpu: number }> = {
@@ -118,85 +119,92 @@ export function projection(roundMs: number, rounds: number): { minutes: number; 
   return { minutes, overTwoHours: minutes > 120 };
 }
 
-/** The bound proposed is the widest completed run times this, rounded up to 100ms; what it is for is stated in the verdict. */
-export const MARGIN = 1.5;
-
-const boundOf = (widthMs: number) => Math.ceil((widthMs * MARGIN) / 100) * 100;
-
-/**
- * Past the margin the second-widest's own bound no longer reaches the widest,
- * so the margin is spent on the gap between two loads: the widest may be
- * over-reading its cell, the opposite of what the margin assumes (the
- * coordinator, 30 Oct).
- */
-const standsAlone = (ascending: number[]) => ascending.length >= 2 && ascending[ascending.length - 1] > ascending[ascending.length - 2] * MARGIN;
-
 const median = (xs: number[]) => {
   const s = [...xs].sort((a, b) => a - b);
   const mid = Math.floor(s.length / 2);
   return s.length % 2 === 1 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
 };
 
+/** The figures Adam judges the bound among, and the acknowledgement's delay among: tolerance places both, and the run only counts. */
+export const CANDIDATES_MS = [1000, 2000, 3000, 4000, 6000, 8000, 12000];
+export const DELAYS_MS = [300, 500, 800, 1000];
+
+const held = (w: Window) => w.kind === 'occurred' || (w.kind === 'incomplete' && w.stage === 'spine-while-loading');
+
+/**
+ * How many loads hold a press longer than each figure, by cell. The hold's
+ * timer runs from the press to hydration, not to interactive, so a wait is the
+ * first frame with spines to the hydrated mark: on cold/fast-3g a 366ms window
+ * is a 16s wait. A press later in the window waits less, so this is each
+ * load's longest. A window with no hydrated mark waited past every figure.
+ */
+export function heldWaits(loads: Load[], figures: number[]): Array<{ cell: string; held: number; past: number[] }> {
+  const cells = [...new Set(loads.map((l) => l.cell))];
+  return cells.flatMap((cell) => {
+    const inCell = loads.filter((l) => l.cell === cell && held(l.window));
+    if (inCell.length === 0) return [];
+    return [{ cell, held: inCell.length, past: figures.map((figure) => inCell.filter((l) => l.waitMs === null || l.waitMs === undefined || l.waitMs > figure).length) }];
+  });
+}
+
+const tableLines = (loads: Load[], figures: number[]) => {
+  const rows = heldWaits(loads, figures);
+  const line = (name: string, count: number, past: number[]) => `${name} (${count} held): ${figures.map((f, i) => `${f}ms ${past[i]}`).join(', ')}.`;
+  return [
+    ...rows.map((r) => line(r.cell, r.held, r.past)),
+    line('All cells', rows.reduce((n, r) => n + r.held, 0), figures.map((_, i) => rows.reduce((n, r) => n + r.past[i], 0))),
+  ];
+};
+
 /** The log has a line per attempt; a retaken load is its last attempt, the one `runPlan` keeps. */
 export function loadsOfLog(log: string): Load[] {
-  const attempts = log.split('\n').filter((line) => line !== '').map((line) => JSON.parse(line) as Load & { i: number });
-  return [...new Map(attempts.map((a) => [a.i, { cell: a.cell, window: a.window }])).values()];
+  const attempts = log.split('\n').filter((line) => line !== '').map((line) => JSON.parse(line) as { i: number; cell: string; window: Window; marks?: Marks | null });
+  const loads = attempts.map((a): [number, Load] => {
+    const { marks, window } = a;
+    const waitMs = window.kind === 'incomplete' ? window.openAtLeastMs ?? null
+      : marks?.hydratedAt === null || marks?.hydratedAt === undefined || marks.frameAt === null ? null
+      : marks.hydratedAt - marks.frameAt;
+    return [a.i, { cell: a.cell, window, waitMs }];
+  });
+  return [...new Map(loads).values()];
 }
 
 /**
- * The verdict in the restated rule's words. The run measures the width, so
- * the figure is the widest completed run plus the margin, and every load
- * that did not complete with the window open longer than that is named. Each
- * cell gives its full spread, so a tail can be told from one load, and a
- * deciding load that stands alone gets the bound without it beside the
- * formula's.
+ * The verdict in the rule's words as Design restated them (§W.8, 30 Oct): the
+ * bound is a judgement of tolerance, so the run gives counts and no figure.
+ * Each cell gives its full spread, so a tail can be told from one load.
  */
-export function verdict(loads: Load[], perCell: number): { sentence: string; boundMs: number | null; broken: number } {
+export function verdict(loads: Load[]): { sentence: string; broken: number } {
   const counted = loads.filter((l) => l.window.kind !== 'broken');
   const broken = loads.length - counted.length;
   const cells = [...new Set(counted.map((l) => l.cell))];
-  const widthsOf = (cell: string) => counted.flatMap((l) => (l.cell === cell && l.window.kind === 'occurred' ? [l.window.widthMs] : [])).sort((a, b) => a - b);
   const lines = cells.flatMap((cell) => {
-    const ws = counted.filter((l) => l.cell === cell).map((l) => l.window);
-    const widths = ws.flatMap((w) => (w.kind === 'occurred' ? [w.widthMs] : []));
+    const inCell = counted.filter((l) => l.cell === cell);
+    const ws = inCell.map((l) => l.window);
+    const widths = ws.flatMap((w) => (w.kind === 'occurred' ? [w.widthMs] : [])).sort((a, b) => a - b);
     const late = ws.filter((w) => w.kind === 'incomplete');
     const limits = [...new Set(late.map((w) => (w.kind === 'incomplete' ? w.limitMs / 1000 : 0)))];
     const lateText = late.length === 0 ? '' : `, did not complete within ${limits.join('s or ')}s ${late.length}`;
-    const widthText = widths.length === 0 ? '' : `; median ${Math.round(median(widths))}ms, widest ${Math.round(Math.max(...widths))}ms`;
+    const widthText = widths.length === 0 ? '' : `; median ${Math.round(median(widths))}ms, widest ${Math.round(widths[widths.length - 1])}ms`;
     const line = `${cell}: ${ws.length} loads; occurred ${widths.length}, none ${ws.filter((w) => w.kind === 'none').length}${lateText}${widthText}.`;
-    const ascending = widthsOf(cell);
-    if (ascending.length === 0) return [line];
-    const second = ascending.length >= 2 ? ascending[ascending.length - 2] : null;
-    const alone = standsAlone(ascending) && second !== null ? ` The widest stands far above the rest of this cell, ${(ascending[ascending.length - 1] / second).toFixed(1)} times the second-widest.` : '';
-    return [line, `${cell} widths, ascending: ${ascending.map(Math.round).join(', ')}ms${second === null ? '' : `; second-widest ${Math.round(second)}ms`}.${alone}`];
+    if (widths.length === 0) return [line];
+    const second = widths.length >= 2 ? `; second-widest ${Math.round(widths[widths.length - 2])}ms` : '';
+    const waits = inCell.flatMap((l) => (l.window.kind === 'occurred' && l.waitMs !== null && l.waitMs !== undefined ? [l.waitMs] : [])).sort((a, b) => a - b);
+    return [line, `${cell} widths, ascending: ${widths.map(Math.round).join(', ')}ms${second}.`, `${cell} waits to hydration, ascending: ${waits.map(Math.round).join(', ')}ms.`];
   });
-  const head = 'This run measures how wide the window is. That it occurs on production at every connection level measured was settled on 29 Oct; a thin or noisy result places the bound less well, and does not reopen whether there is one.';
-  const hits = counted.flatMap((l) => (l.window.kind === 'occurred' ? [{ cell: l.cell, widthMs: l.window.widthMs }] : []));
-  if (hits.length === 0) {
-    return { boundMs: null, broken, sentence: [head, ...lines, 'No load in this run showed the window, so it gives no figure.'].join('\n') };
+  const head = 'This run measures how wide the window is and how long a held press waits. That it occurs on production at every connection level measured was settled on 29 Oct. The bound is a judgement of tolerance: the counts below say how many loads each candidate would navigate, not where the figure goes.';
+  if (!counted.some((l) => held(l.window))) {
+    return { broken, sentence: [head, ...lines, 'No load in this run showed the window, so it gives no counts.'].join('\n') };
   }
-  const widest = hits.reduce((a, b) => (b.widthMs > a.widthMs ? b : a));
-  const boundMs = boundOf(widest.widthMs);
-  const beyond = counted.flatMap((l) => (l.window.kind === 'incomplete' && (l.window.openAtLeastMs ?? 0) > boundMs ? [l.window.openAtLeastMs ?? 0] : []));
-  const beyondText = beyond.length === 0 ? [] : [`${beyond.length} load${beyond.length === 1 ? '' : 's'} that did not complete had the window open at least ${Math.round(Math.min(...beyond))}ms, longer than the bound: the bound does not cover ${beyond.length === 1 ? 'it' : 'them'}.`];
-  const deciding = widthsOf(widest.cell);
-  const others = hits.filter((h) => h !== widest).reduce((a, b) => (b.widthMs > a.widthMs ? b : a), { cell: widest.cell, widthMs: 0 });
-  const secondWidest = deciding[deciding.length - 2];
-  const aloneText = !standsAlone(deciding) ? [] : [[
-    `The widest, ${Math.round(widest.widthMs)}ms, stands far above the rest of ${widest.cell}, where the second-widest is ${Math.round(secondWidest)}ms, so it may over-read its cell, and the margin's reason assumes it under-reads.`,
-    `From the second-widest the bound would be ${boundOf(secondWidest)}ms${others.widthMs > secondWidest ? `, but ${others.cell} reached ${Math.round(others.widthMs)}ms, so without that load the bound would be ${boundOf(others.widthMs)}ms` : ''}.`,
-    'Adam judges against both.',
-  ].join(' ')];
   return {
-    boundMs,
     broken,
     sentence: [
       head,
       ...lines,
-      `The widest completed run was ${Math.round(widest.widthMs)}ms, in ${widest.cell}. Proposed bound: ${boundMs}ms, the widest × ${MARGIN} rounded up to 100ms.`,
-      `The margin is for two things: at ${perCell} loads a cell the widest observed falls below the cell's 95th percentile ${Math.round(0.95 ** perCell * 100)}% of the time (0.95^${perCell}), and the conditions not measured: Safari and Firefox, real devices and lossy networks, other regions, a larger collection. Adam judges the figure.`,
-      ...aloneText,
-      ...beyondText,
+      'Loads a held press would navigate at each candidate, counting a press at the first frame with spines, the longest wait a load offers:',
+      ...tableLines(counted, CANDIDATES_MS),
+      'Loads in which a held press would show the acknowledgement at each delay, counted the same way:',
+      ...tableLines(counted, DELAYS_MS),
     ].join('\n'),
   };
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MARGIN, RUN_A, RUN_B, loadsOfLog, projection, runPlan, schedule, verdict, windowOf, type Load, type Window } from '../../scripts/window-measure';
+import { CANDIDATES_MS, DELAYS_MS, RUN_A, RUN_B, heldWaits, loadsOfLog, projection, runPlan, schedule, verdict, windowOf, type Load, type Window } from '../../scripts/window-measure';
 
 /**
  * **The production measurement's judgement, restated before a load is taken
@@ -108,12 +108,29 @@ describe('runPlan', () => {
 });
 
 describe('loadsOfLog', () => {
-  const line = (cell: string, i: number, window: Window) => JSON.stringify({ label: 'run-a', cell, i, at: 'x', load: [1, 1], window, ms: 1 });
+  const line = (cell: string, i: number, window: Window, marks: unknown = null) => JSON.stringify({ label: 'run-a', cell, i, at: 'x', load: [1, 1], marks, window, ms: 1 });
 
   /* Fails against reading every line as a load: the log has one line per attempt, and a retaken load is its last attempt, as runPlan keeps it. */
   it('reads a log of attempts as its loads, a retaken load as its last attempt', () => {
-    const log = [line('a', 0, { kind: 'broken', reason: 'x' }), line('a', 0, { kind: 'occurred', widthMs: 5 }), line('b', 1, { kind: 'none' }), ''].join('\n');
-    expect(loadsOfLog(log)).toEqual([{ cell: 'a', window: { kind: 'occurred', widthMs: 5 } }, { cell: 'b', window: { kind: 'none' } }]);
+    const log = [line('a', 0, { kind: 'broken', reason: 'x' }), line('a', 0, { kind: 'none' }), line('b', 1, { kind: 'none' }), ''].join('\n');
+    expect(loadsOfLog(log).map((l) => [l.cell, l.window.kind])).toEqual([['a', 'none'], ['b', 'none']]);
+  });
+
+  /* Fails against the wait taken to interactive, which stops the hold's clock 16s early on cold/fast-3g. */
+  it('takes an occurred load\'s wait from its frame to the hydrated mark', () => {
+    const log = line('a', 0, { kind: 'occurred', widthMs: 70 }, marks);
+    expect(loadsOfLog(log)[0].waitMs).toBe(190);
+  });
+
+  /* Fails against an unknown wait read as zero. */
+  it('gives a load with no hydrated mark no wait', () => {
+    expect(loadsOfLog(line('a', 0, { kind: 'occurred', widthMs: 70 }, { ...marks, hydratedAt: null }))[0].waitMs).toBeNull();
+  });
+
+  /* Fails against a load past its limit given no wait: spines painted and no interactive means it waited at least as long as it was open. */
+  it('gives a load that did not complete the time its window was open', () => {
+    const late: Window = { kind: 'incomplete', limitMs: 600_000, stage: 'spine-while-loading', openAtLeastMs: 412_000 };
+    expect(loadsOfLog(line('a', 0, late, marks))[0].waitMs).toBe(412_000);
   });
 });
 
@@ -125,105 +142,112 @@ describe('projection', () => {
   });
 });
 
-describe('verdict', () => {
-  const load = (cell: string, window: Window): Load => ({ cell, window });
+describe('heldWaits', () => {
+  const load = (cell: string, window: Window, waitMs: number | null = null): Load => ({ cell, window, waitMs });
   const occurred = (widthMs: number): Window => ({ kind: 'occurred', widthMs });
 
-  /* Fails against a verdict that frames a thin result as reopening whether the window occurs. */
-  it('frames the run as measuring the width, the occurrence settled on 29 Oct', () => {
-    const v = verdict([load('cold/none', occurred(61))], 20);
-    expect(v.sentence).toMatch(/^This run measures how wide the window is\. That it occurs on production at every connection level measured was settled on 29 Oct; a thin or noisy result places the bound less well, and does not reopen whether there is one\./);
+  /* Fails against a count taken from the width: the hold's timer runs to hydration, 16s past a 366ms window on cold/fast-3g. */
+  it('counts a load past a candidate by its wait to hydration, not its window', () => {
+    const [row] = heldWaits([load('cold/fast-3g', occurred(366), 15900), load('cold/fast-3g', occurred(400), 500)], [1000, 20000]);
+    expect(row).toEqual({ cell: 'cold/fast-3g', held: 2, past: [1, 0] });
+  });
+
+  /* Fails against a load with no window counted: a press there is not held, so no bound can navigate it. */
+  it('leaves out a load in which the window did not occur', () => {
+    const [row] = heldWaits([load('cold/none', { kind: 'none' }), load('cold/none', occurred(30), 2000)], [1000]);
+    expect(row).toEqual({ cell: 'cold/none', held: 1, past: [1] });
+  });
+
+  /* Fails against dropping a load that outlasted its limit: its window was open at least that long, so every candidate below navigates it. */
+  it('counts a load that did not complete with spines painted, by the time it was open', () => {
+    const late: Window = { kind: 'incomplete', limitMs: 600_000, stage: 'spine-while-loading', openAtLeastMs: 412_000 };
+    expect(heldWaits([load('cold/slow-3g', late, 412_000)], [1000, 500_000])[0]).toEqual({ cell: 'cold/slow-3g', held: 1, past: [1, 0] });
+  });
+
+  /* Fails against reading a load with no spine yet as a held press: nothing could have been pressed. */
+  it('leaves out a load that did not complete before a spine was painted', () => {
+    const v = heldWaits([load('cold/slow-3g', { kind: 'incomplete', limitMs: 1, stage: 'no-spine' }), load('cold/slow-3g', occurred(5), 5)], [1]);
+    expect(v[0]).toEqual({ cell: 'cold/slow-3g', held: 1, past: [1] });
+  });
+
+  /* Fails against an unknown wait read as zero: a window that occurred with no hydrated mark by the limit waited longer than any candidate. */
+  it('counts a window whose hydration never arrived past every candidate', () => {
+    expect(heldWaits([load('warm/slow-3g', occurred(800), null)], [1000, 20000])[0].past).toEqual([1, 1]);
+  });
+
+  /* Fails against a candidate counted at or above its own figure: a press that hydrates exactly at the bound pulls. */
+  it('does not count a wait exactly at a candidate', () => {
+    expect(heldWaits([load('warm/fast-3g', occurred(1), 1000)], [1000])[0].past).toEqual([0]);
+  });
+});
+
+describe('verdict', () => {
+  const load = (cell: string, window: Window, waitMs: number | null = null): Load => ({ cell, window, waitMs });
+  const occurred = (widthMs: number): Window => ({ kind: 'occurred', widthMs });
+
+  /* Fails against a verdict that frames a thin result as reopening whether the window occurs, or the run as setting the figure. */
+  it('frames the run as counts for a judgement of tolerance, the occurrence settled on 29 Oct', () => {
+    const v = verdict([load('cold/none', occurred(61), 100)]);
+    expect(v.sentence).toMatch(/^This run measures how wide the window is and how long a held press waits\. That it occurs on production at every connection level measured was settled on 29 Oct\. The bound is a judgement of tolerance: the counts below say how many loads each candidate would navigate, not where the figure goes\./);
   });
 
   /* Fails against a per-cell line that drops the loads that did not complete, or reports a mean for the widest. */
   it('states each cell: its outcomes, the median width and the widest', () => {
     const v = verdict([
-      load('warm/slow-3g', occurred(800)), load('warm/slow-3g', occurred(900)), load('warm/slow-3g', occurred(700)),
+      load('warm/slow-3g', occurred(800), 900), load('warm/slow-3g', occurred(900), 950), load('warm/slow-3g', occurred(700), 750),
       load('warm/slow-3g', { kind: 'none' }), load('warm/slow-3g', { kind: 'incomplete', limitMs: 180_000, stage: 'no-spine' }),
-    ], 20);
+    ]);
     expect(v.sentence).toContain('warm/slow-3g: 5 loads; occurred 3, none 1, did not complete within 180s 1; median 800ms, widest 900ms.');
   });
 
-  /* Fails against a bound that is the widest run alone: at n=20 the widest under-reads the tail, and the margin is what absorbs it. */
-  it('proposes the bound as the widest run plus a stated margin, with what the margin is for', () => {
-    expect(MARGIN).toBe(1.5);
-    const v = verdict([load('warm/slow-3g', occurred(821)), load('cold/none', occurred(61))], 20);
-    expect(v.boundMs).toBe(1300);
-    expect(v.sentence).toContain('The widest completed run was 821ms, in warm/slow-3g. Proposed bound: 1300ms, the widest × 1.5 rounded up to 100ms.');
-    expect(v.sentence).toContain('The margin is for two things: at 20 loads a cell the widest observed falls below the cell\'s 95th percentile 36% of the time (0.95^20), and the conditions not measured: Safari and Firefox, real devices and lossy networks, other regions, a larger collection.');
-  });
-
-  /* Fails against a margin's reason stated for Run A's 20 loads in Run B's verdict, where it is 5. */
-  it('states the sampling shortfall for the run\'s own loads a cell', () => {
-    expect(verdict([load('cold/slow-3g', occurred(2000))], 5).sentence).toContain('at 5 loads a cell the widest observed falls below the cell\'s 95th percentile 77% of the time (0.95^5)');
-  });
-
-  /* Fails against a verdict that leaves a load open longer than the proposed bound out of sight. */
-  it('names the loads that did not complete with the window open longer than the bound', () => {
-    const v = verdict([load('warm/slow-3g', occurred(821)), load('cold/slow-3g', { kind: 'incomplete', limitMs: 600_000, stage: 'spine-while-loading', openAtLeastMs: 412_000 })], 20);
-    expect(v.sentence).toContain('1 load that did not complete had the window open at least 412000ms, longer than the bound: the bound does not cover it.');
-  });
-
   /* Fails against a cell reported by its median and widest alone, which cannot tell a tail from one load (the coordinator, 30 Oct). */
-  it('gives each cell its full spread and its second-widest beside the widest', () => {
-    const v = verdict([load('warm/slow-3g', occurred(900)), load('warm/slow-3g', occurred(700)), load('warm/slow-3g', occurred(800)), load('warm/slow-3g', { kind: 'none' })], 20);
+  it('gives each cell its full spread of widths and of waits, ascending', () => {
+    const v = verdict([load('warm/slow-3g', occurred(900), 1000), load('warm/slow-3g', occurred(700), 750), load('warm/slow-3g', occurred(800), 850)]);
     expect(v.sentence).toContain('warm/slow-3g widths, ascending: 700, 800, 900ms; second-widest 800ms.');
+    expect(v.sentence).toContain('warm/slow-3g waits to hydration, ascending: 750, 850, 1000ms.');
   });
 
   /* Fails against a spread line for a cell with one width, which has no second-widest to state. */
   it('states no second-widest for a cell with one width', () => {
-    const v = verdict([load('cold/none', occurred(61))], 20);
+    const v = verdict([load('cold/none', occurred(61), 100)]);
     expect(v.sentence).toContain('cold/none widths, ascending: 61ms.');
     expect(v.sentence).not.toContain('second-widest');
   });
 
-  /* Fails against a cell's outlier named only when it decides the bound: warm/fast-3g here does not, and is still said. */
-  it('says when a cell\'s widest stands past the margin above everything else in it, in any cell', () => {
-    const v = verdict([
-      load('warm/fast-3g', occurred(200)), load('warm/fast-3g', occurred(1267)),
-      load('warm/slow-3g', occurred(5000)), load('warm/slow-3g', occurred(4900)),
-    ], 20);
-    expect(v.sentence).toContain('warm/fast-3g widths, ascending: 200, 1267ms; second-widest 200ms. The widest stands far above the rest of this cell, 6.3 times the second-widest.');
-    expect(v.sentence).not.toContain('warm/slow-3g widths, ascending: 4900, 5000ms; second-widest 4900ms. The widest stands');
-    expect(v.sentence).not.toContain('Adam judges against both');
+  /* Fails against the withdrawn formula: W.8/bound-above-widest takes the ×1.5 out, and no figure is proposed. */
+  it('proposes no bound', () => {
+    const v = verdict([load('warm/slow-3g', occurred(821), 900)]);
+    expect(v.sentence).not.toMatch(/Proposed bound|× 1\.5|widest ×/);
+    expect(v).not.toHaveProperty('boundMs');
   });
 
-  /* Fails against a threshold other than the margin: at exactly 1.5 the second-widest's bound already covers the widest, so it is not far above. */
-  it('does not call a widest exactly the margin above the second-widest far above it', () => {
-    const v = verdict([load('warm/slow-3g', occurred(1000)), load('warm/slow-3g', occurred(1500))], 20);
-    expect(v.sentence).not.toContain('stands far above');
+  /* Fails against a table with no row per cell, or no total: the coordinator asked for the breakdown, and a press at the first frame is the worst case. */
+  it('tables every bound candidate by cell with a total, and says the count is a press at the first frame', () => {
+    const v = verdict([load('warm/slow-3g', occurred(8000), 9000), load('warm/fast-3g', occurred(200), 250)]);
+    expect(CANDIDATES_MS).toEqual([1000, 2000, 3000, 4000, 6000, 8000, 12000]);
+    expect(v.sentence).toContain('Loads a held press would navigate at each candidate, counting a press at the first frame with spines, the longest wait a load offers:');
+    expect(v.sentence).toContain('warm/slow-3g (1 held): 1000ms 1, 2000ms 1, 3000ms 1, 4000ms 1, 6000ms 1, 8000ms 1, 12000ms 0.');
+    expect(v.sentence).toContain('All cells (2 held): 1000ms 1, 2000ms 1, 3000ms 1, 4000ms 1, 6000ms 1, 8000ms 1, 12000ms 0.');
   });
 
-  /* Fails against the formula applied to one load: 1.5 times an outlier is an outlier, and the margin's reason assumes the widest under-reads its cell. */
-  it('gives the bound from the second-widest beside the formula when the deciding load stands alone', () => {
-    const v = verdict([load('warm/slow-3g', occurred(800)), load('warm/slow-3g', occurred(900)), load('warm/slow-3g', occurred(9000)), load('cold/none', occurred(61))], 20);
-    expect(v.boundMs).toBe(13500);
-    expect(v.sentence).toContain('The widest, 9000ms, stands far above the rest of warm/slow-3g, where the second-widest is 900ms, so it may over-read its cell, and the margin\'s reason assumes it under-reads. From the second-widest the bound would be 1400ms. Adam judges against both.');
-  });
-
-  /* Fails against the second-widest of the deciding cell alone: a bound below another cell's widest covers neither. */
-  it('takes the alternative from the widest left in the run when another cell stands above the second-widest', () => {
-    const v = verdict([load('warm/slow-3g', occurred(800)), load('warm/slow-3g', occurred(9000)), load('warm/slow-3g-cpu4', occurred(2000))], 20);
-    expect(v.sentence).toContain('From the second-widest the bound would be 1200ms, but warm/slow-3g-cpu4 reached 2000ms, so without that load the bound would be 3000ms. Adam judges against both.');
-  });
-
-  /* Fails against the alternative stated for a run with one width, where there is nothing to take it from. */
-  it('states no alternative bound for a lone load, the only width in the run', () => {
-    const v = verdict([load('cold/none', occurred(61))], 20);
-    expect(v.sentence).not.toContain('Adam judges against both');
+  /* Fails against a delay figure read from the bound's table: a delay is how many held presses show the acknowledgement, a different count. */
+  it('tables the acknowledgement delay candidates by cell in the same way', () => {
+    const v = verdict([load('warm/fast-3g', occurred(200), 400)]);
+    expect(DELAYS_MS).toEqual([300, 500, 800, 1000]);
+    expect(v.sentence).toContain('Loads in which a held press would show the acknowledgement at each delay, counted the same way:');
+    expect(v.sentence).toContain('warm/fast-3g (1 held): 300ms 1, 500ms 0, 800ms 0, 1000ms 0.');
   });
 
   /* Fails against a verdict that reads a run with no occurrence as a null on the question 29 Oct settled. */
-  it('gives no figure from a run with no occurrence, and does not call it a null', () => {
-    const v = verdict([load('cold/none', { kind: 'none' })], 20);
-    expect(v.boundMs).toBeNull();
-    expect(v.sentence).toContain('No load in this run showed the window, so it gives no figure.');
+  it('gives no counts from a run with no occurrence, and does not call it a null', () => {
+    const v = verdict([load('cold/none', { kind: 'none' })]);
+    expect(v.sentence).toContain('No load in this run showed the window, so it gives no counts.');
     expect(v.sentence).not.toMatch(/does not occur|no frame with spines/);
   });
 
   /* Fails against a verdict that counts broken loads among the cells' loads. */
   it('leaves broken loads out of the cells and names how many there were', () => {
-    const v = verdict([load('cold/none', occurred(10)), load('cold/none', { kind: 'broken', reason: 'x' })], 20);
+    const v = verdict([load('cold/none', occurred(10), 20), load('cold/none', { kind: 'broken', reason: 'x' })]);
     expect(v.sentence).toContain('cold/none: 1 loads;');
     expect(v.broken).toBe(1);
   });

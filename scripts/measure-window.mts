@@ -27,12 +27,12 @@
  * written. Nothing is pressed and nothing is written to the collection.
  * Each load attempt is a line in `docs/measurements/window-160/<mode>-<time>.jsonl`.
  */
-import { appendFileSync, mkdirSync } from 'node:fs';
+import { appendFileSync, mkdirSync, readFileSync } from 'node:fs';
 import { loadavg } from 'node:os';
 import { join } from 'node:path';
 import { createInterface } from 'node:readline/promises';
 import { chromium, type Browser, type BrowserContext } from '@playwright/test';
-import { NETWORK, RECORDER, RUN_A, RUN_B, cellName, projection, runPlan, schedule, takeLoad, verdict, type Cell, type Window } from './window-measure';
+import { NETWORK, RECORDER, RUN_A, RUN_B, cellName, loadsOfLog, projection, runPlan, schedule, takeLoad, verdict, type Cell, type Window } from './window-measure';
 
 const MODES = ['run-a', 'run-b', 'after-deploy', 'idle-cold'] as const;
 const mode = process.argv[2] ?? 'run-a';
@@ -155,7 +155,7 @@ try {
   if (result.stopped) {
     log(`\n${result.brokenLoads} loads were still broken after their retakes: the instrument is broken, and the run stops without a verdict. Every attempt: ${out}`);
   } else {
-    const v = verdict(result.loads.map((l) => ({ cell: cellName(l.cell.cell), window: l.window })), PER_CELL);
+    const v = verdict(loadsOfLog(readFileSync(out, 'utf8')));
     log(`\n${v.sentence}`);
     log(`${v.broken} load(s) broken after their retakes, left out. Every attempt: ${out}`);
   }
