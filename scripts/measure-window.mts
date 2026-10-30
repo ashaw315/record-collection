@@ -53,7 +53,9 @@ if (!(MODES as readonly string[]).includes(mode)) {
 }
 const password = process.env.PROD_LOGIN_PASSWORD;
 if (password === undefined || password === '') {
-  process.stderr.write('measure-window: PROD_LOGIN_PASSWORD is not set. Run it as\n  read -rs "P?Password: "; echo; PROD_LOGIN_PASSWORD="$P" npm run window:measure; unset P\n');
+  /* This mode's own script: a suggestion naming the wrong one, pasted, starts another run. */
+  const script = mode === 'run-a' ? 'window:measure' : mode === 'run-b' ? 'window:measure:cold-slow' : `window:measure:${mode}`;
+  process.stderr.write(`measure-window: PROD_LOGIN_PASSWORD is not set. Run it as\n  read -rs "P?Password: "; echo; PROD_LOGIN_PASSWORD="$P" npm run ${script}; unset P\n`);
   process.exit(2);
 }
 const BASE = process.env.WINDOW_BASE_URL ?? 'https://record-collection-rust.vercel.app';

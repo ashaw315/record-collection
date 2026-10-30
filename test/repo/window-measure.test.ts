@@ -1,3 +1,5 @@
+import { spawnSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { CANDIDATES_MS, COVER_BLOCK, DELAYS_MS, PRESS_LATE_MS, RUN_A, RUN_B, RUN_CAUSE, cellName, closePlan, conditionMade, coverSummary, coverSizes, heldWaits, loadsOfLog, pressOutcome, pressesOfLog, projection, runPlan, schedule, verdict, windowOf, type Load, type Window } from '../../scripts/window-measure';
 
@@ -12,6 +14,28 @@ import { CANDIDATES_MS, COVER_BLOCK, DELAYS_MS, PRESS_LATE_MS, RUN_A, RUN_B, RUN
  * on production was settled on 29 Oct; the verdict measures how wide.
  */
 const marks = { spineAt: 100, frameAt: 110, frameReadyState: 'loading', interactiveAt: 180, hydratedAt: 300 };
+
+/*
+  Fails against one hard-coded example: Adam hit the message on the weigh mode, and pasting
+  what it printed would have started Run A, 120 loads (30 Oct). Run for each script in
+  package.json, so a mode added later cannot be left out.
+*/
+describe('the message when the password is not set', () => {
+  const scripts = Object.entries((JSON.parse(readFileSync('package.json', 'utf8')) as { scripts: Record<string, string> }).scripts).filter(([name]) => name.startsWith('window:measure'));
+
+  it('covers every mode', () => {
+    expect(scripts.length).toBeGreaterThanOrEqual(7);
+  });
+
+  for (const [name, command] of scripts) {
+    it(`names ${name} for ${name}`, () => {
+      const mode = command.split(' ').pop() ?? '';
+      const { status, stderr } = spawnSync('node', ['--import', 'tsx', 'scripts/measure-window.mts', mode], { encoding: 'utf8', env: { ...process.env, PROD_LOGIN_PASSWORD: '' } });
+      expect(status).toBe(2);
+      expect(stderr).toContain(`npm run ${name};`);
+    }, 30_000);
+  }
+});
 
 describe('windowOf', () => {
   /* Fails against a width taken from the spine's insertion rather than the painted frame. */

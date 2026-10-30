@@ -42435,6 +42435,23 @@ runner. A macOS runner avoids that and costs more, and a standard
 hosted runner has far fewer cores than the 49 minutes here assume.
 Decided by the coordinator on Code's assessment; no trial run.
 
+**Measured, 30 Oct (run 41094475553, on 8cbf381, whose local gate read OK): 12
+tests failed of 1407, not a wall of failures.** Ubuntu, 4 vCPU, the two projects
+as separate jobs, two workers, one retry. chromium 1009 passed, 8 failed, 1
+skipped, in 57.6 minutes against 42.9 locally. mobile on Linux WebKit 386 passed,
+4 failed, 4 skipped. Unit, 4658 passed: its 2 failures were the workflow's own
+exclude. All 12 failed on both attempts, ledger clean. They are six specs:
+- `stats.spec.ts:493`, four widths: a row of 28 against 27.5.
+- `frame-planes.spec.ts:513`, 1440 and 1920: "999 earlier covers" on two rows, not one.
+- `lookup-flows.spec.ts:1840`, two tests: an answer on 1 line at 390 against 2, and 2 against 3.
+- `nav-menu-76.spec.ts:68` and `:180`: a header 105 and 69 tall against 53.
+- `pick-moods-157.spec.ts:195`: "None among these." on 2 lines, not 1.
+- `result-card-150.spec.ts:148`: a width of 119 against 270.
+
+The entry's prediction was untested for 18 days and cost an hour of Adam's
+machine a gate. Why these differ on Linux is not measured here. Whether they
+repeat is the next run's to say.
+
 ## 12 Oct: the doubled "Nothing in the collection matches." is the reader's, not a double render
 
 **One was drawn and one was hidden.** Until the window is measured,
@@ -50502,3 +50519,7 @@ So resize on upload is the larger lever: at the Discogs mean, 43 covers are abou
 **Sent to Design, 30 Oct** (`For Design - hold evidence and covers on pull`): the
 correction to W.8/bound-above-widest; §W.8 against 30 measured presses, an entry;
 and a pull whose cover has not arrived, with lazy held until it rules.
+
+**The password message (30 Oct):** `measure-window` printed `npm run window:measure`
+whatever mode was asked for, so pasting it on the weigh mode would have started
+Run A. It now names the mode's own script, tested for every script in package.json.
