@@ -50616,3 +50616,9 @@ fail-first, 30 Oct):** it shows each line tested can fail. It does not show the
 test was written from the requirement: a test written after the code can still be
 shaped by it, and a mutation only perturbs what was written, so a missing case
 stays missing. It is evidence about the tests' strength, not about their origin.
+
+**Sent to Design, 30 Oct** (`For Design - the top-shelf pull under W.22`): the
+figures and three options: accept the compound motion, let the landing follow the
+row, or keep the single landing and separate pan and pull in time. The dip is
+about two-thirds of the pan plus the record's own drop, 44 to 65px, not the pan
+alone. The lag is left: Adam says whether he still feels it once this is settled.
