@@ -50149,3 +50149,61 @@ estimate this week to cross from one environment to another and be wrong
 by an order of magnitude. An estimate is stated with the environment it was
 measured in, and a run on another environment is sized from that
 environment's own first round, not from the estimate.
+
+## 30 Oct, 00:30: the stopping rule restated, before any load (confirmed by the coordinator)
+
+**The question has narrowed.** The six loads of 29 Oct settled that the
+window occurs on production at every connection level measured, so Design's
+conditional ruling is on its "built" branch. Run A does not ask whether the
+window occurs; it measures how wide, to set the figure. A thin or noisy
+result places the bound less well; it does not reopen whether there is one.
+
+**A load's outcome** (scripts/window-measure.ts, windowOf and takeLoad). A
+load ends at interactive and the wall's hydrated mark, or at its limit; the
+load event, which waits for every cover, is recorded as data inside the
+limit and decides nothing.
+- OCCURRED: a frame with spines painted while readyState is `loading`; the
+  width is that frame to interactive.
+- NONE: the first frame with spines painted after loading ended.
+- DID NOT COMPLETE WITHIN Ns: interactive not reached by the limit. Kept
+  with its marks and the stage reached (no response, no spine, or spines
+  painted while loading); in the last, the window was open at least from
+  the frame to the limit, reported as a lower bound apart from the widest
+  completed run. A result about the app: not retaken, never counted toward
+  the stop.
+- BROKEN: an instrument fault (sign-in, the session refused, the recorder
+  absent, a crash, a warm-up that did not finish). Retaken up to twice;
+  three loads still broken after their retakes stop the run with no
+  verdict. The stop counts loads, not attempts.
+
+**Run A** (`npm run window:measure`): cold/none, cold/fast-3g, warm/none,
+warm/fast-3g, warm/slow-3g, warm/slow-3g-cpu4; 20 loads each, 120,
+round-robin, limit 180s, no early stop. **Run B**
+(`npm run window:measure:cold-slow`): cold/slow-3g, 5 loads, limit 600s;
+the cold cpu4 variant is dropped. After the first round each run projects
+its remainder from its own timing; past two hours Adam stops it, the loads
+are kept, and there is no verdict.
+
+**The verdict**, per cell: occurred, none and did not complete, the median
+width and the widest. **The bound proposed is the widest completed run ×
+1.5, rounded up to 100ms**, across both runs. The margin is for two things,
+stated with the figure: the sampling shortfall (at 20 loads a cell the
+widest observed falls below the cell's 95th percentile 36% of the time,
+0.95^20; at 30 it would be 21%), which is what makes 20 loads a cell
+acceptable rather than a quiet downgrade; and the conditions not measured:
+Safari and Firefox, real devices and lossy networks, other regions, a
+larger collection. Any load that did not complete with the window open
+longer than the bound is named, as a load the bound does not cover. Adam
+judges the figure.
+
+**What this gives up** against the 240-load matrix: 20 loads a cell rather
+than 30, so the widest under-reads the tail more often, which the margin
+absorbs; cold slow-3g at 5 loads, no distribution there; no cold cpu4 cell.
+Not measured, as before: Safari and Firefox, real devices and lossy
+networks, other regions, a larger collection.
+
+**Time:** not estimated from anywhere but production. The aborted run's own
+timings, under the old end condition at the load event: cold/none 4 to 34s,
+cold/fast-3g 79s, the warm cells about 36s each with their warm-up, so a
+round of Run A at most about 260s and the run at most about 85 minutes.
+Run B at most 50 minutes. The first round's projection is the figure.
