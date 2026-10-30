@@ -4,6 +4,12 @@ import type { Page } from '@playwright/test';
  * **The hydration window held open, from an init script, with no product
  * change (§W.8's test instrument, 28 Oct).**
  *
+ * **Measured 30 Oct, dev server: with nothing delivered this does not make the
+ * state described below.** The recorder read React not attached at 300ms and
+ * at 4s past interactive, and a press took the anchor. Its one job is the
+ * delivered arm, `deliverPayload`, for the premise test. The paragraphs below
+ * are the 28 Oct claim, and no instrument reproduces a dropped press.
+ *
  * The window the wall-route Escape flake's trace showed is React's root
  * listener attached and the wall's subtree not yet hydrated, in a state a
  * press cannot hydrate synchronously. Holding the Scheduler's message

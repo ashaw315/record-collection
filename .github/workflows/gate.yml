@@ -2,6 +2,12 @@
 # started by hand, one gate per completed unit. A trial until NOTES says
 # otherwise: geometry tuned on macOS browsers may not hold on Linux, and a
 # failure here is sorted before it is believed. No assertion is loosened to pass.
+# A green job here means the half's own last line read OK, never that a command
+# exited 0: the first run's jobs were green with no e2e test run at all.
+#
+# `test/repo/dev-targets-neon.test.ts` reads the developer's own `.env.local`,
+# which a runner does not have. It is excluded by name, and it still runs on
+# every commit through commit-checked.sh.
 #
 # It needs no secret. `.env.test` is committed and points at the Postgres the
 # jobs start for themselves; no test makes a live call, and production is never
@@ -16,7 +22,7 @@ on:
   workflow_dispatch:
     inputs:
       commit:
-        description: The commit to gate
+        description: The commit to gate, its full id
         required: true
 
 permissions:
@@ -25,6 +31,8 @@ permissions:
 env:
   TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5433/record_collection_test
   DATABASE_URL: postgresql://postgres:postgres@localhost:5433/record_collection_test
+  # Colour in a piped vitest breaks every parse of its summary, including neon-gate.test.ts's.
+  NO_COLOR: '1'
 
 jobs:
   unit:
@@ -43,16 +51,19 @@ jobs:
       - run: docker compose up -d --wait
       # `src/app/type-scale.test.ts` reads the CSS a build produces. As in gate.sh, the build is given no database.
       - run: env -u TEST_DATABASE_URL -u DATABASE_URL npm run build
+      # The log sits outside the tree: inside it, the run's "tree unchanged" reads the log growing.
       - name: Unit suite
         run: |
-          mkdir -p gate-logs
-          npx tsx scripts/run-tests.ts npm test > "gate-logs/$(git rev-parse --short HEAD)-unit.log" 2>&1 || true
-          tail -5 gate-logs/*-unit.log
+          LOG="$RUNNER_TEMP/gate-logs/$(git rev-parse --short=7 HEAD)-unit.log"
+          mkdir -p "$(dirname "$LOG")"
+          npx tsx scripts/run-tests.ts npm test -- --exclude test/repo/dev-targets-neon.test.ts > "$LOG" 2>&1 || true
+          tail -5 "$LOG"
+          tail -1 "$LOG" | grep -q -- '— OK'
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: unit
-          path: gate-logs
+          path: ${{ runner.temp }}/gate-logs
           retention-days: 14
 
   e2e:
@@ -78,20 +89,28 @@ jobs:
       - run: npm ci --no-audit --no-fund
       - run: npx playwright install --with-deps ${{ matrix.browser }}
       - run: docker compose up -d --wait
+      # Locally the unit suite's setup migrates; here each job has a database of its own.
+      - run: NODE_ENV=test npx drizzle-kit migrate
       - name: Playwright, ${{ matrix.project }}
         env:
           PROJECT: ${{ matrix.project }}
         run: |
-          mkdir -p gate-logs
-          npx tsx scripts/run-tests.ts npx playwright test --project="$PROJECT" --output "test-results/$PROJECT" --workers=2 --retries=1 > "gate-logs/$(git rev-parse --short HEAD)-e2e-$PROJECT.log" 2>&1 || true
-          tail -5 gate-logs/*-e2e-"$PROJECT".log
+          LOG="$RUNNER_TEMP/gate-logs/$(git rev-parse --short=7 HEAD)-e2e-$PROJECT.log"
+          mkdir -p "$(dirname "$LOG")"
+          npx tsx scripts/run-tests.ts npx playwright test --project="$PROJECT" --output "test-results/$PROJECT" --workers=2 --retries=1 > "$LOG" 2>&1 || true
+          tail -5 "$LOG"
+          tail -1 "$LOG" | grep -q -- '— OK'
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: e2e-${{ matrix.project }}
-          path: |
-            gate-logs
-            test-results
+          path: ${{ runner.temp }}/gate-logs
+          retention-days: 14
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-${{ matrix.project }}
+          path: test-results
           retention-days: 14
 
   verdict:
@@ -111,5 +130,5 @@ jobs:
       # The script at the commit gated, reading what the halves wrote; its status is the verdict, not any step's above.
       - name: The gate's verdict
         run: |
-          C="$(git rev-parse --short HEAD)"
-          bash scripts/gate-report.sh "$C" "artifacts/unit/$C-unit.log" "chromium=artifacts/e2e-chromium/gate-logs/$C-e2e-chromium.log" "mobile=artifacts/e2e-mobile/gate-logs/$C-e2e-mobile.log"
+          C="$(git rev-parse --short=7 HEAD)"
+          bash scripts/gate-report.sh "$C" "artifacts/unit/$C-unit.log" "chromium=artifacts/e2e-chromium/$C-e2e-chromium.log" "mobile=artifacts/e2e-mobile/$C-e2e-mobile.log"

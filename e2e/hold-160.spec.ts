@@ -32,7 +32,10 @@ import { HOLD_BOUND_MS } from '@/app/wall/hold-script';
  *   dropped; no test uses that state.
  *
  * **The instruments sit on a scale of reachability.** `holdHydration` with
- * nothing delivered makes a state production never reaches. `holdScheduler`
+ * nothing delivered was written as a state production never reaches, a press
+ * there dropped; measured 30 Oct on the dev server, React had not attached 4s
+ * past interactive and a press took the anchor, so that claim above does not
+ * stand, and the dropped press is staged, not reproduced. `holdScheduler`
  * makes one it reaches on every load: the page complete and the wall not yet
  * hydrated (a production build, 29 Oct: interactive at 94ms, hydrated at
  * 148ms, cold). The proxy makes one whose reachability on production is

@@ -50254,9 +50254,9 @@ measured cell the accident and the 29 Oct state the real one. The warm-up is
 not restored and Run A is not discarded. Both the candidate table's navigate
 counts and the acknowledgement's delay are HELD: both rest on the warm cells.
 
-**What the measured cell is, from the code and the log.** Every spine draws its
-cover as an SVG `<image>` with no lazy loading (`WallLabelled.tsx`), so a load
-asks for every cover at once. Run A's warm-up took about 0.6s (warm/none,
+**What the measured cell is, from the code and the log.** (Corrected at 13:00
+below: the covers are the hidden grid's, not the spines'.) A load asks for
+every cover at once. Run A's warm-up took about 0.6s (warm/none,
 median wall time 1083ms a load, 406ms of it the measured load); 29 Oct's took
 about 37s, one load (warm/none, 00:26:24 to 00:27:02). So the warm-up had 0.6s
 of about 37s of cover traffic: scripts cached and few covers, how many left to
@@ -50367,6 +50367,10 @@ dev server, and a press there took the anchor; its doc comment says React is
 attached and the press dropped. Stopped after two attempts. Dropped is staged
 instead by swallowing the click with scripts held, which shows the instrument
 can report it, not that the app reaches it. The control's claim is unverified.
+Step 160's instrument list is corrected to say so (the coordinator, 30 Oct). The
+dropped press rests on one gate trace: if the cause run shows the gap is React
+not attached and the anchor navigating, §W.8's state has been observed exactly
+once, and the report says so plainly. Not raised with Design until then.
 
 ## 30 Oct, 12:45: the CI trial, because the 12 Oct entry is an untested conclusion
 
@@ -50381,3 +50385,39 @@ trial finds, that entry ends up stating a measured result.
 commit whose local gate read OK, so a failure is about the runner and not new
 code. It holds no secret. Accepted only if no assertion is loosened to pass;
 Linux-only failures are sorted by name and stay on a local Mac gate.
+
+## 30 Oct, 13:00: the cause run, measured
+
+Adam's run (docs/measurements/window-160/cause-2026-10-30T16-36-59-747Z.jsonl),
+80 loads, none broken, load 1.8 to 9.9. **Code's own step checks and commit ran
+beside its first five minutes**, up to load 9.9: a mistake, and §9's. Measured,
+it moved nothing: medians at load 5 or more against under 5 were 3669 and 3837,
+789 and 788, 560 and 531. The widths are throttled network time.
+
+**The gap: 20 presses of 20 navigated, React not attached, at 1, 4, 8 and 12s
+past interactive.** So it is survivable. React attached 13.1 to 13.5s past
+interactive and hydrated 2.1 to 2.4s after that. **Not sampled:** that last 2s,
+React attached and the wall not hydrated, the page loaded. No press landed there.
+
+**§W.8's state, plainly.** In all 60 marked loads React attached after the
+document's last byte (5ms at the least), and on warm loads 0 to 11ms before
+interactive. So React attached with the page's payload still arriving was not
+seen on any load. That is the state §W.8's dropped press needs, and it has been
+observed exactly once, in the gate's trace. A press in the window before React
+attaches would have navigated; the hold turns that into a wait.
+
+**The slow-3g cause: covers are necessary, and do not reach.** fully-warm 776 to
+795ms, document end 1411ms, no upper group in 20. covers-cold 3482 to 3852ms and
+one 4857, document end 4293ms. So covers cost about 2.9s and every load in Run
+A's lower group is explained. Run A's upper group, 8489 to 16743ms, is NOT: no
+cached-cover count measured reaches it. What differs: Run A's warm-up BEGAN cover
+requests and abandoned them at about 0.6s; covers-cold's were never sent. A
+connection to Blob already open, or partial cache entries, could each do it.
+Unexplained; `warm` with cover timing, 20 loads, about 3 minutes, would show.
+
+**Correction: the covers are not the wall's.** The 30 Oct 12:00 entry said every
+spine draws its cover. `WallLabelled.tsx` draws `<image>` only for a pulled
+record. The 43 are `GridCover`'s plain `<img>`: the page also renders the
+Collection grid in `main > [data-shelf-fallback]`, `display: none` where the
+shelf is offered, and a plain `<img>` under a hidden parent is still fetched. So
+the wall downloads covers for a grid nobody can see.
