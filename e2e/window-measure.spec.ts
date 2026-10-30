@@ -161,6 +161,16 @@ test.describe('the cover conditions', () => {
 
   const isCover = (url: string) => url.endsWith('.jpg');
 
+  /* The hidden grid's covers (the coordinator, 30 Oct): a plain img under display:none is fetched, and a lazy one is not. Fails if either stops being true. */
+  test('a plain image under a hidden parent is fetched, and a lazy one is not', async ({ page }) => {
+    const seen: string[] = [];
+    page.on('request', (r) => { if (r.url().endsWith('.jpg')) seen.push(new URL(r.url()).pathname); });
+    await page.route(`${origin}/hidden`, (route) => route.fulfill({ contentType: 'text/html', body: `<div style="display:none"><img src="${origin}/fast.jpg"><img loading="lazy" src="${origin}/slow.jpg"></div>` }));
+    await page.goto(`${origin}/hidden`, { waitUntil: 'load' });
+    await page.waitForTimeout(300);
+    expect(seen).toEqual(['/fast.jpg']);
+  });
+
   test('a full warm-up leaves every cover cached, and the condition holds', async ({ page, context }) => {
     const cdp = await context.newCDPSession(page);
     await cdp.send('Network.enable');

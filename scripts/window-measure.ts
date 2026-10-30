@@ -33,7 +33,7 @@ export type Window =
   | { kind: 'broken'; reason: string };
 
 /** `warm` is Run A's: a warm-up that raced the covers. `covers-cold` and `fully-warm` make their state and are checked for it by `conditionMade`. */
-export type Cell = { cache: 'cold' | 'warm' | 'covers-cold' | 'fully-warm'; network: 'none' | 'fast-3g' | 'slow-3g' | 'slow-3g-cpu4'; press?: boolean };
+export type Cell = { cache: 'cold' | 'warm' | 'covers-cold' | 'fully-warm' | 'no-covers'; network: 'none' | 'fast-3g' | 'slow-3g' | 'slow-3g-cpu4'; press?: boolean; weigh?: boolean };
 
 /** `waitMs` is the first frame with spines to the hydrated mark, or how long a load past its limit stood open. */
 export type Load = { cell: string; window: Window; waitMs?: number | null };
@@ -70,7 +70,27 @@ export const RUN_CAUSE: Run = {
   limitMs: 180_000,
 };
 
-export const cellName = (cell: Cell) => `${cell.cache}/${cell.network}${cell.press === true ? '/press' : ''}`;
+export const cellName = (cell: Cell) => `${cell.cache}/${cell.network}${cell.press === true ? '/press' : ''}${cell.weigh === true ? '/weigh' : ''}`;
+
+/** Past interactive: production's React attached 13.1 to 13.5s past it and hydrated at 15.3 to 15.7s, the slice the first 20 presses missed. */
+export const PRESS_LATE_MS = 14_000;
+
+/**
+ * The questions the cause run left (the coordinator, 30 Oct). `warm` with its
+ * covers timed: what Run A's warm-up left. `no-covers`: the cover requests
+ * blocked through the measured load, so what is left of the 13s is the scripts'
+ * own. Presses in the slice before hydration, in the first rounds, then one
+ * load that weighs every cover.
+ */
+export function closePlan(rounds: number): Cell[] {
+  const press: Cell = { cache: 'cold', network: 'fast-3g', press: true };
+  const plan = Array.from({ length: rounds }, (_, round): Cell[] => [
+    ...(round < Math.ceil(rounds / 2) ? [press] : []),
+    { cache: 'warm', network: 'slow-3g' },
+    { cache: 'no-covers', network: 'fast-3g' },
+  ]).flat();
+  return [...plan, { cache: 'cold', network: 'none', weigh: true }];
+}
 
 /** Covers come from Vercel Blob. Blocked over CDP, never with Playwright's route(), which turns the HTTP cache off and would unmake the warm-up. */
 export const COVER_BLOCK = '*.public.blob.vercel-storage.com*';
@@ -82,7 +102,7 @@ export type Network = {
   covers: Array<{ startTs: number; endTs: number | null; fromCache: boolean; bytes: number | null }>;
 };
 
-export type CoverSummary = { documentEndMs: number | null; covers: number; fromCache: number; bytes: number; inFlightAtFrame: number; inFlightAtInteractive: number };
+export type CoverSummary = { documentEndMs: number | null; covers: number; fromCache: number; finished: number; bytes: number; inFlightAtFrame: number; inFlightAtInteractive: number };
 
 /**
  * Network events, not the Resource Timing API: its entries appear on
@@ -121,6 +141,7 @@ export function coverSummary(net: Network, marks: Marks): CoverSummary {
     documentEndMs: net.documentEndTs === null ? null : ms(net.documentEndTs),
     covers: net.covers.length,
     fromCache: net.covers.filter((c) => c.fromCache).length,
+    finished: net.covers.filter((c) => !c.fromCache && c.endTs !== null).length,
     bytes: net.covers.reduce((n, c) => n + (c.bytes ?? 0), 0),
     inFlightAtFrame: inFlightAt(marks.frameAt),
     inFlightAtInteractive: inFlightAt(marks.interactiveAt),
@@ -128,8 +149,10 @@ export function coverSummary(net: Network, marks: Marks): CoverSummary {
 }
 
 /** Whether a load was in the state its cell names. Run A's warm cells were not, and nothing said so. No cover seen proves neither. */
-export function conditionMade(cache: 'covers-cold' | 'fully-warm', s: CoverSummary): boolean {
-  return s.covers > 0 && (cache === 'fully-warm' ? s.fromCache === s.covers : s.fromCache === 0);
+export function conditionMade(cache: 'covers-cold' | 'fully-warm' | 'no-covers', s: CoverSummary): boolean {
+  if (s.covers === 0) return false;
+  if (cache === 'no-covers') return s.inFlightAtFrame === 0;
+  return cache === 'fully-warm' ? s.fromCache === s.covers : s.fromCache === 0;
 }
 
 export function pressOutcome(seen: { navigated: boolean; pullStarts: number }): 'navigated' | 'pulled' | 'dropped' {
@@ -243,7 +266,7 @@ const tableLines = (loads: Load[], figures: number[]) => {
 
 /** The log has a line per attempt; a retaken load is its last attempt, the one `runPlan` keeps. */
 export function loadsOfLog(log: string): Load[] {
-  const attempts = log.split('\n').filter((line) => line !== '').map((line) => JSON.parse(line) as { i: number; cell: string; window: Window; marks?: Marks | null }).filter((a) => !a.cell.endsWith('/press'));
+  const attempts = log.split('\n').filter((line) => line !== '').map((line) => JSON.parse(line) as { i: number; cell: string; window: Window; marks?: Marks | null }).filter((a) => !a.cell.endsWith('/press') && !a.cell.endsWith('/weigh'));
   const loads = attempts.map((a): [number, Load] => {
     const { marks, window } = a;
     const waitMs = window.kind === 'incomplete' ? window.openAtLeastMs ?? null

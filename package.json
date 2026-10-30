@@ -30,6 +30,7 @@
     "window:measure:after-deploy": "node --import tsx scripts/measure-window.mts after-deploy",
     "window:measure:idle-cold": "node --import tsx scripts/measure-window.mts idle-cold",
     "window:measure:cause": "node --import tsx scripts/measure-window.mts cause",
+    "window:measure:close": "node --import tsx scripts/measure-window.mts close",
     "window:verdict": "node --import tsx scripts/window-verdict.mts"
   },
   "dependencyNotes": {

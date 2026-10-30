@@ -50421,3 +50421,25 @@ record. The 43 are `GridCover`'s plain `<img>`: the page also renders the
 Collection grid in `main > [data-shelf-fallback]`, `display: none` where the
 shelf is offered, and a plain `<img>` under a hidden parent is still fetched. So
 the wall downloads covers for a grid nobody can see.
+
+## 30 Oct, 13:30: the closing run's rule, before any load
+
+`npm run window:measure:close`, Adam's, 51 loads, limit 180s (the coordinator, 30
+Oct). 10 presses 14s past interactive, in the slice the first 20 missed. 20 of
+`warm` at slow-3g with covers timed: how many Run A's warm-up left, and whether
+the upper group returns. If that drops warm/slow-3g, warm/slow-3g-cpu4 goes with
+it: same warm-up, and dropping only the one that embarrasses the figure is not
+on. 20 at cold/fast-3g with covers blocked through the load: attach about 1.4s
+past interactive means the 13s is the covers. One cold load to the load event
+weighs them.
+
+If the 14s presses also navigate or pull, the finding goes to Design: §W.8's
+prose describes a mechanism with one sighting behind it, in a gate trace, and no
+instrument has reproduced it. Not a reason to remove the hold, which costs
+nothing.
+
+**The hidden covers' cap, read from the code:** `DEFAULT_PAGE_SIZE` is 50, so the
+hidden grid asks for at most 50 covers whatever the collection's size. A plain
+`<img>` under `display: none` is fetched and a `loading="lazy"` one is not:
+Chromium by test in `e2e/window-measure.spec.ts`, WebKit by a probe. Whether
+production's load behaves the same is what the blocked cell stands in for.

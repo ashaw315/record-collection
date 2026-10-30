@@ -14,6 +14,9 @@
  *   with React's attach mark, and cold/fast-3g with a real press after
  *   interactive. Every cover is timed over CDP, and a warm load not in the state
  *   its cell names is broken.
+ * - `window:measure:close`: what the cause run left, 51 loads: 10 presses 14s
+ *   past interactive, 20 of `warm` at slow-3g with its covers timed, 20 at
+ *   cold/fast-3g with covers blocked, and one load weighing every cover.
  * - `window:measure:after-deploy` and `:idle-cold`: the supplement, unchanged
  *   in what it takes. After-deploy signs in before the deploy and waits for
  *   Enter once it is Ready; idle-cold signs in and makes no request for 20
@@ -38,9 +41,9 @@ import { loadavg } from 'node:os';
 import { join } from 'node:path';
 import { createInterface } from 'node:readline/promises';
 import { chromium, type Browser, type BrowserContext } from '@playwright/test';
-import { COVER_BLOCK, NETWORK, PRESS_AFTER_MS, RECORDER, RUN_A, RUN_B, RUN_CAUSE, cellName, conditionMade, coverSummary, loadsOfLog, pressesOfLog, projection, runPlan, schedule, takeLoad, takePress, verdict, watchNetwork, type Cell, type CoverSummary, type Press, type Window } from './window-measure';
+import { COVER_BLOCK, NETWORK, PRESS_AFTER_MS, PRESS_LATE_MS, RECORDER, RUN_A, RUN_B, RUN_CAUSE, cellName, closePlan, conditionMade, coverSummary, loadsOfLog, pressesOfLog, projection, runPlan, schedule, takeLoad, takePress, verdict, watchNetwork, type Cell, type CoverSummary, type Press, type Window } from './window-measure';
 
-const MODES = ['run-a', 'run-b', 'cause', 'after-deploy', 'idle-cold'] as const;
+const MODES = ['run-a', 'run-b', 'cause', 'close', 'after-deploy', 'idle-cold'] as const;
 const mode = process.argv[2] ?? 'run-a';
 if (!(MODES as readonly string[]).includes(mode)) {
   process.stderr.write(`measure-window: unknown mode ${mode}\n`);
@@ -54,7 +57,7 @@ if (password === undefined || password === '') {
 const BASE = process.env.WINDOW_BASE_URL ?? 'https://record-collection-rust.vercel.app';
 const onProduction = process.env.WINDOW_BASE_URL === undefined;
 const VIEWPORT = { width: 1440, height: 900 };
-const run = mode === 'run-b' ? RUN_B : mode === 'cause' ? RUN_CAUSE : RUN_A;
+const run = mode === 'run-b' ? RUN_B : mode === 'cause' || mode === 'close' ? RUN_CAUSE : RUN_A;
 /* Fixed by the rule on production; WINDOW_PER_CELL is for a smoke run on another base and is refused on production. */
 const PER_CELL = process.env.WINDOW_PER_CELL === undefined ? run.perCell : Number(process.env.WINDOW_PER_CELL);
 if (PER_CELL !== run.perCell && onProduction) {
@@ -105,6 +108,8 @@ async function load(browser: Browser, session: Awaited<ReturnType<typeof signIn>
       const warm = await takeLoad(page, `${BASE}/`, limitOf(cell));
       await cdp.send('Network.setBlockedURLs', { urls: [] });
       if (warm.window.kind === 'incomplete' || warm.window.kind === 'broken') return { window: { kind: 'broken', reason: `the warm-up did not finish (${warm.window.kind})` }, ms: Date.now() - started };
+    } else if (cell.cache === 'no-covers') {
+      await cdp.send('Network.setBlockedURLs', { urls: [COVER_BLOCK] });
     } else if (cell.cache === 'fully-warm') {
       /* To the load event, as on 29 Oct: every cover fetched, about 37s unthrottled. */
       await page.goto(`${BASE}/`, { waitUntil: 'load', timeout: limitOf(cell) });
@@ -116,14 +121,19 @@ async function load(browser: Browser, session: Awaited<ReturnType<typeof signIn>
     await cdp.send('Emulation.setCPUThrottlingRate', { rate: net.cpu });
     const measured = Date.now();
     if (cell.press === true) {
-      const pressAfterMs = PRESS_AFTER_MS[round % PRESS_AFTER_MS.length];
+      const pressAfterMs = mode === 'close' ? PRESS_LATE_MS : PRESS_AFTER_MS[round % PRESS_AFTER_MS.length];
       const press = await takePress(page, `${BASE}/`, limitOf(cell), { pressAfterMs, settleMs: 60_000 });
       return { window: { kind: 'none' }, press, pressAfterMs, ms: Date.now() - measured };
     }
     const network = watchNetwork(cdp);
+    if (cell.weigh === true) {
+      await page.goto(`${BASE}/`, { waitUntil: 'load', timeout: limitOf(cell) });
+      const weighed = coverSummary(network(), { spineAt: null, frameAt: null, frameReadyState: null, interactiveAt: null, hydratedAt: null });
+      return weighed.covers > 0 ? { window: { kind: 'none' }, covers: weighed, ms: Date.now() - measured } : { window: { kind: 'broken', reason: 'no cover seen' }, ms: Date.now() - measured };
+    }
     const taken = await takeLoad(page, `${BASE}/`, limitOf(cell));
     const covers = taken.marks === null ? undefined : coverSummary(network(), taken.marks);
-    const made = (cell.cache !== 'covers-cold' && cell.cache !== 'fully-warm') || (covers !== undefined && conditionMade(cell.cache, covers));
+    const made = (cell.cache !== 'covers-cold' && cell.cache !== 'fully-warm' && cell.cache !== 'no-covers') || (covers !== undefined && conditionMade(cell.cache, covers));
     return { ...taken, covers, window: made ? taken.window : { kind: 'broken', reason: `not ${cell.cache}: ${covers?.fromCache ?? '?'} of ${covers?.covers ?? '?'} covers cached` }, ms: Date.now() - measured };
   } catch (error) {
     if (error instanceof Error && /session was refused/.test(error.message)) throw error;
@@ -144,7 +154,9 @@ try {
   const session = await signIn(browser);
   log('signed in; the session is held in memory only');
   let plan: Array<{ cell: Cell; label: string }>;
-  if (mode === 'run-a' || mode === 'run-b' || mode === 'cause') {
+  if (mode === 'close') {
+    plan = closePlan(PER_CELL).map((cell) => ({ cell, label: mode }));
+  } else if (mode === 'run-a' || mode === 'run-b' || mode === 'cause') {
     plan = schedule(run.cells, PER_CELL).map((cell) => ({ cell, label: mode }));
   } else if (mode === 'after-deploy') {
     const rl = createInterface({ input: process.stdin, output: process.stdout });
@@ -157,7 +169,7 @@ try {
     plan = [{ cell: { cache: 'cold', network: 'none' }, label: 'idle-cold' }];
   }
   const begun = Date.now();
-  const roundSize = mode === 'run-a' || mode === 'run-b' || mode === 'cause' ? run.cells.length : plan.length;
+  const roundSize = mode === 'close' ? 3 : mode === 'run-a' || mode === 'run-b' || mode === 'cause' ? run.cells.length : plan.length;
   let last: Awaited<ReturnType<typeof load>> | null = null;
   let before = loadavg()[0];
   const result = await runPlan(plan, async ({ cell }, i) => {

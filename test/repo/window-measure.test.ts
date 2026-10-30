@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CANDIDATES_MS, COVER_BLOCK, DELAYS_MS, RUN_A, RUN_B, RUN_CAUSE, cellName, conditionMade, coverSummary, heldWaits, loadsOfLog, pressOutcome, pressesOfLog, projection, runPlan, schedule, verdict, windowOf, type Load, type Window } from '../../scripts/window-measure';
+import { CANDIDATES_MS, COVER_BLOCK, DELAYS_MS, PRESS_LATE_MS, RUN_A, RUN_B, RUN_CAUSE, cellName, closePlan, conditionMade, coverSummary, heldWaits, loadsOfLog, pressOutcome, pressesOfLog, projection, runPlan, schedule, verdict, windowOf, type Load, type Window } from '../../scripts/window-measure';
 
 /**
  * **The production measurement's judgement, restated before a load is taken
@@ -85,6 +85,30 @@ describe('the cause run (the coordinator, 30 Oct: one run, both questions)', () 
   });
 });
 
+describe('the closing run (the coordinator, 30 Oct: the three questions left open)', () => {
+  /* Fails against a plan whose cells are not the three asked for, or that leaves out the weighing, which sizes the hidden covers. */
+  it('takes 10 presses, 20 warm with cover timing, 20 with covers blocked, then one load that weighs the covers', () => {
+    const plan = closePlan(20);
+    const count = (name: string) => plan.filter((c) => cellName(c) === name).length;
+    expect(plan).toHaveLength(51);
+    expect(count('cold/fast-3g/press')).toBe(10);
+    expect(count('warm/slow-3g')).toBe(20);
+    expect(count('no-covers/fast-3g')).toBe(20);
+    expect(cellName(plan[plan.length - 1])).toBe('cold/none/weigh');
+  });
+
+  /* Fails against the presses taken one after another: they would all fall on one stretch of the run. */
+  it('keeps the plan round-robin, with the presses in the first rounds', () => {
+    expect(closePlan(20).slice(0, 6).map(cellName)).toEqual(['cold/fast-3g/press', 'warm/slow-3g', 'no-covers/fast-3g', 'cold/fast-3g/press', 'warm/slow-3g', 'no-covers/fast-3g']);
+  });
+
+  /* Fails against a press outside the slice: production's React attached 13.1 to 13.5s past interactive and hydrated at 15.3 to 15.7s. */
+  it('presses between React attaching and the wall hydrating', () => {
+    expect(PRESS_LATE_MS).toBeGreaterThan(13_500);
+    expect(PRESS_LATE_MS).toBeLessThan(15_300);
+  });
+});
+
 describe('coverSummary', () => {
   const net = {
     documentStartTs: 100,
@@ -110,6 +134,11 @@ describe('coverSummary', () => {
     expect(coverSummary(net, marks)).toMatchObject({ documentEndMs: 5000, covers: 5, fromCache: 1, bytes: 3510 });
   });
 
+  /* Fails against a partly cached cache read only by what was cached: Run A's question is how many had finished. */
+  it('counts the covers fetched to their end', () => {
+    expect(coverSummary(net, marks).finished).toBe(3);
+  });
+
   /* Fails against a null document end read as zero: a load that ended before the last byte has no figure. */
   it('gives no document end when the load ended first', () => {
     expect(coverSummary({ ...net, documentEndTs: null }, marks).documentEndMs).toBeNull();
@@ -117,7 +146,7 @@ describe('coverSummary', () => {
 });
 
 describe('conditionMade', () => {
-  const summary = (covers: number, fromCache: number) => ({ documentEndMs: 1, covers, fromCache, bytes: 0, inFlightAtFrame: 0, inFlightAtInteractive: 0 });
+  const summary = (covers: number, fromCache: number, inFlightAtFrame = 0) => ({ documentEndMs: 1, covers, fromCache, finished: 0, bytes: 0, inFlightAtFrame, inFlightAtInteractive: 0 });
 
   /* Fails against a load labelled for a state the warm-up did not make, which is what Run A's warm cells turned out to be. */
   it('refuses a fully warm load with a cover fetched, and a covers-cold load with a cover cached', () => {
@@ -125,6 +154,13 @@ describe('conditionMade', () => {
     expect(conditionMade('fully-warm', summary(43, 42))).toBe(false);
     expect(conditionMade('covers-cold', summary(43, 0))).toBe(true);
     expect(conditionMade('covers-cold', summary(43, 1))).toBe(false);
+  });
+
+  /* Fails against a blocked load taken as blocked when a cover got through: its scripts would still be competing. */
+  it('refuses a no-covers load with a cover in flight, or none asked for', () => {
+    expect(conditionMade('no-covers', summary(43, 0, 0))).toBe(true);
+    expect(conditionMade('no-covers', summary(43, 0, 1))).toBe(false);
+    expect(conditionMade('no-covers', summary(0, 0, 0))).toBe(false);
   });
 
   /* Fails against a load that saw no covers passing both: a pattern that matches nothing makes either condition vacuously true. */
@@ -212,6 +248,11 @@ describe('presses in a log', () => {
   /* Fails against a pressed load counted in the table: a press changes when the wall hydrates. */
   it('leaves a pressed load out of the loads', () => {
     expect(loadsOfLog(press(0, { outcome: 'navigated', attached: false, hydrated: false }))).toEqual([]);
+  });
+
+  /* Fails against the weighing reaching the table: it is one unthrottled load to the load event, not a window measured. */
+  it('leaves the weighing out of the loads', () => {
+    expect(loadsOfLog(JSON.stringify({ cell: 'cold/none/weigh', i: 0, window: { kind: 'none' } }))).toEqual([]);
   });
 
   /* Fails against outcomes reported without whether React had attached, which is the question. */
