@@ -50367,3 +50367,17 @@ dev server, and a press there took the anchor; its doc comment says React is
 attached and the press dropped. Stopped after two attempts. Dropped is staged
 instead by swallowing the click with scripts held, which shows the instrument
 can report it, not that the app reaches it. The control's claim is unverified.
+
+## 30 Oct, 12:45: the CI trial, because the 12 Oct entry is an untested conclusion
+
+**The 12 Oct entry ("CI is dropped, and why, so it is not reopened") ends "no
+trial run".** It stopped anyone looking for 18 days. This is the second untested
+conclusion in NOTES to do that this week; the first said the gate kept no
+traces, and cost a day. A note recording that something will not work is a claim
+that needs verifying like any other (the coordinator, 30 Oct). Whatever this
+trial finds, that entry ends up stating a measured result.
+
+**The trial** is `.github/workflows/gate.yml`, dispatched on 8cbf381, the last
+commit whose local gate read OK, so a failure is about the runner and not new
+code. It holds no secret. Accepted only if no assertion is loosened to pass;
+Linux-only failures are sorted by name and stay on a local Mac gate.
