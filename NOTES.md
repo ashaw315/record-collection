@@ -50586,3 +50586,33 @@ screenshot may show would read as a phase that never reaches `landed`.
 From the code, not yet from production: the cover's `<image>` has explicit size
 and `meet`, so natural size cannot show, and its opacity is the swing's arrival,
 so it is a pale ghost early in a pull. The panel arrives with the rotation.
+
+## 30 Oct, 17:30: the pull on production, in motion
+
+Adam's run (docs/measurements/window-160/pull-2026-10-30T20-25-51-699Z.jsonl), 27
+real pulls, headed Chrome on his machine, 1440 × 900, Playwright recording video.
+
+**All 27 landed**, at 658,180, 560 × 560, cover 433 × 433 at opacity 1, panel in;
+1600ms each. His screenshot's record is the leftmost seat of this run. Its frame
+is a pose of the swing, with the cover at about 0.1 and no panel, and it stalled
+on no load. The panel is in by a cover opacity of 0.34.
+
+**The geometry holds on production, and the leftmost seat is not a separate case:**
+top first dips 251px with the wall 277px down, top second 246 and 268, second
+shelf 111 and 69. Cold or settled changes neither.
+
+**Frames.** 0 long tasks on any of the 27. Gesture frames, of 96 at 60Hz: covers
+fetching 75, blocked 80, settled 77, excluding one load. So the hidden covers cost
+about 5 frames in 80, and did not decode on the main thread in any way a long task
+shows. Every condition runs about 20% short, with video recording on, which is
+itself load: how much of that is the recorder is not measured. One load of 27 had
+a 700ms gap in the swing (top second, settled) with no long task; unexplained.
+
+**So:** the wrongness is the geometry and is Design's. "Laggy" is not explained by
+the covers; the 20% is not separated from the instrument.
+
+**What mutation testing substitutes for (the first time it stood in for
+fail-first, 30 Oct):** it shows each line tested can fail. It does not show the
+test was written from the requirement: a test written after the code can still be
+shaped by it, and a mutation only perturbs what was written, so a missing case
+stays missing. It is evidence about the tests' strength, not about their origin.
