@@ -50039,6 +50039,28 @@ weigh.
 `.env.local` under a key read without printing, or a session minted with
 `SESSION_SECRET`, which forges his and needs his yes).
 
+**Amended 29 Oct, 19:55, before any load (the coordinator).** Two changes.
+Both are made before any load has been taken, which is the condition the
+rule exists for.
+
+- **Sign-in.** Adam runs the measurement himself. The password is set in
+  his shell for that one command and is never in a file. The script reads
+  `PROD_LOGIN_PASSWORD` from the environment only, and keeps the session in
+  memory.
+- **The matrix is the measurement.** The 8 cells of 30, 240 loads, are the
+  measurement; the bound's Provisionals line closes on the matrix's verdict,
+  by the positive or null rules above.
+- **The after-deploy and idle-cold loads are a separate supplement.** They
+  are paced by deploys and by idle time, so they report whenever they
+  complete; the supplement's counts are fixed as stated (6 and 5).
+  - They answer a narrower question: whether a cold function or a cold
+    cache at the edge opens a window the matrix did not see.
+  - The supplement can only add evidence for the window. If it shows the
+    window after a removal argued from the matrix's null, the bound comes
+    back, built from the widest run in either.
+  - A null in the supplement adds its counts to the removal's line. It does
+    not license anything the matrix's null did not.
+
 ## 29 Oct, 18:30: the intake's duplicate step was caught incidentally
 
 Step 160's restated block was inserted beside its old text because the
@@ -50052,3 +50074,44 @@ a step numbered as its id, so a block restated twice between commits, whose
 old text no commit holds, is still a duplicate number to assertion 3.
 Staged on the real handoff: step 160's text at 38a8ba0 put back, the intake
 reported "1 replaced (step-160)" and the index passed.
+
+## 29 Oct, 20:00: a guard that fails open above a size nobody tests at (a shape of its own)
+
+The export-on-commit guard read the commit's changed paths through
+`git diff-tree | grep -q` under `pipefail`. `grep -q` leaves at its first
+match; when the list overruns the pipe's buffer (64KB, about 1500 long
+paths) the writer is killed by SIGPIPE, the pipeline fails, and the
+condition reads false: the export is skipped, silently, inside the mechanism
+built to stop Design ruling against stale text. Every test the guard had
+used commits of one or two files, where the whole list fits the buffer and
+the race never happens. Found only because staging a mutation with `| true`
+failed to fail, for the same reason.
+
+**The shape:** a guard whose failure mode lives above a size its tests never
+reach, and which fails OPEN there, so the failure looks like "nothing to
+do". The check for it is to ask, of any guard that reads a stream, what
+happens when the stream is larger than a buffer, and to test at that size.
+The fix reads the list whole before matching (51c1ac0's test: 1500 paths).
+
+## 29 Oct, 20:00: the measurement script, and the recorder on the dev server
+
+`npm run window:measure` (scripts/measure-window.mts) with the recorder and
+judgement in scripts/window-measure.ts. The recorder is calibrated against
+the proxy's held state (e2e/window-measure.spec.ts: the window seen, at
+least as wide as a 600ms hold; a recorder reading readyState at the load
+event instead of in the painting frame fails it). The judgement's seven
+mutations each fail a test.
+
+A smoke run of the real CLI against the local dev server, one load per
+cell, load 2.1: the window occurred in 6 of 8 (cold/none 10ms, cold/slow-3g
+10, cold/slow-3g-cpu4 49, warm/fast-3g 17, warm/slow-3g 384,
+warm/slow-3g-cpu4 326; none in cold/fast-3g and warm/none). A dev server,
+one load per cell, not the measurement and not evidence about production;
+it says the recorder runs end to end and that the window exists on at least
+one server. The first round took 86s locally. The smoke file is not
+committed.
+
+The supplement's modes keep the session in memory across their wait, since
+signing in is itself a request that would warm the function: idle-cold signs
+in and then makes no request for 20 minutes; after-deploy signs in before
+the deploy and waits for Enter once it is Ready.
