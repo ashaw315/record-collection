@@ -50527,3 +50527,34 @@ and a pull whose cover has not arrived, with lazy held until it rules.
 **The password message (30 Oct):** `measure-window` printed `npm run window:measure`
 whatever mode was asked for, so pasting it on the weigh mode would have started
 Run A. It now names the mode's own script, tested for every script in package.json.
+
+## 30 Oct, 16:00: the pull from the top shelf, measured
+
+Adam, on production: the pull looks wrong, mainly on the top shelf. Measured on
+the local dev server at 1440 × 900 on a frozen clock, an unfiltered wall of
+exactly 22 and exactly 43 records, the second seat of each row
+(`e2e/capture/pull-rows-30-oct.capture.ts`; `docs/captures/pull-rows-30-oct/`).
+
+**Not newly occupied, and nothing changed at the import.** Rows fill top first:
+20, 2, 0, 0 at 22 and 20, 20, 3, 0 at 43. Row 0 and row 1 measure the same at
+both counts to within 3px. perShelf stays 20 to 80 records and four rows draw
+either way, so the box did not change and no derived figure needed re-deriving.
+
+**The gesture is the same on every row; the pan is not.** Travel 290, rotation,
+growth 150 to 560, easing and duration are constants of the gesture, and the
+horizontal path and the landing agree on every row. §W.22 lands every record at
+the same place on screen, y 180. So the pan's vertical direction depends on where
+the seat starts:
+
+| row (43 records) | seat starts, y | record dips | wall pans | frame grows above |
+|---|---|---|---|---|
+| top | 102 | 242px down, to 344 | 267px down | 226px |
+| second | 300 | 107px down, to 408 | 69px down | 28px |
+| third | 498 | 5px down, to 503 | 128px up | 0 |
+
+From the top row the wall slides down the page while the record drops with it,
+so the two add. Lower rows pan against the gesture's drop and it nearly cancels.
+The landed top row leaves about 300px of empty paper over the bookcase. This was
+so at 22 records. The fourth row is empty at 43 and is not measured.
+
+Dev server, test data, no covers. Why Adam read it as lag is not measured here.
