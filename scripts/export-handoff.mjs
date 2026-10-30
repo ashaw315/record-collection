@@ -28,6 +28,7 @@ import { pathToFileURL } from 'node:url';
 
 const HANDOFF = 'docs/design/HANDOFF-wall-and-pull.md';
 const RULES = 'docs/design/DESIGN-RULES.md';
+const WITHDRAWALS = 'docs/design/WITHDRAWALS.md';
 
 /** The export's name: the date and the commit, so two exports never overwrite each other and a relay names its generation. */
 export function fileName(date, sha) {
@@ -86,6 +87,14 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   const rulesPath = join(outDir, `DESIGN-RULES — export for Design, ${date} at ${sha}.md`);
   writeFileSync(rulesPath, `Export note, not part of the file: this is the repository's DESIGN-RULES.md as committed at ${sha} on ${date}. It is read-only for Design: changes come back as change files anchored on this text, and this file never comes back whole.\n\n${rules}`);
   process.stdout.write(`${rulesPath}\n`);
+  /*
+    WITHDRAWALS beside them (the coordinator, 30 Oct): the index checks that
+    an entry's quote stands in its target, not that Design's entry landed as
+    written. The derived comment at its foot comes with it, as HEAD holds it.
+  */
+  const withdrawalsPath = join(outDir, `WITHDRAWALS — export for Design, ${date} at ${sha}.md`);
+  writeFileSync(withdrawalsPath, `Export note, not part of the file: this is the repository's WITHDRAWALS.md as committed at ${sha} on ${date}. It is read-only for Design: changes come back as change files, and the machine-readable comment at its foot is derived by Code's script.\n\n${git('show', `HEAD:${WITHDRAWALS}`)}`);
+  process.stdout.write(`${withdrawalsPath}\n`);
   /*
     A step's captures beside them (the coordinator, 28 Oct): captures were
     the one thing still hand-carried, and the import's Provisionals line was

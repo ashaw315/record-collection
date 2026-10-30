@@ -62,13 +62,35 @@ describe('the script', () => {
     Design can read (Design, 28 Oct), so the export carries it beside the handoff: HEAD's text under
     the same note. Fails against the export of the handoff alone: one file written, not two.
   */
+  /*
+    Fails against the export of the handoff and DESIGN-RULES alone (the coordinator, 30 Oct): the
+    index checks that an entry's quote stands in its target, not that Design's entry landed as
+    written, and Design could not read the list to see.
+  */
+  it('writes the committed WITHDRAWALS beside the handoff, under the same note, named by the date and the commit', () => {
+    const out = mkdtempSync(join(tmpdir(), 'export-withdrawals-'));
+    try {
+      const sha = execFileSync('git', ['rev-parse', '--short', 'HEAD'], { encoding: 'utf8' }).trim();
+      const stdout = execFileSync('node', [SCRIPT, '--out', out], { encoding: 'utf8' });
+      const name = `WITHDRAWALS — export for Design, ${localDate()} at ${sha}.md`;
+      expect(readdirSync(out)).toContain(name);
+      const committed = execFileSync('git', ['show', 'HEAD:docs/design/WITHDRAWALS.md'], { encoding: 'utf8' });
+      const written = readFileSync(join(out, name), 'utf8');
+      expect(written.endsWith(committed)).toBe(true);
+      expect(written.split('\n')[0]).toMatch(/WITHDRAWALS\.md as committed at .* read-only for Design/);
+      expect(stdout).toContain(name);
+    } finally {
+      rmSync(out, { recursive: true, force: true });
+    }
+  });
+
   it('writes the committed DESIGN-RULES beside the handoff, under the same note, named by the date and the commit', () => {
     const out = mkdtempSync(join(tmpdir(), 'export-rules-'));
     try {
       const sha = execFileSync('git', ['rev-parse', '--short', 'HEAD'], { encoding: 'utf8' }).trim();
       const stdout = execFileSync('node', [SCRIPT, '--out', out], { encoding: 'utf8' });
       const files = readdirSync(out).sort();
-      expect(files).toHaveLength(2);
+      expect(files).toHaveLength(3);
       const rules = files.find((f) => f.startsWith('DESIGN-RULES'));
       expect(rules).toBe(`DESIGN-RULES — export for Design, ${localDate()} at ${sha}.md`);
       const written = readFileSync(join(out, rules ?? ''), 'utf8');
