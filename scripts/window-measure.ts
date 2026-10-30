@@ -479,6 +479,22 @@ export function frameStats(times: number[]): { frames: number; durationMs: numbe
   };
 }
 
+/**
+ * §W.22's videos (Design's list): a pull from each shelf, a put back, and the
+ * arrows' swap at the two seats where a row changes, the only places its
+ * sideways pan can compound.
+ */
+export const PAN_CELLS = [
+  { name: 'top', order: 2, then: 'none' }, { name: 'second', order: 22, then: 'none' }, { name: 'third', order: 42, then: 'none' },
+  { name: 'top-put-back', order: 2, then: 'put-back' },
+  { name: 'swap-top-to-second', order: 20, then: 'next' }, { name: 'swap-second-to-third', order: 40, then: 'next' },
+] as const;
+export type PanCell = (typeof PAN_CELLS)[number];
+
+export function panPlan(rounds: number): PanCell[] {
+  return Array.from({ length: rounds }, () => [...PAN_CELLS]).flat();
+}
+
 /** A string, as RECORDER is: tsx names a function's inner functions with a helper the page does not have. */
 const PULL_SAMPLER = (ms: number) => `(() => {
   const log = { frames: [], longTasks: [] };
@@ -507,7 +523,7 @@ const PULL_SAMPLER = (ms: number) => `(() => {
 })()`;
 
 /** Starts logging, then a real click on the seat; resolves with every frame for `forMs`, and the long tasks. */
-export async function takePull(page: Page, order: number, forMs: number): Promise<{ frames: unknown[]; longTasks: Array<{ at: number; ms: number }>; seat: unknown }> {
+export async function takePull(page: Page, order: number, forMs: number, then?: () => Promise<void>): Promise<{ frames: unknown[]; longTasks: Array<{ at: number; ms: number }>; seat: unknown }> {
   const spine = page.locator(`a[data-seat][data-seat-order="${order}"] [data-spine]`).first();
   await spine.scrollIntoViewIfNeeded();
   const box = await spine.boundingBox();
@@ -515,7 +531,8 @@ export async function takePull(page: Page, order: number, forMs: number): Promis
   const point = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
   await page.evaluate(PULL_SAMPLER(forMs));
   await page.mouse.click(point.x, point.y);
-  await page.waitForTimeout(forMs + 200);
+  if (then !== undefined) await then();
+  await page.waitForTimeout(then === undefined ? forMs + 200 : 2200);
   const seat = await spine.evaluate((el) => el.closest('a')?.getAttribute('aria-label')).catch(() => null);
   const { frames, longTasks } = await page.evaluate(() => (window as unknown as { __pull: { frames: unknown[]; longTasks: Array<{ at: number; ms: number }> } }).__pull);
   return { frames, longTasks, seat };

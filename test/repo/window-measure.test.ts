@@ -1,7 +1,7 @@
 import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { CANDIDATES_MS, COVER_BLOCK, PULL_SEATS, frameStats, pullPlan, DELAYS_MS, PRESS_LATE_MS, RUN_A, RUN_B, RUN_CAUSE, cellName, closePlan, conditionMade, coverSummary, coverSizes, heldWaits, loadsOfLog, pressOutcome, pressesOfLog, projection, runPlan, schedule, verdict, windowOf, type Load, type Window } from '../../scripts/window-measure';
+import { CANDIDATES_MS, COVER_BLOCK, PAN_CELLS, PULL_SEATS, frameStats, panPlan, pullPlan, DELAYS_MS, PRESS_LATE_MS, RUN_A, RUN_B, RUN_CAUSE, cellName, closePlan, conditionMade, coverSummary, coverSizes, heldWaits, loadsOfLog, pressOutcome, pressesOfLog, projection, runPlan, schedule, verdict, windowOf, type Load, type Window } from '../../scripts/window-measure';
 
 /**
  * **The production measurement's judgement, restated before a load is taken
@@ -189,6 +189,24 @@ describe('the pull run', () => {
     expect(plan).toHaveLength(27);
     expect(new Set(plan.map((p) => p.covers))).toEqual(new Set(['fetching', 'blocked', 'settled']));
     expect(plan.slice(0, 3).map((p) => p.seat.name)).toEqual(['top-first', 'top-second', 'lower-second']);
+  });
+});
+
+describe('the pan run', () => {
+  /* Fails against a list without the two seats a row changes at: they are the only place an arrow's swap crosses a shelf, and Design asked. */
+  it('films a pull from each shelf, a put back, and the swap across each shelf change', () => {
+    expect(PAN_CELLS.map((c) => [c.name, c.order, c.then])).toEqual([
+      ['top', 2, 'none'], ['second', 22, 'none'], ['third', 42, 'none'],
+      ['top-put-back', 2, 'put-back'],
+      ['swap-top-to-second', 20, 'next'], ['swap-second-to-third', 40, 'next'],
+    ]);
+  });
+
+  /* Fails against one take of each: a video that catches a machine's stall should not be the one Adam judges from. */
+  it('takes each cell three times, round-robin', () => {
+    const plan = panPlan(3);
+    expect(plan).toHaveLength(18);
+    expect(plan.slice(0, 6)).toEqual(PAN_CELLS);
   });
 });
 

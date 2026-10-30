@@ -33,6 +33,7 @@
     "window:measure:close": "node --import tsx scripts/measure-window.mts close",
     "window:measure:weigh": "node --import tsx scripts/measure-window.mts weigh",
     "window:measure:pull": "node --import tsx scripts/measure-window.mts pull",
+    "window:measure:pan": "node --import tsx scripts/measure-window.mts pan",
     "window:verdict": "node --import tsx scripts/window-verdict.mts"
   },
   "dependencyNotes": {

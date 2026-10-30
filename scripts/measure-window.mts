@@ -22,6 +22,9 @@
  * - `window:measure:pull`: the pull's motion, in a headed Chrome so frame delivery
  *   is the machine's own: 27 real pulls, each with its video in
  *   docs/captures/pull-prod-30-oct/ and every frame in the log. A window opens.
+ * - `window:measure:pan`: §W.22's videos, in the same headed Chrome: a pull from
+ *   each shelf, a put back and the swap across each shelf change, three of each,
+ *   in docs/captures/pan-prod-30-oct/.
  * - `window:measure:after-deploy` and `:idle-cold`: the supplement, unchanged
  *   in what it takes. After-deploy signs in before the deploy and waits for
  *   Enter once it is Ready; idle-cold signs in and makes no request for 20
@@ -46,9 +49,9 @@ import { loadavg } from 'node:os';
 import { join } from 'node:path';
 import { createInterface } from 'node:readline/promises';
 import { chromium, type Browser, type BrowserContext } from '@playwright/test';
-import { COVER_BLOCK, NETWORK, PRESS_AFTER_MS, PRESS_LATE_MS, RECORDER, RUN_A, RUN_B, RUN_CAUSE, cellName, closePlan, conditionMade, coverSizes, coverSummary, frameStats, loadsOfLog, pullPlan, takePull, pressesOfLog, projection, runPlan, schedule, takeLoad, takePress, verdict, watchNetwork, type Cell, type CoverSummary, type Press, type Window } from './window-measure';
+import { COVER_BLOCK, NETWORK, PRESS_AFTER_MS, PRESS_LATE_MS, RECORDER, RUN_A, RUN_B, RUN_CAUSE, cellName, closePlan, conditionMade, coverSizes, coverSummary, frameStats, loadsOfLog, panPlan, pullPlan, takePull, pressesOfLog, projection, runPlan, schedule, takeLoad, takePress, verdict, watchNetwork, type Cell, type CoverSummary, type Press, type Window } from './window-measure';
 
-const MODES = ['run-a', 'run-b', 'cause', 'close', 'weigh', 'pull', 'after-deploy', 'idle-cold'] as const;
+const MODES = ['run-a', 'run-b', 'cause', 'close', 'weigh', 'pull', 'pan', 'after-deploy', 'idle-cold'] as const;
 const mode = process.argv[2] ?? 'run-a';
 if (!(MODES as readonly string[]).includes(mode)) {
   process.stderr.write(`measure-window: unknown mode ${mode}\n`);
@@ -188,6 +191,38 @@ async function pullRun(session: Awaited<ReturnType<typeof signIn>>): Promise<voi
   log(`Every frame: ${out}\nVideos: ${videos}`);
 }
 
+async function panRun(session: Awaited<ReturnType<typeof signIn>>): Promise<void> {
+  const videos = join('docs', 'captures', 'pan-prod-30-oct');
+  mkdirSync(videos, { recursive: true });
+  const headed = await chromium.launch({ headless: false });
+  const plan = panPlan(PER_CELL === run.perCell ? 3 : 1);
+  for (const [i, cell] of plan.entries()) {
+    const context = await headed.newContext({ viewport: VIEWPORT, storageState: session, recordVideo: { dir: videos, size: VIEWPORT } });
+    const page = await context.newPage();
+    await page.goto(`${BASE}/`, { waitUntil: 'load', timeout: 60_000 });
+    await page.locator('[data-wall-container][data-hydrated="true"][data-landed="true"]').first().waitFor({ state: 'attached', timeout: 60_000 });
+    /* Pulled and landed first: the follow-up is what is being filmed, and the panel's controls only exist once it has. */
+    const then = cell.then === 'none' ? undefined : async () => {
+      await page.waitForTimeout(2300);
+      if (cell.then === 'next') await page.getByTestId('nav-next').click();
+      else await page.keyboard.press('Escape');
+    };
+    const taken = await takePull(page, cell.order, 5200, then);
+    const name = `${String(i).padStart(2, '0')}-${cell.name}`;
+    const video = page.video();
+    await context.close();
+    if (video !== null) renameSync(await video.path(), join(videos, `${name}.webm`));
+    const frames = taken.frames as Array<{ t: number; phase?: string; record: number[] | null }>;
+    const pulling = frames.filter((f) => f.phase === 'swing' && f.record !== null);
+    const start = pulling[0]?.record?.[1] ?? 0;
+    const dip = pulling.length === 0 ? null : Math.max(...pulling.map((f) => f.record?.[1] ?? 0)) - start;
+    appendFileSync(out, `${JSON.stringify({ label: 'pan', ...cell, name, dip, stats: frameStats(frames.map((f) => f.t)), frames })}\n`);
+    log(`[${i + 1}/${plan.length}] ${name}: dip ${dip}px; ${[...new Set(frames.map((f) => f.phase))].join(' > ')}`);
+  }
+  await headed.close();
+  log(`Every frame: ${out}\nVideos: ${videos}`);
+}
+
 const browser = await chromium.launch();
 try {
   log(`measure-window: ${mode} against ${BASE}, at ${VIEWPORT.width}x${VIEWPORT.height}, writing ${out}`);
@@ -195,6 +230,10 @@ try {
   log('signed in; the session is held in memory only');
   if (mode === 'pull') {
     await pullRun(session);
+    process.exit(0);
+  }
+  if (mode === 'pan') {
+    await panRun(session);
     process.exit(0);
   }
   let plan: Array<{ cell: Cell; label: string }>;
