@@ -50211,7 +50211,7 @@ Run B at most 50 minutes. The first round's projection is the figure.
 ## 30 Oct, 11:30: Run A's verdict, and the 29 Oct and 30 Oct loads compared
 
 Adam's Run A (docs/measurements/window-160/run-a-2026-10-30T15-07-04-848Z.jsonl,
-120 loads, none broken, none past the limit, load 2.5 to 5.9). Re-judged with
+120 loads, none broken, none past the limit, load 2.4 to 5.9). Re-judged with
 `npm run window:verdict`, since the run printed the verdict of the code it
 started with. The formula gives 25200ms, from 16743ms in warm/slow-3g.
 
@@ -50238,7 +50238,7 @@ comparison of one cell.**
 **The likely cause of the upper mode, not shown:** on a warm/slow-3g load the
 covers that the warm-up did not cache now download beside the document's tail
 through one throttled 400kbps, and the window closes only when that tail has
-arrived. It fits: the frame is steady at 750ms, the width alone varies, and
+arrived. It fits: the frame stays between 635 and 761ms, the width alone varies, and
 the lower mode's 786 to 1931ms sits where 29 Oct's 821 did. The log holds no
 resource timing and the warm-up's length was not recorded, so nothing here
 proves it. What resolves it: warm/slow-3g on production with the warm-up
