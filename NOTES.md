@@ -50558,3 +50558,11 @@ The landed top row leaves about 300px of empty paper over the bookcase. This was
 so at 22 records. The fourth row is empty at 43 and is not measured.
 
 Dev server, test data, no covers. Why Adam read it as lag is not measured here.
+
+## 30 Oct, 16:30: the hold is back on production
+
+dd58f15 took it off on the urgent report that a press did nothing. That report
+turned out to be the pull looking wrong, and the hypothesis behind it was rejected
+from the code the same hour (engage is `readyState === 'loading'`, and a hydrated
+wall is never held). Removed for a reason that did not hold; its measured cost is
+nothing; and production and `e2e/hold-160` should not disagree for days.
