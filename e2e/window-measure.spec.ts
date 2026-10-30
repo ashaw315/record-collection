@@ -1,8 +1,11 @@
-import { expect, test } from '@playwright/test';
+import http from 'node:http';
+import type { AddressInfo } from 'node:net';
+import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist, trackRecord } from './cleanup';
 import { holdDocumentTail, type DocumentTail } from './document-tail';
+import { holdScheduler } from './hold-window';
 import { login } from './sign-in';
-import { RECORDER, readMarks, takeLoad, windowOf } from '../scripts/window-measure';
+import { RECORDER, conditionMade, coverSummary, readMarks, takeLoad, takePress, watchNetwork, windowOf } from '../scripts/window-measure';
 
 /**
  * **The production measurement's recorder, shown able to see the window
@@ -78,4 +81,109 @@ test('the recorder calls a page with no wall broken', async ({ page }) => {
   await page.goto('/login');
   await page.waitForLoadState('load');
   expect(windowOf(await readMarks(page)).kind).toBe('broken');
+});
+
+/*
+  **What a press does between interactive and hydration (the coordinator, 30
+  Oct).** On production's cold/fast-3g that gap is 15s and the marks did not
+  say whether React had attached. The cell that answers it is only worth its
+  count if it can report each outcome, so each is staged here: fails against
+  a press that cannot see `dropped`, and against an attach mark that reads
+  the hold script's own listener as React's (`attached: false` with scripts held).
+*/
+test.describe('the press after interactive', () => {
+  const arrive = async (page: Page) => {
+    await login(page);
+    const artist = await page.request.post('/api/artists', { data: { name: `Press-${Date.now().toString(36)}` } });
+    const artistId = ((await artist.json()) as { id: string }).id;
+    trackArtist(artistId);
+    for (let i = 0; i < 4; i += 1) {
+      const record = await page.request.post('/api/records', { data: { title: `Press ${i}`, artistId } });
+      trackRecord(((await record.json()) as { id: string }).id);
+    }
+    await page.addInitScript(RECORDER);
+    return `/?artistId=${artistId}`;
+  };
+
+  test('scripts held, React not attached: the anchor navigates', async ({ page }) => {
+    const url = await arrive(page);
+    await page.route('**/_next/static/chunks/**/*.js*', () => undefined);
+    const press = await takePress(page, url, 30_000, { pressAfterMs: 300, settleMs: 5000 });
+    expect(press).toMatchObject({ outcome: 'navigated', attached: false, hydrated: false });
+    await expect(page).toHaveURL(/\/records\//);
+  });
+
+  test('React attached with its hydration held: the press hydrates the wall and pulls', async ({ page }) => {
+    const url = await arrive(page);
+    await holdScheduler(page);
+    const press = await takePress(page, url, 30_000, { pressAfterMs: 300, settleMs: 5000 });
+    expect(press).toMatchObject({ outcome: 'pulled', attached: true, hydrated: false });
+  });
+
+  /* Nothing in the app makes this state on demand: the click is swallowed, so what is staged is the instrument's reading of a press that did nothing. */
+  test('a press that does nothing is reported as dropped', async ({ page }) => {
+    const url = await arrive(page);
+    await page.route('**/_next/static/chunks/**/*.js*', () => undefined);
+    await page.addInitScript(() => { window.addEventListener('click', (event) => { event.preventDefault(); }, true); });
+    const press = await takePress(page, url, 30_000, { pressAfterMs: 300, settleMs: 1500 });
+    expect(press).toMatchObject({ outcome: 'dropped', attached: false, hydrated: false });
+  });
+
+  test('a wall hydrated before the press is reported as no gap, and nothing is pressed', async ({ page }) => {
+    const url = await arrive(page);
+    const press = await takePress(page, url, 30_000, { pressAfterMs: 3000, settleMs: 1000 });
+    expect(press).toMatchObject({ outcome: 'no-gap', hydrated: true });
+    expect(new URL(page.url()).pathname).toBe('/');
+  });
+});
+
+/*
+  The conditions the cause run names, made for real against a server of the
+  spec's own, since the test environment has no covers. Fails against a warm-up
+  blocked with route(), which turns the cache off, and against a cover in
+  flight being missed because the load ended first.
+*/
+test.describe('the cover conditions', () => {
+  let server: http.Server;
+  let origin = '';
+  test.beforeAll(async () => {
+    server = http.createServer((req, res) => {
+      if (req.url === '/') { res.setHeader('Content-Type', 'text/html'); res.end('<img src="/fast.jpg"><img src="/slow.jpg">'); return; }
+      res.setHeader('Cache-Control', 'public, max-age=3600');
+      res.setHeader('Content-Type', 'image/gif');
+      const gif = Buffer.from('R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==', 'base64');
+      if (req.url === '/slow.jpg') setTimeout(() => res.end(gif), 800); else res.end(gif);
+    });
+    await new Promise<void>((resolve) => { server.listen(0, '127.0.0.1', resolve); });
+    origin = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+  });
+  test.afterAll(() => { server.close(); });
+
+  const isCover = (url: string) => url.endsWith('.jpg');
+
+  test('a full warm-up leaves every cover cached, and the condition holds', async ({ page, context }) => {
+    const cdp = await context.newCDPSession(page);
+    await cdp.send('Network.enable');
+    await page.goto(origin, { waitUntil: 'load' });
+    const read = watchNetwork(cdp, isCover);
+    await page.goto(origin, { waitUntil: 'load' });
+    const summary = coverSummary(read(), { spineAt: 1, frameAt: 1, frameReadyState: 'loading', interactiveAt: 1, hydratedAt: 1 });
+    expect(summary.covers).toBe(2);
+    expect(conditionMade('fully-warm', summary)).toBe(true);
+  });
+
+  test('a warm-up with covers blocked leaves none cached, and a slow cover is counted in flight', async ({ page, context }) => {
+    const cdp = await context.newCDPSession(page);
+    await cdp.send('Network.enable');
+    await cdp.send('Network.setBlockedURLs', { urls: ['*.jpg'] });
+    await page.goto(origin, { waitUntil: 'load' });
+    await cdp.send('Network.setBlockedURLs', { urls: [] });
+    const read = watchNetwork(cdp, isCover);
+    await page.goto(origin, { waitUntil: 'commit' });
+    await expect.poll(() => read().covers.length).toBe(2);
+    await expect.poll(() => read().covers.filter((c) => c.endTs !== null).length).toBe(1);
+    const summary = coverSummary(read(), { spineAt: 1, frameAt: 1, frameReadyState: 'loading', interactiveAt: 200, hydratedAt: 1 });
+    expect(conditionMade('covers-cold', summary)).toBe(true);
+    expect(summary.inFlightAtInteractive).toBe(1);
+  });
 });

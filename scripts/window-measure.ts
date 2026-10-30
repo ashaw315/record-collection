@@ -9,7 +9,7 @@
  * see the window, and to keep its marks past the limit, by
  * `e2e/window-measure.spec.ts`, against the proxy that holds it open.
  */
-import type { Page } from '@playwright/test';
+import type { CDPSession, Page } from '@playwright/test';
 
 export type Marks = {
   spineAt: number | null;
@@ -17,6 +17,8 @@ export type Marks = {
   frameReadyState: string | null;
   interactiveAt: number | null;
   hydratedAt: number | null;
+  /** The second `click` listener on the document: the hold script's is the first, and React's minified names leave only the position (NOTES, 29 Oct 16:40). */
+  attachedAt?: number | null;
 };
 
 /**
@@ -30,7 +32,8 @@ export type Window =
   | { kind: 'incomplete'; limitMs: number; stage: 'no-response' | 'no-spine' | 'spine-while-loading'; openAtLeastMs?: number }
   | { kind: 'broken'; reason: string };
 
-export type Cell = { cache: 'cold' | 'warm'; network: 'none' | 'fast-3g' | 'slow-3g' | 'slow-3g-cpu4' };
+/** `warm` is Run A's: a warm-up that raced the covers. `covers-cold` and `fully-warm` make their state and are checked for it by `conditionMade`. */
+export type Cell = { cache: 'cold' | 'warm' | 'covers-cold' | 'fully-warm'; network: 'none' | 'fast-3g' | 'slow-3g' | 'slow-3g-cpu4'; press?: boolean };
 
 /** `waitMs` is the first frame with spines to the hydrated mark, or how long a load past its limit stood open. */
 export type Load = { cell: string; window: Window; waitMs?: number | null };
@@ -55,7 +58,89 @@ export const RUN_A: Run = {
 /** Whether a cold slow-3g load completes, and how wide the window is when it does or at least how wide when it does not. */
 export const RUN_B: Run = { cells: [{ cache: 'cold', network: 'slow-3g' }], perCell: 5, limitMs: 600_000 };
 
-export const cellName = (cell: Cell) => `${cell.cache}/${cell.network}`;
+/**
+ * The cause of the slow window's upper group, and what a press does between
+ * interactive and hydration on cold/fast-3g (the coordinator, 30 Oct: one run,
+ * both questions). A press changes when the wall hydrates, so the pressed loads
+ * are a cell of their own.
+ */
+export const RUN_CAUSE: Run = {
+  cells: [{ cache: 'covers-cold', network: 'slow-3g' }, { cache: 'fully-warm', network: 'slow-3g' }, { cache: 'cold', network: 'fast-3g' }, { cache: 'cold', network: 'fast-3g', press: true }],
+  perCell: 20,
+  limitMs: 180_000,
+};
+
+export const cellName = (cell: Cell) => `${cell.cache}/${cell.network}${cell.press === true ? '/press' : ''}`;
+
+/** Covers come from Vercel Blob. Blocked over CDP, never with Playwright's route(), which turns the HTTP cache off and would unmake the warm-up. */
+export const COVER_BLOCK = '*.public.blob.vercel-storage.com*';
+const isBlobCover = (url: string) => url.includes('.public.blob.vercel-storage.com');
+
+export type Network = {
+  documentStartTs: number | null;
+  documentEndTs: number | null;
+  covers: Array<{ startTs: number; endTs: number | null; fromCache: boolean; bytes: number | null }>;
+};
+
+export type CoverSummary = { documentEndMs: number | null; covers: number; fromCache: number; bytes: number; inFlightAtFrame: number; inFlightAtInteractive: number };
+
+/**
+ * Network events, not the Resource Timing API: its entries appear on
+ * completion and its buffer holds 250, and a load ended at hydration leaves
+ * covers in flight, which is the thing being counted.
+ */
+export function watchNetwork(cdp: CDPSession, isCover: (url: string) => boolean = isBlobCover): () => Network {
+  const net: Network = { documentStartTs: null, documentEndTs: null, covers: [] };
+  const covers = new Map<string, Network['covers'][number]>();
+  let documentId: string | null = null;
+  cdp.on('Network.requestWillBeSent', (e) => {
+    if (e.type === 'Document' && documentId === null) { documentId = e.requestId; net.documentStartTs = e.timestamp; }
+    if (e.type === 'Image' && isCover(e.request.url) && !covers.has(e.requestId)) {
+      const cover = { startTs: e.timestamp, endTs: null, fromCache: false, bytes: null };
+      covers.set(e.requestId, cover);
+      net.covers.push(cover);
+    }
+  });
+  cdp.on('Network.requestServedFromCache', (e) => { const c = covers.get(e.requestId); if (c !== undefined) c.fromCache = true; });
+  cdp.on('Network.responseReceived', (e) => { const c = covers.get(e.requestId); if (c !== undefined && e.response.fromDiskCache === true) c.fromCache = true; });
+  cdp.on('Network.loadingFinished', (e) => {
+    if (e.requestId === documentId) net.documentEndTs = e.timestamp;
+    const c = covers.get(e.requestId);
+    if (c !== undefined) { c.endTs = e.timestamp; c.bytes = e.encodedDataLength; }
+  });
+  cdp.on('Network.loadingFailed', (e) => { const c = covers.get(e.requestId); if (c !== undefined) c.endTs = e.timestamp; });
+  return () => net;
+}
+
+/** Network timestamps against the page's marks: both are taken from the navigation's start, near enough for counts. */
+export function coverSummary(net: Network, marks: Marks): CoverSummary {
+  const start = net.documentStartTs ?? 0;
+  const ms = (ts: number) => (ts - start) * 1000;
+  const inFlightAt = (at: number | null) => (at === null ? 0 : net.covers.filter((c) => !c.fromCache && ms(c.startTs) <= at && (c.endTs === null || ms(c.endTs) > at)).length);
+  return {
+    documentEndMs: net.documentEndTs === null ? null : ms(net.documentEndTs),
+    covers: net.covers.length,
+    fromCache: net.covers.filter((c) => c.fromCache).length,
+    bytes: net.covers.reduce((n, c) => n + (c.bytes ?? 0), 0),
+    inFlightAtFrame: inFlightAt(marks.frameAt),
+    inFlightAtInteractive: inFlightAt(marks.interactiveAt),
+  };
+}
+
+/** Whether a load was in the state its cell names. Run A's warm cells were not, and nothing said so. No cover seen proves neither. */
+export function conditionMade(cache: 'covers-cold' | 'fully-warm', s: CoverSummary): boolean {
+  return s.covers > 0 && (cache === 'fully-warm' ? s.fromCache === s.covers : s.fromCache === 0);
+}
+
+export function pressOutcome(seen: { navigated: boolean; pullStarts: number }): 'navigated' | 'pulled' | 'dropped' {
+  if (seen.navigated) return 'navigated';
+  return seen.pullStarts > 0 ? 'pulled' : 'dropped';
+}
+
+/** Past interactive, by round: production's gap is about 15s, and one fixed moment could see only one side of React attaching. */
+export const PRESS_AFTER_MS = [1000, 4000, 8000, 12000];
+
+export type Press = { outcome: 'navigated' | 'pulled' | 'dropped' | 'no-gap'; attached: boolean; hydrated: boolean };
 
 /** Every cell once per round, so time of day and Vercel's state fall across the cells and not on one. */
 export function schedule<T>(cells: T[], perCell: number): T[] {
@@ -158,7 +243,7 @@ const tableLines = (loads: Load[], figures: number[]) => {
 
 /** The log has a line per attempt; a retaken load is its last attempt, the one `runPlan` keeps. */
 export function loadsOfLog(log: string): Load[] {
-  const attempts = log.split('\n').filter((line) => line !== '').map((line) => JSON.parse(line) as { i: number; cell: string; window: Window; marks?: Marks | null });
+  const attempts = log.split('\n').filter((line) => line !== '').map((line) => JSON.parse(line) as { i: number; cell: string; window: Window; marks?: Marks | null }).filter((a) => !a.cell.endsWith('/press'));
   const loads = attempts.map((a): [number, Load] => {
     const { marks, window } = a;
     const waitMs = window.kind === 'incomplete' ? window.openAtLeastMs ?? null
@@ -167,6 +252,20 @@ export function loadsOfLog(log: string): Load[] {
     return [a.i, { cell: a.cell, window, waitMs }];
   });
   return [...new Map(loads).values()];
+}
+
+/** The pressed loads, last attempt of each, counted by the state at the press and what it did. */
+export function pressesOfLog(log: string): Array<Press & { loads: number }> {
+  const attempts = log.split('\n').filter((line) => line !== '').map((line) => JSON.parse(line) as { i: number; press?: Press }).flatMap((a) => (a.press === undefined ? [] : [a]));
+  const rows = new Map<string, Press & { loads: number }>();
+  for (const { press } of new Map(attempts.map((a) => [a.i, a])).values()) {
+    if (press === undefined) continue;
+    const key = `${press.attached}/${press.hydrated}/${press.outcome}`;
+    const row = rows.get(key) ?? { ...press, loads: 0 };
+    row.loads += 1;
+    rows.set(key, row);
+  }
+  return [...rows.values()];
 }
 
 /**
@@ -217,8 +316,14 @@ export function verdict(loads: Load[]): { sentence: string; broken: number } {
  * is the document's state while the spines are drawn.
  */
 export const RECORDER = `(() => {
-  const marks = { spineAt: null, frameAt: null, frameReadyState: null, interactiveAt: null, hydratedAt: null };
+  const marks = { spineAt: null, frameAt: null, frameReadyState: null, interactiveAt: null, hydratedAt: null, attachedAt: null };
   window.__windowMarks = marks;
+  let clicks = 0;
+  const add = document.addEventListener;
+  document.addEventListener = function (type, ...rest) {
+    if (type === 'click') { clicks += 1; if (clicks === 2) marks.attachedAt = performance.now(); }
+    return add.call(this, type, ...rest);
+  };
   const interactive = () => { if (marks.interactiveAt === null && document.readyState !== 'loading') marks.interactiveAt = performance.now(); };
   document.addEventListener('readystatechange', interactive);
   const look = () => {
@@ -263,4 +368,47 @@ export async function takeLoad(page: Page, url: string, limitMs: number): Promis
     status: response?.status() ?? null,
     vercelId: response?.headers()['x-vercel-id'] ?? null,
   };
+}
+
+/**
+ * One load with a real press on a spine, after interactive, while the wall
+ * has not hydrated: `pressAfterMs` past interactive. Reads React's state just
+ * before the click, then what the press did: the anchor navigated, the wall
+ * pulled, or nothing by `settleMs`, or 3s past hydration. Read-only on
+ * production: a pull makes no request and a record's page writes nothing.
+ */
+export async function takePress(page: Page, url: string, limitMs: number, { pressAfterMs, settleMs }: { pressAfterMs: number; settleMs: number }): Promise<Press> {
+  const response = await page.goto(url, { waitUntil: 'commit', timeout: limitMs });
+  if (response !== null && new URL(page.url()).pathname === '/login') throw new Error('the session was refused: the Collection redirected to /login');
+  const opening = page.url();
+  await page.waitForFunction((after) => {
+    const m = (window as unknown as { __windowMarks?: Marks }).__windowMarks;
+    return m !== undefined && m.spineAt !== null && m.interactiveAt !== null && performance.now() >= m.interactiveAt + after;
+  }, pressAfterMs, { timeout: limitMs });
+  const before = await page.evaluate(() => {
+    const m = (window as unknown as { __windowMarks: Marks }).__windowMarks;
+    const seat = [...document.querySelectorAll('a[data-seat]')].flatMap((a) => {
+      const r = a.getBoundingClientRect();
+      const [x, y] = [r.left + r.width / 2, r.top + r.height / 2];
+      return document.elementFromPoint(x, y)?.closest('a[data-seat]') === a ? [{ x, y }] : [];
+    })[0];
+    return { attached: m.attachedAt !== null && m.attachedAt !== undefined, hydrated: m.hydratedAt !== null, seat };
+  });
+  if (before.hydrated) return { outcome: 'no-gap', attached: before.attached, hydrated: true };
+  if (before.seat === undefined) throw new Error('no spine could be pressed');
+  const state = { attached: before.attached, hydrated: false };
+  await page.mouse.click(before.seat.x, before.seat.y);
+  const moved = () => page.url() !== opening;
+  const pullStarts = () => page.evaluate(() => Number(document.querySelector('[data-wall-container]')?.getAttribute('data-pull-starts') ?? 0)).catch(() => 0);
+  const deadline = Date.now() + settleMs;
+  let hydratedSince: number | null = null;
+  for (;;) {
+    if (moved()) return { outcome: 'navigated', ...state };
+    const starts = await pullStarts();
+    if (moved()) return { outcome: 'navigated', ...state };
+    if (starts > 0) return { outcome: 'pulled', ...state };
+    if (hydratedSince === null && await page.evaluate(() => (window as unknown as { __windowMarks: Marks }).__windowMarks.hydratedAt !== null).catch(() => false)) hydratedSince = Date.now();
+    if (Date.now() > deadline || (hydratedSince !== null && Date.now() - hydratedSince > 3000)) return { outcome: pressOutcome({ navigated: moved(), pullStarts: await pullStarts() }), ...state };
+    await page.waitForTimeout(100);
+  }
 }

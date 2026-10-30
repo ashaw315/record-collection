@@ -50328,3 +50328,42 @@ and does not reach it. For Design and the coordinator.
 
 **Assertion 12 confirms a no-entry call's form and never its claim:** nothing
 checks whether a call is TRUE. The narrow-detector family again; not urgent.
+
+## 30 Oct, 12:30: the cause run's rule, before any load
+
+**Priority (the coordinator, 30 Oct): the gap outranks the bound and the retake.**
+On cold/fast-3g the page has loaded and the wall has not hydrated for about
+15s, and a press there is not held. Is it dropped, the original defect, or does
+the anchor navigate, which is survivable? The bound and the 500ms delay stay
+held until that is answered. Run B is dropped, by the same reasoning.
+
+**The run** (`npm run window:measure:cause`, Adam's, RUN_CAUSE): 80 loads,
+round-robin, limit 180s. covers-cold/slow-3g 20, fully-warm/slow-3g 20,
+cold/fast-3g 20 with the attach mark, cold/fast-3g/press 20. About 25 minutes
+from production's own timings; the first round's projection is the figure.
+- covers-cold: the warm-up refuses every cover over CDP, zero cached by
+  construction. fully-warm: the warm-up ends at the load event. A load not in
+  the state its cell names is broken and retaken (`conditionMade`), and one that
+  saw no cover proves neither: that is what Run A's warm cells lacked.
+- The press is a real click, 1, 4, 8 or 12s past interactive by round, so both
+  sides of React attaching are seen. This is the first run that presses: a pull
+  makes no request, a record's page only reads, and nothing is written.
+
+**What each answer means.** Navigated with React not attached: the gap is
+survivable and the presses there leave the table, though a press IN the window
+is still held and still waits for hydration or the bound. Pulled with React
+attached: answered as measured on 29 Oct. Dropped: the original defect, and the
+hold's condition has to change. Width following covers in flight, and a late
+document end, confirms the cause of the upper group; a report on 300 records
+and on lazy loading follows it, separate from the bound.
+
+**The prediction, not a result:** on 29 Oct's local production build React
+attached after interactive in all 8 cold loads at every level, so the gap is
+expected to be React not attached.
+
+**A staging that did not make its state.** `holdHydration`, the control step
+160 keeps, reads React not attached at 300ms and at 4s past interactive on the
+dev server, and a press there took the anchor; its doc comment says React is
+attached and the press dropped. Stopped after two attempts. Dropped is staged
+instead by swallowing the click with scripts held, which shows the instrument
+can report it, not that the app reaches it. The control's claim is unverified.

@@ -9,6 +9,11 @@
  *   29 Oct; this run sets the figure.
  * - `window:measure:cold-slow`: Run B, five cold slow-3g loads within 600s:
  *   whether such a load completes, and the window's width or its lower bound.
+ * - `window:measure:cause`: the cover timing and the press (the coordinator,
+ *   30 Oct): 20 loads each of covers-cold and fully-warm at slow-3g, cold/fast-3g
+ *   with React's attach mark, and cold/fast-3g with a real press after
+ *   interactive. Every cover is timed over CDP, and a warm load not in the state
+ *   its cell names is broken.
  * - `window:measure:after-deploy` and `:idle-cold`: the supplement, unchanged
  *   in what it takes. After-deploy signs in before the deploy and waits for
  *   Enter once it is Ready; idle-cold signs in and makes no request for 20
@@ -24,7 +29,8 @@
  *
  * **The password is read from the environment only, never from a file
  * (the coordinator, 29 Oct),** and the session is kept in memory, never
- * written. Nothing is pressed and nothing is written to the collection.
+ * written. Nothing is written to the collection, and only the press cell
+ * presses: a pull makes no request, and a record's page only reads.
  * Each load attempt is a line in `docs/measurements/window-160/<mode>-<time>.jsonl`.
  */
 import { appendFileSync, mkdirSync, readFileSync } from 'node:fs';
@@ -32,9 +38,9 @@ import { loadavg } from 'node:os';
 import { join } from 'node:path';
 import { createInterface } from 'node:readline/promises';
 import { chromium, type Browser, type BrowserContext } from '@playwright/test';
-import { NETWORK, RECORDER, RUN_A, RUN_B, cellName, loadsOfLog, projection, runPlan, schedule, takeLoad, verdict, type Cell, type Window } from './window-measure';
+import { COVER_BLOCK, NETWORK, PRESS_AFTER_MS, RECORDER, RUN_A, RUN_B, RUN_CAUSE, cellName, conditionMade, coverSummary, loadsOfLog, pressesOfLog, projection, runPlan, schedule, takeLoad, takePress, verdict, watchNetwork, type Cell, type CoverSummary, type Press, type Window } from './window-measure';
 
-const MODES = ['run-a', 'run-b', 'after-deploy', 'idle-cold'] as const;
+const MODES = ['run-a', 'run-b', 'cause', 'after-deploy', 'idle-cold'] as const;
 const mode = process.argv[2] ?? 'run-a';
 if (!(MODES as readonly string[]).includes(mode)) {
   process.stderr.write(`measure-window: unknown mode ${mode}\n`);
@@ -48,7 +54,7 @@ if (password === undefined || password === '') {
 const BASE = process.env.WINDOW_BASE_URL ?? 'https://record-collection-rust.vercel.app';
 const onProduction = process.env.WINDOW_BASE_URL === undefined;
 const VIEWPORT = { width: 1440, height: 900 };
-const run = mode === 'run-b' ? RUN_B : RUN_A;
+const run = mode === 'run-b' ? RUN_B : mode === 'cause' ? RUN_CAUSE : RUN_A;
 /* Fixed by the rule on production; WINDOW_PER_CELL is for a smoke run on another base and is refused on production. */
 const PER_CELL = process.env.WINDOW_PER_CELL === undefined ? run.perCell : Number(process.env.WINDOW_PER_CELL);
 if (PER_CELL !== run.perCell && onProduction) {
@@ -79,28 +85,46 @@ async function signIn(browser: Browser): Promise<Awaited<ReturnType<BrowserConte
   return state;
 }
 
-type Taken = Awaited<ReturnType<typeof takeLoad>> & { ms: number };
+type Taken = Partial<Awaited<ReturnType<typeof takeLoad>>> & { window: Window; ms: number; covers?: CoverSummary; press?: Press; pressAfterMs?: number };
 
-async function load(browser: Browser, session: Awaited<ReturnType<typeof signIn>>, cell: Cell): Promise<Taken | { window: Window; ms: number }> {
+async function load(browser: Browser, session: Awaited<ReturnType<typeof signIn>>, cell: Cell, round: number): Promise<Taken> {
   const context = await browser.newContext({ viewport: VIEWPORT, storageState: session });
   const started = Date.now();
   try {
     const page = await context.newPage();
     await page.addInitScript(RECORDER);
+    const cdp = await context.newCDPSession(page);
+    await cdp.send('Network.enable');
     if (cell.cache === 'warm') {
       /* The warm-up is unthrottled and unrecorded: it fills this context's cache. */
       const warm = await takeLoad(page, `${BASE}/`, limitOf(cell));
       if (warm.window.kind === 'incomplete' || warm.window.kind === 'broken') return { window: { kind: 'broken', reason: `the warm-up did not finish (${warm.window.kind})` }, ms: Date.now() - started };
+    } else if (cell.cache === 'covers-cold') {
+      /* Blocked over CDP: route() would turn the cache off, and this warm-up is here to fill it with scripts. */
+      await cdp.send('Network.setBlockedURLs', { urls: [COVER_BLOCK] });
+      const warm = await takeLoad(page, `${BASE}/`, limitOf(cell));
+      await cdp.send('Network.setBlockedURLs', { urls: [] });
+      if (warm.window.kind === 'incomplete' || warm.window.kind === 'broken') return { window: { kind: 'broken', reason: `the warm-up did not finish (${warm.window.kind})` }, ms: Date.now() - started };
+    } else if (cell.cache === 'fully-warm') {
+      /* To the load event, as on 29 Oct: every cover fetched, about 37s unthrottled. */
+      await page.goto(`${BASE}/`, { waitUntil: 'load', timeout: limitOf(cell) });
     }
-    const cdp = await context.newCDPSession(page);
     const net = NETWORK[cell.network];
     await cdp.send('Network.emulateNetworkConditions', net.kbps === null
       ? { offline: false, latency: 0, downloadThroughput: -1, uploadThroughput: -1 }
       : { offline: false, latency: net.latency, downloadThroughput: net.kbps * 125, uploadThroughput: net.kbps * 125 });
     await cdp.send('Emulation.setCPUThrottlingRate', { rate: net.cpu });
     const measured = Date.now();
+    if (cell.press === true) {
+      const pressAfterMs = PRESS_AFTER_MS[round % PRESS_AFTER_MS.length];
+      const press = await takePress(page, `${BASE}/`, limitOf(cell), { pressAfterMs, settleMs: 60_000 });
+      return { window: { kind: 'none' }, press, pressAfterMs, ms: Date.now() - measured };
+    }
+    const network = watchNetwork(cdp);
     const taken = await takeLoad(page, `${BASE}/`, limitOf(cell));
-    return { ...taken, ms: Date.now() - measured };
+    const covers = taken.marks === null ? undefined : coverSummary(network(), taken.marks);
+    const made = (cell.cache !== 'covers-cold' && cell.cache !== 'fully-warm') || (covers !== undefined && conditionMade(cell.cache, covers));
+    return { ...taken, covers, window: made ? taken.window : { kind: 'broken', reason: `not ${cell.cache}: ${covers?.fromCache ?? '?'} of ${covers?.covers ?? '?'} covers cached` }, ms: Date.now() - measured };
   } catch (error) {
     if (error instanceof Error && /session was refused/.test(error.message)) throw error;
     return { window: { kind: 'broken', reason: error instanceof Error ? error.message.split('\n')[0] : String(error) }, ms: Date.now() - started };
@@ -120,7 +144,7 @@ try {
   const session = await signIn(browser);
   log('signed in; the session is held in memory only');
   let plan: Array<{ cell: Cell; label: string }>;
-  if (mode === 'run-a' || mode === 'run-b') {
+  if (mode === 'run-a' || mode === 'run-b' || mode === 'cause') {
     plan = schedule(run.cells, PER_CELL).map((cell) => ({ cell, label: mode }));
   } else if (mode === 'after-deploy') {
     const rl = createInterface({ input: process.stdin, output: process.stdout });
@@ -133,12 +157,12 @@ try {
     plan = [{ cell: { cache: 'cold', network: 'none' }, label: 'idle-cold' }];
   }
   const begun = Date.now();
-  const roundSize = mode === 'run-a' || mode === 'run-b' ? run.cells.length : plan.length;
+  const roundSize = mode === 'run-a' || mode === 'run-b' || mode === 'cause' ? run.cells.length : plan.length;
   let last: Awaited<ReturnType<typeof load>> | null = null;
   let before = loadavg()[0];
-  const result = await runPlan(plan, async ({ cell }) => {
+  const result = await runPlan(plan, async ({ cell }, i) => {
     before = loadavg()[0];
-    last = await load(browser, session, cell);
+    last = await load(browser, session, cell, Math.floor(i / roundSize));
     return last.window;
   }, {
     brokenLimit: BROKEN_LIMIT,
@@ -157,6 +181,7 @@ try {
   } else {
     const v = verdict(loadsOfLog(readFileSync(out, 'utf8')));
     log(`\n${v.sentence}`);
+    for (const p of pressesOfLog(readFileSync(out, 'utf8'))) log(`pressed, React ${p.attached ? 'attached' : 'not attached'}, wall ${p.hydrated ? 'hydrated' : 'not hydrated'}: ${p.outcome}, ${p.loads} load(s)`);
     log(`${v.broken} load(s) broken after their retakes, left out. Every attempt: ${out}`);
   }
 } finally {

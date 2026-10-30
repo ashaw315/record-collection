@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CANDIDATES_MS, DELAYS_MS, RUN_A, RUN_B, heldWaits, loadsOfLog, projection, runPlan, schedule, verdict, windowOf, type Load, type Window } from '../../scripts/window-measure';
+import { CANDIDATES_MS, COVER_BLOCK, DELAYS_MS, RUN_A, RUN_B, RUN_CAUSE, cellName, conditionMade, coverSummary, heldWaits, loadsOfLog, pressOutcome, pressesOfLog, projection, runPlan, schedule, verdict, windowOf, type Load, type Window } from '../../scripts/window-measure';
 
 /**
  * **The production measurement's judgement, restated before a load is taken
@@ -71,6 +71,78 @@ describe('the runs', () => {
   });
 });
 
+describe('the cause run (the coordinator, 30 Oct: one run, both questions)', () => {
+  /* Fails against a press taken among the marks' loads: a press perturbs hydration, so the two are separate cells. */
+  it('takes 80 loads round-robin: two cover conditions at slow-3g, and cold/fast-3g marked and pressed', () => {
+    expect(RUN_CAUSE.cells.map(cellName)).toEqual(['covers-cold/slow-3g', 'fully-warm/slow-3g', 'cold/fast-3g', 'cold/fast-3g/press']);
+    expect(RUN_CAUSE.perCell).toBe(20);
+    expect(RUN_CAUSE.limitMs).toBe(180_000);
+  });
+
+  /* Fails against route(), which turns the HTTP cache off, or a pattern that misses the Blob host the covers come from. */
+  it('blocks covers by the Blob host', () => {
+    expect(COVER_BLOCK).toBe('*.public.blob.vercel-storage.com*');
+  });
+});
+
+describe('coverSummary', () => {
+  const net = {
+    documentStartTs: 100,
+    documentEndTs: 105,
+    covers: [
+      { startTs: 100.5, endTs: 101, fromCache: false, bytes: 1000 },
+      { startTs: 100.5, endTs: 103, fromCache: false, bytes: 2000 },
+      { startTs: 100.6, endTs: null, fromCache: false, bytes: null },
+      { startTs: 100.6, endTs: 100.7, fromCache: true, bytes: 10 },
+      { startTs: 104, endTs: 104.5, fromCache: false, bytes: 500 },
+    ],
+  };
+
+  /* Fails against a cover counted in flight before it started, after it finished, or left out when the load ended first. */
+  it('counts the covers in flight at the frame and at interactive, on the document\'s clock', () => {
+    const c = coverSummary(net, { ...marks, frameAt: 600, interactiveAt: 3000 });
+    expect(c.inFlightAtFrame).toBe(3);
+    expect(c.inFlightAtInteractive).toBe(1);
+  });
+
+  /* Fails against a document end read from the marks: when its last byte arrived is what the tail question turns on. */
+  it('states when the document\'s last byte arrived, and the covers cached, fetched and their bytes', () => {
+    expect(coverSummary(net, marks)).toMatchObject({ documentEndMs: 5000, covers: 5, fromCache: 1, bytes: 3510 });
+  });
+
+  /* Fails against a null document end read as zero: a load that ended before the last byte has no figure. */
+  it('gives no document end when the load ended first', () => {
+    expect(coverSummary({ ...net, documentEndTs: null }, marks).documentEndMs).toBeNull();
+  });
+});
+
+describe('conditionMade', () => {
+  const summary = (covers: number, fromCache: number) => ({ documentEndMs: 1, covers, fromCache, bytes: 0, inFlightAtFrame: 0, inFlightAtInteractive: 0 });
+
+  /* Fails against a load labelled for a state the warm-up did not make, which is what Run A's warm cells turned out to be. */
+  it('refuses a fully warm load with a cover fetched, and a covers-cold load with a cover cached', () => {
+    expect(conditionMade('fully-warm', summary(43, 43))).toBe(true);
+    expect(conditionMade('fully-warm', summary(43, 42))).toBe(false);
+    expect(conditionMade('covers-cold', summary(43, 0))).toBe(true);
+    expect(conditionMade('covers-cold', summary(43, 1))).toBe(false);
+  });
+
+  /* Fails against a load that saw no covers passing both: a pattern that matches nothing makes either condition vacuously true. */
+  it('refuses a load in which no cover was seen', () => {
+    expect(conditionMade('covers-cold', summary(0, 0))).toBe(false);
+    expect(conditionMade('fully-warm', summary(0, 0))).toBe(false);
+  });
+});
+
+describe('pressOutcome', () => {
+  /* Fails against a two-state reading: a press that neither navigated nor pulled is the original defect, and must have its own name. */
+  it('names navigated, pulled and dropped', () => {
+    expect(pressOutcome({ navigated: true, pullStarts: 0 })).toBe('navigated');
+    expect(pressOutcome({ navigated: false, pullStarts: 1 })).toBe('pulled');
+    expect(pressOutcome({ navigated: false, pullStarts: 0 })).toBe('dropped');
+  });
+});
+
 describe('runPlan', () => {
   const sequence = (outcomes: Window[]) => {
     let n = 0;
@@ -131,6 +203,29 @@ describe('loadsOfLog', () => {
   it('gives a load that did not complete the time its window was open', () => {
     const late: Window = { kind: 'incomplete', limitMs: 600_000, stage: 'spine-while-loading', openAtLeastMs: 412_000 };
     expect(loadsOfLog(line('a', 0, late, marks))[0].waitMs).toBe(412_000);
+  });
+});
+
+describe('presses in a log', () => {
+  const press = (i: number, state: unknown) => JSON.stringify({ cell: 'cold/fast-3g/press', i, window: { kind: 'none' }, press: state });
+
+  /* Fails against a pressed load counted in the table: a press changes when the wall hydrates. */
+  it('leaves a pressed load out of the loads', () => {
+    expect(loadsOfLog(press(0, { outcome: 'navigated', attached: false, hydrated: false }))).toEqual([]);
+  });
+
+  /* Fails against outcomes reported without whether React had attached, which is the question. */
+  it('counts the outcomes by whether React had attached at the press', () => {
+    const log = [press(0, { outcome: 'navigated', attached: false, hydrated: false }), press(1, { outcome: 'navigated', attached: false, hydrated: false }), press(2, { outcome: 'dropped', attached: true, hydrated: false }), press(3, { outcome: 'no-gap', attached: true, hydrated: true })].join('\n');
+    expect(pressesOfLog(log)).toEqual([{ attached: false, hydrated: false, outcome: 'navigated', loads: 2 }, { attached: true, hydrated: false, outcome: 'dropped', loads: 1 }, { attached: true, hydrated: true, outcome: 'no-gap', loads: 1 }]);
+  });
+});
+
+describe('presses split by React', () => {
+  /* Fails against a count keyed on the outcome alone: the same outcome either side of React attaching is the finding. */
+  it('keeps one outcome apart by whether React had attached', () => {
+    const line = (i: number, attached: boolean) => JSON.stringify({ cell: 'cold/fast-3g/press', i, window: { kind: 'none' }, press: { outcome: 'navigated', attached, hydrated: false } });
+    expect(pressesOfLog([line(0, false), line(1, true)].join('\n')).map((p) => [p.attached, p.loads])).toEqual([[false, 1], [true, 1]]);
   });
 });
 
