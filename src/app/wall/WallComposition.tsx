@@ -1,6 +1,5 @@
 import { bandRules } from "./band-rules";
 import { WallLive } from "./WallLive";
-import { HOLD_SCRIPT } from "./hold-script";
 import { PickChannelProvider } from "./pick-channel";
 import { PAPER_CSS } from '@/lib/colour/paper';
 import type { WallSeat } from "./shelf-runs";
@@ -157,7 +156,7 @@ ${bandRules('')}
         React's listener drops a press in; it carries its own bound and
         fallback, because the case the bound exists for is React never running.
       */}
-      <script dangerouslySetInnerHTML={{ __html: HOLD_SCRIPT }} />
+      {/* The hold is off while production's dead press is diagnosed (30 Oct): not rendered, `WallLive` finds nothing to apply. */}
       <WallLive seats={seats} summaries={summaries} countLine={countLine} opens={opens} opensShelf={opensShelf} filter={filter} onView={onView} />
     </section>
     </PickChannelProvider>
