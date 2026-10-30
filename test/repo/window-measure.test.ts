@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CANDIDATES_MS, COVER_BLOCK, DELAYS_MS, PRESS_LATE_MS, RUN_A, RUN_B, RUN_CAUSE, cellName, closePlan, conditionMade, coverSummary, heldWaits, loadsOfLog, pressOutcome, pressesOfLog, projection, runPlan, schedule, verdict, windowOf, type Load, type Window } from '../../scripts/window-measure';
+import { CANDIDATES_MS, COVER_BLOCK, DELAYS_MS, PRESS_LATE_MS, RUN_A, RUN_B, RUN_CAUSE, cellName, closePlan, conditionMade, coverSummary, coverSizes, heldWaits, loadsOfLog, pressOutcome, pressesOfLog, projection, runPlan, schedule, verdict, windowOf, type Load, type Window } from '../../scripts/window-measure';
 
 /**
  * **The production measurement's judgement, restated before a load is taken
@@ -142,6 +142,13 @@ describe('coverSummary', () => {
   /* Fails against a null document end read as zero: a load that ended before the last byte has no figure. */
   it('gives no document end when the load ended first', () => {
     expect(coverSummary({ ...net, documentEndTs: null }, marks).documentEndMs).toBeNull();
+  });
+});
+
+describe('coverSizes', () => {
+  /* Fails against a split by source: a stored cover's name is a UUID, so the page cannot say where it came from, and only size can bound it. */
+  it('reports the covers above Discogs\' largest, which must be uploads, and leaves the rest unattributed', () => {
+    expect(coverSizes([100, 150_000, 170_001, 600_000, null], 170_000)).toEqual({ finished: 4, unfinished: 1, totalBytes: 920_101, meanBytes: 230_025, mustBeUploads: { count: 2, totalBytes: 770_001 }, unattributed: { count: 2, totalBytes: 150_100 } });
   });
 });
 

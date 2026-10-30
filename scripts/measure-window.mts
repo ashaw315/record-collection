@@ -17,6 +17,8 @@
  * - `window:measure:close`: what the cause run left, 51 loads: 10 presses 14s
  *   past interactive, 20 of `warm` at slow-3g with its covers timed, 20 at
  *   cold/fast-3g with covers blocked, and one load weighing every cover.
+ * - `window:measure:weigh`: one cold load to the load event, every cover's
+ *   size. Run on its own; it makes no window measurement.
  * - `window:measure:after-deploy` and `:idle-cold`: the supplement, unchanged
  *   in what it takes. After-deploy signs in before the deploy and waits for
  *   Enter once it is Ready; idle-cold signs in and makes no request for 20
@@ -41,9 +43,9 @@ import { loadavg } from 'node:os';
 import { join } from 'node:path';
 import { createInterface } from 'node:readline/promises';
 import { chromium, type Browser, type BrowserContext } from '@playwright/test';
-import { COVER_BLOCK, NETWORK, PRESS_AFTER_MS, PRESS_LATE_MS, RECORDER, RUN_A, RUN_B, RUN_CAUSE, cellName, closePlan, conditionMade, coverSummary, loadsOfLog, pressesOfLog, projection, runPlan, schedule, takeLoad, takePress, verdict, watchNetwork, type Cell, type CoverSummary, type Press, type Window } from './window-measure';
+import { COVER_BLOCK, NETWORK, PRESS_AFTER_MS, PRESS_LATE_MS, RECORDER, RUN_A, RUN_B, RUN_CAUSE, cellName, closePlan, conditionMade, coverSizes, coverSummary, loadsOfLog, pressesOfLog, projection, runPlan, schedule, takeLoad, takePress, verdict, watchNetwork, type Cell, type CoverSummary, type Press, type Window } from './window-measure';
 
-const MODES = ['run-a', 'run-b', 'cause', 'close', 'after-deploy', 'idle-cold'] as const;
+const MODES = ['run-a', 'run-b', 'cause', 'close', 'weigh', 'after-deploy', 'idle-cold'] as const;
 const mode = process.argv[2] ?? 'run-a';
 if (!(MODES as readonly string[]).includes(mode)) {
   process.stderr.write(`measure-window: unknown mode ${mode}\n`);
@@ -65,6 +67,8 @@ if (PER_CELL !== run.perCell && onProduction) {
   process.exit(2);
 }
 const BROKEN_LIMIT = 3;
+/* The largest Discogs-supplied cover the coordinator reported, 30 Oct: above it, a cover is an upload. */
+const DISCOGS_MAX_BYTES = 170 * 1024;
 const IDLE_MS = onProduction ? 20 * 60 * 1000 : Number(process.env.WINDOW_IDLE_MS ?? 20 * 60 * 1000);
 /* The supplement's cold slow-3g load takes Run B's limit; every other load Run A's. */
 const limitOf = (cell: Cell) => (cell.cache === 'cold' && cell.network === 'slow-3g' ? RUN_B.limitMs : RUN_A.limitMs);
@@ -88,7 +92,7 @@ async function signIn(browser: Browser): Promise<Awaited<ReturnType<BrowserConte
   return state;
 }
 
-type Taken = Partial<Awaited<ReturnType<typeof takeLoad>>> & { window: Window; ms: number; covers?: CoverSummary; press?: Press; pressAfterMs?: number };
+type Taken = Partial<Awaited<ReturnType<typeof takeLoad>>> & { window: Window; ms: number; covers?: CoverSummary; press?: Press; pressAfterMs?: number; sizes?: Array<number | null> };
 
 async function load(browser: Browser, session: Awaited<ReturnType<typeof signIn>>, cell: Cell, round: number): Promise<Taken> {
   const context = await browser.newContext({ viewport: VIEWPORT, storageState: session });
@@ -129,7 +133,9 @@ async function load(browser: Browser, session: Awaited<ReturnType<typeof signIn>
     if (cell.weigh === true) {
       await page.goto(`${BASE}/`, { waitUntil: 'load', timeout: limitOf(cell) });
       const weighed = coverSummary(network(), { spineAt: null, frameAt: null, frameReadyState: null, interactiveAt: null, hydratedAt: null });
-      return weighed.covers > 0 ? { window: { kind: 'none' }, covers: weighed, ms: Date.now() - measured } : { window: { kind: 'broken', reason: 'no cover seen' }, ms: Date.now() - measured };
+      const sizes = network().covers.map((c) => c.bytes);
+      if (mode === 'weigh') log(JSON.stringify(coverSizes(sizes, DISCOGS_MAX_BYTES)));
+      return weighed.covers > 0 ? { window: { kind: 'none' }, covers: weighed, sizes, ms: Date.now() - measured } : { window: { kind: 'broken', reason: 'no cover seen' }, ms: Date.now() - measured };
     }
     const taken = await takeLoad(page, `${BASE}/`, limitOf(cell));
     const covers = taken.marks === null ? undefined : coverSummary(network(), taken.marks);
@@ -154,7 +160,9 @@ try {
   const session = await signIn(browser);
   log('signed in; the session is held in memory only');
   let plan: Array<{ cell: Cell; label: string }>;
-  if (mode === 'close') {
+  if (mode === 'weigh') {
+    plan = [{ cell: { cache: 'cold', network: 'none', weigh: true }, label: mode }];
+  } else if (mode === 'close') {
     plan = closePlan(PER_CELL).map((cell) => ({ cell, label: mode }));
   } else if (mode === 'run-a' || mode === 'run-b' || mode === 'cause') {
     plan = schedule(run.cells, PER_CELL).map((cell) => ({ cell, label: mode }));

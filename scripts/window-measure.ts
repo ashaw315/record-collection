@@ -132,6 +132,19 @@ export function watchNetwork(cdp: CDPSession, isCover: (url: string) => boolean 
   return () => net;
 }
 
+/**
+ * A stored cover's name is a UUID (`storageKeyFor`), so a page cannot say where
+ * it came from. Size can bound it: anything above Discogs' largest must be an
+ * upload. The rest may be either, and the exact split needs the database.
+ */
+export function coverSizes(bytes: Array<number | null>, discogsMaxBytes: number) {
+  const done = bytes.flatMap((b) => (b === null ? [] : [b]));
+  const sum = (xs: number[]) => xs.reduce((n, b) => n + b, 0);
+  const above = done.filter((b) => b > discogsMaxBytes);
+  const rest = done.filter((b) => b <= discogsMaxBytes);
+  return { finished: done.length, unfinished: bytes.length - done.length, totalBytes: sum(done), meanBytes: done.length === 0 ? 0 : Math.round(sum(done) / done.length), mustBeUploads: { count: above.length, totalBytes: sum(above) }, unattributed: { count: rest.length, totalBytes: sum(rest) } };
+}
+
 /** Network timestamps against the page's marks: both are taken from the navigation's start, near enough for counts. */
 export function coverSummary(net: Network, marks: Marks): CoverSummary {
   const start = net.documentStartTs ?? 0;

@@ -50443,3 +50443,44 @@ hidden grid asks for at most 50 covers whatever the collection's size. A plain
 `<img>` under `display: none` is fetched and a `loading="lazy"` one is not:
 Chromium by test in `e2e/window-measure.spec.ts`, WebKit by a probe. Whether
 production's load behaves the same is what the blocked cell stands in for.
+
+## 30 Oct, 13:45: the closing run, measured
+
+Adam's run (docs/measurements/window-160/close-2026-10-30T17-15-20-957Z.jsonl),
+51 loads, none broken, load 1.6 to 7.7, nothing of Code's beside it.
+
+**The press: 10 of 10 navigated at 14s past interactive, React attached, the wall
+not hydrated.** With the first 20, 30 presses across the gap and none dropped.
+§W.8's dropped press has one sighting, a gate trace, and no instrument or
+production load has reproduced it. Between a press with React attached and the
+navigation, what happened is not recorded, and §W.8's measured "hydrates it and
+pulls" is not what production did here: it navigated. To Design.
+
+**The 13s is the covers.** Covers blocked, cold/fast-3g: React attached 963 to
+1073ms past interactive, hydrated at a median 2598ms, against 13.3s and 19.7s.
+The window occurred in 8 of 20, 33 to 43ms. Blocking is a stand-in for not
+fetching them.
+
+**The upper group is a dose, not a split.** warm/slow-3g again, 904 to 20319ms,
+with no gap between groups this time. Width = -656 + 522ms per uncached cover,
+r2 0.991, 1 to 40 uncached. Run A's "bimodal" was how the warm-up's race fell. So
+the entry's split is wrong as description. covers-cold, 43 uncached, reached only
+3.7s where this fit gives 21.8s: its warm-up never sent a cover request, this
+one's did. The likely difference is a connection to Blob already open, not shown.
+A reader reloading within seconds has that state; so "instrument artefact, not a
+production state" is too strong, and "not a returning reader's state" is fair.
+warm/slow-3g and warm/slow-3g-cpu4 drop from the table together: same warm-up.
+
+**The weighing corrects a figure.** 43 covers, 15,299,955 bytes, mean 356KB, the
+whole cold load unthrottled 2557ms. The "about 37s" warm-up of the 12:00 entry
+was one 29 Oct load, not the covers' time.
+
+**CI, Gate #2 (41094475553), mobile on Linux WebKit: 386 passed, 4 failed.** All
+four are `stats.spec.ts:493`, a genre row 28 against 27.5 under a fine pointer.
+
+**A cover's source is not on the page.** `storageKeyFor` names a stored image by
+UUID, so `npm run window:measure:weigh` gives sizes and a bound: anything above
+Discogs' 170KB must be an upload. The exact split needs a read of production's
+images and a mark of which came from Discogs. A first test of a split by file
+name passed on a fixture of an assumed name, and went: a test written from an
+assumption defends the assumption.
