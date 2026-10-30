@@ -32,10 +32,10 @@
  */
 
 /**
- * The bound, one place. Provisional (§W.8, 29 Oct): it stays if the window
- * occurs on production and its figure comes from that window's widest run;
- * if it does not, the bound and its navigation come out. The 2000 was set
- * against the broader window of 28 Oct and is unbased (the Provisionals line).
+ * The bound, one place. Built, with its figure provisional (§W.8, 30 Oct): a
+ * judgement of tolerance, not derived from the window's widest run. The 2000
+ * was set against the broader window of 28 Oct and is unbased (the
+ * Provisionals line).
  */
 export const HOLD_BOUND_MS = 2000;
 

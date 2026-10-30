@@ -50245,3 +50245,60 @@ proves it. What resolves it: warm/slow-3g on production with the warm-up
 restored to the load event. If the upper mode goes, Run A's warm cells measured
 a partly filled cache, and the bound's proposed figure falls with them.
 Run B is cold and takes no warm-up.
+
+## 30 Oct, 12:00: the warm cell is not what its name says, and three conditions
+
+**The coordinator's correction (30 Oct), taken:** a fully warm cache is the
+optimistic case, so the 11:30 entry had it the wrong way round to call the
+measured cell the accident and the 29 Oct state the real one. The warm-up is
+not restored and Run A is not discarded. Both the candidate table's navigate
+counts and the acknowledgement's delay are HELD: both rest on the warm cells.
+
+**What the measured cell is, from the code and the log.** Every spine draws its
+cover as an SVG `<image>` with no lazy loading (`WallLabelled.tsx`), so a load
+asks for every cover at once. Run A's warm-up took about 0.6s (warm/none,
+median wall time 1083ms a load, 406ms of it the measured load); 29 Oct's took
+about 37s, one load (warm/none, 00:26:24 to 00:27:02). So the warm-up had 0.6s
+of about 37s of cover traffic: scripts cached and few covers, how many left to
+a race. That is near warm-scripts-cold-covers, uncontrolled. It is not a reader
+after an import, who has all but the new covers cached.
+
+**The condition Adam's reader is in is none of the three:** all but N covers
+cached. It sits between fully warm and covers cold, and it is the only one of
+the four whose cover traffic scales with what was added.
+
+**Proposed: three conditions, each across none, fast-3g, slow-3g, slow-3g-cpu4.**
+1. cold: empty cache. Run A's two cells and Run B stand.
+2. warm-scripts-cold-covers: the warm-up refuses every cover request, so the
+   count cached is zero by construction. Run A's four warm cells keep their
+   numbers under the name `warm-scripts-few-covers`, not this one.
+3. fully-warm: the warm-up ends at the load event, as on 29 Oct.
+
+**Cost, from production's own timings:** condition 2, 80 loads, about 5
+minutes; condition 3, 80 loads, about 50 minutes, nearly all of it the
+warm-ups; resource timing on the cold cells, 40 loads, about 7 minutes. All of
+it 200 loads, about 65 minutes. The least that settles the cause: conditions 2
+and 3 at slow-3g only, 40 loads, about 16 minutes. The first round's projection
+is the figure.
+
+**Cover timing in the retake:** by CDP Network events, not the Resource Timing
+API, whose entries appear only on completion, whose buffer holds 250 by default,
+and which a load ended at hydration would leave incomplete. For each cover:
+started, finished, from cache, bytes; for each load, the covers in flight at
+frame and at interactive, and when the document's last byte arrived. If covers
+widen the window, width follows covers in flight, and the document's tail
+arrives late only when they are.
+
+**Owed from `W.8/bound-above-widest`:** `verdict` still prints a proposed bound
+from the widest × 1.5, which that entry withdraws. Its replacement is the
+candidate table, which is held, so it changes with the table. The entry's
+description cites the bimodal split and 25200ms as evidence: if the retake
+shows the upper group is an artefact of the warm-up, the withdrawal stands on
+its reasoning but the sentence is wrong, and Design qualifies it. Flagged, not
+edited. Design's change file also names Run A as the table's source; a retake
+changes that too.
+
+**Assertion 12 counts calls for the whole index, never per section** (§T.6 has
+seven new-ruling calls), so §W.8's two `No entry: nothing was ruled here before`
+calls each pass alone. It reads plain text, so bold changes nothing. Nothing
+checks that such a call is true.
