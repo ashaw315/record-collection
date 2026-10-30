@@ -1,13 +1,13 @@
 import { expect, test, type Page } from '@playwright/test';
 import { parseMatrix } from '../src/app/wall/landing';
 import { COS30, DEPTH, SIN30, SPINE_HEIGHT } from '../src/app/wall/geometry';
-import { FINISH_MS, GROWTH, OUT_MS, RETURN_MS, SWING_MS, easeInOutCubic } from '../src/app/wall/gesture';
+import { FINISH_MS, GROWTH, OUT_MS, PAN_MS, RETURN_MS, SWING_MS, easeInOutCubic } from '../src/app/wall/gesture';
 import { WIDEST } from '../src/app/wall/rotation';
 import { RETURN_FADE_END, WALL_PAPER_HEX, pullFill } from '../src/app/wall/pull-colour';
 import { recordLadder } from '../src/lib/colour/record-ladder';
 import { COLLECTION_SPINES } from '../test/fixtures/collection-spines';
 import { login } from './sign-in';
-import { clickSpine } from './wall-ready';
+import { pullSpine } from './wall-ready';
 
 /**
  * The pull on the 1:1 wall, with colour arriving across it (8a §W.2, §W.3,
@@ -78,8 +78,9 @@ test('clicking a spine pulls it out on the gesture: the seat emptied from the fi
   expect(wired).not.toBeNull();
   const furnitureBefore = await page.locator('[data-wall="labelled"] [data-furniture]').count();
 
-  await clickSpine(page, page.locator(`[data-seat="${WIRED_ID}"] [data-spine]`));
-  await page.clock.runFor(1);
+  await pullSpine(page, page.locator(`[data-seat="${WIRED_ID}"] [data-spine]`));
+  /* One frame, since the clock starts on the first frame after the press: the pull's own first frame. */
+  await page.clock.runFor(20);
   /* Frame 0: the cover plane is the seated face's own; the seat's anchor is gone. */
   const start = parseMatrix((await landing(page)) ?? '');
   expect(start[0]).toBeCloseTo(COS30, 6);
@@ -88,7 +89,7 @@ test('clicking a spine pulls it out on the gesture: the seat emptied from the fi
   expect(await phase(page)).toBe('swing');
 
   /* The swing's end: the spine has closed to nothing, the cover is level and at its widest — √2·cos30 of its grown run. */
-  await page.clock.runFor(SWING_MS + TWO_FRAMES - 1);
+  await page.clock.runFor(SWING_MS + TWO_FRAMES - 20);
   const [a45, b45, , d45] = parseMatrix((await landing(page)) ?? '');
   expect(Math.abs(b45)).toBeLessThan(0.02);
   expect(a45 * DEPTH).toBeCloseTo(DEPTH * GROWTH * WIDEST, 0);
@@ -112,7 +113,7 @@ test('colour arrives across the full out-span on one ease (§W.2) — paper at 0
   page,
 }) => {
   if (wired === null) throw new Error('fixture');
-  await clickSpine(page, page.locator(`[data-seat="${WIRED_ID}"] [data-spine]`));
+  await pullSpine(page, page.locator(`[data-seat="${WIRED_ID}"] [data-spine]`));
   await page.clock.runFor(1);
   expect((await pulled(page))?.fill, 'starts as paper').toBe(pullFill(0, wired));
 
@@ -140,7 +141,7 @@ test('on the return the fade completes before the spine lands — checked on the
 }) => {
   if (wired === null) throw new Error('fixture');
   const spine = page.locator(`[data-seat="${WIRED_ID}"] [data-spine]`);
-  await clickSpine(page, spine);
+  await pullSpine(page, spine);
   await page.clock.runFor(OUT_MS + TWO_FRAMES);
 
   /* Send it back: the whole gesture reversed on one clock. */
@@ -161,7 +162,7 @@ test('on the return the fade completes before the spine lands — checked on the
   }
   expect(frames, 'frames the viewer sees in paper before landing').toBeGreaterThan(8);
 
-  await page.clock.runFor(STEP_MS * 3);
+  await page.clock.runFor(STEP_MS * 3 + PAN_MS);
   await expect(spine, 'landed: the seated face is back').toHaveCount(1);
   await expect(spine).toHaveAttribute('fill', /oklch\(0\.925/);
   await expect(page.locator('[data-pulled]')).toHaveCount(0);

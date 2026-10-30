@@ -1,9 +1,9 @@
-import { OUT_MS, RETURN_MS } from '../src/app/wall/gesture';
+import { OUT_MS, PAN_MS, RETURN_MS } from '../src/app/wall/gesture';
 import { expect, test, type Page } from '@playwright/test';
 import { getTestDb } from '../test/helpers/db';
 import { sql } from 'drizzle-orm';
 import { login } from './sign-in';
-import { clickSpine } from './wall-ready';
+import { pullSpine } from './wall-ready';
 
 
 /*
@@ -96,7 +96,7 @@ const pulled = (page: Page) =>
 async function pullFirst(page: Page) {
   /* Seat order's FIRST record -- the DOM's first spine is paint order's, a different seat once the wall wraps (§W.23). */
   const first = (await wallOrder(page))[0];
-  await clickSpine(page, page.locator(`a[data-seat="${first}"] [data-spine]`));
+  await pullSpine(page, page.locator(`a[data-seat="${first}"] [data-spine]`));
   /* Settled, not merely pulled — see `settle`. */
   await settle(page);
 }
@@ -185,7 +185,7 @@ test('the previous arrow is ABSENT at the first record, the next arrow at the la
 
     /* Click, advance the clock, then settle -- pullFirst settles before the clock has moved. */
     /* Seat order's first (§W.23): from the DOM's first spine the walk started at seat 38, 40, 47 or 53 of 60 depending on the layout. */
-    await clickSpine(page, page.locator(`a[data-seat="${order[0]}"] [data-spine]`));
+    await pullSpine(page, page.locator(`a[data-seat="${order[0]}"] [data-spine]`));
     await page.clock.runFor(OUT_MS + 40);
     await settle(page);
     /*
@@ -247,7 +247,7 @@ test('navigation moves along the collection — both records moving, the neighbo
     /* Read BEFORE pulling: a pulled record's anchor is absent from the wall. */
     const order = await wallOrder(page);
     /* Seat order's first (§W.23): from the DOM's first spine the walk started at seat 38, 40, 47 or 53 of 60 depending on the layout. */
-    await clickSpine(page, page.locator(`a[data-seat="${order[0]}"] [data-spine]`));
+    await pullSpine(page, page.locator(`a[data-seat="${order[0]}"] [data-spine]`));
     await page.clock.runFor(OUT_MS + 40);
     /* The pulled BOX's extent — the union of its three faces — which is what the landing centres in the region. */
     const place = () =>
@@ -323,7 +323,7 @@ test('put back lands in the HELD record\'s slot after navigating', async ({ page
     /* The wall's anchor order before anything moves: a pulled record leaves the DOM's seats, so the held record's index is taken against this. */
     const initial = await wallOrder(page);
     /* Seat order's first (§W.23): from the DOM's first spine the walk started at seat 38, 40, 47 or 53 of 60 depending on the layout. */
-    await clickSpine(page, page.locator(`a[data-seat="${initial[0]}"] [data-spine]`));
+    await pullSpine(page, page.locator(`a[data-seat="${initial[0]}"] [data-spine]`));
     await page.clock.runFor(OUT_MS + 40);
     await settle(page);
 
@@ -351,7 +351,7 @@ test('put back lands in the HELD record\'s slot after navigating', async ({ page
 
     await page.getByTestId('record-chrome').getByTestId('action-put').click();
     /* The return animates too; advance its length so the seat can be re-read. */
-    await page.clock.runFor(RETURN_MS + 40);
+    await page.clock.runFor(RETURN_MS + PAN_MS + 40);
     await expect(page.locator('[data-pulled]')).toHaveCount(0, { timeout: 5000 });
 
     /*

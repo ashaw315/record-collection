@@ -50634,3 +50634,18 @@ every pull. Once framed first, every seat starts from the same place on screen,
 so the record's own dip is one figure on every shelf: 69px, peak about 650ms in.
 An arrow's swap pans 13 to 19px on a shelf and 280px across shelves. A re-roll's
 one pan is a median 184px, at most 412. Totals: today's pull 1600ms, re-roll 2462ms.
+
+## 30 Oct, 19:15: pan before pull, built
+
+§W.22: `PAN_MS` 250, ease-out; a pull runs from -PAN_MS with the record at its first
+pose, so the pull's own times do not move; a put back seats and then pans; a re-roll
+pans once. An arrow's swap stays on its one clock. Its specs step a frozen clock, so
+those about the pull advance past the pan (`pullSpine`) with their assertions
+unchanged, and the two about the one clock are rewritten: they encoded the ruling
+withdrawn. Not a change to make failing code pass.
+
+**Found building it:** the wall's clock has no reduced-motion path, and §W has no
+sentence for the pan under it, so "the pan cuts with the pull" describes nothing
+built. Left as ruled; for Design. And on a put back the DOCUMENT scrolls about 131px
+on the near view, re-roll or not, while the wall's own scroll returns exactly. Not
+caused by this change as far as measured, and unexplained.

@@ -138,6 +138,42 @@ test('an ask while a record moves is ignored, coming out and going back', async 
 const DRAWS = [0, 0.999];
 const pin = (page: Page, draw: number) => page.evaluate((r) => { Math.random = () => r; }, draw);
 
+/*
+  §W.22: a re-roll pans once, from the first framing to the second's, and a put back after it still
+  returns to where the reader was. Fails against a frame let go between the two gestures, where the
+  wall jumps, and against a rest view forgotten there, where the put back lands on the first's framing.
+*/
+test('after a re-roll the wall does not jump, and a put back returns to where the reader was', async ({ page }) => {
+  const { artistId } = await poolOf(page, 3);
+  await openNear(page, artistId);
+  await wallMeasured(page);
+  const place = () => page.locator('[data-region="wall"]').evaluate((el) => [el.scrollLeft, el.scrollTop, el.querySelector('svg')?.getAttribute('viewBox')]);
+  const rest = await place();
+  await press(page);
+  await settledOut(page);
+  await page.evaluate(() => {
+    const w = window as unknown as { __jump: number[][] };
+    w.__jump = [];
+    const tick = () => {
+      const r = document.querySelector('[data-furniture="upright-front"]')?.getBoundingClientRect();
+      if (r !== undefined) w.__jump.push([r.left, r.top]);
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
+  await press(page);
+  await page.waitForFunction(() => document.querySelector('[data-wall-container]')?.getAttribute('data-phase') === 'return');
+  await page.waitForFunction(() => document.querySelector('[data-wall-container]')?.getAttribute('data-phase') === 'landed', undefined, { timeout: 10_000 });
+  const path = await page.evaluate(() => (window as unknown as { __jump: number[][] }).__jump);
+  const steps = path.slice(1).map((p, i) => Math.hypot(p[0] - path[i][0], p[1] - path[i][1]));
+  /* A 250ms pan of at most 412px moves at most about 100px a frame on its fastest frame; a jump of the frame's own 650 is not that. */
+  expect(Math.max(...steps), 'no frame jumps the wall').toBeLessThan(200);
+  await page.keyboard.press('Escape');
+  await expect(page.locator('[data-pulled]')).toHaveCount(0, { timeout: 10_000 });
+  /* The wall's own scroll: on a put back the document scrolls too, with or without a re-roll, so a screen position cannot say. */
+  await expect.poll(place, 'back where the reader was').toEqual(rest);
+});
+
 test('a record pulled by its spine counts as served, and an ask with it out re-rolls', async ({ page }) => {
   const { artistId, ids } = await poolOf(page, 2);
   const [spine, other] = ids;

@@ -1,5 +1,5 @@
 import { SPINE_WIDTH_MAX, frontFace, type PlacedSeat } from './geometry';
-import { OUT_MS, SWING_MS, easeInOutCubic, gestureFaces, outTime, poseAt, type GestureState } from './gesture';
+import { OUT_MS, PAN_MS, RETURN_MS, SWING_MS, easeInOutCubic, gestureFaces, outTime, poseAt, type GestureState } from './gesture';
 import { ARROW_LANE, LANDING_PAD } from './landing';
 import type { View } from './view';
 
@@ -90,7 +90,10 @@ export function frameView(extent: Extent, view: Pick<View, 'width' | 'height'>):
 }
 
 /** A pan: from the view where the gesture began to the view it arrives at, on the swing's ease of the record driving it. */
-export type Pan = { forId: string; from: [number, number]; to: [number, number]; at0: number };
+export type Pan = { forId: string; from: [number, number]; to: [number, number]; at0: number; apart?: boolean };
+
+/** §W.22: a curve that arrives at rest. */
+const easeOutCubic = (k: number) => 1 - (1 - Math.min(1, Math.max(0, k))) ** 3;
 
 /**
  * Where the view is at a state of the driving record: on the way out, from
@@ -99,6 +102,11 @@ export type Pan = { forId: string; from: [number, number]; to: [number, number];
  * return began, so a put-back mid-swing is continuous.
  */
 export function panView(pan: Pan, state: GestureState): [number, number] {
+  /* §W.22: apart from the gesture, before a pull and after a put back. The next arrow's swap stays on the clock below. */
+  if (pan.apart === true) {
+    const f = easeOutCubic(state.direction === 'out' ? (state.ms + PAN_MS) / PAN_MS : (state.ms - RETURN_MS) / PAN_MS);
+    return [pan.from[0] + (pan.to[0] - pan.from[0]) * f, pan.from[1] + (pan.to[1] - pan.from[1]) * f];
+  }
   const eased = easeInOutCubic(Math.min(1, outTime(state) / SWING_MS));
   if (state.direction === 'out') return [pan.from[0] + (pan.to[0] - pan.from[0]) * eased, pan.from[1] + (pan.to[1] - pan.from[1]) * eased];
   /* The return: the travel unwinds from at0 to 0, and the view retraces from where the return began to the pre-gesture view. */

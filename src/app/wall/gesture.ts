@@ -64,7 +64,19 @@ export const GROWTH = LANDED_SIZE / DEPTH;
 export const GROWTH_START = ROTATION_START;
 export const GROWTH_END = 1;
 
-export type GestureState = { id: string; direction: 'out' | 'back'; ms: number };
+/**
+ * §W.22, pan before pull: the view frames the landing first, and the record is
+ * pulled once it rests. Framing rather than gesture, so short: a pull is 1850ms
+ * against the one clock's 1600, for Adam to judge from video (provisional).
+ */
+export const PAN_MS = 250;
+
+/**
+ * `ms` runs from -PAN_MS on a pull from the shelf, the record at its first pose
+ * while the view moves. `trail` is the pan back a put back runs once seated; a
+ * re-roll's put back has none, since the next pull's pan is the only one.
+ */
+export type GestureState = { id: string; direction: 'out' | 'back'; ms: number; trail?: number };
 export type Pose = { k: number; travel: number; scale: number; angle: number; finish: number };
 
 export function easeInOutCubic(k: number): number {
@@ -74,12 +86,12 @@ export function easeInOutCubic(k: number): number {
 
 /** Where on the out gesture's own time a state is: the return reads the same times backwards. */
 export function outTime(state: GestureState): number {
-  if (state.direction === 'out') return Math.min(OUT_MS, state.ms);
+  if (state.direction === 'out') return Math.max(0, Math.min(OUT_MS, state.ms));
   return OUT_MS * (1 - Math.min(RETURN_MS, state.ms) / RETURN_MS);
 }
 
 export function settled(state: GestureState): boolean {
-  return state.ms >= (state.direction === 'out' ? OUT_MS : RETURN_MS);
+  return state.ms >= (state.direction === 'out' ? OUT_MS : RETURN_MS + (state.trail ?? 0));
 }
 
 export function poseAt(t: number): Pose {

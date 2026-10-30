@@ -6,7 +6,7 @@ import { unitRows } from '../src/app/wall/unit';
 import { SPINE_TEXT_BUDGET, spineLabel } from '../src/app/wall/spine-text';
 import { COLLECTION_SPINES } from '../test/fixtures/collection-spines';
 import { login } from './sign-in';
-import { clickSpine } from './wall-ready';
+import { pullSpine } from './wall-ready';
 
 /**
  * The 1:1 component (The Wall 5b §1, §4, §5; §W), on the real collection.
@@ -318,7 +318,7 @@ test('the record with no cover pulls to ink, not to a default colour', async ({ 
   await page.clock.install();
   await page.clock.pauseAt(Date.now() + 1000);
   const blues = COLLECTION_SPINES.findIndex((row) => row.resampled === null);
-  await clickSpine(page, page.locator(`[data-seat="collection-${blues}"] [data-spine]`));
+  await pullSpine(page, page.locator(`[data-seat="collection-${blues}"] [data-spine]`));
   await page.clock.runFor(OUT_MS + 40);
   await expect(page.locator('[data-pulled] [data-field]')).toHaveAttribute('fill', WALL_INK);
 });

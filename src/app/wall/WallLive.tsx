@@ -9,7 +9,7 @@ import { labelsFit } from './geometry';
 import { navigate, type Direction } from './adjacent-seat';
 import { LANDING_PAD, offsetOf } from './landing';
 import type { View } from './view';
-import { OUT_MS, RETURN_MS, SWING_MS, outTime, settled } from './gesture';
+import { OUT_MS, PAN_MS, RETURN_MS, SWING_MS, outTime, settled } from './gesture';
 import { frameView, landedExtent, panFraction, panView, type Pan } from './pan';
 import { wallLayout } from './wall-layout';
 import { isFarView } from './view-fork';
@@ -208,6 +208,7 @@ export function WallLive({
   const viewNowRef = useRef<[number, number] | null>(null);
   const restViewRef = useRef<[number, number] | null>(null);
   const panRef = useRef<Pan | null>(null);
+  const queued = useRef<string | null>(null);
   /* The frame's originRef as last committed, for the scroll listener that tracks the view at rest. */
   const originRef = useRef<[number, number]>([0, 0]);
   const gestureOnRef = useRef(false);
@@ -364,7 +365,8 @@ if (offset !== null) offset.style.transform = '';
     gestureOnRef.current = pulls.length > 0;
     if (pulls.length === 0) {
       viewNowRef.current = readView(el, [frameX, frameY]);
-      restViewRef.current = null;
+      /* Between a re-roll's two gestures the reader's own place is still what a put back returns to. */
+      if (queued.current === null) restViewRef.current = null;
       panRef.current = null;
       return;
     }
@@ -375,11 +377,15 @@ if (offset !== null) offset.style.transform = '';
       if (panRef.current?.forId !== arriving.id) {
         const seat = layout.placed.find((p) => p.id === arriving.id);
         if (seat !== undefined) {
-          panRef.current = { forId: arriving.id, from: current, to: frameView(landedExtent(seat), { width: el.clientWidth, height: el.clientHeight - LANDING_PAD }), at0: 1 };
+          const to = frameView(landedExtent(seat), { width: el.clientWidth, height: el.clientHeight - LANDING_PAD });
+          /* §W.22: a pull from the shelf pans first, and a pull with nothing to pan runs alone. An arrow's swap stays on its one clock. */
+          const swap = pulls.length > 1;
+          panRef.current = { forId: arriving.id, from: current, to, at0: 1, apart: !swap };
+          if (!swap && Math.hypot(to[0] - current[0], to[1] - current[1]) < 1) base.current.set(arriving.id, 0);
         }
       }
     } else if (pulls[0] !== undefined && panRef.current?.forId !== `back:${pulls[0].id}`) {
-      panRef.current = { forId: `back:${pulls[0].id}`, from: current, to: restViewRef.current, at0: panFraction(pulls[0]) };
+      panRef.current = { forId: `back:${pulls[0].id}`, from: current, to: restViewRef.current, at0: panFraction(pulls[0]), apart: true };
     }
     viewNowRef.current = current;
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -444,20 +450,20 @@ if (offset !== null) offset.style.transform = '';
   */
   const [pullStarts, setPullStarts] = useState(0);
   const begin = useCallback(
-    (id: string, direction: PullState['direction']) => {
+    (id: string, direction: PullState['direction'], trail = PAN_MS) => {
       started.current = null;
       if (direction === 'out') {
         setPullStarts((n) => n + 1);
         setSide('front');
         setView(visible());
-        base.current.set(id, 0);
+        base.current.set(id, -PAN_MS);
         setFramed((current) => (current.includes(id) ? current : [...current, id]));
-        setPulls([{ id, direction, ms: 0 }]);
+        setPulls([{ id, direction, ms: -PAN_MS }]);
       } else {
         /* The return begins at the time that mirrors where the out had got to: the whole gesture reversed (§W.21). */
         const from = held !== null && held.id === id ? RETURN_MS * (1 - outTime(held) / OUT_MS) : 0;
         base.current.set(id, from);
-        setPulls([{ id, direction, ms: from }]);
+        setPulls([{ id, direction, ms: from, trail }]);
       }
     },
     [visible, held],
@@ -470,7 +476,6 @@ if (offset !== null) offset.style.transform = '';
     sequential is what is built, not what is ruled).
   */
   const channel = usePickChannel();
-  const queued = useRef<string | null>(null);
   const far = viewport === 0 ? null : isFarView(viewport) || routeView === 'far';
   useEffect(() => {
     if (channel === null) return;
@@ -483,7 +488,8 @@ if (offset !== null) offset.style.transform = '';
       if (answer.kind === 'pull') begin(answer.id, 'out');
       if (answer.kind === 'reroll') {
         queued.current = answer.pull;
-        begin(answer.back, 'back');
+        /* §W.22: a re-roll pans once, from the first framing to the second's: the next pull's. */
+        begin(answer.back, 'back', 0);
       }
       return { did: answer.kind, host: null };
     });
@@ -546,7 +552,8 @@ if (offset !== null) offset.style.transform = '';
       /* Landed: the seated anchor is drawn again by the ordinary path; at rest, the frame lets the landings go. */
       const remaining = next.filter((state) => !(state.direction === 'back' && settled(state)));
       setPulls(remaining);
-      if (remaining.length === 0) setFramed([]);
+      /* A re-roll's second pull starts from the first's framing (§W.22), so the frame keeps that room until it has. */
+      if (remaining.length === 0 && queued.current === null) setFramed([]);
       if (!next.every(settled)) handle = requestAnimationFrame(frame);
     };
 
@@ -616,14 +623,16 @@ if (offset !== null) offset.style.transform = '';
     return () => window.removeEventListener('keydown', onKey);
   }, [held, begin, routeView, zoomOut]);
 
-  /* The gesture's phase, for whoever watches: rest · swing · finish · landed · return. */
+  /* The gesture's phase, for whoever watches: rest · pan · swing · finish · landed · return. */
   const phase =
     held !== null
-      ? held.ms < SWING_MS
-        ? 'swing'
-        : held.ms < OUT_MS
-          ? 'finish'
-          : 'landed'
+      ? held.ms < 0
+        ? 'pan'
+        : held.ms < SWING_MS
+          ? 'swing'
+          : held.ms < OUT_MS
+            ? 'finish'
+            : 'landed'
       : pulls.length === 0
         ? 'rest'
         : 'return';

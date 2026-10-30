@@ -1,10 +1,10 @@
 import { expect, test, type Page } from '@playwright/test';
 import { parseMatrix } from '../src/app/wall/landing';
-import { OUT_MS, RETURN_MS, ROTATION_START, SWING_MS, TRAVEL, easeInOutCubic } from '../src/app/wall/gesture';
+import { OUT_MS, PAN_MS, RETURN_MS, ROTATION_START, SWING_MS, TRAVEL, easeInOutCubic } from '../src/app/wall/gesture';
 import { COS30, SIN30 } from '../src/app/wall/geometry';
 import { COLLECTION_SPINES } from '../test/fixtures/collection-spines';
 import { login } from './sign-in';
-import { clickSpine } from './wall-ready';
+import { clickSpine, pullSpine } from './wall-ready';
 
 /**
  * §W.19 / §W.21: the assembled gesture, watched under a paused clock. The
@@ -39,7 +39,7 @@ const foot = (page: Page) =>
   });
 
 test('the rotation joins at 42% of the swing — with the panel — and the spine closes to nothing by its end', async ({ page }) => {
-  await clickSpine(page, page.locator(`[data-seat="${WIRED_ID}"] [data-spine]`));
+  await pullSpine(page, page.locator(`[data-seat="${WIRED_ID}"] [data-spine]`));
   const join = ROTATION_START * SWING_MS;
   await page.clock.runFor(join - TWO_FRAMES);
   const before = await spineWidth(page);
@@ -54,7 +54,7 @@ test('the rotation joins at 42% of the swing — with the panel — and the spin
 });
 
 test('the foot of the cover’s near edge moves only with the travel — growth and rotation hold it, and nothing drifts (§W.21, §W.22)', async ({ page }) => {
-  await clickSpine(page, page.locator(`[data-seat="${WIRED_ID}"] [data-spine]`));
+  await pullSpine(page, page.locator(`[data-seat="${WIRED_ID}"] [data-spine]`));
   await page.clock.runFor(1);
   const f0 = await foot(page);
   let elapsed = 1;
@@ -70,7 +70,8 @@ test('the foot of the cover’s near edge moves only with the travel — growth 
   }
 });
 
-test('the view pans to frame the landing on the swing’s ease — the wall still relative to itself, the record in frame at the end (§W.22)', async ({ page }) => {
+/* §W.22 (W.22/pan-one-clock): the view pans first and the record is pulled once it rests. Fails against the one clock, where the view is still moving through the swing. */
+test('the view pans to frame the landing before the pull, on a curve that arrives at rest, and holds through the gesture (§W.22)', async ({ page }) => {
   const region = page.locator('[data-region="wall"]');
   const scroll = () => region.evaluate((el) => [el.scrollLeft, el.scrollTop]);
   const upright = () => page.locator('[data-furniture="upright-front"]').first().evaluate((el) => el.getBoundingClientRect().left);
@@ -80,19 +81,21 @@ test('the view pans to frame the landing on the swing’s ease — the wall stil
   await page.clock.runFor(1);
   const s0 = await scroll();
   expect(Math.abs((await upright()) - before), 'the frame grew and the scroll was compensated: the wall did not move').toBeLessThan(1);
-  await page.clock.runFor(546 - 1);
-  const sJoin = await scroll();
-  await page.clock.runFor(1300 - 546);
+  expect(await phase(page), 'the record has not begun').toBe('pan');
+  await page.clock.runFor(PAN_MS / 2 - 1);
+  const sMid = await scroll();
+  await page.clock.runFor(PAN_MS / 2 + TWO_FRAMES);
   const sEnd = await scroll();
   expect(sEnd[0], 'panned left toward the landing').toBeLessThan(s0[0]);
-  /* On the swing's ease: e(0.42) of the way at the join, within two frames. */
-  const ratio = (sJoin[0] - s0[0]) / (sEnd[0] - s0[0]);
-  const slack = easeInOutCubic((546 + 2 * FRAME_MS) / SWING_MS) - easeInOutCubic(ROTATION_START);
-  expect(Math.abs(ratio - easeInOutCubic(ROTATION_START))).toBeLessThan(slack + 0.02);
+  /* Decelerating: seven eighths of the way at the halfway mark, within two frames. */
+  expect((sMid[0] - s0[0]) / (sEnd[0] - s0[0])).toBeGreaterThan(0.75);
+  expect(await phase(page), 'the pull follows with no hold at the join').toBe('swing');
   /* The wall stayed still relative to itself: the upright moved on screen by exactly the pan. */
   expect(Math.abs((await upright()) - before - (s0[0] - sEnd[0]))).toBeLessThan(1.5);
+  await page.clock.runFor(SWING_MS / 2);
+  expect(await scroll(), 'the view does not move through the pull').toEqual(sEnd);
   /* And the landing is in frame, arrows and all. */
-  await page.clock.runFor(OUT_MS - 1300 + 2 * TWO_FRAMES);
+  await page.clock.runFor(OUT_MS - SWING_MS / 2 + 2 * TWO_FRAMES);
   const inside = await page.evaluate(() => {
     const r = document.querySelector('[data-region="wall"]')?.getBoundingClientRect();
     const f = document.querySelector('[data-pulled] [data-field]')?.getBoundingClientRect();
@@ -117,7 +120,7 @@ test('the pan settles where the empty seat clears the cover’s trailing edge �
   const uprightAtRest = await rect(upright);
   expect(seatAtRest && uprightAtRest).toBeTruthy();
   if (!seatAtRest || !uprightAtRest) return;
-  await clickSpine(page, page.locator(`[data-seat="${WIRED_ID}"] [data-spine]`));
+  await pullSpine(page, page.locator(`[data-seat="${WIRED_ID}"] [data-spine]`));
   await page.clock.runFor(OUT_MS + 2 * TWO_FRAMES);
   const [region, field, uprightLanded] = await Promise.all([rect('[data-region="wall"]'), rect('[data-pulled] [data-field]'), rect(upright)]);
   expect(region && field && uprightLanded).toBeTruthy();
@@ -130,16 +133,20 @@ test('the pan settles where the empty seat clears the cover’s trailing edge �
   expect(field.left >= region.left && field.right <= region.right, 'and so is the landed record').toBe(true);
 });
 
-test('put back pans the view back to where it began, on the same clock', async ({ page }) => {
+/* §W.22: a put back seats the record and then pans back. Fails against a pan that runs while the record seats. */
+test('put back seats the record, then pans the view back to where it began', async ({ page }) => {
   /* Measured on the wall's own screen position: scroll numbers are frame-relative and the frame changes with the landing. */
   const upright = () => page.locator('[data-furniture="upright-front"]').first().evaluate((el) => { const r = el.getBoundingClientRect(); return [r.left, r.top]; });
   const before = await upright();
-  await clickSpine(page, page.locator(`[data-seat="collection-0"] [data-spine]`));
+  await pullSpine(page, page.locator(`[data-seat="collection-0"] [data-spine]`));
   await page.clock.runFor(OUT_MS + TWO_FRAMES);
   const landed = await upright();
   expect(Math.hypot(landed[0] - before[0], landed[1] - before[1]), 'the view panned').toBeGreaterThan(20);
   await page.keyboard.press('Escape');
-  await page.clock.runFor(RETURN_MS + 2 * TWO_FRAMES);
+  await page.clock.runFor(RETURN_MS - TWO_FRAMES);
+  const seating = await upright();
+  expect(Math.hypot(seating[0] - landed[0], seating[1] - landed[1]), 'the view holds while the record seats').toBeLessThan(1.5);
+  await page.clock.runFor(PAN_MS + 3 * TWO_FRAMES);
   const back = await upright();
   expect(Math.abs(back[0] - before[0]), 'and panned back').toBeLessThan(1.5);
   expect(Math.abs(back[1] - before[1])).toBeLessThan(1.5);
@@ -147,7 +154,7 @@ test('put back pans the view back to where it began, on the same clock', async (
 
 test('put back is the whole gesture reversed on one clock, from wherever it stood', async ({ page }) => {
   const spine = page.locator(`[data-seat="${WIRED_ID}"] [data-spine]`);
-  await clickSpine(page, spine);
+  await pullSpine(page, spine);
   await page.clock.runFor(OUT_MS + TWO_FRAMES);
   expect(await phase(page)).toBe('landed');
   const landed = parseMatrix((await page.locator('[data-pulled] [data-landing]').getAttribute('transform')) ?? '');
@@ -161,7 +168,7 @@ test('put back is the whole gesture reversed on one clock, from wherever it stoo
   expect(half[1], 'sheared: back in the projection').toBeLessThan(-0.05);
   expect(await spineWidth(page)).toBeGreaterThan(1);
 
-  await page.clock.runFor(RETURN_MS / 2 + 2 * TWO_FRAMES);
+  await page.clock.runFor(RETURN_MS / 2 + PAN_MS + 2 * TWO_FRAMES);
   await expect(spine, 'seated again').toHaveCount(1);
   await expect(page.locator('[data-pulled]')).toHaveCount(0);
   expect(await phase(page)).toBe('rest');
@@ -169,12 +176,12 @@ test('put back is the whole gesture reversed on one clock, from wherever it stoo
 
 test('Escape mid-swing reverses from where the record stood, not from the end', async ({ page }) => {
   const spine = page.locator(`[data-seat="${WIRED_ID}"] [data-spine]`);
-  await clickSpine(page, spine);
+  await pullSpine(page, spine);
   await page.clock.runFor(400);
   await page.keyboard.press('Escape');
   await page.clock.runFor(1);
   expect(await phase(page)).toBe('return');
   /* 400 of 1600 out is a quarter; the return has a quarter of its 860 to run. */
-  await page.clock.runFor(RETURN_MS * 0.25 + 2 * TWO_FRAMES);
+  await page.clock.runFor(RETURN_MS * 0.25 + PAN_MS + 2 * TWO_FRAMES);
   await expect(spine, 'seated within a quarter of the return').toHaveCount(1);
 });

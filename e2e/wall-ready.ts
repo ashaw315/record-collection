@@ -1,4 +1,5 @@
 import { expect, type Locator, type Page } from '@playwright/test';
+import { PAN_MS } from '../src/app/wall/gesture';
 
 /**
  * **A seat is clicked only when the wall is hydrated and landed (28 Oct).**
@@ -28,6 +29,12 @@ import { expect, type Locator, type Page } from '@playwright/test';
  */
 export async function wallAtRest(page: Page): Promise<void> {
   await expect(page.locator('[data-wall-container][data-hydrated="true"][data-landed="true"]').first(), 'the wall is hydrated and landed').toBeAttached({ timeout: 30_000 });
+}
+
+/** A press and the pan before the pull (§W.22), on a paused clock: the pull's own time is 0 when this returns. */
+export async function pullSpine(page: Page, spine: Locator): Promise<void> {
+  await clickSpine(page, spine);
+  await page.clock.runFor(PAN_MS);
 }
 
 /** The spine's click, after the wall is at rest. `spine` is the caller's locator for the spine or its seat. */

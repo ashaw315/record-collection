@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { layoutRow, project } from './geometry';
-import { OUT_MS, RETURN_MS, ROTATION_START, SWING_MS, easeInOutCubic, gestureFaces, poseAt } from './gesture';
+import { OUT_MS, PAN_MS, RETURN_MS, ROTATION_START, SWING_MS, easeInOutCubic, gestureFaces, outTime, poseAt, settled } from './gesture';
 import { ARROW_LANE, LANDING_PAD } from './landing';
 import { SEAT_CLEARANCE, clearanceShift, frameView, landedExtent, panFraction, panView, recordOffset } from './pan';
 import { SPINE_WIDTH_MAX, frontFace } from './geometry';
@@ -125,5 +125,70 @@ describe('panView — the view rides the swing’s ease out, and retraces to the
     const back = { forId: 'p', from: [-100, -750] as [number, number], to: [0, -800] as [number, number], at0 };
     expect(panView(back, state)).toEqual([-100, -750]);
     expect(panView(back, { ...state, ms: RETURN_MS })).toEqual([0, -800]);
+  });
+});
+
+/*
+  §W.22: pan, then pull (W.22/pan-one-clock). From the top shelf the two ran on one clock and
+  compounded: on production the record fell 251px under a 277px pan. Apart, the view moves while
+  the record holds its first pose, and the pull runs unchanged once the view has come to rest.
+*/
+describe('panView, the pan before the pull', () => {
+  const pan = { forId: 'p', from: [0, -800] as [number, number], to: [-600, -500] as [number, number], at0: 1, apart: true };
+
+  /* Fails against the one clock: the view must be at rest when the pull's own time is 0. */
+  it('has finished when the pull begins, and stays there through it', () => {
+    expect(panView(pan, { id: 'p', direction: 'out', ms: -PAN_MS })).toEqual([0, -800]);
+    expect(panView(pan, { id: 'p', direction: 'out', ms: 0 })).toEqual([-600, -500]);
+    expect(panView(pan, { id: 'p', direction: 'out', ms: 700 })).toEqual([-600, -500]);
+    expect(panView(pan, { id: 'p', direction: 'out', ms: OUT_MS })).toEqual([-600, -500]);
+  });
+
+  /* Fails against the swing's ease, whose S starts slowly: §W.22 rules a curve that arrives at rest, so the pan is over most of its way by halfway. */
+  it('arrives at rest, decelerating', () => {
+    const half = panView(pan, { id: 'p', direction: 'out', ms: -PAN_MS / 2 });
+    expect((half[0] - 0) / -600).toBeCloseTo(0.875, 5);
+    const a = panView(pan, { id: 'p', direction: 'out', ms: -PAN_MS * 0.1 })[0];
+    const b = panView(pan, { id: 'p', direction: 'out', ms: 0 })[0];
+    expect(Math.abs(b - a)).toBeLessThan(2);
+  });
+
+  /* Fails against a return that pans while the record seats: §W.22, a put back seats the record and then pans back. */
+  it('a put back holds the view until the record has seated, then pans', () => {
+    const back = { forId: 'back:p', from: [-600, -500] as [number, number], to: [0, -800] as [number, number], at0: 1, apart: true };
+    expect(panView(back, { id: 'p', direction: 'back', ms: 0, trail: PAN_MS })).toEqual([-600, -500]);
+    expect(panView(back, { id: 'p', direction: 'back', ms: RETURN_MS, trail: PAN_MS })).toEqual([-600, -500]);
+    expect(panView(back, { id: 'p', direction: 'back', ms: RETURN_MS + PAN_MS, trail: PAN_MS })).toEqual([0, -800]);
+  });
+
+  /* Fails against a re-roll that pans back and out again: one pan, from the first framing to the second's, belongs to the next pull. */
+  it('a re-roll\'s put back does not pan, and the pull after it pans once', () => {
+    const back = { forId: 'back:p', from: [-600, -500] as [number, number], to: [0, -800] as [number, number], at0: 1, apart: true };
+    expect(panView(back, { id: 'p', direction: 'back', ms: RETURN_MS })).toEqual([-600, -500]);
+    expect(settled({ id: 'p', direction: 'back', ms: RETURN_MS })).toBe(true);
+  });
+});
+
+describe('the record under the pan', () => {
+  /* Fails against a record that moves while the view does: the join has no hold, and the pull is unchanged. */
+  it('holds its first pose through the pan, and the gesture\'s times do not move', () => {
+    const lead = { id: 'p', direction: 'out' as const, ms: -PAN_MS / 2 };
+    expect(outTime(lead)).toBe(0);
+    expect(recordOffset(seat, lead)).toEqual([0, 0]);
+    expect(settled(lead)).toBe(false);
+    expect(settled({ id: 'p', direction: 'out', ms: OUT_MS })).toBe(true);
+  });
+
+  /* Fails against a put back that lets go of the record's clock early, which would cut the pan back off. */
+  it('a put back with a trail is not settled until the pan back has run', () => {
+    expect(settled({ id: 'p', direction: 'back', ms: RETURN_MS, trail: PAN_MS })).toBe(false);
+    expect(settled({ id: 'p', direction: 'back', ms: RETURN_MS + PAN_MS, trail: PAN_MS })).toBe(true);
+  });
+
+  /* Fails against a figure drifting unseen: the duration is Adam's judgement, and total time is the trade. */
+  it('makes a pull 1850ms and a re-roll 2712ms', () => {
+    expect(PAN_MS).toBe(250);
+    expect(PAN_MS + OUT_MS).toBe(1850);
+    expect(Math.round(RETURN_MS + PAN_MS + OUT_MS)).toBe(2712);
   });
 });
