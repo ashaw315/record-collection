@@ -50622,3 +50622,15 @@ figures and three options: accept the compound motion, let the landing follow th
 row, or keep the single landing and separate pan and pull in time. The dip is
 about two-thirds of the pan plus the record's own drop, 44 to 65px, not the pan
 alone. The lag is left: Adam says whether he still feels it once this is settled.
+
+## 30 Oct, 18:15: the pan's figures, before it is built
+
+Computed from the wall's own functions at 43 records, a 872 × 813 region, the
+default scroll: not measured in a browser. **The pan is zero on 0 of 43 seats,**
+397 to 724px, 388 to 669 of it across, since every record lands left of the case
+and the wall cannot rest scrolled left of it. So §W.22's "where the pan is zero"
+is a case that does not happen on a pull from rest, and the pan's cost is paid by
+every pull. Once framed first, every seat starts from the same place on screen,
+so the record's own dip is one figure on every shelf: 69px, peak about 650ms in.
+An arrow's swap pans 13 to 19px on a shelf and 280px across shelves. A re-roll's
+one pan is a median 184px, at most 412. Totals: today's pull 1600ms, re-roll 2462ms.
