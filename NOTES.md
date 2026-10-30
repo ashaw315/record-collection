@@ -50484,3 +50484,21 @@ Discogs' 170KB must be an upload. The exact split needs a read of production's
 images and a mark of which came from Discogs. A first test of a split by file
 name passed on a fixture of an assumed name, and went: a test written from an
 assumption defends the assumption.
+
+## 30 Oct, 14:15: the covers by source, and the send to Design
+
+**A production read, approved by Adam through the coordinator (a SELECT of the
+newest cover per record, then a HEAD of each):** 43 covers, 15,283,153 bytes,
+against the weighing load's 15,299,955. Source is inferred: a cover written
+within 5s of its record is the Discogs attach, later is an upload.
+- Discogs-supplied: 24 covers, 2.67MB, 17% of the bytes, mean 108KB, 51 to 187KB.
+- Uploads: 19 covers, 12.62MB, 83% of the bytes, mean 649KB, median 460KB, 25KB
+  to 2.6MB. Three PNGs are 4.85MB.
+
+So resize on upload is the larger lever: at the Discogs mean, 43 covers are about
+4.6MB. Whether the grid needs a smaller variant is for after it, measured.
+`window:measure:weigh` is not needed; its 170KB is below the 187KB measured.
+
+**Sent to Design, 30 Oct** (`For Design - hold evidence and covers on pull`): the
+correction to W.8/bound-above-widest; §W.8 against 30 measured presses, an entry;
+and a pull whose cover has not arrived, with lazy held until it rules.
