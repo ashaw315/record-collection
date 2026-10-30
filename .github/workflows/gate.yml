@@ -6,8 +6,9 @@
 # exited 0: the first run's jobs were green with no e2e test run at all.
 #
 # `test/repo/dev-targets-neon.test.ts` reads the developer's own `.env.local`,
-# which a runner does not have. It is excluded by name, and it still runs on
-# every commit through commit-checked.sh.
+# which a runner does not have. It is removed from this checkout by name, because
+# each vitest project's own `exclude` overrides the CLI's. It still runs on every
+# commit through commit-checked.sh.
 #
 # It needs no secret. `.env.test` is committed and points at the Postgres the
 # jobs start for themselves; no test makes a live call, and production is never
@@ -56,7 +57,8 @@ jobs:
         run: |
           LOG="$RUNNER_TEMP/gate-logs/$(git rev-parse --short=7 HEAD)-unit.log"
           mkdir -p "$(dirname "$LOG")"
-          npx tsx scripts/run-tests.ts npm test -- --exclude '**/dev-targets-neon.test.ts' > "$LOG" 2>&1 || true
+          rm test/repo/dev-targets-neon.test.ts
+          npx tsx scripts/run-tests.ts npm test > "$LOG" 2>&1 || true
           tail -5 "$LOG"
           tail -1 "$LOG" | grep -q -- '— OK'
       - uses: actions/upload-artifact@v4

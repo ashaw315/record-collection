@@ -42449,8 +42449,12 @@ exclude. All 12 failed on both attempts, ledger clean. They are six specs:
 - `result-card-150.spec.ts:148`: a width of 119 against 270.
 
 The entry's prediction was untested for 18 days and cost an hour of Adam's
-machine a gate. Why these differ on Linux is not measured here. Whether they
-repeat is the next run's to say.
+machine a gate. Why these differ on Linux is not measured here.
+
+**Repeated (run 41104315989, the same commit): the same 12 tests, in the same six
+specs, on both attempts.** chromium 1009 passed, 8 failed, 53.9 minutes; mobile
+386 passed, 4 failed, 18.3 minutes. They are deterministic on this runner, and no
+test failed that had passed the first time.
 
 ## 12 Oct: the doubled "Nothing in the collection matches." is the reader's, not a double render
 
