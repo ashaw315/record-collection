@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { NEARER, nearer, paintOrder, type PaintBounds } from './paint-sort';
+import { OUT_MS, gestureFaces, poseAt } from './gesture';
+import { NEARER, nearer, paintOrder, seatBounds, type PaintBounds } from './paint-sort';
+import { wallLayout } from './wall-layout';
 
 /**
  * §W.20's camera and the probe's sort: **order the drawing's objects — not
@@ -81,9 +83,7 @@ describe('paintOrder — the reference’s insertion, over every object: each sh
       would fail exactly here: a record's projected extent is 150 plus a 75px
       top face against a 198 pitch, so a lower record's top overpaints the
       bottom 27px of the record above it unless that one paints later. The
-      pairs that do not overlap on screen (separated on x as well as z) are
-      free, so the rows interleave rather than group; the paint order is
-      right, and the reading order is with Design.
+      paint order is right, and the reading order is with Design.
     */
     const upper = [0, 1, 2].map((i) => seat(`u${i}`, i, 594));
     const lower = [0, 1, 2].map((i) => seat(`l${i}`, i, 396));
@@ -114,5 +114,95 @@ describe('paintOrder — the reference’s insertion, over every object: each sh
   it('never drops or duplicates an object — the first frame renders', () => {
     const objects = [shelf('s', 594), upright('l', -10), upright('r', 340), seat('a', 0, 594), { ...box('p', 17, 29, 0, 150, 594, 744), moving: true }];
     expect([...ids(objects)].sort()).toEqual(objects.map((o) => o.id).sort());
+  });
+});
+
+/*
+  §W.18 and §W.20, read as rulings over the real wall. At d < 150 "a neighbour
+  at larger x is genuinely nearer, so it correctly draws in front of the pulled
+  record"; at d >= 150 the record "draws in front of the whole row". So what may
+  paint after a pulled record is that neighbour, what stands above it, and the
+  right upright, then nothing. The row below is never on that list: the defect
+  was a full row below moving the record behind its own shelf, clean at 22
+  records and wrong at 23, which is why these counts straddle the shelf's end.
+  The list is every object, not left neighbours, so a shelf's leftmost seat,
+  which has none, is held too: that seat is the one Adam reported.
+*/
+describe('the pulled record against the wall, §W.18 and §W.20', () => {
+  const layoutOf = (count: number) => wallLayout(Array.from({ length: count }, (_, i) => ({ id: `r${i}`, section: 'S' })), [], 1440, 900);
+  const paintedAfter = (count: number, seatId: string, ms: number) => {
+    const { placed, pieces } = layoutOf(count);
+    const seat = placed.find((p) => p.id === seatId);
+    if (seat === undefined) throw new Error(`no seat ${seatId}`);
+    const bounds = gestureFaces(seat, poseAt(ms)).sortBounds;
+    const order = paintOrder<PaintBounds>([
+      ...pieces.map((piece) => ({ id: piece.id, ...piece.bounds })),
+      ...placed.filter((p) => p.id !== seatId).map(seatBounds),
+      { id: seatId, ...bounds, moving: true },
+    ]);
+    return { seat, placed, pieces, bounds, after: order.slice(order.findIndex((o) => o.id === seatId) + 1), order };
+  };
+
+  for (const count of [22, 23, 43, 80]) {
+    it(`at ${count} records nothing but a nearer object paints after a pulled record, at every seat, from the press to the landing`, () => {
+      const { placed, pieces } = layoutOf(count);
+      const pieceOf = new Map(pieces.map((p) => [p.id, p]));
+      const seatOf = new Map(placed.map((p) => [p.id, p]));
+      const wrong: string[] = [];
+      for (const { id } of placed) {
+        for (let ms = 0; ms <= OUT_MS; ms += 80) {
+          const { seat, bounds, after } = paintedAfter(count, id, ms);
+          for (const object of after) {
+            const other = seatOf.get(object.id);
+            const nearerByRuling =
+              bounds.y0 < 150 &&
+              (other !== undefined
+                ? (other.z === seat.z && other.x > seat.x) || other.z > seat.z
+                : object.id === 'upright-right' || (pieceOf.get(object.id)?.bounds.z0 ?? -Infinity) >= seat.z);
+            if (!nearerByRuling) wrong.push(`${id} at ${ms}ms: ${object.id}`);
+          }
+        }
+      }
+      expect(wrong.length, wrong.slice(0, 6).join('; ')).toBe(0);
+    });
+  }
+
+  /*
+    The comparator is pairwise and the insertion places by the first refusal, so
+    a cycle would surface as a pair painted against its own verdict, whichever
+    seat it landed on. Fails if a later change makes the order depend on the
+    sort's internals, which is what the defect above was.
+  */
+  for (const count of [43, 80]) {
+    it(`at ${count} records no pair is painted against the comparator's own verdict, at any seat or moment`, () => {
+      const against: string[] = [];
+      for (const { id } of layoutOf(count).placed.filter((_, i) => i % 3 === 0)) {
+        for (let ms = 0; ms <= OUT_MS; ms += 200) {
+          const { order } = paintedAfter(count, id, ms);
+          for (let i = 0; i < order.length; i += 1) {
+            for (let j = i + 1; j < order.length; j += 1) {
+              if (nearer(order[i], order[j]) > 0) against.push(`${id} at ${ms}ms: ${order[i].id} before ${order[j].id}`);
+            }
+          }
+        }
+      }
+      expect(against.length, against.slice(0, 6).join('; ')).toBe(0);
+    }, 30_000);
+  }
+
+  it('the leftmost seat of the top shelf stays in front of its own shelf and the full row below while it leaves', () => {
+    const { placed, pieces } = layoutOf(43);
+    const top = Math.max(...placed.map((p) => p.z));
+    const leftmost = placed.filter((p) => p.z === top).reduce((a, b) => (b.x < a.x ? b : a));
+    const shelf = pieces.find((p) => p.kind === 'shelf' && p.bounds.z1 === top);
+    expect(shelf, 'the precondition: the shelf it stands on').toBeDefined();
+    const below = placed.filter((p) => p.z < top);
+    expect(below.some((p) => p.x > leftmost.x), 'the precondition: the row below reaches past the seat').toBe(true);
+    for (const ms of [120, 320, 520]) {
+      const { after } = paintedAfter(43, leftmost.id, ms);
+      const ids = after.map((o) => o.id);
+      expect(ids, `${ms}ms`).not.toContain(shelf?.id);
+      expect(ids.filter((id) => below.some((p) => p.id === id)), `${ms}ms`).toEqual([]);
+    }
   });
 });

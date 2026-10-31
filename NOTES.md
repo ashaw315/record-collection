@@ -50729,3 +50729,90 @@ shelves: about 281px sideways and 36px down on its one clock, the arriving recor
 falling about 50px. Code's commit check overlapped the run's first seconds; those
 pulls match the rest. The third shelf's dip rose, 5 to 69: the pan no longer cancels
 the record's own drop there. Videos are on disk, uncommitted, 47MB.
+
+## 31 Oct: the gate on 511e399, and the machine asleep
+
+Gate FAILED, unit 4713 passed, chromium 1028 passed, 1 failed, 1 flaky, mobile 386
+passed, 4 flaky, chromium 43.4m, mobile 14.4m, load 2.05 at the start and 642 at the
+end, pressure 4, swap 11786MB. The failure was the spec: an exact y of 180 against a
+rounded landing that reads 179 or 180 by seat, a precision that failed on the seat the
+arrows reach. The five flakes were the Mac sleeping: `net::ERR_NETWORK_IO_SUSPENDED`
+in wall-route, and four `page.goto` timeouts in beforeEach. Not a result about the
+code. Gates that may outlast the screen run under `caffeinate`.
+
+## 31 Oct: the pairing check parked (the coordinator)
+
+Of the seven claims, two are test defects, one of those already closed, and the third
+is unbuilt work with its test to come: one live defect in seven (8a §18, whose
+containment test reads three probe records and not the fixture). A name check would
+not have caught that one; a person reading the assertion did. Revisit if another
+absent test appears.
+
+## 31 Oct: the landing's 179, and the pull's rollback
+
+The gate's 179 is not the pan's. On 17 seats at 1440 × 900 y is 179 or 179.5 by seat
+and x 657.6 to 658.5, the same under the preference or not, the same reached by a
+direct pull, either arrow or after the reader scrolls (6 seats, 4 paths, frame and
+scroll differing by up to 18px), and the same on cea2797, before the pan. `180` was
+Math.round of 179.5. Cause in part: y sits on a half pixel grid from SIN30, x does not
+from COS30. Not fully explained: 179.5 + 34 is not 179 + 35. The spec's comment saying
+"on production too" is wrong: production's figures are rounded and do not show it.
+
+Production went to 0de4e55 and back (promote; `rollback` is limited to the previous
+deployment on this plan). The pull was wrong there too.
+
+## 31 Oct: does the pan's distance scale with the collection? No
+
+On `/wall/probe/labelled?count=N`, 1440 × 900, chromium, next dev, load 4 to 8: a
+neighbouring spine's screen position each frame. The first run read region scroll, the
+frame's growth compensated in it, and its figures (41px, 200,000px/s) are void. Peak
+px/s divides by frame gaps near zero after a long frame and is unusable at 43 and up.
+
+Distance, same seat, unchanged at 22, 43, 80 and 200: 734, 716, 660. Seat varies it:
+411 at the shelf's end, 126 at seat 50 of 200. Mean speed on the pan 2,850 to 3,300px/s
+at every count, against 570 to 625 at 0de4e55, where the view moves on the one clock in
+about 1150ms. So "more abrupt" is the 250ms, five times faster, at every count.
+
+What does move with count is frame delivery, on both builds: the first frame after a
+press 26 to 31ms at 22, 34 to 44ms at 43. Largest single frame of the pan on main: 137px
+at 22 and 43, 256 at 80, 516 of 734 at 200, 100 frames in 2.6s. Press to first motion
+65ms, 97 at 80, 196 at 200. Dev build; the harness 404s in production. Nothing measured
+yet accounts for Adam's right at 22, wrong at 43.
+
+## 31 Oct: what differs at 43: the painter's order, not the pan
+
+Adam, on the pre-pan build at the harness: speed much better, right at 22, wrong at 43,
+the top shelf. The clamp is ruled out on 0de4e55: scrollHeight 1175 at rest and 1437
+mid-pull at both counts, the wall's on-screen move 669,303 at both, the record's path
+within a few pixels, no scroll limit reached.
+
+`paintOrder` is an insertion on a comparator that is not transitive, and the moving
+record goes in last. `nearer` checks y, x, z, so a seat on a lower row at larger x reads
+nearer than the moving record on x, though the z plane says the opposite. Lower rows
+paint first, so the record lands ahead of its whole row, and the left neighbours draw
+over it. Stills: docs/captures/paint-order-31-oct/, c22 in front, c43 behind.
+
+The functions, every seat and every 20ms: broken seats 0 at 22, 1 at 23, 3 at 25, 18 at
+40, 19 at 43, 36 at 60, 54 at 80; one rule: a top-shelf seat breaks when the row below
+reaches past it. Wrong from the press to 640ms of the 1600, when the y plane is reached
+and the record pops to the front of its row. Not count of records as such: the second
+row's length. §W.18 and §W.20 are right as written (only a neighbour at LARGER x draws
+over it); the build departs from them. Build defect. Scratch check not committed: the
+failing test for the fix is that check.
+
+## 31 Oct: the painter's order fixed
+
+`nearer` checks y, z, x. When two planes disagree neither object can occlude the other,
+so which wins was a convention, but under the insertion it was not free: a seat on the
+row below at larger x read nearer than a record leaving the shelf above. One correction
+to the table above: it counted left neighbours, so a shelf's leftmost seat could not
+register, and that seat broke at any count, 22 included, its own shelf painting after it.
+
+Tests from §W.18 and §W.20: `paint-sort.test.ts`, at 22, 23, 43 and 80, every seat through
+the pull, what may paint after the record, which failed 5 of 5 first; no pair painted
+against the comparator's verdict, at 43 and 80, sampled every third seat and 200ms; and
+`e2e/paint-order-43.spec.ts`, the stack at the record's own pixels, seats 1, 2 and 10. Its
+first two forms could not tell fixed from unfixed; the third fails all three seats on the
+old order. `elementsFromPoint` needs the record hit-testable, switched on in the spec.
+The far view sorts through the same function. The rows now run low to high in the DOM
+rather than interleaving; the wall's 26 specs agree (201 passed on chromium).

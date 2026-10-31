@@ -49,10 +49,16 @@ export function seatBounds(seat: PlacedSeat): PaintBounds {
  * other), so the order is a convention: y is checked first, which is
  * §W.18's — past the row on y, the record draws in front of every seat
  * regardless of x.
+ *
+ * z before x, because the convention is not free under an insertion. Checked
+ * the other way, a seat on the row below at larger x read as nearer than a
+ * record leaving the shelf above; the rows paint low to high, so the record
+ * was inserted ahead of its own row and shelf (31 Oct: wrong from the 23rd
+ * record, and on a shelf's leftmost seat at any count).
  */
 export function nearer(a: PaintBounds, b: PaintBounds): number {
   const eps = 1e-9;
-  for (const axis of ['y', 'x', 'z'] as const) {
+  for (const axis of ['y', 'z', 'x'] as const) {
     const [a0, a1, b0, b1] = [a[`${axis}0`], a[`${axis}1`], b[`${axis}0`], b[`${axis}1`]];
     if (a0 >= b1 - eps) return NEARER[axis];
     if (b0 >= a1 - eps) return -NEARER[axis];

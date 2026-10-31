@@ -127,7 +127,7 @@ export function WallLabelled({
     arrow keys move focus seat to seat in §W.23's order, over the seated
     records (§W.12: an empty seat is not on the path; a pulled record has
     left the seat list) and do nothing else; Enter pulls, as the anchor's
-    own activation. Paint order interleaves rows by column, so the order is
+    own activation. Paint order runs the rows low to high, so the order is
     the seats' and not the DOM's. The stop is the seat the arrows last
     reached, or the first while none has been; it carries tabindex 0 and
     every other seat -1, so one Tab leaves the wall.
@@ -338,7 +338,7 @@ export function WallLabelled({
         nearer than and last once past the row on y. The spine is the +y
         face, toward the camera, so a record's anchor holds all three faces.
         Document order follows this order — within a row it is seat order;
-        across rows it interleaves by column, so the keyboard's seat order
+        the rows run low to high, so the keyboard's seat order
         (§W.23) is the arrows' order on one roving stop, not the DOM's.
       */}
       {paintOrder([
