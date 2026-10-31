@@ -50644,8 +50644,25 @@ those about the pull advance past the pan (`pullSpine`) with their assertions
 unchanged, and the two about the one clock are rewritten: they encoded the ruling
 withdrawn. Not a change to make failing code pass.
 
-**Found building it:** the wall's clock has no reduced-motion path, and §W has no
-sentence for the pan under it, so "the pan cuts with the pull" describes nothing
-built. Left as ruled; for Design. And on a put back the DOCUMENT scrolls about 131px
-on the near view, re-roll or not, while the wall's own scroll returns exactly. Not
-caused by this change as far as measured, and unexplained.
+**Corrected, 30 Oct 22:00.** Two sentences here were wrong. §W does rule reduced
+motion: a search for "reduced motion" missed "reduced-motion". And the document does
+not scroll on a put back; see below.
+
+## 30 Oct, 22:00: reduced motion, and the 131px that was not a put back
+
+**Reduced motion on the wall is broken, and its test does not exist.** §W.8 rules that
+the wall moves nothing on its own under the preference, and says a test asserts a
+pull reaches its end state in one frame; the handoff has the unnumbered step. No wall
+spec sets the preference, so this is neither a vacuous green nor a red: a test a
+target names and nobody wrote, a third state. Staged as a throwaway: phase is `pan`
+for six frames and `swing` a second on, and at d298e30, before the pan, `swing` for
+six frames and a second on. So it has always animated, and the pan adds 250ms to it.
+Nothing checks that a test a target names exists.
+
+**The 131px is not a put back, and not the pan's.** The window scrolls 131px at the
+PRESS of SURPRISE ME, which stands below the fold at 1440 × 900, so Playwright scrolls
+to reach it. It is there at `out`, before any put back; and a spine pull and Escape
+moves the page 0px. Same on both sides of the pan. An artefact of the instrument, read
+as a defect because the assertion was on a screen position. It is not 4b, and 4b's
+Provisionals line stays open: its case is 200 records scrolled to the bottom, the
+wall's own scroll off, and nothing committed here stages that.
