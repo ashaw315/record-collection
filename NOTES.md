@@ -50666,3 +50666,32 @@ moves the page 0px. Same on both sides of the pan. An artefact of the instrument
 as a defect because the assertion was on a screen position. It is not 4b, and 4b's
 Provisionals line stays open: its case is 200 records scrolled to the bottom, the
 wall's own scroll off, and nothing committed here stages that.
+
+## 30 Oct, 22:30: reduced motion built, and the absent test named
+
+**The family's new member: the absent test.** A sentence in a target says a test
+asserts something, and no such test exists. It is worse than a vacuous green, which at
+least runs: this is invisible from both ends. The target reads as covered, and the
+suite has nothing to report. §W.8's "The test sets the preference and asserts" stood
+for weeks over a pull that animated in full.
+
+**The size of the hole, counted tonight, not closed.** In the seven build targets,
+7 sentences of the strict form "the test asserts/sets/clicks", 32 on a loose pattern
+(assert, test that, a test sets). In the handoff, 35 "test a/that/the/with" and one
+**Test** bullet. These are regex counts of claims, with no pairing to a spec, so 39 to
+about 75 named tests of which one was checked, and it did not exist. Nothing checks
+this. The check would be a name in the sentence and in the spec, as withdrawals pair
+a quote with an entry.
+
+**A phrase search covers punctuation variants.** "reduced motion" missed
+"reduced-motion", and the conclusion drawn was that the rule did not exist: a negative
+from a search is a claim about the search. Mechanically: normalise both sides before
+comparing (lower case; hyphens, dashes, curly quotes and non-breaking spaces to one
+form), so remembering is not involved. Code's side is a small script; Design's greps
+are its own, so its side is the same normalisation in DESIGN-RULES. Not built.
+
+**Built:** the cut is one line on the one clock. Writing the view in a cut return's
+frame drew the landed record over the jumped wall on 7 of 8 runs, and 0 of 8 once the
+commit writes it. A first count-of-frames assertion could not see that; a set of the
+poses drawn could. One test flaked in the wall's specs at load, did not recur at
+--retries=0, and was not identified.

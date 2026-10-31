@@ -9,7 +9,7 @@ import { labelsFit } from './geometry';
 import { navigate, type Direction } from './adjacent-seat';
 import { LANDING_PAD, offsetOf } from './landing';
 import type { View } from './view';
-import { OUT_MS, PAN_MS, RETURN_MS, SWING_MS, outTime, settled } from './gesture';
+import { CUT_MS, OUT_MS, PAN_MS, RETURN_MS, SWING_MS, outTime, settled } from './gesture';
 import { frameView, landedExtent, panFraction, panView, type Pan } from './pan';
 import { wallLayout } from './wall-layout';
 import { isFarView } from './view-fork';
@@ -539,7 +539,9 @@ if (offset !== null) offset.style.transform = '';
     let handle = 0;
     const frame = (now: number) => {
       if (started.current === null) started.current = now;
-      const elapsed = now - started.current;
+      /* §W.8: the one clock is the one place a gesture spends time, so cutting here cuts all of them. Read on each press: the preference can change under the page. */
+      const cut = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const elapsed = cut ? CUT_MS : now - started.current;
       const next = pullsRef.current.map((state) => ({ ...state, ms: (base.current.get(state.id) ?? 0) + elapsed }));
       /* The pan, on the same clock: the view follows the record coming out, or the one going back. */
       const el = region.current;
@@ -547,7 +549,8 @@ if (offset !== null) offset.style.transform = '';
       if (el !== null && panRef.current !== null && driver !== undefined) {
         const v = panView(panRef.current, driver);
         viewNowRef.current = v;
-        writeView(el, originRef.current, v);
+        /* A cut return leaves in the commit below, and the layout effect writes this view before its paint. Written here, a frame draws the landed record over the jumped wall. */
+        if (!(cut && driver.direction === 'back')) writeView(el, originRef.current, v);
       }
       /* Landed: the seated anchor is drawn again by the ordinary path; at rest, the frame lets the landings go. */
       const remaining = next.filter((state) => !(state.direction === 'back' && settled(state)));

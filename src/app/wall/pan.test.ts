@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { layoutRow, project } from './geometry';
-import { OUT_MS, PAN_MS, RETURN_MS, ROTATION_START, SWING_MS, easeInOutCubic, gestureFaces, outTime, poseAt, settled } from './gesture';
+import { CUT_MS, OUT_MS, PAN_MS, RETURN_MS, ROTATION_START, SWING_MS, easeInOutCubic, gestureFaces, outTime, poseAt, settled } from './gesture';
 import { ARROW_LANE, LANDING_PAD } from './landing';
 import { SEAT_CLEARANCE, clearanceShift, frameView, landedExtent, panFraction, panView, recordOffset } from './pan';
 import { SPINE_WIDTH_MAX, frontFace } from './geometry';
@@ -192,3 +192,14 @@ describe('the record under the pan', () => {
     expect(Math.round(RETURN_MS + PAN_MS + OUT_MS)).toBe(2712);
   });
 });
+
+/* §W.8. Fails against a cut shorter than a gesture's whole time, which would leave a frame of motion from the far end of a return. */
+describe('the cut under reduced motion', () => {
+  it('settles every gesture from any start, a put back\'s pan included', () => {
+    expect(settled({ id: 'p', direction: 'out', ms: -PAN_MS + CUT_MS })).toBe(true);
+    expect(settled({ id: 'p', direction: 'back', ms: CUT_MS, trail: PAN_MS })).toBe(true);
+    const pan = { forId: 'p', from: [0, 0] as [number, number], to: [10, 10] as [number, number], at0: 1, apart: true };
+    expect(panView(pan, { id: 'p', direction: 'out', ms: -PAN_MS + CUT_MS })).toEqual([10, 10]);
+  });
+});
+

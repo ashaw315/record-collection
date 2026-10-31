@@ -76,6 +76,13 @@ export const PAN_MS = 250;
  * while the view moves. `trail` is the pan back a put back runs once seated; a
  * re-roll's put back has none, since the next pull's pan is the only one.
  */
+/**
+ * §W.8: under the reduced-motion setting the wall moves nothing on its own, so
+ * a press spends all of its time at once. More than any gesture can need, from
+ * any start, a put back's pan included.
+ */
+export const CUT_MS = PAN_MS + OUT_MS + RETURN_MS + PAN_MS;
+
 export type GestureState = { id: string; direction: 'out' | 'back'; ms: number; trail?: number };
 export type Pose = { k: number; travel: number; scale: number; angle: number; finish: number };
 
