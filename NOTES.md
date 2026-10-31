@@ -50678,8 +50678,9 @@ for weeks over a pull that animated in full.
 **The size of the hole, counted tonight, not closed.** In the seven build targets,
 7 sentences of the strict form "the test asserts/sets/clicks", 32 on a loose pattern
 (assert, test that, a test sets). In the handoff, 35 "test a/that/the/with" and one
-**Test** bullet. These are regex counts of claims, with no pairing to a spec, so 39 to
-about 75 named tests of which one was checked, and it did not exist. Nothing checks
+**Test** bullet. These are regex counts of claims, with no pairing to a spec, so 43 to
+68 named tests of which one was checked, and it did not exist. (372cd04's message says
+39 to about 75: a wrong sum.) Nothing checks
 this. The check would be a name in the sentence and in the spec, as withdrawals pair
 a quote with an entry.
 
