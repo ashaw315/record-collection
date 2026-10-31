@@ -50696,3 +50696,36 @@ frame drew the landed record over the jumped wall on 7 of 8 runs, and 0 of 8 onc
 commit writes it. A first count-of-frames assertion could not see that; a set of the
 poses drawn could. One test flaked in the wall's specs at load, did not recur at
 --retries=0, and was not identified.
+
+## 31 Oct: the seven strict claims, read
+
+An audit before any pairing mechanism (the coordinator): read what each sentence
+claims, then the assertion, not a file with a similar name.
+
+| target | the claim | behind it |
+|---|---|---|
+| 8a, §22 | no illegal arrangement across the full list | `colour-eligibility.test.ts:195`, yes |
+| 8a, §18 | on the extremes fixture, every record's drawing lies inside its cell | `colour-distribution.spec.ts:229`, narrower: three probe records, not that fixture |
+| 8a, §27 | no pressing fact clipped on the worst title | `identity-extremes.spec.ts:26`, yes |
+| T&G, §T.1 | the sidebar's content starts on the wordmark, 0.5px | `sidebar-113.spec.ts:102`, yes |
+| §W.29 | with script off, the offset's transform is none | `shelf.spec.ts:162`, yes |
+| §W.8 | a pull ends in one frame under reduced motion | absent until 372cd04 |
+| §W.8 | the hold's states, the acknowledgement, the fallback | in part: a ruling of 30 Oct ahead of its step |
+
+Four of seven hold, and two of the four quote the target in the spec. One is real and
+narrower than its sentence. One was absent. One is a ruling newer than its build, a
+queued step and not this family. So an absent test was the outlier here, one in seven,
+and the pairing is not built: a name check would not have caught the narrower one
+either, since its test exists. The limit: seven sentences of 43 to 68, the strict form
+is the most careful writing in the targets, and the handoff's 36 are unread.
+
+## 31 Oct: the pan on production
+
+Adam's run (docs/measurements/window-160/pan-2026-10-31T05-41-45-892Z.jsonl), 18 pulls,
+headed Chrome, 1440 × 900, video on. 69px from every shelf, one take 68, the record
+starting at y 370 on all 18. All 3 put backs returned to 0,75.
+Landed at about 1870ms; a put back at rest about 1135ms after Escape. A swap across
+shelves: about 281px sideways and 36px down on its one clock, the arriving record
+falling about 50px. Code's commit check overlapped the run's first seconds; those
+pulls match the rest. The third shelf's dip rose, 5 to 69: the pan no longer cancels
+the record's own drop there. Videos are on disk, uncommitted, 47MB.
