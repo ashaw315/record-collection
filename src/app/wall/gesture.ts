@@ -65,25 +65,13 @@ export const GROWTH_START = ROTATION_START;
 export const GROWTH_END = 1;
 
 /**
- * §W.22, pan before pull: the view frames the landing first, and the record is
- * pulled once it rests. Framing rather than gesture, so short: a pull is 1850ms
- * against the one clock's 1600, for Adam to judge from video (provisional).
- */
-export const PAN_MS = 250;
-
-/**
- * `ms` runs from -PAN_MS on a pull from the shelf, the record at its first pose
- * while the view moves. `trail` is the pan back a put back runs once seated; a
- * re-roll's put back has none, since the next pull's pan is the only one.
- */
-/**
  * §W.8: under the reduced-motion setting the wall moves nothing on its own, so
  * a press spends all of its time at once. More than any gesture can need, from
- * any start, a put back's pan included.
+ * any start.
  */
-export const CUT_MS = PAN_MS + OUT_MS + RETURN_MS + PAN_MS;
+export const CUT_MS = OUT_MS + RETURN_MS;
 
-export type GestureState = { id: string; direction: 'out' | 'back'; ms: number; trail?: number };
+export type GestureState = { id: string; direction: 'out' | 'back'; ms: number };
 export type Pose = { k: number; travel: number; scale: number; angle: number; finish: number };
 
 export function easeInOutCubic(k: number): number {
@@ -93,12 +81,12 @@ export function easeInOutCubic(k: number): number {
 
 /** Where on the out gesture's own time a state is: the return reads the same times backwards. */
 export function outTime(state: GestureState): number {
-  if (state.direction === 'out') return Math.max(0, Math.min(OUT_MS, state.ms));
+  if (state.direction === 'out') return Math.min(OUT_MS, state.ms);
   return OUT_MS * (1 - Math.min(RETURN_MS, state.ms) / RETURN_MS);
 }
 
 export function settled(state: GestureState): boolean {
-  return state.ms >= (state.direction === 'out' ? OUT_MS : RETURN_MS + (state.trail ?? 0));
+  return state.ms >= (state.direction === 'out' ? OUT_MS : RETURN_MS);
 }
 
 export function poseAt(t: number): Pose {
