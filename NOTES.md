@@ -50955,6 +50955,21 @@ across. The first fix, leaving the view to the layout effect as a return does, f
 view follows. Pull, return and arrows, 72 of 72 at load up to 32. The retry would have
 passed it, and 372cd04's "flaked at load, not identified" may have been this.
 
-**`pick-moods-157:154`, not touched by this batch.** 23 expected, 27 received, passed on
-retry: first in 38 gates. It reads the whole count and then re-reads it, and looks like
-another worker's records landing between. Inferred, not staged.
+**`pick-moods-157:154`: a structural property, not a one-off.** 23 expected, 27 received,
+passed on retry, first in 38 gates. It reads the collection's count twice. This is the
+family's member already stated, a green that is a fact about what ran beside it, and it is
+rare because the window is narrow, not because the cause is. Workers share one database, so
+any count-based assertion in any spec can read another worker's rows at any time. When a
+count reads high and passes on retry, start here. Which spec's rows these were is not staged.
+
+**What shipped and what was gated are different commits.** The gate covered 24464c1, which
+contained the 652px defect. 45c6246 is ungated, at step level only, and CI is its gate. Its
+72 of 72 repeats were all under reduced motion: the ordinary pull has one-run coverage on it,
+216 wall specs, and "not touched" is a reading of the diff (`setPulls` moved into a closure
+called at once), not a measurement.
+
+**The queue.** The named-test pairing check moves above release_year (the coordinator).
+`wall-reduced-motion.spec.ts` has found two real defects since it was written, the landed
+record over the jumped wall in 372cd04 and this 652px one, and §W named it for weeks while it
+did not exist. This revises the parking of 31 Oct: the test of a check is what it would have
+reached, and an absent test hides everything behind it, not one defect.
