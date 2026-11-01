@@ -50816,3 +50816,34 @@ first two forms could not tell fixed from unfixed; the third fails all three sea
 old order. `elementsFromPoint` needs the record hit-testable, switched on in the spec.
 The far view sorts through the same function. The rows now run low to high in the DOM
 rather than interleaving; the wall's 26 specs agree (201 passed on chromium).
+
+## 31 Oct: the record under its shelf, and two new members of the family
+
+Adam's screenshots at 43 are second-shelf records going under the board above, mid
+gesture, on a pull and on a put back. d1bc90d does not fix that. Run, not noticed: at 22,
+43 and 80, out and back, the seats failing §W.18 as written are 2, 23 and 60, and each
+set equals the seats not on the top shelf; 0 top-shelf seats fail. On the old sort 3, 42
+and 79, with 1, 19 and 19 on the top shelf. So d1bc90d takes 42 to 23 at 43, and the top
+shelf to 0. One case: seat 21, r20, Dire Straits, shelf 2 from the top, z 396, at 500ms y
+66 to 216, painted before shelf-0, the board shelf 1 stands on, and the 20 records on it.
+"Just the top shelf" was the old sort; what is seen on the fix is the record passing under
+the top shelf's board.
+
+The record cannot be one object in the order. Past y 150 its front cannot be hidden by
+anything still on a shelf, since a nearer point along (1, 1, 1) has larger y, while the
+part still under the board must stay behind it. A whole-object sort has no right answer.
+§W.18's "a neighbour at larger x correctly draws in front" may hold only for the part in
+the row. Asked of Design; no split and no force-in-front until it rules. Adam's eye judges
+whether anything shows through.
+
+**A test carrying an exception the ruling does not contain, written by the same hand
+that read the ruling.** "What stands above it" was mine; §W.18 names one neighbour. A
+reader checks a test's rule against the build, and the exception is what the build does,
+so it reads as correct. Found by reading the rule against the sentence, not the output.
+
+**That exception run only where it is inert, so the test could not have failed.** The
+on-screen spec was top-shelf seats only, and no piece stands above the top shelf (run:
+none). This is what let the first survive: a pass with the exception and a pass without it
+were the same pass. They fail differently: the first is a wrong sentence, the second a
+right sentence with no reach. Showing fixed against unfixed did not catch either, because
+the old sort fails the same seats for a different reason.
