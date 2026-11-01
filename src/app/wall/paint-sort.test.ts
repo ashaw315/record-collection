@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { OUT_MS, gestureFaces, poseAt } from './gesture';
+import { OUT_MS, RETURN_MS, gestureFaces, outTime, poseAt, type GestureState } from './gesture';
 import { NEARER, nearer, paintOrder, seatBounds, type PaintBounds } from './paint-sort';
 import { wallLayout } from './wall-layout';
 
@@ -120,21 +120,22 @@ describe('paintOrder — the reference’s insertion, over every object: each sh
 /*
   §W.18 and §W.20, read as rulings over the real wall. At d < 150 "a neighbour
   at larger x is genuinely nearer, so it correctly draws in front of the pulled
-  record"; at d >= 150 the record "draws in front of the whole row". So what may
-  paint after a pulled record is that neighbour, what stands above it, and the
-  right upright, then nothing. The row below is never on that list: the defect
-  was a full row below moving the record behind its own shelf, clean at 22
-  records and wrong at 23, which is why these counts straddle the shelf's end.
-  The list is every object, not left neighbours, so a shelf's leftmost seat,
-  which has none, is held too: that seat is the one Adam reported.
+  record"; at d >= 150 the record "draws in front of the whole row". Nothing
+  else is named, so nothing else is allowed: the right upright, which ends the
+  row, and that neighbour, then nothing. Measured from the moment the record
+  leaves its seat. An earlier form of this test also allowed "what stands above
+  it", which the ruling does not say, and ran on screen only on the top shelf,
+  where nothing does: it could not fail on what Adam was looking at. Every shelf,
+  both directions. Red on purpose until Design rules on §W.18 and the fix lands.
 */
 describe('the pulled record against the wall, §W.18 and §W.20', () => {
   const layoutOf = (count: number) => wallLayout(Array.from({ length: count }, (_, i) => ({ id: `r${i}`, section: 'S' })), [], 1440, 900);
-  const paintedAfter = (count: number, seatId: string, ms: number) => {
+  const paintedAfter = (count: number, seatId: string, ms: number, direction: GestureState['direction'] = 'out') => {
     const { placed, pieces } = layoutOf(count);
     const seat = placed.find((p) => p.id === seatId);
     if (seat === undefined) throw new Error(`no seat ${seatId}`);
-    const bounds = gestureFaces(seat, poseAt(ms)).sortBounds;
+    /* Through outTime, as WallLabelled's facesOf does: the return reads the same times backwards. */
+    const bounds = gestureFaces(seat, poseAt(outTime({ id: seatId, direction, ms }))).sortBounds;
     const order = paintOrder<PaintBounds>([
       ...pieces.map((piece) => ({ id: piece.id, ...piece.bounds })),
       ...placed.filter((p) => p.id !== seatId).map(seatBounds),
@@ -143,22 +144,18 @@ describe('the pulled record against the wall, §W.18 and §W.20', () => {
     return { seat, placed, pieces, bounds, after: order.slice(order.findIndex((o) => o.id === seatId) + 1), order };
   };
 
-  for (const count of [22, 23, 43, 80]) {
-    it(`at ${count} records nothing but a nearer object paints after a pulled record, at every seat, from the press to the landing`, () => {
-      const { placed, pieces } = layoutOf(count);
-      const pieceOf = new Map(pieces.map((p) => [p.id, p]));
+  for (const [direction, span, journey] of [['out', OUT_MS, 'from the press to the landing'], ['back', RETURN_MS, 'from the put back to the seat']] as const) for (const count of [22, 23, 43, 80]) {
+    it(`at ${count} records nothing but a nearer object paints after a record going ${direction}, at every seat, ${journey}`, () => {
+      const { placed } = layoutOf(count);
       const seatOf = new Map(placed.map((p) => [p.id, p]));
       const wrong: string[] = [];
       for (const { id } of placed) {
-        for (let ms = 0; ms <= OUT_MS; ms += 80) {
-          const { seat, bounds, after } = paintedAfter(count, id, ms);
+        for (let ms = 0; ms <= span; ms += span / 20) {
+          const { seat, bounds, after } = paintedAfter(count, id, ms, direction);
+          if (bounds.y1 <= 150) continue;
           for (const object of after) {
             const other = seatOf.get(object.id);
-            const nearerByRuling =
-              bounds.y0 < 150 &&
-              (other !== undefined
-                ? (other.z === seat.z && other.x > seat.x) || other.z > seat.z
-                : object.id === 'upright-right' || (pieceOf.get(object.id)?.bounds.z0 ?? -Infinity) >= seat.z);
+            const nearerByRuling = bounds.y0 < 150 && (other !== undefined ? other.z === seat.z && other.x > seat.x : object.id === 'upright-right');
             if (!nearerByRuling) wrong.push(`${id} at ${ms}ms: ${object.id}`);
           }
         }
