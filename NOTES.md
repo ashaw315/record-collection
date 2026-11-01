@@ -50847,3 +50847,48 @@ none). This is what let the first survive: a pass with the exception and a pass 
 were the same pass. They fail differently: the first is a wrong sentence, the second a
 right sentence with no reach. Showing fixed against unfixed did not catch either, because
 the old sort fails the same seats for a different reason.
+
+## 1 Nov: the cut's premise was false, and it was mine
+
+Design's drop is in (refs/drops/2026-11-01-01, d7bcb10). The cut is not built. Three things
+Code told the coordinator and Design on 31 Oct were wrong.
+
+**"Those are second-shelf records."** Adam's screenshots are top-shelf records, Dire
+Straits at seat 4 and Steely Dan at seat 15, slid down-left and cut off behind the row
+below. Reproduced at seat 15: old axis order, "Steely Dan · G" a fragment under the top
+board, as in his screenshot; d1bc90d, the record whole and in front. Stills:
+docs/captures/paint-order-31-oct/old-axis-seat15-t500.png, fixed-axis-seat15-t500.png. It
+fits his "just the top shelf".
+
+**"The fix fails on them."** The screenshots were of a build without it. Inferred, not
+proven: the gate worktree, on 0de4e55, created its dev server's log at 19:05 on 31 Oct,
+three minutes before the first screenshot, and Code's instructions gave `npm run dev`
+with no `cd` straight after Adam had been told to `cd` there. Adam has not yet seen the fix.
+
+**"No single place in the order is right for all of it", and 2, 23, 60.** An object
+painted after the record is the row above or a neighbour at larger x. At the same pixel
+as a point past y 150 it would need a smaller y, a smaller x and a smaller z than that
+point, so it cannot overlap one. One place is right. 2, 23 and 60 counted the board
+covering the part still under it, which §W.18 wants. Per point, §W.18 as first written
+fails 0 on the fix and 1, 21 and 57 on the old order. The earlier 3, 42 and 79 are void too.
+
+So `W.18/record-one-object`, its measured sentence, and the record cut are built on a wrong
+report. `W.23/reduced-volume-every` loses its reason with it. For Design: `the cut's reason
+has gone`. `W.22/pan-first` stands; it rests on Adam's judgement.
+
+The threshold, run: travel reaches 150 at 658ms, and the physical box clears y 150 at that
+ms, depth 150.0 to 150.7 across it. The drawn solid clears at 669ms at both spine widths and
+goes back through the plane after about 800ms, reaching y 4 landed, because it is grown. A
+whole-record sort turning front at 658 is unchanged by this: an 11ms lag, under a frame.
+
+**A guard has no link to the sentence it guards.** Not a mistake but a gap: when a sentence
+is withdrawn nothing says which tests stopped being evidence. 539cd55 is the first instance,
+a guard committed hours before its sentence was withdrawn. Adjacent to the parked pairing
+check and not the same: that asks whether a named test exists, this whether a live test
+still has a live sentence behind it.
+
+**A red test is a claim as well.** Added to the family: 539cd55 was red for a reason that
+was false, and red read as confirmation, so the strictness of "every seat, both directions"
+was taken as accuracy. A count that reads as mechanically complete is no evidence of what it
+counts. Seat-level sets matching exactly (2, 23, 60 being every seat with a board above)
+was the tell: everything under a board is covered by it.
