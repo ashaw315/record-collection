@@ -50973,3 +50973,39 @@ called at once), not a measurement.
 record over the jumped wall in 372cd04 and this 652px one, and §W named it for weeks while it
 did not exist. This revises the parking of 31 Oct: the test of a check is what it would have
 reached, and an absent test hides everything behind it, not one defect.
+
+## 1 Nov: CI on fef9589: twelve known failures AND one new wall flake, and CI cannot pass
+
+Run 41346898462, in the batch where WallLive.tsx changed: twelve known failures and one new
+wall flake. Code's first report headed this "nothing new is failing", which was wrong, and
+its next paragraph said so. Unit 4710 passed, 2 skipped; chromium 1039 passed, 8 failed, 1
+flaky, 1 skipped, 55.8m; mobile 386 passed, 4 failed, 4 skipped, 14.6m.
+
+**The 12 repeat,** the same six specs and counts as 30 Oct, which closes the question left
+open then. Why they differ on Linux is still unmeasured, and stays open.
+
+**CI cannot pass, by construction.** gate.yml runs three jobs with three artifact
+directories, and gate-report refuses logs from more than one directory. Staged on all-OK
+logs: one directory, `verdict: OK`, exit 0; CI's layout, `REFUSED`, `verdict: FAILED — see
+above`, exit 1. The refusal has no exit code of its own: it shares 1 with a real failure.
+On this run the printed verdict was computed from both, chromium and mobile failing and the
+refusal, and the refusal is false: three directories of one run. So "CI is 45c6246's gate"
+was false, and it is a verdict that is a fact about how the run was assembled. What stands
+is each half's own line, written by run-result on fef9589 before the report, and the tests
+by name. What 45c6246 has is those lines, not a gate verdict.
+
+**The Linux debt is cleared on chromium only, and only once.** Every Linux pass was a single
+run, not a repeat, and paint-order-43 and build-stamp have never run on WebKit.
+
+**`wall-arrival-104:120` is the shared database, not the wall, as far as staged.** Top 0
+against 75 after a filter clears, passed on retry. Four workers at --repeat-each=24: 12 of 24
+on HEAD, 11 on 511e399, 10 on 0de4e55, with CI's exact values among them. That figure is the
+repeat's own doing: the test seeds records, and the copies moved each other's wall. One
+worker: 16 of 16, and 16 of 16 with six CPU burners, load 13. So it needs a second worker on
+the database and not load, it predates this batch, and with pick-moods-157 it is the second
+instance in two runs of the structural property above. Not shown: which rows on CI, or the
+mechanism of the 0. **A repeat of a test that seeds, on many workers, measures the repeat.**
+
+**A flake that passes on retry is read before it is believed.** The last wall flake that did
+was the 652px defect. "A timing limit in the test" was the guess here, and it was wrong too:
+the wait was never the cause. Staging is what tells them apart.
