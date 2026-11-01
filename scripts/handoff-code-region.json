@@ -284,5 +284,11 @@
     "before": "- **Unnumbered, for Code to number — §W.7, §W.8, §W.19, §W.22: reduced motion,",
     "why": "Code's number for the reduced-motion half of Design's unnumbered §W.7, §W.8, §W.19, §W.22 step.",
     "text": "162. **Done: built, for reduced motion only; the panel title, the corner at 200 and the swipe in the step below are not this.** **§W.8 — reduced motion on the wall: Code's number for that half.** The one clock spends a press's whole time at once under the preference, so a pull, a return and the arrows are at their end state in one frame, and the reader's own pan tracks. `e2e/wall-reduced-motion.spec.ts` is the test the target names, which had not been written; a pull animated in full under the preference until this step. A cut return leaves the view's write to the commit that removes the record: written in the frame, the landed record was drawn over the jumped wall on 7 of 8 runs."
+  },
+  {
+    "id": "step-163",
+    "before": "- **Unnumbered, for Code to number — §W.22: the pan overlapped.**",
+    "why": "Code's number for Design's unnumbered §W.22 step.",
+    "text": "163. **Done: built, the curve with Adam.** **§W.22 — the pan overlapped: Code's number for that step.** The view pans on the swing's own ease and clock, about 1150ms inside the 1600ms pull, the build before step 161 with §W.8's cut kept; `PAN_MS` and the trail are gone. A put back retraces on the return's clock, and came back to the reader's place exactly at 22, 43, 80 and 200 from an at-rest pull, so the 455px put back did not recur there; a pull from out of frame or by the pick was not staged. A re-roll is a return then a pull, 2462ms by the constants, not measured. The curve proposed is the swing's easeInOutCubic, the one Adam judged."
   }
 ]
