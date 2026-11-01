@@ -50892,3 +50892,19 @@ was false, and red read as confirmation, so the strictness of "every seat, both 
 was taken as accuracy. A count that reads as mechanically complete is no evidence of what it
 counts. Seat-level sets matching exactly (2, 23, 60 being every seat with a board above)
 was the tell: everything under a board is covered by it.
+
+## 1 Nov: Adam on the fix, the pan overlapped, and what the 18 were
+
+Adam, on d1bc90d: "working great, the pull and return looks perfect." The cut is withdrawn
+(`W.18/cut`) and §W.23 restored. His complaint was the pan: abrupt, then much better, then
+reverted. One thing: main, 0de4e55, main. Timing and order changed only in 5f339ea, and in
+the CUT_MS on it. "Jerky" was that too: the largest single-frame move 138px at 22 and 516
+at 200 under pan-first, 28 and 81 overlapped. The rest of the frame cost with count stands.
+
+Harness dip, top shelf, overlapped: 189 to 195px, against the 245 to 251 the fit gives for
+production's pans. Not reconciled: the harness pans less and has no header. Production not
+measured.
+
+The on-screen 18 were at 43 records. The nine seats were not picked blind: 1, 2 and 10 from
+the first version, 4 and 15 from Adam's screenshots, 21, 22, 33 and 41 to reach the lower
+shelves. The per-point test is the one that covers every seat.
