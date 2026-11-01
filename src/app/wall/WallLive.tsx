@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { flushSync } from 'react-dom';
 import type { PullState } from './WallLabelled';
 import { WallStage } from './WallStage';
 import type { RecordSummary } from './summary';
@@ -543,13 +544,24 @@ if (offset !== null) offset.style.transform = '';
       if (el !== null && panRef.current !== null && driver !== undefined) {
         const v = panView(panRef.current, driver);
         viewNowRef.current = v;
-        /* A cut return leaves in the commit below, and the layout effect writes this view before its paint. Written here, a frame draws the landed record over the jumped wall. */
-        if (!(cut && driver.direction === 'back')) writeView(el, originRef.current, v);
+        if (!cut) writeView(el, originRef.current, v);
       }
       /* Landed: the seated anchor is drawn again by the ordinary path; at rest, the frame lets the landings go. */
       const remaining = next.filter((state) => !(state.direction === 'back' && settled(state)));
-      setPulls(remaining);
-      if (remaining.length === 0) setFramed([]);
+      const commit = () => {
+        setPulls(remaining);
+        if (remaining.length === 0) setFramed([]);
+      };
+      /*
+        §W.8: a cut's pose and view land in one frame, so the commit is synchronous and the view follows it. A cut
+        return leaves the view to that commit, which removes the record and writes it in the layout effect. Written
+        on the ordinary path, the view lands a frame ahead of the pose: a return drew the landed record over the
+        jumped wall, 7 of 8 runs, and a pull drew the record at its seat's size on the landing's framing, 14 of 24.
+      */
+      if (cut) {
+        flushSync(commit);
+        if (el !== null && driver?.direction === 'out' && viewNowRef.current !== null) writeView(el, originRef.current, viewNowRef.current);
+      } else commit();
       if (!next.every(settled)) handle = requestAnimationFrame(frame);
     };
 

@@ -50901,10 +50901,60 @@ reverted. One thing: main, 0de4e55, main. Timing and order changed only in 5f339
 the CUT_MS on it. "Jerky" was that too: the largest single-frame move 138px at 22 and 516
 at 200 under pan-first, 28 and 81 overlapped. The rest of the frame cost with count stands.
 
-Harness dip, top shelf, overlapped: 189 to 195px, against the 245 to 251 the fit gives for
-production's pans. Not reconciled: the harness pans less and has no header. Production not
-measured.
+Harness dip, top shelf, overlapped: 189 to 195px. An instrument artifact, not a finding, and
+it goes with the 131px scroll. It read the pulled group's bounding box against the spine's
+start, on the probe page. The harness pans 303px, more than production's 268 to 277, and the
+fit fed that 303 gives 268px, so the figure misses the fit on the harness's own geometry and
+says nothing about the app. Production's dip is measured by `window:measure:pan` once live.
+(Corrected: this said "the harness pans less", the reverse of the measurement it cited.)
 
 The on-screen 18 were at 43 records. The nine seats were not picked blind: 1, 2 and 10 from
 the first version, 4 and 15 from Adam's screenshots, 21, 22, 33 and 41 to reach the lower
 shelves. The per-point test is the one that covers every seat.
+
+## 1 Nov: after the pan, what stays open
+
+**A note that records the reverse of the measurement it cites.** "The harness pans less", in
+the entry above, against 303px measured. New to the family, and the false "gate retains no
+traces" line in a different costume: the number was to hand and the sentence went the other
+way. A note's direction is a claim, and it is checked against the figure, not recalled.
+
+**The 455px put back: not reproduced, under conditions that exclude the original.** Not
+"did not recur". Every put back came back to 0,0 at 22, 43, 80 and 200, all from at-rest
+pulls. The 455px was seen by an uncommitted probe whose conditions were not recorded, and
+neither a pull from out of frame nor one by the pick was staged. A negative from a test that
+cannot reach the condition is a guard passing because it runs where the real thing is not.
+Open.
+
+**The on-screen 18 are not a rate.** Nine seats, chosen, not blind. 14 of 18 is not to be
+quoted as one. The per-point test over every seat is the evidence.
+
+**The option not yet judged: pan first at 1150ms.** Not built, and not for Design yet. The
+jerkiness was the 250ms, not the order, so the comparison that decided the order was
+confounded: Adam judged pan first at 250 against overlapped, and what he reacted to was
+duration. Pan first at 1150 should be as smooth, unmeasured, with the record's own drop of
+about 65px in place of the 250px dip. Its cost is time: 1150 then 1600 is 2750ms against
+1600. If the dip bothers him once he sees it live, that is a duration and sequencing change,
+and Design would have to rule pan first back. If not, nothing is owed. His judgement on the
+built pan comes first.
+
+**The re-roll, once live.** 2462ms is return plus pull from the constants; measure it. About
+2.5 seconds for "show me another one" may be a thing Adam wants to judge, not a figure.
+
+## 1 Nov: the gate on 24464c1, and a flake that was a defect
+
+Gate exit 3, GREEN WITH FLAKES. Unit 4712 passed, 5 skipped; chromium 1046 passed, 2 flaky, 1
+skipped, 44.0m; mobile 390 passed, 4 skipped, 11.4m; load 3.16 to 10.74, swap 5.2 of 6.0 GB,
+ran alone, under caffeinate, no sleep.
+
+**`wall-reduced-motion:62` was real.** Staged at --repeat-each=24, four workers: 14 of 24.
+The clock wrote the view in its tick and React committed the pose a frame later, so under
+the preference one frame drew the record at seat size on the landing's framing, 652px
+across. The first fix, leaving the view to the layout effect as a return does, failed 24 of
+24: that effect keys on the pull and not the tick. A cut now commits with flushSync and the
+view follows. Pull, return and arrows, 72 of 72 at load up to 32. The retry would have
+passed it, and 372cd04's "flaked at load, not identified" may have been this.
+
+**`pick-moods-157:154`, not touched by this batch.** 23 expected, 27 received, passed on
+retry: first in 38 gates. It reads the whole count and then re-reads it, and looks like
+another worker's records landing between. Inferred, not staged.
