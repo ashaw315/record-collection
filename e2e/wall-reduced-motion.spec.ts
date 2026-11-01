@@ -28,6 +28,15 @@ const region = (page: Page) => page.locator('[data-region="wall"]').evaluate((el
 /* Frames of motion: anything between the press and the end state. */
 const moving = (log: Frame[]) => log.filter((f) => ['pan', 'swing', 'finish', 'return'].includes(f.phase)).length;
 
+/* §W.19's landing, to the pixel. y sits on a half-pixel grid, since project() takes it through SIN30, and the scroller stops on whole pixels, so a seat lands at 179 or 179.5 and x at 657.6 to 658.5. Each seat's landing is the same however it is reached, and the same before the pan: it is rounding that cannot grow, so a bound and not an exact figure. */
+const expectLanded = (box: number[] | null) => {
+  expect(box).not.toBeNull();
+  const [x, y, w, h] = box ?? [];
+  expect(Math.abs(x - 658)).toBeLessThanOrEqual(1);
+  expect(Math.abs(y - 180)).toBeLessThanOrEqual(1);
+  expect([w, h]).toEqual([560, 560]);
+};
+
 const open = async (page: Page, reducedMotion: 'reduce' | 'no-preference') => {
   await login(page);
   await page.setViewportSize({ width: 1440, height: 900 });
@@ -56,8 +65,7 @@ test('a pull reaches its end state in one frame, at the place and size the motio
   const log = await frames(page);
   expect(moving(log), 'at most the frame the press lands in').toBeLessThanOrEqual(1);
   expect(log[log.length - 1].phase).toBe('landed');
-  /* §W.19's landing, measured on production and the same at every seat. */
-  expect(log[log.length - 1].box).toEqual([658, 180, 560, 560]);
+  expectLanded(log[log.length - 1].box);
 });
 
 test('a return cuts to the shelf, and the view jumps back', async ({ page }) => {
@@ -70,7 +78,8 @@ test('a return cuts to the shelf, and the view jumps back', async ({ page }) => 
   /* The clock arms a frame after the press, so the phase can read `return` for two frames: what must not exist is a pose between. */
   const poses = new Set((await frames(page)).map((f) => JSON.stringify(f.box)));
   poses.delete('null');
-  expect([...poses], 'the landed record, then nothing: no pose between').toEqual([JSON.stringify([658, 180, 560, 560])]);
+  expect(poses.size, 'the landed record, then nothing: no pose between').toBe(1);
+  expectLanded(JSON.parse([...poses][0]) as number[]);
   await expect(page.locator('[data-pulled]')).toHaveCount(0);
   expect(await region(page)).toEqual(before);
 });
@@ -83,7 +92,7 @@ test('the arrows move nothing on their own: the neighbour is landed in one frame
   await page.waitForTimeout(500);
   const log = await frames(page);
   expect(moving(log)).toBeLessThanOrEqual(1);
-  expect(log[log.length - 1].box).toEqual([658, 180, 560, 560]);
+  expectLanded(log[log.length - 1].box);
 });
 
 /* §W.8: "A pan the reader drives with a finger or a wheel still tracks, because that motion is theirs." */
