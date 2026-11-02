@@ -51070,3 +51070,11 @@ check, which ended at 19:17 against the take's 19:21. Video was on, and a frame 
 what the recorder can cause, but that is not shown: one rAF gap with no long-task record. Open,
 as an observed one-off; the video is 05-swap-second-to-third.webm. Frames past 33ms: 11 to 20 a
 take, 29 to 49 on swaps.
+
+**The one-worker control (run 41368034292, cba95bb, --workers=1).** Unit 4713 passed, 2 skipped;
+chromium 1040 passed, 8 failed, 1 skipped, 83m; mobile 386 passed, 4 failed, 4 skipped, 25m. All
+12 survive at one worker, the same tests, each failing both attempts, and nothing new. So
+the 12 are not cross-worker, and the lead is closed on them: it is the Linux difference after
+all, still unmeasured, and the font hypothesis still untested. No flake at one worker, against
+one in each half-worker run: consistent with the shared database, on one run. First verdict CI
+has given that is true: `verdict: FAILED — chromium and mobile failed`, exit 1, no refusal.
