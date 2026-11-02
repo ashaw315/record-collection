@@ -153,3 +153,4 @@ docs/design/*
 # which the build step measures from Adam's picture": the same reachability
 # rule, a measurement's source is tracked with what was measured from it.
 !docs/design/table-grid-wireframe.png
+font-probe-*.json

@@ -51078,3 +51078,15 @@ the 12 are not cross-worker, and the lead is closed on them: it is the Linux dif
 all, still unmeasured, and the font hypothesis still untested. No flake at one worker, against
 one in each half-worker run: consistent with the shared database, on one run. First verdict CI
 has given that is true: `verdict: FAILED — chromium and mobile failed`, exit 1, no refusal.
+
+**Adam on the gesture, Sunday evening on production (relayed 2 Nov):** "pan looks great now", and
+"pull and return seems to work across the board and be fixed now". That closes §W.22's
+Provisional on the pan's curve at `easeInOutCubic`, and the option of pan first at 1150ms is not
+raised: nothing is owed unless he asks.
+
+**The font probe.** The twelve assert text metrics in unrelated features, and a cause in type
+would be deterministic, so repeating is what it predicts. `e2e/font-probe.capture.ts` asks which
+font was asked for, which drew it (CDP, chromium only) and how wide fixed strings are, in both
+browsers; font-probe.yml is one run on GitHub's machines. macOS: chromium and webkit agree to
+the third place, 109.750 for "None among these." at 13px. Nothing follows from that until Linux
+reports. Next: compare, then delete the workflow and the probe.
