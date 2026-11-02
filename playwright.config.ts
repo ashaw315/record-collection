@@ -122,7 +122,15 @@ export default defineConfig({
     screenshot: 'only-on-failure',
   },
   projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+    /*
+      Unhinted, so Linux chromium lays type out as macOS does: 0.016px at worst on ten strings
+      against 12.578 without the flag, which hints to whole-pixel widths (font-probe runs
+      41486552297 and 41488583552). This is a change to the test environment and not to any
+      assertion. The app has one user, on macOS, so macOS's text metrics are the target and CI
+      is made to match that platform. The cost, kept here on purpose: these tests can no longer
+      catch a text overflow that only a hinting browser on another platform would show.
+    */
+    { name: 'chromium', use: { ...devices['Desktop Chrome'], launchOptions: { args: ['--font-render-hinting=none'] } } },
     /*
       **The capture project: a tool, not a suite.** `e2e/capture/` regenerates
       the screenshots in `docs/` that 7a's grid is judged against. Opted into by

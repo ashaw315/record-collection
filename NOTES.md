@@ -51104,3 +51104,18 @@ in the same run. So chromium's type differs on Linux by hinting, with no font mi
 not yet show that the eight chromium failures go: that needs a CI run with the flag in
 playwright.config.ts. The four `stats:493` are WebKit, which already matches on these strings
 at a desktop size, and are not explained.
+
+**The hinting flag in playwright.config.ts, and why it is legitimate.** The app has one user, on
+macOS, so macOS's text metrics are the target, and CI is made to match that platform. The cost:
+these tests can no longer catch a text overflow that only a hinting browser on another platform
+would show. A green that arrives from a configuration change needs its reason written down.
+On macOS the flag changes none of the ten widths. Whether it changes anything on Linux besides
+the eight is the run's to say, and a new failure outranks the eight going.
+
+**The lesson of the font question (the coordinator):** it sat untested for three weeks because
+it was restated as a hypothesis and not written as a measurement. Naming the values to capture
+is what moved it.
+
+**`stats:493`.** Expected 27.5, got 28, tolerance under 0.5, so a half-pixel rounding fails it
+by the smallest margin. The probe now reads the real row on the iPhone 13 profile: row and line
+box heights, and the device pixel ratio.
