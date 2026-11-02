@@ -51135,3 +51135,19 @@ the build. Here the expected value was a sum, never 27.609, and the tolerance hi
 as long as the suite ran on one platform. A second platform exposed it, which is an argument for
 cross-platform CI beyond catching regressions. (Whether 27.5 was literally the sum is the
 open point above; that the constant matched no build is the measurement.)
+
+**`stats:493`'s margin, exact.** toBeCloseTo(x, 0) passes under 0.5. Linux's 28 against 27.609 is
+0.391 off, a margin of 0.109. The tolerance is wide for a 27.6px row, a half pixel either way.
+
+**Assertion numbering.** The index's thirteenth line is 8b, assertion 8's second part, so nothing
+unspecified runs. The next assertion is 13.
+
+**Does Linux WebKit quantise heights? Not as a rule.** One row read 28.000, but its line boxes
+read 19.5 on Linux, and the mobile specs hold 19 height-like toBeCloseTo in 7 specs, 7 of them at
+precision 1 or 2, and only stats fails in either Linux run. The row's 28 is the baseline offset
+between two fonts, 0.5 against 0.109, so the class is `items-baseline` across mixed fonts, not
+heights. Whether other such rows drift is unmeasured.
+
+**The inversion (the coordinator's own note):** +269 and +70 against measured +268 and +70, and -88
+against -128: exact inside the fit's range, wrong outside it. It was diagnosing the range. A
+figure in a governing document carries its range and basis, or it costs a correction later.
