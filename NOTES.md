@@ -51039,10 +51039,34 @@ contaminate deterministically. gate.yml takes a `workers` input, and the e2e job
 to 240 minutes, since a job cut off reports nothing. One run at one worker is the control.
 
 **The overlapped pan on production (Adam's run, 1 Nov, pan-2026-11-02T00-14-41-183Z.jsonl, 18
-takes, headed Chrome, 1440 × 900, video on).** Every landing 658,180, 560 × 560. Dip: top 245 to
-246px, as the fit gave; second 111 to 112; third 5 to 6. The third shelf contradicts the fit,
-whose floor is 64.6, and the target's "cannot stand beside that fit" held the local 5 to be the
-wrong one: it is production's too, so the fit is what does not reach that shelf, where the pan
-runs up against the drop. A swap across shelves: 198 to 199, then 24 to 25. Frames past 33ms:
-11 to 20 a take, 29 to 49 on swaps. One swap, second to third, had a 1335ms gap, one take of 18,
-unexplained and not read yet. Code's commit check overlapped this run's first minutes.
+takes, headed Chrome, 1440 × 900, video on).** Every landing 658,180, 560 × 560. Signed pan,
+scroll from the gesture's first drawn frame to landed, so past the frame's growth:
+
+| case | pan | dip | dip = 0.673 × pan + 64.6 | peak of the curve |
+|---|---|---|---|---|
+| top | +268 | 245 to 246 | 245 | 246 |
+| swap seat, top | +114 | 140 | 141 | 138 |
+| second | +70 | 111 to 112 | 112 | 108 |
+| swap seat, second | -84 | 24 to 25 | 8 | 27 |
+| third | -128 | 5 to 6 | -22 | 10 |
+
+**The dip is a peak and not a line.** The wall's move runs on the record's clock, so what is
+measured is the maximum across the gesture of the record's own drop plus pan × the pan's eased
+fraction, and that maximum cannot fall below zero. One own-drop curve, within 5px across all
+five, peaks at 69px about 700ms in, and predicts every case within 4px. The line is a secant
+of it, good from +70 up. Three statements here were wrong: the target's "floor" of 64.6, since
+the pan does go negative; Code's "the limit is in the fit" as first put, with no sign read; and
+the inversion's -88 and -60, since the fit does not hold below zero. A line refit moves it to
+0.606 and 78.5 with 10px residuals, and is the wrong shape anyway.
+
+**`dip`'s 198 to 199 on the swap across top and second is the instrument's.** measure-window's
+dip takes the maximum over every `swing` frame of a take, and a swap's take has two records.
+The first pull's is 140. The 24 to 25 happens to be right. Not fixed.
+
+**The 1335ms gap.** Take 05, second to third, 1 take of 54 across three production runs, and
+the same seat clean in this run's other two. The arriving record froze at its seat at the arrow's
+press, opacity 0.001, and the next frame was already at the finish, panel in. Not Code's commit
+check, which ended at 19:17 against the take's 19:21. Video was on, and a frame gap that size is
+what the recorder can cause, but that is not shown: one rAF gap with no long-task record. Open,
+as an observed one-off; the video is 05-swap-second-to-third.webm. Frames past 33ms: 11 to 20 a
+take, 29 to 49 on swaps.
