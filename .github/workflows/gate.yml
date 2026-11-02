@@ -25,6 +25,9 @@ on:
       commit:
         description: The commit to gate, its full id
         required: true
+      workers:
+        description: Playwright workers. 2 is the gate; workers share each job's database, so 1 is the control for a failure that may be cross-worker.
+        default: '2'
 
 permissions:
   contents: read
@@ -70,7 +73,8 @@ jobs:
 
   e2e:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    # One worker takes about twice two workers' 56 minutes, and a job cut off reports nothing.
+    timeout-minutes: 240
     strategy:
       fail-fast: false
       matrix:
@@ -99,7 +103,7 @@ jobs:
         run: |
           LOG="$RUNNER_TEMP/gate-logs/$(git rev-parse --short=7 HEAD)-e2e-$PROJECT.log"
           mkdir -p "$(dirname "$LOG")"
-          npx tsx scripts/run-tests.ts npx playwright test --project="$PROJECT" --output "test-results/$PROJECT" --workers=2 --retries=1 > "$LOG" 2>&1 || true
+          npx tsx scripts/run-tests.ts npx playwright test --project="$PROJECT" --output "test-results/$PROJECT" --workers=${{ inputs.workers }} --retries=1 > "$LOG" 2>&1 || true
           tail -5 "$LOG"
           tail -1 "$LOG" | grep -q -- '— OK'
       - uses: actions/upload-artifact@v4
@@ -133,4 +137,7 @@ jobs:
       - name: The gate's verdict
         run: |
           C="$(git rev-parse --short=7 HEAD)"
-          bash scripts/gate-report.sh "$C" "artifacts/unit/$C-unit.log" "chromium=artifacts/e2e-chromium/$C-e2e-chromium.log" "mobile=artifacts/e2e-mobile/$C-e2e-mobile.log"
+          # One directory: each job's artifact arrives in its own, and gate-report refuses logs from more than one. A missing log stays missing, and the report says so.
+          mkdir -p logs
+          cp artifacts/*/"$C"-*.log logs/ || true
+          bash scripts/gate-report.sh "$C" "logs/$C-unit.log" "chromium=logs/$C-e2e-chromium.log" "mobile=logs/$C-e2e-mobile.log"

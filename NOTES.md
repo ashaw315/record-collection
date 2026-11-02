@@ -51009,3 +51009,40 @@ mechanism of the 0. **A repeat of a test that seeds, on many workers, measures t
 **A flake that passes on retry is read before it is believed.** The last wall flake that did
 was the 652px defect. "A timing limit in the test" was the guess here, and it was wrong too:
 the wait was never the cause. Staging is what tells them apart.
+
+## 1 Nov: CI could not return green, fixed, and the one-worker control
+
+**CI has never returned green, and until this commit it could not.** A fact about the
+workflow's whole history. gate.yml was added on 30 Oct (ef0bcac), so that history is two days:
+five completed runs, none green, one cancelled. Not one cause: 41090243751 stopped at git;
+41090498418 had green jobs and no logs at the paths the report read; 41094475553 and
+41104315989 were failing on the suites, and their verdict lines could not be read back;
+41346898462 was refused. The refusal is confirmed on that last run only, so "every CI is red
+was partly the refusal" overstates it, but from the fix to the artifact paths on it held for
+any run that reached the report.
+
+| The same logs, every half OK | verdict | exit |
+|---|---|---|
+| one directory | OK | 0 |
+| CI's three directories, before | REFUSED, FAILED — see above | 1 |
+| CI's three directories, with the fix | OK | 0 |
+
+Fixed: the verdict step copies the logs into one directory. A refusal is exit 5, `verdict:
+REFUSED`, no longer sharing 1 with a failure, and a real failure outranks it. The staging is
+now `gate-report.test.ts`, which runs the step's own text out of gate.yml under `bash -e`.
+The test that said a refusal exits 1 changed with it: it encoded the old contract.
+
+**The lead:** the 12 may be partly cross-worker, since CI runs two workers on one database,
+wall-arrival-104 and pick-moods-157:154 are that, and pick-moods-157:195 is one of the 12.
+Repeating across two runs is no evidence against it, since two workers in a fixed order can
+contaminate deterministically. gate.yml takes a `workers` input, and the e2e job's limit goes
+to 240 minutes, since a job cut off reports nothing. One run at one worker is the control.
+
+**The overlapped pan on production (Adam's run, 1 Nov, pan-2026-11-02T00-14-41-183Z.jsonl, 18
+takes, headed Chrome, 1440 × 900, video on).** Every landing 658,180, 560 × 560. Dip: top 245 to
+246px, as the fit gave; second 111 to 112; third 5 to 6. The third shelf contradicts the fit,
+whose floor is 64.6, and the target's "cannot stand beside that fit" held the local 5 to be the
+wrong one: it is production's too, so the fit is what does not reach that shelf, where the pan
+runs up against the drop. A swap across shelves: 198 to 199, then 24 to 25. Frames past 33ms:
+11 to 20 a take, 29 to 49 on swaps. One swap, second to third, had a 1335ms gap, one take of 18,
+unexplained and not read yet. Code's commit check overlapped this run's first minutes.

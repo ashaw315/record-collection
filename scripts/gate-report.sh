@@ -11,7 +11,7 @@
 # `scripts/run-result.ts` wrote:
 #
 #   0  every half reads "— OK"
-#   1  a half does not, has no log, or the logs are from more than one run
+#   1  a half does not, or has no log
 #   2  every half reads OK but GATE_ONLY narrowed the run: not a gate
 #   3  every half passed, one with retries: run-result will not call that OK
 #      and will not call it a failure, so neither does this
@@ -30,6 +30,7 @@ UNIT="$2"
 shift 2
 
 red=0
+refused=0
 flaky=0
 failed=()
 unfinished=()
@@ -76,7 +77,7 @@ done
 if [ "$(printf '%s\n' "$dirs" | sed '/^$/d' | sort -u | wc -l)" -gt 1 ]; then
   echo "REFUSED: the logs are from more than one run, in more than one directory:"
   printf '%s\n' "$dirs" | sed '/^$/d' | sort -u | sed 's/^/  /'
-  red=1
+  refused=1
 fi
 
 # "chromium" or "chromium and mobile".
@@ -87,6 +88,7 @@ if [ ${#failed[@]} -gt 0 ] || [ "$red" -ne 0 ]; then
   echo "verdict: FAILED — ${why:-see above}"
   exit 1
 fi
+if [ "$refused" -ne 0 ]; then echo "verdict: REFUSED — these logs are not one run, so they say nothing about the code"; exit 5; fi
 if [ ${#unfinished[@]} -gt 0 ]; then echo "verdict: DID NOT FINISH — $(names "${unfinished[@]}") did not report; nothing failed"; exit 4; fi
 if [ -n "${GATE_ONLY:-}" ]; then echo "verdict: NOT A GATE"; exit 2; fi
 if [ "$flaky" -ne 0 ]; then echo "verdict: GREEN WITH FLAKES"; exit 3; fi

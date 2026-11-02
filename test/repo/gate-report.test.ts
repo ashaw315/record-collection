@@ -1,5 +1,5 @@
-import { execFileSync } from 'node:child_process';
-import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { execFileSync, spawnSync } from 'node:child_process';
+import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -18,10 +18,10 @@ import { describe, expect, it } from 'vitest';
  * is the check that does not depend on the thing it checks. The lines are
  * cut from real gate logs (f4c265e, and 414e121's flaky run).
  *
- * 0 is a gate that passed; 1 a half that did not, a log with no verdict,
- * or logs from more than one run; 2 a run that passed but was not a gate
- * (`GATE_ONLY`); 3 a pass with retries, which `run-result.ts` will not
- * call OK and will not call a failure either.
+ * 0 is a gate that passed; 1 a half that did not, or a log with no verdict;
+ * 2 a run that passed but was not a gate (`GATE_ONLY`); 3 a pass with
+ * retries, which `run-result.ts` will not call OK and will not call a failure
+ * either; 5 logs that say nothing about the code, because they are not one run.
  */
 const SCRIPT = join(process.cwd(), 'scripts', 'gate-report.sh');
 
@@ -138,7 +138,7 @@ describe('a report from one run only', () => {
     expect(result.status, result.output).toBe(1);
   });
 
-  it('exits 1 when a log of the same commit is from another directory, as the copied flaky run is', () => {
+  it('exits 5 when a log of the same commit is from another directory, as the copied flaky run is', () => {
     const dir = mkdtempSync(join(tmpdir(), 'gate-report-'));
     const aside = join(dir, '414e121-flaky-run');
     mkdirSync(aside);
@@ -146,6 +146,68 @@ describe('a report from one run only', () => {
     const copied = logs('414e121', { unit: null, chromium: null, mobile: MOBILE_OK }, aside);
     const result = report('414e121', { ...live, mobile: copied.mobile });
     expect(result.output).toMatch(/more than one run/i);
+    expect(result.output).toMatch(/^verdict: REFUSED/m);
+    expect(result.status, result.output).toBe(5);
+  });
+
+  it('a real failure among refused logs is still a failure: the code outranks the assembly', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'gate-report-'));
+    const aside = join(dir, '414e121-flaky-run');
+    mkdirSync(aside);
+    const live = logs('414e121', { unit: UNIT_OK, chromium: CHROMIUM_RED, mobile: null }, dir);
+    const copied = logs('414e121', { unit: null, chromium: null, mobile: MOBILE_OK }, aside);
+    const result = report('414e121', { ...live, mobile: copied.mobile });
+    expect(result.output).toMatch(/more than one run/i);
+    expect(result.status, result.output).toBe(1);
+  });
+});
+
+/*
+  **The workflow's own verdict step, run in CI's layout (1 Nov).** gate.yml's three jobs left
+  three artifact directories, which gate-report refuses, so CI could not read OK whatever the
+  suites did, from its first run, and every "CI is red" was partly that. This runs the step's
+  text as it stands in gate.yml, with `bash -e` as a runner does, so it cannot drift from the file.
+*/
+describe('gate.yml\'s verdict step in the layout the jobs leave', () => {
+  const stepOf = () => {
+    const yml = readFileSync(join(process.cwd(), '.github', 'workflows', 'gate.yml'), 'utf8');
+    const lines = yml.slice(yml.indexOf("- name: The gate's verdict")).split('\n').slice(2);
+    const body: string[] = [];
+    for (const line of lines) {
+      if (line.trim() !== '' && !line.startsWith('          ')) break;
+      body.push(line.slice(10));
+    }
+    return body.join('\n');
+  };
+  const run = (halves: { unit: string; chromium: string[]; mobile: string[] }) => {
+    const dir = mkdtempSync(join(tmpdir(), 'gate-yml-'));
+    mkdirSync(join(dir, 'scripts'));
+    copyFileSync(SCRIPT, join(dir, 'scripts', 'gate-report.sh'));
+    const git = (...args: string[]) => execFileSync('git', args, { cwd: dir, encoding: 'utf8' }).trim();
+    git('init', '-q');
+    git('-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-q', '--allow-empty', '-m', 'x');
+    const short = git('rev-parse', '--short=7', 'HEAD');
+    const put = (artifact: string, name: string, text: string) => {
+      mkdirSync(join(dir, 'artifacts', artifact), { recursive: true });
+      writeFileSync(join(dir, 'artifacts', artifact, `${short}-${name}.log`), text);
+    };
+    put('unit', 'unit', `${halves.unit}\n`);
+    put('e2e-chromium', 'e2e-chromium', `${halves.chromium.join('\n')}\n`);
+    put('e2e-mobile', 'e2e-mobile', `${halves.mobile.join('\n')}\n`);
+    const result = spawnSync('bash', ['-e', '-c', stepOf()], { cwd: dir, encoding: 'utf8' });
+    return { status: result.status, output: `${result.stdout}${result.stderr}` };
+  };
+
+  it('reads OK when every half read OK: CI can pass', () => {
+    const result = run({ unit: UNIT_OK, chromium: CHROMIUM_OK, mobile: MOBILE_OK });
+    expect(result.output).toMatch(/^verdict: OK$/m);
+    expect(result.status, result.output).toBe(0);
+  });
+
+  it('reads FAILED with no refusal when a half failed: the verdict is about the code', () => {
+    const result = run({ unit: UNIT_OK, chromium: CHROMIUM_RED, mobile: MOBILE_OK });
+    expect(result.output).not.toMatch(/REFUSED/);
+    expect(result.output).toMatch(/^verdict: FAILED — chromium failed$/m);
     expect(result.status, result.output).toBe(1);
   });
 });
