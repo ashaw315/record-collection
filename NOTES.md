@@ -51173,3 +51173,16 @@ pressing year. So at most 12 are wrong or missing.
 **A value that looks quantised because a fractional part happened to complete it.** Linux's row
 at 28.000 read as rounding. It is 27.5 plus an offset of exactly 0.5, and the whole number is a
 coincidence. Roundness read as a mechanism: the 2, 23 and 60 error in other clothes.
+
+**A guard whose threshold may assume a scale the real case does not have.** The flat guard refuses
+a run where every record got the same count, a signal at the collection's size and possibly
+chance at six records, in which case a retry refuses the same six forever. Not shown: whether
+that is what happened on 1 Nov. Running the six is the diagnosis either way: refused confirms it,
+and a pass makes 1 Nov transient and the gap purely the missing retry.
+
+**The is_reissue count took release_year from "most of the collection" to 12 records.** The
+reordering mattered more than the fix: at most 12 of 55, tidy-up and not urgent.
+
+**The hinting flag on CI (run 41494823196, e667734):** chromium 8 failures to 2, nothing new among
+the 1040, one flake, wall-route:234. frame-planes:513 flipped: 999 is one row as ruled, and 1000
+now fits on one too. §62 rules by count, so asserting a width is a different claim and Design's.
