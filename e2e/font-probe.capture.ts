@@ -154,3 +154,29 @@ test('images line probe', async ({ page }, info) => {
   }
   process.stdout.write(`\nLINEPROBE ${JSON.stringify({ platform: process.platform, lines })}\n`);
 });
+
+/* The Images line is 3.81px narrower on Linux with its clause identical. What drew each part of what is left? */
+test('glyph probe', async ({ page }, info) => {
+  test.skip(info.project.name !== 'chromium-unhinted', 'the configuration the suite runs');
+  await page.goto('/login');
+  await page.evaluate(() => document.fonts.ready);
+  const parts = ['→', '·', 'Manage', 'Images 2', ' '];
+  const widths = await page.evaluate((list) => list.map((text, i) => {
+    const span = document.createElement('span');
+    span.id = `glyph-${i}`;
+    span.textContent = text;
+    span.style.cssText = 'position:absolute;white-space:pre;font-family:"Geist Mono";font-size:11px;font-weight:500;letter-spacing:1.1px';
+    document.body.append(span);
+    return span.getBoundingClientRect().width;
+  }), parts);
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send('DOM.enable');
+  await cdp.send('CSS.enable');
+  const { root } = await cdp.send('DOM.getDocument');
+  const rows: unknown[] = [];
+  for (const [i, text] of parts.entries()) {
+    const { nodeId } = await cdp.send('DOM.querySelector', { nodeId: root.nodeId, selector: `#glyph-${i}` });
+    rows.push({ text, width: widths[i], fonts: (await cdp.send('CSS.getPlatformFontsForNode', { nodeId })).fonts.map((f) => `${f.postScriptName} custom=${f.isCustomFont}`) });
+  }
+  process.stdout.write(`\nGLYPHPROBE ${JSON.stringify({ platform: process.platform, rows })}\n`);
+});
