@@ -51097,3 +51097,10 @@ at 13px is 114.000 against 109.750. Not a missing font: whole-pixel glyph advanc
 matches macOS to within 0.016px on every string, so it does not explain the four `stats:493`
 failures, which are WebKit's. The artifact download failed on a GitHub egress limit; these came
 from the job's log, which the probe prints to.
+
+**`--font-render-hinting=none` is the variable (run 41488583552).** With only that flag, Linux
+chromium matches macOS on all ten strings, worst difference 0.016px, against 12.578 without it
+in the same run. So chromium's type differs on Linux by hinting, with no font missing. It does
+not yet show that the eight chromium failures go: that needs a CI run with the flag in
+playwright.config.ts. The four `stats:493` are WebKit, which already matches on these strings
+at a desktop size, and are not explained.
