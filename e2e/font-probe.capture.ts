@@ -124,3 +124,33 @@ test('row probe', async ({ page, browserName }, info) => {
   process.stdout.write(`\nROWPROBE ${JSON.stringify(out)}\n`);
   writeFileSync(`font-probe-${process.platform}-${info.project.name}.json`, JSON.stringify(out, null, 2));
 });
+
+/*
+  frame-planes:513: on Linux with the flag, 1000 earlier covers stays on one row, where macOS takes
+  two. The line itself at both counts: its text's width against the width it has.
+*/
+test('images line probe', async ({ page }, info) => {
+  test.skip(info.project.name !== 'chromium-unhinted', 'the configuration the suite runs');
+  await login(page);
+  const lines: unknown[] = [];
+  for (const width of [1440, 1920]) {
+    for (const earlier of [999, 1000]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto(`/wall/probe/page8a?case=richest&generated=1&configured=1&earlier=${earlier}`);
+      await page.locator('[data-field="images-line"]').waitFor({ timeout: 20_000 });
+      await page.evaluate(() => document.fonts.ready);
+      lines.push(await page.locator('[data-field="images-line"]').evaluate((el, at) => {
+        const box = el.getBoundingClientRect();
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        const rects = [...range.getClientRects()];
+        const left = Math.min(...rects.map((r) => r.left));
+        const right = Math.max(...rects.map((r) => r.right));
+        const clause = el.querySelector('[data-field="earlier-covers"]')?.getBoundingClientRect();
+        const cs = getComputedStyle(el);
+        return { ...at, text: (el.textContent ?? '').replace(/\s+/g, ' ').trim(), boxWidth: box.width, boxHeight: box.height, lineHeight: cs.lineHeight, inkWidth: right - left, clauseWidth: clause?.width, clauseRects: el.querySelector('[data-field="earlier-covers"]')?.getClientRects().length, display: cs.display, letterSpacing: cs.letterSpacing, family: cs.fontFamily.slice(0, 20), font: cs.fontSize };
+      }, { width, earlier }));
+    }
+  }
+  process.stdout.write(`\nLINEPROBE ${JSON.stringify({ platform: process.platform, lines })}\n`);
+});

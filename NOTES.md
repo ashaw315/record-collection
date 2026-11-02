@@ -51186,3 +51186,12 @@ reordering mattered more than the fix: at most 12 of 55, tidy-up and not urgent.
 **The hinting flag on CI (run 41494823196, e667734):** chromium 8 failures to 2, nothing new among
 the 1040, one flake, wall-route:234. frame-planes:513 flipped: 999 is one row as ruled, and 1000
 now fits on one too. §62 rules by count, so asserting a width is a different claim and Design's.
+
+**CI on 36892c2 (run 41528130476).** Chromium 1044 passed, 2 failed, 2 flaky; mobile 389 passed, 1
+flaky, its first half with no hard failure, so bb2b339 is proven on Linux: stats:493's four are gone.
+Verdict FAILED, chromium, exit 1. Failing: frame-planes:513, two. Flaky: wall-route:234 for the second
+run, pick-moods-157:154, and new, lookup-flows:1743 on mobile. wall-route:234 on one worker, 10 of
+10, and no flake in CI's whole one-worker run: the shared database, as far as staged, though the
+mechanism is not shown.
+
+frame-planes on macOS at 1440 and 1920: the line is 316.25 of 322 at 999, and about 323.95 at 1000.
