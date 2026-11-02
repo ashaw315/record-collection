@@ -787,8 +787,9 @@ The provisionals in force, for the note in Maintaining this file that a provisio
 - **§T.6 · the Discogs import on Manage.** Closed by step 159 (`docs/captures/import-159/`, at 1280 fine and 390 coarse: before a run, after with the report closed and open, and returned after leaving Manage). The placement is as ruled. Each of the four lines sits on the 44 line under both pointers, in the row names' type, and the four counts add up to the nine Discogs holds. The report survives a return beneath its run line. An open list's entries clear contrast. The open glyph is §T.1's −, not a dash character. Step 158's underlines were the resting pointer, and 159 clears pointer and focus before every capture and shows none. The 97.5 before a run is the reserved failure slot.
 - **§W.8 · a pull before its cover arrives.** "The pending field's look, and how often a pull lands on it, are provisional until built and captured on a slow connection." Returns from the covers step. Open.
 - **§W.22 · the pan before the pull.** Closed on Adam's judgement by use: overlapped, a 1150ms pan inside a 1600ms pull (`W.22/pan-first`).
-- **§W.22 · the pan's curve.** "The pan's curve is provisional: Code proposes it, and Adam judges it by use, because a motion cannot be judged from stills." Returns from the overlapped-pan step. Open.
+- **§W.22 · the pan's curve.** Closed: easeInOutCubic, as Code proposed and Adam preferred on 0de4e55, the overlapped pan judged by use on production at fef9589.
 - **§W.18 · the record cut at the row's front.** Closed without returning: the cut is withdrawn (`W.18/cut`), and nothing was built.
+- **§W.22 · the top-shelf dip under the overlapped pan.** Predicted at about 250px by Code's fit, dip = 0.673 × pan + 64.6, and not yet observed. Returns from window:measure:pan on production. If it comes in well below 245 to 251px, §W.22's sentence resting on the fit is revisited. Open.
 
 ## Findings for screens without a pass
 
