@@ -484,8 +484,14 @@ test('empty genres stay on the screen and recede', async ({ page }) => {
   opened rows, a label's and a store's are each a link in a column of
   links, so the row is what is 44.
 */
-/* A genre's row and the pitch of a label's or store's row: 44 under a finger, and under a mouse what they were before step 126. */
-const ROWS = { coarse: { genre: 44, pitch: 44 }, fine: { genre: 27.5, pitch: 33.5 } } as const;
+/*
+  A genre's row and the pitch of a label's or store's row: 44 under a finger, and under a mouse what they were before
+  step 126. A genre's row is 27.609 on macOS, the target platform, and not 19.5 + 8: the name in Inter Tight and the
+  count in Geist Mono share a baseline, and aligning them adds 0.109. Linux WebKit adds 0.5 and draws 28, with the same
+  line boxes and device pixel ratio (font probe 41494827456). That difference is real and is left standing; this is
+  the figure for the target, and toBeCloseTo's 0.5 is the tolerance it always had.
+*/
+const ROWS = { coarse: { genre: 44, pitch: 44 }, fine: { genre: 27.609, pitch: 33.5 } } as const;
 for (const pointer of POINTERS) test.describe(`stats under a ${pointer} pointer`, () => {
  test.use({ hasTouch: pointer === 'coarse' });
  for (const width of [320, 390, 768, 1280]) {

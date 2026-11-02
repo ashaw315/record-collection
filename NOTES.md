@@ -51119,3 +51119,19 @@ is what moved it.
 **`stats:493`.** Expected 27.5, got 28, tolerance under 0.5, so a half-pixel rounding fails it
 by the smallest margin. The probe now reads the real row on the iPhone 13 profile: row and line
 box heights, and the device pixel ratio.
+
+**`stats:493`, read.** Tolerance: toBeCloseTo(x, 0), under 0.5. The row's 27.609 on macOS is
+19.5 + 8 + 0.109, and the 0.109 is `items-baseline` aligning Inter Tight with Geist Mono: the count
+sits 0.109 lower, and the inner row is 19.609. Linux WebKit: row 28, line boxes 19.5, device pixel
+ratio 3, the same as macOS, so the DPR candidate is out and the baseline offset, 0.5 against
+0.109, is the difference. The expected value is 27.609, the target platform's figure. Linux is
+then 0.391 away, inside the same tolerance, and that passing is not a claim the platforms agree:
+they differ by 0.391 and the comment says so. 27.5 was not moved to 28, and the tolerance was not
+widened. Where 27.5 came from is not established: the row already had the mono count and the
+baseline on 11 Oct when it was written, so it was the sum or a rounded reading.
+
+**A test from the ruling's arithmetic, that no build matched.** The mirror of a test written from
+the build. Here the expected value was a sum, never 27.609, and the tolerance hid the mismatch for
+as long as the suite ran on one platform. A second platform exposed it, which is an argument for
+cross-platform CI beyond catching regressions. (Whether 27.5 was literally the sum is the
+open point above; that the constant matched no build is the measurement.)

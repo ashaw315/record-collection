@@ -58,7 +58,7 @@ function Row({ node, href }: { node: GenrePairNode; href: (id: string) => string
       controls stack with no gap"), and the name's hit area is the row's
       height over the name's width. The name and its figures keep one
       baseline inside it. Where the pointer is coarse (step 127): with a
-      mouse the row is the 27.5 it was.
+      mouse the row is the 27.6 it was.
     */
     <div
       className={`flex items-center py-1 text-detail pointer-coarse:min-h-[44px] pointer-coarse:py-0 ${ROW_CUTS} ${ROW_TARGET}${empty ? ' text-muted-foreground' : ''}`}
