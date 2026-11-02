@@ -789,7 +789,7 @@ The provisionals in force, for the note in Maintaining this file that a provisio
 - **§W.22 · the pan before the pull.** Closed on Adam's judgement by use: overlapped, a 1150ms pan inside a 1600ms pull (`W.22/pan-first`).
 - **§W.22 · the pan's curve.** Closed: easeInOutCubic, as Code proposed and Adam preferred on 0de4e55, the overlapped pan judged by use on production at fef9589.
 - **§W.18 · the record cut at the row's front.** Closed without returning: the cut is withdrawn (`W.18/cut`), and nothing was built.
-- **§W.22 · the top-shelf dip under the overlapped pan.** Predicted at about 250px by Code's fit, dip = 0.673 × pan + 64.6, and not yet observed. Returns from window:measure:pan on production. If it comes in well below 245 to 251px, §W.22's sentence resting on the fit is revisited. Open.
+- **§W.22 · the top-shelf dip under the overlapped pan.** Closed: observed on production on 1 Nov at 245 to 246px, within the 245 to 251 predicted. The dip is the peak of the record's own drop, about 69px, plus the pan. The straight-line fit holds only from a pan of about +70.
 
 ## Findings for screens without a pass
 

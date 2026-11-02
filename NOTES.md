@@ -51151,3 +51151,25 @@ heights. Whether other such rows drift is unmeasured.
 **The inversion (the coordinator's own note):** +269 and +70 against measured +268 and +70, and -88
 against -128: exact inside the fit's range, wrong outside it. It was diagnosing the range. A
 figure in a governing document carries its range and basis, or it costs a correction later.
+
+**A decision deferred on a stated condition, where nothing checks whether the condition still
+holds.** The Images disc (§60) was left open on the grounds that it was invisible until a record
+had two images, and there are now 120 images across 55 records. §55's eight unconfirmed figures
+have the same shape: the collection went from 17 to 55, so any figure derived from its size is
+suspect by default and not by inspection. A deferral's reason is a claim with an expiry, and
+nothing reads it.
+
+**The six untagged records (1 Nov).** All from one import, 16:34 UTC, 6 imported, 0 failed. The
+previous batch was tagged 19s after it arrived, so the import's tagging works, and it wrote
+nothing here. Not known why: a run refused as flat writes nothing and a 6-record batch can
+come out flat, or the call failed, or the function ended. All are logged and not stored,
+and llm_requests does not record tagging. So "every import adds untagged records" overstates
+it: the import resolves its own, and nothing retries one that failed. §5.10's route is that retry.
+
+**release_year, counted.** 15 of 55 are flagged reissues. 40 are not, and those years are
+right if the flag is. Of the 15: 11 hold the pressing's year, 1 is empty, 3 differ or have no
+pressing year. So at most 12 are wrong or missing.
+
+**A value that looks quantised because a fractional part happened to complete it.** Linux's row
+at 28.000 read as rounding. It is 27.5 plus an offset of exactly 0.5, and the whole number is a
+coincidence. Roundness read as a mechanism: the 2, 23 and 60 error in other clothes.

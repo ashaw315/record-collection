@@ -489,7 +489,8 @@ test('empty genres stay on the screen and recede', async ({ page }) => {
   step 126. A genre's row is 27.609 on macOS, the target platform, and not 19.5 + 8: the name in Inter Tight and the
   count in Geist Mono share a baseline, and aligning them adds 0.109. Linux WebKit adds 0.5 and draws 28, with the same
   line boxes and device pixel ratio (font probe 41494827456). That difference is real and is left standing; this is
-  the figure for the target, and toBeCloseTo's 0.5 is the tolerance it always had.
+  the figure for the target, and toBeCloseTo's 0.5 is the tolerance it always had. So this test cannot see that
+  0.391 grow until it passes 0.5: half a pixel admits it, on purpose and in view.
 */
 const ROWS = { coarse: { genre: 44, pitch: 44 }, fine: { genre: 27.609, pitch: 33.5 } } as const;
 for (const pointer of POINTERS) test.describe(`stats under a ${pointer} pointer`, () => {
