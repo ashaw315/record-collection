@@ -11,6 +11,7 @@ export default defineConfig({
   use: { baseURL: `http://localhost:${PORT}` },
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+    { name: 'chromium-unhinted', use: { ...devices['Desktop Chrome'], launchOptions: { args: ['--font-render-hinting=none'] } } },
     { name: 'webkit', use: { ...devices['Desktop Safari'], deviceScaleFactor: 1 } },
   ],
   webServer: { command: `NODE_ENV=test npm run dev -- --port ${PORT}`, url: `http://localhost:${PORT}/login`, timeout: 120_000, reuseExistingServer: false, stdout: 'ignore', stderr: 'pipe' },

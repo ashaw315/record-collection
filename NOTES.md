@@ -51090,3 +51090,10 @@ font was asked for, which drew it (CDP, chromium only) and how wide fixed string
 browsers; font-probe.yml is one run on GitHub's machines. macOS: chromium and webkit agree to
 the third place, 109.750 for "None among these." at 13px. Nothing follows from that until Linux
 reports. Next: compare, then delete the workflow and the probe.
+
+**The font probe's result (run 41486552297).** Linux chromium draws the same fonts as macOS,
+loaded and custom, and every width is a whole number, 0.75 to 12.6px wider: "None among these."
+at 13px is 114.000 against 109.750. Not a missing font: whole-pixel glyph advances. Linux WebKit
+matches macOS to within 0.016px on every string, so it does not explain the four `stats:493`
+failures, which are WebKit's. The artifact download failed on a GitHub egress limit; these came
+from the job's log, which the probe prints to.

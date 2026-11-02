@@ -17,7 +17,7 @@ const STRINGS = [
   ['Hamburgers quiver 0123456789', '16px', '400'],
 ];
 
-test('font probe', async ({ page, browserName }) => {
+test('font probe', async ({ page, browserName }, info) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/login');
   await page.evaluate(() => document.fonts.ready);
@@ -65,7 +65,7 @@ test('font probe', async ({ page, browserName }) => {
     };
     drew = { sans: await fonts('#probe-sans'), mono: await fonts('#probe-mono') };
   }
-  const out = { platform: process.platform, browserName, ...read, drew };
+  const out = { platform: process.platform, browserName, project: info.project.name, ...read, drew };
   process.stdout.write(`\nFONTPROBE ${JSON.stringify(out)}\n`);
-  writeFileSync(`font-probe-${process.platform}-${browserName}.json`, JSON.stringify(out, null, 2));
+  writeFileSync(`font-probe-${process.platform}-${info.project.name}.json`, JSON.stringify(out, null, 2));
 });
