@@ -51412,3 +51412,46 @@ test on bda6ad1. CI is now a usable signal, in the coordinator's sense: a red fr
 about the code. The cost is 1h8m for the chromium job at one worker, against roughly 40 minutes at
 two with the flake class live; the per-worker database rebuild stays held until a few more one-worker
 runs say whether the class is gone or only slower to show.
+
+**The rebuild's basis is the local gate, not more CI evidence (the coordinator, 3 Nov).** At one
+worker the shared-database class cannot occur, rather than being hidden: two workers cannot collide
+when there is one. CI at one worker prevents it at no cost to Adam, so more green CI runs say nothing
+about the rebuild. Its value is entirely the local gate at two workers, the only place the class
+still reaches him. Held on that basis.
+
+**Step 164, §W.8's covers: the 19.7s was pending, not banked.** The coordinator's 31 Oct ordering put
+"covers on pull, with lazy on the grid" third, 19.7s to 2.6s, and nothing in it had been built:
+`GridCover` carried no `loading="lazy"`, the hidden grid under the wall still fetched up to 50
+covers at parse time on every wall load, and the wall fetched none of its own. The ruling entered
+the target on 30 Oct (818fd45) and no drop since touched its two sentences; no §W.8 withdrawal
+names them. Staged locally: the grid's covers requested at 317ms where the wall hydrated at 958ms,
+the defect measured by the test before the fix. Built: the grid lazy, the wall asking for its covers
+in the effect that marks it hydrated, one image per distinct cover at low priority, held on a ref;
+a pull's `<image>` of the same URL joins the request in flight. A pull before its cover arrives
+already landed on the field by accident, an SVG image drawing nothing until it decodes; it is now
+asserted, by the painted pixel against the field's fill, with the no-cover type absent and no
+transition on the image. The first-pull rate at fast and slow 3G is a production run after the
+deploy, not a build.
+
+**The instrument that reads "after hydration" has to be synchronous.** A MutationObserver on
+`data-hydrated` reported after React's whole effect flush, and the prefetch is made inside that
+flush, so the observer's time came 38ms after a request the ruling allows and the test failed on a
+correct build. Wrapping `setAttribute` in an init script takes the time in the set itself,
+microseconds before the request; a parse-time fetch is hundreds of milliseconds before either. The
+family: an instrument whose latency is larger than the gap it measures.
+
+**"Low priority" is not observable against the attribute in Chromium.** An image outside the
+viewport is Low on Chromium's own rule, with or without `fetchPriority`, so the spec's priority
+assertion cannot fail against the one line that sets it; the unit test asserts the attribute, the
+spec asserts the loader's priority, and the spec says so beside the line.
+
+**Design's drop of 3 Nov, Steps for 62 63 64 (refs/drops/2026-11-03-02), landed mid-unit.** Adam
+copied the target into docs/design while step 164 was at verification, so the tree held a drop and a
+build at once. Taken in order: drop-ref with Code's own handoff line stashed out so the capture's diff
+was Design's alone; the change file applied as written; the index refused it on 1 (§64 had no governs
+row) and 7 (`63/arrow-subset` declared, unentered), then on 6 (the comment stale) until
+derive-withdrawals; 14 of 14 and 696 after. The withdrawal: `63/arrow-subset`, nothing built
+against it, as its Build clause says. Three steps now unnumbered for Code: §62 the covers group,
+§63 the arrow with its weight report, §64 the two years. The coordinator's order: §62, then covers on
+pull, then §63 and §64; step 164 was already built when the order arrived and lands first because a
+half-built unit in the tree blocks the intake.

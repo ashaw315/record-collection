@@ -40,6 +40,14 @@ export function GridCover({ url }: { url: string | null }) {
         data-cover-treatment={treatment ?? undefined}
         src={url}
         alt=""
+        /*
+          Step 164, §W.8: the grid is also in the wall page's markup, under
+          `display: none` where the shelf is offered, and a plain img there
+          is fetched; a lazy one is not (e2e/window-measure.spec.ts). Those
+          fetches were 13 of a cold load's 19.7 seconds (NOTES, 30 Oct). The
+          wall fetches its own covers once hydrated (prefetch-covers.ts).
+        */
+        loading="lazy"
         onLoad={(event) => read(event.currentTarget)}
         onError={() => setFailed(true)}
         className={`block h-full w-full ${treatment === null ? 'invisible object-cover' : treatment === 'fit' ? 'bg-background object-contain' : 'object-cover'}`}

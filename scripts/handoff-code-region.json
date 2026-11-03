@@ -290,5 +290,11 @@
     "before": "- **Unnumbered, for Code to number — §W.22: the pan overlapped.**",
     "why": "Code's number for Design's unnumbered §W.22 step.",
     "text": "163. **Done: built, the curve with Adam.** **§W.22 — the pan overlapped: Code's number for that step.** The view pans on the swing's own ease and clock, about 1150ms inside the 1600ms pull, the build before step 161 with §W.8's cut kept; `PAN_MS` and the trail are gone. A put back retraces on the return's clock, and came back to the reader's place exactly at 22, 43, 80 and 200 from an at-rest pull, so the 455px put back did not recur there; a pull from out of frame or by the pick was not staged. A re-roll is a return then a pull, 2462ms by the constants, not measured. The curve proposed is the swing's easeInOutCubic, the one Adam judged."
+  },
+  {
+    "id": "step-164",
+    "before": "- **Unnumbered, for Code to number — §W.8: a pull before its cover arrives, and when the wall fetches covers.**",
+    "why": "Code's number for Design's unnumbered §W.8 covers step.",
+    "text": "164. **Done: built and captured; the first-pull rate on production outstanding.** **§W.8 — the covers: Code's number for that step.** The Collection grid under the wall is lazy, so at `display: none` it fetches nothing: its covers had been requested at parse time, 317ms on a local load where the wall hydrated at 958ms, every one ahead of the scripts, and were 13 of a cold load's 19.7s on production at fast 3G. The wall asks for its own covers in the effect that marks it hydrated, one image per distinct cover with `fetchPriority` low, Chromium's loader reporting Low; a pull's `<image>` of the same URL joins the request in flight, which is the fetch at once. A pull before its cover arrives lands on the field in the record's colour with no type, the painted pixel read against the field's fill, and the cover takes the field's place with no transition on arrival (`e2e/covers-164.spec.ts`, `prefetch-covers.test.ts`). Captured from the build at 1440 × 900: `docs/captures/covers-164/pending-1440x900.png` and `arrived-1440x900.png`. Not measured: how often a first pull lands on the field at cold fast 3G and slow 3G, which is a production run of Adam's after the deploy, and the Provisional returns on it."
   }
 ]

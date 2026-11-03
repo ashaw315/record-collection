@@ -12,6 +12,7 @@ import { LANDING_PAD, offsetOf } from './landing';
 import type { View } from './view';
 import { CUT_MS, OUT_MS, RETURN_MS, SWING_MS, outTime, settled } from './gesture';
 import { frameView, landedExtent, panFraction, panView, type Pan } from './pan';
+import { prefetchCovers, type CoverFetch } from './prefetch-covers';
 import { wallLayout } from './wall-layout';
 import { isFarView } from './view-fork';
 import { pickAnswer } from './reroll';
@@ -209,6 +210,8 @@ export function WallLive({
   const viewNowRef = useRef<[number, number] | null>(null);
   const restViewRef = useRef<[number, number] | null>(null);
   const panRef = useRef<Pan | null>(null);
+  /* §W.8: the covers asked for once hydrated, held so no load is collected mid-flight (step 164). */
+  const prefetchedRef = useRef<CoverFetch[]>([]);
   /* The frame's originRef as last committed, for the scroll listener that tracks the view at rest. */
   const originRef = useRef<[number, number]>([0, 0]);
   const gestureOnRef = useRef(false);
@@ -419,7 +422,10 @@ if (offset !== null) offset.style.transform = '';
       container is that wall whichever region is shown.
     */
     el.closest('[data-wall-container]')?.setAttribute('data-hydrated', 'true');
+    /* §W.8: hydrated, so now the covers, at low priority (step 164). Held on the ref so no load is collected mid-flight. */
+    prefetchedRef.current = prefetchCovers(seats, () => new Image());
     return () => el.removeEventListener('scroll', onScroll);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useLayoutEffect(() => {
