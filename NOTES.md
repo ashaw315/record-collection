@@ -51492,3 +51492,12 @@ browser's broken-image mark, 1386 pixels outside the sleeve changed, and cover-f
 the whole page. The tile now draws §33's frame on failure, the same box and edge the image drew,
 so nothing moves. The gallery's own tiles still draw the broken mark on a failed photograph; not
 this unit's, recorded.
+
+**Two CI runs wasted on a short id (3 Nov).** Runs 41734064967 and 41738856433 failed at checkout in
+38 and 13 seconds: gate.yml's `commit` input says "its full id", and a seven-character id is read by
+actions/checkout as a branch name that does not exist. The earlier runs were dispatched with full
+ids; these two were not, Code's slip, and the failure is silent until the job log is read. A first
+step that refuses an input shorter than 40 characters would name it in the run's own summary; a
+change to gate.yml is shared infrastructure and waits for a gate, so it is recorded, not made. The
+run that counts is on 3bc23a1 by its full id and covers steps 164 and 165 together, four commits
+since the last green.
