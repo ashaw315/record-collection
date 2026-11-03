@@ -51271,3 +51271,36 @@ does; importRelease writes release_year only from its caller, so a form left bla
 of taking the pressing's. The test that held the opposite was rewritten: it encoded the comment's
 argument and not §4.2. Rendered at 1440 × 900: Release year at 432px and Year pressed at 1136px, 704
 apart, so they are never on screen together, and neither shows until "Everything else" opens.
+
+**A test that defends the defect.** release_year's wrong meaning lived in four artifacts: the bulk
+import, the prefill, the API fallback, and a test enforcing it, "asks the master only when the
+release has no year of its own". The right meaning lived in three: SPEC §4.2, a comment above the
+import, and the form's own hint a reader can see. The test is the worst of the four, because it
+would have failed anyone attempting the correct fix and read as a regression catch. Beside "a test
+written from the build rather than the ruling", in the same family, but this one resists correction
+rather than failing to detect it.
+
+**A correct observation acted on in the wrong layer.** The old prefill comment's author was half
+right: a reader holding a 2024 reissue and seeing "1969" prefilled is a real confusion, and the two
+year fields are 704px apart, never on screen together. They diagnosed it and fixed it by changing the
+value instead of the layout. More useful to record than "someone was wrong": the fix for a layout
+problem went into the data.
+
+**"Dip line as description" was never applied.** Relayed to Adam on 2 Nov, never reached docs/design,
+and gone from his Downloads by 3 Nov. Asked of Design again in the five-things send. A change file
+that is only in a Downloads folder is one tidy-up from gone.
+
+**release_year, the dry run (3 Nov, `npm run records:backfill-year`, production read-only, 55 masters
+asked through the shared client).** 9 records whose page says "Released · same year" where the
+master says otherwise; 10 wrong and in scope, those 9 and ATLiens, empty; 2 wrong and out of scope,
+Diamond Jubilee (2025, master 2024) and Glenn Miller (1963, master 1956), both not flagged reissues,
+so the flag is wrong on 2 of 40 and the "40 correct by construction" was 38; 42 right; Weezer's master
+has no year, its 1994 hand-set and standing. 21 pressings take a master id from the cache on --write.
+Nothing written.
+
+**A dry run that could not tell a failed call from no answer.** Run 2 read 4 "no answer" against run 1's
+1, on the same data: three master fetches failed under rate pressure, and `masterYear` folds a failure
+into null by design, since the import must not lose a record to its master. Right for the import,
+wrong for a dry run, whose whole job is to be the same twice. `askMaster` keeps the three states apart,
+and the script lists a failed read and exits 1 as incomplete. Run 3: 55 of 55 read, matching run 1.
+The absent-against-broken rule, met at the cost of two runs.

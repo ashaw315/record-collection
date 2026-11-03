@@ -15,6 +15,7 @@ describe('the moods scripts are npm scripts', () => {
   it.each([
     ['moods:tag', 'scripts/tag-moods.mts'],
     ['moods:override', 'scripts/override-moods.mts'],
+    ['records:backfill-year', 'scripts/backfill-release-year.mts'],
   ])('%s runs %s with the flags the file header names', (name, file) => {
     expect(scripts[name], name).toBeDefined();
     expect(scripts[name]).toContain(file);
