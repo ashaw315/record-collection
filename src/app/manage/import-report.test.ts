@@ -58,3 +58,11 @@ describe('lastImportLine', () => {
     expect(lastImportLine('2026-03-01T08:07:00.000Z', 'UTC')).toBe('Last import, 1 March, 08:07');
   });
 });
+
+/* A master that could not answer leaves the pressing's year standing: the report says it in the reader's words, not the column's. */
+describe('the original year in the report', () => {
+  it('names it as the original year', () => {
+    const lines = reportLines({ username: 'a', imported: [{ releaseId: 1, recordId: 'r', title: 'T', artist: 'A', blank: [{ field: 'release_year', value: '2024', reason: 'r' }], dropped: [], cover: 'attached' }], skipped: [], failed: [] } as never);
+    expect(lines.find((l) => l.key === 'blank')?.items.join(' ')).toContain('original year 2024');
+  });
+});

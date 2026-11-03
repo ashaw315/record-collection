@@ -13,7 +13,7 @@ import type { CollectionReport, FailedItem, ImportedItem, SkippedItem } from '@/
 export type ReportLine = { key: 'complete' | 'blank' | 'skipped' | 'failed'; sentence: string; count: number; items: string[] };
 
 /** The column's name in the reader's words: the report lists what was left blank, not which column. */
-const FIELD_WORDS: Record<string, string> = { format: 'format', color_variant: 'colour', year_pressed: 'year' };
+const FIELD_WORDS: Record<string, string> = { release_year: 'original year', format: 'format', color_variant: 'colour', year_pressed: 'year' };
 
 const name = (item: Pick<ImportedItem | SkippedItem | FailedItem, 'artist' | 'title'>) => `${item.artist ?? ''} — ${item.title ?? ''}`.trim();
 

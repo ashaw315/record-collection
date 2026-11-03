@@ -51218,3 +51218,19 @@ database per worker is held: "retires the class" rests on one clean run, and eac
 worker is free evidence. Revisit with several.
 
 **ASSERTIONS-spec is in the export set.** Design was authoring assertion text it could not read back.
+
+**A comment stating the correct behaviour directly above code that does the opposite.** New to the
+family. "§4.2: the ALBUM's year, not the pressing's", over a line writing the pressing's. Worse than
+no comment: it makes the line read as reviewed, so anyone scanning sees the rule and assumes the
+line below implements it. It was wrong on every bulk import since 27 Oct.
+
+**release_year, unit 1.** The import takes the album's year from the master, through the client it
+is given and so the shared bucket; a master that cannot answer leaves the pressing's year and the
+report says so. `master_id: 0` is Discogs' no-master, normalised to null, which a test caught: it had
+been asking /masters/0's way and could store a 0. Urgent, unlike the backfill: at most 12 of 55 is
+tidy-up, but each import adds more until this ships.
+
+**The form has the same defect, and reasons for it.** Code told the coordinator the form was right.
+It is not: discogs-prefill.ts takes `release.year ?? master`, so a reissue's release_year prefills
+with the pressing's, and its comment argues the master "would date every reissue to its original",
+which is what §4.2 asks. Not changed in this unit. A decision.

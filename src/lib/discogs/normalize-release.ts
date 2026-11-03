@@ -273,7 +273,7 @@ export function normalizeRelease(input: unknown): NormalizedRelease {
 
   return {
     discogsId: raw.id,
-    masterId: raw.master_id ?? null,
+    masterId: raw.master_id || null,
     // Title alone here — NOT combined with the artist as in search results.
     title: bounded(meaningful(raw.title), FIELD_LIMITS.title),
     artist: bounded(meaningful(raw.artists?.[0]?.name), FIELD_LIMITS.name),

@@ -7,6 +7,7 @@ import { readCachedRelease, writeCachedRelease } from '@/lib/discogs/cache';
 import type { DiscogsClient } from '@/lib/discogs/client';
 import { fetchCollection, type CollectionItem } from '@/lib/discogs/collection';
 import { mapCollectionItem, type Omission } from '@/lib/discogs/collection-map';
+import { masterYear } from '@/lib/discogs/master-year';
 import { findFormatByName } from './formats';
 import { importRelease } from './discogs-import';
 import { recordImportRun, type ImportRun } from './import-runs';
@@ -64,10 +65,14 @@ async function releasePayload(client: DiscogsClient, releaseId: number): Promise
 async function importOne(client: DiscogsClient, item: CollectionItem): Promise<ImportedItem> {
   const mapped = mapCollectionItem(await releasePayload(client, item.releaseId), item);
   const format = mapped.formatName === null ? undefined : await findFormatByName(mapped.formatName);
+  /* §4.2: the album's year is the master's. The release's year is this pressing's, and stands only where the master cannot answer, which the report lists. */
+  const albumYear = await masterYear(client, mapped.release.masterId);
+  const blank: Omission[] = [...mapped.blank];
+  if (mapped.release.masterId !== null && albumYear === null) blank.push({ field: 'release_year', value: String(mapped.release.year ?? ''), reason: 'the master gave no year, so the pressing’s stands' });
   const created = await importRelease({
     release: mapped.release,
     target: 'record',
-    overrides: { ...mapped.overrides, formatId: format?.id ?? null },
+    overrides: { ...mapped.overrides, formatId: format?.id ?? null, ...(albumYear === null ? {} : { releaseYear: albumYear }) },
     matrixRunoutSource: 'discogs',
     recordNameCollisions: true,
   });
@@ -77,7 +82,7 @@ async function importOne(client: DiscogsClient, item: CollectionItem): Promise<I
     recordId: created.id,
     title: mapped.release.title ?? '',
     artist: mapped.release.artist ?? '',
-    blank: mapped.blank,
+    blank,
     dropped: mapped.dropped,
     cover: cover.attached ? 'attached' : `not attached: ${'reason' in cover ? String(cover.reason) : 'no primary image'}`,
   };

@@ -398,8 +398,10 @@ export async function importRelease(
         formatId: overrides.formatId ?? null,
         storeId: overrides.storeId ?? null,
         title: pick(overrides.title, release.title) ?? '',
-        // §4.2: the ALBUM's year, not the pressing's. They coincide on a first
-        // pressing, which is exactly why they must not be conflated.
+        // §4.2 wants the album's year here, and `release.year` is the pressing's.
+        // They coincide on a first pressing and on no reissue, so a caller that
+        // knows the album's year passes it as the override; the fallback is only
+        // right when there is no master to ask.
         releaseYear: pick(overrides.releaseYear, release.year),
         conditionMedia: (overrides.conditionMedia ?? null) as typeof records.$inferInsert.conditionMedia,
         conditionSleeve: (overrides.conditionSleeve ?? null) as typeof records.$inferInsert.conditionSleeve,

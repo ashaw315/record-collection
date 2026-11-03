@@ -44,6 +44,8 @@ function fakeClient(over: Answers = {}): DiscogsClient & { calls: string[] } {
     '/oauth/identity': fixture('collection-identity'),
     '/users/AdamPseudo/collection/folders/0/releases': PAGE,
     ...Object.fromEntries(IDS.map((id) => [`/releases/${id}`, fixture(`collection-release-${id}`)])),
+    /* Each master answers with its release's own year unless a test says otherwise, so no test but those below meets a difference. */
+    ...Object.fromEntries(IDS.map((id) => { const r = fixture(`collection-release-${id}`) as { master_id: number; year: number }; return [`/masters/${r.master_id}`, { year: r.year }]; })),
     ...over,
   };
   const calls: string[] = [];
@@ -63,6 +65,59 @@ function fakeClient(over: Answers = {}): DiscogsClient & { calls: string[] } {
 }
 
 const count = async (table: 'records' | 'pressings' | 'artists' | 'labels' | 'genres') => Number((await db.execute(sql.raw(`SELECT count(*)::int AS n FROM ${table}`))).rows[0]?.n ?? 0);
+
+/*
+  §4.2: release_year is "the album's original release year, not this pressing's year". The import
+  wrote the release's year there, under a comment saying the opposite, so a 2024 pressing of a 1969
+  album read 2024. The master is the album across its pressings, so it is what answers.
+*/
+describe('the album\'s year on an imported record', () => {
+  const years = async (title: string) => {
+    const rows = await db.execute(sql`SELECT r.release_year, p.year_pressed FROM records r JOIN pressings p ON p.id = r.pressing_id WHERE r.title = ${title}`);
+    return rows.rows[0] as { release_year: number | null; year_pressed: number | null };
+  };
+  const JEWELS = fixture('collection-release-31126154') as { master_id: number };
+
+  it('takes the album\'s year from the master and leaves the pressing its own', async () => {
+    await importCollection(fakeClient({ [`/masters/${JEWELS.master_id}`]: { year: 1969 } }));
+    expect(await years('Jewels Of Thought')).toEqual({ release_year: 1969, year_pressed: 2024 });
+  });
+
+  it('gives a release with no year of its own the master\'s', async () => {
+    const atliens = fixture('collection-release-15661267') as { master_id: number };
+    await importCollection(fakeClient({ [`/masters/${atliens.master_id}`]: { year: 1996 } }));
+    expect(await years('ATLiens')).toEqual({ release_year: 1996, year_pressed: null });
+  });
+
+  it('keeps the record when the master cannot answer, with the release\'s year, and says so in the report', async () => {
+    const report = await importCollection(fakeClient({ [`/masters/${JEWELS.master_id}`]: () => { throw new Error('Discogs answered 500'); } }));
+    expect(report.failed).toEqual([]);
+    expect(await years('Jewels Of Thought')).toEqual({ release_year: 2024, year_pressed: 2024 });
+    const item = report.imported.find((i) => i.title === 'Jewels Of Thought');
+    expect(item?.blank.map((b) => b.field)).toContain('release_year');
+  });
+
+  it('treats a master with no year as one that cannot answer', async () => {
+    const report = await importCollection(fakeClient({ [`/masters/${JEWELS.master_id}`]: { year: 0 } }));
+    expect(await years('Jewels Of Thought')).toEqual({ release_year: 2024, year_pressed: 2024 });
+    expect(report.imported.find((i) => i.title === 'Jewels Of Thought')?.blank.map((b) => b.field)).toContain('release_year');
+  });
+
+  it('asks nothing of a release that has no master, and does not list it', async () => {
+    const release = fixture('collection-release-31126154') as Record<string, unknown>;
+    const client = fakeClient({ '/releases/31126154': { ...release, master_id: 0 } });
+    const report = await importCollection(client);
+    expect(client.calls.filter((c) => c === `/masters/${JEWELS.master_id}`)).toEqual([]);
+    expect(await years('Jewels Of Thought')).toEqual({ release_year: 2024, year_pressed: 2024 });
+    expect(report.imported.find((i) => i.title === 'Jewels Of Thought')?.blank.map((b) => b.field)).not.toContain('release_year');
+  });
+
+  it('asks through the client it was given, whose bucket every Discogs call spends from', async () => {
+    const client = fakeClient();
+    await importCollection(client);
+    expect(client.calls.filter((c) => c.startsWith('/masters/'))).toHaveLength(IDS.length);
+  });
+});
 
 describe('importCollection', () => {
   it('imports the nine as records on pressings keyed by release id, with stub artists and labels, genres and not styles, the seven formats and no more, the conditions, and each matrix seeded and marked discogs', async () => {
