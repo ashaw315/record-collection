@@ -51380,3 +51380,15 @@ installed on the machine.
 it posts the row's own fields, a third entry path. The handoff lists "the record form" among screens
 without a pass. The place every record enters the system has never been ruled, and all three wrong
 release_year writers lived on it.
+
+**The §62 test's bound bites on macOS and cannot on Linux.** 1000 wraps to two rows on macOS and stays
+at one on Linux, 1.86px to spare, so on Linux no count in the sweep reaches two rows and "at most two
+rows" is trivially true. Acceptable for the reason the hinting flag was: macOS is the target. Written
+in the test so a later reader does not take a green on Linux as evidence of the wrapping rule. The
+first family member in its benign form, a guard that passes because it runs where the real thing is
+not, and the benign ones are the ones misread later. The sweep is not pushed higher: §62 rules
+plausible counts and 1000 is past them.
+
+**The form is §64 in the record-detail target (Adam, 3 Nov),** not a seventh target: own routes that
+nothing governs, one row of two fields, §63 the precedent. Told Design, with two steps owed for the
+covers group and the arrow, which "Covers reach" ruled without steps.

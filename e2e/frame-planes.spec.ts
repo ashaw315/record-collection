@@ -518,7 +518,13 @@ for (const width of [1440, 1920]) {
       one machine, 999 against 1000 here and one row at 1000 on Linux, and §62 rules the floor,
       not the count. The counts run past anything a record holds, 120 images across 55 records.
     */
-    /* 1000 is past plausible and is here because it is where the line wraps on at least one machine: the bound is exercised, not pinned. */
+    /*
+      1000 is past plausible and is here because it is where the line wraps on macOS, the target
+      platform: there the bound is exercised, and pinned nowhere. On Linux the line is one row at
+      every count in this sweep, 1.86px to spare at 1000, so "at most two rows" is trivially true
+      there and a green on Linux is not evidence the wrapping rule holds. The sweep is not pushed
+      higher to make it bite: §62 rules plausible counts, and 1000 is past them already.
+    */
     for (const earlier of [0, 1, 3, 12, 99, 999, 1000]) {
       const m = await probeAbout(page, width, earlier);
       expect(m.controlRows, `${earlier}: the full control line`).toBe(2);
