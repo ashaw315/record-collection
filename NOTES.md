@@ -51392,3 +51392,12 @@ plausible counts and 1000 is past them.
 **The form is §64 in the record-detail target (Adam, 3 Nov),** not a seventh target: own routes that
 nothing governs, one row of two fields, §63 the precedent. Told Design, with two steps owed for the
 covers group and the arrow, which "Covers reach" ruled without steps.
+
+**a43b647 broke a test, and CI found it, not Code.** `test/integration/discogs-import.test.ts` asserted
+that importRelease wrote the pressing's year to release_year with no override, "for a first pressing
+they coincide": the conflation tested as a coincidence, a second test that defended the defect, in
+the query layer where the first was in the prefill. Code's step-level run was scoped by filenames it
+recalled and missed it; a grep for `importRelease(` across the tests finds it in one line. The rule:
+scope a step's run by what calls the changed function, not by the files remembered. The commit was
+pushed ungated, which is allowed, and CI's unit half caught it on the next run: the gate doing its job
+on GitHub's machine, which is what it was moved there for. Mobile read OK on that run, its first.

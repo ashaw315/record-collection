@@ -77,16 +77,23 @@ describe('creating the record and its reference rows', () => {
     expect(rows.rows[0].matrix_runout).toContain('CLAY-LP-3-A2');
   });
 
-  it('records the release year on the RECORD, which is the album year', async () => {
-    // §4.2: release_year is the album's original year; year_pressed belongs to
-    // the pressing. For a first pressing they coincide, which is exactly why
-    // the two must not be conflated — a reissue would show the difference.
+  it('leaves release_year to its caller: the release knows the pressing\'s year, and only a caller knows the album\'s', async () => {
+    /*
+      §4.2: release_year is the album's original year; year_pressed belongs to the pressing.
+      Until 3 Nov this test asserted 1982 landed in release_year with no override, "for a first
+      pressing they coincide", which is the conflation itself tested as a coincidence: it held
+      the fallback that wrote every reissue's pressing year as its album year, and it would
+      have failed the fix. Rewritten to the ruling. The album's year comes from the master, which
+      the bulk import and the prefill ask; importRelease takes it as the override or not at all.
+    */
     await importRelease({ release: RELEASE, target: 'record' });
+    const without = await db.execute<{ release_year: number | null }>(sql`SELECT release_year FROM records`);
+    expect(without.rows[0].release_year).toBeNull();
 
-    const rows = await db.execute<{ release_year: number }>(
-      sql`SELECT release_year FROM records`,
-    );
-    expect(rows.rows[0].release_year).toBe(1982);
+    await truncateAll();
+    await importRelease({ release: RELEASE, target: 'record', overrides: { releaseYear: 1982 } });
+    const given = await db.execute<{ release_year: number | null }>(sql`SELECT release_year FROM records`);
+    expect(given.rows[0].release_year).toBe(1982);
   });
 
   it('prefers styles over genres, per §6', async () => {
