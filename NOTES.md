@@ -51304,3 +51304,29 @@ into null by design, since the import must not lose a record to its master. Righ
 wrong for a dry run, whose whole job is to be the same twice. `askMaster` keeps the three states apart,
 and the script lists a failed read and exits 1 as incomplete. Run 3: 55 of 55 read, matching run 1.
 The absent-against-broken rule, met at the cost of two runs.
+
+**The write, 3 Nov 13:11 UTC, by a run Code did not start.** Code's `--write` run began about 13:12:55
+and reported "Written: 0 years, 0 master ids": the ten years and 21 master ids were already there,
+written at 13:11:27 in the script's own order, pressings then records, 20ms apart. The same script on
+the same data, so the result is the one the dry run showed; and the write is idempotent, filtered to
+nulls and to the in-scope rule, so the second run touched nothing. Two runners on one production
+database, 90 seconds apart, and neither knew of the other: the "what else was running" rule, on
+production. Who ran it is Adam's to say; the timestamps say when.
+
+**What the absent-against-broken finding cost and saved.** Two dry runs. Saved: on a single-run write,
+three records whose master fetch failed under rate pressure, URGH, Wired and Wowee Zowee, would have
+been skipped as "no year" with nothing saying so, and Wowee Zowee is one of the ten. A failed fetch
+folded into "no year" is a claim about the fetch presented as a fact about the record, the negative
+search result read as a negative finding, already in the family. **The rule: a read-only report that
+precedes a write is run twice and compared, and a difference is a finding about the instrument.**
+
+**The total held and the composition did not.** 12 of 55 was right. Two reissues predicted wrong were
+right, and two records not flagged as reissues were wrong: four misclassified, errors cancelling. A
+count that survives while its membership changes reads as confirmation, and this is the second
+instance this week, after 2, 23 and 60.
+
+**is_reissue is unreliable, wrong on 2 of 40, both from imports on 28 and 29 Oct; `inferReissue` to
+the list, not this unit.** What has inherited the flag: the record page's "Reissue: Yes" fact
+(record-detail-format.ts) and the wall's back face "Pressing: Reissue" (back-face.ts), both shown;
+lookup's identical-versions dedupe key; the form's checkbox, a person's to correct; and the
+backfill's own write rule, which is why its two out-of-scope records are wrong and unwritten.
