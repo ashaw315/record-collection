@@ -510,17 +510,22 @@ for (const width of [1440, 1920]) {
     expect(extended.budget, "§53's seven-line floor").toBeGreaterThanOrEqual(7);
   });
 
-  test(`§62 at ${width}, full control line: the Images line takes a second row at 1000 earlier covers, not at 999, and the prose is then seven`, async ({ page }) => {
+  /* @target §62 "the line takes at most two rows" */
+  test(`§62 at ${width}, full control line: the Images line takes at most two rows, and the About prose holds §53's seven lines, at every count a record could plausibly carry`, async ({ page }) => {
     await login(page);
-    const last = await probeAbout(page, width, 999);
-    const first = await probeAbout(page, width, 1000);
-    test.info().annotations.push({ type: '§62 headroom', description: `${width}: 999 ${JSON.stringify(last)} 1000 ${JSON.stringify(first)}` });
-
-    expect(last.controlRows, 'the full control line, at both counts').toBe(2);
-    expect(last.lineRows, '999 earlier covers is still one row').toBe(1);
-    expect(first.lineRows, '1000 is the first count that takes another').toBe(2);
-    expect(first.footCut, 'the second row is inside the cell, not clipped at its floor').toBeLessThanOrEqual(0);
-    expect(first.budget, 'the second row costs the prose one line').toBe(last.budget - 1);
-    expect(first.budget, "and leaves §53's floor met, not broken").toBeGreaterThanOrEqual(7);
+    /*
+      Not pinned at a count (Design, 3 Nov): where the line wraps is step 80's measurement on
+      one machine, 999 against 1000 here and one row at 1000 on Linux, and §62 rules the floor,
+      not the count. The counts run past anything a record holds, 120 images across 55 records.
+    */
+    /* 1000 is past plausible and is here because it is where the line wraps on at least one machine: the bound is exercised, not pinned. */
+    for (const earlier of [0, 1, 3, 12, 99, 999, 1000]) {
+      const m = await probeAbout(page, width, earlier);
+      expect(m.controlRows, `${earlier}: the full control line`).toBe(2);
+      expect(m.lineRows, `${earlier}: the Images line is drawn`).not.toBeNull();
+      expect(m.lineRows ?? 0, `${earlier}: at most two rows`).toBeLessThanOrEqual(2);
+      expect(m.footCut, `${earlier}: inside the cell`).toBeLessThanOrEqual(0);
+      expect(m.budget, `${earlier}: §53's seven-line floor`).toBeGreaterThanOrEqual(7);
+    }
   });
 }

@@ -51330,3 +51330,53 @@ the list, not this unit.** What has inherited the flag: the record page's "Reiss
 (record-detail-format.ts) and the wall's back face "Pressing: Reissue" (back-face.ts), both shown;
 lookup's identical-versions dedupe key; the form's checkbox, a person's to correct; and the
 backfill's own write rule, which is why its two out-of-scope records are wrong and unwritten.
+
+**The write, confirmed Adam's.** 10 years, 21 master ids, the third identical reading of the data.
+
+**"release_year earlier than year_pressed" as a derived reissue flag: tested against the data, and it
+does not catch the two the flag missed.** Cross-tab, 3 Nov, after the write. Flag false and the years
+the same: 40, Diamond Jubilee and Glenn Miller among them, because the backfill left their
+release_year at the pressing's: the write rule trusted the flag, so the derived flag trusts the write.
+Circular; on the data as it stands the rule reads both as originals. Flag true and earlier: 10, the
+nine written and Weezer, agreeing. Flag true and the same: 2, The Collective (2024) and The Soft Parade
+(1969), the same-year repress the rule reads as an original, or a wrong flag, not known which. No
+comparison: 3, ATLiens, Super Rich and The Doors, with no pressing year. The signal that would catch
+the two is the master's year against the pressing's, read from the master directly and not through
+release_year: 54 of 55 have a master year, and the dry run already computed it. Why it is available
+now and was not before: while release_year was written as the pressing's, the two always matched and
+the comparison said nothing. Fixing the data made a signal possible. Readers of the flag that would
+change with it are listed above; to the list, not this unit.
+
+**ATLiens' third state, a year with no pressing year, is the tested one:** `pressedSameYear` is false
+with nothing to compare (grid-modules.test.ts:83), so the page reads "Released" and 1996, as a
+different-year record does. The look on production is Adam's to confirm.
+
+**The write's authorship: a relay failure, not an unknown writer.** Adam ran `--write` at 13:11 UTC on
+the coordinator's approval, and Code was about to; neither was told of the other. Harmless because
+the write is idempotent and filtered to nulls and the in-scope rule, which was the design and not
+luck. The rule, the coordinator's: when a write to production is approved, the message that approves
+it says who runs it.
+
+**Design's drop of 3 Nov, Covers reach (refs/drops/2026-11-03-01), and Dip line as description, re-sent.**
+§62 rules covers managed in the Images section's own group, newest first, the shown one marked, each
+with a delete; the Images line's wrap held by §53's floor and not a count; new §63, → subset into Geist
+Mono from the family's own drawing. No withdrawal: "where they are kept or deleted" stays and the
+build diverges until built. Assertion reasons move to ASSERTIONS-spec (c2a9244). The two years: not
+ruled; no target rules the add-record form, and Design is asking Adam where it goes.
+
+**Assertion 13 caught its first case on the next drop.** §62's new sentence "The test asserts that the
+line takes at most two rows…" named a test that did not exist, and the intake refused the drop, armed,
+7 of 8. The test is now written and paired, 8 of 8. First run green, since the build already complied;
+shown able to fail by mutation, with 1000 in the sweep because it is where the line wraps on this
+machine: the bound is exercised there and pinned nowhere.
+
+**Geist Mono draws →.** Google's served subsets, 36 files, none has U+2192; the family's own
+GeistMono-Variable has 889 glyphs and every arrow U+2190 to U+2199. So §63 is built by serving the
+family's own file, and nothing needs ruling again. Checked in a venv in the scratchpad, nothing
+installed on the machine.
+
+**No target rules the record form.** RecordForm renders on its own routes, /records/new and
+/records/[id]/edit, not in the modal, so §M does not own it. Want-list acquire does not use the form;
+it posts the row's own fields, a third entry path. The handoff lists "the record form" among screens
+without a pass. The place every record enters the system has never been ruled, and all three wrong
+release_year writers lived on it.

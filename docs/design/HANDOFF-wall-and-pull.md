@@ -108,7 +108,8 @@ The wall at rest is line, ink and paper; colour arrives with the pull. Everythin
 | §59 | Contrast is the rule, not a size | Why the contrast rule reaches type of any size; why the Images quarter-disc yields to its caption. |
 | §60 | The disc’s reference is a height, not a rendering | Why the Images disc is sized against named fixed parts, and why the cover note’s blank row goes. |
 | §61 | The cover the record shows, and the colour that follows it | Why the newest cover displays and the colour follows it; why the page’s geometry does not read the colour, so no acceptance is about one colour; what a re-coloured record re-opens and what it does not. |
-| §62 | What the Images count counts | Why the count is what the page shows, and how covers the page does not show are named. |
+| §62 | What the Images count counts | Why the count is what the page shows, and how covers the page does not show are named.; covers managed in the Images section's own group, and the line's wrap held by §53's floor rather than a count |
+| §63 | The arrow | → subset into Geist Mono wherever the app sets it, rather than a system fallback |
 | §G.1 | The header joins the record detail’s system, because the record detail already ruled it | Why the header is not chrome kept apart, which settled clauses it builds (§4.1 and §3), the type, colour and weights it takes, and the shared label style’s tracking with its reach into §W.6 and §62. |
 | §G.2 | The 53 holds | Why the header’s height is the box’s and not the type’s, why no other height needs ruling, and the line height. |
 | §G.3 | The header’s measure is the screen’s | Why the header has no cap of its own, the inset taken from §47 and the earlier draft it corrects, the gap between links, and their hit area. |
@@ -789,7 +790,9 @@ The provisionals in force, for the note in Maintaining this file that a provisio
 - **§W.22 · the pan before the pull.** Closed on Adam's judgement by use: overlapped, a 1150ms pan inside a 1600ms pull (`W.22/pan-first`).
 - **§W.22 · the pan's curve.** Closed: easeInOutCubic, as Code proposed and Adam preferred on 0de4e55, the overlapped pan judged by use on production at fef9589.
 - **§W.18 · the record cut at the row's front.** Closed without returning: the cut is withdrawn (`W.18/cut`), and nothing was built.
-- **§W.22 · the top-shelf dip under the overlapped pan.** Closed: observed on production on 1 Nov at 245 to 246px, within the 245 to 251 predicted. The dip is the peak of the record's own drop, about 69px, plus the pan. The straight-line fit holds only from a pan of about +70.
+- **§W.22 · the top-shelf dip under the overlapped pan.** Closed: observed on production on 1 Nov at 245 to 246px, within the 245 to 251 predicted. Across five production pulls the dip fits the peak of the record's own drop, about 69px, plus the pan, as a description rather than a law (§W.22). The straight-line fit holds only from a pan of about +70.
+- **§62 · the covers group.** "What the group and its mark look like is provisional until built and captured." Returns from the step that builds the group. Open.
+- **§63 · the arrow.** "The arrow's appearance is provisional until built and captured." Returns from the subset step. Open.
 
 ## Findings for screens without a pass
 
@@ -807,7 +810,7 @@ Logged against a screen's future pass, not patched. Nothing here is a ruling, an
 
 **A governs row goes stale in two ways, and both happen while a change file is being written.** A withdrawal moves a ruling to another section and the old row keeps describing it, or a ruling is added to a section and its row never mentions it. The reconciliation of 28 October found 39 rows of 110 read stale this way: 13 among the wall, nav, modal and table and grid rows, and 26 on the record page. **A check that can't see the failure it stands in for belongs in the narrow-detector family.** A vocabulary check passed every record-page row while 26 lacked their withdrawals, because it compared the row's words with the section's and nothing else. It is the same shape as a guard aimed one layer below the sentence it protects.
 
-**A test a target names has to exist (assertion 13).** §W.8 said the test sets the preference and asserts, for weeks, over a test nobody had written; once written it found two defects. The target read as covered and the suite had nothing to report. A marker in the test pairs it with its sentence. It shows that the test exists, not that it checks what the sentence says.
+An assertion's motivating defect is recorded under the assertion in ASSERTIONS-spec.md.
 
 **A supersession of a built ruling gets its own build step.** §34 superseded §28's grouping for row 2, and the change went unbuilt because it was sentence four of step 32, which did four other things. §33's fixed rule rows were the same, inside step 29's nine lettered clauses. Nothing in the index catches a supersession: the old tests keep passing because the old behaviour is still there. Steps 22, 23, 24 and 43 to 53 are the convention; step 54 adds a guard and supersedes nothing; steps 55 to 70 are the convention.
 
