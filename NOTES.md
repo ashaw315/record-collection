@@ -51401,3 +51401,14 @@ recalled and missed it; a grep for `importRelease(` across the tests finds it in
 scope a step's run by what calls the changed function, not by the files remembered. The commit was
 pushed ungated, which is allowed, and CI's unit half caught it on the next run: the gate doing its job
 on GitHub's machine, which is what it was moved there for. Mobile read OK on that run, its first.
+
+**CI read OK on all three halves for the first time (run 41658206682 on 2618842, 3 Nov, one worker).**
+Unit 4744 passed, 2 skipped; chromium 1048 passed, 1 skipped in 1.1h; mobile 390 passed, 4 skipped in
+23.9m; zero retries on either project, so no flake either. The verdict step on GitHub and
+gate-report run here on the downloaded logs agree, `verdict: OK`, exit 0. Eleven runs before it since
+30 Oct read failure or were cancelled: the artifact-directory refusal until cba95bb, the twelve Linux
+font failures until the hinting flag, the shared-database flakes at two workers, and a43b647's broken
+test on bda6ad1. CI is now a usable signal, in the coordinator's sense: a red from here says something
+about the code. The cost is 1h8m for the chromium job at one worker, against roughly 40 minutes at
+two with the flake class live; the per-worker database rebuild stays held until a few more one-worker
+runs say whether the class is gone or only slower to show.
