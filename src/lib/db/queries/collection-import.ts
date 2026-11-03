@@ -72,7 +72,7 @@ async function importOne(client: DiscogsClient, item: CollectionItem): Promise<I
   const created = await importRelease({
     release: mapped.release,
     target: 'record',
-    overrides: { ...mapped.overrides, formatId: format?.id ?? null, ...(albumYear === null ? {} : { releaseYear: albumYear }) },
+    overrides: { ...mapped.overrides, formatId: format?.id ?? null, releaseYear: albumYear ?? mapped.release.year },
     matrixRunoutSource: 'discogs',
     recordNameCollisions: true,
   });

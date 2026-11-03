@@ -1,6 +1,7 @@
 import 'server-only';
 import { readCachedRelease, writeCachedRelease } from '@/lib/discogs/cache';
 import { DiscogsError, getDiscogsClient } from '@/lib/discogs/client';
+import { masterYear } from '@/lib/discogs/master-year';
 import { normalizeRelease, type NormalizedRelease } from '@/lib/discogs/normalize-release';
 import { findArtistByDiscogsId, findArtistsNamed } from '@/lib/db/queries/artists';
 import { findLabelByDiscogsId, findLabelByName } from '@/lib/db/queries/labels';
@@ -118,39 +119,6 @@ export async function loadRelease(discogsReleaseId: number): Promise<NormalizedR
   }
 }
 
-/**
- * The album's year, from the MASTER, when the release does not carry one.
- *
- * FOUND IN REAL USE: release 12856557 (the US Carpenters LP, `SP-3502`) has
- * `year: 0` and no `released` field — Discogs records no year on that release
- * at all, and the 1971 a user sees on the site comes from the master.
- *
- * §4.2 makes the master the CORRECT source rather than merely an available
- * one: `release_year` is the album's original year, and a master is precisely
- * a description of an album across its pressings.
- *
- * Asked only when the release cannot answer. The release's own year is more
- * specific — a 1989 reissue of a 1971 album says 1989, and the master says
- * 1971 — so preferring the master would date every reissue to its original,
- * which is CLAUDE.md §8's collapse arriving through a date field. It also
- * costs a rate-limited call.
- */
-async function masterYear(masterId: number | null): Promise<number | null> {
-  if (masterId === null) return null;
-
-  try {
-    const master = await getDiscogsClient().get<{ year?: number }>(`/masters/${masterId}`);
-    const year = master.year;
-
-    return typeof year === 'number' && year > 0 ? year : null;
-  } catch {
-    // A failed master must not cost the user the whole prefill: the release is
-    // already in hand and the master is an enhancement. Same shape as the
-    // versions endpoint degrading to tier 1.
-    return null;
-  }
-}
-
 export async function loadDiscogsPrefill(
   discogsReleaseId: number,
 ): Promise<DiscogsPrefill | null> {
@@ -172,7 +140,17 @@ export async function loadDiscogsPrefill(
    * fabricated value contradicted an identifying field and silently lost tier 1
    * — punished for fixing our error.
    */
-  const albumYear = release.year ?? (await masterYear(release.masterId));
+  /*
+    The album's year from the master, and the release's own only where the master cannot answer.
+    This used to ask the master only when the release had no year, on the argument that "a 1989
+    reissue of a 1971 album says 1989, and the master says 1971", so preferring the master "would
+    date every reissue to its original". That is what §4.2 asks of release_year: the album's
+    original year, not this pressing's. The pressing's year has its own field, filled on 52 of 55
+    records, so both are held and the only question is which box each goes in. It costs one
+    rate-limited call per prefill with a master. FOUND IN REAL USE before that: release 12856557
+    has year 0, and the 1971 comes from its master.
+  */
+  const albumYear = (await masterYear(getDiscogsClient(), release.masterId)) ?? release.year;
   const pressingYear = release.year;
 
   /**

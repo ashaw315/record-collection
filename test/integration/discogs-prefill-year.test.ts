@@ -270,23 +270,29 @@ describe('a release Discogs gives no year', () => {
     ).toBe(CARPENTERS);
   });
 
-  it('asks the master only when the release has no year of its own', async () => {
+  it('takes the album\'s year from the master even when the release has its own, which is the pressing\'s', async () => {
     /**
-     * The release's own year is more specific: a 1989 reissue of a 1971 album
-     * has `year: 1989`, and the master says 1971. Preferring the master would
-     * date every reissue to its original release — the §8 collapse, arriving
-     * through a date field.
-     *
-     * It also costs a rate-limited call, so it must not be made when the
-     * release already answers.
+     * Rewritten 2 Nov: this test held the opposite, from the comment's argument that the master
+     * "would date every reissue to its original release". That is what §4.2 asks of
+     * release_year, the album's original year. The pressing's year has its own field, filled on
+     * 52 of 55 records, so both values are held and the only question is which box each goes in.
+     * The test encoded the build's reasoning and not the ruling, so changing it is part of the fix.
      */
     await seedRelease({ ...RELEASE_WITHOUT_YEAR, year: 1989 });
     const get = mockMaster(1971);
 
     const prefill = await loadDiscogsPrefill(CARPENTERS);
 
+    expect(prefill?.values.releaseYear, 'the album').toBe('1971');
+    expect(prefill?.pressing.yearPressed, 'the pressing, in its own box').toBe('1989');
+    expect(get).toHaveBeenCalled();
+  });
+
+  it('falls back to the release\'s year when the master cannot answer, as the import does', async () => {
+    await seedRelease({ ...RELEASE_WITHOUT_YEAR, year: 1989 });
+    mockMaster(null);
+    const prefill = await loadDiscogsPrefill(CARPENTERS);
     expect(prefill?.values.releaseYear).toBe('1989');
-    expect(get, 'no master call when the release knows its own year').not.toHaveBeenCalled();
   });
 
   it('leaves the year empty when neither the release nor the master has one', async () => {

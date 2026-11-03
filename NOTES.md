@@ -51265,3 +51265,9 @@ Not tidy-up, and the dry run's report leads with that.
 **The gate on 9987a4a: OK, exit 0, no flake.** Unit OK, chromium 1048 passed, 1 skipped, 44.2m, mobile 390
 passed, 4 skipped, 11.7m; load 4.06 to 10.58, swap 4.1 to 5.1 GB, two days without a reboot. It covers
 45c6246 and everything since 24464c1.
+
+**release_year, the form and the third writer (2 Nov).** The prefill takes the master's year, as the import
+does; importRelease writes release_year only from its caller, so a form left blank stays blank instead
+of taking the pressing's. The test that held the opposite was rewritten: it encoded the comment's
+argument and not §4.2. Rendered at 1440 × 900: Release year at 432px and Year pressed at 1136px, 704
+apart, so they are never on screen together, and neither shows until "Everything else" opens.

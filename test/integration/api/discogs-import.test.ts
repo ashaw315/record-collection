@@ -64,6 +64,23 @@ describe('importing', () => {
     expect(created.title).toBe('Hear Nothing See Nothing Say Nothing');
   });
 
+  /* §4.2: release_year is the album's original year, and the release's year is this pressing's. A form that sends none leaves it blank, not the pressing's. */
+  it('leaves release_year blank when the form sends none, and the pressing keeps its own year', async () => {
+    mockDiscogs();
+    const response = await importRoute(post({ discogsReleaseId: 381756, target: 'record' }));
+    const created = (await response.json()) as { id: string };
+    const rows = await db.execute<{ release_year: number | null; year_pressed: number | null }>(sql`SELECT r.release_year, p.year_pressed FROM records r JOIN pressings p ON p.id = r.pressing_id WHERE r.id = ${created.id}`);
+    expect(rows.rows[0]).toEqual({ release_year: null, year_pressed: 1982 });
+  });
+
+  it('writes the album\'s year the form sends', async () => {
+    mockDiscogs();
+    const response = await importRoute(post({ discogsReleaseId: 381756, target: 'record', overrides: { releaseYear: 1982 } }));
+    const created = (await response.json()) as { id: string };
+    const rows = await db.execute<{ release_year: number | null }>(sql`SELECT release_year FROM records WHERE id = ${created.id}`);
+    expect(rows.rows[0].release_year).toBe(1982);
+  });
+
   it('creates a want-list item when asked for one', async () => {
     mockDiscogs();
 

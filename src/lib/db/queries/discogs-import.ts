@@ -398,11 +398,11 @@ export async function importRelease(
         formatId: overrides.formatId ?? null,
         storeId: overrides.storeId ?? null,
         title: pick(overrides.title, release.title) ?? '',
-        // §4.2 wants the album's year here, and `release.year` is the pressing's.
-        // They coincide on a first pressing and on no reissue, so a caller that
-        // knows the album's year passes it as the override; the fallback is only
-        // right when there is no master to ask.
-        releaseYear: pick(overrides.releaseYear, release.year),
+        // §4.2: the album's year, which `release.year` is not: that is the
+        // pressing's, and it goes to the pressing. Only the caller can know the
+        // album's year, so it comes from the override or not at all; the bulk
+        // import passes its own fallback, and a form left blank stays blank.
+        releaseYear: overrides.releaseYear ?? null,
         conditionMedia: (overrides.conditionMedia ?? null) as typeof records.$inferInsert.conditionMedia,
         conditionSleeve: (overrides.conditionSleeve ?? null) as typeof records.$inferInsert.conditionSleeve,
         purchasePrice: overrides.purchasePrice ?? null,
