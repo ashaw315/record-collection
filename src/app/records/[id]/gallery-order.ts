@@ -127,6 +127,20 @@ export function newestOfType(images: GalleryImage[], type: GalleryImageType): Ga
 }
 
 /**
+ * §62 (step 165): the covers group. "The group lists every cover the record
+ * holds, newest first, and the cover the page shows is first and marked as
+ * the one shown." Newest first is `displayedCover`'s own clock, so the mark
+ * is the frame's cover by construction and not a second decision; empty for
+ * §54's record, and the gallery draws no group then.
+ */
+export function coverGroup(images: GalleryImage[]): { image: GalleryImage; shown: boolean }[] {
+  return images
+    .filter((image) => image.imageType === 'cover')
+    .sort((a, b) => time(b.createdAt) - time(a.createdAt))
+    .map((image, index) => ({ image, shown: index === 0 }));
+}
+
+/**
  * §62 (step 73): what the Images line counts. "The Images count counts what
  * the page shows: the displayed cover and the gallery's tiles, and nothing
  * the page does not draw." A count beside a page reads as a count of that

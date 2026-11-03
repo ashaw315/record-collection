@@ -87,14 +87,56 @@ describe('the gallery says which kind of empty it is', () => {
     expect(html, 'the grid is not marked out of a host measure').not.toContain('data-not-host-height');
   });
 
-  it('never renders the cover itself', () => {
-    /* The repetition this whole pass exists to remove, asserted on the markup. */
+  it('never renders the cover as a gallery tile: it is in the covers group only (§56, then §62)', () => {
+    /*
+      §56's repetition stays removed from the GRID; since §62 (step 165) the
+      cover is drawn once more, in the group of covers the section now keeps.
+      Until step 165 this asserted the cover's URL absent from the whole
+      markup, which §62's group makes false by ruling.
+    */
     const html = renderToStaticMarkup(
       <ImageGallery recordId="r1" images={[image('c', 'cover'), image('b', 'back')]} base="oklch(0.7 0.06 60)" />,
     );
 
-    expect(html).not.toContain('/c.jpg');
-    expect(html).toContain('/b.jpg');
+    const grid = html.slice(html.indexOf('data-image-grid'), html.indexOf('</ul>', html.indexOf('data-image-grid')));
+    expect(grid).not.toContain('/c.jpg');
+    expect(grid).toContain('/b.jpg');
+  });
+});
+
+/**
+ * **§62 (step 165): the covers group.** "The group lists every cover the
+ * record holds, newest first, and the cover the page shows is first and
+ * marked as the one shown." Each has a delete control, as a tile has. With no
+ * cover there is no group (§54).
+ */
+describe('§62: the covers group in the Images section', () => {
+  const cover = (id: string, createdAt: string): GalleryImage => ({ ...image(id, 'cover'), createdAt });
+
+  it('lists every cover newest first, marks the first as shown, and gives each a delete control', () => {
+    const html = renderToStaticMarkup(
+      <ImageGallery
+        recordId="r1"
+        images={[cover('old', '2026-01-01T00:00:00Z'), image('b', 'back'), cover('new', '2026-01-03T00:00:00Z'), cover('mid', '2026-01-02T00:00:00Z')]}
+        base="oklch(0.7 0.06 60)"
+      />,
+    );
+    expect(html.match(/data-cover-group/g), 'one group').toHaveLength(1);
+    const tiles = Array.from(html.matchAll(/<li[^>]*data-cover-tile[^>]*>/g)).map((m) => m[0]);
+    expect(tiles, 'three covers').toHaveLength(3);
+    expect(tiles.map((t) => /data-shown/.test(t)), 'the first is marked, the others not').toEqual([true, false, false]);
+    /* Newest first: the order of the URLs in the markup. */
+    const order = ['new', 'mid', 'old'].map((id) => html.indexOf(`/${id}.jpg`));
+    expect(order.every((at) => at > 0), 'every cover is drawn').toBe(true);
+    expect([...order].sort((a, b) => a - b), 'in that order').toEqual(order);
+    expect(html.match(/aria-label="Delete this cover image"/g), 'a delete on each').toHaveLength(3);
+    /* The mark is readable, not only an attribute. */
+    expect(html).toMatch(/data-cover-tile[^>]*data-shown[\s\S]*?Shown/);
+  });
+
+  it('draws no group for a record with no cover (§54)', () => {
+    const html = renderToStaticMarkup(<ImageGallery recordId="r1" images={[image('b', 'back')]} base={null} />);
+    expect(html).not.toContain('data-cover-group');
   });
 });
 

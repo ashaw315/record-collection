@@ -614,24 +614,37 @@ export function RecordPage8a({ record, writingConfigured = false }: { record: Pa
           positioned, and its ::before overlay works the same), and every
           other control is relative as before.
         */
-        @layer components {
-          [data-section] :is(a, button, select, input, label),
-          [data-cell="air"] :is(a, button, select, input, label) { position: relative; }
-          [data-section] :is(a, button, select, input, label)::before,
-          [data-cell="air"] :is(a, button, select, input, label)::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            right: 0;
-            top: 50%;
-            height: ${CONTROL_HEIGHT}px;
-            transform: translateY(-50%);
-            /*
-              No z-index: the overlay is in the control's own stacking context
-              and paints under its text by source order, so it takes the tap
-              without hiding the type. z-index: -1 put it behind the cell's
-              background, where elementFromPoint never reached it.
-            */
+        /*
+          **Step 165: under a coarse pointer only.** §T.6 (step 127): "where
+          the primary pointer is fine, controls keep their drawn size." This
+          overlay had no pointer scope and was never caught: a replaced
+          element (input, select) carries no ::before, and until the covers
+          group no button shorter than 44 lived inside a section on the
+          floor test's record, so the one control it reached past was the
+          gallery tile's Delete on records the test never seeds. The group's
+          Delete, the tile's own vocabulary, read 24 drawn and 45 reached
+          under a mouse.
+        */
+        @media (pointer: coarse) {
+          @layer components {
+            [data-section] :is(a, button, select, input, label),
+            [data-cell="air"] :is(a, button, select, input, label) { position: relative; }
+            [data-section] :is(a, button, select, input, label)::before,
+            [data-cell="air"] :is(a, button, select, input, label)::before {
+              content: '';
+              position: absolute;
+              left: 0;
+              right: 0;
+              top: 50%;
+              height: ${CONTROL_HEIGHT}px;
+              transform: translateY(-50%);
+              /*
+                No z-index: the overlay is in the control's own stacking context
+                and paints under its text by source order, so it takes the tap
+                without hiding the type. z-index: -1 put it behind the cell's
+                background, where elementFromPoint never reached it.
+              */
+            }
           }
         }
       `}</style>

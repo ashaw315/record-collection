@@ -7,7 +7,7 @@ import { Section } from './Section';
 import { CONTROL_HEIGHT, FIELD_HEIGHT } from './extended-grid';
 import { useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { IMAGE_TYPE_ORDER, imageTypeLabel, orderImages, type GalleryImage } from './gallery-order';
+import { IMAGE_TYPE_ORDER, coverGroup, imageTypeLabel, orderImages, type GalleryImage } from './gallery-order';
 import { imagesDiscReference } from './images-disc';
 import { MAX_IMAGE_BYTES } from '@/lib/storage/image-type';
 
@@ -56,6 +56,8 @@ export function ImageGallery({
   const [imageType, setImageType] = useState<string>('back');
 
   const tiles = orderImages(images);
+  const covers = coverGroup(images);
+  const [failedCovers, setFailedCovers] = useState<ReadonlySet<string>>(new Set());
 
   async function upload(file: File) {
     setError(undefined);
@@ -193,6 +195,52 @@ export function ImageGallery({
         <p role="alert" className="mb-3 text-meta text-destructive">
           {error}
         </p>
+      )}
+
+      {covers.length > 0 && (
+        /*
+          §62 (step 165): the covers, in a group of their own, newest first,
+          the shown one first and marked, each with a delete as a tile has.
+          "Manage →" on the Images line promised a place where earlier covers
+          are kept or deleted, and until this group the section left every
+          cover out, so the promise led nowhere. The look is provisional
+          until captured: the tile vocabulary of §56's grid, in its own list
+          above it, the mark on the badge rather than over the photograph
+          (§34). Deleting the shown cover is the route's §61: the next newest
+          shows and the colour is re-derived; the refresh moves the mark.
+        */
+        <ul data-cover-group="" data-testid="cover-group" className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+          {covers.map(({ image, shown }) => (
+            <li key={image.id} data-cover-tile="" data-shown={shown ? '' : undefined} className="group relative">
+              {failedCovers.has(image.id) ? (
+                /* §33 (step 87): a photograph that fails is the frame, the hairline on paper, as the grid's and the sleeve's. The same box and the same edge as the image drew, so nothing else on the page moves. */
+                <div data-cover-tile-failed="" className="box-border aspect-square w-full border border-border bg-background" />
+              ) : (
+                /* eslint-disable-next-line @next/next/no-img-element -- blob and data URLs, as the tiles below */
+                <img
+                  src={image.url}
+                  alt={shown ? 'The cover this record shows' : 'An earlier cover of this record'}
+                  loading="lazy"
+                  referrerPolicy="no-referrer"
+                  onError={() => setFailedCovers((prev) => new Set(prev).add(image.id))}
+                  className="aspect-square w-full border border-border object-cover"
+                />
+              )}
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                disabled={busy}
+                onClick={() => void remove(image.id, 'Cover')}
+                className="absolute top-1 right-1 h-6 bg-background/90 px-1.5 text-label"
+                aria-label="Delete this cover image"
+              >
+                Delete
+              </Button>
+              <span data-testid="cover-badge" className={`mt-1 block ${LABEL}`}>{shown ? 'Cover · Shown' : 'Cover'}</span>
+            </li>
+          ))}
+        </ul>
       )}
 
       {tiles.length === 0 ? (

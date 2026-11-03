@@ -161,6 +161,9 @@ const GOVERNED = [
   /* Step 144: the clipping survey and the ring's walk visit every route, a record's among them, from one list. */
   'e2e/capture/ring-144.capture.ts',
   'e2e/ring-routes.ts',
+  /* §62 (step 165): the covers group in the Images section, read and captured on seeded records. */
+  'e2e/covers-group-165.spec.ts',
+  'e2e/capture/covers-group-165.capture.ts',
 ];
 
 /** The values a record-screen spec must not type. */

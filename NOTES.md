@@ -51455,3 +51455,40 @@ against it, as its Build clause says. Three steps now unnumbered for Code: §62 
 §63 the arrow with its weight report, §64 the two years. The coordinator's order: §62, then covers on
 pull, then §63 and §64; step 164 was already built when the order arrived and lands first because a
 half-built unit in the tree blocks the intake.
+
+**Step 165, §62's covers group, built.** A list of the record's covers in the Images section, newest
+first, the shown one first and marked on its badge ("Cover · Shown"), each with the tile's delete.
+The route already did §61 on a cover's delete, so the group adds no server change: the refresh moves
+the mark, the sleeve shows the next newest, and the last delete leaves §54's record with the group
+gone, asserted at 1440 and 390 on three covers of three colours. `coverGroup` sorts on
+`displayedCover`'s clock, so the mark is the frame's cover by construction. One component test was
+retargeted: "never renders the cover itself" asserted the cover's URL absent from the whole section,
+§56's repetition removed from the grid; §62's group now draws it by ruling, so the test asserts the
+GRID alone omits it. Said here because a fix that fails a test asks first whether the test encodes a
+ruling or the build; this one encoded a ruling §62 has since narrowed.
+
+**§62 now says two things about earlier covers, for Design.** "Covers the page does not show are
+named, not folded into the count" and the line reads "Images 2 · 3 earlier covers"; and "the group
+lists every cover the record holds". With the group built, the page draws every cover, and the count
+beside it still counts the frame and the gallery's tiles, as the earlier sentences rule. frame-planes
+asserts the count against what the page draws, counting `[data-cover]` and the gallery's tiles, so the
+group's tiles carry neither marker and that test holds. Not a defect in the build, which follows both
+sentences; a question of whether "the page does not show" still describes covers the section now
+lists. Left as ruled; to Design with the captures.
+
+**Step 165 exposed two things outside the group, one fixed, one kept.** (1) The record page's 44px
+hit overlay (`[data-section] … ::before`, step 71) had no pointer scope, so under a mouse a 24px
+Delete inside a section reached 45 rows, against §T.6's "where the primary pointer is fine, controls
+keep their drawn size". Never caught: a replaced element carries no ::before, so the select and the
+file input read their own boxes, and no button under 44 lived inside a section on the floor test's
+record; the gallery tile's Delete had the same reach on every record with a photograph, on no
+record the test seeds. Found by a staged probe (elementFromPoint down the control's middle: the
+button from -22 to +20 rows, `::before` content ""), deleted once read, with record-detail's floor
+test as the guard that now sees it. Fixed by wrapping the rule in `@media (pointer: coarse)`, out of
+this unit's scope and done here because the step's covering test cannot be green without it; the
+coordinator can reverse it. The family: a rule whose wrong half was unreachable by every element
+it applied to until a new one arrived. (2) A cover whose request fails: the group's tile drew the
+browser's broken-image mark, 1386 pixels outside the sleeve changed, and cover-fail-87 compares
+the whole page. The tile now draws §33's frame on failure, the same box and edge the image drew,
+so nothing moves. The gallery's own tiles still draw the broken mark on a failed photograph; not
+this unit's, recorded.
