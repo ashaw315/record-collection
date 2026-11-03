@@ -84,13 +84,31 @@ describe('the script', () => {
     }
   });
 
+  /* Design authors assertion text, and until this it could not read what landed. */
+  it('writes the committed ASSERTIONS-spec beside the handoff, under the same note, named by the date and the commit', () => {
+    const out = mkdtempSync(join(tmpdir(), 'export-assertions-'));
+    try {
+      const sha = execFileSync('git', ['rev-parse', '--short', 'HEAD'], { encoding: 'utf8' }).trim();
+      const stdout = execFileSync('node', [SCRIPT, '--out', out], { encoding: 'utf8' });
+      const name = `ASSERTIONS-spec — export for Design, ${localDate()} at ${sha}.md`;
+      expect(readdirSync(out)).toContain(name);
+      const committed = execFileSync('git', ['show', 'HEAD:scripts/ASSERTIONS-spec.md'], { encoding: 'utf8' });
+      const written = readFileSync(join(out, name), 'utf8');
+      expect(written.endsWith(committed)).toBe(true);
+      expect(written.split('\n')[0]).toMatch(/ASSERTIONS-spec\.md as committed at .* read-only for Design/);
+      expect(stdout).toContain(name);
+    } finally {
+      rmSync(out, { recursive: true, force: true });
+    }
+  });
+
   it('writes the committed DESIGN-RULES beside the handoff, under the same note, named by the date and the commit', () => {
     const out = mkdtempSync(join(tmpdir(), 'export-rules-'));
     try {
       const sha = execFileSync('git', ['rev-parse', '--short', 'HEAD'], { encoding: 'utf8' }).trim();
       const stdout = execFileSync('node', [SCRIPT, '--out', out], { encoding: 'utf8' });
       const files = readdirSync(out).sort();
-      expect(files).toHaveLength(3);
+      expect(files).toHaveLength(4);
       const rules = files.find((f) => f.startsWith('DESIGN-RULES'));
       expect(rules).toBe(`DESIGN-RULES — export for Design, ${localDate()} at ${sha}.md`);
       const written = readFileSync(join(out, rules ?? ''), 'utf8');

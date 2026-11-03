@@ -15,8 +15,10 @@
 # reached. It holds its own copies of neither DATABASE_URL nor anything else.
 #
 # `playwright.config.ts` reads CI=true as one worker and two retries, which is
-# not the gate: the flags below keep the two workers and one retry that a
-# retry's meaning, and the gate's verdict, were judged on.
+# not the gate: the flags below keep the one retry that a retry's meaning, and
+# the gate's verdict, were judged on. One worker on CI and two on the local gate,
+# by decision: CI's extra half hour costs nobody, and each run here is evidence
+# on whether the shared database is the whole flake class.
 name: Gate
 
 on:
@@ -26,8 +28,8 @@ on:
         description: The commit to gate, its full id
         required: true
       workers:
-        description: Playwright workers. 2 is the gate; workers share each job's database, so 1 is the control for a failure that may be cross-worker.
-        default: '2'
+        description: Playwright workers. 1 by default, the coordinator, 2 Nov. Workers share each job's database, and that has flaked three specs five times.
+        default: '1'
 
 permissions:
   contents: read

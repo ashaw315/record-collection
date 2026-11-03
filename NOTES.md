@@ -51212,3 +51212,9 @@ handoff. The "10" and "10 of 85" sent to Design double-counted a target, matched
 it is the 7 of the 31 Oct audit. The loose and handoff counts moved with exact rules. It arms from
 HEAD, so nothing has to decide. Two markers carry a caveat beside them: §26's test is narrower than
 its sentence, and §W.8's hold has no acknowledgement to assert. A marker claims a test exists.
+
+**CI runs at one worker from here, the local gate at two (the coordinator, 2 Nov).** The rebuild to a
+database per worker is held: "retires the class" rests on one clean run, and each CI run at one
+worker is free evidence. Revisit with several.
+
+**ASSERTIONS-spec is in the export set.** Design was authoring assertion text it could not read back.

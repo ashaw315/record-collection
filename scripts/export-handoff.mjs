@@ -96,6 +96,13 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   writeFileSync(withdrawalsPath, `Export note, not part of the file: this is the repository's WITHDRAWALS.md as committed at ${sha} on ${date}. It is read-only for Design: changes come back as change files, and the machine-readable comment at its foot is derived by Code's script.\n\n${git('show', `HEAD:${WITHDRAWALS}`)}`);
   process.stdout.write(`${withdrawalsPath}\n`);
   /*
+    ASSERTIONS-spec beside them (the coordinator, 2 Nov): Design authors its
+    assertion text and could not read what landed. Design's copy is this one.
+  */
+  const assertionsPath = join(outDir, `ASSERTIONS-spec — export for Design, ${date} at ${sha}.md`);
+  writeFileSync(assertionsPath, `Export note, not part of the file: this is the repository's ASSERTIONS-spec.md as committed at ${sha} on ${date}. It is read-only for Design: changes come back as change files anchored on this text.\n\n${git('show', 'HEAD:scripts/ASSERTIONS-spec.md')}`);
+  process.stdout.write(`${assertionsPath}\n`);
+  /*
     A step's captures beside them (the coordinator, 28 Oct): captures were
     the one thing still hand-carried, and the import's Provisionals line was
     held open twice by a folder upload rather than by anything left to do.
