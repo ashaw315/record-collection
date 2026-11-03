@@ -51234,3 +51234,34 @@ tidy-up, but each import adds more until this ships.
 It is not: discogs-prefill.ts takes `release.year ?? master`, so a reissue's release_year prefills
 with the pressing's, and its comment argues the master "would date every reissue to its original",
 which is what §4.2 asks. Not changed in this unit. A decision.
+
+**A comment that ARGUES for the wrong behaviour.** Different from the one above it. That one states the
+right rule over wrong code and misleads by mislabelling, so it fails a careless reader. The prefill's
+gives reasons: the master "would date every reissue to its original". A reader finds reasoning,
+finds it plausible, and stops. It defeats a careful one. Why the argument lost: the pressing's year has
+its own field, filled on 52 of 55, so both values are already held and the only question is which
+box each goes in, which §4.2 answers.
+
+**Tests first, working.** A test written before the code caught `master_id: 0` before it shipped.
+That has been rare enough this week to be worth a line.
+
+**release_year, every reader and writer (2 Nov).** Readers all mean the album's year: list, panel,
+record page, sort, filters, shelf, stats' decades. Writers: the bulk import, fixed; the form's prefill,
+wrong; `discogs-import.ts`'s fallback, wrong when the form clears the field. `pressedSameYear` reads
+true on every wrong year, so those records say "Released · same year", a false claim until the
+backfill.
+
+**Documentation density is not a guard.** `release_year`'s meaning was stated in SPEC §4.2, in a comment
+directly above the import's line, and in the form's own hint a reader can see, and all three writers
+were wrong. What caught it was a count of how many records held the right value, the one thing in
+that list that had to actually run. Three of three writers wrong is not a coincidence: the field's
+meaning never survived contact with the code. It generalises past this field: a rule stated more
+often is not a rule checked more often.
+
+**The backfill removes a false statement.** "Released · same year" on a 2024 pressing of a 1969 album is
+the page asserting something untrue, in the same category as "Manage →" promising cover deletion.
+Not tidy-up, and the dry run's report leads with that.
+
+**The gate on 9987a4a: OK, exit 0, no flake.** Unit OK, chromium 1048 passed, 1 skipped, 44.2m, mobile 390
+passed, 4 skipped, 11.7m; load 4.06 to 10.58, swap 4.1 to 5.1 GB, two days without a reboot. It covers
+45c6246 and everything since 24464c1.
