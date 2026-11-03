@@ -109,7 +109,8 @@ The wall at rest is line, ink and paper; colour arrives with the pull. Everythin
 | §60 | The disc’s reference is a height, not a rendering | Why the Images disc is sized against named fixed parts, and why the cover note’s blank row goes. |
 | §61 | The cover the record shows, and the colour that follows it | Why the newest cover displays and the colour follows it; why the page’s geometry does not read the colour, so no acceptance is about one colour; what a re-coloured record re-opens and what it does not. |
 | §62 | What the Images count counts | Why the count is what the page shows, and how covers the page does not show are named.; covers managed in the Images section's own group, and the line's wrap held by §53's floor rather than a count |
-| §63 | The arrow | → subset into Geist Mono wherever the app sets it, rather than a system fallback |
+| §63 | The arrow | → drawn in Geist Mono from the family's own file wherever the app sets it, rather than a system fallback (the subset wording withdrawn) |
+| §64 | The two years on the record form | Why the record form is ruled here, and why its two years stand together inside the disclosure. |
 | §G.1 | The header joins the record detail’s system, because the record detail already ruled it | Why the header is not chrome kept apart, which settled clauses it builds (§4.1 and §3), the type, colour and weights it takes, and the shared label style’s tracking with its reach into §W.6 and §62. |
 | §G.2 | The 53 holds | Why the header’s height is the box’s and not the type’s, why no other height needs ruling, and the line height. |
 | §G.3 | The header’s measure is the screen’s | Why the header has no cap of its own, the inset taken from §47 and the earlier draft it corrects, the gap between links, and their hit area. |
@@ -702,6 +703,8 @@ Its rows are in the governs table above, one per section; this section does not 
 
   > A press on a spine before the wall hydrates is held, and applied as a pull when it hydrates, whether or not the page has finished loading.
 
+164. **Done: built and captured; the first-pull rate on production outstanding.** **§W.8 — the covers: Code's number for that step.** The Collection grid under the wall is lazy, so at `display: none` it fetches nothing: its covers had been requested at parse time, 317ms on a local load where the wall hydrated at 958ms, every one ahead of the scripts, and were 13 of a cold load's 19.7s on production at fast 3G. The wall asks for its own covers in the effect that marks it hydrated, one image per distinct cover with `fetchPriority` low, Chromium's loader reporting Low; a pull's `<image>` of the same URL joins the request in flight, which is the fetch at once. A pull before its cover arrives lands on the field in the record's colour with no type, the painted pixel read against the field's fill, and the cover takes the field's place with no transition on arrival (`e2e/covers-164.spec.ts`, `prefetch-covers.test.ts`). Captured from the build at 1440 × 900: `docs/captures/covers-164/pending-1440x900.png` and `arrived-1440x900.png`. Not measured: how often a first pull lands on the field at cold fast 3G and slow 3G, which is a production run of Adam's after the deploy, and the Provisional returns on it.
+
 - **Unnumbered, for Code to number — §W.8: a pull before its cover arrives, and when the wall fetches covers.**
   - **Land** a pulled record whose cover hasn't arrived on its sleeve's field in the record's colour, with no type.
   - **Replace** the field with the cover in one frame when it decodes, with no fade.
@@ -737,6 +740,13 @@ Its rows are in the governs table above, one per section; this section does not 
   - **Report** what the put back and a re-roll do with the pan, and the re-roll's total.
   - **Report** whether the 455px put back recurs.
   > The pan runs with the pull, overlapped, as Adam judged it: a 1150ms pan inside a 1600ms pull.
+
+- **Unnumbered, for Code to number — §62: the covers group.** In the Images section, a group of covers of its own. List every cover newest first, the shown one first and marked, each with a delete control. Deleting the shown cover runs §61's fallback and re-derive, and the next cover takes the mark. Deleting the last leaves the record as §54 rules, with the group gone. Capture the group, and a deleted shown cover, at 1440 × 900 and 390.
+  > The group lists every cover the record holds, newest first, and the cover the page shows is first and marked as the one shown.
+- **Unnumbered, for Code to number — §63: the arrow.** Serve the family's own GeistMono-Variable in place of Google's subsets wherever the app sets Geist Mono. Report the file's weight against the subsets'. Capture every "Manage →" at 1440 × 900, on macOS and Linux, with the arrow's advance.
+  > The arrow is the app’s type, not the machine’s: → is drawn in Geist Mono, from the family’s own file, wherever the app sets it.
+- **Unnumbered, for Code to number — §64: the two years on the record form.** Place Release year and Year pressed together in one row inside "Everything else", Release year first, each with its hint. Put them side by side where both fit the measure, and stack them directly where they don't; report the width where they stack. Capture both routes at 1440 × 900 and 390.
+  > “Release year” and “Year pressed” stand together, Release year first, each keeping its hint, inside “Everything else”: side by side where both fit the measure, and one directly beneath the other where they do not.
 
 No step: §G.7. It rules nothing. Hover and focus wait on Code's second pass, the breakpoint is settled and recorded in §G.8, and the eyebrow repetition is an observation, not a ruling.
 
@@ -792,7 +802,8 @@ The provisionals in force, for the note in Maintaining this file that a provisio
 - **§W.18 · the record cut at the row's front.** Closed without returning: the cut is withdrawn (`W.18/cut`), and nothing was built.
 - **§W.22 · the top-shelf dip under the overlapped pan.** Closed: observed on production on 1 Nov at 245 to 246px, within the 245 to 251 predicted. Across five production pulls the dip fits the peak of the record's own drop, about 69px, plus the pan, as a description rather than a law (§W.22). The straight-line fit holds only from a pan of about +70.
 - **§62 · the covers group.** "What the group and its mark look like is provisional until built and captured." Returns from the step that builds the group. Open.
-- **§63 · the arrow.** "The arrow's appearance is provisional until built and captured." Returns from the subset step. Open.
+- **§63 · the arrow.** "The arrow's appearance is provisional until built and captured." Returns from the arrow step. Open.
+- **§64 · the two years.** "How the pair looks is provisional until built and captured, at 1440 × 900 and at 390." Returns from the two-years step. Open.
 
 ## Findings for screens without a pass
 
