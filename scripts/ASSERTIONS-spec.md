@@ -143,6 +143,8 @@ Twelve are built and numbered 0 to 9, 11 and 12. Assertion 8 has two parts, so t
 
 13. **A test a target names exists.** For each sentence in a build target containing "the test asserts", "the test sets" or "the test clicks", some test file carries a marker naming that sentence's section and quoting a phrase from it. Phrases are compared after normalising case, hyphens, dashes, curly quotes and non-breaking spaces. It reports three numbers: in-form sentences paired, of all in-form sentences; loose test sentences not yet reworded into the form; and handoff step instructions, out of scope. It arms itself: while any in-form sentence is unpaired it reports, and once none is, an unpaired in-form sentence fails the intake. It does not check what the test asserts.
 
+   **The defect that motivated it (2 Nov):** §W.8 said "the test sets the preference and asserts" for weeks over a test nobody had written; once written, `e2e/wall-reduced-motion.spec.ts` found two defects. The target read as covered and the suite had nothing to report.
+
 ## Assertion 10 — NOT BUILT
 
 **NOT BUILT. The script does not run it, so the no-count rule does not reach it and the suite does not run it.** It was planned as assertion 9; the number went to the reverse check, which was built first, so this is 10. It moves into the numbered list above in the round the quoting pass over the build steps lands.
@@ -151,4 +153,4 @@ Twelve are built and numbered 0 to 9, 11 and 12. Assertion 8 has two parts, so t
 
 ## Changing this spec
 
-Add an assertion only with the defect that motivated it, recorded in `H`'s "Maintaining this file". Change an allow-list only in this file, never in the script alone.
+Add an assertion only with the defect that motivated it, recorded under the assertion in this file (Design, 3 Nov; it lived in `H`'s "Maintaining this file" until then, where an export could drop it). Change an allow-list only in this file, never in the script alone.
