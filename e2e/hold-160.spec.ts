@@ -90,6 +90,7 @@ const spine = (page: Page, id: string) => page.locator(`a[data-seat="${id}"] [da
 /* The wall's container carries the marks for both views. */
 const region = (page: Page) => page.locator('[data-wall-container]').first();
 
+/* @target §W.8 "the test clicks inside the window on purpose". In part: the held pull, the cancelled hold and the fallback are here; the acknowledgement is unbuilt, so its assertions are not. */
 test('a click while the page is loading is held, marks the region, prevents the anchor, and pulls when hydration lands', async ({ page }) => {
   await login(page);
   const { artistId, ids } = await seed(page, 12);

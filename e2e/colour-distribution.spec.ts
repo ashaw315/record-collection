@@ -226,6 +226,7 @@ test.describe('colour distribution (§5.5)', () => {
    * three probe cases: the SVG sits 24 inside the still cell on every side,
    * and every drawn face and the disc sit inside the SVG's box.
    */
+  /* @target §26 "every record’s drawing lies inside its cell". Narrower than that sentence: three probe records, not the extremes fixture. Paired because the test exists, which is all the marker claims. */
   for (const which of CASES) {
     test(`draws the construction inside the cell's 24px margin on the ${which} record`, async ({ page }) => {
       await login(page);

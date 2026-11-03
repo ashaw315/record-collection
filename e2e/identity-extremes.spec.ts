@@ -23,6 +23,7 @@ registerCleanup();
  * rule; this test says what the cell does today.
  */
 
+/* @target §27 "no pressing fact is clipped on the collection’s worst title" */
 test('§27: every pressing fact ends inside the cell on the collection’s worst title', async ({ page }) => {
   await login(page);
   const id = await seedExtreme(page, WORST);

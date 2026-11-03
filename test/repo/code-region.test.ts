@@ -160,7 +160,7 @@ describe('Code’s region of the handoff', () => {
  * nothing and exits 0).
  */
 describe('the intake runs the index and the document suite, and fails on either', () => {
-  const INDEX_GREEN = 'PASS 12\nRESULT: 13 PASS, 0 FAIL, 0 ABSENT of 13\n';
+  const INDEX_GREEN = 'PASS 12\nRESULT: 14 PASS, 0 FAIL, 0 ABSENT of 14\n';
 
   /* Fails against a judge of the exit code alone, and of the line alone. */
   it('passes the index only on exit 0 with every assertion passing and none absent', () => {
@@ -205,7 +205,7 @@ describe('the intake runs the index and the document suite, and fails on either'
       command === 'node' ? { code: 0, output: INDEX_GREEN } : { code: 1, output: '      Tests  9 failed | 509 passed (518)\n' };
     const result = intake(run);
     expect(result.ok).toBe(false);
-    expect(result.lines[0]).toMatch(/^index: 13 PASS, 0 FAIL, 0 ABSENT of 13 — OK$/);
+    expect(result.lines[0]).toMatch(/^index: 14 PASS, 0 FAIL, 0 ABSENT of 14 — OK$/);
     expect(result.lines[1]).toMatch(/^test\/repo src\/app\/wall\/unit\.test\.ts: 509 passed, 9 failed — NOT OK — 9 failed$/);
   });
 
@@ -223,7 +223,7 @@ describe('the intake runs the index and the document suite, and fails on either'
       const r = cli(suite);
       expect(r.status, `${suite}: ${r.stdout}${r.stderr}`).toBe(1);
       expect(r.stdout).toMatch(/^code region: 0 restored/m);
-      expect(r.stdout).toMatch(/^index: 13 PASS, 0 FAIL, 0 ABSENT of 13 — OK$/m);
+      expect(r.stdout).toMatch(/^index: 14 PASS, 0 FAIL, 0 ABSENT of 14 — OK$/m);
       expect(r.stdout).toMatch(new RegExp(`^${suite.replace(/[-/]/g, '\\$&')}: .* — NOT OK — no summary line found`, 'm'));
       expect(r.stdout).toMatch(/^INTAKE NOT OK/m);
     }

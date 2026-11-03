@@ -8,7 +8,7 @@ import { parseBullets } from '../../scripts/withdrawals.mjs';
 
 const REPO_ROOT = join(import.meta.dirname, '..', '..');
 const DESIGN = join(REPO_ROOT, 'docs', 'design');
-const IDS = ['0', '1', '2', '3', '4', '5', '6', '7', '8a', '8b', '9', '11', '12'];
+const IDS = ['0', '1', '2', '3', '4', '5', '6', '7', '8a', '8b', '9', '11', '12', '13'];
 
 /**
  * **The nav target, §G, is an input (2 Oct).** The first record-detail
@@ -293,15 +293,15 @@ describe('a run that stops partway names the ids it never reached', () => {
     });
     const { code, out } = run(dir);
     expect(code).not.toBe(0);
-    for (const id of ['6', '7', '8a', '8b', '9', '11', '12']) expect(out).toMatch(new RegExp(`^ABSENT ${id}\\b`, 'm'));
-    expect(out).toMatch(/^RESULT: \d+ PASS, \d+ FAIL, 7 ABSENT of 13 -- INCOMPLETE/m);
+    for (const id of ['6', '7', '8a', '8b', '9', '11', '12', '13']) expect(out).toMatch(new RegExp(`^ABSENT ${id}\\b`, 'm'));
+    expect(out).toMatch(/^RESULT: \d+ PASS, \d+ FAIL, 8 ABSENT of 14 -- INCOMPLETE/m);
   });
 
   /* Fails against the summary: a complete run must say it reported every id, so a short run cannot pass for a clean one. */
   it('reports every id on a complete run, and says so in its last line', () => {
     const { out } = run();
     for (const id of IDS) expect(out).toMatch(new RegExp(`^(PASS|FAIL) ${id}$`, 'm'));
-    expect(out).toMatch(/^RESULT: \d+ PASS, \d+ FAIL, 0 ABSENT of 13$/m);
+    expect(out).toMatch(/^RESULT: \d+ PASS, \d+ FAIL, 0 ABSENT of 14$/m);
   });
 });
 

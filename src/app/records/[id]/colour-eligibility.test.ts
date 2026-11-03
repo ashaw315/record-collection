@@ -192,6 +192,7 @@ describe('§22: the colour lands on a form that can carry it', () => {
     }
   });
 
+  /* @target §22 "the test asserts it across the full list" */
   it('produces no illegal arrangement across the full list', () => {
     /*
       §22: "If an arrangement has no eligible form it is illegal and the hash

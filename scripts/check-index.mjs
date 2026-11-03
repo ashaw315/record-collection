@@ -24,6 +24,7 @@ import {
   stripTags,
   withoutSvg,
 } from './design-target-parser.mjs';
+import { inFormSentences, loose, markersIn, verdict } from './named-tests.mjs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -48,7 +49,7 @@ const FILES = {
   stack trace: to someone skimming for FAIL, a clean run. An id with no
   result is now named as one, and the last line counts all three.
 */
-const IDS = ['0', '1', '2', '3', '4', '5', '6', '7', '8a', '8b', '9', '11', '12'];
+const IDS = ['0', '1', '2', '3', '4', '5', '6', '7', '8a', '8b', '9', '11', '12', '13'];
 const results = new Map();
 function stop(reason) {
   console.log(`RUN STOPPED: ${reason}`);
@@ -742,6 +743,36 @@ function sentencesOf(plain) {
   for (const line of other) console.log(line);
   console.log(`     12: ${calls} no-entry calls, ${named} named and checked, ${newRulings.length} ruling something new, ${unnamed.length} unnamed and ${phrases.length} quoting a phrase (report only), ${draftFixes.length} draft fix${draftFixes.length === 1 ? '' : 'es'} not calls, ${other.length} mention${other.length === 1 ? '' : 's'} in another sense`);
   report(12, failures.length === before);
+}
+
+/*
+  13. A test a target names exists (named-tests.mjs). It arms itself: whether every in-form
+  sentence was paired at the last commit is read from HEAD, as 3 reads the committed order, so
+  no one has to decide when the report becomes a rule.
+*/
+{
+  const before = failures.length;
+  const texts = (from) => Object.keys(FILES).filter((key) => !['H', 'D'].includes(key)).flatMap((key) => sections(from(key), { prefixW: key === 'W' }).map((h) => ({ id: h.id, text: sectionText(h.html) })));
+  const now = inFormSentences(texts((key) => src[key]));
+  const grep = spawnSync('grep', ['-rhE', '@target +§', 'e2e', 'src', 'test', '--include=*.ts', '--include=*.tsx', '--exclude=named-tests.test.ts'], { encoding: 'utf8' });
+  const result = (sentences, markers, armed) => verdict(sentences, markers, armed);
+  /* HEAD's own sentences and markers. A file absent there, as in a first commit, leaves it unarmed. */
+  const atHead = () => {
+    const show = (key) => spawnSync('git', ['show', `HEAD:docs/design/${FILES[key]}`], { encoding: 'utf8', maxBuffer: 1 << 26 });
+    if (Object.keys(FILES).some((key) => show(key).status !== 0)) return false;
+    const old = spawnSync('git', ['grep', '-hE', '@target +§', 'HEAD', '--', 'e2e', 'src', 'test', ':!test/repo/named-tests.test.ts'], { encoding: 'utf8' });
+    const sentences = inFormSentences(texts((key) => decode(show(key).stdout)));
+    return sentences.length > 0 && result(sentences, markersIn(old.stdout), false).unpaired.length === 0;
+  };
+  const armed = atHead();
+  const v = result(now, markersIn(grep.stdout), armed);
+  const targets = Object.keys(FILES).filter((key) => !['H', 'D'].includes(key));
+  const looseCount = targets.reduce((n, key) => n + loose(stripTags(src[key])), 0);
+  const handoff = (src.H.match(/\b[Tt]est (?:a|that|the|with)\b/g)?.length ?? 0) + (src.H.match(/\*\*Test\*\*/g)?.length ?? 0);
+  console.log(`     13: ${v.paired} of ${v.total} in-form sentences paired; ${looseCount} loose not yet reworded; ${handoff} handoff instructions out of scope${armed ? ' (armed)' : ' (reporting: not armed until a commit pairs them all)'}`);
+  for (const u of v.unpaired) console.log(`13 §${u.section} unpaired "${u.sentence.slice(0, 90)}"`);
+  if (v.fails) for (const u of v.unpaired) fail(`13 §${u.section} no-test "${u.sentence.slice(0, 90)}"`);
+  report(13, failures.length === before);
 }
 
 for (const line of failures) console.log(line);

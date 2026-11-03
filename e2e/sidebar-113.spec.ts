@@ -98,6 +98,7 @@ for (const view of VIEWS) {
         const lefts: [string, number | undefined][] = [['SEARCH', r.searchLabel?.left], ['the search field', r.search.left], ['the first view name', r.views[0]?.left], ['the count', r.count?.left], ['the heading', r.heading?.left], ['Sort', r.sortText?.left], ['the first filter line', r.lines[0]?.left]];
         for (const [name, left] of lefts) {
           if (left === undefined) throw new Error(`${name} is not drawn`);
+          /* @target §T.1 "the test asserts the sidebar’s content starts on it" */
           /* The heading's glyphs carry their own side bearing; its box is read with the others below. */
           if (name !== 'the heading') expect(Math.abs(left - r.wordmark.left), `${name} starts on the wordmark’s left`).toBeLessThan(0.5);
         }

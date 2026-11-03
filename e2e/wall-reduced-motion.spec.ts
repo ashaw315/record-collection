@@ -11,6 +11,7 @@ import { wallAtRest } from './wall-ready';
  * every animation frame from before the press, so a frame of motion cannot be
  * stepped over, and the control shows the recording can see motion at all.
  */
+/* @target §W.8 "a pull reaches its end state in one frame" */
 const FRAMES = `(() => {
   const log = [];
   window.__frames = log;

@@ -159,6 +159,7 @@ test('without JavaScript the first and last spines can both be scrolled to and f
     await plain.goto(`/?artistId=${artistId}`);
     const spines = plain.locator('a[data-seat]');
     await expect(spines).toHaveCount(24);
+    /* @target §W.29 "the test asserts the origin" */
     const offset = await plain.locator('[data-arrival-offset]').evaluate((el) => getComputedStyle(el).transform);
     expect(offset, 'the arrival offset is cleared without script, by the noscript style').toBe('none');
     for (const which of ['first', 'last'] as const) {

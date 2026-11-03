@@ -51195,3 +51195,20 @@ run, pick-moods-157:154, and new, lookup-flows:1743 on mobile. wall-route:234 on
 mechanism is not shown.
 
 frame-planes on macOS at 1440 and 1920: the line is 316.25 of 322 at 999, and about 323.95 at 1000.
+
+**The Images line, stated exactly.** The earlier-covers clause is 177.125 at 999 and 184.828 at 1000,
+and each is identical across macOS and Linux, so the 3.81px lies outside the clause. Every part
+measured alone is identical or wider on Linux, and the assembled line is narrower, so no line made
+of those parts does that: the glyph probe was not reading the line's composition. Probing
+stopped. If Design says the count matters, the next measurement is the assembled line in place.
+→ is not in Geist Mono's subset: Menlo-Bold on macOS, LiberationSerif on Linux. To Design.
+
+**What the shared database costs.** Flakes in three specs, five times: pick-moods-157:154 twice,
+wall-arrival-104:120, wall-route:234 twice. Options costed for Adam, none chosen. A test's
+transaction cannot help: 129 specs write through the Next server's own connection.
+
+**Assertion 13 is built, and the count was wrong.** 7 of 7 in-form sentences paired, 44 loose, 38
+handoff. The "10" and "10 of 85" sent to Design double-counted a target, matched twice by a glob;
+it is the 7 of the 31 Oct audit. The loose and handoff counts moved with exact rules. It arms from
+HEAD, so nothing has to decide. Two markers carry a caveat beside them: §26's test is narrower than
+its sentence, and §W.8's hold has no acknowledgement to assert. A marker claims a test exists.
