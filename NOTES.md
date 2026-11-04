@@ -52077,3 +52077,15 @@ skipped; chromium 1058 passed, 1 skipped, no flaky, 1.1h; mobile 390 passed, 4 s
 failure, no flake. Logs copied into one directory, gate-report written to a file, its exit read
 from the shell and not from a pipe. Every commit pushed on 4 Nov now has a green run or a read
 whose failures were known and fixed in a later green one; nothing pushed is unverified by CI.
+
+**Drop 2026-11-04-06 applied (4 Nov): "Contributor notes withdrawn", intake OK.** §W.24 withdraws the
+applied copy's contributor-notes wording and its colon list (`W.24/contributor-notes`, owed because
+that copy was taken at 8a74ab3); the build never reached contributor notes, so nothing followed the
+clause. The entry sits after `W.24/search-reach-list` under The wall. **The samples note to Adam,
+corrected on the coordinator's reading:** URGH's note is not a hedge, it is a false sentence, a
+2026 record placed before the band's 2023 debut and said plainly; Smerz and Bluey hold on every
+checkable claim, so the thin-end rate is one wrong in three. The consequence is in the note: once
+the prose is searchable a false "early-2020s" makes the record match for a reason that is not
+true, so the accuracy question and the search feature are one question. If Adam says generate:
+all 45, none filtered, in one readable file for a single pass, every run recorded whether it
+finished or failed. Held unpushed under the push-per-unit rule, with the four NOTES commits.
