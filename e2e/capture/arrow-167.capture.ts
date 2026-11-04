@@ -50,8 +50,20 @@ test('the Images line’s "Manage →" at 1440 × 900, with the arrow’s advanc
   const advance = await link.evaluate((el) => {
     const node = Array.from(el.childNodes).find((n) => n.nodeType === Node.TEXT_NODE && (n.textContent ?? '').includes('→')) as Text;
     const width = (needle: string) => { const at = node.textContent?.indexOf(needle) ?? -1; const r = document.createRange(); r.setStart(node, at); r.setEnd(node, at + 1); return Math.round(r.getBoundingClientRect().width * 100) / 100; };
-    return { arrow: width('→'), letter: width('M'), size: getComputedStyle(el).fontSize, family: getComputedStyle(el).fontFamily };
+    return { arrow: width('→'), letter: width('M'), size: getComputedStyle(el).fontSize };
   });
+  /*
+    The face that RENDERED the glyphs, from Chromium's platform-font report for the node, not the
+    declared family: the first sheet printed the declaration's list, "mono, mono Fallback", under
+    "family", and Design read the fallback's name as the renderer (4 Nov).
+  */
+  const cdp = await context.newCDPSession(page);
+  await cdp.send('DOM.enable');
+  await cdp.send('CSS.enable');
+  const { root } = await cdp.send('DOM.getDocument', { depth: -1 });
+  const { nodeId } = await cdp.send('DOM.querySelector', { nodeId: root.nodeId, selector: 'a[href="#images"]' });
+  const { fonts } = await cdp.send('CSS.getPlatformFontsForNode', { nodeId });
+  const rendered = (fonts as { familyName: string; postScriptName: string; isCustomFont: boolean; glyphCount: number }[]).map((f) => `${f.familyName} (${f.postScriptName}, ${f.isCustomFont ? 'the app’s file' : 'a system face'}) for ${f.glyphCount} glyph(s)`).join('; ');
   const line = link.locator('xpath=..');
   await line.screenshot({ path: join(OUT, `manage-arrow-${process.platform}-1440x900.png`) });
   const height = await page.evaluate(() => document.documentElement.scrollHeight);
@@ -66,7 +78,9 @@ test('the Images line’s "Manage →" at 1440 × 900, with the arrow’s advanc
     `| manage-arrow-${process.platform}-1440x900.png | the Images line, "Manage →" |`,
     `| record-${process.platform}-w1440-h${height}.png | the record page whole |`,
     '',
-    `The arrow’s advance: ${advance.arrow}px; M in the same run: ${advance.letter}px; at ${advance.size}, ${advance.family}.`,
+    `Rendered by: ${rendered}. The line is ${(await link.textContent())?.trim().length ?? 0} characters, so one face for that many glyphs is the whole line from the family’s file.`,
+    '',
+    `The arrow’s advance: ${advance.arrow}px; M in the same run: ${advance.letter}px; at ${advance.size}. Both are 600 units at 11px plus the label’s .1em tracking, 7.7; a difference in the second decimal is the Range rectangles’ subpixel edges, not a second face.`,
     '',
     'The Linux drawing is attached by `e2e/arrow-167.spec.ts` on every CI run, in the `test-results-chromium` artifact, as `manage-arrow-linux-1440x900.png`.',
     '',

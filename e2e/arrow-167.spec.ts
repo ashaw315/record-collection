@@ -10,41 +10,44 @@ import { login } from './sign-in';
  * Google's Latin range plus U+2190 to 2199, served wherever the app sets Geist
  * Mono.
  *
- * Two readings, on the record page's "Manage →" at 1440 × 900 and on the
- * wall's "N RECORDS →":
+ * **Read from the face that rendered the glyphs, not from anything the page
+ * declares.** Chromium names the platform font behind every glyph of a node
+ * (`CSS.getPlatformFontsForNode`), so the reading is: every glyph of the
+ * line, the arrow included, drawn by the one custom face, and no system
+ * font among them. Two readings this replaced were proxies (4 Nov): the
+ * face's declared `unicodeRange`, which next/font sets to everything
+ * whatever the file holds, and the arrow's advance against a letter's,
+ * which a metric-adjusted fallback could match. A control on the same page
+ * draws a glyph the cut does not hold (☃) and expects a system font to
+ * appear for it, so the channel is shown able to see a fallback.
  *
- * - **The face.** Among the loaded faces of the family the element resolves
- *   to, one covers U+2192. Google's slices never did: the latin file holds ↑ and
- *   ↓ and not →, and no other slice holds it either, so the machine's fallback
- *   drew it. `document.fonts.check` is not this reading: a family with no face
- *   for a character answers true, having nothing to load.
- * - **The advance.** In a monospace face every glyph has one advance, so the
- *   arrow's width equals a letter's in the same run; the fallback's does not.
- *   The advance is reported in the test's annotations, which is the figure
- *   §63's step asks for, and the line is attached as a picture at 1440 × 900
- *   so the CI runner's Linux drawing travels with the macOS one.
+ * The advance is still read and reported, because §63's step asks for it,
+ * and the line is attached as a picture so the CI runner's Linux drawing
+ * travels with the macOS capture. Chromium only, by the channel.
  *
- * Fails against the build before it on the face: no loaded face of the mono
- * family covers U+2192.
+ * Fails against the build before it on the first reading: the arrow's glyph
+ * came from a system face, two fonts on the node.
  */
 registerCleanup();
 
-const readArrow = (page: Page, selector: string, letter: string) => page.evaluate(async ([sel, ch]) => {
+type Face = { familyName: string; postScriptName: string; isCustomFont: boolean; glyphCount: number };
+
+async function platformFonts(page: Page, selector: string): Promise<Face[]> {
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send('DOM.enable');
+  await cdp.send('CSS.enable');
+  const { root } = await cdp.send('DOM.getDocument', { depth: -1 });
+  const { nodeId } = await cdp.send('DOM.querySelector', { nodeId: root.nodeId, selector });
+  if (nodeId === 0) throw new Error(`${selector}: not found`);
+  const { fonts } = await cdp.send('CSS.getPlatformFontsForNode', { nodeId });
+  await cdp.detach();
+  return fonts as Face[];
+}
+
+/** The advance of → and of a letter, each as a one-character Range in the same text node; §63's figure. */
+const advances = (page: Page, selector: string, letter: string) => page.evaluate(([sel, ch]) => {
   const el = document.querySelector(sel);
   if (el === null) throw new Error(`${sel}: not found`);
-  await document.fonts.ready;
-  const family = getComputedStyle(el).fontFamily;
-  const first = family.split(',')[0].trim().replace(/^["']|["']$/g, '');
-  const inRange = (range: string, cp: number) => range.split(',').some((part) => {
-    const m = part.trim().match(/^U\+([0-9A-F?]+)(?:-([0-9A-F]+))?$/i);
-    if (m === null) return false;
-    const lo = parseInt(m[1].replace(/\?/g, '0'), 16);
-    const hi = m[2] === undefined ? parseInt(m[1].replace(/\?/g, 'F'), 16) : parseInt(m[2], 16);
-    return cp >= lo && cp <= hi;
-  });
-  const faces = Array.from(document.fonts).filter((f) => f.family.replace(/^["']|["']$/g, '') === first && f.status === 'loaded');
-  const covering = faces.filter((f) => inRange(f.unicodeRange, 0x2192)).length;
-  /* The advance of → and of a letter, each as a one-character Range in the same text node. */
   const widthOf = (needle: string) => {
     const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
     let node: Node | null = walker.nextNode();
@@ -61,8 +64,15 @@ const readArrow = (page: Page, selector: string, letter: string) => page.evaluat
     }
     throw new Error(`${sel}: "${needle}" is not in its text`);
   };
-  return { family, faces: faces.length, covering, arrow: widthOf('→'), letter: widthOf(ch), size: getComputedStyle(el).fontSize };
+  return { arrow: widthOf('→'), letter: widthOf(ch), text: (el.textContent ?? '').trim(), size: getComputedStyle(el).fontSize };
 }, [selector, letter] as const);
+
+async function expectOneCustomFace(page: Page, selector: string, what: string) {
+  const fonts = await platformFonts(page, selector);
+  const { text } = await advances(page, selector, '→');
+  expect(fonts.map((f) => `${f.familyName}${f.isCustomFont ? '' : ' (system)'} ×${f.glyphCount}`), `${what}: every glyph from the one custom face`).toEqual([`Geist Mono ×${[...text].length}`]);
+  return fonts[0];
+}
 
 async function post(page: Page, path: string, data: unknown): Promise<string> {
   const response = await page.request.post(path, { data });
@@ -77,7 +87,7 @@ async function post(page: Page, path: string, data: unknown): Promise<string> {
 test.describe('§63: the arrow is drawn in Geist Mono from the family’s own file', () => {
   test.use({ viewport: { width: 1440, height: NO_SCROLL_HEIGHT } });
 
-  test('the record page’s "Manage →": a loaded face of the mono family covers U+2192, and the arrow’s advance is a letter’s', async ({ page }, testInfo) => {
+  test('the record page’s "Manage →": every glyph rendered by the custom Geist Mono face, a control glyph the cut lacks falling to a system face', async ({ page }, testInfo) => {
     await login(page);
     const artist = await post(page, '/api/artists', { name: 'Arrow 167' });
     trackArtist(artist);
@@ -85,24 +95,40 @@ test.describe('§63: the arrow is drawn in Geist Mono from the family’s own fi
     await page.goto(`/records/${record}`);
     const link = page.locator('a[href="#images"]', { hasText: 'Manage →' });
     await link.waitFor({ timeout: 20_000 });
-    const read = await readArrow(page, 'a[href="#images"]', 'M');
-    testInfo.annotations.push({ type: 'arrow advance', description: `${read.arrow}px against M ${read.letter}px at ${read.size}, ${read.family}` });
-    expect(read.faces, `loaded faces of ${read.family}`).toBeGreaterThan(0);
-    expect(read.covering, `a loaded face of ${read.family} covers U+2192`).toBeGreaterThan(0);
+    await page.evaluate(() => document.fonts.ready);
+
+    const face = await expectOneCustomFace(page, 'a[href="#images"]', 'Manage →');
+    const read = await advances(page, 'a[href="#images"]', 'M');
+    testInfo.annotations.push({ type: 'rendered by', description: `${face.familyName} (${face.postScriptName}), ${face.glyphCount} glyphs` });
+    testInfo.annotations.push({ type: 'arrow advance', description: `${read.arrow}px against M ${read.letter}px at ${read.size}` });
     expect(Math.abs(read.arrow - read.letter), `→ advances ${read.arrow}, M ${read.letter}`).toBeLessThanOrEqual(0.1);
+
+    /* The control: the same font stack asked for a glyph the cut does not hold. A system face must appear, or the channel is not seeing fallbacks. */
+    await page.evaluate(() => {
+      const probe = document.createElement('span');
+      probe.id = 'arrow-167-control';
+      probe.className = 'font-mono';
+      probe.textContent = 'M☃';
+      document.body.appendChild(probe);
+    });
+    await page.evaluate(() => document.fonts.ready);
+    const control = await platformFonts(page, '#arrow-167-control');
+    expect(control.some((f) => !f.isCustomFont), `the control ☃ falls to a system face: ${JSON.stringify(control)}`).toBe(true);
+    expect(control.some((f) => f.isCustomFont && f.familyName === 'Geist Mono'), 'and its M is still the family’s').toBe(true);
+
     const line = link.locator('xpath=..');
     await testInfo.attach(`manage-arrow-${process.platform}-1440x900.png`, { body: await line.screenshot(), contentType: 'image/png' });
   });
 
-  test('the wall’s "THE WHOLE COLLECTION →" at arrival: the same face, the same advance', async ({ page }, testInfo) => {
+  test('the wall’s "THE WHOLE COLLECTION →" at arrival: every glyph from the same face', async ({ page }, testInfo) => {
     await login(page);
     await page.goto('/');
     await page.locator('[data-wall-container][data-hydrated="true"]').waitFor({ timeout: 30_000 });
-    const mark = page.locator('[data-zoom-mark]').first();
-    await mark.waitFor({ timeout: 20_000 });
-    const read = await readArrow(page, '[data-zoom-mark]', 'T');
-    testInfo.annotations.push({ type: 'arrow advance', description: `${read.arrow}px against T ${read.letter}px at ${read.size}, ${read.family}` });
-    expect(read.covering, `a loaded face of ${read.family} covers U+2192`).toBeGreaterThan(0);
+    await page.locator('[data-zoom-mark]').first().waitFor({ timeout: 20_000 });
+    await page.evaluate(() => document.fonts.ready);
+    const face = await expectOneCustomFace(page, '[data-zoom-mark]', 'THE WHOLE COLLECTION →');
+    const read = await advances(page, '[data-zoom-mark]', 'T');
+    testInfo.annotations.push({ type: 'rendered by', description: `${face.familyName} (${face.postScriptName}), ${face.glyphCount} glyphs` });
     expect(Math.abs(read.arrow - read.letter), `→ advances ${read.arrow}, T ${read.letter}`).toBeLessThanOrEqual(0.1);
   });
 });

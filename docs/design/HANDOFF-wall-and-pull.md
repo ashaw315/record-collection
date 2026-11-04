@@ -44,7 +44,7 @@ The wall at rest is line, ink and paper; colour arrives with the pull. Everythin
 | §W.21 | The finish’s window, and what the growth scales about | The finish added after the rotation, with its two bounds stated and its length chosen, not derived. Growth scales about the foot of the pivot edge, so rotation and growth share one fixed point. Also: a transform's origin is invisible to every still. |
 | §W.22 | The view pans; the gesture does not move | The interim drift withdrawn — the record's transforms stay as §W.21 rules them and the drawing region pans to frame the landing with the pull, overlapped as Adam judged it, resolving to zero when the landing is already in frame (pan-first withdrawn). Why a drift negates §W.21's shared fixed point rather than weakening it; why no page room is needed (§W.13's bands unchanged); §W.19's composition is a statement about the framed view. Also: a ruling whose terms are all in one coordinate system cannot discharge an obligation in another. |
 | §W.23 | Tiling withdrawn, paint order separated from reading order | The wall as one fixture whose row length grows, and why tiling was withdrawn on the full-collection drawing; why paint order interleaves rows by column and the keyboard walk gets its own sequence; why the pitch does not grow; the reduced disjoint proxy for every interpenetrating object; the reframe as §W.22's pan. |
-| §W.24 | The filter belongs in the rail; the narrow shelf is the far view | GENRE and SORT in the rail, and why the control must be on the shelf; the shelf offered only above its fork and under a fine pointer, with the far view, not the shelf, below it; and the rail as one band. Supersedes §W.8's withdrawn fork with a shelf-side one. |
+| §W.24 | The filter belongs in the rail; the narrow shelf is the far view | GENRE and SORT in the rail, and why the control must be on the shelf; the shelf offered only above its fork and under a fine pointer, with the far view, not the shelf, below it; and the rail as one band. Supersedes §W.8's withdrawn fork with a shelf-side one. And what search reaches, and the shelf's reason on the pull. |
 | §W.25 | Growth rides the rotation, not the travel | Why growth rides the rotation's window, not the travel (§W.20's reason withdrawn; §W.21 untouched): an orthographic projection has no size change on approach. The join point, adjustable; why growth on the travel's ease gave a constant ratio that could not be tuned. Also: what a still cannot judge, a ruling should not fix. |
 | §W.26 | The pan clears the seat; the fork is the landing's | How the pan clears the empty seat without shortening the travel or shrinking the cover; why the seat must stay visible; the fork moved to the landing's width and why; Add record not wrapping in the band. |
 | §W.27 | The chrome on the drawn paper | Why the generic hairlines take §3's value, why chip hover surfaces invert to one proportional step below paper, and the rule that the chrome borrows the drawing's steps and is ruled only where it contradicts a value the drawings depend on. |
@@ -128,7 +128,7 @@ The wall at rest is line, ink and paper; colour arrives with the pull. Everythin
 | §M.7 | The cover’s travel | How the modal opens and closes from the page’s cover, what comes with it and after it, presses during the travel, and reduced motion. |
 | §T.1 | Why these views are designed, and why here | Why the views are designed and have their own target, the band they share with the shelf, the content inset on every screen, the sidebar above its fork with CLEAR FILTERS, and the page length. |
 | §T.2 | The vocabulary they take | The type the views take, and the hit-area floor. Their colour and corners are withdrawn to §T.6, which rules them for every screen. |
-| §T.3 | The heading, the count, search and filters | The count and heading, search, the filters as a disclosure in the band, and in the sidebar the options opening in place and pushing the page down, with its return. |
+| §T.3 | The heading, the count, search and filters | The count and heading, search, the filters as a disclosure in the band, and in the sidebar the options opening in place and pushing the page down, with its return. And the reason line on a record that matched by tracklist or credits. |
 | §T.4 | The table | The table's rows, alignment, the Record column's slack, the Genre column and its separator, sort and the Sort control kept at every width, the sticky header row, and hover. |
 | §T.5 | The grid | The grid’s covers, captions, spacing, column counts and Sort control. |
 | §T.6 | Ornament and colour, for every screen | Ornament, oxblood, the grey, corners and headings across every screen; the content measure; pending answers and reserved slots; the hit-area floor by pointer and how sets meet it; one focus ring for the app and Tab order; and each screen's pass: the want list, stats, manage with its Discogs import, the record form, look up, login, the dialog, the error and not-found pages. |
@@ -759,6 +759,17 @@ Its rows are in the governs table above, one per section; this section does not 
   - **Leave** the line at 24 and the rail's pitch as built.
   - **Move** `collection-band-97`'s 44 under a coarse pointer. Under a fine pointer, assert the drawn line.
   > An unboxed label in a list of lines keeps the list’s 44 line under both pointers. An unboxed label that is §W’s furniture, as the view names in the band and the rail are, keeps the line §W draws it on and meets the 44 floor by overlay only where the pointer is coarse.
+- **Unnumbered, for Code to number — §W.24: what search reaches.**
+  - **Extend** search to the tracklist and the credits, in every view.
+  - **Release notes:** confirm the import stores no Discogs release notes and that search reads none. If any are stored today, report it; don't delete them.
+  - **On the shelf:** draw the matching track or credit in the pulled record's facts when the match was not by title or artist. Propose where it stands against §W.19's composition.
+  - **Capture** at 1440 × 900.
+  > Search reaches a record’s title, artist and label, its tracklist and its credits, in every view.
+- **Unnumbered, for Code to number — §T.3: why a record matched.**
+  - **Draw one line** on a row or cell that matched by tracklist or credits and not by title or artist: the track by position and title, or the credit by name and role.
+  - **Propose** the wording, the line's place, and whether it moves what follows. Report the height.
+  - **Capture** at 1280 and 390, with a match by a credit and by a track.
+  > In the table and the grid, a record that matched by its tracklist or its credits, and not by its title or artist, carries one line saying what matched: the track by its position and title, or the credit by its name and role.
 
 No step: §G.7. It rules nothing. Hover and focus wait on Code's second pass, the breakpoint is settled and recorded in §G.8, and the eyebrow repetition is an observation, not a ruling.
 
@@ -816,6 +827,8 @@ The provisionals in force, for the note in Maintaining this file that a provisio
 - **§62 · the covers group.** "What the group and its mark look like is provisional until built and captured." Returns from the step that builds the group. Open.
 - **§63 · the arrow.** "The arrow's appearance is provisional until built and captured." Returns from the arrow step. Open.
 - **§64 · the two years.** Closed on step 166's captures, at 1440 fine and 390 coarse: side by side at 1440 and one beneath the other at 390, Release year first, each hint under its own field, the two hints reading against each other.
+- **§W.24 · the shelf's reason on the pull.** "Where in the facts the line stands, and how it reads, are provisional until built and captured." Returns from the search step. Open.
+- **§T.3 · the reason line.** "The line's wording, where it stands in the row and the cell, and whether it moves what follows are provisional until built and captured at 1280 and 390." Returns from the reason step. Open.
 
 ## Findings for screens without a pass
 

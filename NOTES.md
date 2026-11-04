@@ -51838,3 +51838,63 @@ companies; 1,021 tracks, 1,196 credits, 31,823 characters of notes, 515 companie
 800 kB, 62 rows older than 7 days (left in place, as designed); 0 text rows, the backfill not
 yet run. So the backfill covers the whole collection without a Discogs call, and the text it
 would index is about 2,700 rows.
+
+**CI runs 41832205788 on 8c191a9 and 41842939272 on 9d209d0, read in full (4 Nov).** The three logs of
+each copied into one scratchpad directory first. 8c191a9 (step 166): unit 4767 passed, 2 skipped;
+chromium 1054 passed, 1 skipped, no flaky, 1.4h; mobile 390 passed, 4 skipped; verdict OK, exit 0.
+9d209d0 (the handoff line and the governed list): unit 4767 passed, 2 FAILED; chromium 1054
+passed, no flaky, 1.1h; mobile 390 passed; verdict FAILED, unit failed, exit 1. The two failures
+are `arrow-167.spec.ts types no declared constant` and the same for its capture: the governed
+list in that commit names two files the commit did not carry, which were in the working tree
+and landed four commits later at bf90d85. **The finding: `commit-checked` checks the working
+tree and commits the named paths, so a check can pass on a tree whose commit does not reproduce
+it.** This is the first instance: a test that reads files by a list, with the list committed and
+the files not. Run 41844505578 on be8f980 will fail the same two for the same reason, known
+before it is read; 41848700453 on fd5da98 carries the files. No mechanism built: whether the
+commit path should check the committed tree as well as the working one is a decision, listed.
+
+**Drop 2026-11-04-02 applied (4 Nov): "View names keep W line" and "Years passed", intake OK.** The
+Table and Grid target's §T.6 withdraws every unboxed label keeping a 44 line under both pointers
+(`T.6/unboxed-every-44`) and scopes it: a label in a list of lines keeps the list's 44; the view
+names, §W's furniture, keep §W's line and meet the floor by overlay only under a coarse pointer.
+The step is in the handoff, unnumbered, for Code to number: scope the band's overlay to coarse,
+leave the 24 line and the rail's pitch, move collection-band-97's 44 under a coarse pointer and
+assert the drawn line under a fine one. §64's provisional line is closed on step 166's captures.
+Found by the index before the drop was noticed: the commit of the CI reads was refused on
+assertion 7, one withdrawal sentence with no entry, which is what a drop on disk looks like
+from the commit path; drop-ref recorded it as 2026-11-04-02. The derive script regenerated the
+comment, 259 entries.
+
+**§63: which face drew the arrow, read from the renderer and not the advance (the coordinator and
+Design, 4 Nov).** The capture sheet printed the declaration's family list, "mono, mono Fallback",
+under "family", and the arrow's advance read 7.72 against M's 7.70, so Design read the fallback
+as the renderer, and the coordinator named the test's green a proxy. Two readings, the decisive
+one first: Chromium's `CSS.getPlatformFontsForNode` on the Images line reports one face, Geist
+Mono (GeistMono-Regular, a custom font) for all 8 glyphs of "Manage →", and a control "M☃" on
+the same page reports Menlo for the snowman and Geist Mono for the M, so the channel sees a
+fallback when there is one. The served file's cmap holds U+2190 to 2199, → at advance 600 as M
+is. The 0.02 is the Range rectangles' subpixel edges, both glyphs being 6.6 plus 1.1 of tracking.
+So step 167 is built. **But the test's face reading was a proxy all the same:** it checked a
+loaded face's declared `unicodeRange`, which next/font sets to everything whatever the file
+holds, so it would have passed on a file without the arrow, and the advance beside it is a
+measure a metric-adjusted fallback could match. Rewritten on the renderer's channel with the
+control glyph, the advance kept as the figure §63 asks for and not as the proof; 2 passed. The
+sheet says "Rendered by" now. Same family as the `::before` height and the family name: a value
+one layer below the claim, easy to read and unable to fail on the thing the name names.
+
+**Drop 2026-11-04-03 applied (4 Nov): "Search reaches and says why", intake OK.** Design's answer to
+the results question, from Adam's four answers. §W.24 rules what search reaches: a record's title,
+artist and label, its tracklist and its credits, in every view; not Discogs' release notes, which
+Adam ruled are not kept ("they compete with the ABOUT he curates, and are mostly pressing minutiae
+and copyright lines"). §T.3 rules the reason: in the table and the grid, a record that matched by
+tracklist or credits and not by title or artist carries one line saying what matched, the track by
+position and title or the credit by name and role; on the shelf a match says why once pulled, in
+the pulled record's facts. Two steps, unnumbered, in the handoff; two Provisionals open; two
+governs rows appended. Found as the last drop was: the tree changed under the commit check.
+**What this changes in the storage unit before the backfill runs:** `releaseText` derives a
+`notes` kind, so the backfill would store the release notes Adam ruled are not kept. Production
+holds 0 text rows today, so nothing is stored and nothing to delete; the notes kind goes from the
+extractor before the backfill is run, and the step's "report it, don't delete them" is answered
+with "none are stored". Labels enter search's reach as a third OR branch beside title and artist.
+Open for Adam, from Design: whether search reaches "Contributor notes" in the opened pressing
+details.
