@@ -2,6 +2,7 @@ import 'server-only';
 import { eq } from 'drizzle-orm';
 import { getDb } from '@/db/client';
 import { discogsCache } from '@/db/schema';
+import { storeReleaseText } from './release-text-store';
 
 /**
  * The Discogs release cache (SPEC.md §6).
@@ -81,4 +82,6 @@ export async function writeCachedRelease(
       target: discogsCache.discogsReleaseId,
       set: { payload, fetchedAt },
     });
+  /* The release's searchable text, derived here so every path that caches a release fills it (the free-text unit, 4 Nov). */
+  await storeReleaseText(discogsReleaseId, payload);
 }

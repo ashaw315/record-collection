@@ -51755,3 +51755,26 @@ report before anything moves: boxed or unboxed, and their drawn line's height.
 stack": the pair wraps where the form's measure holds less than two halves of 280 and the 16
 between, so under a measure of 576, which with the frame's 18 insets is a window under 612. The
 line is in `scripts/handoff-code-region.json` as step-166 and the intake placed it.
+
+**The free-text unit, part 1: the storage (4 Nov).** `discogs_release_text`, migration 0032: one row
+per track title, credit, company and the notes of a cached release, keyed by the release id the
+cache and `pressings` share, with `kind`, `ordinal`, `text` and `detail` (a track's position, a
+credit's or a company's role: what a result can say the match by, which is Design's question in
+the 4 Nov note), a btree on the release id and a trigram index on the text for the search's `%`.
+`releaseText(payload)` is pure and decides the rows: tracks first, then the release's credits,
+then each track's own credits with the track's position in the role, then every company
+whatever its role, then the notes whole; blanks dropped by `meaningful`, a payload of another
+shape gives nothing. `storeReleaseText` replaces a release's rows, and `writeCachedRelease` calls
+it after the upsert, so every path that caches a release fills them (five callers). The backfill
+reads every cache row and stores its rows, idempotent; `npm run discogs:backfill-text` runs it
+once against production, by Adam, after the deploy carries 0032. Nothing reads the table yet:
+the two OR branches in `buildWhere` wait on Design's answer about why a record is in the results.
+Tests first: 6 unit on the extractor and 4 integration (the derivation at the write, the
+replacement on a refresh, the backfill's counts twice, the index in pg_indexes), all failing on
+the modules' absence. The fresh-clone migration test failed while 0032 was untracked, as it
+should: `commit-checked` adds the named paths with intent before its check, so the commit sees
+them. Step level: release-text (10), discogs-cache, collection-import, market-cache,
+migrations-complete, typecheck, lint, build, and the backfill script run against the local test
+database. The production count asked for on 4 Nov was refused by the permission classifier as a
+production read: the target, not the query's shape, so a read-only count will be refused again
+until a rule allows `mcp__claude_ai_Neon__run_sql`, or Adam runs it.

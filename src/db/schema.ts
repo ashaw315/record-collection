@@ -414,6 +414,32 @@ export const discogsCache = pgTable('discogs_cache', {
 });
 
 /**
+ * The searchable text of a cached release (the free-text unit, 4 Nov): one
+ * row per track title, credit, company and the notes, derived from the
+ * payload by `releaseText` wherever `writeCachedRelease` writes it, and by
+ * the backfill for releases cached before. Keyed by the release id the cache
+ * and `pressings` share, not by the cache row, so a record reaches its text
+ * through its pressing. `detail` is what a result can say the match by: a
+ * track's position, a credit's or a company's role. The trigram index is
+ * for the search's likeness operator, as the title's and the artist's are.
+ */
+export const discogsReleaseText = pgTable(
+  'discogs_release_text',
+  {
+    id,
+    discogsReleaseId: integer('discogs_release_id').notNull(),
+    kind: text('kind').notNull(),
+    ordinal: integer('ordinal').notNull(),
+    text: text('text').notNull(),
+    detail: text('detail'),
+  },
+  (t) => [
+    index('discogs_release_text_release_idx').on(t.discogsReleaseId),
+    index('discogs_release_text_trgm_idx').using('gin', sql`${t.text} gin_trgm_ops`),
+  ],
+);
+
+/**
  * §4.2 `discogs_import_runs` (A77, step 18; §T.6, 28 Oct): what each
  * collection import did, one row per run, append-only; Manage reads the
  * latest. The report is the only record of a run, and its blank and failed
