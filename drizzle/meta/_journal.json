@@ -232,6 +232,13 @@
       "when": 1793800887854,
       "tag": "0032_remarkable_firebrand",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1793807671371,
+      "tag": "0033_tiny_miss_america",
+      "breakpoints": true
     }
   ]
 }

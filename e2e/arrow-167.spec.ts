@@ -116,8 +116,16 @@ test.describe('§63: the arrow is drawn in Geist Mono from the family’s own fi
     expect(control.some((f) => !f.isCustomFont), `the control ☃ falls to a system face: ${JSON.stringify(control)}`).toBe(true);
     expect(control.some((f) => f.isCustomFont && f.familyName === 'Geist Mono'), 'and its M is still the family’s').toBe(true);
 
+    /*
+      As a FILE in the test's output directory, not a body: a body attachment lives in the reporter and the
+      line reporter keeps none, so run 41848700453 uploaded no test-results artifact at all and the Linux
+      drawing never left the runner (4 Nov). A file is in test-results/chromium/<this test>/, which the
+      gate uploads as test-results-chromium on every run.
+    */
     const line = link.locator('xpath=..');
-    await testInfo.attach(`manage-arrow-${process.platform}-1440x900.png`, { body: await line.screenshot(), contentType: 'image/png' });
+    const file = testInfo.outputPath(`manage-arrow-${process.platform}-1440x900.png`);
+    await line.screenshot({ path: file });
+    await testInfo.attach(`manage-arrow-${process.platform}-1440x900.png`, { path: file, contentType: 'image/png' });
   });
 
   test('the wall’s "THE WHOLE COLLECTION →" at arrival: every glyph from the same face', async ({ page }, testInfo) => {

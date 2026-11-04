@@ -432,6 +432,8 @@ export const discogsReleaseText = pgTable(
     ordinal: integer('ordinal').notNull(),
     text: text('text').notNull(),
     detail: text('detail'),
+    /* §4's timestamps as every table has them, not the caches' exemption: CI run 41848700453 found them missing (4 Nov). */
+    ...timestamps,
   },
   (t) => [
     index('discogs_release_text_release_idx').on(t.discogsReleaseId),

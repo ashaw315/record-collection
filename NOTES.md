@@ -51898,3 +51898,28 @@ extractor before the backfill is run, and the step's "report it, don't delete th
 with "none are stored". Labels enter search's reach as a third OR branch beside title and artist.
 Open for Adam, from Design: whether search reaches "Contributor notes" in the opened pressing
 details.
+
+**Step 168, §T.6: the view names' overlay by pointer (4 Nov).** The band's view-name overlay is
+inside `@media (pointer: coarse)` in `band-rules.ts`, as step 165 scoped the record page's; the
+24 line and the rail's pitch are as built. collection-band-97's 44 runs under a coarse pointer,
+and under a fine one each view name reaches its drawn line and no further. Tests first: the
+fine case failed against the build, "a mouse reaches 45 rows of a 14 line", at 390 and 1024 on
+both views. Step level: collection-band-97, sidebar-113, filter-container-113 on chromium (75
+passed), typecheck, lint, build. The rail's own overlay (`globals.css`) was coarse-only already.
+
+**CI run 41848700453 on fd5da98, read in full (4 Nov): NOT OK on the unit half, two findings.**
+Unit 4787 passed, 2 FAILED; chromium 1056 passed, 1 skipped, no flaky, 1.1h; mobile 390 passed;
+verdict FAILED, unit failed. Both failures are `schema-conformance`: the trigram-index list
+enumerates the indexes and the new one was not in it, and `discogs_release_text` had no
+`created_at`/`updated_at`, which §4 gives every table but the caches. Not caught at step level
+because the storage unit's covering runs were the cache, import and migration suites and not the
+conformance suite: a schema change's covering set includes `schema-conformance`, and that is
+now the rule. Migration 0033 adds the two columns; the index joins the list, reasoned; 24 pass
+across conformance and release-text. **The second finding: the run uploaded no test-results
+artifact at all.** The arrow test attached the Linux drawing as a body, which lives in the
+reporter, and the line reporter keeps none; with every test green nothing else wrote to
+`test-results`, so the upload found no files. The attachment is a file now, in the test's output
+directory, which the gate uploads on every run; the Linux drawing comes from the next run and
+goes into `docs/captures/arrow-167/`, by hand, with a commit that names the folder. Whether the
+capture export should reach CI artifacts: not worth crossing, one `gh run download` is the
+whole distance and it is written here.

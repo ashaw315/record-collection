@@ -208,6 +208,8 @@ describe('§4.4 conformance — every FK column is indexed', () => {
 
     expect(rows.map((r) => r.indexname)).toEqual([
       'artists_name_trgm_idx',
+      /* The free-text unit (4 Nov): the cached releases' text, for the search's likeness operator as the two above are. */
+      'discogs_release_text_trgm_idx',
       'records_title_trgm_idx',
     ]);
   });
