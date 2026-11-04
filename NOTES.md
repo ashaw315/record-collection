@@ -52059,3 +52059,14 @@ each. **Three samples** generated through the module and not stored, for records
 thin, in a Downloads note for Adam: Mandy, Indiana — URGH (532 characters, hedged on a 2026
 record), Smerz — Believer (512), Joff Bush — Bluey The Album (526). Not built: the coverage is
 Adam's call on the samples, then Design's ruling on reaching the prose, then the branch.
+
+**CI runs 41864830633 on 90b5444, 41866380180 on 507a83c and 41844505578 on be8f980, read in full
+(4 Nov).** 90b5444 (step 168): unit 4789 passed, 2 skipped; chromium 1058 passed, 1 skipped, no
+flaky, 1.2h; mobile 390 passed; verdict OK, exit 0. 507a83c (the matching half of search): unit
+4794 passed; chromium 1058 passed, no flaky, 1.1h; mobile 390; verdict OK, exit 0. be8f980 (the
+storage unit, before 0033 and before arrow-167's files landed): unit 4775 passed, 4 FAILED, the
+two schema-conformance tests fixed by 0033 and the two governed-list tests fixed at bf90d85, all
+four known before the read; chromium 1054 passed, no flaky, 1.4h; mobile 390; verdict FAILED,
+unit failed, exit 1. No new failure and no flake across the three. Every half read from logs
+copied into one directory per run, exit codes read from files, nothing piped through tail. The
+run on 0d9657f (the guards, companies and the plant) is in progress.
