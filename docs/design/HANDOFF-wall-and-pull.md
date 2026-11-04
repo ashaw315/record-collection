@@ -762,11 +762,11 @@ Its rows are in the governs table above, one per section; this section does not 
   - **Move** `collection-band-97`'s 44 under a coarse pointer. Under a fine pointer, assert the drawn line.
   > An unboxed label in a list of lines keeps the list’s 44 line under both pointers. An unboxed label that is §W’s furniture, as the view names in the band and the rail are, keeps the line §W draws it on and meets the 44 floor by overlay only where the pointer is coarse.
 - **Unnumbered, for Code to number — §W.24: what search reaches.**
-  - **Extend** search to the tracklist and the credits, in every view.
+  - **Extend** search to label, the catalogue number, the tracklist, the credits, the companies with the plant, and the matrix and runout, in every view.
   - **Release notes:** confirm the import stores no Discogs release notes and that search reads none. If any are stored today, report it; don't delete them.
   - **On the shelf:** draw the matching track or credit in the pulled record's facts when the match was not by title or artist. Propose where it stands against §W.19's composition.
   - **Capture** at 1440 × 900.
-  > Search reaches a record’s title, artist and label, its tracklist and its credits, in every view.
+  > Search reaches every field the record page shows that a reader would name a record by, in every view, and the test is the rule, not the list.
 - **Unnumbered, for Code to number — §T.3: why a record matched.**
   - **Draw one line** on a row or cell that matched by tracklist or credits and not by title or artist: the track by position and title, or the credit by name and role.
   - **Propose** the wording, the line's place, and whether it moves what follows. Report the height.
@@ -827,7 +827,7 @@ The provisionals in force, for the note in Maintaining this file that a provisio
 - **§W.18 · the record cut at the row's front.** Closed without returning: the cut is withdrawn (`W.18/cut`), and nothing was built.
 - **§W.22 · the top-shelf dip under the overlapped pan.** Closed: observed on production on 1 Nov at 245 to 246px, within the 245 to 251 predicted. Across five production pulls the dip fits the peak of the record's own drop, about 69px, plus the pan, as a description rather than a law (§W.22). The straight-line fit holds only from a pan of about +70.
 - **§62 · the covers group.** "What the group and its mark look like is provisional until built and captured." Returns from the step that builds the group. Open.
-- **§63 · the arrow.** "The arrow's appearance is provisional until built and captured." Returns from the arrow step. Open.
+- **§63 · the arrow.** "The arrow's appearance is provisional until built and captured." macOS passed on step 167's capture at 1440 × 900: "Manage →" is drawn whole in GeistMono-Regular from the app's file, eight glyphs in one face, the arrow at M's advance. Linux is open until `manage-arrow-linux-1440x900.png` reaches Design. It is in CI's artifact, not in `docs/captures/arrow-167/`. Open.
 - **§64 · the two years.** Closed on step 166's captures, at 1440 fine and 390 coarse: side by side at 1440 and one beneath the other at 390, Release year first, each hint under its own field, the two hints reading against each other.
 - **§W.24 · the shelf's reason on the pull.** "Where in the facts the line stands, and how it reads, are provisional until built and captured." Returns from the search step. Open.
 - **§T.3 · the reason line.** "The line's wording, where it stands in the row and the cell, and whether it moves what follows are provisional until built and captured at 1280 and 390." Returns from the reason step. Open.

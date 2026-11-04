@@ -297,6 +297,104 @@ describe('the export follows a commit that touches the shared documents', () => 
 });
 
 /*
+  **A refusal stands until it is read (the coordinator, 4 Nov).** A chain of
+  commits piped each refusal through `tail`, so a refused commit was followed
+  by a successful one that carried the first's NOTES entry, out of order. The
+  script now leaves a marker on refusal, and the next commit refuses on the
+  marker alone, naming the log, until `--read` clears it; a passing commit
+  clears it too, since nothing passes without the check. Each fails against a
+  script that forgets a refusal the moment it prints it.
+*/
+describe('a refusal stands until it is read', () => {
+  it('refuses the next commit after a refused one, naming the unread log, until --read', () => {
+    const { dir, git } = repo();
+    writeFileSync(join(dir, 'a.txt'), 'a\n');
+    const refused = run(dir, 'echo "1 failed"; exit 1', ['-m', 'first', 'a.txt']);
+    expect(refused.status).not.toBe(0);
+    const before = git('rev-parse', 'HEAD');
+    const next = run(dir, 'echo "1 passed"', ['-m', 'second', 'a.txt']);
+    expect(next.status, next.output).toBe(5);
+    expect(next.output).toMatch(/NOT COMMITTED: the refusal at .* is unread/);
+    expect(git('rev-parse', 'HEAD'), 'nothing was committed over an unread refusal').toBe(before);
+    const read = run(dir, 'echo "1 passed"', ['--read']);
+    expect(read.status, read.output).toBe(0);
+    expect(read.output).toMatch(/1 failed/);
+    const after = run(dir, 'echo "1 passed"', ['-m', 'second', 'a.txt']);
+    expect(after.status, after.output).toBe(0);
+  });
+
+  it('a passing commit leaves no marker, so the one after it is not refused', () => {
+    const { dir } = repo();
+    writeFileSync(join(dir, 'a.txt'), 'a\n');
+    expect(run(dir, 'echo "1 passed"', ['-m', 'first', 'a.txt']).status).toBe(0);
+    writeFileSync(join(dir, 'b.txt'), 'b\n');
+    expect(run(dir, 'echo "1 passed"', ['-m', 'second', 'b.txt']).status).toBe(0);
+  });
+});
+
+/*
+  **A commit carries what it names (the coordinator, 4 Nov).** The check reads
+  the working tree and the commit carries the named paths, so twice in one
+  day CI failed a commit whose check had passed: a governed list naming spec
+  files still untracked, and a migration journal naming a migration still
+  untracked. After staging, every path-like token in a staged text file that
+  names a file the tree holds untracked, and the journal's tags as
+  `drizzle/<tag>.sql`, refuses the commit. Each fails against a script that
+  commits the list without the files.
+*/
+describe('a commit carries the files it names', () => {
+  it('refuses a staged file that names an untracked file the tree holds, and says which', () => {
+    const { dir, git } = repo();
+    writeFileSync(join(dir, 'list.ts'), "export const GOVERNED = ['e2e/arrow-167.spec.ts'];\n");
+    mkdirSync(join(dir, 'e2e'));
+    writeFileSync(join(dir, 'e2e', 'arrow-167.spec.ts'), 'spec\n');
+    const before = git('rev-parse', 'HEAD');
+    const result = run(dir, 'echo "1 passed"', ['-m', 'list', 'list.ts']);
+    expect(result.status, result.output).toBe(6);
+    expect(result.output).toMatch(/names e2e\/arrow-167\.spec\.ts, which the tree holds untracked/);
+    expect(git('rev-parse', 'HEAD')).toBe(before);
+    expect(git('diff', '--cached', '--name-only'), 'nothing left staged').toBe('');
+  });
+
+  it('refuses a journal whose tag names a migration file still untracked', () => {
+    const { dir } = repo();
+    mkdirSync(join(dir, 'drizzle', 'meta'), { recursive: true });
+    writeFileSync(join(dir, 'drizzle', 'meta', '_journal.json'), '{"entries":[{"idx":0,"tag":"0000_first","breakpoints":true}]}\n');
+    writeFileSync(join(dir, 'drizzle', '0000_first.sql'), 'CREATE TABLE t (id int);\n');
+    const result = run(dir, 'echo "1 passed"', ['-m', 'journal', 'drizzle/meta/_journal.json']);
+    expect(result.status, result.output).toBe(6);
+    expect(result.output).toMatch(/drizzle\/0000_first\.sql/);
+  });
+
+  it('commits when the named file is ignored: held by the tree on purpose, not left out by omission', () => {
+    const { dir } = repo();
+    writeFileSync(join(dir, '.gitignore'), 'ignored/\n');
+    mkdirSync(join(dir, 'ignored'));
+    writeFileSync(join(dir, 'ignored', 'x.ts'), 'x\n');
+    writeFileSync(join(dir, 'notes.md'), 'see ignored/x.ts\n');
+    const result = run(dir, 'echo "1 passed"', ['-m', 'notes', 'notes.md', '.gitignore']);
+    expect(result.status, result.output).toBe(0);
+  });
+
+  it('does not read a name that matches a tracked file only by case as an untracked one', () => {
+    /* On a case-insensitive filesystem `-f FIRST.txt` is true of first.txt, which git tracks under its own case; found when a test fixture named notes.md and the repo's NOTES.md answered. */
+    const { dir } = repo();
+    writeFileSync(join(dir, 'notes.md'), 'see FIRST.txt\n');
+    const result = run(dir, 'echo "1 passed"', ['-m', 'case', 'notes.md']);
+    expect(result.status, result.output).toBe(0);
+  });
+
+  it('commits when every named file is tracked or named alongside', () => {
+    const { dir } = repo();
+    writeFileSync(join(dir, 'list.ts'), "export const GOVERNED = ['e2e/arrow-167.spec.ts', 'first.txt'];\n");
+    mkdirSync(join(dir, 'e2e'));
+    writeFileSync(join(dir, 'e2e', 'arrow-167.spec.ts'), 'spec\n');
+    const result = run(dir, 'echo "1 passed"', ['-m', 'list and spec', 'list.ts', 'e2e/arrow-167.spec.ts']);
+    expect(result.status, result.output).toBe(0);
+  });
+});
+
+/*
   **A step's captures follow the commit that names them (the coordinator, 4 Nov).**
   Captures are untracked, so they cannot ride a commit, and three times a step's
   look was held because Adam had to find PNGs by hand. After the commit, the

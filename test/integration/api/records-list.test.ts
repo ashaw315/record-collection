@@ -979,9 +979,12 @@ describe('GET /api/records — q reaches the label, the tracklist and the credit
     expect(await names('/api/records?q=Mike Stone')).toEqual(['Hear Nothing See Nothing Say Nothing']);
   });
 
-  it('does not reach the companies, which §W.24 leaves out', async () => {
+  /* The coordinator, 4 Nov, on Design's own principle (a hit has a visible cause, and the pressing plant shows on the record page): companies are reached, "what do I have pressed at Sterling" being a real question. */
+  it('reaches the companies, and the pressing plant the record itself carries', async () => {
     await seedText();
-    expect(await names('/api/records?q=Orlake')).toEqual([]);
+    expect(await names('/api/records?q=Orlake')).toEqual(['Hear Nothing See Nothing Say Nothing']);
+    await db.execute(sql`UPDATE pressings SET pressing_plant = 'Sterling Sound' WHERE discogs_release_id = 11029111`);
+    expect(await names('/api/records?q=Sterling')).toEqual(['Hear Nothing See Nothing Say Nothing']);
   });
 
   it('a record whose own artist matches still matches by name, so nothing a search found before is lost', async () => {

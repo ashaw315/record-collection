@@ -24,17 +24,44 @@ set -uo pipefail
 
 message=""
 paths=()
+read_refusal=0
 while [ $# -gt 0 ]; do
   case "$1" in
     -m) shift; message="${1:-}"; [ $# -gt 0 ] && shift ;;
+    --read) read_refusal=1; shift ;;
     --) shift ;;
     *) paths+=("$1"); shift ;;
   esac
 done
 
+# A refusal stands until it is read (the coordinator, 4 Nov). A chain piped
+# two refusals through `tail` and a later commit carried an earlier one's
+# notes, out of order; so a refusal leaves a marker naming its log, the
+# next commit refuses on the marker alone, and `--read` prints the log and
+# clears it. A passing commit clears it too: nothing passes without the check.
+logs="$(git rev-parse --path-format=absolute --git-common-dir)/commit-checked"
+mkdir -p "$logs"
+unread="$logs/unread"
+if [ "$read_refusal" -eq 1 ]; then
+  if [ -f "$unread" ]; then
+    refused_log="$(cat "$unread")"
+    echo "the refusal at $refused_log, read:"
+    [ -f "$refused_log" ] && tail -40 "$refused_log"
+    rm -f "$unread"
+  else
+    echo "no unread refusal"
+  fi
+  exit 0
+fi
+
 if [ -z "$message" ] || [ ${#paths[@]} -eq 0 ]; then
-  echo "usage: commit-checked.sh -m \"message\" path [path...]" >&2
+  echo "usage: commit-checked.sh -m \"message\" path [path...]   |   commit-checked.sh --read" >&2
   exit 2
+fi
+
+if [ -f "$unread" ]; then
+  echo "NOT COMMITTED: the refusal at $(cat "$unread") is unread. Read it, then scripts/commit-checked.sh --read clears it." >&2
+  exit 5
 fi
 
 if ! git diff --cached --quiet; then
@@ -77,17 +104,56 @@ export COMMIT_PATHS="$(printf '%s\n' "${paths[@]}")"
 # one run whose log was needed was the one nothing kept. It is kept in the
 # common git directory, which outlives the throwaway worktree a commit is
 # made in and is never committed; a passing run's log is dropped.
-logs="$(git rev-parse --path-format=absolute --git-common-dir)/commit-checked"
-mkdir -p "$logs"
 log="$logs/$(date +%Y%m%d-%H%M%S)-$$.log"
 if ! bash -o pipefail -c "$check" 2>&1 | tee "$log"; then
   echo "NOT COMMITTED: the check failed. Nothing was staged. Its output is kept at $log" >&2
+  printf '%s\n' "$log" > "$unread"
   undo_intent
   exit 1
 fi
 rm -f "$log"
 
-git add -- "${paths[@]}" && git commit -q -m "$message" && git log --oneline -1 || exit 1
+git add -- "${paths[@]}" || exit 1
+
+# A commit carries what it names (the coordinator, 4 Nov). The check reads
+# the working tree and the commit carries the named paths, so twice in one
+# day CI failed a commit whose check had passed: a governed list naming
+# spec files still untracked, and a migration journal naming a migration
+# still untracked. Every path-like token in a staged text file that names
+# a file the tree holds and git does not, and the journal's tags as
+# drizzle/<tag>.sql, refuses the commit and leaves nothing staged.
+unnamed=()
+while IFS= read -r staged; do
+  [ -f "$staged" ] || continue
+  case "$staged" in *.png|*.jpg|*.jpeg|*.gif|*.ico|*.woff2|*.woff|*.ttf|*.pdf|*.zip) continue ;; esac
+  tokens="$(grep -oE '[A-Za-z0-9_./-]+\.(ts|tsx|mts|mjs|cjs|js|sql|json|md|css|html|sh|yml|yaml)' "$staged" 2>/dev/null | sort -u || true)"
+  if [ "$staged" = "drizzle/meta/_journal.json" ]; then
+    tags="$(grep -oE '"tag": *"[^"]+"' "$staged" | sed -E 's/"tag": *"([^"]+)"/drizzle\/\1.sql/' || true)"
+    tokens="$(printf '%s\n%s\n' "$tokens" "$tags")"
+  fi
+  while IFS= read -r tok; do
+    tok="${tok#./}"
+    [ -n "$tok" ] || continue
+    # Exact case: the filesystem answers `-f notes.md` with NOTES.md, and git, case-sensitive, calls that untracked (found on the guard's second real commit).
+    [ -n "$(find "$(dirname "./$tok")" -maxdepth 1 -name "$(basename "$tok")" -type f -print -quit 2>/dev/null)" ] || continue
+    # An ignored file is held by the tree on purpose (node_modules, test-results), not left out of a commit by omission: the guard's first real commit named two.
+    git check-ignore -q -- "$tok" && continue
+    if [ -z "$(git ls-files -- "$tok")" ]; then unnamed+=("$staged names $tok, which the tree holds untracked"); fi
+  done <<<"$tokens"
+done < <(git diff --cached --name-only)
+if [ ${#unnamed[@]} -gt 0 ]; then
+  git reset -q -- "${paths[@]}"
+  undo_intent
+  guard_log="$logs/$(date +%Y%m%d-%H%M%S)-$$-carries.log"
+  printf '%s\n' "${unnamed[@]}" > "$guard_log"
+  printf '%s\n' "$guard_log" > "$unread"
+  echo "NOT COMMITTED: the commit would not carry what it names. Name each alongside, or leave it out:" >&2
+  printf '  %s\n' "${unnamed[@]}" >&2
+  exit 6
+fi
+
+git commit -q -m "$message" && git log --oneline -1 || exit 1
+rm -f "$unread"
 
 # The export follows the commit (the coordinator, 29 Oct). Design rules
 # against the handoff Code exports, and an export taken at the intake is

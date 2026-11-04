@@ -346,10 +346,13 @@ export function buildWhere(filters: RecordFilters) {
       §W.24 (4 Nov): "Search reaches a record's title, artist and label, its
       tracklist and its credits, in every view." The label is the record's
       own; the tracklist and the credits are the record's pressing's cached
-      release text, the track and credit kinds only: the companies are stored
-      and not reached, and Discogs' release notes are neither stored nor
-      reached, by Adam's ruling. Each branch matches as the title does, by
-      likeness or by substring, and the shelf shares this predicate.
+      release text. The companies too, and the pressing plant the record
+      itself carries (the coordinator, 4 Nov, on Design's principle that a
+      hit has a visible cause: the plant shows on the record page, and "what
+      do I have pressed at Sterling" is a real question). Discogs' release
+      notes are neither stored nor reached, by Adam's ruling. Each branch
+      matches as the title does, by likeness or by substring, and the shelf
+      shares this predicate.
     */
     const likeness = (column: AnyPgColumn) => or(sql`${column} % ${q}`, ilike(column, like));
     clauses.push(
@@ -371,11 +374,17 @@ export function buildWhere(filters: RecordFilters) {
           getDb()
             .select({ one: sql`1` })
             .from(pressings)
+            .where(and(eq(pressings.id, records.pressingId), likeness(pressings.pressingPlant))),
+        ),
+        exists(
+          getDb()
+            .select({ one: sql`1` })
+            .from(pressings)
             .innerJoin(discogsReleaseText, eq(discogsReleaseText.discogsReleaseId, pressings.discogsReleaseId))
             .where(
               and(
                 eq(pressings.id, records.pressingId),
-                inArray(discogsReleaseText.kind, ['track', 'credit']),
+                inArray(discogsReleaseText.kind, ['track', 'credit', 'company']),
                 likeness(discogsReleaseText.text),
               ),
             ),

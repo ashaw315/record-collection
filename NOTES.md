@@ -51962,3 +51962,58 @@ storage, no new control. But at 10 of 55 a search of it answers for a fifth of t
 and silently misses the rest, which reads as search being wrong rather than the ABOUT being
 absent; the cheap answer only becomes an answer once most records carry one, which is a
 different problem (writing is a per-record act on the record page, with a configured key).
+
+**Two rules from §63's reading (the coordinator, 4 Nov), recorded as rules and not results.** (1) A
+channel that names the face behind a glyph proves nothing until it is shown naming a fallback:
+"all eight drawn by Geist Mono" is a sentence the channel might produce whatever the truth, and
+the control glyph the cut does not hold (☃, falling to Menlo) is what makes the sentence
+evidence. The pairing is the assertion; a renderer reading without its control is the proxy
+again. (2) Evidence that exists only on failure: the Linux drawing was a reporter body, so a
+green run wrote nothing to disk and the artifact of success was produced only when a test
+failed. The eighth family member inverted, and it recurs anywhere a capture rides a test
+result: a capture that is evidence of a pass is written as a file by the test, unconditionally.
+**Flagged, not fixed:** §W.24's rule reaches "title, artist and label", and the label was not in
+Adam's four answers nor in search before 4 Nov; Design added it to a question it was not asked.
+Kept, since it is sensible and built, and visible here and in the note to Design.
+
+**Search reaches the companies and the pressing plant; "Contributor notes" is not a stored field (4 Nov).**
+The coordinator's two decisions on Design's principle, a hit has a visible cause. Companies: the
+company kind joins the text branch and `pressings.pressing_plant` gets a branch of its own, the
+plant showing on the record page; tests first, Orlake and Sterling, failing against the predicate
+as it stood. Contributor notes: the field Design named stands only on the lookup page's evidence
+panel for a candidate release ("Contributor notes — context, not evidence"), Discogs' release
+notes drawn once and never stored; the table has no opened pressing details and no record shows
+such a field, so the principle does not admit them as the build stands, and that is in the one
+line to Design rather than built on a wrong premise. Step level: records-list, shelf, release-text
+(165), collection-filters, wall-arrival-104 on chromium (17), typecheck, lint, build.
+
+**Two guards in the commit path (the coordinator, 4 Nov), each staged by its own test.** (1) A
+refusal stands until it is read: a refused check or guard writes `.git/commit-checked/unread`
+naming its log, the next commit refuses on it with status 5, `--read` prints the log and clears
+it, and a passing commit clears it. A chain that pipes a refusal through `tail` now stops at the
+next commit instead of landing one out of order. (2) A commit carries what it names: after
+staging, every path-like token in a staged text file that names a file the tree holds and git
+does not, and the journal's tags as `drizzle/<tag>.sql`, refuses the commit with status 6,
+unstages, and says which; both of the day's CI failures (the governed list, migration 0033)
+would have been refused at the commit. Five tests, all failing against the script before it.
+
+**Drops 2026-11-04-04 and -05 applied (4 Nov): "Search reaches notes and companies" and "Arrow macOS
+passed".** §W.24 withdraws its first list (`W.24/search-reach-list`, owed because the second copy
+was applied at 8a74ab3 and built against) and rules search's reach as a test: every field the
+record page shows that a reader would name a record by, in every view; today the title, artist,
+label, catalogue number, tracklist, credits, companies with the plant, and the matrix and runout;
+the ABOUT not reached, a ruling of its own; "Contributor notes" not a record field. Of those,
+the catalogue number and the matrix are not built; the rest are. The step and its quote in the
+handoff follow the third copy. §63's provisional line: macOS passed on step 167's capture, Linux
+open until the drawing reaches Design. **§T.6's "opened pressing details" sentence:** its subject
+is built on the lookup page's evidence panel (step 150, `PressingEvidence.tsx`, which cites the
+sentence), not a table row; the table and the grid have no opened pressing details; whether the
+wording describes that panel is Design's, said in the note. **The Linux drawing** is in
+`docs/captures/arrow-167/`, copied from run 41863860269's test-results-chromium, the first run
+whose attachment was a file: "IMAGES 0 MANAGE →" as the runner drew it, the same face and
+advance as the macOS line. Both drops landed on disk while a commit's check ran, which the check
+reported as the tree changing and refused; the refusal marker held the next commit until read.
+
+**CI run 41863860269 on ccbbc29, read in full (4 Nov): OK, exit 0, every half.** Unit 4789 passed,
+2 skipped, the conformance tests green with migration 0033; chromium 1056 passed, 1 skipped, no
+flaky, 1.0h; mobile 390 passed, 4 skipped. The first green since the free-text storage landed.
