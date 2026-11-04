@@ -52070,3 +52070,10 @@ four known before the read; chromium 1054 passed, no flaky, 1.4h; mobile 390; ve
 unit failed, exit 1. No new failure and no flake across the three. Every half read from logs
 copied into one directory per run, exit codes read from files, nothing piped through tail. The
 run on 0d9657f (the guards, companies and the plant) is in progress.
+
+**CI run 41880983763 on 0d9657f, read in full (4 Nov): OK, exit 0, every half.** The two commit-path
+guards, search reaching the companies and the plant, and the Linux drawing. Unit 4801 passed, 2
+skipped; chromium 1058 passed, 1 skipped, no flaky, 1.1h; mobile 390 passed, 4 skipped, 23.0m. No
+failure, no flake. Logs copied into one directory, gate-report written to a file, its exit read
+from the shell and not from a pipe. Every commit pushed on 4 Nov now has a green run or a read
+whose failures were known and fixed in a later green one; nothing pushed is unverified by CI.
