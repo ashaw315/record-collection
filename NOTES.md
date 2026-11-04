@@ -51816,3 +51816,25 @@ compares two values to each other and proves nothing. The sixth family member, p
 written at both tests. Tests first: arrow-167 at both places failed on the face. Step level:
 arrow-167, nav-type-74, wall-labelled, stats on chromium (12 and 34 passed), capture (1),
 typecheck, lint, build, the cut script run and compared.
+
+**A step's captures follow the commit that names them (the coordinator, 4 Nov).** Captures are
+untracked, so they cannot ride a commit, and three times (159, 166, 167) a step's look was held
+while Adam found PNGs by hand. `scripts/export-captures.mjs` copies `docs/captures/<name>` from the
+working tree to ~/Downloads as "captures <name> — export for Design, <date> at <sha>", and
+`commit-checked.sh` runs it after the commit for every folder the message names as
+`docs/captures/<name>`, once each, in order; a failed export keeps the commit and says so with
+status 3, as the document export does. `export-handoff.mjs --captures` reads HEAD and no capture
+folder is in HEAD, which is why it never served. Tests first: capturesNamed (3), the copy with
+subfolders and the two refusals (3), and the commit path's three cases, with a recorder script
+on `COMMIT_EXPORT_CAPTURES`; the first recorder was a quoted string whose own "$@" ended the
+quote, and became a file. Staged for real on bf90d85, whose message names arrow-167: three
+files landed in Downloads with the commit. The commit path changed, so this is a gate: CI on
+the landed commit. **The classifier, narrowed (the coordinator):** it blocks the Neon run_sql
+tool, not production reads; scripts with `--env-file=.env.local` read production fine, so an
+inventory needs a script, not Adam. `npm run discogs:inventory-text` is that script, read-only;
+run on 4 Nov after the deploy carried 0032: 55 records, 55 with a release id, 97 cache rows of
+which 55 are held by a record, 97 with a tracklist, 91 with credits, 92 with notes, 85 with
+companies; 1,021 tracks, 1,196 credits, 31,823 characters of notes, 515 companies; the cache
+800 kB, 62 rows older than 7 days (left in place, as designed); 0 text rows, the backfill not
+yet run. So the backfill covers the whole collection without a Discogs call, and the text it
+would index is about 2,700 rows.

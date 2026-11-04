@@ -105,3 +105,18 @@ if grep -qE '^(docs/design/|scripts/handoff-code-region\.json$)' <<<"$changed"; 
     exit 3
   fi
 fi
+
+# A step's captures follow the commit that names them (the coordinator,
+# 4 Nov): the folders the message names as docs/captures/<name> are
+# exported from the working tree, since captures are untracked and three
+# times a step's look was held while Adam found PNGs by hand. Names are
+# read as `scripts/export-captures.mjs` reads them, once each, in order.
+# `COMMIT_EXPORT_CAPTURES` replaces the command, for the test.
+captures=()
+while IFS= read -r name; do [ -n "$name" ] && captures+=("$name"); done < <(grep -oE 'docs/captures/[A-Za-z0-9][A-Za-z0-9._-]*' <<<"$message" | sed 's#^docs/captures/##; s#[._-]*$##' | awk '!seen[$0]++')
+if [ ${#captures[@]} -gt 0 ]; then
+  if ! bash -o pipefail -c "${COMMIT_EXPORT_CAPTURES:-node scripts/export-captures.mjs} \"\$@\"" -- "${captures[@]}"; then
+    echo "COMMITTED, but the captures were NOT exported: run node scripts/export-captures.mjs ${captures[*]} and read why." >&2
+    exit 3
+  fi
+fi

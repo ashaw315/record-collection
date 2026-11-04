@@ -295,3 +295,59 @@ describe('the export follows a commit that touches the shared documents', () => 
     expect(result.output).toMatch(/COMMITTED, but the export was NOT written/);
   });
 });
+
+/*
+  **A step's captures follow the commit that names them (the coordinator, 4 Nov).**
+  Captures are untracked, so they cannot ride a commit, and three times a step's
+  look was held because Adam had to find PNGs by hand. After the commit, the
+  folders the message names as `docs/captures/<name>` are exported from the
+  working tree by `scripts/export-captures.mjs`, under the same ~/Downloads
+  naming as the documents. Staged with the export replaced by a recorder
+  (`COMMIT_EXPORT_CAPTURES`), which writes the commit it saw and the names it
+  was given. Each fails against a script that exports no captures.
+*/
+describe('the captures a commit message names are exported after the commit', () => {
+  const runCaptures = (dir: string, exportCommand: string, args: string[]) => {
+    try {
+      const output = execFileSync('bash', [join(dir, 'commit-checked.sh'), ...args], { cwd: dir, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], env: { ...process.env, COMMIT_CHECK: 'echo "1 passed"', COMMIT_EXPORT: 'true', COMMIT_EXPORT_CAPTURES: exportCommand } });
+      return { status: 0, output };
+    } catch (error) {
+      const failure = error as { status?: number; stdout?: string; stderr?: string };
+      return { status: failure.status ?? 1, output: `${failure.stdout ?? ''}${failure.stderr ?? ''}` };
+    }
+  };
+  /* A script that records the commit it ran at and the folder names it was handed, one line each; a file, so the names reach it as arguments and not through a quoted string. */
+  const recorder = (dir: string) => {
+    const script = join(dir, 'recorder.sh');
+    writeFileSync(script, `#!/bin/bash\n{ git -C '${dir}' rev-parse HEAD; printf '%s\\n' "$@"; } > '${join(dir, 'captures-exported')}'\n`);
+    return `bash '${script}'`;
+  };
+
+  it('exports every folder the message names, once each, after the commit', () => {
+    const { dir, git } = repo();
+    writeFileSync(join(dir, 'a.txt'), 'a\n');
+    const result = runCaptures(dir, recorder(dir), ['-m', 'Step 166. Captures in docs/captures/years-166 and docs/captures/arrow-167; docs/captures/years-166 again.', 'a.txt']);
+    expect(result.status, result.output).toBe(0);
+    const lines = readFileSync(join(dir, 'captures-exported'), 'utf8').trim().split('\n');
+    expect(lines[0], 'the export ran after the commit').toBe(git('rev-parse', 'HEAD'));
+    expect(lines.slice(1)).toEqual(['years-166', 'arrow-167']);
+  });
+
+  it('exports nothing after a commit whose message names no captures folder', () => {
+    const { dir } = repo();
+    writeFileSync(join(dir, 'a.txt'), 'a\n');
+    const result = runCaptures(dir, recorder(dir), ['-m', 'NOTES: a read of a run', 'a.txt']);
+    expect(result.status, result.output).toBe(0);
+    expect(existsSync(join(dir, 'captures-exported'))).toBe(false);
+  });
+
+  it('keeps the commit when the captures export fails, and says so with the export status', () => {
+    const { dir, git } = repo();
+    writeFileSync(join(dir, 'a.txt'), 'a\n');
+    const before = git('rev-parse', 'HEAD');
+    const result = runCaptures(dir, 'echo "export-captures: NOT exported." >&2; exit 1', ['-m', 'Captures in docs/captures/x', 'a.txt']);
+    expect(git('rev-parse', 'HEAD'), 'the commit stands').not.toBe(before);
+    expect(result.status).toBe(3);
+    expect(result.output).toMatch(/COMMITTED, but the captures were NOT exported/);
+  });
+});
