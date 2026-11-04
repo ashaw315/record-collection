@@ -51658,3 +51658,11 @@ flake fired. gate-report refused the three logs as "from more than one directory
 `gh run download` puts each artifact in its own; the verdict still read, and the next read puts the
 three in one directory first, as the check says. Next run: 982efa3's HEAD, carrying the instrument
 (33bda08) and the identity fix.
+
+**CI run 41762846318 on 2d4fba1 (4 Nov): OK, exit 0, every half.** Unit 4766 passed, 2 skipped, the
+ci-gate identity test green on the runner for the first time (4 of 4). Chromium 1052 passed, 1
+skipped, no failed, no flaky, 1.3h. Mobile 390 passed, 4 skipped, 23.9m. No known flake fired. The
+three logs were copied into one scratchpad directory before gate-report read them, and it read
+them without the refusal of the run before. This is the first green run since the dispatch script,
+the tie fix, the §28 coarse-pointer change, the first-pull instrument and the identity fix landed;
+nothing in the tree is unverified by CI. No run is dispatched for this entry: it changes NOTES only.
