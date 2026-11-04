@@ -116,12 +116,18 @@ export function displayedCover(images: GalleryImage[]): GalleryImage | null {
  * newest cover, as §61 rules for the page, the back the newest back, and
  * each inside leaf the newest of its own type." One rule for every face, so
  * the displayed cover is this function asked for a cover.
+ *
+ * On a tie the LATER row wins. The column keeps microseconds and the record
+ * query orders by it ascending, so the input's order is the database's; the
+ * driver's Date keeps milliseconds, and two rows written within one tie here
+ * while the database knows which came second. CI run 41739055168 (3 Nov) seeded
+ * three covers inside a millisecond and the frame showed the second-newest.
  */
 export function newestOfType(images: GalleryImage[], type: GalleryImageType): GalleryImage | null {
   let newest: GalleryImage | null = null;
   for (const image of images) {
     if (image.imageType !== type) continue;
-    if (newest === null || time(image.createdAt) > time(newest.createdAt)) newest = image;
+    if (newest === null || time(image.createdAt) >= time(newest.createdAt)) newest = image;
   }
   return newest;
 }
@@ -131,11 +137,14 @@ export function newestOfType(images: GalleryImage[], type: GalleryImageType): Ga
  * holds, newest first, and the cover the page shows is first and marked as
  * the one shown." Newest first is `displayedCover`'s own clock, so the mark
  * is the frame's cover by construction and not a second decision; empty for
- * §54's record, and the gallery draws no group then.
+ * §54's record, and the gallery draws no group then. Reversed before the
+ * stable sort so a millisecond tie keeps the later row first, as
+ * `newestOfType` resolves it.
  */
 export function coverGroup(images: GalleryImage[]): { image: GalleryImage; shown: boolean }[] {
   return images
     .filter((image) => image.imageType === 'cover')
+    .reverse()
     .sort((a, b) => time(b.createdAt) - time(a.createdAt))
     .map((image, index) => ({ image, shown: index === 0 }));
 }

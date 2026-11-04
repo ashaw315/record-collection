@@ -51562,3 +51562,32 @@ scratchpad venv, 424 glyphs) is 35,044 bytes, 1.5×, +11,936; the same range wit
 34,012, so the arrows cost 1KB and the rest is the family's file keeping what Google's pipeline
 strips. Material at 3.1×, held: the self-subset is the mechanism whose wording Design withdrew
 before anyone had a weight, so the number goes to Design as a question, not forward as a build.
+
+**CI run 41739055168 on 3bc23a1 (3 Nov, one worker), read with gate-report: NOT OK, exit 1.** Unit
+4754 passed, 2 skipped, OK. Mobile 390 passed, 4 skipped, OK. Chromium 1049 passed, 1 failed, 2
+flaky. No known flake fired; lookup-flows:1743 passed. All three are step 165's, none pre-existing:
+
+(1) `covers-group-165` at both widths, flaky, "newest first" read [middle, newest, oldest] and passed
+on retry. The runner seeded three covers inside one millisecond. The column is timestamptz with
+microseconds and the record query (`records.ts:174`) orders by it ascending, so the page's input
+order is the database's; the driver's Date keeps milliseconds, so two rows tied in JS, and both
+`newestOfType`'s strict > and `coverGroup`'s stable sort kept the EARLIER row on a tie. The frame and
+the group agreed with each other, "by construction", and both were wrong by the database's clock. Fixed
+in the pure functions, >= and a reverse before the sort, so a tie resolves to the later row of the
+ascending input; the unit test seeds two covers at one millisecond and failed against both lines.
+Unobservable to a person, who cannot upload two covers in a millisecond, so the fixture found a
+precision loss the build had and nobody would see. Not a sleep in the fixture: the defect was real.
+
+(2) `record-page-28.spec.ts:135` "every control clears the 44px touch floor, at 390", failed and
+failed its retry, and fails locally the same way (31 passed, 1 failed, step level). It runs on the
+chromium project, a fine pointer, and reads the section overlay's declared `::before` height, which
+the step-165 scope removed under a mouse. It is from step 71's §28, before step 130 applied §T.6's
+pointer rule to the record page ("the 44 floor applies where the pointer is coarse; where the primary
+pointer is fine, controls keep their drawn size") with tests under both pointers in record-detail. So
+it encodes the pre-130 build, and the two tests contradict each other on a control inside a section
+at 390 under a mouse; record-detail's is the ruling's. The test's reading is also a proxy: a replaced
+element renders no `::before`, but `getComputedStyle(input, '::before').height` returns the
+declared 44 all the same, so the two 34-tall inputs it now reports as short were passing before by a
+height no finger ever got. Proposed, held for agreement as §2 requires: run the test under a coarse
+pointer, where the floor applies, and note the proxy. Not changed here. The dispatch for the fix
+waits on that decision, so one run covers both.

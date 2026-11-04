@@ -28,6 +28,22 @@ describe('coverGroup (§62: every cover, newest first, the shown one first and m
     expect(group[0]?.image.id).toBe(displayedCover(images)?.id);
   });
 
+  /*
+    CI run 41739055168 (3 Nov): three covers seeded on the runner within one
+    millisecond read [middle, newest, oldest]. The column is timestamptz with
+    microseconds and the record query orders by it ascending, so the input's
+    order is the database's; the driver's Date keeps milliseconds, so two rows
+    tie here. A strict > and a stable sort both kept the EARLIER row on a tie.
+    Fails against `>` in newestOfType and the unreversed sort in coverGroup.
+  */
+  it('two covers in the same millisecond: the later row of the ascending query is the newer, in the group and in the frame', () => {
+    const same = '2026-11-03T23:40:00.123Z';
+    const images = [image('first-row', 'cover', same), image('second-row', 'cover', same)];
+    expect(coverGroup(images).map((g) => g.image.id)).toEqual(['second-row', 'first-row']);
+    expect(coverGroup(images)[0]?.shown).toBe(true);
+    expect(displayedCover(images)?.id).toBe('second-row');
+  });
+
   it('is empty for a record with no cover (§54), whatever else it holds', () => {
     expect(coverGroup([image('b', 'back', '2026-01-01T00:00:00Z')])).toEqual([]);
     expect(coverGroup([])).toEqual([]);
