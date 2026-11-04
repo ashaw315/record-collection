@@ -51649,3 +51649,12 @@ test passed here and could not fail here until the identity was hidden
 carries its own identity for the object it writes. The family: a test that passes on the machine
 it was written on by a property of that machine, the same shape as the fonts that passed until
 the hinting flag. Mobile read OK. The chromium half was still running when this was read.
+
+**CI run 41752642598 on c4329a2, read in full (4 Nov): NOT OK, exit 1, on the unit half alone.** Unit
+4758 passed, 1 failed, the ci-gate identity test, fixed in 982efa3. Chromium 1052 passed, 1 skipped,
+no flaky, no retries, OK, in 1.4h against 1.1h on the run before: the §28 test under a coarse pointer
+and the covers group with the tie fix both green at one worker. Mobile 390 passed, OK. No known
+flake fired. gate-report refused the three logs as "from more than one directory" because
+`gh run download` puts each artifact in its own; the verdict still read, and the next read puts the
+three in one directory first, as the check says. Next run: 982efa3's HEAD, carrying the instrument
+(33bda08) and the identity fix.
