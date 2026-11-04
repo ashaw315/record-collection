@@ -49,7 +49,6 @@ describe('discogs_release_text is written where the payload is', () => {
     expect(await rowsFor(RELEASE.id)).toEqual([
       { kind: 'company', ordinal: 0, text: 'Orlake Records Ltd.', detail: 'Pressed By' },
       { kind: 'credit', ordinal: 0, text: 'Mike Stone (2)', detail: 'Producer' },
-      { kind: 'notes', ordinal: 0, text: 'Includes a lyric sheet.', detail: null },
       { kind: 'track', ordinal: 0, text: 'The Blood Runs Red', detail: 'A1' },
       { kind: 'track', ordinal: 1, text: 'The Price Of Silence', detail: 'A2' },
     ]);
@@ -70,16 +69,17 @@ describe('the backfill over the cache', () => {
 
   it('fills the rows of every cached release that has none, counts them, and is idempotent', async () => {
     await seedCacheOnly(1, RELEASE);
+    /* Notes only: nothing is derived from release notes (§W.24, 4 Nov), so this release stands with no rows and still counts as read. */
     await seedCacheOnly(2, { ...RELEASE, id: 2, tracklist: [], extraartists: [], companies: [], notes: 'Only notes.' });
     await seedCacheOnly(3, { id: 3, title: 'Nothing to say' });
     const first = await backfillReleaseText();
-    expect(first).toEqual({ releases: 3, rows: 6 });
-    expect((await rowsFor(1)).length).toBe(5);
-    expect(await rowsFor(2)).toEqual([{ kind: 'notes', ordinal: 0, text: 'Only notes.', detail: null }]);
+    expect(first).toEqual({ releases: 3, rows: 4 });
+    expect((await rowsFor(1)).length).toBe(4);
+    expect(await rowsFor(2)).toEqual([]);
     expect(await rowsFor(3)).toEqual([]);
     const second = await backfillReleaseText();
-    expect(second).toEqual({ releases: 3, rows: 6 });
-    expect((await rowsFor(1)).length).toBe(5);
+    expect(second).toEqual({ releases: 3, rows: 4 });
+    expect((await rowsFor(1)).length).toBe(4);
   });
 });
 

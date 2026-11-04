@@ -4,20 +4,27 @@ import { meaningful } from './fields';
 /**
  * The searchable text of a cached Discogs release (the free-text unit, 4 Nov).
  *
- * The cache holds every release payload the app has fetched, and four of its
+ * The cache holds every release payload the app has fetched, and three of its
  * fields are text a reader might search a collection by: the tracklist, the
- * credits (`extraartists`, on the release and on its tracks), the companies,
- * and the release notes. None of them is read by the record page, and the
- * search matched a record's title and its artist's name only. This turns a
- * payload into one row per searchable thing, each with its kind and, where
- * it has one, a detail a result can say the match by: a track's position, a
- * credit's or a company's role.
+ * credits (`extraartists`, on the release and on its tracks) and the
+ * companies. None of them is read by the record page, and the search
+ * matched a record's title and its artist's name only. This turns a payload
+ * into one row per searchable thing, each with its kind and, where it has
+ * one, a detail a result can say the match by: a track's position, a
+ * credit's or a company's role. §W.24 reaches the tracklist and the credits;
+ * the companies are stored and not reached, and the release notes are
+ * neither (see RELEASE_TEXT_KINDS).
  *
  * Pure, so the rows are decided here and tested here; the store writes them
  * wherever the payload is written and the backfill derives them for the
  * releases cached before the table existed.
  */
-export const RELEASE_TEXT_KINDS = ['track', 'credit', 'company', 'notes'] as const;
+/*
+  No `notes` kind (§W.24, 4 Nov): "Search does not reach Discogs' release notes, which the app does
+  not store"; Adam ruled they are not kept, as they compete with the ABOUT he curates. The kind was
+  derived for a day and never stored anywhere but the test database; the backfill had not run.
+*/
+export const RELEASE_TEXT_KINDS = ['track', 'credit', 'company'] as const;
 export type ReleaseTextKind = (typeof RELEASE_TEXT_KINDS)[number];
 
 export type ReleaseTextRow = { kind: ReleaseTextKind; ordinal: number; text: string; detail: string | null };
@@ -28,7 +35,6 @@ const Shape = z.object({
   tracklist: z.array(z.object({ position: z.string().optional(), title: z.string().optional(), extraartists: z.array(Credit).optional() })).optional(),
   extraartists: z.array(Credit).optional(),
   companies: z.array(z.object({ name: z.string().optional(), entity_type_name: z.string().optional() })).optional(),
-  notes: z.string().optional(),
 });
 
 export function releaseText(payload: unknown): ReleaseTextRow[] {
@@ -52,6 +58,5 @@ export function releaseText(payload: unknown): ReleaseTextRow[] {
     }
   }
   for (const company of raw.companies ?? []) add('company', meaningful(company.name), meaningful(company.entity_type_name));
-  add('notes', meaningful(raw.notes), null);
   return rows;
 }

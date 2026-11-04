@@ -55,9 +55,9 @@ describe('releaseText: the searchable text of a cached release', () => {
     ]);
   });
 
-  it('keeps the notes whole as one row with no detail', () => {
-    const notes = releaseText(PAYLOAD).filter((row) => row.kind === 'notes');
-    expect(notes).toEqual([{ kind: 'notes', ordinal: 0, text: 'Includes a lyric sheet.\n\nMatrix on the runout.', detail: null }]);
+  it('stores no release notes: Adam ruled they are not kept, and §W.24 says search reaches none (4 Nov)', () => {
+    expect(releaseText(PAYLOAD).some((row) => row.text.includes('lyric sheet'))).toBe(false);
+    expect(releaseText(PAYLOAD).map((row) => row.kind)).not.toContain('notes');
   });
 
   it('returns nothing for a payload with none of the four, and nothing for a payload that is not a release', () => {
@@ -69,7 +69,7 @@ describe('releaseText: the searchable text of a cached release', () => {
 
   it('orders the rows kind by kind, tracks first, in the payload’s order within a kind', () => {
     expect(releaseText(PAYLOAD).map((row) => `${row.kind}:${row.ordinal}`)).toEqual([
-      'track:0', 'track:1', 'credit:0', 'credit:1', 'credit:2', 'company:0', 'company:1', 'notes:0',
+      'track:0', 'track:1', 'credit:0', 'credit:1', 'credit:2', 'company:0', 'company:1',
     ]);
   });
 });

@@ -941,6 +941,55 @@ async function seed2(...titles: string[]): Promise<string> {
   return artistId;
 }
 
+/**
+ * §W.24 (4 Nov): "Search reaches a record's title, artist and label, its
+ * tracklist and its credits, in every view." The tracklist and the credits
+ * are the record's pressing's cached release text (`discogs_release_text`,
+ * the free-text unit); the label is the record's own. Not the companies and
+ * not Discogs' release notes, which Adam ruled are not kept. One predicate,
+ * `buildWhere`, so the shelf reaches the same. Fails against the predicate
+ * before it, title and artist alone.
+ */
+describe('GET /api/records — q reaches the label, the tracklist and the credits', () => {
+  async function seedText() {
+    await seed();
+    const [{ id: record }] = (await db.execute<{ id: string }>(sql`SELECT id FROM records WHERE title = 'Hear Nothing See Nothing Say Nothing'`)).rows;
+    const [{ id: pressing }] = (await db.execute<{ id: string }>(sql`INSERT INTO pressings (discogs_release_id) VALUES (11029111) RETURNING id`)).rows;
+    await db.execute(sql`UPDATE records SET pressing_id = ${pressing} WHERE id = ${record}`);
+    await db.execute(sql`INSERT INTO discogs_release_text (discogs_release_id, kind, ordinal, text, detail) VALUES
+      (11029111, 'track', 0, 'The Blood Runs Red', 'A1'),
+      (11029111, 'credit', 0, 'Mike Stone (2)', 'Producer'),
+      (11029111, 'company', 0, 'Orlake Records Ltd.', 'Pressed By')`);
+  }
+
+  it('matches on the LABEL name', async () => {
+    await seedText();
+    expect(await names('/api/records?q=Clay')).toEqual(['Hear Nothing See Nothing Say Nothing']);
+    expect(await names('/api/records?q=Spiderleg')).toEqual(['Arise!']);
+  });
+
+  it('matches on a track title, by substring and by likeness', async () => {
+    await seedText();
+    expect(await names('/api/records?q=Blood')).toEqual(['Hear Nothing See Nothing Say Nothing']);
+    expect(await names('/api/records?q=Blod Runs')).toEqual(['Hear Nothing See Nothing Say Nothing']);
+  });
+
+  it('matches on a credit’s name, a drummer’s or a producer’s', async () => {
+    await seedText();
+    expect(await names('/api/records?q=Mike Stone')).toEqual(['Hear Nothing See Nothing Say Nothing']);
+  });
+
+  it('does not reach the companies, which §W.24 leaves out', async () => {
+    await seedText();
+    expect(await names('/api/records?q=Orlake')).toEqual([]);
+  });
+
+  it('a record whose own artist matches still matches by name, so nothing a search found before is lost', async () => {
+    await seedText();
+    expect(await names('/api/records?q=Discharge')).toEqual(['Hear Nothing See Nothing Say Nothing']);
+  });
+});
+
 describe('GET /api/records — q is a literal, not a LIKE pattern', () => {
   /**
    * `q` was interpolated straight into `%${q}%`, so LIKE metacharacters acted

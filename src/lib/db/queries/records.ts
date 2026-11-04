@@ -1,5 +1,6 @@
 import 'server-only';
 import { and, asc, desc, eq, exists, gte, ilike, inArray, lte, or, sql } from 'drizzle-orm';
+import type { AnyPgColumn } from 'drizzle-orm/pg-core';
 import { isForeignKeyViolation } from '@/lib/api/errors';
 import { escapeLikePattern } from '@/lib/api/like';
 import type { RecordFilters, RecordSortField } from '@/lib/records/fields';
@@ -10,6 +11,7 @@ import { genreSubtree } from './genre-hierarchy';
 import { getDb } from '@/db/client';
 import {
   artists,
+  discogsReleaseText,
   formats,
   genres,
   images,
@@ -340,18 +342,41 @@ export function buildWhere(filters: RecordFilters) {
      * prefix. Conversely 'Notthing' is not a substring of anything, so
      * substring alone would miss the typo the trigram indexes exist for.
      */
+    /*
+      §W.24 (4 Nov): "Search reaches a record's title, artist and label, its
+      tracklist and its credits, in every view." The label is the record's
+      own; the tracklist and the credits are the record's pressing's cached
+      release text, the track and credit kinds only: the companies are stored
+      and not reached, and Discogs' release notes are neither stored nor
+      reached, by Adam's ruling. Each branch matches as the title does, by
+      likeness or by substring, and the shelf shares this predicate.
+    */
+    const likeness = (column: AnyPgColumn) => or(sql`${column} % ${q}`, ilike(column, like));
     clauses.push(
       or(
-        sql`${records.title} % ${q}`,
-        ilike(records.title, like),
+        likeness(records.title),
         exists(
           getDb()
             .select({ one: sql`1` })
             .from(artists)
+            .where(and(eq(artists.id, records.artistId), likeness(artists.name))),
+        ),
+        exists(
+          getDb()
+            .select({ one: sql`1` })
+            .from(labels)
+            .where(and(eq(labels.id, records.labelId), likeness(labels.name))),
+        ),
+        exists(
+          getDb()
+            .select({ one: sql`1` })
+            .from(pressings)
+            .innerJoin(discogsReleaseText, eq(discogsReleaseText.discogsReleaseId, pressings.discogsReleaseId))
             .where(
               and(
-                eq(artists.id, records.artistId),
-                or(sql`${artists.name} % ${q}`, ilike(artists.name, like)),
+                eq(pressings.id, records.pressingId),
+                inArray(discogsReleaseText.kind, ['track', 'credit']),
+                likeness(discogsReleaseText.text),
               ),
             ),
         ),

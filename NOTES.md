@@ -51934,3 +51934,18 @@ commit whose NOTES describes code it does not hold. Caught by reading the chain'
 against what it claimed. The rule, already written for runs and now for chains: a command
 whose status decides the next step is never piped; write its output to a file and read both.
 Step 168's files follow in the next commit, the entry already landed, out of order by one.
+
+**The free-text unit, part 2: what search reaches (4 Nov), §W.24's step, the matching half.** Three
+OR branches beside the title's in `buildWhere`, each by likeness or substring as the title is: the
+record's label by name; the record's pressing's cached text, the track and credit kinds only,
+through `pressings.discogs_release_id`. The companies are stored and not reached; Discogs'
+release notes are neither, so the `notes` kind left `releaseText` before any backfill stored one
+(production held 0 text rows), which answers the step's "if any are stored today, report it":
+none are. The shelf shares the predicate by construction (`shelf.ts` reuses `buildWhere`), so
+"in every view" is one change. Tests first: label, track by substring and by likeness, credit,
+not a company, and the artist still matching, in records-list; three failed against the
+predicate as it stood. Step level: records-list, release-text, shelf (142), collection-filters,
+wall-arrival-104, collection-band-97 on chromium (41), typecheck, lint, build. Held for the next
+unit: the reason line in the table and the grid (§T.3) and the shelf's reason on the pull
+(§W.24), both provisional and both a proposal; and the backfill on production, Adam's, now
+derives no notes. Open for Adam, from Design: whether search reaches "Contributor notes".
