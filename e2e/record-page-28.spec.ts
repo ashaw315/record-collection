@@ -138,12 +138,14 @@ test('§28: below 960 the lower region is a document — no air, no figures', as
   coarse; where the primary pointer is fine, controls keep their drawn size",
   and the section overlay this reads is coarse-only since step 165. Written at
   step 71 on the chromium project, a fine pointer, it encoded the pre-130 build
-  and passed until a 24px control lived inside a section. That is ONE of its two
-  defects. The other survives this change: it reads the declared `::before`
-  height, and a replaced element (input, select) renders no `::before` under any
-  pointer, so the two 34-tall fields below pass a floor no finger gets from
-  them. How §T.6's floor is met for a control that cannot carry the overlay is
-  Design's question (NOTES, 3 Nov), and the reading stays as it is until answered.
+  and passed until a 24px control lived inside a section. That was ONE of its
+  two defects. The other was its reading of the declared `::before` height,
+  which a replaced element (input, select) returns without rendering under any
+  pointer, so two 34-tall fields passed a floor no finger got from them. Settled
+  by Design on 4 Nov from §T.6 as written: a control that renders no `::before`
+  meets the floor by its drawn box, 44 under a coarse pointer, as step 130 drew
+  the two fields; so a replaced element is read by its box below, and nothing
+  else.
 */
 test.describe('under a coarse pointer', () => {
 test.use({ hasTouch: true });
@@ -198,7 +200,16 @@ test('§28: every control clears the 44px touch floor, at 390', async ({ page })
         controls was reporting that they were off screen, including three
         whose own boxes were already 44 tall.
       */
-      const hit = parseFloat(getComputedStyle(el, '::before').height);
+      /*
+        §T.6, settled 4 Nov: "Where a control renders no `::before`, it meets
+        the floor by its box: drawn 44 under a coarse pointer." A replaced
+        element (input, select, textarea) returns the declared height of a
+        pseudo-element it never renders, so reading it there passed two
+        34-tall fields at a 44 no finger got; those read their drawn box, and
+        only that.
+      */
+      const replaced = ['INPUT', 'SELECT', 'TEXTAREA'].includes(el.tagName);
+      const hit = replaced ? NaN : parseFloat(getComputedStyle(el, '::before').height);
       const reach = Number.isNaN(hit) ? box.height : Math.max(box.height, hit);
       if (reach < floor - 0.5) {
         out.push(`${el.tagName}${el.getAttribute('data-field') ? `[${el.getAttribute('data-field')}]` : ''} ${Math.round(box.width)}×${Math.round(box.height)} — "${(el.textContent ?? '').trim().slice(0, 24)}"`);

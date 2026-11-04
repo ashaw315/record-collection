@@ -51741,3 +51741,12 @@ change file did not say so and the next one need not, the index says it. Second 
 acceptable, because the reason is the width of every line carrying →, which the machine sets,
 not how the glyph looks": whether Design had Adam's "seems okay" when it wrote that is not
 knowable from the drop, so the fact goes in the next note and Design is free to keep the answer.
+
+**§T.6 settled (Design, 4 Nov) and the §28 test's second defect gone.** "Where a control renders no
+`::before`, it meets the floor by its box: drawn 44 under a coarse pointer", for the whole class,
+no case-by-case ruling owed. So record-page-28's floor test reads a replaced element (input,
+select, textarea) by its drawn box and nothing else, and the overlay only where an element can
+render one; the two fields step 130 drew 44 under a coarse pointer pass on their box, 8 passed on
+chromium, and the test no longer certifies a 44 from a declared height nothing draws. The proxy
+is gone, which the pointer change alone did not do. Part (b), the band's view names, is a fact to
+report before anything moves: boxed or unboxed, and their drawn line's height.
