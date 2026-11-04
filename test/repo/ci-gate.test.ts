@@ -37,7 +37,9 @@ function dispatch(args: string[]): { status: number; output: string; calls: stri
   return { status: result.status ?? -1, output: `${result.stdout}${result.stderr}`, calls };
 }
 
-const git = (...args: string[]) => execFileSync('git', args, { encoding: 'utf8' }).trim();
+/* The dangling commit below needs an author, and a runner has none: CI run 41752642598 failed here on "empty ident name". The identity is the test's own, so the test does not depend on the machine's. */
+const IDENT = { GIT_AUTHOR_NAME: 'ci-gate test', GIT_AUTHOR_EMAIL: 'ci-gate@test.invalid', GIT_COMMITTER_NAME: 'ci-gate test', GIT_COMMITTER_EMAIL: 'ci-gate@test.invalid' };
+const git = (...args: string[]) => execFileSync('git', args, { encoding: 'utf8', env: { ...process.env, ...IDENT } }).trim();
 
 describe('scripts/ci-gate.sh dispatches the gate on a full commit id', () => {
   /* A commit every remote branch holds: the oldest on origin/main is on no other machine's edits. */

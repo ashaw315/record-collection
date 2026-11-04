@@ -51640,3 +51640,12 @@ spine, as the specs press it. (2) With every local cover pointed at a server ans
 cells read the field for 2,958 and 2,947ms, the pull 24 and 35ms past hydration; with the seeded
 data: covers, 0 of 1 on the field at each. Both branches read once each against a local server
 before the command was handed over. The smoke's logs are deleted: they measured a dev server.
+
+**CI run 41752642598 on c4329a2 (4 Nov): unit NOT OK on a test of Code's own, 4758 passed, 1 failed.**
+`ci-gate.test.ts`'s fourth case writes a dangling commit object with `git commit-tree`, and the
+runner has no git identity: "empty ident name". Local git fills a name from the account, so the
+test passed here and could not fail here until the identity was hidden
+(`GIT_AUTHOR_NAME= GIT_COMMITTER_NAME=`), which reproduced the runner's line exactly. The test now
+carries its own identity for the object it writes. The family: a test that passes on the machine
+it was written on by a property of that machine, the same shape as the fonts that passed until
+the hinting flag. Mobile read OK. The chromium half was still running when this was read.
