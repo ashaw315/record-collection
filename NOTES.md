@@ -52017,3 +52017,26 @@ reported as the tree changing and refused; the refusal marker held the next comm
 **CI run 41863860269 on ccbbc29, read in full (4 Nov): OK, exit 0, every half.** Unit 4789 passed,
 2 skipped, the conformance tests green with migration 0033; chromium 1056 passed, 1 skipped, no
 flaky, 1.0h; mobile 390 passed, 4 skipped. The first green since the free-text storage landed.
+
+**Vercel Functions Storage at 75% of 10GB (the coordinator, 4 Nov): two reads, and a workflow change.**
+Read through the Vercel CLI's saved session and the API, nothing deployed. (1) Which project: in
+the last 30 days the team made 314 deployments, record-collection 294 of them (291 production),
+we-were-here-briefly 9, es-corpus-sculpture 8, trace-forms 3. Every push to main is a production
+deployment; today alone 14 commits were pushed, half of them NOTES-only or documentation. (2) The
+sum of function sizes on one deployment, dpl_4tXZbXNeV6tf15KT3oiZ8547oHCm (12:50 EST, the
+latest): 135 lambda outputs resolving to 4 unique bundles, 22.40 MB together: 18.42 MB serving 86
+API routes, 2.57 MB serving 36 page routes, 1.27 MB serving 12, 0.14 MB the middleware. The
+cross-check: 294 × 22.4 MB is about 6.4 GB, so record-collection's share of the 7.5 GB is nearly
+all of it, by volume and by size. **What is in the 18.42 MB:** the local instrument (every
+function's `.nft.json` traced files, deduplicated) puts the API functions at about 32 MB each on
+this machine, of which sharp's libvips is 19 MB (darwin) plus 8.6 MB of its wasm fallback; on the
+runner it is the linux build, hence 18.4. Without sharp the big bundle would be about the page
+bundle's size, 2.6 MB, so a deployment would be about 6 MB rather than 22. sharp stays last and
+is measured before and after with the same instrument if it goes. **The workflow change:** push
+once per completed unit, never per commit; NOTES-only, documentation and drop commits ride with
+the next unit's push. The one thing in the loop that depended on pushing per commit is the CI
+dispatch, which refuses an unpushed commit; it moves to after the unit's push, one run per
+unit, which was the rule already. Exports to Downloads happen at commit, so Design's relay is
+unchanged. No skip-build step: Vercel's HEAD^..HEAD example reads the last commit of a push, and
+a batch ending in a NOTES commit would skip a real change. This entry is the first commit held
+unpushed under the rule.
