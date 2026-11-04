@@ -51620,3 +51620,23 @@ Read from the served latin file itself, not its declared range: it holds › » 
 "Manage ›" is the nearest in sense. Adam is looking at the arrow as it draws; if it does not read
 as foreign to him, leaving it is the cheapest correct answer, and nothing is worth 12KB for a glyph
 nobody minds.
+
+**Step 164's measurement has a command (the coordinator, 3 Nov: "an unrun measurement is how a
+provisional quietly becomes permanent").** `npm run window:measure:first-pull`, Adam's, on
+production after the deploy, the same shape as the other modes: 20 cold loads at fast-3g and 20 at
+slow-3g, round-robin, each pressed on the first spine at the hydrated mark, the earliest a cold load
+can pull (a press before hydration navigates or drops, the cause run). Each load records what the
+pull landed on, read inside the page on the attribute the wall increments: the field, if the wall's
+own request for that cover (Resource Timing, which the pull's image joins) had not ended at the
+pull; the cover, if it had, or the cover is a data: URI; no-cover, left out of the rate. The field's
+duration is kept, the request's end less the pull, so what a press a second later would have seen
+can be read off the run. The mode prints its own sentence and its own broken count: the window's
+verdict leaves these cells out, and on the first smoke it printed "no counts, 0 broken" over six
+broken loads. About 15 to 25 minutes; nothing written, a pull makes no request.
+
+**Staged before it was believed, twice.** (1) Six loads "no spine could be pressed": the seat anchor's
+box spans its sleeve, and the next seat's spine polygon covers its centre, so the press moved to the
+spine, as the specs press it. (2) With every local cover pointed at a server answering in 3,000ms, both
+cells read the field for 2,958 and 2,947ms, the pull 24 and 35ms past hydration; with the seeded
+data: covers, 0 of 1 on the field at each. Both branches read once each against a local server
+before the command was handed over. The smoke's logs are deleted: they measured a dev server.

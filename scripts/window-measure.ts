@@ -33,7 +33,7 @@ export type Window =
   | { kind: 'broken'; reason: string };
 
 /** `warm` is Run A's: a warm-up that raced the covers. `covers-cold` and `fully-warm` make their state and are checked for it by `conditionMade`. */
-export type Cell = { cache: 'cold' | 'warm' | 'covers-cold' | 'fully-warm' | 'no-covers'; network: 'none' | 'fast-3g' | 'slow-3g' | 'slow-3g-cpu4'; press?: boolean; weigh?: boolean };
+export type Cell = { cache: 'cold' | 'warm' | 'covers-cold' | 'fully-warm' | 'no-covers'; network: 'none' | 'fast-3g' | 'slow-3g' | 'slow-3g-cpu4'; press?: boolean; weigh?: boolean; firstPull?: boolean };
 
 /** `waitMs` is the first frame with spines to the hydrated mark, or how long a load past its limit stood open. */
 export type Load = { cell: string; window: Window; waitMs?: number | null };
@@ -70,7 +70,63 @@ export const RUN_CAUSE: Run = {
   limitMs: 180_000,
 };
 
-export const cellName = (cell: Cell) => `${cell.cache}/${cell.network}${cell.press === true ? '/press' : ''}${cell.weigh === true ? '/weigh' : ''}`;
+export const cellName = (cell: Cell) => `${cell.cache}/${cell.network}${cell.press === true ? '/press' : ''}${cell.weigh === true ? '/weigh' : ''}${cell.firstPull === true ? '/first-pull' : ''}`;
+
+/**
+ * **Step 164's Report bullet: "how often a first pull lands on the field at
+ * cold fast 3G and slow 3G."** A press before hydration navigates or drops
+ * (the cause run, 30 Oct), so the first pull a cold load can make is at the
+ * hydrated mark, and that is the moment the wall has just begun asking for its
+ * covers: the press is taken there, the worst case. The field's duration is
+ * kept with each, so what a press a second later would have seen can be read
+ * off the run. Cold slow-3g loads reached hydration in 20 to 40s before step
+ * 164 took the covers out of the load; 600s is Run B's limit, kept.
+ */
+export const RUN_FIRST_PULL: Run = {
+  cells: [{ cache: 'cold', network: 'fast-3g', firstPull: true }, { cache: 'cold', network: 'slow-3g', firstPull: true }],
+  perCell: 20,
+  limitMs: 600_000,
+};
+
+/** What a first pull landed on: the field (its cover still in flight), the cover (already arrived), or a record with no cover, which has no field to wait on. */
+export type FirstPull = { landed: 'field' | 'cover' | 'no-cover'; fieldMs: number | null; hydratedAt?: number; pulledAt?: number; href?: string | null };
+
+export type FirstPullRow = { cell: string; pulls: number; onField: number; withCover: number; noCover: number; fieldMs: number[] };
+
+/** The first-pull loads, last attempt of each, counted per cell by what the pull landed on. */
+export function firstPullsOfLog(log: string): FirstPullRow[] {
+  const attempts = log.split('\n').filter((line) => line !== '').map((line) => JSON.parse(line) as { i: number; cell: string; firstPull?: FirstPull }).flatMap((a) => (a.firstPull === undefined ? [] : [a]));
+  const rows = new Map<string, FirstPullRow>();
+  for (const { cell, firstPull } of new Map(attempts.map((a) => [a.i, a])).values()) {
+    if (firstPull === undefined) continue;
+    const row = rows.get(cell) ?? { cell, pulls: 0, onField: 0, withCover: 0, noCover: 0, fieldMs: [] };
+    row.pulls += 1;
+    if (firstPull.landed === 'field') { row.onField += 1; if (firstPull.fieldMs !== null) row.fieldMs.push(firstPull.fieldMs); }
+    else if (firstPull.landed === 'cover') row.withCover += 1;
+    else row.noCover += 1;
+    rows.set(cell, row);
+  }
+  return [...rows.values()];
+}
+
+/** The first-pull loads whose last attempt was broken: the window's verdict leaves these cells out, so this mode counts its own. */
+export function firstPullBroken(log: string): number {
+  const attempts = log.split('\n').filter((line) => line !== '').map((line) => JSON.parse(line) as { i: number; cell: string; window: Window }).filter((a) => a.cell.endsWith('/first-pull'));
+  return [...new Map(attempts.map((a) => [a.i, a])).values()].filter((a) => a.window.kind === 'broken').length;
+}
+
+/** The rate in the bullet's words, per cell, over the pulls that had a cover to wait for, with the field's spread. */
+export function firstPullSentence(rows: FirstPullRow[]): string {
+  return rows.map((row) => {
+    const name = row.cell.replace(/\/first-pull$/, '');
+    const waited = row.onField + row.withCover;
+    const left = row.noCover > 0 ? ` (${row.noCover} on a record with no cover, left out)` : '';
+    if (waited === 0) return `${name}: no first pull had a cover to wait for${left}`;
+    const sorted = [...row.fieldMs].sort((a, b) => a - b);
+    const spread = sorted.length === 0 ? '' : `, the field for ${Math.round(sorted[0])} to ${Math.round(sorted[sorted.length - 1])}ms, median ${Math.round(sorted[Math.floor(sorted.length / 2)])}ms`;
+    return `${name}: ${row.onField} of ${waited} first pulls landed on the field${left}${spread}`;
+  }).join('; ');
+}
 
 /** Past interactive: production's React attached 13.1 to 13.5s past it and hydrated at 15.3 to 15.7s, the slice the first 20 presses missed. */
 export const PRESS_LATE_MS = 14_000;
@@ -279,7 +335,7 @@ const tableLines = (loads: Load[], figures: number[]) => {
 
 /** The log has a line per attempt; a retaken load is its last attempt, the one `runPlan` keeps. */
 export function loadsOfLog(log: string): Load[] {
-  const attempts = log.split('\n').filter((line) => line !== '').map((line) => JSON.parse(line) as { i: number; cell: string; window: Window; marks?: Marks | null }).filter((a) => !a.cell.endsWith('/press') && !a.cell.endsWith('/weigh'));
+  const attempts = log.split('\n').filter((line) => line !== '').map((line) => JSON.parse(line) as { i: number; cell: string; window: Window; marks?: Marks | null }).filter((a) => !a.cell.endsWith('/press') && !a.cell.endsWith('/weigh') && !a.cell.endsWith('/first-pull'));
   const loads = attempts.map((a): [number, Load] => {
     const { marks, window } = a;
     const waitMs = window.kind === 'incomplete' ? window.openAtLeastMs ?? null
@@ -447,6 +503,63 @@ export async function takePress(page: Page, url: string, limitMs: number, { pres
     if (Date.now() > deadline || (hydratedSince !== null && Date.now() - hydratedSince > 3000)) return { outcome: pressOutcome({ navigated: moved(), pullStarts: await pullStarts() }), ...state };
     await page.waitForTimeout(100);
   }
+}
+
+/**
+ * One cold load pressed at the hydrated mark, the first pull the load can
+ * make: what it landed on, read at the moment the pull started. The wall's
+ * own request for the cover is on Resource Timing (the hydration effect asks
+ * for every cover, and the pull's image joins the request in flight), so the
+ * field is "no finished entry for the pulled cover's URL when the pull
+ * started", and the field's duration is that entry's end less the pull's
+ * start. Read inside the page, on the attribute the wall increments, so the
+ * reading is at the pull and not a round trip later. Read-only: a pull makes
+ * no request of the app.
+ */
+export async function takeFirstPull(page: Page, url: string, limitMs: number): Promise<FirstPull> {
+  const response = await page.goto(url, { waitUntil: 'commit', timeout: limitMs });
+  if (response !== null && new URL(page.url()).pathname === '/login') throw new Error('the session was refused: the Collection redirected to /login');
+  await page.waitForFunction(() => {
+    const m = (window as unknown as { __windowMarks?: Marks }).__windowMarks;
+    return m !== undefined && m.hydratedAt !== null;
+  }, undefined, { timeout: limitMs });
+  const before = await page.evaluate(() => {
+    const m = (window as unknown as { __windowMarks: Marks }).__windowMarks;
+    /* The spine, as the specs press it: a seat's own box spans its sleeve and its neighbour's spine covers the centre (the smoke of 3 Nov: "no spine could be pressed" six times). */
+    const seat = [...document.querySelectorAll('a[data-seat]')].flatMap((a) => {
+      const spine = a.querySelector('[data-spine]');
+      if (spine === null) return [];
+      const r = spine.getBoundingClientRect();
+      const [x, y] = [r.left + r.width / 2, r.top + r.height / 2];
+      return document.elementFromPoint(x, y)?.closest('a[data-seat]') === a ? [{ x, y }] : [];
+    })[0];
+    const container = document.querySelector('[data-wall-container]');
+    const w = window as unknown as { __firstPull?: { pulledAt: number; href: string | null; noCover: boolean; finishedAtPull: boolean } };
+    if (container !== null) new MutationObserver(() => {
+      if (w.__firstPull !== undefined || Number(container.getAttribute('data-pull-starts') ?? 0) === 0) return;
+      const pulled = document.querySelector('[data-pulled]');
+      const href = pulled?.querySelector('image[data-cover]')?.getAttribute('href') ?? null;
+      const absolute = href === null ? null : new URL(href, location.href).href;
+      const now = performance.now();
+      const finishedAtPull = absolute !== null && performance.getEntriesByName(absolute).some((e) => (e as PerformanceResourceTiming).responseEnd > 0 && (e as PerformanceResourceTiming).responseEnd <= now);
+      w.__firstPull = { pulledAt: now, href: absolute, noCover: pulled?.querySelector('[data-no-cover]') !== null && href === null, finishedAtPull };
+    }).observe(container, { attributes: true, attributeFilter: ['data-pull-starts'] });
+    return { hydratedAt: m.hydratedAt, seat };
+  });
+  if (before.seat === undefined) throw new Error('no spine could be pressed');
+  await page.mouse.click(before.seat.x, before.seat.y);
+  await page.waitForFunction(() => (window as unknown as { __firstPull?: unknown }).__firstPull !== undefined, undefined, { timeout: 15_000 });
+  const pulled = await page.evaluate(() => (window as unknown as { __firstPull: { pulledAt: number; href: string | null; noCover: boolean; finishedAtPull: boolean } }).__firstPull);
+  const hydratedAt = before.hydratedAt ?? undefined;
+  if (pulled.noCover || pulled.href === null) return { landed: 'no-cover', fieldMs: null, hydratedAt, pulledAt: pulled.pulledAt, href: pulled.href };
+  /* A data: cover needs no fetch and has no Resource Timing entry: it is there at the pull. */
+  if (pulled.finishedAtPull || pulled.href.startsWith('data:')) return { landed: 'cover', fieldMs: null, hydratedAt, pulledAt: pulled.pulledAt, href: pulled.href };
+  /* The field stands until the cover's response ends; past the limit, the duration is at least that. */
+  const end = await page.waitForFunction((href) => {
+    const e = performance.getEntriesByName(href).find((x) => (x as PerformanceResourceTiming).responseEnd > 0);
+    return e === undefined ? false : (e as PerformanceResourceTiming).responseEnd;
+  }, pulled.href, { timeout: limitMs }).then((h) => h.jsonValue() as Promise<number>).catch(() => null);
+  return { landed: 'field', fieldMs: end === null ? null : Math.max(0, end - pulled.pulledAt), hydratedAt, pulledAt: pulled.pulledAt, href: pulled.href };
 }
 
 /**

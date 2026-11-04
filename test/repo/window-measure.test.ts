@@ -1,7 +1,7 @@
 import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { CANDIDATES_MS, COVER_BLOCK, PAN_CELLS, PULL_SEATS, frameStats, panPlan, pullPlan, DELAYS_MS, PRESS_LATE_MS, RUN_A, RUN_B, RUN_CAUSE, cellName, closePlan, conditionMade, coverSummary, coverSizes, heldWaits, loadsOfLog, pressOutcome, pressesOfLog, projection, runPlan, schedule, verdict, windowOf, type Load, type Window } from '../../scripts/window-measure';
+import { CANDIDATES_MS, COVER_BLOCK, PAN_CELLS, PULL_SEATS, frameStats, panPlan, pullPlan, DELAYS_MS, PRESS_LATE_MS, RUN_A, RUN_B, RUN_CAUSE, RUN_FIRST_PULL, cellName, firstPullBroken, firstPullSentence, firstPullsOfLog, closePlan, conditionMade, coverSummary, coverSizes, heldWaits, loadsOfLog, pressOutcome, pressesOfLog, projection, runPlan, schedule, verdict, windowOf, type Load, type Window } from '../../scripts/window-measure';
 
 /**
  * **The production measurement's judgement, restated before a load is taken
@@ -458,5 +458,65 @@ describe('verdict', () => {
     const v = verdict([load('cold/none', occurred(10), 20), load('cold/none', { kind: 'broken', reason: 'x' })]);
     expect(v.sentence).toContain('cold/none: 1 loads;');
     expect(v.broken).toBe(1);
+  });
+});
+
+/**
+ * **Step 164's Report bullet: "how often a first pull lands on the field at
+ * cold fast 3G and slow 3G."** A pull before hydration navigates or drops (the
+ * cause run), so the first pull a load can make is at the hydrated mark, and
+ * that is when the wall has just begun asking for its covers: the press is
+ * taken there, the worst case, and the field's duration is kept so a later
+ * press can be read off it.
+ */
+describe('the first-pull run (step 164)', () => {
+  /* Fails against the press taken among the window's cells, or at one network: the rate is asked at both. */
+  it('takes 20 cold loads at fast-3g and 20 at slow-3g, round-robin, each pressed at the hydrated mark, within 600s', () => {
+    expect(RUN_FIRST_PULL.cells.map(cellName)).toEqual(['cold/fast-3g/first-pull', 'cold/slow-3g/first-pull']);
+    expect(RUN_FIRST_PULL.perCell).toBe(20);
+    expect(RUN_FIRST_PULL.limitMs).toBe(600_000);
+    expect(schedule(RUN_FIRST_PULL.cells, RUN_FIRST_PULL.perCell).slice(0, 4).map(cellName)).toEqual(['cold/fast-3g/first-pull', 'cold/slow-3g/first-pull', 'cold/fast-3g/first-pull', 'cold/slow-3g/first-pull']);
+  });
+
+  const pull = (cell: string, i: number, firstPull: unknown) => JSON.stringify({ cell, i, window: { kind: 'none' }, firstPull });
+
+  /* Fails against a pulled load counted in the window table: a press changes when the wall hydrates. */
+  it('leaves a first-pull load out of the loads', () => {
+    expect(loadsOfLog(pull('cold/fast-3g/first-pull', 0, { landed: 'field', fieldMs: 400 }))).toEqual([]);
+  });
+
+  /* Fails against a count that folds the two networks, or that counts a record with no cover as a field. */
+  it('counts, per cell, the first pulls that landed on the field, with the cover, or on a record with no cover, the last attempt of each, with the field\'s durations', () => {
+    const log = [
+      pull('cold/fast-3g/first-pull', 0, { landed: 'field', fieldMs: 400 }),
+      pull('cold/slow-3g/first-pull', 1, { landed: 'field', fieldMs: 2600 }),
+      pull('cold/fast-3g/first-pull', 2, { landed: 'cover', fieldMs: null }),
+      pull('cold/fast-3g/first-pull', 2, { landed: 'field', fieldMs: 900 }),
+      pull('cold/slow-3g/first-pull', 3, { landed: 'no-cover', fieldMs: null }),
+    ].join('\n');
+    expect(firstPullsOfLog(log)).toEqual([
+      { cell: 'cold/fast-3g/first-pull', pulls: 2, onField: 2, withCover: 0, noCover: 0, fieldMs: [400, 900] },
+      { cell: 'cold/slow-3g/first-pull', pulls: 2, onField: 1, withCover: 0, noCover: 1, fieldMs: [2600] },
+    ]);
+  });
+
+  /* Fails against a rate with no spread: a 20 of 20 at slow-3g says nothing without how long the field stood. */
+  it('states each cell\'s rate over the pulls that had a cover to wait for, and the field\'s shortest, median and longest', () => {
+    const rows = [
+      { cell: 'cold/fast-3g/first-pull', pulls: 20, onField: 13, withCover: 6, noCover: 1, fieldMs: [300, 400, 500, 500, 600, 700, 800, 900, 1000, 1100, 1200, 1400, 1900] },
+      { cell: 'cold/slow-3g/first-pull', pulls: 20, onField: 20, withCover: 0, noCover: 0, fieldMs: Array.from({ length: 20 }, (_, i) => 2000 + i * 100) },
+    ];
+    expect(firstPullSentence(rows)).toBe('cold/fast-3g: 13 of 19 first pulls landed on the field (1 on a record with no cover, left out), the field for 300 to 1900ms, median 800ms; cold/slow-3g: 20 of 20 first pulls landed on the field, the field for 2000 to 3900ms, median 3000ms');
+  });
+
+  /* Fails against the window's verdict standing in for this mode's: the smoke of 3 Nov read six broken loads and "0 broken, no counts", because the verdict leaves first-pull cells out. */
+  it('counts the first-pull loads still broken after their retakes', () => {
+    const broken = (i: number) => JSON.stringify({ cell: 'cold/fast-3g/first-pull', i, window: { kind: 'broken', reason: 'no spine could be pressed' } });
+    expect(firstPullBroken([broken(0), broken(0), pull('cold/fast-3g/first-pull', 0, { landed: 'cover', fieldMs: null }), broken(1), broken(1), broken(1)].join('\n'))).toBe(1);
+    expect(firstPullBroken('')).toBe(0);
+  });
+
+  it('says so when no pull had a cover to wait for', () => {
+    expect(firstPullSentence([{ cell: 'cold/fast-3g/first-pull', pulls: 2, onField: 0, withCover: 0, noCover: 2, fieldMs: [] }])).toBe('cold/fast-3g: no first pull had a cover to wait for (2 on a record with no cover, left out)');
   });
 });

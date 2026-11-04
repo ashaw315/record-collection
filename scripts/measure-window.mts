@@ -25,6 +25,11 @@
  * - `window:measure:pan`: §W.22's videos, in the same headed Chrome: a pull from
  *   each shelf, a put back and the swap across each shelf change, three of each,
  *   in docs/captures/pan-prod-30-oct/.
+ * - `window:measure:first-pull`: step 164's Report bullet, "how often a first
+ *   pull lands on the field at cold fast 3G and slow 3G": 20 cold loads at each,
+ *   round-robin, each pressed on the first spine at the hydrated mark, the
+ *   earliest a pull can be made, with what it landed on and how long the field
+ *   stood. About 15 to 25 minutes. Nothing is written: a pull makes no request.
  * - `window:measure:after-deploy` and `:idle-cold`: the supplement, unchanged
  *   in what it takes. After-deploy signs in before the deploy and waits for
  *   Enter once it is Ready; idle-cold signs in and makes no request for 20
@@ -49,9 +54,9 @@ import { loadavg } from 'node:os';
 import { join } from 'node:path';
 import { createInterface } from 'node:readline/promises';
 import { chromium, type Browser, type BrowserContext } from '@playwright/test';
-import { COVER_BLOCK, NETWORK, PRESS_AFTER_MS, PRESS_LATE_MS, RECORDER, RUN_A, RUN_B, RUN_CAUSE, cellName, closePlan, conditionMade, coverSizes, coverSummary, frameStats, loadsOfLog, panPlan, pullPlan, takePull, pressesOfLog, projection, runPlan, schedule, takeLoad, takePress, verdict, watchNetwork, type Cell, type CoverSummary, type Press, type Window } from './window-measure';
+import { COVER_BLOCK, NETWORK, PRESS_AFTER_MS, PRESS_LATE_MS, RECORDER, RUN_A, RUN_B, RUN_CAUSE, RUN_FIRST_PULL, cellName, closePlan, conditionMade, coverSizes, coverSummary, firstPullBroken, firstPullSentence, firstPullsOfLog, frameStats, loadsOfLog, panPlan, pullPlan, takeFirstPull, takePull, pressesOfLog, projection, runPlan, schedule, takeLoad, takePress, verdict, watchNetwork, type Cell, type CoverSummary, type FirstPull, type Press, type Window } from './window-measure';
 
-const MODES = ['run-a', 'run-b', 'cause', 'close', 'weigh', 'pull', 'pan', 'after-deploy', 'idle-cold'] as const;
+const MODES = ['run-a', 'run-b', 'cause', 'close', 'weigh', 'pull', 'pan', 'first-pull', 'after-deploy', 'idle-cold'] as const;
 const mode = process.argv[2] ?? 'run-a';
 if (!(MODES as readonly string[]).includes(mode)) {
   process.stderr.write(`measure-window: unknown mode ${mode}\n`);
@@ -67,7 +72,7 @@ if (password === undefined || password === '') {
 const BASE = process.env.WINDOW_BASE_URL ?? 'https://record-collection-rust.vercel.app';
 const onProduction = process.env.WINDOW_BASE_URL === undefined;
 const VIEWPORT = { width: 1440, height: 900 };
-const run = mode === 'run-b' ? RUN_B : mode === 'cause' || mode === 'close' ? RUN_CAUSE : RUN_A;
+const run = mode === 'run-b' ? RUN_B : mode === 'cause' || mode === 'close' ? RUN_CAUSE : mode === 'first-pull' ? RUN_FIRST_PULL : RUN_A;
 /* Fixed by the rule on production; WINDOW_PER_CELL is for a smoke run on another base and is refused on production. */
 const PER_CELL = process.env.WINDOW_PER_CELL === undefined ? run.perCell : Number(process.env.WINDOW_PER_CELL);
 if (PER_CELL !== run.perCell && onProduction) {
@@ -100,7 +105,7 @@ async function signIn(browser: Browser): Promise<Awaited<ReturnType<BrowserConte
   return state;
 }
 
-type Taken = Partial<Awaited<ReturnType<typeof takeLoad>>> & { window: Window; ms: number; covers?: CoverSummary; press?: Press; pressAfterMs?: number; sizes?: Array<number | null> };
+type Taken = Partial<Awaited<ReturnType<typeof takeLoad>>> & { window: Window; ms: number; covers?: CoverSummary; press?: Press; pressAfterMs?: number; sizes?: Array<number | null>; firstPull?: FirstPull };
 
 async function load(browser: Browser, session: Awaited<ReturnType<typeof signIn>>, cell: Cell, round: number): Promise<Taken> {
   const context = await browser.newContext({ viewport: VIEWPORT, storageState: session });
@@ -132,6 +137,10 @@ async function load(browser: Browser, session: Awaited<ReturnType<typeof signIn>
       : { offline: false, latency: net.latency, downloadThroughput: net.kbps * 125, uploadThroughput: net.kbps * 125 });
     await cdp.send('Emulation.setCPUThrottlingRate', { rate: net.cpu });
     const measured = Date.now();
+    if (cell.firstPull === true) {
+      const firstPull = await takeFirstPull(page, `${BASE}/`, limitOf(cell));
+      return { window: { kind: 'none' }, firstPull, ms: Date.now() - measured };
+    }
     if (cell.press === true) {
       const pressAfterMs = mode === 'close' ? PRESS_LATE_MS : PRESS_AFTER_MS[round % PRESS_AFTER_MS.length];
       const press = await takePress(page, `${BASE}/`, limitOf(cell), { pressAfterMs, settleMs: 60_000 });
@@ -241,7 +250,7 @@ try {
     plan = [{ cell: { cache: 'cold', network: 'none', weigh: true }, label: mode }];
   } else if (mode === 'close') {
     plan = closePlan(PER_CELL).map((cell) => ({ cell, label: mode }));
-  } else if (mode === 'run-a' || mode === 'run-b' || mode === 'cause') {
+  } else if (mode === 'run-a' || mode === 'run-b' || mode === 'cause' || mode === 'first-pull') {
     plan = schedule(run.cells, PER_CELL).map((cell) => ({ cell, label: mode }));
   } else if (mode === 'after-deploy') {
     const rl = createInterface({ input: process.stdin, output: process.stdout });
@@ -254,7 +263,7 @@ try {
     plan = [{ cell: { cache: 'cold', network: 'none' }, label: 'idle-cold' }];
   }
   const begun = Date.now();
-  const roundSize = mode === 'close' ? 3 : mode === 'run-a' || mode === 'run-b' || mode === 'cause' ? run.cells.length : plan.length;
+  const roundSize = mode === 'close' ? 3 : mode === 'run-a' || mode === 'run-b' || mode === 'cause' || mode === 'first-pull' ? run.cells.length : plan.length;
   let last: Awaited<ReturnType<typeof load>> | null = null;
   let before = loadavg()[0];
   const result = await runPlan(plan, async ({ cell }, i) => {
@@ -275,6 +284,11 @@ try {
   });
   if (result.stopped) {
     log(`\n${result.brokenLoads} loads were still broken after their retakes: the instrument is broken, and the run stops without a verdict. Every attempt: ${out}`);
+  } else if (mode === 'first-pull') {
+    const text = readFileSync(out, 'utf8');
+    const rows = firstPullsOfLog(text);
+    log(`\nfirst pulls: ${rows.length === 0 ? 'none were taken' : firstPullSentence(rows)}`);
+    log(`${firstPullBroken(text)} load(s) broken after their retakes, left out. Every attempt: ${out}`);
   } else {
     const v = verdict(loadsOfLog(readFileSync(out, 'utf8')));
     log(`\n${v.sentence}`);
