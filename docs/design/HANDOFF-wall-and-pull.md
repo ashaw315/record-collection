@@ -754,6 +754,12 @@ Its rows are in the governs table above, one per section; this section does not 
 - **Unnumbered, for Code to number — §64: the two years on the record form.** Place Release year and Year pressed together in one row inside "Everything else", Release year first, each with its hint. Put them side by side where both fit the measure, and stack them directly where they don't; report the width where they stack. Capture both routes at 1440 × 900 and 390.
   > “Release year” and “Year pressed” stand together, Release year first, each keeping its hint, inside “Everything else”: side by side where both fit the measure, and one directly beneath the other where they do not.
 
+- **Unnumbered, for Code to number — §T.6: the view names' overlay by pointer.**
+  - **Scope** the band's view-name overlay to a coarse pointer, as step 165 scoped the record page's.
+  - **Leave** the line at 24 and the rail's pitch as built.
+  - **Move** `collection-band-97`'s 44 under a coarse pointer. Under a fine pointer, assert the drawn line.
+  > An unboxed label in a list of lines keeps the list’s 44 line under both pointers. An unboxed label that is §W’s furniture, as the view names in the band and the rail are, keeps the line §W draws it on and meets the 44 floor by overlay only where the pointer is coarse.
+
 No step: §G.7. It rules nothing. Hover and focus wait on Code's second pass, the breakpoint is settled and recorded in §G.8, and the eyebrow repetition is an observation, not a ruling.
 
 No step: §P.1. It rules where the feature is ruled and which view presents an answer; what that means for the build is in the steps for §P.3 and §P.4.
@@ -809,7 +815,7 @@ The provisionals in force, for the note in Maintaining this file that a provisio
 - **§W.22 · the top-shelf dip under the overlapped pan.** Closed: observed on production on 1 Nov at 245 to 246px, within the 245 to 251 predicted. Across five production pulls the dip fits the peak of the record's own drop, about 69px, plus the pan, as a description rather than a law (§W.22). The straight-line fit holds only from a pan of about +70.
 - **§62 · the covers group.** "What the group and its mark look like is provisional until built and captured." Returns from the step that builds the group. Open.
 - **§63 · the arrow.** "The arrow's appearance is provisional until built and captured." Returns from the arrow step. Open.
-- **§64 · the two years.** "How the pair looks is provisional until built and captured, at 1440 × 900 and at 390." Returns from the two-years step. Open.
+- **§64 · the two years.** Closed on step 166's captures, at 1440 fine and 390 coarse: side by side at 1440 and one beneath the other at 390, Release year first, each hint under its own field, the two hints reading against each other.
 
 ## Findings for screens without a pass
 
