@@ -51949,3 +51949,16 @@ wall-arrival-104, collection-band-97 on chromium (41), typecheck, lint, build. H
 unit: the reason line in the table and the grid (§T.3) and the shelf's reason on the pull
 (§W.24), both provisional and both a proposal; and the backfill on production, Adam's, now
 derives no notes. Open for Adam, from Design: whether search reaches "Contributor notes".
+
+**Read: the ABOUT as a search field (the coordinator, 4 Nov).** Adam finds the mood buttons "very
+limiting": an eight-word input vocabulary, not the pool's size. The ABOUT is `records.snippet`,
+§10b's snippet that §33 names the About, one nullable text column per record with
+`snippet_edited_at` for the owner's edits; no index, and nothing searches it (`buildWhere` reads
+title, artist, label and the pressing's text; the collection summary reads it as prose). On
+production by script, 4 Nov: 10 of 55 records have one, 482 to 745 characters, median 523, none
+edited by Adam, all the model's. Reaching it is one more `likeness(records.snippet)` branch in
+`buildWhere` and, for the likeness operator at scale, one trigram index by migration; no new
+storage, no new control. But at 10 of 55 a search of it answers for a fifth of the collection
+and silently misses the rest, which reads as search being wrong rather than the ABOUT being
+absent; the cheap answer only becomes an answer once most records carry one, which is a
+different problem (writing is a per-record act on the record page, with a configured key).
