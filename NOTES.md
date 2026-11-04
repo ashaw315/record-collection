@@ -51750,3 +51750,8 @@ render one; the two fields step 130 drew 44 under a coarse pointer pass on their
 chromium, and the test no longer certifies a 44 from a declared height nothing draws. The proxy
 is gone, which the pointer change alone did not do. Part (b), the band's view names, is a fact to
 report before anything moves: boxed or unboxed, and their drawn line's height.
+
+**Step 166's handoff line (4 Nov), and the width §64's step asked for.** "Report the width where they
+stack": the pair wraps where the form's measure holds less than two halves of 280 and the 16
+between, so under a measure of 576, which with the frame's 18 insets is a window under 612. The
+line is in `scripts/handoff-code-region.json` as step-166 and the intake placed it.

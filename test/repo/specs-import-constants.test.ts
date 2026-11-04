@@ -60,6 +60,9 @@ const GOVERNED = [
   'e2e/title-ladder-33.spec.ts',
   'e2e/layout-sweep.spec.ts',
   'e2e/capture/breakpoints.capture.ts',
+  /* Step 167: both read the record page's "Manage →" for §63's arrow, by its own record. */
+  'e2e/arrow-167.spec.ts',
+  'e2e/capture/arrow-167.capture.ts',
   'e2e/capture/about-lines.capture.ts',
   'e2e/capture/step29.capture.ts',
   'e2e/capture/real-captures.capture.ts',
