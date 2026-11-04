@@ -51501,3 +51501,64 @@ step that refuses an input shorter than 40 characters would name it in the run's
 change to gate.yml is shared infrastructure and waits for a gate, so it is recorded, not made. The
 run that counts is on 3bc23a1 by its full id and covers steps 164 and 165 together, four commits
 since the last green.
+
+**The hidden grid's fetch was found by a confirmation, not by profiling (3 Nov).** The 13s of the
+19.7s cold load, fifty covers requested at parse time under `display: none`, was in every
+production trace since 30 Oct and in the 2 Nov window run's finding that covers govern the window.
+It was found when the coordinator asked whether the 19.7s to 2.6s figure was banked or pending:
+answering meant reading what the grid actually did on a wall load, and the answer was "fetches
+everything, before hydration". The largest user-visible win in weeks came from being asked to
+check a number's status, not from measuring. Record it as that: a figure carried as "associated
+with" a ruling is a figure nobody has checked against the build.
+
+**The overlay fix stands (the coordinator, 3 Nov), and the shape's other instance.** The 44px
+`::before` overlay without a pointer scope is a §T.6 conformance defect, kept. Swept for the same
+shape elsewhere, from source: `hit-area.ts`'s `HIT` is `pointer-coarse:before:block`, scoped;
+`globals.css:674`'s rail overlay sits in `@media (pointer: coarse)`, scoped; `band-rules.ts:42`'s
+44px `::before` on the rail's links is NOT scoped in either host. WallComposition wraps it in a
+width query alone (below the near view's fork), and CollectionBand wraps it in nothing, on `/`
+wherever the band draws: under a mouse below 1044, where the shelf is not offered. And it has a
+guard that ENFORCES it: `collection-band-97.spec.ts:149` asserts each view name reaches 44 rows on
+the chromium project, a fine pointer, at 390 and at the band's widest, from §9.3's floor; §T.6's
+"controls keep their drawn size" under a fine pointer would fail it. Not staged, not fixed, not
+this unit's; the coordinator decides whether §9.3's test encodes a ruling §T.6 since narrowed.
+
+**The family member, stated apart from the others.** The record page's overlay was invisible to the
+floor test because the FIXTURE lacked the case: no control under 44 had lived inside a section on
+the record the test seeds, and the one that did (the gallery tile's Delete) lives on records with
+photographs, which the test does not seed. The other members ran in the wrong place or asserted a
+proxy; this guard was in the right place, asserted the right channel, and read a fixture on which
+the defect could not occur. A guard is only as wide as its fixture, and a fixture is written from
+the controls that existed when it was written. When a step adds a control to a screen, the screen's
+floor test's fixture is part of what the step checks.
+
+**release_year: three writers, two tests, said plainly (the coordinator's question, 3 Nov).** The
+wrong year had three writers: the bulk import, the prefill, and the query layer's fallback in
+importRelease, all changed in a43b647. Two tests defended them, one per layer, and they are the two
+accounts given: `discogs-prefill-year.test.ts` encoded the prefill comment's argument and changed in
+a43b647 with the fix; `discogs-import.test.ts` asserted the query layer's fallback "for a first
+pressing they coincide", was missed by a43b647's scoped run, failed on CI, and was rewritten in
+2618842. Four artifacts in the 2 Nov entry was three writers and the first test; the second test
+makes five. The story is three wrong writers and two tests that would have failed the fix.
+
+**The gate's dispatch is one script, so a short id cannot reach it (3 Nov).** The two runs wasted
+on a seven-character id were a repeat: the full-id requirement was in NOTES from the first CI work.
+A known error repeating is not a memory to improve but a form to remove: `scripts/ci-gate.sh <ref>
+[workers]` resolves any ref `git rev-parse` can, hands `gh` the forty characters, and refuses a
+ref that names nothing and a commit no remote branch holds, which actions/checkout could not find
+either. `test/repo/ci-gate.test.ts` holds the derivation from a seven-character id and both
+refusals against a fake `gh` on PATH (4 failed on the script's absence, 4 passed). The gate.yml
+guard recorded earlier is no longer owed: the input cannot be short.
+
+**§63's weight, measured before anything is built (the coordinator's gate, 3 Nov).** The earlier
+"one subset of about 45KB" was wrong: the 44,916-byte preload is Inter Tight's latin. Geist Mono
+today, from `next/font/google` at `subsets: ['latin']`: six unicode-range files totalling 70,516
+bytes, of which a cold load fetches the latin one, 23,108, preloaded; the others only when a glyph in
+their range is drawn, and U+2192 is in none. The family's own `GeistMono-Variable.woff2` (geist
+1.9.0, wght 100 to 900, 1,159 glyphs, the arrows present) is 71,272 bytes: 3.1× the latin subset,
++48,164 per cold load, about 0.24s at fast 3G and 0.96s at slow 3G before the type can draw. A
+subset of the family's file cut to Google's latin range plus U+2190 to 2199 (pyftsubset in a
+scratchpad venv, 424 glyphs) is 35,044 bytes, 1.5×, +11,936; the same range without the arrows is
+34,012, so the arrows cost 1KB and the rest is the family's file keeping what Google's pipeline
+strips. Material at 3.1×, held: the self-subset is the mechanism whose wording Design withdrew
+before anyone had a weight, so the number goes to Design as a question, not forward as a build.
