@@ -308,5 +308,11 @@
     "before": "- **Unnumbered, for Code to number — §64: the two years on the record form.**",
     "why": "Code's number for Design's unnumbered §64 step.",
     "text": "166. **Done: built and captured; the look provisional for Design.** **§64 — the two years on the record form: Code's number for that step.** Release year and Year pressed stand together inside Everything else, Release year first, each keeping its hint, as one row's box holding two halves of the form's row: each half keeps a row's 12 above and below and asks for 280, a label's 160, the 16 beside it and a year's four figures, and grows into what is left, so the pair wraps on the measure and not a breakpoint. The width where they stack: the form's measure under 576, which is a window under 612; at 1440 the fields are 184 each on one line, at 390 Year pressed stands beneath on the same measure, 24 apart as two rows are, with no rule between. Year pressed left Pressing details, which starts at Country; its id, hint and errors are unchanged (`e2e/years-166.spec.ts`). Captured: `docs/captures/years-166/`, the new form whole and the pair alone at 1440 × 900 and 390."
+  },
+  {
+    "id": "step-167",
+    "before": "- **Unnumbered, for Code to number — §63: the arrow.**",
+    "why": "Code's number for Design's unnumbered §63 step.",
+    "text": "167. **Done: built and captured; the appearance provisional for Design.** **§63 — the arrow: Code's number for that step.** The family's own GeistMono-Variable, cut once by `scripts/cut-geist-mono.sh` to Google's Latin range plus U+2190 to 2199 with Google's own feature list, served through next/font/local wherever the app sets Geist Mono: 22,520 bytes against the 23,108 slice a cold load fetched before, the arrows 556 of it, one variable file as before. The first cut's 12KB was the stylistic sets and the aalt closure, not the axis, the hinting or the arrows. The arrow's advance is the mono's one advance, 7.72 against M at 7.70 at 11px with .1em tracking (`e2e/arrow-167.spec.ts`, which also attaches the Linux drawing from CI). Captured: `docs/captures/arrow-167/`, the Images line and the record page whole at 1440 × 900 on macOS."
   }
 ]

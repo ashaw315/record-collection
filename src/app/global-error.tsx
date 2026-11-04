@@ -1,6 +1,7 @@
 'use client';
 
-import { Inter_Tight, Geist_Mono } from 'next/font/google';
+import { Inter_Tight } from 'next/font/google';
+import localFont from 'next/font/local';
 import { ErrorBody } from './ErrorBody';
 import { SCREEN_FRAME } from './screen-frame';
 import './globals.css';
@@ -16,7 +17,8 @@ import './globals.css';
  * that could be the thing that failed: no header, no provider.
  */
 const sans = Inter_Tight({ variable: '--font-sans', subsets: ['latin'], display: 'swap' });
-const mono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin'], display: 'swap' });
+/* §63 (step 167): the family's own file, cut once by scripts/cut-geist-mono.sh, as layout.tsx declares it. */
+const mono = localFont({ src: './fonts/GeistMono-latin-arrows.woff2', variable: '--font-geist-mono', weight: '100 900', display: 'swap' });
 
 export default function GlobalError({ retry }: { error: Error & { digest?: string }; retry: () => void }) {
   return (

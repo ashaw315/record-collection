@@ -90,8 +90,25 @@ test.describe('§G.1: the header is set in the record detail’s type', () => {
     const ink = await computedColour(page, INK);
     const label = await computedColour(page, LABEL);
     const h = await readHeader(page);
+    /*
+      **The family, by the coordinator's agreement (4 Nov), and what this line
+      is and is not.** Until step 167 this matched the computed family name
+      against "Geist Mono", which Google's declaration happened to carry; the
+      family's own file is declared under the app's binding (§63), so the
+      name is the app's. The line now says: the wordmark and links are set
+      in the app's mono declaration, whatever it resolves to. That is a
+      self-consistency check: if the declaration and the header both fell to
+      a fallback it would still pass. It is load-bearing ONLY beside the
+      advance test below, which measures the drawn glyphs; the PAIR is the
+      assertion and neither half stands alone. Deleting the advance test as
+      redundant would leave a check that compares two values to each other
+      and proves nothing (the sixth family member, pre-empted).
+    */
+    const declared = await page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--font-geist-mono'));
+    const normal = (family: string) => family.replace(/["']/g, '').split(',').map((part) => part.trim()).join(', ');
+    expect(normal(declared), 'the app declares a mono family').not.toBe('');
     for (const item of [h.wordmark, ...h.links]) {
-      expect(item.family, `${item.text}: Geist Mono`).toMatch(/Geist Mono/);
+      expect(normal(item.family), `${item.text}: the app's mono declaration (${declared})`).toBe(normal(declared));
       expect(item.size, `${item.text}: 11px`).toBe('11px');
       expect(item.transform, `${item.text}: uppercase`).toBe('uppercase');
       expect(item.tracking, `${item.text}: .12em of 11px`).toBe('1.32px');
@@ -106,7 +123,11 @@ test.describe('§G.1: the header is set in the record detail’s type', () => {
     }
   });
 
-  /* Fails against the built header, where the current link is 500 in Inter Tight, a proportional face that widens with weight. */
+  /*
+    Fails against the built header, where the current link is 500 in Inter Tight, a proportional face that widens with weight.
+    Since 4 Nov this is the half of a pair that measures the drawn glyphs: the family test above is a self-consistency check and
+    stands only beside this one. Not redundant, whatever it looks like next to it.
+  */
   test('the weight does not change Geist Mono’s advance: COLLECTION is as wide current at 500 as not current at 400', async ({ page }) => {
     await open(page, '/', 1440);
     const current = (await readHeader(page)).links.find((l) => l.text === 'Collection');

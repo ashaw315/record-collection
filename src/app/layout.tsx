@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
-import { Inter_Tight, Geist_Mono } from 'next/font/google';
+import { Inter_Tight } from 'next/font/google';
+import localFont from 'next/font/local';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import './globals.css';
 
@@ -21,9 +22,20 @@ const sans = Inter_Tight({
   display: 'swap',
 });
 
-const mono = Geist_Mono({
+/*
+  §63 (step 167): "The arrow is the app's type, not the machine's: → is drawn
+  in Geist Mono, from the family's own file, wherever the app sets it."
+  Google's latin slice held ↑ and ↓ and not →, and no other slice held it, so
+  every "Manage →" set its arrow in the machine's fallback at the fallback's
+  width. The family's own file, cut once by scripts/cut-geist-mono.sh to
+  Google's Latin range plus U+2190 to 2199 with Google's own feature list:
+  22,520 bytes against the slice's 23,108, the arrows 556 of it. One file
+  carrying the weight axis, as the slice did.
+*/
+const mono = localFont({
+  src: './fonts/GeistMono-latin-arrows.woff2',
   variable: '--font-geist-mono',
-  subsets: ['latin'],
+  weight: '100 900',
   display: 'swap',
 });
 

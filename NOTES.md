@@ -51778,3 +51778,41 @@ migrations-complete, typecheck, lint, build, and the backfill script run against
 database. The production count asked for on 4 Nov was refused by the permission classifier as a
 production read: the target, not the query's shape, so a read-only count will be refused again
 until a rule allows `mcp__claude_ai_Neon__run_sql`, or Adam runs it.
+
+**Step 167, §63: the arrow drawn from the family's own file, and the figures that let it be built (4 Nov).**
+The coordinator asked what the 11KB was before anyone paid it. Three figures:
+
+| file | bytes | glyphs |
+|---|---|---|
+| Google's latin slice, what a cold load fetched before | 23,108 | 264 |
+| the family's `GeistMono-Variable` cut to the same range plus U+2190 to 2199, served now | 22,520 | 273 |
+| the same cut without the arrows | 21,964 | 265 |
+
+What they mean: the first cut (35,044) kept every layout feature, so it carried the family's
+eleven stylistic sets and the `aalt` closure, 160 alternate glyphs and a GSUB of 10,982 bytes
+against Google's 554; not the axis (Google's slice is itself variable, `wght`, nine instances),
+not the hinting (neither file has any), not the arrows. Cut with Google's own feature list
+(ccmp, dnom, frac, locl, numr, mark, mkmk) the family's file is 588 bytes under today's and
+the arrows cost 556. A correct arrow at 588 bytes under today's load is a different decision
+from one at 12KB, and the only reason anyone knows is that the number was reported before it
+was paid. That is the rule worth keeping, not the number. Built: `scripts/cut-geist-mono.sh`
+(fontTools 4.68.0, run once, reproduces the file byte for byte), the file at
+`src/app/fonts/GeistMono-latin-arrows.woff2`, `next/font/local` in layout and the global error
+page with the weight axis 100 to 900, preloaded as the slice was; Google's six Geist Mono slices
+are gone from the build's media. The arrow's advance on the Images line: 7.72px against M at
+7.70 at 11px with the label's .1em tracking. `arrow-167.spec.ts` reads two things, a loaded face
+of the mono family covering U+2192 (`document.fonts.check` is not that reading: a family with no
+face for a character answers true, having nothing to load) and the arrow's advance equal to a
+letter's in the same run, on the record page's "Manage →" and the wall's "THE WHOLE COLLECTION
+→", and attaches the line as a picture so the CI runner's Linux drawing travels with the macOS
+capture in `docs/captures/arrow-167/`. Naming the face "Geist Mono" by a `declarations`
+font-family broke the match between face and class, so the family is the app's binding, `mono`.
+**nav-type-74, by the coordinator's agreement:** its family line matched the computed name
+against "Geist Mono", a name proxy that Google's declaration happened to satisfy; it now asserts
+the header's family equals the app's mono declaration, which is a self-consistency check, and
+stands only beside the advance test that measures the drawn glyphs. The pair is the assertion
+and neither half stands alone; deleting the advance test as redundant would leave a check that
+compares two values to each other and proves nothing. The sixth family member, pre-empted, and
+written at both tests. Tests first: arrow-167 at both places failed on the face. Step level:
+arrow-167, nav-type-74, wall-labelled, stats on chromium (12 and 34 passed), capture (1),
+typecheck, lint, build, the cut script run and compared.
