@@ -39,7 +39,8 @@ export function bandRules(scope: string): string {
   ${rail} > hr { display: none; }
   ${rail} { align-items: baseline; }
   ${link} { position: relative; }
-  ${link}::before { content: ''; position: absolute; left: -9px; right: -9px; top: 50%; height: 44px; transform: translateY(-50%); }
+  /* Step 168, §T.6 (4 Nov): the view names are §W's furniture on a 24 line, and meet the 44 floor by overlay only where the pointer is coarse; a mouse reaches the drawn line and no further. The 9 each side makes adjacent targets abut exactly at the 18 gap. */
+  @media (pointer: coarse) { ${link}::before { content: ''; position: absolute; left: -9px; right: -9px; top: 50%; height: 44px; transform: translateY(-50%); } }
   ${rail} li > span { pointer-events: none; }
   ${scope}[data-rail-filter] { display: none; }
   ${scope}[data-rail-rule] { display: none; }

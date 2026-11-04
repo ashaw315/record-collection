@@ -145,21 +145,44 @@ for (const view of VIEWS) {
       });
     }
 
-    /* Fails against a band whose links have only their drawn boxes: 11 tall. Read by what a tap at each point reaches. Re-measured at step 134 with SHELF gone from the row. */
-    test(`each view name and Add record is tappable over 44, at 390 and at ${BAND_WIDE}`, async ({ page }) => {
-      for (const width of [390, BAND_WIDE]) {
-        await open(page, view, width);
-        const reach = await page.evaluate(() => Array.from(document.querySelectorAll<HTMLElement>('[data-collection-band] ul[aria-label="View"] a, [data-collection-band] nav > a')).filter((a) => a.getClientRects().length > 0).map((a) => {
-          const r = a.getBoundingClientRect();
-          const x = r.left + r.width / 2;
-          const mid = r.top + r.height / 2;
-          let hit = 0;
-          for (let y = Math.round(mid - 30); y <= Math.round(mid + 30); y += 1) { const at = document.elementFromPoint(x, y); if (at !== null && (at === a || a.contains(at))) hit += 1; }
-          return { name: (a.textContent ?? '').trim(), hit };
-        }));
-        expect(reach.map((r) => r.name), `at ${width}`).toEqual([...NAMES, 'Add record']);
-        for (const r of reach) expect(r.hit, `${r.name} at ${width}: rows of pixels a tap reaches`).toBeGreaterThanOrEqual(44);
-      }
+    /*
+      Step 168, §T.6 as withdrawn and scoped on 4 Nov (`T.6/unboxed-every-44`): "An unboxed label that is §W's furniture, as the view
+      names in the band and the rail are, keeps the line §W draws it on and meets the 44 floor by overlay only where the pointer is
+      coarse." Read by what a tap at each point reaches, under each pointer. Coarse fails against a band whose links have only their
+      drawn boxes: 14 tall; fine fails against the build before 168, whose overlay gave a mouse 44 rows. Re-measured at step 134 with
+      SHELF gone from the row.
+    */
+    const reachOf = (page: Page) => page.evaluate(() => Array.from(document.querySelectorAll<HTMLElement>('[data-collection-band] ul[aria-label="View"] a, [data-collection-band] nav > a')).filter((a) => a.getClientRects().length > 0).map((a) => {
+      const r = a.getBoundingClientRect();
+      const x = r.left + r.width / 2;
+      const mid = r.top + r.height / 2;
+      let hit = 0;
+      for (let y = Math.round(mid - 30); y <= Math.round(mid + 30); y += 1) { const at = document.elementFromPoint(x, y); if (at !== null && (at === a || a.contains(at))) hit += 1; }
+      return { name: (a.textContent ?? '').trim(), hit, drawn: r.height };
+    }));
+
+    test.describe('under a coarse pointer', () => {
+      test.use({ hasTouch: true });
+      test(`each view name and Add record is tappable over 44, at 390 and at ${BAND_WIDE}`, async ({ page }) => {
+        for (const width of [390, BAND_WIDE]) {
+          await open(page, view, width);
+          const reach = await reachOf(page);
+          expect(reach.map((r) => r.name), `at ${width}`).toEqual([...NAMES, 'Add record']);
+          for (const r of reach) expect(r.hit, `${r.name} at ${width}: rows of pixels a tap reaches`).toBeGreaterThanOrEqual(44);
+        }
+      });
+    });
+
+    test.describe('under a fine pointer', () => {
+      test.use({ hasTouch: false });
+      test(`each view name reaches its drawn line and no further, at 390 and at ${BAND_WIDE}`, async ({ page }) => {
+        for (const width of [390, BAND_WIDE]) {
+          await open(page, view, width);
+          const reach = (await reachOf(page)).filter((r) => r.name !== 'Add record');
+          expect(reach.map((r) => r.name), `at ${width}`).toEqual([...NAMES]);
+          for (const r of reach) expect(Math.abs(r.hit - r.drawn), `${r.name} at ${width}: a mouse reaches ${r.hit} rows of a ${r.drawn} line`).toBeLessThanOrEqual(1);
+        }
+      });
     });
   });
 }

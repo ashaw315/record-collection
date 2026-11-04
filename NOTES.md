@@ -51923,3 +51923,14 @@ directory, which the gate uploads on every run; the Linux drawing comes from the
 goes into `docs/captures/arrow-167/`, by hand, with a commit that names the folder. Whether the
 capture export should reach CI artifacts: not worth crossing, one `gh run download` is the
 whole distance and it is written here.
+
+**A chain that piped two refusals through `tail` (4 Nov), the §9 family in a new place.** The step
+168 commit and the schema fix were chained as `intake | tail && commit-checked | tail && commit-checked
+| tail && push`. The intake was NOT OK (migration 0033 untracked while the tree held it, the
+ordering family of 9d209d0) and the first commit was refused, but each pipeline's status was
+`tail`'s, so the chain ran on: the schema fix committed as ccbbc29 carrying NOTES with step
+168's entry, while step 168's own four files stayed in the tree, and CI was dispatched on a
+commit whose NOTES describes code it does not hold. Caught by reading the chain's output
+against what it claimed. The rule, already written for runs and now for chains: a command
+whose status decides the next step is never piped; write its output to a file and read both.
+Step 168's files follow in the next commit, the entry already landed, out of order by one.

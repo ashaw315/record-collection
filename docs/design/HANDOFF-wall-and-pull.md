@@ -754,6 +754,8 @@ Its rows are in the governs table above, one per section; this section does not 
 - **Unnumbered, for Code to number — §64: the two years on the record form.** Place Release year and Year pressed together in one row inside "Everything else", Release year first, each with its hint. Put them side by side where both fit the measure, and stack them directly where they don't; report the width where they stack. Capture both routes at 1440 × 900 and 390.
   > “Release year” and “Year pressed” stand together, Release year first, each keeping its hint, inside “Everything else”: side by side where both fit the measure, and one directly beneath the other where they do not.
 
+168. **Done: built.** **§T.6 — the view names' overlay by pointer: Code's number for that step.** The band's view-name overlay is scoped to a coarse pointer, as step 165 scoped the record page's; the 24 line and the rail's pitch stand as built. `collection-band-97`'s 44 runs under a coarse pointer, and under a fine pointer each view name reaches its drawn line and no further, which failed against the build before it: a mouse reached 45 rows of a 14 line.
+
 - **Unnumbered, for Code to number — §T.6: the view names' overlay by pointer.**
   - **Scope** the band's view-name overlay to a coarse pointer, as step 165 scoped the record page's.
   - **Leave** the line at 24 and the rail's pitch as built.
