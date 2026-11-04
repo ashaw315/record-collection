@@ -58,6 +58,7 @@ function Row({
   children,
   hint,
   after,
+  half,
 }: {
   label: string;
   /**
@@ -72,6 +73,18 @@ function Row({
   hint?: string;
   /** Supporting detail rendered BELOW the hint — never between field and hint. */
   after?: ReactNode;
+  /**
+   * §64 (step 166): one of a pair that shares a line where the measure holds
+   * both. The pair's box carries the rule, so the two halves draw one rule
+   * rather than two segments with a gap; each half keeps a row's 12 above and
+   * below, because §T.6 places a label's words and its field from the row's
+   * top and the reach test reads them there. Each half asks for 280, a
+   * label's 160, the 16 beside it and a year's four figures, and grows into
+   * what is left, so the pair wraps where the measure holds less than two of
+   * them and the 16 between; stacked, the halves meet as two rows do, with
+   * no rule between.
+   */
+  half?: boolean;
 }) {
   /*
     §T.6, under a coarse pointer. Below 640 the label is the field's width
@@ -85,7 +98,7 @@ function Row({
     `${LABEL} sm:w-40 sm:shrink-0 sm:pt-2 pointer-coarse:max-sm:block pointer-coarse:max-sm:py-[6px] pointer-coarse:sm:pt-3`;
 
   return (
-    <div className="border-b border-border py-3 last:border-0 sm:flex sm:gap-4">
+    <div className={half === true ? 'min-w-0 grow basis-[280px] py-3 sm:flex sm:gap-4' : 'border-b border-border py-3 last:border-0 sm:flex sm:gap-4'}>
       {htmlFor === undefined ? (
         <span data-row-label="" className={labelClass}>{label}</span>
       ) : (
@@ -716,27 +729,52 @@ export function RecordForm({
           />
         </Row>
 
-        <Row
-          label="Release year"
-          htmlFor="releaseYear"
-          hint="The album's original year, not this pressing's."
-        >
-          <Input
-            id="releaseYear"
-            // `inputMode` rather than type="number": a number input allows
-            // scientific notation and silently discards non-numeric text, so what
-            // the user typed and what the form reads can differ.
-            inputMode="numeric"
-            value={values.releaseYear}
-            onChange={(event) => set('releaseYear', event.target.value)}
-            className="h-9 font-mono"
-          />
-          {fieldErrors.releaseYear !== undefined && (
-            <p role="alert" className="mt-1 text-xs text-destructive">
-              {fieldErrors.releaseYear}
-            </p>
-          )}
-        </Row>
+        {/*
+          §64 (step 166): "'Release year' and 'Year pressed' stand together,
+          Release year first, each keeping its hint, inside 'Everything else':
+          side by side where both fit the measure, and one directly beneath
+          the other where they do not." Year pressed stood inside Pressing
+          details, 704 below Release year at 1440 and never on screen with
+          it, and every writer of release_year had written the pressing's
+          year; seen together, each hint reads against the other.
+        */}
+        <div data-year-pair="" className="flex flex-wrap gap-x-4 border-b border-border">
+          <Row
+            label="Release year"
+            htmlFor="releaseYear"
+            hint="The album's original year, not this pressing's."
+            half
+          >
+            <Input
+              id="releaseYear"
+              // `inputMode` rather than type="number": a number input allows
+              // scientific notation and silently discards non-numeric text, so what
+              // the user typed and what the form reads can differ.
+              inputMode="numeric"
+              value={values.releaseYear}
+              onChange={(event) => set('releaseYear', event.target.value)}
+              className="h-9 font-mono"
+            />
+            {fieldErrors.releaseYear !== undefined && (
+              <p role="alert" className="mt-1 text-xs text-destructive">
+                {fieldErrors.releaseYear}
+              </p>
+            )}
+          </Row>
+
+          <Row label="Year pressed" htmlFor="yearPressed" hint="This pressing's year, not the album's." half>
+            <Input
+              id="yearPressed"
+              aria-describedby={fieldErrors.yearPressed === undefined ? undefined : 'yearPressed-error'}
+              aria-invalid={fieldErrors.yearPressed !== undefined}
+              inputMode="numeric"
+              value={pressing.yearPressed}
+              onChange={(event) => setPressingField('yearPressed', event.target.value)}
+              className="h-9 font-mono"
+            />
+            {pressingError('yearPressed')}
+          </Row>
+        </div>
 
         {(['conditionMedia', 'conditionSleeve'] as const).map((field) => (
           <Row
@@ -864,18 +902,7 @@ export function RecordForm({
           {pressingError('countryPressed')}
           </Row>
 
-          <Row label="Year pressed" htmlFor="yearPressed" hint="This pressing's year, not the album's.">
-            <Input
-              id="yearPressed"
-              aria-describedby={fieldErrors.yearPressed === undefined ? undefined : 'yearPressed-error'}
-              aria-invalid={fieldErrors.yearPressed !== undefined}
-              inputMode="numeric"
-              value={pressing.yearPressed}
-              onChange={(event) => setPressingField('yearPressed', event.target.value)}
-              className="h-9 font-mono"
-            />
-          {pressingError('yearPressed')}
-          </Row>
+          {/* Year pressed stands beside Release year in Everything else, §64 (step 166), not here among the rest of the pressing. */}
 
           <Row label="Pressing plant" htmlFor="pressingPlant">
             <Input

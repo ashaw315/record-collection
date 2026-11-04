@@ -51666,3 +51666,64 @@ three logs were copied into one scratchpad directory before gate-report read the
 them without the refusal of the run before. This is the first green run since the dispatch script,
 the tie fix, the §28 coarse-pointer change, the first-pull instrument and the identity fix landed;
 nothing in the tree is unverified by CI. No run is dispatched for this entry: it changes NOTES only.
+
+**Step 166, §64: the two years on the record form (4 Nov).** "Release year" and "Year pressed" stand
+together inside Everything else, Release year first, each keeping its hint: side by side where the
+measure holds both, one beneath the other where it does not. Built as a pair box carrying the row's
+rule, with each year a half of a `Row` that keeps a row's 12 above and below and asks for 280, a
+label's 160, the 16 beside it and a year's four figures, growing into what is left; the pair wraps
+where the measure holds less than two of them and the 16 between, so the break is the measure's
+and not a breakpoint's. At 1440 the two share a line with fields of 184; at 390 they stand one
+beneath the other on the same measure, 24 apart as two rows are, with no rule between. Year
+pressed left Pressing details, which starts at Country now; its id, hint and errors are unchanged,
+so every spec that fills it fills it still. The first build gave the pair's box the row's padding
+and the halves none, and the coarse reach test at 320 and 390 read both labels' words 7 below
+their row's top where §T.6 places them at 19: the test reads the label's parent as the row, and
+§T.6's ruling is about that box, so the halves keep the padding and only the rule moved. A test
+that failed a fix and was right to. Captures at `docs/captures/years-166/`, the new form whole at
+1440 × 900 and 390 × 844 and the pair alone at each; the look is provisional until Design has
+seen them, and the note is in Downloads. Tests first: years-166 at both windows failed on the
+second disclosure holding the field. Step level: years-166, form-146, record-form,
+discogs-prefill on chromium (48 passed); record-form, discogs-prefill on mobile (44 passed);
+capture (1 passed); typecheck, lint (3 warnings, none in a touched file), build.
+
+**Read: what the app's search matches (the coordinator, 4 Nov).** One field, one predicate. The
+band's search field (§T.1) and the rail's search on the wall (`WallRail.tsx:117`) are the same form
+control, `name="q"`, submitted to the Collection route; `collection-params.ts:91` reads it into
+`filters.q`; `buildWhere` in `src/lib/db/queries/records.ts:328-360` is the one place the match is
+decided, and the shelf's raw query reuses that predicate (`shelf.ts:148`) rather than restating
+it. What it matches: the record's title and its artist's name, each by trigram similarity (`%`,
+the 0.3 default) OR by case-insensitive substring with the LIKE metacharacters escaped. Nothing
+else: not the label, not the catalogue number, not notes, not the pressing. So searching
+tracklists and credits would be a third and fourth OR branch in that one function, each an
+EXISTS against wherever the text is stored, and the two fields would need no change. The near
+view's behaviour on a search (wall-arrival-104) is about where the wall lands after the filter
+changes, not about matching.
+
+**Read: storing the Discogs text the cache already holds (the coordinator, 4 Nov).** The cache
+keeps every release payload ever fetched: a stale row is read as a miss and left in place
+(`cache.ts`, "deleting on read would turn a temporary outage into permanent loss"), so a backfill
+needs no Discogs call for any release the app has seen, and `writeCachedRelease` is the one write
+of a payload, with five callers (prefill, the release route, the import route, the collection
+import, verify-release). What the payload holds, read from three fixtures: a tracklist of 13 to
+32 tracks; `extraartists`, the release-level credits, 3 to 10 of them, each a name and a role
+("Lacquer Cut By", "Producer"), with track-level credits inside some tracks; `notes` of 100 to
+800 characters; `companies` 7 to 12, of which the normaliser already keeps the manufacturing
+roles and the pressing plant. The normaliser (`normalize-release.ts`) already parses tracklist,
+notes and companies for the lookup panel; it does not read `extraartists` at all, and the record
+page reads none of the four. Shape, if asked for: one table, `discogs_release_text`
+(`discogs_release_id`, `kind` in track | credit | company | notes, `ordinal`, `text`), keyed by
+the id the cache and `pressings` share, with a trigram index on `text`; the search's new OR
+branches are EXISTS from the record's pressing into it. One table rather than four because the
+reason to store the text is to match it, and a reader of the record page would still be given
+the rows grouped by kind. The import writer does not change: the derived rows are written where
+the payload is, in `writeCachedRelease`, so every path that caches a release fills them, and a
+backfill is one pass over `discogs_cache` in a script, run once after the migration. Two files
+of substance: the migration and the write, plus the backfill script and the search branches.
+Release notes unstored: deliberate where it was decided and undecided where it was not.
+`records.notes` and `pressings.notes` are the owner's, written only from the form's overrides
+(`discogs-import.ts:410`), never from `release.notes`, which is CLAUDE.md §8's "never overwrite
+user-entered data with Discogs data" and SPEC §10's reading of `notes` as "someone's description
+of the release"; nobody then chose not to keep that description somewhere of its own, it was
+never asked for. The production count of records, pressings with a release id and cache rows
+was refused by the permission classifier; the query is in the Downloads note for Adam.
