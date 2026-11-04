@@ -52040,3 +52040,22 @@ unit, which was the rule already. Exports to Downloads happen at commit, so Desi
 unchanged. No skip-build step: Vercel's HEAD^..HEAD example reads the last commit of a push, and
 a batch ending in a NOTES commit would skip a real change. This entry is the first commit held
 unpushed under the rule.
+
+**Read: generating the 45 missing ABOUTs (the coordinator, 4 Nov).** The path exists outside the
+page's control: `POST /api/records/:id/snippet` is `findRecordSubject` (artist and title, nothing
+else) → `getSnippetClient().write(subject)` → `storeGeneratedSnippet`, three module calls a script
+can make as tag-moods.mts makes the tagger's, with `--conditions=react-server` and the key from
+`.env.local`. What a script would need beyond that: the route's `claimLlmRequest('snippet')`,
+which is the 10-an-hour limit and the log; a script calling the module directly has neither, so
+it must claim per record or run outside the limit on purpose, and say which. **What is recorded:**
+`llm_requests` keeps every claimed request's kind, requested_at, completed_at, input and output
+tokens and stop reason, so a run that finished and one that did not (completed_at NULL, the
+timeout signature) are both visible; it does not keep the record id or the error, so "which
+record failed and why" is in the server log alone. The mood tagger's gap was tagging not
+claiming at all. **Measured cost:** 15 snippet requests on production, 0 never completed, 0 at
+the ceiling, 245 tokens in and 525 out on average (the out includes thinking), so about 1.4
+cents a note at Opus 5's $5 and $25 per million, about 65 cents for the 45, 11 to 15 seconds
+each. **Three samples** generated through the module and not stored, for records chosen as
+thin, in a Downloads note for Adam: Mandy, Indiana — URGH (532 characters, hedged on a 2026
+record), Smerz — Believer (512), Joff Bush — Bluey The Album (526). Not built: the coverage is
+Adam's call on the samples, then Design's ruling on reaching the prose, then the branch.
