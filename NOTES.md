@@ -51591,3 +51591,32 @@ declared 44 all the same, so the two 34-tall inputs it now reports as short were
 height no finger ever got. Proposed, held for agreement as §2 requires: run the test under a coarse
 pointer, where the floor applies, and note the proxy. Not changed here. The dispatch for the fix
 waits on that decision, so one run covers both.
+
+**The sixth family member, in its clearest form (the coordinator, 3 Nov).** On the millisecond tie:
+"They agreed with each other and were wrong by the database's clock." An instrument confirmed
+against itself: the group's order and the frame's choice were built from one clock so they could
+not disagree, and the test that read them against each other would have passed every tie. Only the
+fixture's third thing, the seeding order, which neither reads, said they were both wrong. Beside
+the gate's judge reading its own verdict (CLAUDE.md §2's fourth row): agreement between two readings
+of one source is not verification of either. A sleep in the fixture would have hidden a real
+precision loss between the column's microseconds and the driver's milliseconds; refusing it was
+right.
+
+**record-page-28:135 runs under a coarse pointer (the coordinator's agreement, 3 Nov), and that fixes
+one of its two defects.** The pointer change fixes the encoding of the pre-130 build. The proxy
+survives it: the test reads the declared `::before` height, and a replaced element renders no
+`::before` under any pointer, so the two 34-tall fields still pass a 44 they do not meet. Left as it
+reads, because the fix is not Code's: if an input cannot carry the overlay at all, how §T.6's floor
+is met for that class is Design's to answer (step 130 drew the two fields 44 in the box, as one
+case). Asked in the 3 Nov note beside the §62 wording question, with the band's rail links as the
+same question asked once as a principle: whether §T.6's pointer rule narrows §9.3's floor wherever
+§9.3 reaches, so a test asserting 44 under a mouse (collection-band-97:149) encodes a ruling since
+narrowed. Not decided case by case: two case-by-case answers is how a rule drifts.
+
+**§63: the weight note sent with a third option, and the build held either way (the coordinator, 3
+Nov).** Beside the family's file (+48KB) and the self-subset (+12KB, the withdrawn mechanism, named
+as such and as the third round trip on this arrow): change the character, not the font, zero weight.
+Read from the served latin file itself, not its declared range: it holds › » > ↑ ↓ and not →, so
+"Manage ›" is the nearest in sense. Adam is looking at the arrow as it draws; if it does not read
+as foreign to him, leaving it is the cheapest correct answer, and nothing is worth 12KB for a glyph
+nobody minds.

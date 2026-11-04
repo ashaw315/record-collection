@@ -132,6 +132,21 @@ test('§28: below 960 the lower region is a document — no air, no figures', as
   }
 });
 
+/*
+  Under a coarse pointer since 3 Nov (the coordinator's agreement): step 130
+  applied §T.6's rule to this page, "the 44 floor applies where the pointer is
+  coarse; where the primary pointer is fine, controls keep their drawn size",
+  and the section overlay this reads is coarse-only since step 165. Written at
+  step 71 on the chromium project, a fine pointer, it encoded the pre-130 build
+  and passed until a 24px control lived inside a section. That is ONE of its two
+  defects. The other survives this change: it reads the declared `::before`
+  height, and a replaced element (input, select) renders no `::before` under any
+  pointer, so the two 34-tall fields below pass a floor no finger gets from
+  them. How §T.6's floor is met for a control that cannot carry the overlay is
+  Design's question (NOTES, 3 Nov), and the reading stays as it is until answered.
+*/
+test.describe('under a coarse pointer', () => {
+test.use({ hasTouch: true });
 test('§28: every control clears the 44px touch floor, at 390', async ({ page }) => {
   /**
    * "§9.3's 44px hit floor now covers every control on the page, the 11px
@@ -193,6 +208,7 @@ test('§28: every control clears the 44px touch floor, at 390', async ({ page })
   }, CONTROL_HEIGHT);
 
   expect(small, `controls under the ${CONTROL_HEIGHT}px hit floor at 390:\n${small.join('\n')}`).toEqual([]);
+});
 });
 
 test('§28: the images strip wraps its thumbnails, two per row at 390', async ({ page }) => {
