@@ -51727,3 +51727,17 @@ user-entered data with Discogs data" and SPEC §10's reading of `notes` as "some
 of the release"; nobody then chose not to keep that description somewhere of its own, it was
 never asked for. The production count of records, pressings with a release id and cache rows
 was refused by the permission classifier; the query is in the Downloads note for Adam.
+
+**Drop 2026-11-04-01 applied (4 Nov): "Covers named and the arrow cut", 3 changes, intake OK.**
+The 8a target as sent: §62's not-shown wording withdrawn (`62/covers-not-shown`, the count
+unchanged), §63's prose replaced with the weighing and the cut, the ruled sentence unchanged.
+WITHDRAWALS.md: the new entry before `63/arrow-subset`, whose description now says the build cuts
+the family's file and that this is the arrow's third pass. HANDOFF: the §62 governs row and the
+§63 step reworded as the change file says, "cut once by a committed script to Google's Latin
+range plus U+2190 to 2199". The intake's first run failed index assertion 6 on the
+machine-readable comment being stale, which `scripts/derive-withdrawals.mjs` regenerates; the
+change file did not say so and the next one need not, the index says it. Second run: 14 PASS,
+711 passed, INTAKE OK. Design's §63 prose also says "Nor does the fallback stand if it looks
+acceptable, because the reason is the width of every line carrying →, which the machine sets,
+not how the glyph looks": whether Design had Adam's "seems okay" when it wrote that is not
+knowable from the drop, so the fact goes in the next note and Design is free to keep the answer.
