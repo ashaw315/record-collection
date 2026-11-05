@@ -52200,3 +52200,11 @@ and a push is the one event every unit has exactly once; a manifest written from
 actually gathered, listing each with its purpose, so a bundle that misses one is visible on
 arrival; and the three triggers of today (documents at a commit touching them, captures at a
 commit naming them, notes by hand) become inputs the push gathers, not events of their own.
+
+**CI run 41959513368 on 2054305, read in full (5 Nov): OK, exit 0, every half.** The ABOUT unit's
+push, five commits under it: the twins mechanism, three NOTES entries and the gate. Unit 4830
+passed, 2 skipped; chromium 1058 passed, 1 skipped, no flaky, 1.1h, the narrowest margin 59% on
+pick-pull-156's arrows case; mobile 390 passed, 4 skipped, 23.0m, narrowest 67% on sidebar-113's
+column count. No failure, no flake; the lines a grep for "failed" finds are test names. Logs in
+one directory, gate-report written to a file, exit read from the shell. Everything on origin is
+verified by CI; this entry is held unpushed for the next unit.
