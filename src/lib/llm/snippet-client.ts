@@ -112,6 +112,13 @@ export function buildSnippetPrompt(subject: SnippetSubject, grounding?: Groundin
     facts, with the note asked not to contradict them and not to recite them:
     the sentence that is the product ("a surface so lacquered and cool…") is
     not a list of fields, and a note that reads like Discogs is a loss.
+
+    The 5 Nov line (the coordinator), a principle and not a quota: the facts
+    are already in the database and already searchable, so naming them adds
+    nothing a reader could not find by typing the name; the note's job is what
+    no field holds. The three grounded samples showed why: the two with credits
+    in the prompt thinned into them, and Smerz, who do everything themselves and
+    had almost none to list, kept the writing.
   */
   const facts =
     grounding === undefined
@@ -120,8 +127,11 @@ export function buildSnippetPrompt(subject: SnippetSubject, grounding?: Groundin
           'FACTS FROM THE COLLECTOR’S CATALOGUE, for this record and its artist. Treat them as',
           'true and do not contradict them; a claim about when this record came, what came',
           'before or after it, who played on it, or who issued it should agree with them. Do',
-          'not recite them: this is a note, not a catalogue entry, and most of them belong',
-          'in it only as what you know, not as what you list.',
+          'not recite them: this is a note, not a catalogue entry. These credits, the label, the',
+          'format, the year and the companies are already in the collector’s database and already',
+          'searchable, so naming them in the note adds nothing a reader could not find by typing',
+          'the name. The note’s job is the thing no field holds: what the record sounds like,',
+          'what it is doing, why someone would put it on.',
           '',
           ...[
             grounding.facts.label === null ? null : `Issued by: ${grounding.facts.label}`,

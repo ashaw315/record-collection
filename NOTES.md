@@ -52230,3 +52230,36 @@ new quote, whether or not the change file said so. What the check does not read 
 file's own statement; the bullet is what asks for that, and the test is what notices when it was
 not kept. The two closes of the §63 line's own stretch: the line no longer names the Linux file,
 so the carries-what-it-names guard has nothing to find in it, and §63 leaves the open list.
+
+**The 45 ABOUT drafts generated, nothing stored (5 Nov, Adam's step 5 after the gate).** Adam's
+answer to the gate: run the 45 with one change to the prompt, a principle and not a quota. Not a
+cap on names: the facts in the prompt are already in the database and already searchable, so
+naming them in the note adds nothing a reader could not find by typing the name, and the note's
+job is the thing no field holds, what the record sounds like, what it is doing, why someone
+would put it on. The reason, from the three samples: Smerz kept its voice because the duo do
+everything themselves and there were almost no credits to list; the other two thinned because
+credits in the prompt read as things to mention. The grounding stays as it is for the facts the
+model would otherwise get wrong. Test first (`about-grounding.test.ts`, failing against the 4
+Nov prompt), then the four sentences in `buildSnippetPrompt`; 36 across the three LLM files,
+typecheck, lint (the three standing warnings), build. **The run:** 45 finished, 0 failed, 10
+conflicts, in one file ordered by year descending, 2026 to 1956, URGH first; 71,929 tokens in,
+17,966 out, 386s of calls, 8.6s a draft; every record had facts and a discography, 42 artists
+fetched once and kept. Notes 499 to 593 characters, median 526, none over the ceiling. Every
+call is a row in llm_requests under `about_batch`. **The voice came back on the top three:**
+URGH names nobody beyond the singer and calls billy woods "a guest verse in English", Cindy Lee
+names nobody at all, Water From Your Eyes names only the duo by surname; all three are about
+what the records sound like. **The ten conflicts, classified and shown, none suppressed:** two
+`unchecked` (Smerz's Okey as before; The Doors' debut against Alabama Song (Whisky Bar), 1967,
+a single whose title does not say so); eight `personnel`, of which three are real people the
+credits do not hold (Nick Cash on 999, Mick Jagger on No Secrets, Danny Kalb on the Blues
+Project, each true and uncredited in the data) and five are song or band titles the rule read as
+a two-word name (Beach Boys, Bad Girls, Blow By, Big Yellow, Tuxedo Junction). So the personnel
+rule's false flags are titles; the grounding does not carry the tracklist, and the fix is to hold
+the release's track titles beside the credits. Recorded, not built: the file is for Adam to read
+and a conflict is for him to look at, not a verdict. **The limit the check cannot reach (the
+coordinator, 5 Nov, to record rather than fix):** debut and first-album claims, the most common
+sequence claim there is, cannot be verified where the earlier releases' formats are unknown,
+and `/artists/{id}/releases` gives no format for any master; the checker names them `unchecked`
+rather than wrong, which is the right reading, and it is the class the check does not reach.
+Second pass: Adam marks the ids that hold, one per line; `--store` writes those drafts and no
+other through the page's own path.

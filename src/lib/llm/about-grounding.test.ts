@@ -80,6 +80,21 @@ describe('buildSnippetPrompt with grounding', () => {
     expect(prompt).toContain('say less rather');
     expect(prompt).toMatch(/not (a )?list|do not recite|not a catalogue entry/i);
   });
+  /*
+    The coordinator, 5 Nov, on why Smerz kept its voice and the other two thinned: their credits
+    read as things to mention. Not a cap on names but a principle: the facts are already in the
+    database and searchable, so naming them adds nothing a reader could not find by typing the
+    name; the note's job is what no field holds. Fails against the 4 Nov prompt, which asked only
+    that the facts not be recited.
+  */
+  it('says the facts are already searchable, so naming them adds nothing, and the note’s job is what no field holds', () => {
+    const prompt = buildSnippetPrompt(subject, grounding);
+    expect(prompt).toMatch(/already (in the (collector’s )?(database|catalogue)|stored)[^.]*searchable/i);
+    expect(prompt).toMatch(/adds nothing[^.]*typing/i);
+    expect(prompt).toMatch(/no field holds/i);
+    expect(prompt).toMatch(/what (the record|it) sounds like/i);
+    expect(buildSnippetPrompt(subject)).not.toMatch(/no field holds/i);
+  });
   it('is the ungrounded prompt without grounding, unchanged', () => {
     const prompt = buildSnippetPrompt(subject);
     expect(prompt).not.toMatch(/contradict/i);
