@@ -52124,3 +52124,11 @@ block naming the unnumbered line it discharges, checked by a test: every named l
 every unnumbered line is named by at most one block, and the unnamed ones are listed as
 unbuilt; the apply script then places every Done before its twin. About thirty blocks to
 annotate once, with the pairing above as the draft.
+
+**The push-per-unit rule's first measured effect (the coordinator, 4 Nov).** The push of 2efbd95
+carried six commits, five of them NOTES and drops held since the rule, and made one production
+deployment where the day's earlier pattern made one per commit: six deployments became one, on
+a project that had 294 of the team's 314 in thirty days. The first instance and the first
+measurement are the same event, recorded as a measurement. And with the catalogue number and
+the matrix reached, §W.24's field list is fully built: for the first time that section has no
+daylight between what it rules and what runs.
