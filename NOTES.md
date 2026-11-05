@@ -52598,3 +52598,46 @@ four-worker run on this unit's commit is dispatched after the push to see what r
   apostrophes and quote marks included; plus the bold-sentence set diff between the previous
   card and the new one. Report, never refuse: a reading aid, not an assertion, not in
   ASSERTIONS-spec.
+
+**The queue file built, with the coordinator's correction (5 Nov): `QUEUE.md` at the root,
+`scripts/check-queue.mjs` its report, `test/repo/check-queue.test.ts` the check's tests.**
+The correction first, because the build follows it: the twins-test trick works because two
+independent records exist to pair, and a queue file has no second record. A check over it
+alone can hold ids unique, statuses valid, closed items resolving against git and rulings
+against the targets, and cannot notice an item that was never written down, which is the
+failure the file exists to prevent. So nothing in the check is a numbered assertion and its
+exit is always 0: a report, never a verdict, with the sentence saying so in the file and at
+the report's foot. Where a second record exists the check reads it: the six unbuilt handoff
+steps are printed from `scripts/handoff-unbuilt.json`, the list the twins test keeps exact,
+and are not items in the file; the draft's Q13 to Q18 were those six and are retired, the
+gap kept so the ids are never reused. Closed items resolve by `git cat-file -e`; `ruled` and
+`dropped §x` resolve against the text of every design target, the handoff, WITHDRAWALS.md and
+SPEC.md. The content is the coordinator's 37 items as given; the statuses are Code's (Q11,
+Q12 done at 194ac24; Q9 open, parts 3 and 5 pending; Q19 closes with this commit's own sha,
+which cannot be written before it exists, so it closes in the next commit that touches the
+file). The draft at `QUEUE.md` was replaced in place as it said to be.
+
+Tests first: 14 in the file, run before the script existed, "Cannot find module
+scripts/check-queue.mjs", no tests. Then 13 passed and 1 failed on the real file: the
+sentence "cannot notice an item that was never written down" is in the file wrapped at 80
+and the regex wanted a single space; made whitespace-tolerant, since the claim is the
+sentence and not its line breaks, and 14 passed. One correction to my own fixture before the
+first green: two line numbers miscounted in the fixture's second table. Run on the real file:
+31 items in 7 sections, 29 open, 2 done; consistency nothing to report; restatements none.
+Step level: the 14, typecheck, lint, build. The test joins the document suite, which is a
+change to the commit path's test set and so a gate: CI on the pushed commit.
+
+**Proposed as an assertion, not built (the coordinator asked for the proposal): `QUEUE.md`
+restates no unbuilt handoff step.** The motivating defect is already in the family: two
+hand-maintained copies of one list drifting apart, which is what the index's assertions 6
+and 13 and the twins test exist for, and what the handoff and its index did on 4 Nov. **It
+is reachable, and the line is drawn at the head's own words.** The check already reports it:
+a table row whose item carries an unbuilt step's head after its `§x:` prefix, lowercased
+with curly apostrophes straightened, is a copy; a row that names the section number alone
+("after §65 lands") is a reference and is left alone. The two cannot be confused because a
+reference needs the number and a copy needs the words, and the heads are sentences of
+Design's, not numbers: "the tracklist and the credits", "why a record matched". What it would
+miss is a paraphrase that keeps none of the head's words, which the index's quote rule
+already accepts as the limit of a text check. Tested on fixtures both ways (a copy in any
+case flagged, a bare reference not). If ruled an assertion it becomes a numbered line in the
+check with a non-zero exit, and only that line, so the rest of the report stays a report.
