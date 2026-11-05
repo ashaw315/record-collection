@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { AppHeader } from '@/components/AppHeader';
+import { HydratedMark } from '@/app/HydratedMark';
 import { hydrateWantListItem } from '@/lib/db/queries/want-list';
 import { formatCeiling, huntFacts, priorityLabel } from '../want-list-format';
 import { PressingVariants } from '../PressingVariants';
@@ -46,6 +47,7 @@ export default async function WantListItemPage({
     <>
       <AppHeader />
       <main data-screen-frame="" className={`${ITEM_FRAME} py-5`}>
+        <HydratedMark />
         <Link
           href="/want-list"
           className={`${HIT_ALONE} text-meta text-muted-foreground underline-offset-2 hover:text-foreground hover:underline`}

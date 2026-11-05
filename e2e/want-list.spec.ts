@@ -751,6 +751,12 @@ test('the dig fields Adam recorded are visible without editing', async ({ page }
   });
 
   await page.goto('/want-list');
+  /*
+    The press waits for the hydrated mark (5 Nov): a press on a Link before hydration navigates
+    or drops (step 160's measured cause), and this press dropped on three of four mobile runs at
+    four workers. The assertion below is unchanged; only when the press is made.
+  */
+  await page.locator('[data-hydrated="true"]').first().waitFor({ state: 'attached', timeout: 15_000 });
   await page.getByTestId('want-list-detail-link').first().click();
   await expect(page).toHaveURL(new RegExp(`/want-list/${item.id}$`));
 
@@ -866,7 +872,9 @@ test('a want-list row is editable, and the dig fields survive the round trip', a
     **Reached by CLICKING, not by navigating to a known URL.** Following the
     app's own link is what proves the route exists; `page.goto` to a path the
     test author chose would pass even if nothing rendered that link.
+    The press waits for the hydrated mark (5 Nov), as the list's does above.
   */
+  await page.locator('[data-hydrated="true"]').first().waitFor({ state: 'attached', timeout: 15_000 });
   await page.getByTestId('want-list-edit').click();
   await expect(page).toHaveURL(new RegExp(`/want-list/${item.id}/edit$`));
 

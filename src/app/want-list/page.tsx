@@ -6,6 +6,7 @@ import { listRecordAges, spineColoursOf } from '@/lib/db/queries/records';
 import Link from 'next/link';
 import { AppHeader } from '@/components/AppHeader';
 import { WantListRow, type WantListItem } from './WantListRow';
+import { HydratedMark } from '../HydratedMark';
 import { listWantList } from '@/lib/db/queries/want-list';
 import { hydrateWantListItem } from '@/lib/db/queries/want-list';
 import type { Offset } from '@/lib/api/query-params';
@@ -55,6 +56,7 @@ export default async function WantListPage({ searchParams }: PageProps<'/want-li
       <AppHeader />
 
       <main data-screen-frame="" className={`${SCREEN_FRAME} py-6`}>
+        <HydratedMark />
         <header className="mb-4 flex flex-wrap items-start justify-between gap-4">
           <div>
             <h1 className="font-heading text-headline font-semibold tracking-tight">
