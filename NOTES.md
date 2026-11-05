@@ -52317,3 +52317,24 @@ begins with one of those words would be skipped. `--rerender` now reads the fact
 cache, since a checker that learned a field needs it. Tests first: 9 then 2 failing on absence
 across the two files; 52 across the three LLM files, typecheck, lint, build; nothing stored, nothing
 re-run on the 45.
+
+**CI run 42053953453 on fcab6ed, read in full (5 Nov): GREEN WITH FLAKES, exit 3, no failure.** The
+push of the ABOUT unit with §65 and the two rules under it. Unit 4831 passed, 2 skipped; chromium
+1056 passed, 2 flaky, 1 skipped, 41.7m; mobile 388 passed, 2 flaky, 4 skipped, 17.9m. GitHub shows
+the run as failed because the verdict counts a flake as not OK, which is the rule. The four,
+each read from its failed attempt's log and snapshot, none known in NOTES before: (1)
+pick-moods-157:154 on chromium, the untagged line read "23 not tagged yet" then "24" across one
+grid open, so another worker's record arrived between the two reads on the shared database, an
+interference flake, not timing; (2) wall-arrival-104:120 on chromium, the scroll after clearing
+the search read top 0 against the unfiltered arrival's 75, a timing of the restore; (3) and (4)
+want-list.spec.ts:739 and :849 on mobile, both the same shape: a press on a Link straight after
+`goto`, and the URL stayed where it was, the list and the item page respectively, with the
+snapshot showing the link present and its href right. **The same :849 flake again on the next
+run, 42059632838 on dfbe205, mobile half,** 389 passed, 1 flaky, 12.7m: three in two runs. The
+cause shape is step 160's, measured then: a press before hydration navigates or drops. The
+want-list spec waits for nothing between the load and the press, where the specs that learned
+this (sign-in, record-form, images and others) wait on the hydrated mark. **Proposed, not done,
+since it changes a test:** the two presses in want-list.spec.ts wait for hydration first, as the
+others do; the test's claim is unchanged, the press is made when the page can take it. A margin to
+watch: record-navigation.spec.ts:295 on chromium at 1% of its 60s. Logs in one directory per run,
+gate-report written to a file, exit read from the shell.
