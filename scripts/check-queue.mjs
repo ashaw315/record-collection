@@ -16,11 +16,23 @@
  *
  * Where a second record exists the check reads it rather than the file's
  * copy: the unbuilt handoff steps are printed from `scripts/handoff-unbuilt.json`,
- * the list the twins test keeps exact, and a row of `QUEUE.md` that carries
- * one of their heads' own words is reported as a restatement, since two
- * hand-maintained copies of one list drifting apart is already in the family
- * (the handoff and its index, 4 Nov). That one finding is proposed as an
- * assertion in NOTES (5 Nov); until it is ruled one, it reports.
+ * the list the twins test keeps exact.
+ *
+ * **Assertion 1, the one numbered line, with the exit code: `QUEUE.md`
+ * restates no unbuilt handoff step** (ruled by the coordinator, 5 Nov). A
+ * table row whose item carries a step's head after its `§x:` prefix,
+ * lowercased with curly apostrophes straightened, is a copy; a row naming the
+ * section number alone is a reference and is left alone. The two cannot be
+ * confused because a reference needs the number and a copy needs the words,
+ * and the heads are Design's sentences. What it misses is a paraphrase keeping
+ * none of the words, the limit the index's quote rule already accepts. The
+ * motivating defect is the coordinator's own, named by them: the queue content
+ * handed over on 5 Nov restated all six unbuilt steps as items Q13 to Q18,
+ * carrying their heads verbatim, and they had to be retired. Two
+ * hand-maintained copies of one list, in the document this guards.
+ *
+ * `QUEUE_FILE` points a run at a staged file, which is how the tests break
+ * one on purpose.
  */
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
@@ -95,7 +107,7 @@ export function restatements(items, heads) {
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
-  const text = readFileSync('QUEUE.md', 'utf8');
+  const text = readFileSync(process.env.QUEUE_FILE ?? 'QUEUE.md', 'utf8');
   const items = parseQueue(text);
   const unbuilt = JSON.parse(readFileSync('scripts/handoff-unbuilt.json', 'utf8'));
   const design = 'docs/design';
@@ -117,8 +129,8 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   console.log(`consistency, report only: ${found.length === 0 ? 'nothing to report' : `${found.length} finding${found.length === 1 ? '' : 's'}`}`);
   for (const f of found) console.log(`  ${f}`);
   const copies = restatements(items, unbuilt.map((u) => u.head));
-  console.log(`restatements of unbuilt steps, report only (proposed as an assertion, NOTES 5 Nov): ${copies.length === 0 ? 'none' : copies.length}`);
+  console.log(`${copies.length === 0 ? 'PASS' : 'FAIL'} 1 restates no unbuilt handoff step${copies.length === 0 ? '' : ` (${copies.length})`}`);
   for (const c of copies) console.log(`  ${c}`);
-  console.log('A report, not a verdict: it cannot notice an item that was never written down, and a clean report is not proof the list is complete.');
-  process.exit(0);
+  console.log('The rest is a report, not a verdict: it cannot notice an item that was never written down, and a clean report is not proof the list is complete.');
+  process.exit(copies.length === 0 ? 0 : 1);
 }

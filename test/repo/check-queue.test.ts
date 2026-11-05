@@ -1,4 +1,7 @@
-import { readFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { readFileSync, unlinkSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { consistency, parseQueue, restatements } from '../../scripts/check-queue.mjs';
 
@@ -129,5 +132,46 @@ describe('the repo’s QUEUE.md', () => {
 
   it('does not list the unbuilt handoff steps as items: they are the twins test’s, derived and never restated', () => {
     expect(text).toMatch(/handoff-unbuilt\.json/);
+  });
+
+  /*
+    Assertion 1, the one numbered line in the check (the coordinator, 5 Nov):
+    QUEUE.md restates no unbuilt handoff step. The motivating defect is the
+    coordinator's own, named by them: the queue content handed over restated
+    all six unbuilt steps as items Q13 to Q18, carrying their heads verbatim,
+    and they had to be retired. Two hand-maintained copies of one list, in the
+    document the assertion guards.
+  */
+  it('assertion 1: restates no unbuilt handoff step', () => {
+    const heads = (JSON.parse(readFileSync('scripts/handoff-unbuilt.json', 'utf8')) as Array<{ head: string }>).map((u) => u.head);
+    expect(restatements(parseQueue(text), heads)).toEqual([]);
+  });
+});
+
+describe('the check as a command', () => {
+  const run = (queueFile: string) => {
+    const r = spawnSync('node', ['scripts/check-queue.mjs'], { env: { ...process.env, QUEUE_FILE: queueFile }, encoding: 'utf8' });
+    return { status: r.status, out: r.stdout };
+  };
+
+  it('exits 0 on the repo’s QUEUE.md and prints the report-only lines with no PASS or FAIL beside them', () => {
+    const { status, out } = run('QUEUE.md');
+    expect(status).toBe(0);
+    expect(out).toMatch(/consistency, report only/);
+    expect(out).toMatch(/^PASS 1 restates no unbuilt handoff step/m);
+  });
+
+  it('exits 1 with FAIL 1 on a staged file that carries an unbuilt step’s head as an item, and still prints the report', () => {
+    const staged = join(tmpdir(), `queue-${process.pid}.md`);
+    writeFileSync(staged, '## Q\n\n| id | status | item | record lives in |\n|---|---|---|---|\n| Q18 | open | §65: the tracklist and the credits, read from the release text | the handoff |\n');
+    try {
+      const { status, out } = run(staged);
+      expect(status).toBe(1);
+      expect(out).toMatch(/^FAIL 1 restates no unbuilt handoff step/m);
+      expect(out).toMatch(/Q18 restates "§65: the tracklist and the credits"/);
+      expect(out).toMatch(/consistency, report only/);
+    } finally {
+      unlinkSync(staged);
+    }
   });
 });

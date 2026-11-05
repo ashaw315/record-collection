@@ -18,8 +18,9 @@ handoff and `WITHDRAWALS.md`.
 test (`test/repo/handoff-twins.test.ts`) against the handoff, listed in
 `scripts/handoff-unbuilt.json`, and printed by the check. Restating them here
 would be a second hand-maintained copy of one list, the drift the index exists
-to catch. The draft's ids Q13 to Q18 were those six and are retired, never
-reused.
+to catch, and the check's one numbered assertion, with the exit code, is that
+no row here carries one of their heads. The draft's ids Q13 to Q18 were those
+six, restated verbatim, and are retired, never reused.
 
 **Statuses.** `open`; `done <commit>`; `dropped <commit or §section>`;
 `ruled <§section>`. A row is `| id | status | item | record lives in |`, and
