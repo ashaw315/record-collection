@@ -52414,3 +52414,14 @@ own code, which is an offline checker; a seed and a paint measurement that fit a
 one worker do not at four on one runner. The run on 6e772cd was dispatched at the default, one
 worker, as the runs before fcab6ed were; whether the gate should run at four workers is a
 question for the coordinator, since at four it is faster by half and these are its costs.
+
+**CI run 42074402765 on 6e772cd (5 Nov): OK, exit 0, no failure, no flake, at the default one
+worker.** Unit 4845 passed, 2 skipped; chromium 1058 passed, 1 skipped, 1.3h; mobile 390
+passed, 4 skipped, 23.0m; both halves print "using 1 worker"; no retry on either half. The
+want-list presses on the hydrated mark: 739 at 5.8s and 855 at 6.6s on mobile, 3.8s and 5.1s
+on chromium, 0 retries, the first CI pass of that spec at one worker since the mark. The three
+tests the four-worker runs pushed over, at one worker here: wall-route:234 8.1s whole (seed
+inside its 30s budget), record-band-43:33 2.4m, pick-moods-157:154 2.7s, all passed first
+attempt. So the evidence reads the same way a fourth time: one worker clean, four workers
+failing, nothing in the code between. The four-worker question stays with the coordinator.
+Held unpushed; rides with the next unit.
