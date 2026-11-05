@@ -52398,3 +52398,19 @@ exist. Not a coincidence and not a mechanism in the app. **pick-moods-157:154 re
 fixed, in this unit:** worker interference on the shared database, another worker's record
 arriving between two reads of the untagged count; infrastructure, not a race in that spec; it
 will recur at more than one worker.
+
+**CI run 42059632838 on dfbe205, read in full (5 Nov): FAILED, exit 1, one failure, three flakes,
+all four the four-worker load.** Unit 4847 passed, 2 skipped; chromium 1055 passed, 1 failed, 2
+flaky, 1 skipped, 51.0m; mobile 389 passed, 1 flaky, 4 skipped, 12.7m. **The failure,
+wall-route.spec.ts:234,** both attempts: the test seeds 260 records by one POST each inside its
+30s budget, and the seed took 32.0s and 31.5s; the retry's "expected 201, received 400" is the
+POST after the timeout, the request context closed under it. The same test across the three
+runs, read from the logs: 5.3s at 1 worker on 2054305; 22.3s at 4 workers on fcab6ed, passed at
+74% of the budget; 32.0s at 4 workers here. **The flakes:** pick-moods-157:154, the interference
+flake again (23 then 24), 2.3s at 1 worker, 7.5s and 8.5s at 4; record-band-43:33, "first paint
+is not the settled layout", a cold-paint measurement that took 1.9m at 1 worker and 5.1m then
+6.2m at 4; and want-list:849 on mobile, fixed in 6e772cd. So nothing in dfbe205 failed on its
+own code, which is an offline checker; a seed and a paint measurement that fit a 30s budget at
+one worker do not at four on one runner. The run on 6e772cd was dispatched at the default, one
+worker, as the runs before fcab6ed were; whether the gate should run at four workers is a
+question for the coordinator, since at four it is faster by half and these are its costs.
