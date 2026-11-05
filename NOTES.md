@@ -52303,9 +52303,10 @@ reads that one. **What the first build got wrong, each now a test:** it held the
 song claims, and 999's Found Out Too Late is the artist's 1979 single, so the one defect the rule
 was built for passed; "closer to rock'n'roll" read as song context; a person the personnel rule
 had flagged stood again as a missing track; "a Bay Area bar band" and "Not the Decca sides" were
-titles. The rule now says when the discography holds the phrase, as the fact. **The third real
-error, found by rule 3 on the first recheck:** Carly Simon's No Secrets, "You're So Vain opens
-it out", and it is A3; The Right Thing To Do opens the record. In the note to Adam. **The recheck
+titles. The rule now says when the discography holds the phrase, as the fact. **A third error
+reported by rule 3 on the first recheck, WITHDRAWN the same day (see the next entry but one):**
+Carly Simon's No Secrets, "You're So Vain opens it out"; "opens it out" is a phrasal verb, broadens,
+and the note never claimed a position. Rule 3 matched the token. **The recheck
 of the 45,** no call spent, written to a separate file so the one Adam is marking from is not
 rewritten under him: 11 conflicts against the first run's 10; gone, four titles; added, 999's
 bonus track with the discography fact, Carly Simon's order, the Doors sentence as unchecked, and
@@ -52338,3 +52339,21 @@ since it changes a test:** the two presses in want-list.spec.ts wait for hydrati
 others do; the test's claim is unchanged, the press is made when the page can take it. A margin to
 watch: record-navigation.spec.ts:295 on chromium at 1% of its 60s. Logs in one directory per run,
 gate-report written to a file, exit read from the shell.
+
+**The Carly Simon finding withdrawn (the coordinator, 5 Nov): not an error, the note marked as it
+stands.** "You're So Vain opens it out" is a phrasal verb, broadens or widens, not "opens it"; the
+sentence's contrast is loud against quiet, and it names The Right Thing To Do as part of the
+quieter spine, right for A1. The data was right and the note never claimed otherwise; rule 3
+matched the token "opens" and reported a position claim never made, and it reached Adam as a
+correction. The note to him corrected: two to handle by hand, 999 and The Doors. **The honest
+reading of rule 3, taken:** on this batch it returned `unchecked` on The Doors, the defect it was
+built for, caught no instance of that defect, and produced one false positive. Recording it as
+closing its defect was the shape NOTES already names, a new instrument's first catch read as
+proof the instrument works. The test that asserted the Carly Simon flag asserted the false
+positive as correct behaviour, a test written from the build; it changes with whatever is decided
+for rule 3. **Two options put to Code, Code's read given and nothing built until the coordinator
+decides:** (a) scope rule 3 to a track named by title and a verb that resolves to a position,
+dropping bare "opens it" and the phrasal forms, with the Carly Simon false positive as its
+defect; (b) drop rule 3 and record the Doors class, tracks referred to by description, as one
+the checker cannot reach, beside the debut-and-first-album class. Rules 1 and 2 stand; rule 2's
+two remaining flags (Everyone's Crushed, Love To Love You Baby) are correct and stay.
