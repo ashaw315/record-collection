@@ -1,0 +1,27 @@
+[
+  {
+    "head": "§T.6: slots of two lines, names in their case",
+    "status": "built in parts, unbuilt as a step",
+    "evidence": "Look up's slot is ruled at two lines and one and asserted (lookup-flows.spec.ts:1811-1897, steps 125 and 150); the error screen's bare fallback has its dev probe (/error-probe, step 142). Not found: every slot message checked at 320 and 1280, and names inside controls set in their own case as an asserted rule. Checked 4 Nov by grep over e2e and src."
+  },
+  {
+    "head": "§T.6: tag rings on chips, and the item page's artist gap",
+    "status": "unbuilt",
+    "evidence": "No spec draws a tag checkbox's ring on its visible chip (ring-144.spec.ts has no chip case; RecordForm's chips carry no focus-visible rule); no spec measures the want-list item page's artist line against the record page's gap; the result card's floor count on three cards at 320 and 390 is not in result-card-150.spec.ts. Checked 4 Nov."
+  },
+  {
+    "head": "ring-144's two cases",
+    "status": "built in part, unbuilt as a step",
+    "evidence": "Suggestions' width-reserving text is aria-hidden and invisible (GapAnalysis.tsx:283), so the control's name reads once. The chip ring and the ring kept on a text field focused by a press are not in ring-144.spec.ts. Checked 4 Nov."
+  },
+  {
+    "head": "§T.6: the import's failure slot holds one line",
+    "status": "unbuilt",
+    "evidence": "The slot exists and is asserted reserved and taken by a whole-run failure (import-159.spec.ts:95-185, step 159); the step's own ask, every whole-run message enumerated from the code and asserted on one line at 390 coarse and 1280 fine, is not written. Checked 4 Nov."
+  },
+  {
+    "head": "§T.3: why a record matched",
+    "status": "unbuilt",
+    "evidence": "§T.3's reason line on a row or cell that matched by tracklist or credits: not built; it is the next search step, a proposal with captures at 1280 and 390. Checked 4 Nov."
+  }
+]

@@ -52132,3 +52132,30 @@ a project that had 294 of the team's 314 in thirty days. The first instance and 
 measurement are the same event, recorded as a measurement. And with the catalogue number and
 the matrix reached, §W.24's field list is fully built: for the first time that section has no
 daylight between what it rules and what runs.
+
+**The handoff's twins, linked by quote and the backlog stated (the coordinator, 4 Nov).** Built as
+proposed and then sharpened on the coordinator's point: a pointer answers which instruction a
+Done discharged and not whether it moved since, so each code-region block carries `discharges`,
+the unnumbered step's head and its whole clause (the line and its indented bullets and quote) as
+it stood when the work was built; `test/repo/handoff-twins.test.ts` finds the head in the handoff
+and compares the clause as it stands, naming the step and the drift on a mismatch, as assertions
+6 and 13 detect drift by a quote. A block whose instruction was not an unnumbered step names its
+`origin` in words (121's half of step 118; 135 to 137, 147, 151 to 155, 158, 159: rulings, defects
+and Adam's requests). `scripts/handoff-unbuilt.json` is the one list of ruled work with nothing
+built against it, with what was checked; the test keeps the three sets exact, discharged, unbuilt,
+and nothing in neither or both; `node scripts/handoff-twins.mjs` prints the standing figure.
+Tests first: three of six failing on the field's and the list's absence; the drift branch staged
+by changing one word of §63's clause, which failed it naming step-167, and put back. **The
+figure, 4 Nov: 37 unnumbered steps, 32 discharged, 5 unbuilt, 0 undetermined.** The nine built
+under a differently named Done are now linked: one inset to 120 (and 122, 124 to 126, 130 for its
+parts), the floor by pointer to 127 and 129, the three passes to 131 to 133, the two shelf steps
+to 134 as one, reduced motion to 162 (a part), the press before hydration to 160, the pull before
+its cover to 164; and the split's move to the pull to 157, by sidebar-113's re-pin. **The five
+unbuilt, each with its evidence in the list:** slots of two lines and names in their case (built
+in parts: look up's slot, the error probe; the 320 and 1280 check and the names' case not
+asserted); tag rings on chips and the item page's artist gap (nothing found); ring-144's two
+cases (suggestions' hidden text built; the chip ring and the text-field ring not); the import's
+failure slot holding one line (the slot built in 159; the enumerated one-line assertion not);
+and §T.3's reason line, the next search step. The matching half of §W.24's search step is
+numbered 169, built in part, with the shelf's reason on the pull as the rest. This commit is
+repository tooling and the backlog, not app code, so it is held for the next unit's push.

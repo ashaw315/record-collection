@@ -761,6 +761,8 @@ Its rows are in the governs table above, one per section; this section does not 
   - **Leave** the line at 24 and the rail's pitch as built.
   - **Move** `collection-band-97`'s 44 under a coarse pointer. Under a fine pointer, assert the drawn line.
   > An unboxed label in a list of lines keeps the list’s 44 line under both pointers. An unboxed label that is §W’s furniture, as the view names in the band and the rail are, keeps the line §W draws it on and meets the 44 floor by overlay only where the pointer is coarse.
+169. **Done: built in part; the shelf's reason on the pull, its capture and the proposal against §W.19 are the rest.** **§W.24 — what search reaches: Code's number for that step.** Search reaches the label, the catalogue number, the tracklist, the credits, the companies with the plant, and the matrix and runout, each by likeness or substring, in the one predicate the table, the grid and the shelf share (507a83c, 0d9657f, 2efbd95); the release-notes report is "none are stored, and none were": the notes kind left the extractor before any backfill ran. Left: the matching track or credit in the pulled record's facts when the match was not by title or artist, as a proposal, and the capture at 1440 × 900.
+
 - **Unnumbered, for Code to number — §W.24: what search reaches.**
   - **Extend** search to label, the catalogue number, the tracklist, the credits, the companies with the plant, and the matrix and runout, in every view.
   - **Release notes:** confirm the import stores no Discogs release notes and that search reads none. If any are stored today, report it; don't delete them.
