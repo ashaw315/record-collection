@@ -52780,6 +52780,13 @@ path a build removes, which `error-probe`'s spec would show. The 89 specs that h
 Q39:** a `E2E_SERVER=build` switch in the webServer command (`next build && next start`, both
 under NODE_ENV=test), the gate.yml e2e job building once before Playwright, and one
 four-worker CI run against the build read against this table. Touches playwright.config.ts
-and gate.yml, shared infrastructure, so a gate; possibly `error-probe`'s spec. Recorded because a 13-second failure on
+and gate.yml, shared infrastructure, so a gate; possibly `error-probe`'s spec.
+
+**CI run 42108198297 on b749d61 at the default one worker (5 Nov): OK, exit 0.** Unit 4859
+passed, 2 skipped; chromium 1058 passed, 1 skipped; mobile 390 passed, 4 skipped; no flake on
+either half; both halves print "using 1 worker". The gate for the queue-file unit (b749d61)
+and the four-worker unit's parts 1 and 2 (64aa789) at the default. Not a row in the
+four-worker table, which holds four-worker runs only. The four-worker gate on 50a18cc,
+42115186427, carrying option (b), is still running its chromium half. Recorded because a 13-second failure on
 every job is a dispatch defect and not a result, and the report would otherwise have read
 "FAILED" beside a commit that was never checked out.
