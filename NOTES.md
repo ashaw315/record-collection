@@ -52263,3 +52263,21 @@ and `/artists/{id}/releases` gives no format for any master; the checker names t
 rather than wrong, which is the right reading, and it is the class the check does not reach.
 Second pass: Adam marks the ids that hold, one per line; `--store` writes those drafts and no
 other through the page's own path.
+
+**Design's §65, the tracklist and the credits, taken in (5 Nov).** It landed in the tree while the
+45 ran: the 8a target with a new §65 and "Tracklist and credits - for Code to apply", anchored
+on the 35da788 exports. Found by the unit's commit being refused, and the refusal rule applied
+as written: the refusal said assertion 1, "§65 rows=0", the governs table had no row for the new
+section, and that row is the change file's Change 3; nothing else was inferred or changed first.
+drop-ref recorded it as refs/drops/2026-11-05-01 before anything ran against it. Applied by
+hand: the governs row after §64, the unnumbered step before "No step: §G.7." with its quote, and
+the §65 Provisionals line, open, returning from the tracklist step. The twins test then named
+the step as neither discharged nor listed, which is the mechanism doing its job, and it is in
+`scripts/handoff-unbuilt.json` with evidence: no file under src/app or src/components reads
+discogs_release_text or draws a TRACKLIST section. Intake OK: 14 assertions, 736 tests. **The
+mechanical, reported as the change file asks:** §65 rules that the section lands with the shelf's
+reason line or before it; the reason-line unit is not in flight, it is on the unbuilt list as
+§T.3, so there is no deploy to hold, and the order is a constraint on which of the two goes
+first. No withdrawal is owed, by the change file's own reading: no target ruled what the page
+shows of a release's text, and §W.24's test held only once the page shows these fields. The
+backlog is now six unnumbered steps unbuilt, 32 discharged, 38 in all.

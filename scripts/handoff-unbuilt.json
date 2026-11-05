@@ -23,5 +23,10 @@
     "head": "§T.3: why a record matched",
     "status": "unbuilt",
     "evidence": "§T.3's reason line on a row or cell that matched by tracklist or credits: not built; it is the next search step, a proposal with captures at 1280 and 390. Checked 4 Nov."
+  },
+  {
+    "head": "§65: the tracklist and the credits",
+    "status": "unbuilt",
+    "evidence": "Arrived 5 Nov with §65 in the 8a target (refs/drops/2026-11-05-01). No component reads discogs_release_text for the page; the record page's lower region has no TRACKLIST section (grep over src/app and src/components, 5 Nov). Ruled to land with the shelf's reason line or before it."
   }
 ]
