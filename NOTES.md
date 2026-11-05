@@ -52648,6 +52648,67 @@ reads the `commit` input as a ref, "A branch or tag with the name '64aa789' coul
 found". The earlier dispatches that ran carried full shas. The run on b749d61 dispatched the
 same way (42108066389) had already failed identically before the cancel reached it, and both
 gates on b749d61, 42108198297 at the default worker and 42108210395 at four, were dispatched
-by full sha. Recorded because a 13-second failure on
+by full sha.
+
+**A guard present, correct, and not on the path: a family member in its own right (the
+coordinator, 5 Nov).** The coordinator's three questions, answered. (1) Did this dispatch call
+`scripts/ci-gate.sh`? No. All four dispatches on 5 Nov were `gh workflow run` typed by hand;
+two carried short ids and failed at checkout, two carried full ids and ran. (2) What else does
+not call it? Nothing in the repo: `grep "gh workflow run"` over scripts, workflows, tests and
+docs finds ci-gate.sh alone. The bypass was the hand. (3) The script was never on the path, so
+it returned nothing. So this is the third occurrence of short-id-read-as-branch-name, after the
+two of 3 Nov, and the 3 Nov entry's "the gate.yml guard is no longer owed: the input cannot be
+short" was wrong: the input could be short from any shell that was not the script. **Distinct
+from the fixture-blind guard**, which was in the right place reading a case that could not
+occur: this one was in the right place, read the right case, and was walked around. Worse than
+no guard, because a reader of the guard stops checking; the 3 Nov entry is that reader. Made:
+gate.yml gains a first job, `commit-id`, that unit and e2e depend on, refusing any `commit`
+input that is not forty hex characters, with the reason in the run's own summary and an error
+annotation, so a hand dispatch fails in its first step and says why. On every path, since every
+dispatch arrives there. Shared infrastructure, so a gate: the workflow's own run on this commit
+is the gate, and its refusal is staged once by a deliberate short-id dispatch after the push,
+which should refuse in seconds with the message; recorded below when read. Code's own rule is
+in memory: dispatch through ci-gate.sh only.
+
+**Option (b) built: pick-moods-157:154 brackets its two reads (5 Nov).** The coordinator's
+limit first: can any spec DECREASE the untagged count? **Yes, two ways.** Tagging: ring-144 and
+pick-moods-157 insert `record_moods` rows straight into the database, and a tagged record
+leaves the count. Deletion: every spec's cleanup deletes its untagged records through the API,
+and three delete directly. So a compensating pair inside the window is possible and the
+quantity's own equality is not the bracket. **Picked: `pg_current_snapshot()`**, Postgres's
+xmin:xmax:xip, read through the test database before and after the two page loads. It changes
+whenever a writing transaction starts (xmax advances) or ends (its id leaves xip, or xmin
+advances), and never on a read, since reads take no transaction id. Two equal snapshots either
+side of the reads mean no committed state changed between them, whatever any count did, so
+both page loads were served from one collection. Monotonic in the sense needed: it moves on
+every write and moves back on none. `e2e/bracket.ts` holds the loop, eight attempts at most,
+failing with every pair of snapshots named; `test/e2e-helpers/bracket.test.ts` holds four
+cases, the compensating pair among them (an equal quantity across a moved fingerprint is not
+accepted), run first against no module. The spec's claim is unchanged, "every record in this
+filter is tagged, and the line still counts the collection", and a second test stages the
+flake's own shape, one untagged record written between the two reads, and asserts the bracket
+reopened and the reads that counted were of one collection. The cost under four workers is
+that the window is two page loads, and a quiet two seconds may be rare; a bracket that never
+closes fails with its snapshots named rather than comparing two collections, which is the
+honest end.
+
+**Assertion 1 of the queue check, numbered with the exit code (ruled by the coordinator, 5
+Nov).** `node scripts/check-queue.mjs` now prints `PASS 1 restates no unbuilt handoff step` or
+`FAIL 1` with the rows, exits 1 on FAIL, and everything else stays a report. The motivating
+defect is the coordinator's own, named by them: the queue content handed over restated all six
+unbuilt steps as items Q13 to Q18, carrying their heads verbatim, and they had to be retired;
+two hand-maintained copies of one list, in the document the assertion guards. Tests: the real
+file's assertion in vitest, which passed first time because the file was already clean (the
+fixture cases of the same function failed first, earlier in the day), and two command tests
+through a staged `QUEUE_FILE`, FAIL 1 and exit 1 on a copy, PASS 1 and exit 0 on the repo's,
+both failed first against the script without the line and the env.
+
+**The arithmetic (the coordinator's question).** 736 and "the document suite" are the same
+total: `DOCUMENT_SUITE` is test/repo plus the wall's unit test, and commit-checked runs exactly
+that. 736 to 750 is 14, and 14 is the whole of `check-queue.test.ts` as it stood: 11 tests on
+fixtures and 3 on the real file, not 14 plus one; "14 plus one" was a miscount in the report,
+not in the suite. This commit adds 3 to that file (the real-file assertion and the two command
+tests), so the document suite is 753, and the bracket's 4 tests sit in test/e2e-helpers, in
+`npm test` and not in the document suite. Recorded because a 13-second failure on
 every job is a dispatch defect and not a result, and the report would otherwise have read
 "FAILED" beside a commit that was never checked out.

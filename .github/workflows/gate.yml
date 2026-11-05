@@ -41,7 +41,35 @@ env:
   NO_COLOR: '1'
 
 jobs:
+  # The input refused here, before any job checks it out. actions/checkout
+  # reads a seven-character id as a branch name that does not exist, and every
+  # job then fails in seconds with the reason only in its log: 41734064967 and
+  # 41738856433 on 3 Nov, 42106636860 on 5 Nov. After the first two,
+  # scripts/ci-gate.sh became the dispatcher that can only hand over forty
+  # characters; the third was dispatched by hand around it. A guard that is
+  # present, correct and not on the path is worse than none, because a reader
+  # of the guard stops checking (the coordinator, 5 Nov). This one is on every
+  # path, since every dispatch arrives here, and it cannot be bypassed by a
+  # dispatcher that forgets to resolve.
+  commit-id:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: refuse anything but a full forty-character commit id
+        env:
+          COMMIT: ${{ inputs.commit }}
+        run: |
+          case "$COMMIT" in
+            [0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f])
+              echo "commit ${COMMIT}: a full id, the gate runs" ;;
+            *)
+              echo "::error::REFUSED: the commit input must be the full forty-character id; got '${COMMIT}' (${#COMMIT} characters). Dispatch with scripts/ci-gate.sh <ref> [workers], which resolves it."
+              echo "REFUSED: commit '${COMMIT}' is not a forty-character id; nothing was checked out and nothing ran" >> "$GITHUB_STEP_SUMMARY"
+              exit 1 ;;
+          esac
+
   unit:
+    needs: commit-id
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -74,6 +102,7 @@ jobs:
           retention-days: 14
 
   e2e:
+    needs: commit-id
     runs-on: ubuntu-latest
     # One worker takes about twice two workers' 56 minutes, and a job cut off reports nothing.
     timeout-minutes: 240
