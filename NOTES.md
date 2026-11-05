@@ -52100,3 +52100,27 @@ collection-filters, wall-arrival-104 on chromium (17), typecheck, lint, build. T
 push: it carries the five NOTES and drop commits held since the push-per-unit rule, one
 deployment for six commits, and one CI run. Left of §W.24's steps: the shelf's reason on the pull
 and §T.3's reason line, both proposals; and the captures.
+
+**The handoff's unnumbered steps and their numbered twins (the coordinator, 4 Nov): a convention, with
+an informal link and no guard.** 37 "Unnumbered, for Code to number" lines stand in the handoff;
+35 numbered Done lines say "Code's number for that step". Numbering never consumed the original,
+by the one-author rule: the unnumbered line is Design's text and carries the ruling's quote, and
+Code inserts its Done line as a code-region block rather than editing it. Since step 160 the
+block's `before` anchor is the unnumbered line itself, so the Done stands immediately above its
+twin (161, 163, 165 to 168 are adjacent); for 120 to 159 the Done lines sit in a numbered list
+apart from the unnumbered ones, linked only by a subject phrase in Code's own words. Pairing by
+subject finds 16 twins and leaves 21 unpaired, of which at least nine are built under a Done that
+names the work differently (one inset → 120, the floor by pointer → 127, the three passes → 131
+to 133, the shelf for a fine pointer → 134, reduced motion → 162, the press before hydration →
+160, the pull before its cover → 164); 764 and 770 are the two search steps, one half-built, one
+not. So by reading alone built and unbuilt cannot be told apart, which is the coordinator's
+point, and nothing checks it: assertion 3 counts numbered steps and never asks whether a Done
+has a twin. **Which copy is for what:** the unnumbered line is Design's instruction and the
+anchor for Design's change files, as the §63 one was; the Done line above it is Code's record of
+what was built against which wording. A change to the instruction after its Done is read
+against the Done, and that is where the gap bites: nothing says the Done predates the edit.
+**Proposed, not built:** a declared link in Code's data, a `numbers` field on each code-region
+block naming the unnumbered line it discharges, checked by a test: every named line exists,
+every unnumbered line is named by at most one block, and the unnamed ones are listed as
+unbuilt; the apply script then places every Done before its twin. About thirty blocks to
+annotate once, with the pairing above as the draft.
