@@ -52641,3 +52641,13 @@ miss is a paraphrase that keeps none of the head's words, which the index's quot
 already accepts as the limit of a text check. Tested on fixtures both ways (a copy in any
 case flagged, a bare reference not). If ruled an assertion it becomes a numbered line in the
 check with a non-zero exit, and only that line, so the rest of the report stays a report.
+
+**A CI dispatch by short sha does not run (5 Nov).** Run 42106636860 on 64aa789, the
+four-worker run on the unit, completed "failure" in 13 seconds on every job: actions/checkout
+reads the `commit` input as a ref, "A branch or tag with the name '64aa789' could not be
+found". The earlier dispatches that ran carried full shas. The run on b749d61 dispatched the
+same way (42108066389) had already failed identically before the cancel reached it, and both
+gates on b749d61, 42108198297 at the default worker and 42108210395 at four, were dispatched
+by full sha. Recorded because a 13-second failure on
+every job is a dispatch defect and not a result, and the report would otherwise have read
+"FAILED" beside a commit that was never checked out.

@@ -57,7 +57,7 @@ here; see above.
 
 | id | status | item | record lives in |
 |---|---|---|---|
-| Q19 | open | The queue file and its check | this file |
+| Q19 | done b749d61 | The queue file and its check | this file |
 | Q20 | open | `scripts/check-design-card.mjs`: tag balance, nesting depth 1, doctype, closing tag, withdrawal-sentence count and uniqueness, change-file quotes matched character for character including curly apostrophes, and the bold-sentence set diff against the previous card | the script |
 | Q21 | open | inferReissue is wrong on 2 records | NOTES |
 | Q22 | open | The vibe search: embed the ABOUT notes, rank the collection by closeness to a typed vibe, 3 to 5 results, an honest weak-match state. Blocked on Q1. Replaces the mood buttons; they survive as presets at most | nothing yet |
