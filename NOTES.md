@@ -52709,6 +52709,29 @@ that. 736 to 750 is 14, and 14 is the whole of `check-queue.test.ts` as it stood
 fixtures and 3 on the real file, not 14 plus one; "14 plus one" was a miscount in the report,
 not in the suite. This commit adds 3 to that file (the real-file assertion and the two command
 tests), so the document suite is 753, and the bracket's 4 tests sit in test/e2e-helpers, in
-`npm test` and not in the document suite. Recorded because a 13-second failure on
+`npm test` and not in the document suite.
+
+**The refusal staged (5 Nov): run 42115201572, a deliberate short-id hand dispatch on 50a18cc
+after the push.** The `commit-id` job failed in 4 seconds with "REFUSED: the commit input must
+be the full forty-character id; got '50a18cc' (7 characters). Dispatch with scripts/ci-gate.sh",
+as an error annotation and in the run's summary; unit and e2e were skipped, nothing checked
+out. The guard is on the path now. The same commit's real gate went through ci-gate.sh,
+42115186427 at four workers, and its commit-id job passed.
+
+**CI run 42108210395 on b749d61 at four workers (5 Nov): GREEN WITH FLAKES, exit 3, no
+failure.** Unit 4859 passed, 2 skipped; chromium 1055 passed, 3 flaky, 1 skipped, 42.7m;
+mobile 390 passed, 4 skipped, 12.4m, no flake, the want-list presses clean at four workers on
+CI for the first time. This is the run on the commit before option (b), so pick-moods-157:154
+flaked again as it did (the collision; (b) is in db48076, gated by 42115186427).
+record-band-43:33 flaked again, 5.0m, Design's question open. **One new distinct test:
+roving-148:83**, a 30s timeout on `openShelf` at the test's start, "Target page, context or
+browser has been closed" at the evaluate after it: 4.6s at one worker (6e772cd), 9.1s at four
+(dfbe205), 30.4s here, the margins list's one OVER. The wall's open under four workers' load,
+the wall-route:234 shape without the seed: a load-shaped timeout, one appearance, not a
+collision and not a wait on a clock (openShelf waits on the wall's own marks). Not fixed; it
+goes in the queue. **The figure, in the agreed form: seven distinct tests, nine appearances,
+three four-worker runs.** wall-route:234 and wall-arrival-104:120 did not appear here, their
+fixes in 64aa789; the one-worker gate on b749d61 (42108198297) is still running its chromium
+half. Recorded because a 13-second failure on
 every job is a dispatch defect and not a result, and the report would otherwise have read
 "FAILED" beside a commit that was never checked out.

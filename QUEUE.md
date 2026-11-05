@@ -66,6 +66,7 @@ here; see above.
 | Q24 | open | lookup-flows:1743: an unread flake | the known-flaky table |
 | Q25 | open | Mood tagging: the retry and the run-record | SPEC §5.10 |
 | Q26 | open | sharp's cold-start cost: optional, from the Vercel work | NOTES |
+| Q38 | open | roving-148:83 at four workers: a 30s timeout on openShelf at the test's start (4.6s at one worker, 9.1s and 30.4s at four), the seventh distinct four-worker test, one appearance; load-shaped, not a collision; read the trace before building anything | NOTES, 5 Nov |
 | Q27 | open | Vercel deployment retention. 294 production deployments at 22.4 MB each is about 6.4 GB of the 7.5 GB. No action has been chosen, and the first proposal was wrong twice over: the numerator spans projects and the denominator should be retained deployments, and preview retention does not touch production deployments | the Vercel investigation |
 
 ## Design's queue
