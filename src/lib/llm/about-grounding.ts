@@ -23,6 +23,13 @@ export type ReleaseFacts = {
   companies: { name: string; role: string }[];
   /** Discogs' community figures, the obscurity proxy: how many have it, want it, and rate it. */
   community: { have: number; want: number; rating: number; ratings: number } | null;
+  /**
+   * The release's tracks by position and title, in the payload's order (5 Nov). Read for the
+   * checker, not the prompt: the fact-check pass on the 45 found a bonus track named as on the
+   * LP and a side's order reversed, both in the tracklist the cache held and the checker never
+   * read. Empty where the release carries none, which the checker reads as unchecked, not wrong.
+   */
+  tracks: { position: string; title: string }[];
 };
 
 export type DiscographyEntry = { title: string; year: number; format: string };
@@ -42,6 +49,7 @@ const Release = z.object({
   extraartists: z.array(Person).optional(),
   companies: z.array(z.object({ name: z.string().optional(), entity_type_name: z.string().optional() })).optional(),
   community: z.object({ have: z.number().optional(), want: z.number().optional(), rating: z.object({ count: z.number().optional(), average: z.number().optional() }).optional() }).optional(),
+  tracklist: z.array(z.object({ position: z.string().optional(), title: z.string().optional() })).optional(),
 });
 
 /** The release's facts from its cached payload, or null when the payload is not a release. */
@@ -66,6 +74,7 @@ export function groundingFromPayload(payload: unknown): ReleaseFacts | null {
       community === undefined || community.have === undefined || community.want === undefined
         ? null
         : { have: community.have, want: community.want, rating: community.rating?.average ?? 0, ratings: community.rating?.count ?? 0 },
+    tracks: (r.tracklist ?? []).map((t) => ({ position: meaningful(t.position) ?? '', title: meaningful(t.title) })).filter((t): t is { position: string; title: string } => t.title !== null),
   };
 }
 

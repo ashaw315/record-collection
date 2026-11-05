@@ -59,10 +59,27 @@ describe('discographyOf', () => {
   });
 });
 
+describe('groundingFromPayload: the tracklist (5 Nov)', () => {
+  /*
+    The fact-check pass on the 45 found a bonus track named as on the LP and a side's order
+    reversed, both checkable against the tracklist already in the cache that the checker never
+    read. Fails against a reader that leaves `tracks` empty on a payload holding 32 of them.
+  */
+  it('reads every track by position and title, in the payload’s order', () => {
+    const facts = groundingFromPayload(PAYLOAD);
+    expect(facts?.tracks.length).toBe(32);
+    expect(facts?.tracks[0]).toEqual({ position: 'A1', title: 'Diamond Jubilee' });
+    expect(facts?.tracks[2]).toEqual({ position: 'A3', title: 'Baby Blue' });
+  });
+  it('reads no tracks from a release that carries none, and says so by an empty list', () => {
+    expect(groundingFromPayload({ id: 1, title: 'Bare' })?.tracks).toEqual([]);
+  });
+});
+
 describe('buildSnippetPrompt with grounding', () => {
   const subject = { artist: 'Mandy, Indiana', title: 'URGH' };
   const grounding = {
-    facts: { label: 'Fire Talk', country: 'US', year: 2026, format: 'Vinyl, LP, Album', artistId: 1, credits: [{ name: 'Scott Fair', role: 'Guitar, Electronics' }], companies: [{ name: 'Fire Talk', role: 'Phonographic Copyright (p)' }], community: null },
+    facts: { label: 'Fire Talk', country: 'US', year: 2026, format: 'Vinyl, LP, Album', artistId: 1, credits: [{ name: 'Scott Fair', role: 'Guitar, Electronics' }], companies: [{ name: 'Fire Talk', role: 'Phonographic Copyright (p)' }], community: null, tracks: [] },
     discography: [{ title: '…', year: 2021, format: 'EP' }, { title: "i've seen a way", year: 2023, format: 'LP, Album' }, { title: 'URGH', year: 2026, format: 'LP' }],
   };
   it('carries the facts and the discography, says they are the record’s and the artist’s, and asks that nothing contradict them', () => {

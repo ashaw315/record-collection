@@ -52281,3 +52281,39 @@ reason line or before it; the reason-line unit is not in flight, it is on the un
 first. No withdrawal is owed, by the change file's own reading: no target ruled what the page
 shows of a release's text, and §W.24's test held only once the page shows these fields. The
 backlog is now six unnumbered steps unbuilt, 32 discharged, 38 in all.
+
+**The checker reads the tracklist (5 Nov, the coordinator's fact-check of the 45).** Two real errors
+the checker missed: 999's note named Found Out Too Late as on the 1980 LP, and it is the 1999
+CD's bonus track; The Doors' note ran side one from the hit to the Brecht-Weill turn, and
+Alabama Song is A5 with Light My Fire at A6. Both were checkable against the tracklist the cache
+holds for every release. **The "data you already paid for, unread" shape:** the pipeline fetched
+49 artists' discographies for grounding and the checker read the release list but not the
+tracklist from the same cache, so a fact one table away went unchecked; and the earlier NOTES
+entry had the gap in its weaker form, a title near "by" looking like a person. Three rules, each
+with its defect beside it in the test and the source: (1) the personnel rule holds the tracklist
+and the discography, so four of the five title flags clear (Big Yellow Taxi, Tuxedo Junction, Bad
+Girls, Blow By Blow); the Beach Boys, a band named as an influence, is held by no data and stays;
+(2) a song the note presents as on this record, in a sentence that talks of tracks, sides, the
+hit, what opens or closes or carries it, read against the tracklist, with no tracklist cached
+reading as `unchecked` and never as a conflict; (3) "side N runs from X to Y", "X opens it", "X
+closes it" against the ordinals, with a side's first and last read from the position letter, and
+a claim naming no track the data can place as `unchecked`, which is what the Doors sentence as
+written is: it names neither track, so rule 3 reads the named form of the claim and a person
+reads that one. **What the first build got wrong, each now a test:** it held the discography for
+song claims, and 999's Found Out Too Late is the artist's 1979 single, so the one defect the rule
+was built for passed; "closer to rock'n'roll" read as song context; a person the personnel rule
+had flagged stood again as a missing track; "a Bay Area bar band" and "Not the Decca sides" were
+titles. The rule now says when the discography holds the phrase, as the fact. **The third real
+error, found by rule 3 on the first recheck:** Carly Simon's No Secrets, "You're So Vain opens
+it out", and it is A3; The Right Thing To Do opens the record. In the note to Adam. **The recheck
+of the 45,** no call spent, written to a separate file so the one Adam is marking from is not
+rewritten under him: 11 conflicts against the first run's 10; gone, four titles; added, 999's
+bonus track with the discography fact, Carly Simon's order, the Doors sentence as unchecked, and
+two prior-release titles named in song-context sentences (Everyone's Crushed on the Water From
+Your Eyes note, Love To Love You Baby on a Donna Summer note), each stated with the release it
+is, true and for a person. Limits recorded: a one-word title (Trouble) is not told from a word
+and is not read; a sentence-opening word list is a judgement (Not, Ten, Nine…), and a title that
+begins with one of those words would be skipped. `--rerender` now reads the facts again from the
+cache, since a checker that learned a field needs it. Tests first: 9 then 2 failing on absence
+across the two files; 52 across the three LLM files, typecheck, lint, build; nothing stored, nothing
+re-run on the 45.

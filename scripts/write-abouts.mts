@@ -114,14 +114,18 @@ if (mode === 'store') {
 
 if (mode === 'rerender') {
   const drafts: Draft[] = JSON.parse(readFileSync(join(WORK, 'drafts.json'), 'utf8'));
+  /* The facts again from the cache, since a checker that learned to read a field the last run did not keep (the tracklist, 5 Nov) needs it. */
+  const fresh = new Map((await rows(sql`${sql.join(drafts.map((d) => sql`r.id = ${d.id}::uuid`), sql` OR `)}`)).map((r) => [r.id, groundingFromPayload(r.payload)]));
   for (const d of drafts) {
     const subject = { artist: d.artist, title: d.title };
+    d.facts = fresh.get(d.id) ?? d.facts;
     d.conflicts = d.note === null || d.facts === null ? [] : checkNote(d.note, { subject, year: d.year, facts: d.facts, discography: d.discography });
   }
   writeFileSync(join(WORK, 'drafts.json'), JSON.stringify(drafts, null, 2));
+  /* A separate file: the one Adam is marking from is not rewritten under him. */
   const all = drafts.length > 3;
-  const out = join(OUT, all ? `ABOUT drafts, ${date}.md` : `ABOUT grounded samples, ${date}.md`);
-  writeFileSync(out, render(drafts, all ? `ABOUT drafts for the records without one, ${date}` : `Three grounded ABOUT samples, ${date}`));
+  const out = join(OUT, all ? `ABOUT drafts, ${date}, rechecked.md` : `ABOUT grounded samples, ${date}, rechecked.md`);
+  writeFileSync(out, render(drafts, all ? `ABOUT drafts for the records without one, ${date}, rechecked` : `Three grounded ABOUT samples, ${date}, rechecked`));
   console.log(`write-abouts: re-rendered ${drafts.length} draft(s), ${drafts.reduce((s, d) => s + d.conflicts.length, 0)} conflict(s); ${out}`);
   process.exit(0);
 }

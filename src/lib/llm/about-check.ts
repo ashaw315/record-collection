@@ -21,7 +21,13 @@ import type { SnippetSubject } from './snippet-client';
   be neither confirmed nor refuted against it. Named, since a claim the checker could not read is
   still one for a person to look at, and never suppressed into a pass.
 */
-export type Conflict = { kind: 'sequence' | 'date' | 'label' | 'personnel' | 'unchecked'; claim: string; fact: string };
+/*
+  `track` and `order` (5 Nov): the fact-check pass on the 45 found two errors the checker missed,
+  both in the tracklist the cache held for every release and the checker never read. A song the
+  note presents as on this record that the tracklist does not hold; and a position or an order
+  among tracks the ordinals contradict.
+*/
+export type Conflict = { kind: 'sequence' | 'date' | 'label' | 'personnel' | 'track' | 'order' | 'unchecked'; claim: string; fact: string };
 
 export type CheckSubject = { subject: SnippetSubject; year: number | null; facts: ReleaseFacts; discography: DiscographyEntry[] };
 
@@ -104,8 +110,14 @@ export function checkNote(note: string, about: CheckSubject): Conflict[] {
     }
   }
 
-  /* Personnel: a two-word proper name the credits, the artist and the title do not hold. */
-  const held = [about.subject.artist, about.subject.title, ...about.facts.credits.map((c) => c.name), ...about.facts.companies.map((c) => c.name)].map((n) => n.toLowerCase().replace(/\s*\(\d+\)$/, ''));
+  /*
+    Personnel: a two-word proper name the credits, the artist, the title, the tracklist and the
+    discography do not hold. Rule 1 of 5 Nov: five of the eight personnel flags on the 45 were
+    titles near "by" or "with" (Big Yellow Taxi, Tuxedo Junction, Bad Girls on tracklists; Blow By
+    Blow in the discography), read as a person because the tracks were never read. A band named
+    as an influence (the Beach Boys) is held by no data and stays for a person to look at.
+  */
+  const held = [about.subject.artist, about.subject.title, ...about.facts.credits.map((c) => c.name), ...about.facts.companies.map((c) => c.name), ...about.facts.tracks.map((t) => t.title), ...about.discography.map((d) => d.title)].map((n) => n.toLowerCase().replace(/\s*\(\d+\)$/, ''));
   for (const m of note.matchAll(/\b([A-Z][a-z]+(?:[-'’][A-Z]?[a-z]+)?) ([A-Z][a-z]+(?:[-'’][A-Z]?[a-z]+)?)\b/g)) {
     const name = `${m[1]} ${m[2]}`;
     const lower = name.toLowerCase();
@@ -116,6 +128,98 @@ export function checkNote(note: string, about: CheckSubject): Conflict[] {
     if (before === '' || /[.!?]\s*$/.test(before)) continue;
     if (!/\b(by|with|producer|produced|featuring|drums|guitar|bass|vocals|mixed|engineered|wrote|written)\b/i.test(note.slice(Math.max(0, (m.index ?? 0) - 40), (m.index ?? 0) + name.length + 40))) continue;
     if (!conflicts.some((c) => c.kind === 'personnel' && c.claim === name)) conflicts.push({ kind: 'personnel', claim: name, fact: `not in the credits: ${about.facts.credits.map((c) => c.name).join(', ') || 'none in the data'}` });
+  }
+
+  /*
+    Rule 2 (5 Nov): a song the note presents as on this record that the tracklist does not hold.
+    The defect: 999's note said "Boys In The Gang, Trouble and Found Out Too Late carry it", and
+    Found Out Too Late is the 1999 CD's bonus track, not on the 1980 LP. A sentence presents a
+    phrase as a song when it talks of tracks, sides, the hit, what opens or closes, what carries
+    it; a capitalised run of two or more words in such a sentence is read against the tracklist.
+    Where no tracklist is cached the claim is unchecked, never a conflict: absent is not broken.
+    Limit: a one-word title (Trouble) is not told from a word, so it is not read.
+  */
+  const tracks = about.facts.tracks;
+  const norm = (s: string) => s.toLowerCase().replace(/[’]/g, "'").replace(/\s+/g, ' ').trim();
+  const titleHolds = (phrase: string) => {
+    const p = norm(phrase);
+    return p.length >= 4 && tracks.some((t) => norm(t.title).includes(p) || p.includes(norm(t.title)));
+  };
+  /*
+    Held for a song claim: the artist, the title, the credits and the companies, and NOT the
+    discography. The first build held the discography too, and 999's "Found Out Too Late" was
+    the artist's 1979 single, so the one defect the rule was built for passed; a release of the
+    artist's that is not on this record is the fact to say, not a reason to stay quiet. A person
+    the personnel rule already flagged is read as a person, not as a song (Mick Jagger stood as
+    both); a phrase after "a" or "an" is not a title; a sentence's opening words are not one.
+  */
+  const heldForSong = [about.subject.artist, about.subject.title, ...about.facts.credits.map((c) => c.name), ...about.facts.companies.map((c) => c.name)].map((n) => n.toLowerCase().replace(/\s*\(\d+\)$/, ''));
+  const heldElsewhere = (phrase: string) => {
+    const p = norm(phrase);
+    return heldForSong.some((h) => h.includes(p) || p.includes(h)) || NOT_A_PERSON.test(phrase) || /^(The|This|Side|Record Store|Greatest Hits|Not|What|Where|Here|Play|Put|Ten|Two|Three|Four|Five|Six|Seven|Eight|Nine|Twelve|Thirty)\b/.test(phrase) || conflicts.some((c) => c.kind === 'personnel' && c.claim === phrase);
+  };
+  const inDiscography = (phrase: string) => about.discography.find((d) => norm(d.title) === norm(phrase) || norm(d.title).includes(norm(phrase)));
+  /* "the closer", not "closer": "closer to rock'n'roll than to sloganeering" read as song context and put a singer on the tracklist. */
+  const SONG_CONTEXT = /\b(tracks?|songs?|singles?|cuts?|side (one|two|three|four|a|b)|opens|closes|the closer|the opener|carry it|carries it|the hit|title track|runs from|[ab]-side)\b/i;
+  const RUN = /\b[A-Z][\w'’!?-]*(?: (?:[A-Z][\w'’!?-]*|of|the|a|an|in|to|on|at|for|my|your))+/g;
+  for (const s of sentences) {
+    if (!SONG_CONTEXT.test(s)) continue;
+    const runs = [...s.matchAll(RUN)]
+      .filter((m) => !/\b(a|an) $/i.test(s.slice(0, m.index ?? 0)))
+      .map((m) => m[0].replace(/(?: (?:of|the|a|an|in|to|on|at|for|my|your))+$/, ''))
+      .filter((r) => r.includes(' ') && !heldElsewhere(r));
+    if (tracks.length === 0) {
+      if (runs.length > 0) conflicts.push({ kind: 'unchecked', claim: s, fact: `no tracklist is cached for this release, so whether ${runs.join(', ')} ${runs.length === 1 ? 'is one of its songs' : 'are its songs'} cannot be read` });
+      continue;
+    }
+    for (const run of runs) {
+      if (titleHolds(run)) continue;
+      const elsewhere = inDiscography(run);
+      if (!conflicts.some((c) => c.kind === 'track' && c.claim === run)) conflicts.push({ kind: 'track', claim: run, fact: `not on this release’s tracklist${elsewhere === undefined ? '' : `; it is the artist’s ${elsewhere.year} release ${elsewhere.title}`}: ${tracks.map((t) => `${t.position} ${t.title}`.trim()).join(', ')}` });
+    }
+  }
+
+  /*
+    Rule 3 (5 Nov): a position or an order among tracks, against the ordinals. The defect: The
+    Doors' note ran side one "from the hit's long solo trade to a Brecht-Weill cabaret turn", and
+    Alabama Song is A5 with Light My Fire at A6 closing the side. That sentence names neither by
+    title, so what the rule reads is the named form of the claim ("side one runs from X to Y", "X
+    opens it", "X closes it"), and a claim that names no track the data can place is unchecked.
+  */
+  if (tracks.length > 0) {
+    const sideOf = (position: string) => /^[A-Za-z]+/.exec(position)?.[0].toUpperCase() ?? null;
+    /* The track whose title stands nearest the end of `text`; the title track is the record's own. */
+    const trackIn = (text: string) => {
+      const t = norm(text).replace(/\btitle track\b/, norm(about.subject.title));
+      let best: { track: (typeof tracks)[number]; at: number } | null = null;
+      for (const track of tracks) {
+        const title = norm(track.title);
+        const bare = title.replace(/\s*\(.*\)$/, '');
+        const at = Math.max(t.lastIndexOf(title), bare.length >= 4 ? t.lastIndexOf(bare) : -1, title.includes(t) && t.length >= 4 ? 0 : -1);
+        if (at >= 0 && (best === null || at > best.at)) best = { track, at };
+      }
+      return best === null ? null : best.track;
+    };
+    const index = (track: (typeof tracks)[number]) => tracks.indexOf(track);
+    for (const s of sentences) {
+      const span = /\bside (?:one|two|three|four|a|b|c|d)\b[^.;]*?\bruns from (.+?) to (.+?)(?=[;.,]|$)/i.exec(s);
+      if (span !== null) {
+        const from = trackIn(span[1]); const to = trackIn(span[2]);
+        if (from === null || to === null) conflicts.push({ kind: 'unchecked', claim: span[0], fact: 'an order claim that names no track the data can place; read it against the tracklist' });
+        else if (index(from) >= index(to)) conflicts.push({ kind: 'order', claim: span[0], fact: `${to.title} is ${to.position} and ${from.title} is ${from.position}: the order is the other way` });
+      }
+      for (const m of s.matchAll(/(.+?) (opens|closes) (it|the record|the album|the side|side (?:one|two|a|b))\b/gi)) {
+        const track = trackIn(m[1]);
+        if (track === null) { conflicts.push({ kind: 'unchecked', claim: m[0].trim(), fact: 'a position claim that names no track the data can place; read it against the tracklist' }); continue; }
+        const side = sideOf(track.position);
+        const onSide = side === null ? tracks : tracks.filter((t) => sideOf(t.position) === side);
+        const opens = m[2].toLowerCase() === 'opens';
+        const edge = opens ? [tracks[0], onSide[0]] : [tracks[tracks.length - 1], onSide[onSide.length - 1]];
+        if (edge.includes(track)) continue;
+        const actual = edge[0];
+        conflicts.push({ kind: 'order', claim: m[0].trim(), fact: `${track.title} is ${track.position}; the record ${opens ? 'opens' : 'closes'} with ${actual.title} (${actual.position})` });
+      }
+    }
   }
 
   return conflicts;
