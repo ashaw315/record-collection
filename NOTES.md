@@ -52159,3 +52159,10 @@ failure slot holding one line (the slot built in 159; the enumerated one-line as
 and §T.3's reason line, the next search step. The matching half of §W.24's search step is
 numbered 169, built in part, with the shelf's reason on the pull as the rest. This commit is
 repository tooling and the backlog, not app code, so it is held for the next unit's push.
+
+**CI run 41941356042 on 2efbd95, read in full (4 Nov): OK, exit 0, every half.** The first push under
+the push-per-unit rule, six commits, the catalogue number and matrix branches among them. Unit
+4802 passed, 2 skipped; chromium 1058 passed, 1 skipped, no flaky, 1.1h; mobile 390 passed, 4
+skipped, 23.3m. No failure, no flake. Logs copied into one directory, gate-report written to a
+file, its exit read from the shell. Everything on origin is verified by CI; three commits are held
+unpushed for the next unit: the twins mechanism and backlog, and two NOTES entries.
