@@ -1,8 +1,10 @@
 import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist } from './cleanup';
 import { LANDING_PAD } from '../src/app/wall/landing';
+import { seedRecords } from './seed';
 import { login } from './sign-in';
 import { clickSpine } from './wall-ready';
+import { landings, settled } from './wall-settle';
 
 registerCleanup();
 
@@ -34,53 +36,30 @@ async function clickFarRun(page: Page) {
   await page.locator('[data-run]').first().click();
 }
 
-const landings = (page: Page) => page.evaluate(() => (window as unknown as { __landings?: number }).__landings ?? 0);
-
 /**
- * The landing SETTLED, by condition rather than clock: the pending landing
- * consumed (`__landings` has reached what the caller expects), and then the
- * region's scroll and extent unchanged over three animation frames, since
- * the frame grows once the region is measured and the write lands on that
- * frame. Fixed waits of 900 and 250ms flaked under load three times, read
- * each time with the load named (27 Oct): load was the trigger, the fixed
- * wait the defect.
+ * Enough records to fill more than one shelf, so a zoom lands on a row that is not the first.
+ *
+ * Scenery, so straight to the database in one statement (`seed.ts`, whose
+ * reason is in that file: creating scenery through HTTP "measurably degrades
+ * the shared dev server and destabilises every other spec in the run"). Until
+ * 5 Nov this was one POST per record, and the test at :234 seeds 260: at one
+ * worker that took 5.3s of its 30s, at four workers on CI 22.3s and then 32.0s,
+ * the run's one failure (42059632838), with every other worker's requests
+ * queued behind the 260. The ids come back by one GET in the wall's own
+ * tie-break within an artist, title then id (`shelf.ts`), so `ids[0]` is the
+ * artist's first seat as it was when the titles were "Route 000" upward; only
+ * `ids[0]` is read, and the page is clamped at 200 (§5), which the 240 seed
+ * exceeds without needing the rest.
  */
-async function settled(page: Page, landed: number) {
-  await expect.poll(() => landings(page), { timeout: 15_000, message: `the landing is consumed (${landed})` }).toBeGreaterThanOrEqual(landed);
-  /* The region's own mark of the same fact, which clickSpine waits on (28 Oct): held here where the count is also known. */
-  await expect(page.locator('[data-wall-container][data-landed="true"]').first()).toBeAttached();
-  await page.waitForFunction(
-    () =>
-      new Promise<boolean>((resolve) => {
-        const el = document.querySelector('[data-region="wall"]') as HTMLElement | null;
-        if (el === null) return resolve(false);
-        const read = () => `${el.scrollLeft},${el.scrollTop},${el.scrollWidth},${el.scrollHeight},${el.clientWidth}`;
-        const first = read();
-        let frames = 0;
-        const tick = () => {
-          frames += 1;
-          if (read() !== first) return resolve(false);
-          if (frames >= 3) return resolve(true);
-          requestAnimationFrame(tick);
-        };
-        requestAnimationFrame(tick);
-      }),
-    undefined,
-    { timeout: 15_000 },
-  );
-}
-
-/** Enough records to fill more than one shelf, so a zoom lands on a row that is not the first. */
 async function seed(page: Page, count: number): Promise<{ artistId: string; ids: string[] }> {
   const artist = await page.request.post('/api/artists', { data: { name: `Route-${suffix()}` } });
   const artistId = (await artist.json()).id as string;
   trackArtist(artistId);
-  const ids: string[] = [];
-  for (let i = 0; i < count; i += 1) {
-    const record = await page.request.post('/api/records', { data: { title: `Route ${String(i).padStart(3, '0')}`, artistId } });
-    expect(record.status()).toBe(201);
-    ids.push((await record.json()).id as string);
-  }
+  await seedRecords(artistId, 'Route', suffix(), count);
+  const listed = await page.request.get(`/api/records?artistId=${artistId}&pageSize=200&sort=title:asc`);
+  expect(listed.status(), 'the seeded records are listed').toBe(200);
+  const ids = ((await listed.json()) as { data: Array<{ id: string }> }).data.map((r) => r.id);
+  expect(ids.length, `the seed is in place (${count} asked)`).toBe(Math.min(count, 200));
   return { artistId, ids };
 }
 

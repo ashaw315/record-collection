@@ -52506,3 +52506,95 @@ to (3) are in and a four-worker gate on CI is clean. Touches about six files; ea
 shown failing first where it can be (the lock's test against two concurrent writers; the
 settle wait against the clock, by the trace's own timing). Not built until the coordinator
 says.
+
+**The count, corrected from the four summary blocks (5 Nov).** The figure has been given as
+four, three, five and six in turn, and the coordinator asked for it as distinct tests with the
+run each appeared in. From the logs: fcab6ed (42053953453) had four, want-list:739 and :849 on
+mobile, pick-moods-157:154 and wall-arrival-104:120 on chromium; dfbe205 (42059632838) had
+four, not five: want-list:849 on mobile, pick-moods-157:154, wall-route:234 and
+record-band-43:33 on chromium; want-list:739 did not flake on dfbe205. **Six distinct tests,
+eight appearances, two runs.** From here the figure is stated that way.
+
+**"Four workers honest", the unit, parts 1 and 2 built (5 Nov), approved by the coordinator
+in the order proposed with one addition to part 3 and one condition on it.**
+
+*Part 1, wall-route's seed.* `seed()` in `e2e/wall-route.spec.ts` now goes through
+`seedRecords` in one statement and reads the ids back by one GET sorted by title, the wall's
+own tie-break within an artist (`shelf.ts`: root genre, artist, year, title, id), so `ids[0]`
+is the artist's first seat as it was with "Route 000"; only `ids[0]` is read anywhere in the
+file, and the page is clamped at 200, which the 240 seed exceeds without needing the rest.
+Ten tests in the file use the helper; none changed its assertions. Carve-out verification,
+no new test: the specs are the test. Whole file on chromium at two workers locally, beside
+nothing: 14 passed across the two files, exit 0; :234 (now :213) 7.6s whole, against 8.1s at
+one worker on CI and 32.0s at four, where 260 POSTs were the seed.
+
+*Part 2, wall-arrival-104:120's clock.* `landings` and `settled` moved verbatim from
+wall-route into `e2e/wall-settle.ts` with their 27 Oct comment, one wait for the one fact in
+both files; wall-route imports them. The :120 test's two 900ms clocks are now `settled`.
+**The first build of the wait failed, and the failure was mine:** it read the count before
+the search and waited for count+1, then count+2, and the search step timed out at "expected
+≥ 2, received 1". A throwaway probe printed the count and the scroll at each step: 1 after
+the arrival, 1 again after the search, null then 1 after the clear. **The rail's search
+submits as a navigation, so each step is a new document whose count starts at nothing and
+whose arrival is its first landing.** So the wait is for landing 1 of the new document, and
+the seat and footprint counts that precede each wait hold only in the new document, so the old
+one's consumed landing cannot satisfy it. The probe is deleted; its finding is the comment at
+the wait and the wait itself. Then 14 passed, exit 0, :120 (now :121) 10.1s. The failing form
+of the old clock is fcab6ed's trace, read above; four-worker load was not staged locally.
+Step level: wall-route and wall-arrival-104 on chromium, typecheck, lint, build.
+
+*Part 3, the lock: the survey done, the lock NOT built, because the survey shows it would be
+inert.* The coordinator asked that each of the seven specs saying "whole collection" record
+whether it takes the lock and, where not, why another worker's write cannot move its count.
+Read on 5 Nov:
+
+| spec | reads the whole collection as nobody else's? | why not |
+|---|---|---|
+| collection-filters | no | scoped to its own artist since the 1980-83 collision (its comment at :356); counts are its own rows |
+| pick-moods-157:154 | **yes** | two page loads compared for equality; any worker's record between them moves it |
+| ring-144 | no | "whole collection" is the zoom-out button's label; nothing counted |
+| shelf | no | reads its five seats' shelf and x against each other, since 6 Oct's N-extra-records measurement |
+| stats | no | scoped by `?artistId=` since the mid-run-truncate finding; an empty collection of one |
+| wall-arrival-104 | no | seeds its own 60 ahead in genre order and READS the first match's order as a precondition; the arrival is the first shelf whatever the count |
+| wall-route | no | :234's comment: "the collection is every record in a database other tests seed", so it seeds 240 more, measures the wall and widens the window; nothing pinned |
+
+One taker. A lock with one taker serialises nothing, because the writes that move
+pick-moods-157:154's count come from the sixty-odd specs that create records through the API
+and would not take it. Built as approved it would be the exception run only where it is
+inert, this time as a mutex. What would make the one test honest at four workers is one of:
+(a) every writer takes a shared lock and the one reader an exclusive one, touching every
+spec that creates a record, which is the per-worker-isolation cost in other clothes; or (b)
+the test brackets its read: whole count, filtered count, whole count again, asserting
+equality only when the two whole reads agree and retrying a bounded number of times when they
+do not, failing with the two reads named if the bracket never closes. (b) keeps the exact
+assertion §P.6 rules, changes how the test reads and not what it claims, and touches one
+test. It is a change to a test, so it waits for agreement. The stale-lock age and poll bound
+the coordinator asked for are moot with no lock; if (a) is chosen they are 90s and 120s with
+the holder's pid and test title in the message, recorded here so the question is answered
+either way.
+
+*Part 4, record-band-43:33 to Design, no change to §43 or the test while it is open.*
+**Adjacent to the quantised-value member:** a measurement that reads as valid because
+something incomplete produced it. There, 28.000 read as rounding and was 27.5 plus an offset
+of exactly 0.5; here, "band painted at 73" read as a first-painted height and was a frame
+before the stylesheet or the font arrived under four workers' load. In both the instrument
+reported a true reading of an incomplete thing as a reading of the thing.
+
+*Part 5, the CI worker count,* waits on part 3's resolution and a clean four-worker run; a
+four-worker run on this unit's commit is dispatched after the push to see what remains.
+
+**Queued, to go into the queue file once it exists (the coordinator, 5 Nov):**
+- **A. The queue file.** One file in the repo holding every open item: the six unbuilt handoff
+  steps, the §T.3 reason line, §65, the vibe search, Adam's parked judgements, the Design
+  export bundle, this unit's parts 3 and 5 and the (a)/(b) decision; with a test in the twins
+  shape, an item neither discharged nor listed fails it, as does one that is both. The
+  coordinator's motivating defect: the roadmap lost six items three times, and three rounds
+  of "anything missing?" surfaced more each round. Propose the format first; the test is the
+  part that matters.
+- **B. `scripts/check-design-card.mjs`.** The checks run by hand on every Design card, written
+  ad hoc three times this week: strong-tag open/close balance; maximum nesting depth of 1;
+  doctype present; closing `</html>`; withdrawal-sentence count, presence and uniqueness;
+  every quote in the change file matched character for character against the card, curly
+  apostrophes and quote marks included; plus the bold-sentence set diff between the previous
+  card and the new one. Report, never refuse: a reading aid, not an assertion, not in
+  ASSERTIONS-spec.

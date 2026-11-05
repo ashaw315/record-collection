@@ -2,6 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist, trackCreated } from './cleanup';
 import { login } from './sign-in';
 import { pointerIs } from './hit-area';
+import { settled } from './wall-settle';
 
 registerCleanup();
 
@@ -121,11 +122,28 @@ test('a search applied while the near view is open moves it to the first match, 
   const f = await seed(page);
   await near(page, '/');
   const start = await read(page, f.ids);
+  /*
+    Read once each landing is consumed and the region still, by the wall's
+    own count (`wall-settle.ts`), not after a clock. The 900ms this replaces
+    flaked at four workers on CI (fcab6ed, 42053953453): the trace shows the
+    clearing Enter took 1.73s under load, the footprints gone at once, and
+    900ms later the region at scrollTop 0 where the unfiltered arrival puts
+    it at 75: a landing not yet consumed, read as a landing in the wrong
+    place. The same defect wall-route's `settled` was written for (27 Oct).
+
+    The rail's search submits as a navigation, so each step below is a new
+    document whose count starts at nothing and whose arrival is its first
+    landing (probed 5 Nov: the count read 1 after the arrival, 1 again after
+    the search, null then 1 after the clear). So the wait is for landing 1 of
+    the new document, and the count before it is not read. The seat and
+    footprint counts that precede each wait hold only in the new document,
+    so the old one's consumed landing cannot satisfy it.
+  */
   await page.locator('#rail-search').fill(f.word);
   await page.locator('#rail-search').press('Enter');
   await expect(page).toHaveURL(new RegExp(`q=${f.word}`), { timeout: 15_000 });
   await expect(page.locator('a[data-seat]')).toHaveCount(3, { timeout: 15_000 });
-  await page.waitForTimeout(900);
+  await settled(page, 1);
   const m = await read(page, f.ids);
   const first = [...m.seats].sort((a, b) => a.order - b.order)[0];
   expect(inRegion(m, m.seats.indexOf(first)), 'the first match’s shelf is the one framed').toBe(true);
@@ -135,7 +153,7 @@ test('a search applied while the near view is open moves it to the first match, 
   await page.locator('#rail-search').fill('');
   await page.locator('#rail-search').press('Enter');
   await expect(page.locator('[data-footprint]')).toHaveCount(0, { timeout: 15_000 });
-  await page.waitForTimeout(900);
+  await settled(page, 1);
   expect((await read(page, f.ids)).scroll, 'cleared, it is back where the unfiltered wall arrives').toEqual(start.scroll);
 });
 
