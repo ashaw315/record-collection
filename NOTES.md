@@ -52742,12 +52742,15 @@ table wins.
 | 42053953453 | fcab6ed | 4 | want-list:739 (m), want-list:849 (m), pick-moods-157:154, wall-arrival-104:120 |
 | 42059632838 | dfbe205 | 4 | want-list:849 (m), pick-moods-157:154, wall-route:234 (failed), record-band-43:33 |
 | 42108210395 | b749d61 | 4 | pick-moods-157:154, record-band-43:33, roving-148:83 |
+| 42115186427 | 50a18cc | 4 | record-navigation:295 (failed), hold-160:111, hold-160:123, pick-moods-157:154 (now :181) |
 
-Derived: appearances 4 + 4 + 3 = **11**; distinct tests **7** (want-list:739, want-list:849,
-pick-moods-157:154, wall-arrival-104:120, wall-route:234, record-band-43:33, roving-148:83).
-The "nine" written above this table was wrong, recalled rather than read; corrected here in
-the same commit. By script, when the rows are many: count the comma-separated ids in the last
-column for appearances, and the set of them for distinct.
+Derived: appearances 4 + 4 + 3 + 4 = **15**; distinct tests **10** (want-list:739,
+want-list:849, pick-moods-157:154, wall-arrival-104:120, wall-route:234, record-band-43:33,
+roving-148:83, record-navigation:295, hold-160:111, hold-160:123). The "nine" written above
+this table was wrong, recalled rather than read; corrected in the commit that made the table.
+By script, when the rows are many: count the comma-separated ids in the last column for
+appearances, and the set of them for distinct. A test that moves line number keeps its first
+id with "(now :N)" beside it, so the set counts it once.
 
 **Assertion "1" of the queue check renamed `queue-1` (the coordinator, 5 Nov).** check-index's
 assertion 1 is "§65 rows=0", the one that refused the §65 unit this morning, and a refusal's
@@ -52786,7 +52789,48 @@ and gate.yml, shared infrastructure, so a gate; possibly `error-probe`'s spec.
 passed, 2 skipped; chromium 1058 passed, 1 skipped; mobile 390 passed, 4 skipped; no flake on
 either half; both halves print "using 1 worker". The gate for the queue-file unit (b749d61)
 and the four-worker unit's parts 1 and 2 (64aa789) at the default. Not a row in the
-four-worker table, which holds four-worker runs only. The four-worker gate on 50a18cc,
-42115186427, carrying option (b), is still running its chromium half. Recorded because a 13-second failure on
+four-worker table, which holds four-worker runs only.
+
+**CI run 42115186427 on 50a18cc at four workers (5 Nov, through ci-gate.sh): FAILED, exit 1,
+one failure, three flakes.** Unit 4866 passed, 2 skipped; chromium 1055 passed, 1 failed, 3
+flaky, 1 skipped; mobile 390 passed, 4 skipped, clean; both halves "using 4 workers". The
+row, appended to the table above:
+
+| run | commit | workers | flaked or failed |
+|---|---|---|---|
+| 42115186427 | 50a18cc | 4 | record-navigation:295 (failed), hold-160:111, hold-160:123, pick-moods-157:154 (now :181) |
+
+Derived from the four rows: appearances 4 + 4 + 3 + 4 = **15**; distinct **10**, the seven
+before plus record-navigation:295, hold-160:111 and hold-160:123 (pick-moods-157's test moved
+from :154 to :181 when the file grew and is one test).
+
+**What the four say.** (1) **pick-moods-157:181, option (b)'s first run at four workers: the
+bracket did not close in 8 attempts, then the retry passed.** The failure named its eight
+windows, and the snapshots' xmax advanced by 11, 10, 14, 4, 7, 11, 16 and 13 across them: a
+write transaction every 200 to 700ms, from four workers, for the 24 seconds the attempts took.
+The mechanism did what it was built to do, refuse to compare two collections and say why,
+and the risk recorded when it was built, "a quiet two seconds may be rare", is measured: at
+four workers there is no quiet two seconds. A flake in the table all the same. **The claim is
+already held one layer down, with no concurrent writer:** `untaggedCount()` in
+`record-moods.ts` takes no argument and cannot see a filter, page.tsx passes it to the control
+in the filtered and the unfiltered render alike, and `test/integration/mood-pool.test.ts:59`
+asserts it "counts the records with no row, over the whole collection" against the real test
+database. So the e2e's equality across two page loads is a second assertion of a fact the
+query layer's test holds exactly, made where it cannot be read exactly. **Proposed, a change
+to a test, so it waits for agreement (Q40):** the e2e asserts what only the page can show,
+that under a filter whose pool is four tagged records the line is drawn and reads at least
+seventeen, the seventeen being untagged and not in that pool, so it cannot be the pool's
+count; the equality stays in mood-pool.test.ts. The bracket and its tests would then be
+removed, not kept inert. (2) **record-navigation:295, hold-160:111 and :123: the dev server's
+first response under four workers**, the class Q39 names, now five tests. record-navigation:295
+waits 5s for `record-chrome` inside a 60s budget: 17.5s and 11.1s whole at one worker, 51.4s
+and 59.6s at four on the two earlier four-worker runs, 62.0s here, both attempts; the margins
+list's one OVER on every four-worker run since dfbe205. hold-160's two wait 5s for the same
+`record-chrome` after releasing a held press, with the record page's navigation still in
+flight in the call log: 3.1 to 3.8s at one worker, 7.2 to 10.1s at four. Not collisions, not
+clocks: fixed 5s expectations on a page whose first response is slower than that under four
+workers' compilation. Nothing in 50a18cc's code touched them. (3) wall-route:213 (was :234)
+13.6s, wall-arrival-104:121 (was :120) passed, the want-list presses 12.4 to 22.5s and
+passed: parts 1 and 2 and the hydrated mark held at four workers. Recorded because a 13-second failure on
 every job is a dispatch defect and not a result, and the report would otherwise have read
 "FAILED" beside a commit that was never checked out.
