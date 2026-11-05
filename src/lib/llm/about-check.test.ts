@@ -191,30 +191,30 @@ describe('checkNote: a song named as on this record that its tracklist does not 
   });
 });
 
-describe('checkNote: a position or an order among tracks, against the ordinals (rule 3, 5 Nov)', () => {
-  /* The defect: The Doors' note had side one running from the hit to the Brecht-Weill turn; Alabama Song is A5 and Light My Fire A6 closes the side. */
-  it('flags "side one runs from Light My Fire to Alabama Song" against A6 and A5', () => {
-    const order = checkNote('Side one runs from Light My Fire to Alabama Song; side two ends in drone.', DOORS).filter((c) => c.kind === 'order');
-    expect(order.length).toBe(1);
-    expect(order[0].fact).toMatch(/Alabama Song \(Whisky Bar\) is A5.*Light My Fire is A6/);
-  });
-  it('accepts the order the ordinals hold, and "closes it" on the last track', () => {
-    expect(checkNote('Side one runs from Soul Kitchen to Light My Fire.', DOORS).filter((c) => c.kind === 'order')).toEqual([]);
-    expect(checkNote('Woodstock is slow and haunted, and The Circle Game closes it like a door shutting on youth.', JONI).filter((c) => c.kind === 'order')).toEqual([]);
-  });
-  /* The third real error in the 45, found by this rule on the first recheck: "You're So Vain opens it out", and it is A3. */
-  it('flags "You’re So Vain opens it" on No Secrets, where The Right Thing To Do is A1', () => {
-    const order = checkNote("You're So Vain opens it out — that bass figure, the sneer kept elegant.", CARLY).filter((c) => c.kind === 'order');
-    expect(order.map((c) => c.fact)).toEqual([expect.stringMatching(/You're So Vain is A3; the record opens with The Right Thing To Do \(A1\)/)]);
-  });
-  it('flags "opens it" and "closes it" on a track that does neither, naming its position', () => {
-    const order = checkNote('Willy opens it and Blue Boy closes it.', JONI).filter((c) => c.kind === 'order');
-    expect(order.map((c) => c.fact)).toEqual([expect.stringMatching(/Willy is A5/), expect.stringMatching(/Blue Boy is B3/)]);
-  });
-  it('names the Doors sentence as it was written as unchecked: an order claim with no track the data can place', () => {
+describe('checkNote: the pointer on a side run from one thing to another (5 Nov): not a check, no verdict', () => {
+  /*
+    Rule 3, an order check against the ordinals, was built and dropped the same day: across the 45
+    it met one position claim by a named title (Joni Mitchell's "The Circle Game closes it", true)
+    and invented one finding from "opens it out", a phrasal verb, which reached Adam as a
+    correction; and its test asserted that false positive as correct behaviour, a test written
+    from the build in the turn the build was made. The Doors' sentence, the real error, refers to
+    tracks by description and is a class no check reaches. What stays points at it.
+  */
+  it('names the Doors sentence as it was written as unchecked, with the tracklist beside it and no verdict', () => {
     const result = checkNote("Side one runs from the hit's long solo trade to a Brecht-Weill cabaret turn; side two ends in eleven minutes of drone and theatre.", DOORS);
-    expect(result.filter((c) => c.kind === 'order')).toEqual([]);
-    expect(result.filter((c) => c.kind === 'unchecked').map((c) => c.fact)).toEqual([expect.stringMatching(/names no track/)]);
+    const pointer = result.filter((c) => c.kind === 'unchecked');
+    expect(pointer.length).toBe(1);
+    expect(pointer[0].fact).toMatch(/^a pointer, not a check/);
+    expect(pointer[0].fact).toMatch(/A5 Alabama Song \(Whisky Bar\), A6 Light My Fire/);
+    expect(result.map((c) => c.kind)).not.toContain('order');
+  });
+  it('says nothing about a position claim by a named title, true or false: "opens it out" is a phrasal verb and "The Circle Game closes it" is a reader’s to check', () => {
+    expect(checkNote("You're So Vain opens it out — that bass figure, the sneer kept elegant.", CARLY).filter((c) => c.kind !== 'personnel')).toEqual([]);
+    expect(checkNote('Woodstock is slow and haunted, and The Circle Game closes it like a door shutting on youth.', JONI)).toEqual([]);
+    expect(checkNote('Willy opens it and Blue Boy closes it.', JONI)).toEqual([]);
+  });
+  it('points at nothing where the tracklist is not cached, since there is nothing to read it against', () => {
+    expect(checkNote('Side one runs from a ballad to a riot.', { ...DOORS, facts: { ...DOORS.facts, tracks: [] } }).filter((c) => c.kind === 'unchecked')).toEqual([]);
   });
 });
 

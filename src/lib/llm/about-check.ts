@@ -22,12 +22,12 @@ import type { SnippetSubject } from './snippet-client';
   still one for a person to look at, and never suppressed into a pass.
 */
 /*
-  `track` and `order` (5 Nov): the fact-check pass on the 45 found two errors the checker missed,
-  both in the tracklist the cache held for every release and the checker never read. A song the
-  note presents as on this record that the tracklist does not hold; and a position or an order
-  among tracks the ordinals contradict.
+  `track` (5 Nov): the fact-check pass on the 45 found two errors the checker missed, both in the
+  tracklist the cache held for every release and the checker never read. A song the note presents
+  as on this record that the tracklist does not hold is one; the other, an order among tracks
+  referred to by description, is a class the checker cannot reach, and gets a pointer (below).
 */
-export type Conflict = { kind: 'sequence' | 'date' | 'label' | 'personnel' | 'track' | 'order' | 'unchecked'; claim: string; fact: string };
+export type Conflict = { kind: 'sequence' | 'date' | 'label' | 'personnel' | 'track' | 'unchecked'; claim: string; fact: string };
 
 export type CheckSubject = { subject: SnippetSubject; year: number | null; facts: ReleaseFacts; discography: DiscographyEntry[] };
 
@@ -180,44 +180,22 @@ export function checkNote(note: string, about: CheckSubject): Conflict[] {
   }
 
   /*
-    Rule 3 (5 Nov): a position or an order among tracks, against the ordinals. The defect: The
-    Doors' note ran side one "from the hit's long solo trade to a Brecht-Weill cabaret turn", and
-    Alabama Song is A5 with Light My Fire at A6 closing the side. That sentence names neither by
-    title, so what the rule reads is the named form of the claim ("side one runs from X to Y", "X
-    opens it", "X closes it"), and a claim that names no track the data can place is unchecked.
+    A POINTER, NOT A CHECK (the coordinator, 5 Nov). The Doors' note ran side one "from the hit's
+    long solo trade to a Brecht-Weill cabaret turn", and Alabama Song is A5 with Light My Fire at
+    A6 closing the side: a real error, in a sentence that refers to tracks by description and not
+    by title, which no check can reach without reading the note the way a person does. A rule 3
+    that read the named form of such claims was built and dropped the same day: across the 45 it
+    met one position claim by a named title (true) and invented one finding from "opens it out", a
+    phrasal verb, which reached Adam as a correction. A rule with one instance and no defect is
+    not a rule. What stays is this: a sentence that runs a side from one thing to another is named
+    `unchecked`, with the tracklist beside it and no verdict, so a reader's eye goes to it. It
+    makes no claim, so it needs no motivating defect and has no entry in ASSERTIONS-spec. Do not
+    let it grow a verdict.
   */
   if (tracks.length > 0) {
-    const sideOf = (position: string) => /^[A-Za-z]+/.exec(position)?.[0].toUpperCase() ?? null;
-    /* The track whose title stands nearest the end of `text`; the title track is the record's own. */
-    const trackIn = (text: string) => {
-      const t = norm(text).replace(/\btitle track\b/, norm(about.subject.title));
-      let best: { track: (typeof tracks)[number]; at: number } | null = null;
-      for (const track of tracks) {
-        const title = norm(track.title);
-        const bare = title.replace(/\s*\(.*\)$/, '');
-        const at = Math.max(t.lastIndexOf(title), bare.length >= 4 ? t.lastIndexOf(bare) : -1, title.includes(t) && t.length >= 4 ? 0 : -1);
-        if (at >= 0 && (best === null || at > best.at)) best = { track, at };
-      }
-      return best === null ? null : best.track;
-    };
-    const index = (track: (typeof tracks)[number]) => tracks.indexOf(track);
     for (const s of sentences) {
-      const span = /\bside (?:one|two|three|four|a|b|c|d)\b[^.;]*?\bruns from (.+?) to (.+?)(?=[;.,]|$)/i.exec(s);
-      if (span !== null) {
-        const from = trackIn(span[1]); const to = trackIn(span[2]);
-        if (from === null || to === null) conflicts.push({ kind: 'unchecked', claim: span[0], fact: 'an order claim that names no track the data can place; read it against the tracklist' });
-        else if (index(from) >= index(to)) conflicts.push({ kind: 'order', claim: span[0], fact: `${to.title} is ${to.position} and ${from.title} is ${from.position}: the order is the other way` });
-      }
-      for (const m of s.matchAll(/(.+?) (opens|closes) (it|the record|the album|the side|side (?:one|two|a|b))\b/gi)) {
-        const track = trackIn(m[1]);
-        if (track === null) { conflicts.push({ kind: 'unchecked', claim: m[0].trim(), fact: 'a position claim that names no track the data can place; read it against the tracklist' }); continue; }
-        const side = sideOf(track.position);
-        const onSide = side === null ? tracks : tracks.filter((t) => sideOf(t.position) === side);
-        const opens = m[2].toLowerCase() === 'opens';
-        const edge = opens ? [tracks[0], onSide[0]] : [tracks[tracks.length - 1], onSide[onSide.length - 1]];
-        if (edge.includes(track)) continue;
-        const actual = edge[0];
-        conflicts.push({ kind: 'order', claim: m[0].trim(), fact: `${track.title} is ${track.position}; the record ${opens ? 'opens' : 'closes'} with ${actual.title} (${actual.position})` });
+      if (/\bside (?:one|two|three|four|a|b|c|d)\b[^.;]*?\bruns from\b/i.test(s)) {
+        conflicts.push({ kind: 'unchecked', claim: s, fact: `a pointer, not a check: this runs a side from one thing to another; read it against the tracklist: ${tracks.map((t) => `${t.position} ${t.title}`.trim()).join(', ')}` });
       }
     }
   }

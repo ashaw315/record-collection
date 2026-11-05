@@ -52357,3 +52357,44 @@ dropping bare "opens it" and the phrasal forms, with the Carly Simon false posit
 defect; (b) drop rule 3 and record the Doors class, tracks referred to by description, as one
 the checker cannot reach, beside the debut-and-first-album class. Rules 1 and 2 stand; rule 2's
 two remaining flags (Everyone's Crushed, Love To Love You Baby) are correct and stay.
+
+**(b) taken (the coordinator, 5 Nov): rule 3 dropped, the Doors class recorded, a pointer kept.**
+The coordinator's read of (a) withdrawn on the circularity: recording the Carly Simon false
+positive as rule 3's motivating defect makes the instrument its own justification. A rule with
+one instance and no defect is not a rule. **The class the checker cannot reach, beside the
+debut-and-first-album class:** a sentence that refers to tracks by description rather than by
+title ("the hit's long solo trade", "a Brecht-Weill cabaret turn") is not reachable without
+reading it the way a person does. **The test that defended the defect, another instance of the
+family:** the test asserting the Carly Simon flag asserted a false positive as correct behaviour,
+written from the build in the same turn the build was made; removed with rule 3, with the
+coordinator's agreement. **The pointer, built as named:** not rule 3, not an assertion, no entry
+in ASSERTIONS-spec. A sentence that runs a side from one thing to another is named `unchecked`,
+with the tracklist beside it and no verdict, its fact beginning "a pointer, not a check". It
+makes no claim, so it needs no motivating defect. The reason to have it: the Doors error was
+real, nothing in the checker would have surfaced its shape, and on this batch it fires once in
+45 and points at a genuine error; a cheap reading aid that keeps Adam's pass short. The
+distinction stands in the code's comment and here, so it cannot drift into a verdict. Tests: the
+pointer fires on the Doors sentence with the tracklist and says nothing on a position claim by a
+named title, true or false; 50 across the three LLM files.
+
+**The want-list flake fixed, as approved: pressing after the hydrated mark, nothing loosened.** The
+assertion is the same URL pattern with the same timeout; only when the press is made changed.
+Neither want-list page carried a hydrated mark, so the fix is in two halves: `HydratedMark`, a
+hidden span that reads `data-hydrated="true"` after an effect, placed in both pages' main
+(the forms, the filters and the wall set the same attribute on their own roots; it draws nothing
+and changes no behaviour), and the two presses in want-list.spec.ts wait on it attached. The
+changed spec was run first against the pages without the mark: both tests failed on the wait's
+timeout, which is the failing form of the fix; then 10 of 10 at `--repeat-each 5` on mobile, and
+the whole spec 88 passed on chromium and mobile. Typecheck, lint, build. **The answer on the
+four flakes, with the evidence:** nothing in fcab6ed or dfbe205 touched the app's load or
+hydration path; the diff across both pushes under src is five files in src/lib/llm, an offline
+checker. What changed is the dispatch: the run on 2054305 ran "394 tests using 1 worker", and the
+two runs since ran "using 4 workers", because Code dispatched them with workers=4 where the
+earlier dispatches took the default. Four workers on one runner is more load per worker, so
+hydration lands later against a press made straight after the load, and the shared database
+sees four workers' writes at once. So: three tests always close to the line, pushed over it by
+a worker count Code changed, and one interference flake that needs more than one worker to
+exist. Not a coincidence and not a mechanism in the app. **pick-moods-157:154 recorded, not
+fixed, in this unit:** worker interference on the shared database, another worker's record
+arriving between two reads of the untagged count; infrastructure, not a race in that spec; it
+will recur at more than one worker.
