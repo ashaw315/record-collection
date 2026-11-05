@@ -52425,3 +52425,84 @@ inside its 30s budget), record-band-43:33 2.4m, pick-moods-157:154 2.7s, all pas
 attempt. So the evidence reads the same way a fourth time: one worker clean, four workers
 failing, nothing in the code between. The four-worker question stays with the coordinator.
 Held unpushed; rides with the next unit.
+
+**A suite that passes at one worker and fails at four, with the one-worker run reported as
+the clean one, is a new member of the family (the coordinator, 5 Nov).** A result made green
+by removing the condition that exposed the defect: the same shape as the exception run only
+where it is inert, and as widening a tolerance to make a red test green, refused at
+stats:493. Serialising the suite does not remove a concurrency defect, it removes the
+evidence, and makes every run slower. This entry's own earlier paragraphs are the instance:
+they report the one-worker run as OK and the four-worker runs as "the load", which named the
+condition and not the defects. **The repo already held an earlier instance, in
+playwright.config.ts at the workers line (14 Aug):** workers cut from three to two after
+flakes in three files, with the comment "This is MITIGATION, not diagnosis… Something is
+genuinely SHARED between concurrent workers — most likely test data in the one database".
+Named then, not diagnosed since. The coordinator's direction: four workers kept, and the
+smallest thing that makes four workers honest.
+
+**The coordinator's question answered from the logs: the four-worker flakes are not the
+three 6e772cd fixed, and they are not three tests.** Across the two four-worker runs
+(fcab6ed 42053953453, dfbe205 42059632838) five tests failed or flaked, and only one of them
+is the press-before-hydration shape:
+
+- **want-list:739, :849 (mobile; fcab6ed both, dfbe205 :849):** the press-before-hydration
+  shape, fixed in 6e772cd by the hydrated mark. The fix had never run at four workers; CI
+  42074402765 ran at one. **Run locally at four, 5 Nov:** `want-list.spec.ts` on mobile,
+  `--workers=4 --repeat-each=3 --retries=0`, 132 passed in 4.6m, exit 0, each press test
+  3 of 3 (7.4 to 11.8s against 3.7 to 6.6s at one worker: slower under load, and passing).
+  Not re-run at four in CI; the local run is the evidence. Nothing else running beside it.
+- **pick-moods-157:154 (chromium; both runs):** a shared-database collision. The test reads
+  the untagged count over the whole collection, opens a filter, reads it again, and asserts
+  the two are equal; another worker's record landed between the reads (23 then 24).
+  Infrastructure, not the spec: the assertion is §P.6's, and it is right at any worker count
+  where nobody else writes during the test.
+- **wall-route:234 (chromium; dfbe205, the one failure):** load the test makes for itself
+  and for every other worker, not a collision: it seeds 260 records by 260 serial POSTs
+  through the one dev server inside its 30s budget (5.3s at one worker, 22.3s and 32.0s at
+  four). `e2e/seed.ts` exists for exactly this, with its reason in the file: "creating them
+  through HTTP measurably degrades the shared dev server and destabilises every other spec
+  in the run". The seed is scenery, not the thing under test, and it goes through HTTP
+  anyway. The test's own comment says the collection is "every record in a database other
+  tests seed" and measures rather than pins, so it does not need serialising; it needs its
+  seed off the server.
+- **wall-arrival-104:120 (chromium; fcab6ed once):** a timed wait, not a collision. After
+  clearing the search the test waits a fixed 900ms and reads the region's scroll; the trace
+  (fcab6ed's test-results, read 5 Nov) shows the clearing Enter took 1.73s under load, the
+  footprints went at once, and 900ms later scrollTop was 0 where the unfiltered arrival puts
+  it at 75: the landing had not happened yet. The same file's neighbour wall-route waits on
+  the wall's own landing count (`__landings`, WallLive.tsx:296) through `settled`; this test
+  waits on a clock. Condition-based waiting is the fix, as at the hydrated mark.
+- **record-band-43:33 (chromium; dfbe205 once):** the cold-paint measurement, 119 loads in
+  new contexts, found "Super Rich @1000: band painted at 73 and settled at 233.9" and three
+  cells moved 42px. Not a collision and not a wait: the recorder saw a frame before the
+  layout was final, which at four workers on one dev server is the stylesheet or the font
+  arriving after the first frame. Whether §43's "first-painted height" means the first
+  frame the browser paints at all, or the first frame after the page's styles are applied,
+  is a ruling and not Code's to settle: at one worker the two coincide, at four they can
+  differ. Flagged for Design; not changed.
+
+**What the five say together:** one database and one dev server shared by four workers, and
+the defects are in the tests' assumptions about that sharing, not in the app. Two tests
+assume nobody else writes (pick-moods-157:154; the collision class), one puts 260 HTTP
+writes on the server everyone shares, one waits on a clock, one measures paint timing on a
+server under four workers' load. Per-worker database isolation would answer only the first
+class, and it is the elaborate option here: the dev server is one process reading one
+DATABASE_URL, so per-worker databases mean per-worker servers or a request-routed driver.
+
+**Proposed as a unit, not started (the coordinator asked for the proposal first):** "four
+workers honest", the smallest thing. (1) `e2e/wall-route.spec.ts`: the 260-record seed
+through `seedRecords` in one statement, ids read back by one GET, as pick-moods-157 does.
+(2) `e2e/wall-arrival-104.spec.ts:120`: the 900ms clock replaced by a wait on the landing
+count, the way wall-route's `settled` waits. (3) A whole-collection lock for the specs
+whose assertions read the whole collection as nobody else's: a small helper in `e2e/`
+(an atomic `mkdirSync` on a lock directory under the test-results folder, polled, released
+in `finally`), no dependency, with a repo test; applied first to pick-moods-157:154 and then
+to whichever of the seven specs that say "whole collection" (collection-filters,
+pick-moods-157, ring-144, shelf, stats, wall-arrival-104, wall-route; grep, 5 Nov, a pointer
+not a survey) read a count that another worker's write would change. The survey is part of
+the unit. (4) record-band-43 to Design as a question, no change. (5) `playwright.config.ts`
+workers raised to four on CI with the 14 Aug comment amended to say what was found, once (1)
+to (3) are in and a four-worker gate on CI is clean. Touches about six files; each test
+shown failing first where it can be (the lock's test against two concurrent writers; the
+settle wait against the clock, by the trace's own timing). Not built until the coordinator
+says.
