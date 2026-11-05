@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { assertNoLiveCall, usesRealNetwork } from '@/lib/discogs/no-live-calls';
+import type { Grounding } from './about-grounding';
 import type { MessageCreate } from './client';
 import { callAnthropic, type AnthropicRequest, type Observed } from './transport';
 
@@ -103,13 +104,45 @@ export type SnippetResult =
  * it reduces hallucination and does not prevent it, and its presence here must
  * not be read anywhere as a verification).
  */
-export function buildSnippetPrompt(subject: SnippetSubject): string {
+export function buildSnippetPrompt(subject: SnippetSubject, grounding?: Grounding): string {
+  /*
+    Grounded (the coordinator, 4 Nov): the record's facts from its cached
+    release and the artist's own releases with their years, so a sequence
+    claim or a date is read rather than recalled. Stated as the catalogue's
+    facts, with the note asked not to contradict them and not to recite them:
+    the sentence that is the product ("a surface so lacquered and cool…") is
+    not a list of fields, and a note that reads like Discogs is a loss.
+  */
+  const facts =
+    grounding === undefined
+      ? []
+      : [
+          'FACTS FROM THE COLLECTOR’S CATALOGUE, for this record and its artist. Treat them as',
+          'true and do not contradict them; a claim about when this record came, what came',
+          'before or after it, who played on it, or who issued it should agree with them. Do',
+          'not recite them: this is a note, not a catalogue entry, and most of them belong',
+          'in it only as what you know, not as what you list.',
+          '',
+          ...[
+            grounding.facts.label === null ? null : `Issued by: ${grounding.facts.label}`,
+            grounding.facts.year === null ? null : `This record’s year: ${grounding.facts.year}`,
+            grounding.facts.country === null ? null : `Country: ${grounding.facts.country}`,
+            grounding.facts.format === null ? null : `Format: ${grounding.facts.format}`,
+            grounding.facts.credits.length === 0 ? null : `Credits: ${grounding.facts.credits.map((c) => `${c.name} (${c.role})`).join('; ')}`,
+            grounding.facts.companies.length === 0 ? null : `Companies: ${grounding.facts.companies.map((c) => `${c.name} (${c.role})`).join('; ')}`,
+            grounding.discography.length === 0
+              ? null
+              : `The artist’s own releases, oldest first: ${grounding.discography.map((d) => `${d.title} (${d.year}${d.format === '' ? '' : `, ${d.format}`})`).join('; ')}`,
+          ].filter((line): line is string => line !== null),
+          '',
+        ];
   return [
     'Write a short note about a record in a collector’s collection.',
     '',
     `ARTIST: ${subject.artist}`,
     `TITLE: ${subject.title}`,
     '',
+    ...facts,
     /* §33: written to fit ten lines of the record's frame; §34: 535 characters is the writing guide, not a limit. */
     'At most ten lines of a narrow column -- about 535 characters, and never much',
     'past it: what the record is, roughly when it landed, and why it matters. Write',
@@ -131,7 +164,7 @@ export function buildSnippetPrompt(subject: SnippetSubject): string {
 }
 
 export type SnippetClient = {
-  write: (subject: SnippetSubject) => Promise<SnippetResult>;
+  write: (subject: SnippetSubject, grounding?: Grounding) => Promise<SnippetResult>;
 };
 
 /**
@@ -141,7 +174,7 @@ export type SnippetClient = {
  */
 export function createSnippetClient(transport: { create: MessageCreate }): SnippetClient {
   return {
-    async write(subject) {
+    async write(subject, grounding) {
       /*
        * Through `callAnthropic`, so the diagnostics arrive with the response
        * rather than being assembled here. The refusal below is still THIS
@@ -152,7 +185,7 @@ export function createSnippetClient(transport: { create: MessageCreate }): Snipp
         model: MODEL,
         max_tokens: SNIPPET_MAX_TOKENS,
         output_config: { effort: SNIPPET_EFFORT },
-        messages: [{ role: 'user', content: buildSnippetPrompt(subject) }],
+        messages: [{ role: 'user', content: buildSnippetPrompt(subject, grounding) }],
       });
 
       /*

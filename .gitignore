@@ -154,3 +154,6 @@ docs/design/*
 # rule, a measurement's source is tracked with what was measured from it.
 !docs/design/table-grid-wireframe.png
 font-probe-*.json
+
+# ABOUT drafts and fetched discographies, a machine-local workspace for scripts/write-abouts.mts
+.abouts/

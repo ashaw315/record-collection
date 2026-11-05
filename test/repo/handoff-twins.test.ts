@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { discharged, stepsOf, type UnnumberedStep } from '../../scripts/handoff-twins.mjs';
+import { discharged, stepsOf } from '../../scripts/handoff-twins.mjs';
 
 /**
  * **Every unnumbered step in the handoff is discharged by a numbered one, or
@@ -99,4 +99,3 @@ describe('the unbuilt list is exact: what no block discharges, and nothing else'
   });
 });
 
-export type { UnnumberedStep };

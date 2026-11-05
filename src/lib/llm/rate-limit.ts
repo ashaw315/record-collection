@@ -63,7 +63,9 @@ export type LlmRequestKind =
   | 'gap_analysis'
   | 'snippet'
   | 'genre_parents'
-  | 'pressing_assessment';
+  | 'pressing_assessment'
+  /* A batch run by hand, recorded and never claimed; the `_batch` suffix is what the hour's count leaves out. */
+  | 'about_batch';
 
 export type ClaimResult =
   /**
@@ -131,6 +133,7 @@ export async function claimLlmRequest(kind: LlmRequestKind): Promise<ClaimResult
       WHERE (
         SELECT COUNT(*) FROM llm_requests
          WHERE requested_at > ${windowStart}
+           AND kind NOT LIKE '%\_batch'
            AND (completed_at IS NOT NULL OR requested_at > ${abandonedBefore})
       ) < ${LLM_REQUESTS_PER_HOUR}
       RETURNING id
@@ -158,6 +161,7 @@ export async function claimLlmRequest(kind: LlmRequestKind): Promise<ClaimResult
   const oldest = await db.execute<{ requested_at: string | Date }>(sql`
     SELECT requested_at FROM llm_requests
      WHERE requested_at > ${windowStart}
+       AND kind NOT LIKE '%\_batch'
        AND (completed_at IS NOT NULL OR requested_at > ${abandonedBefore})
      ORDER BY requested_at ASC
      LIMIT 1
@@ -257,4 +261,27 @@ export async function completeLlmRequest(id: string, usage?: LlmUsage): Promise<
            output_tokens = ${usage?.outputTokens ?? null},
            stop_reason = ${usage?.stopReason ?? null}
      WHERE id = ${id}`);
+}
+
+/**
+ * A batch's call, recorded whether it finished or failed (the coordinator,
+ * 4 Nov): the mood tagger recorded nothing, and six untagged records went
+ * unnoticed for two days. A batch does not claim against the hour's ten,
+ * which is for a person's requests, and its kinds end in `_batch` so the
+ * claim's count leaves them out; but every call leaves a completed row, a
+ * finished one with its usage and a failed one with the failure named in
+ * `stop_reason`, never a claim left open.
+ */
+export type LlmRunOutcome =
+  | { finished: true; inputTokens: number | null; outputTokens: number | null; stopReason: string | null }
+  | { finished: false; reason: string };
+
+export async function recordLlmRun(kind: LlmRequestKind, outcome: LlmRunOutcome): Promise<void> {
+  const db = getDb();
+  await db.execute(sql`
+    INSERT INTO llm_requests (kind, completed_at, input_tokens, output_tokens, stop_reason)
+    VALUES (${kind}, now(),
+            ${outcome.finished ? outcome.inputTokens : null},
+            ${outcome.finished ? outcome.outputTokens : null},
+            ${outcome.finished ? outcome.stopReason : `failed: ${outcome.reason}`})`);
 }

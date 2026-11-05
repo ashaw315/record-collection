@@ -52166,3 +52166,37 @@ the push-per-unit rule, six commits, the catalogue number and matrix branches am
 skipped, 23.3m. No failure, no flake. Logs copied into one directory, gate-report written to a
 file, its exit read from the shell. Everything on origin is verified by CI; three commits are held
 unpushed for the next unit: the twins mechanism and backlog, and two NOTES entries.
+
+**The ABOUT unit, step 1 of Adam's six (5 Nov): three grounded samples, the gate held until he answers.**
+Grounding, free and cheap: `groundingFromPayload` reads the cached release's label, country, year,
+format, credits, companies and community figures; `discographyOf` reads `/artists/{id}/releases`,
+one call per artist through the one limiter, the artist's own masters oldest first, kept in
+`.abouts/discographies.json` so a rerun spends nothing; the endpoint gives no format for any
+master, so album against EP can be told only where a title says EP. `buildSnippetPrompt(subject,
+grounding)` carries the facts as the catalogue's, asks that nothing contradict them and that they
+not be recited, and is the ungrounded prompt unchanged without them; the page's path passes none.
+**The check after:** `checkNote` reads sequence claims, dates and date-ish phrasing, the label and
+personnel against the data, descriptive claims untouched, and names an earlier release of
+unknown format as `unchecked`, a third outcome beside a conflict and silence. The first grounded
+run taught it three things, each now a test: an EP with a blank format is not the first album,
+"if the debut was" is a reference and not a claim, and a sentence's opening capitals are not a
+person. **Recorded:** `recordLlmRun` writes every batch call to llm_requests as finished with its
+usage or failed with the reason, completed either way, under a `_batch` kind the hour's count
+leaves out, so a person's ten are untouched (a test of eleven rows and a claim). **The script**
+`scripts/write-abouts.mts`: `--sample`, `--all`, `--rerender`, `--store`; nothing stored until
+`--store` with the ids Adam marks; the file ordered by year descending with Discogs' have, want
+and rating as the obscurity proxy, each run's status beside its note. **The gate's result:** three
+grounded notes, all finished, URGH now "their second album, three years on from I've Seen A Way",
+Smerz and Bluey right as before; the checker reads no conflict on two and one unchecked on Smerz
+(Okey, 2016, format unknown; it is an EP). The cost to the writing is in the note to Adam: two of
+three lean on the credits, two to four names each, and read a step closer to a sleeve note; not a
+Discogs dump, and a one-line prompt change proposed before the 45. Tests first: 50 then 19 across
+the three new files, failing on absence. Step level: about-grounding, about-check, llm-run-log,
+snippet-client, rate-limit, handoff-twins (116), typecheck, lint, build; three grounded samples
+run against production data, nothing stored. **Step 6, proposed and not built:** one "for Design"
+export on each unit push. The single trigger should be the push itself, not the commit: the
+exports describe the pushed commit, the captures return a provisional at a commit that names them,
+and a push is the one event every unit has exactly once; a manifest written from the files
+actually gathered, listing each with its purpose, so a bundle that misses one is visible on
+arrival; and the three triggers of today (documents at a commit touching them, captures at a
+commit naming them, notes by hand) become inputs the push gathers, not events of their own.
