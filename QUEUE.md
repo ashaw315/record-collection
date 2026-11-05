@@ -18,8 +18,8 @@ handoff and `WITHDRAWALS.md`.
 test (`test/repo/handoff-twins.test.ts`) against the handoff, listed in
 `scripts/handoff-unbuilt.json`, and printed by the check. Restating them here
 would be a second hand-maintained copy of one list, the drift the index exists
-to catch, and the check's one numbered assertion, with the exit code, is that
-no row here carries one of their heads. The draft's ids Q13 to Q18 were those
+to catch, and the check's one numbered assertion, `queue-1`, with the exit
+code, is that no row here carries one of their heads. The draft's ids Q13 to Q18 were those
 six, restated verbatim, and are retired, never reused.
 
 **Statuses.** `open`; `done <commit>`; `dropped <commit or §section>`;
@@ -67,6 +67,7 @@ here; see above.
 | Q25 | open | Mood tagging: the retry and the run-record | SPEC §5.10 |
 | Q26 | open | sharp's cold-start cost: optional, from the Vercel work | NOTES |
 | Q38 | open | roving-148:83 at four workers: a 30s timeout on openShelf at the test's start (4.6s at one worker, 9.1s and 30.4s at four), the seventh distinct four-worker test, one appearance; load-shaped, not a collision; read the trace before building anything | NOTES, 5 Nov |
+| Q39 | open | The gate against a build, not `next dev`: an `E2E_SERVER=build` switch in playwright.config.ts's webServer (`NODE_ENV=test next build && next start`), gate.yml's e2e job building once before Playwright, one four-worker CI run read against the runs table. Measured 5 Nov: build 9.3s, start ready in 222ms, login 200 and the session cookie set without Secure under runtime NODE_ENV=test. Plausibly one change against wall-route:234, record-band-43:33 and roving-148:83, all first responses from a dev server under four workers. Shared infrastructure, so a gate; error-probe's spec is the one dev-only path to check | NOTES, 5 Nov |
 | Q27 | open | Vercel deployment retention. 294 production deployments at 22.4 MB each is about 6.4 GB of the 7.5 GB. No action has been chosen, and the first proposal was wrong twice over: the numerator spans projects and the denominator should be retained deployments, and preview retention does not touch production deployments | the Vercel investigation |
 
 ## Design's queue

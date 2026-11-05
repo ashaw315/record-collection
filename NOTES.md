@@ -52729,9 +52729,57 @@ browser has been closed" at the evaluate after it: 4.6s at one worker (6e772cd),
 (dfbe205), 30.4s here, the margins list's one OVER. The wall's open under four workers' load,
 the wall-route:234 shape without the seed: a load-shaped timeout, one appearance, not a
 collision and not a wait on a clock (openShelf waits on the wall's own marks). Not fixed; it
-goes in the queue. **The figure, in the agreed form: seven distinct tests, nine appearances,
-three four-worker runs.** wall-route:234 and wall-arrival-104:120 did not appear here, their
-fixes in 64aa789; the one-worker gate on b749d61 (42108198297) is still running its chromium
-half. Recorded because a 13-second failure on
+goes in the queue. wall-route:234 and wall-arrival-104:120 did not appear here, their fixes in
+64aa789; the one-worker gate on b749d61 (42108198297) is still running its chromium half.
+
+**The four-worker runs, one row each; the figures are derived from this table and never
+recalled (the coordinator, 5 Nov, after the third wrong figure for one set: "three", "five",
+"nine").** Every run appends a row. If a figure in a report disagrees with the table, the
+table wins.
+
+| run | commit | workers | flaked or failed |
+|---|---|---|---|
+| 42053953453 | fcab6ed | 4 | want-list:739 (m), want-list:849 (m), pick-moods-157:154, wall-arrival-104:120 |
+| 42059632838 | dfbe205 | 4 | want-list:849 (m), pick-moods-157:154, wall-route:234 (failed), record-band-43:33 |
+| 42108210395 | b749d61 | 4 | pick-moods-157:154, record-band-43:33, roving-148:83 |
+
+Derived: appearances 4 + 4 + 3 = **11**; distinct tests **7** (want-list:739, want-list:849,
+pick-moods-157:154, wall-arrival-104:120, wall-route:234, record-band-43:33, roving-148:83).
+The "nine" written above this table was wrong, recalled rather than read; corrected here in
+the same commit. By script, when the rows are many: count the comma-separated ids in the last
+column for appearances, and the set of them for distinct.
+
+**Assertion "1" of the queue check renamed `queue-1` (the coordinator, 5 Nov).** check-index's
+assertion 1 is "§65 rows=0", the one that refused the §65 unit this morning, and a refusal's
+message has to name one check: Design's rule, ask what the refusal said before changing
+anything, depends on it. The check prints `PASS queue-1` / `FAIL queue-1`; the tests, the
+script's header and QUEUE.md say so. Changed before anything refused on it.
+
+**The suite total, reconciled (the coordinator's second question).** 750 plus the two command
+tests is 752; the third is the real-file assertion test, `assertion queue-1: restates no
+unbuilt handoff step`, added to `check-queue.test.ts` in the same commit as the command tests
+(06aa443), which the earlier entry listed by name and the report did not. `grep -c "it("` on
+the file reads 17: 14 before, 17 after, 753 in all. The bracket's four and the new spec test
+are outside the document suite, as before.
+
+**The e2e suite runs against `next dev`, and a gate against a build is cheap to try (the
+coordinator's observation, 5 Nov).** `playwright.config.ts`'s webServer is `NODE_ENV=test npm
+run dev`, so four workers contend on on-demand compilation and the dev overlay as well as on
+data, and wall-route:234's seed, record-band-43's unstyled first frame and roving-148's 30s
+shelf open are all first responses from a dev server under four workers. Measured on 5 Nov,
+locally, nothing else running: `NODE_ENV=test npx next build` compiled in 9.3s with no
+non-standard-env warning (Next treats `test` as standard and loads `.env.test`), `NODE_ENV=test
+npx next start -p 3199` was ready in 222ms, `/login` answered 200 in 0.14s cold and 0.005s
+warm, and `POST /api/auth/login` set `rc_session` with `Path=/` and no `Secure` flag, so the
+session works over plain http because the server's runtime NODE_ENV is `test`. The pages
+gated by `NODE_ENV === 'production'` (the six `/wall/probe/*` pages, `/error-probe`,
+`/suggestions/probe`, `/wall/overview`) are server components reading the runtime env, so they
+stay reachable; `error.tsx`'s client branch reads the inlined value and is the one dev-only
+path a build removes, which `error-probe`'s spec would show. The 89 specs that hide
+`nextjs-portal` lose nothing when there is no portal. **Proposed, not built, in the queue as
+Q39:** a `E2E_SERVER=build` switch in the webServer command (`next build && next start`, both
+under NODE_ENV=test), the gate.yml e2e job building once before Playwright, and one
+four-worker CI run against the build read against this table. Touches playwright.config.ts
+and gate.yml, shared infrastructure, so a gate; possibly `error-probe`'s spec. Recorded because a 13-second failure on
 every job is a dispatch defect and not a result, and the report would otherwise have read
 "FAILED" beside a commit that was never checked out.

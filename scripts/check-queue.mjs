@@ -18,8 +18,10 @@
  * copy: the unbuilt handoff steps are printed from `scripts/handoff-unbuilt.json`,
  * the list the twins test keeps exact.
  *
- * **Assertion 1, the one numbered line, with the exit code: `QUEUE.md`
- * restates no unbuilt handoff step** (ruled by the coordinator, 5 Nov). A
+ * **Assertion queue-1, the one numbered line, with the exit code: `QUEUE.md`
+ * restates no unbuilt handoff step** (ruled by the coordinator, 5 Nov; its
+ * name carries the script, because check-index's assertion 1 is "§65 rows=0"
+ * and a refusal's message has to name one check). A
  * table row whose item carries a step's head after its `§x:` prefix,
  * lowercased with curly apostrophes straightened, is a copy; a row naming the
  * section number alone is a reference and is left alone. The two cannot be
@@ -129,7 +131,8 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   console.log(`consistency, report only: ${found.length === 0 ? 'nothing to report' : `${found.length} finding${found.length === 1 ? '' : 's'}`}`);
   for (const f of found) console.log(`  ${f}`);
   const copies = restatements(items, unbuilt.map((u) => u.head));
-  console.log(`${copies.length === 0 ? 'PASS' : 'FAIL'} 1 restates no unbuilt handoff step${copies.length === 0 ? '' : ` (${copies.length})`}`);
+  /* `queue-1`, not `1`: assertion 1 is check-index's "§65 rows=0", and a refusal's message has to name one check (the coordinator, 5 Nov). */
+  console.log(`${copies.length === 0 ? 'PASS' : 'FAIL'} queue-1 restates no unbuilt handoff step${copies.length === 0 ? '' : ` (${copies.length})`}`);
   for (const c of copies) console.log(`  ${c}`);
   console.log('The rest is a report, not a verdict: it cannot notice an item that was never written down, and a clean report is not proof the list is complete.');
   process.exit(copies.length === 0 ? 0 : 1);

@@ -135,14 +135,15 @@ describe('the repo’s QUEUE.md', () => {
   });
 
   /*
-    Assertion 1, the one numbered line in the check (the coordinator, 5 Nov):
+    Assertion queue-1, the one numbered line in the check (the coordinator, 5 Nov;
+    named for its script, since check-index's assertion 1 is "§65 rows=0"):
     QUEUE.md restates no unbuilt handoff step. The motivating defect is the
     coordinator's own, named by them: the queue content handed over restated
     all six unbuilt steps as items Q13 to Q18, carrying their heads verbatim,
     and they had to be retired. Two hand-maintained copies of one list, in the
     document the assertion guards.
   */
-  it('assertion 1: restates no unbuilt handoff step', () => {
+  it('assertion queue-1: restates no unbuilt handoff step', () => {
     const heads = (JSON.parse(readFileSync('scripts/handoff-unbuilt.json', 'utf8')) as Array<{ head: string }>).map((u) => u.head);
     expect(restatements(parseQueue(text), heads)).toEqual([]);
   });
@@ -158,16 +159,16 @@ describe('the check as a command', () => {
     const { status, out } = run('QUEUE.md');
     expect(status).toBe(0);
     expect(out).toMatch(/consistency, report only/);
-    expect(out).toMatch(/^PASS 1 restates no unbuilt handoff step/m);
+    expect(out).toMatch(/^PASS queue-1 restates no unbuilt handoff step/m);
   });
 
-  it('exits 1 with FAIL 1 on a staged file that carries an unbuilt step’s head as an item, and still prints the report', () => {
+  it('exits 1 with FAIL queue-1 on a staged file that carries an unbuilt step’s head as an item, and still prints the report', () => {
     const staged = join(tmpdir(), `queue-${process.pid}.md`);
     writeFileSync(staged, '## Q\n\n| id | status | item | record lives in |\n|---|---|---|---|\n| Q18 | open | §65: the tracklist and the credits, read from the release text | the handoff |\n');
     try {
       const { status, out } = run(staged);
       expect(status).toBe(1);
-      expect(out).toMatch(/^FAIL 1 restates no unbuilt handoff step/m);
+      expect(out).toMatch(/^FAIL queue-1 restates no unbuilt handoff step/m);
       expect(out).toMatch(/Q18 restates "§65: the tracklist and the credits"/);
       expect(out).toMatch(/consistency, report only/);
     } finally {
