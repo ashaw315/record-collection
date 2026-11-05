@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { sql } from 'drizzle-orm';
+import { bracketed } from './bracket';
 import { registerCleanup, trackArtist } from './cleanup';
 import { removeRecordsFor, seedRecords } from './seed';
 import { login } from './sign-in';
@@ -151,18 +152,64 @@ test('an inert mood cannot be selected and leaves ASK inert, and it is still a T
   }
 });
 
+/*
+  The two reads the next test compares are of a count every other worker can
+  move, up (a record created untagged) and down (a record tagged, ring-144
+  and this file; an untagged record deleted, every cleanup). Between them on
+  CI at four workers another worker's record landed, "23" then "24", twice
+  (42053953453, 42059632838): §P.6's claim held and the reading was of two
+  collections. So the reads are bracketed (`bracket.ts`): taken between two
+  of Postgres's own snapshots and counted only when the snapshots agree,
+  which means no committed state changed across both loads; otherwise read
+  again, eight times at most, then failed with every pair of snapshots
+  named. The claim is unchanged; what changed is that the comparison is now
+  made of one collection.
+*/
+const snapshot = async () =>
+  String(((await getTestDb().execute(sql`SELECT pg_current_snapshot()::text AS s`)) as unknown as { rows: Array<{ s: string }> }).rows[0].s);
+async function countsAcrossFilter(page: Page, artistId: string, between: () => Promise<void> = async () => {}) {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/?view=grid');
+  await page.locator('[data-collection-filters][data-hydrated="true"]').first().waitFor({ timeout: 30_000 });
+  const whole = (await line(page).textContent()) ?? '';
+  await between();
+  await openGrid(page, artistId);
+  const filtered = (await line(page).textContent()) ?? '';
+  return { whole, filtered };
+}
+
 test('the untagged line counts the whole collection on load, and a filter does not change it', async ({ page }) => {
   const { artistId } = await fixture(page);
   try {
-    await page.setViewportSize({ width: 1440, height: 900 });
-    await page.goto('/?view=grid');
-    await page.locator('[data-collection-filters][data-hydrated="true"]').first().waitFor({ timeout: 30_000 });
-    const whole = (await line(page).textContent()) ?? '';
-    expect(whole, 'the seventeen are untagged, so the line is drawn').toMatch(/^\d+ not tagged yet\.$/);
+    const { value: { whole, filtered }, attempts } = await bracketed(snapshot, () => countsAcrossFilter(page, artistId), { attempts: 8 });
+    expect(whole, `the seventeen are untagged, so the line is drawn (bracket closed on attempt ${attempts})`).toMatch(/^\d+ not tagged yet\.$/);
     const n = Number(/^(\d+)/.exec(whole)?.[1]);
     expect(n).toBeGreaterThanOrEqual(17);
-    await openGrid(page, artistId);
-    expect(await line(page).textContent(), 'every record in this filter is tagged, and the line still counts the collection').toBe(whole);
+    expect(filtered, 'every record in this filter is tagged, and the line still counts the collection').toBe(whole);
+  } finally {
+    await removeRecordsFor(artistId);
+  }
+});
+
+/* Fails against a bracket that compares across a write: the write is this test's own, between the two reads, once. */
+test('a write between the two reads reopens the bracket rather than being compared', async ({ page }) => {
+  const { artistId } = await fixture(page);
+  let written = false;
+  try {
+    const result = await bracketed(
+      snapshot,
+      () =>
+        countsAcrossFilter(page, artistId, async () => {
+          if (written) return;
+          written = true;
+          /* One untagged record of this artist: the whole count moves by one, the flake's own shape, and this artist's cleanup removes it. */
+          await seedRecords(artistId, 'Mood X', `x${Date.now().toString(36)}`, 1);
+        }),
+      { attempts: 8 },
+    );
+    expect(result.reopened.length, `the write reopened the bracket: ${result.reopened.join(', ')}`).toBeGreaterThanOrEqual(1);
+    expect(result.attempts).toBeGreaterThanOrEqual(2);
+    expect(result.value.filtered, 'and the reads that counted were of one collection').toBe(result.value.whole);
   } finally {
     await removeRecordsFor(artistId);
   }
