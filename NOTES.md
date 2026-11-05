@@ -52208,3 +52208,25 @@ pick-pull-156's arrows case; mobile 390 passed, 4 skipped, 23.0m, narrowest 67% 
 column count. No failure, no flake; the lines a grep for "failed" finds are test names. Logs in
 one directory, gate-report written to a file, exit read from the shell. Everything on origin is
 verified by CI; this entry is held unpushed for the next unit.
+
+**Design's "Two rules and the arrow" applied (5 Nov): one file in place of the two that never landed.**
+Anchored on the 60392b7 exports; both anchors verified before anything was edited (DESIGN-RULES
+ended at the "A target sentence that says what a test does" bullet; the §63 Provisionals line
+still read "macOS passed … Linux is open"). drop-ref ran first and recorded no ref: the file is
+prose only and no target travels with it, so docs/design on disk was the committed state. Three
+things applied by hand: the refusal rule (ask what the refusal said before changing anything; the
+4 Nov resend of an anchor that had matched is the reason); the §63 line closed on both captures,
+macOS and Linux at 1440 × 900, naming CI run 41863860269 on ccbbc29; and a bullet codifying
+which copy of a step a change file anchors on, Design's unnumbered line and never Code's Done,
+with the change file saying when a step was built against an earlier wording. Intake OK: 14
+index assertions pass, 736 document-suite tests pass. **Beside that last bullet, so it does not
+read as having closed the gap by itself (the coordinator's observation):** the bullet is the
+human half, a convention held by Design remembering to apply it, which is the fifth family
+member exactly. The machine half is not owed; it landed in 60392b7, the commit this file is
+anchored on: `test/repo/handoff-twins.test.ts` reads each Done block's `discharges` quote against
+the handoff as it stands and names a step whose instruction moved after its Done. So an
+instruction edited after its Done now fails a test until Code builds the change and carries the
+new quote, whether or not the change file said so. What the check does not read is the change
+file's own statement; the bullet is what asks for that, and the test is what notices when it was
+not kept. The two closes of the §63 line's own stretch: the line no longer names the Linux file,
+so the carries-what-it-names guard has nothing to find in it, and §63 leaves the open list.
