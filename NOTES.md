@@ -52089,3 +52089,14 @@ the prose is searchable a false "early-2020s" makes the record match for a reaso
 true, so the accuracy question and the search feature are one question. If Adam says generate:
 all 45, none filtered, in one readable file for a single pass, every run recorded whether it
 finished or failed. Held unpushed under the push-per-unit rule, with the four NOTES commits.
+
+**Search reaches the catalogue number and the matrix and runout (4 Nov), §W.24's test completed for
+today's fields.** The pressing's branch in `buildWhere` now covers the plant, the catalogue number
+and the matrix, each by likeness or substring; with the title, artist, label, tracklist, credits
+and companies, every field §W.24 names today is reached, in every view by the shared predicate.
+Tests first: "CLAY LP 3" by substring and by likeness ("CLAY LP 4"), "LP 3 A1" and "Townhouse" in
+the matrix; one failing against the predicate as it stood. Step level: records-list, shelf (133),
+collection-filters, wall-arrival-104 on chromium (17), typecheck, lint, build. This is the unit's
+push: it carries the five NOTES and drop commits held since the push-per-unit rule, one
+deployment for six commits, and one CI run. Left of §W.24's steps: the shelf's reason on the pull
+and §T.3's reason line, both proposals; and the captures.

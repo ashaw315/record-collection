@@ -370,11 +370,23 @@ export function buildWhere(filters: RecordFilters) {
             .from(labels)
             .where(and(eq(labels.id, records.labelId), likeness(labels.name))),
         ),
+        /*
+          The pressing's own fields the record page shows (§W.24 as a test, 4
+          Nov): the plant; the catalogue number, how a collector names a
+          pressing ("do I already have MCA-1693?"); and the matrix and runout,
+          how one pressing is told from another, so a reader with a record in
+          hand searches by it.
+        */
         exists(
           getDb()
             .select({ one: sql`1` })
             .from(pressings)
-            .where(and(eq(pressings.id, records.pressingId), likeness(pressings.pressingPlant))),
+            .where(
+              and(
+                eq(pressings.id, records.pressingId),
+                or(likeness(pressings.pressingPlant), likeness(pressings.catalogNumber), likeness(pressings.matrixRunout)),
+              ),
+            ),
         ),
         exists(
           getDb()

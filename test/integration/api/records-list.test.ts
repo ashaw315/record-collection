@@ -987,6 +987,16 @@ describe('GET /api/records — q reaches the label, the tracklist and the credit
     expect(await names('/api/records?q=Sterling')).toEqual(['Hear Nothing See Nothing Say Nothing']);
   });
 
+  /* §W.24 as a test (4 Nov): the catalogue number is how a collector names a pressing, "do I already have MCA-1693?", and the matrix is how one pressing is told from another, so a reader with a record in hand searches by it. Both are the pressing's own fields, shown on the record page. */
+  it('matches on the catalogue number, and on the matrix and runout, by substring and by likeness', async () => {
+    await seedText();
+    await db.execute(sql`UPDATE pressings SET catalog_number = 'CLAY LP 3', matrix_runout = 'CLAY LP 3 A1 TOWNHOUSE' WHERE discogs_release_id = 11029111`);
+    expect(await names('/api/records?q=CLAY LP 3')).toEqual(['Hear Nothing See Nothing Say Nothing']);
+    expect(await names('/api/records?q=LP 3 A1')).toEqual(['Hear Nothing See Nothing Say Nothing']);
+    expect(await names('/api/records?q=Townhouse')).toEqual(['Hear Nothing See Nothing Say Nothing']);
+    expect(await names('/api/records?q=CLAY LP 4')).toEqual(['Hear Nothing See Nothing Say Nothing']);
+  });
+
   it('a record whose own artist matches still matches by name, so nothing a search found before is lost', async () => {
     await seedText();
     expect(await names('/api/records?q=Discharge')).toEqual(['Hear Nothing See Nothing Say Nothing']);
