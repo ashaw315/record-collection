@@ -1,6 +1,13 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { assertNoLiveCall, isTestContext } from './no-live-calls';
 
+/*
+  The guard reads NODE_ENV through the parsed env, which a build cannot inline (Q39, 5 Nov), and
+  the real one parses once and caches. Here it is stood in by one that reads each test's stub, so
+  the NODE_ENV a test stubs below is the NODE_ENV the guard sees. Setup only: no assertion changed.
+*/
+vi.mock('@/env', () => ({ getEnv: () => ({ NODE_ENV: process.env.NODE_ENV }) }));
+
 /**
  * CLAUDE.md §2: "Always mock Discogs and the Anthropic API. Never allow a test
  * to make a live external call — not even 'just once to check.'"

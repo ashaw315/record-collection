@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import { probesOpen } from '@/lib/probes';
 import { AppHeader } from '@/components/AppHeader';
 import { RecordPage8a, type PageRecord } from '@/app/records/[id]/RecordPage8a';
 
@@ -192,7 +193,7 @@ export default async function Page8aProbe({
 }: {
   searchParams: Promise<{ case?: string; configured?: string; earlier?: string; generated?: string }>;
 }) {
-  if (process.env.NODE_ENV === 'production') notFound();
+  if (!probesOpen()) notFound();
 
   const { case: which, configured, earlier, generated } = await searchParams;
   const name = which ?? 'richest';

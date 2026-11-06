@@ -1,6 +1,7 @@
 import { LABEL_INK } from '@/app/records/[id]/grid-type';
 import { PAPER_CSS } from '@/lib/colour/paper';
 import { notFound } from 'next/navigation';
+import { probesOpen } from '@/lib/probes';
 import { ConstructionStill } from '@/app/records/[id]/ConstructionStill';
 import { listRecordsForSheet } from '@/lib/db/queries/records';
 
@@ -18,7 +19,7 @@ import { listRecordsForSheet } from '@/lib/db/queries/records';
 export const dynamic = 'force-dynamic';
 
 export default async function ConstructionSheetPage() {
-  if (process.env.NODE_ENV === 'production') notFound();
+  if (!probesOpen()) notFound();
 
   const records = await listRecordsForSheet();
 

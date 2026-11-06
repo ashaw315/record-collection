@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import { probesOpen } from '@/lib/probes';
 import { AppHeader } from '@/components/AppHeader';
 import { RecordBands } from '@/app/records/[id]/RecordBands';
 
@@ -18,7 +19,7 @@ import { RecordBands } from '@/app/records/[id]/RecordBands';
 export const dynamic = 'force-dynamic';
 
 export default function BandProbePage() {
-  if (process.env.NODE_ENV === 'production') notFound();
+  if (!probesOpen()) notFound();
 
   const cell = (label: string) => (
     <div className="p-[18px] font-mono text-[11px] tracking-[0.09em] uppercase">{label}</div>

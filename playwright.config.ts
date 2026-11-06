@@ -268,6 +268,13 @@ export default defineConfig({
     // NODE_ENV=test makes Next load .env.test and skip .env.local, so an E2E run
     // never authenticates against the developer's own APP_PASSWORD_HASH.
     command: `NODE_ENV=test npm run dev -- --port ${PORT}`,
+    /*
+      The probe pages open on E2E_PROBES=1 and a parsed NODE_ENV that is not production
+      (src/lib/probes.ts, Q39, 5 Nov). Set here and nowhere else: Playwright merges this over its
+      own process env for the server it starts, so every run through this config carries it,
+      the capture project and both gates included, and nothing on Vercel ever does.
+    */
+    env: { E2E_PROBES: '1' },
     url: baseURL,
     // A stale dev server would carry the developer's own env, not these values,
     // and the login tests would fail confusingly.

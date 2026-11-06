@@ -96,9 +96,12 @@ test.describe('under a fine pointer', () => {
   test('?view=shelf below the fork draws the grid and the address is cleared by replacement; at the fork it stands', async ({ page }) => {
     await page.setViewportSize({ width: FORK - 1, height: 900 });
     await page.goto('/want-list');
-    /* The page is not asked for again to correct its own address: what is drawn is already right. Fails against a replacement through the router, which fetches / a second time; that fetch is what a stalled server held past this test's wait once in thirteen runs (12 Oct). */
+    /*
+      The page is not asked for again to correct its own address: what is drawn is already right. Fails against a replacement through the router, which fetches / a second time; that fetch is what a stalled server held past this test's wait once in thirteen runs (12 Oct).
+      A request carrying `Next-Router-Prefetch: 1` is not that fetch: a production `<Link>` prefetches what is in the viewport, the header's nav links included, and `next dev` never prefetches, so under a build this counted three prefetches of / as the collection fetched again (Q39, 5 Nov, the trace). The header is the discriminator the URL is not. What the filter throws away, three unmeasured collection requests on every production navigation, is Q41's, not this test's.
+    */
     const fetched: string[] = [];
-    page.on('request', (request) => { const url = new URL(request.url()); if (url.pathname === '/' && url.searchParams.has('_rsc')) fetched.push(url.search); });
+    page.on('request', (request) => { const url = new URL(request.url()); if (url.pathname === '/' && url.searchParams.has('_rsc') && request.headers()['next-router-prefetch'] !== '1') fetched.push(url.search); });
     await page.goto('/?view=shelf');
     const entries = await page.evaluate(() => history.length);
     await expect(page, 'the view is cleared from the address').toHaveURL('/');

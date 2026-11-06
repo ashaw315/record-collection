@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers';
 import { notFound } from 'next/navigation';
+import { probesOpen } from '@/lib/probes';
 import { AppHeader } from '@/components/AppHeader';
 import { SCREEN_FRAME } from '@/app/screen-frame';
 
@@ -19,7 +20,7 @@ import { SCREEN_FRAME } from '@/app/screen-frame';
 export const dynamic = 'force-dynamic';
 
 export default async function ErrorProbePage() {
-  if (process.env.NODE_ENV === 'production') notFound();
+  if (!probesOpen()) notFound();
   const asked = (await cookies()).get('error-probe')?.value;
   if (asked === 'throw') throw new Error('the error probe, throwing as asked');
   /* `sleep`: the page answers after six seconds, so a request can be in flight while something else happens (`cleanup-in-flight.spec.ts`). */

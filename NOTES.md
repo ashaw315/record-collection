@@ -52834,3 +52834,223 @@ workers' compilation. Nothing in 50a18cc's code touched them. (3) wall-route:213
 passed: parts 1 and 2 and the hydrated mark held at four workers. Recorded because a 13-second failure on
 every job is a dispatch defect and not a result, and the report would otherwise have read
 "FAILED" beside a commit that was never checked out.
+
+## Q39, the gate against a build: what depends on dev, found by running (5 Nov)
+
+**The switch is built and tested, committed held with this entry; until the probe gate below
+is fixed, both gates run against a build and cannot read green, so nothing is dispatched on it:** `E2E_SERVER=build` in
+playwright.config.ts makes the webServer `NODE_ENV=test npm run build && NODE_ENV=test npm run
+start -- --port <port>`, five minutes' timeout, its stdout in the log; gate.yml's Playwright
+step and gate.sh set it; `test/repo/e2e-server.test.ts` reads the config as Playwright loads
+it in a child process (5 tests, 4 watched failing). Every figure below carries its machine
+and worker count; the coordinator's rule, a number without its condition is what put us here.
+
+**The smoke test, local, two workers, both projects one after the other, nothing else on the
+machine, 19:43 to 20:52.** Chromium 948 passed, 111 failed, 1 skipped, 1.0h, NOT OK, every
+failure on both attempts; mobile 390 passed, 4 skipped, 7.1m, OK. The chromium hour is not a
+timing: 111 tests timing out twice is most of it. The mobile half is comparable, same
+machine, same two workers, 390 passed on both sides: **7.1m against the build, 11.4m and 11.7m
+against dev** (the local gates on 24464c1 and 9987a4a). The five four-worker tests are NOT
+read from this run: a two-worker run is a condition under which the defect does not appear,
+the inert-condition shape, so their before-and-after is CI four workers against CI four
+workers, 42115186427 as the dev side, once the switch is pushed.
+
+**The 111 failures are four causes in 20 files, one of them covering 18 of the files.**
+
+1. **The eight probe pages gate on the NODE_ENV literal, and `next build` inlines it as
+   "production" into the server bundles too.** Confirmed, not reasoned: logged in with curl
+   against the running build, `/wall/probe/identity`, `/wall/probe/bands`,
+   `/wall/probe/labelled`, `/error-probe` and `/suggestions/probe` all answered 404 while
+   `/login` and `/` answered 200. The gates: `wall/probe/{bands,sheet,page8a,identity,labelled}`,
+   `wall/overview`, `error-probe`, `suggestions/probe`, each `if (process.env.NODE_ENV ===
+   'production') notFound()`. Every one is reached by at least one spec or capture (the sweep
+   below), so the 109 tests in 18 files are the extent and not only the coverage:
+   paint-order-43, suggestions-140, error-screen-142, ring-144, page8a-marks,
+   colour-distribution, frame-planes, wall-pull, wall-labelled, wall-gesture, wall-cover,
+   record-bands, no-cover-54, identity-cell, covers-164, cleanup-in-flight, build-stamp,
+   about-row-36. The guard is right: the pages must not be reachable on the production deploy,
+   and under a build the literal closes them. The test environment changed under it.
+2. **Predicted, masked by 1, to verify after 1 is fixed:** `error.tsx:36` reads the same literal
+   in the client bundle, where it is inlined whatever the server does; its own comment says
+   "this branch is not in" a production build. error-screen-142:93 and ring-144's global-error
+   case read that branch.
+3. **hold-160:220: the instrument's condition arrived.** `hold-window.ts` names four couplings to
+   Next's client internals and says of the fourth, the stream-close handler found by its
+   function name `DOMContentLoaded`, that "if the handler's name changes, the stream closes at
+   load". A production bundle minifies the name. The failure is the one the comment predicted:
+   `Cannot enqueue a chunk into a readable stream that is closed`.
+4. **shelf-offered-134:96: production prefetch counted as a fetch.** The test watches `/?_rsc=`
+   requests to assert the fallback does not refetch the collection through the router. The
+   trace shows the three it counted all carry `Next-Router-Prefetch: 1`: a production `<Link>`
+   prefetches what is in the viewport, and `next dev` never prefetches. The instrument cannot
+   tell a prefetch from a replacement; the header can.
+
+**Not failures, recorded because a reader of the log will meet them:** `next start` prints
+`⨯ Error: The destination stream closed early` 480 times on chromium and 168 on mobile, where
+mobile had no failure at all; a page navigating away mid-stream, which the dev server does not
+log. The build served from `.next-test` under `NODE_ENV=test`, Compiled in 3.2s, Ready in
+223ms, local; the login cookie set without Secure as measured before.
+
+**The sweep: every read of the literal in src, twelve.** The eight gates above; `error.tsx:36`;
+`session.ts:78`, a fallback the login and logout routes bypass by passing `getEnv().NODE_ENV`,
+which is why the cookie came out right; `routes.ts:74`, dead, its `DEV_ONLY_PUBLIC_PATHS` set
+is empty; `no-live-calls.ts:73`, a belt inlined to false under a build while its braces hold
+(`VITEST`, `TEST_DATABASE_URL` set at all, the local database). No gated path without a test.
+
+**Two family members.** (a) **One path's success taken as evidence for a sibling that reads
+the same fact a different way.** On 5 Nov the login route was measured under the build, its
+cookie without Secure, and the probe pages were recorded as reachable without being fetched.
+The route reads the parsed env object, which the build cannot inline; the pages read the
+literal, which it does. Same fact, two readers, one measured. (b) **A lapsed deferral: a
+condition written beside the code and never watched.** hold-window.ts wrote on 29 Oct what a
+minified bundle would do to its fourth coupling, and nothing was set to look for it; the
+condition arrived with the first build-served run. Beside Q10's deferral in QUEUE.md, which
+the coordinator held open for the same reason.
+
+**The build's cost on CI, stated right.** The unit job's build step took 29s and 31s
+(42108198297 and 42115186427, ubuntu-latest, warm npm cache). Chromium and mobile are separate
+jobs on separate runners, and the build is inside each job's webServer command, so **each e2e
+job builds once: two builds per run, about a minute of runner time, about 30s on each job's
+wall clock** since the jobs run in parallel. The unit job's build is a third, and cannot be
+shared: it builds without `NODE_ENV=test` into `.next` for type-scale.test.ts. Against that:
+record-band-43:33 alone is 5.1 to 6.3 minutes per four-worker CI run (the table), and
+record-navigation:295 is 51 to 62 seconds against 11 to 17 at one worker.
+
+**Proposed fix shape, for the coordinator's ruling, not built (the coordinator, 5 Nov: the
+fix must not be "read the runtime env").** The pages open only when `E2E_PROBES=1` is set,
+a variable nothing on Vercel sets, AND the parsed env's `NODE_ENV` is not production, which
+Vercel always sets: two independent conditions, closed by default, a single mistake cannot
+open them. One server-only helper holds the pair; the eight pages call it; the root layout
+writes a data attribute from the same helper so `error.tsx`'s client branch can read it with
+its cookie instead of the inlined literal; the config, gate.yml and gate.sh set `E2E_PROBES=1`
+beside `E2E_SERVER=build`. Verified by curl against the production URL after the deploy, all
+nine paths, status codes reported. shelf-offered-134's instrument ignores requests carrying
+`Next-Router-Prefetch`, a test change needing agreement. hold-window.ts's fourth coupling
+found by the event name instead of the function name: `DOMContentLoaded` is a string
+Next passes to `addEventListener`, which a minifier does not touch, where the handler's
+name was. About 19 files in four decisions, so four units, not one: the switch (built, 5
+files); the probe gate, one decision across 13 files, mechanical fan-out; the prefetch
+filter, one file; the hold instrument, one file.
+
+## Q39 unit one: the suite honest against either server (5 Nov)
+
+**The rulings applied (the coordinator, 5 Nov).** Two units, not four: the three fixes are one
+purpose and two of them cannot be verified until the switch lands. Unit one, this entry, is
+pushed first and gated under dev, so a green there says nothing broke; unit two is the switch,
+and its four-worker CI run is the measurement. The 13-file fan-out was yes. `E2E_PROBES` is set
+in this commit and not the switch's, or the pages close under dev the moment this lands. The
+no-live-calls belt is fixed here. Both test changes approved. The hold question asked once more.
+The production curl extended to the html tag. The stream counts re-read after this unit. The
+suite total read from the runner, never stated.
+
+**Sequencing, done by re-applying and not by reverting.** The switch commit c6ff360 was ahead of
+this work on main and had to come after it. It is kept whole as branch `q39-switch`; main was
+reset to 191b141, its NOTES and QUEUE text carried forward into this commit, and the switch's
+five files are re-applied on top of this push as unit two, through commit-checked, with the
+same message. Nothing built was undone; one commit object becomes another.
+
+**The probe gate: one decision across the files below, so it can be read and not trusted.** The
+helper `src/lib/probes.ts`, `probesOpen()`: `E2E_PROBES === '1'`, read first and alone, then
+`getEnv().NODE_ENV !== 'production'`. The eight pages, each `if (!probesOpen()) notFound()`
+where the literal was: `wall/probe/{bands,sheet,page8a,identity,labelled}`, `wall/overview`,
+`error-probe`, `suggestions/probe`. `app/layout.tsx` writes `data-e2e-probes="1"` on `<html>`
+from the same call. `app/error.tsx` reads that attribute with its cookie (below). The variable
+is set in `playwright.config.ts`'s `webServer.env` and nowhere else: Playwright merges it over
+its own process env for the server it starts (playwright/lib/runner, `...process.env,
+...this._options.env`), so every run through the config carries it, the capture project and
+both gates included, and the two gate scripts need nothing; a deploy never sees the config.
+Tests, written first and watched failing: `src/lib/probes.test.ts` (5: closed with nothing
+set; closed on production with the variable; open on exactly "1" off production; "true", "0",
+"" closed; the env never parsed while the variable is unset, since `/_not-found` is rendered at
+build time and the unit job builds with no database); `test/repo/e2e-server.test.ts` (the
+config's webServer env, read from the config as Playwright loads it); and the sweep as a watch,
+`test/repo/node-env-literal.test.ts`, which failed first on twelve files and passes on two.
+
+**The sweep decided, as asked.** `no-live-calls.ts:73` reads `getEnv().NODE_ENV`, one line; its
+test file gains a mock of `@/env` whose `getEnv` reads each test's stub, since the real one
+parses once and caches, setup only, no assertion changed. `session.ts:78`, the fallback: harmless
+as it stands and left. No caller in src reaches it (login and logout pass `getEnv().NODE_ENV`);
+under a build it would answer "production", which sets Secure on a cookie over http and fails
+the login tests loudly, the safe direction; on Vercel it is right. `routes.ts:74`, the dead
+dev-only branch: harmless as it stands and left; `DEV_ONLY_PUBLIC_PATHS` is empty, so the branch
+is unreachable under every server and the inlined value changes nothing. Both are tolerated by
+name in the watch with those reasons written beside them, and a third needs the same sentence.
+
+**The hold question, asked once more: yes, without reaching into Next at all.** The repo already
+had the instrument: `e2e/document-tail.ts`, a proxy that holds back the document and reads
+nothing of Next's, used by hold-160's loading-state tests. hold-160:220's state is every payload
+chunk read and Next's stream close not fired; Next closes on DOMContentLoaded, which waits on the
+document's end. So the proxy gained a second place to hold, `end`: after the last `</body>`,
+known only when the upstream ends, so that mode buffers and splits there. The test navigates
+through it, asserts by name that the end is held and the document still loading, then that the
+wall hydrates, then that both still hold. `holdHydration`, `deliverPayload`, `releaseHydration`
+and the chunk count came out of `hold-window.ts`; `holdScheduler` stays for the one test that
+needs it, with `inTheWindow` trimmed to the hydrated mark. The measurements the removed
+instrument made stay where they were written (28 to 30 Oct above). Watched failing first with the
+mode unimplemented: the proxy held at the payload and the wall could not hydrate. Then, local,
+two workers: dev 11 passed in 38.3s with the new test at 3.3s; against the build, below, 1.3s.
+The first dev run had two of the :145 cancel tests time out at 30s waiting for hydration after
+release, on a cold dev server whose first two tests took 9.7s and 10.5s against 5.4s and 6.1s
+on the second run; the dev server's first response, the class the switch is for.
+
+**The lapsed-deferral member, and its general fix (the coordinator, 5 Nov): a comment is a
+note, a test is a watch.** The 29 Oct comment in hold-window.ts was correct and was not
+watched. Applied twice here: the sweep that found the twelve literal reads is now a test that
+refuses the thirteenth by name, and the hold's coupling was not re-written with a better comment
+but removed, with the proxy's own precondition asserted in the test that depends on it
+(`holding()` true, `readyState` loading), so a Next upgrade that moves the split fails by name
+before any hold assertion runs. The same shape as Q10's deferral in QUEUE.md, held open on
+purpose; the difference is that these two now have something looking.
+
+**shelf-offered-134:96: the filter, and what it throws away measured.** The instrument ignores a
+request carrying `Next-Router-Prefetch: 1`. Before, under the build, it counted three prefetches
+of `/` as the collection fetched again (the smoke test's trace); after, 2.8s green against the
+build. Measured 5 Nov against the local build, test database, 17 records, chromium at 1440: a
+production prefetch of `/` is a 211-byte shell (160 encoded; a full RSC fetch of `/` by hand
+from the same page is 90,874 bytes); a landing on /want-list makes 11 prefetches, 8,960 bytes on
+the wire, 10,417 decoded, 13 to 30ms each. The collection's rows are not in a prefetch, so this
+is not the hidden-grid class. Q41 holds the figures; nothing to fix.
+
+**error.tsx's client branch: the shape that holds under both servers took three measurements.**
+(1) Reading the attribute and cookie at render, as proposed: under the build the global-error
+case failed on both pointer variants and both attempts (the 20-file run below), the screen
+committed with React's fibers attached, `dataset.e2eProbes` "1" and both cookies present, no
+`[data-global-error]`; the same throw from a later render (TRY AGAIN, a throwaway probe) reached
+global-error. (2) Throwing from an effect after mount instead: the build fine, the dev server
+looping, "Maximum update depth exceeded" 81 times and 4,237 logs of the probe's error in one
+test: the boundary above catches a throw from a later render, remounts the screen, and its
+effect throws again. (3) Why (1) failed: both servers answer the probe's failure with the bare
+`<html id="__next_error__">` shell (8,680 bytes build, 12,322 dev; neither renders the screen
+into the HTML), so in the screen's first render the layout's attribute is not yet on the
+document; React commits it with the root. The shape kept: throw in the render where the gate
+reads true, and from the effect where it did not; the boundary then remounts the screen and
+that fresh first render throws in the same pass as the capture, which passes the boundary.
+dev 15 passed in 2.3m, build 15 passed in 2.1m (error-screen-142 and ring-144, chromium, local,
+two workers; the first throw was a setState, which the react-hooks lint refuses in an effect,
+so it is the error itself thrown from the effect, the same boundary either way, measured again
+both sides). The month of green on the literal shape was dev's first-render path and said
+nothing about a build, as the inlining member says.
+
+**Step level, all local, two workers.** typecheck 0, lint 0 (four warnings: three pre-existing
+in check-index.mjs and Section.tsx, one in the temporary build config deleted before the
+commit), build 0. Against a build through a temporary config (the switch is unit two): the
+eighteen probe-gated files plus shelf-offered-134 and hold-160 on chromium, 146 passed, 2
+failed, 5.1m, the two being error-screen-142:93's global-error case before measurement (3)
+above; then error-screen-142 and ring-144 against the build, 15 passed, 2.1m. Under dev:
+hold-160 11 passed, error-screen-142 and ring-144 15 passed. The build inside the run: Compiled
+in 3.0s and 2.6s, Ready in 225ms. Curl against the local build, logged in: with the variable
+set, all nine paths 200 and `/login`'s html tag carries `data-e2e-probes="1"`; restarted without
+it, the eight probe paths and the error probe 404, `/login` and `/` 200, and `/`'s tag carries
+no attribute. `/login` is static (○ in the build), so its tag is the BUILD's answer, not the
+runtime's: built with the variable it kept "1" after the restart without it. On Vercel the build
+has no `E2E_PROBES` and `NODE_ENV` is production at build time, so both conditions close it there
+too; the curl after the deploy, below, is what says so.
+
+**The stream noise, re-read.** `The destination stream closed early`: 47 lines in the 146-test
+build run with 2 failures, 6 and 11 in the two 15-test build runs with none, 0 in a browser session that made
+25 prefetches, 0 in curl-only sessions. So it is not prefetching and not a failure's symptom;
+about one line per three tests of a passing build-served run, a page navigating away
+mid-stream. The full chromium count on a clean run is read from unit two's CI log.
+
+**The suite total.** Read from commit-checked's own summary line on each commit and written
+beside the commit, never derived here and never recalled.

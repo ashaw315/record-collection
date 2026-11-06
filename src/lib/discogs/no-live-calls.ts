@@ -1,3 +1,4 @@
+import { getEnv } from '@/env';
 import { resolveConnectionHost } from '@/lib/db/connection-string';
 import { DiscogsError } from './client';
 
@@ -39,6 +40,12 @@ const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '::1']);
  * no database at all, so neither database signal is present and they are the
  * only ones left.
  *
+ * `NODE_ENV` is read through the parsed env and not the literal (Q39, 5 Nov):
+ * `next build` inlines `process.env.NODE_ENV` as "production" whatever
+ * `next start` runs under, so against a build the belt below read false and
+ * three conditions had quietly become two. `getEnv()` reads the runtime
+ * value, as the login route's cookie does.
+ *
  * **Broad refusal is the safe direction.** A false positive is a loud error in
  * development; a false negative is a live call that succeeds silently, which is
  * what happened twice.
@@ -70,7 +77,7 @@ export function isTestContext(): boolean {
   if (process.env.VERCEL === '1') return false;
 
   if (process.env.VITEST === 'true') return true;
-  if (process.env.NODE_ENV === 'test') return true;
+  if (getEnv().NODE_ENV === 'test') return true;
 
   // Set at all means the local Docker database is in play — nothing else ever
   // sets it, and `resolveDriver` refuses a non-local value.

@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import { probesOpen } from '@/lib/probes';
 import { AppHeader } from '@/components/AppHeader';
 import { SCREEN_FRAME } from '@/app/screen-frame';
 import { GapAnalysis } from '../GapAnalysis';
@@ -22,7 +23,7 @@ import { GapAnalysis } from '../GapAnalysis';
 export const dynamic = 'force-dynamic';
 
 export default function AskPanelProbePage() {
-  if (process.env.NODE_ENV === 'production') notFound();
+  if (!probesOpen()) notFound();
 
   return (
     <>

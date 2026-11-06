@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist, trackRecord } from './cleanup';
 import { holdDocumentTail, type DocumentTail } from './document-tail';
-import { deliverPayload, holdHydration, holdScheduler, inTheWindow, releaseScheduler } from './hold-window';
+import { holdScheduler, inTheWindow, releaseScheduler } from './hold-window';
 import { login } from './sign-in';
 import { HOLD_BOUND_MS } from '@/app/wall/hold-script';
 
@@ -73,15 +73,18 @@ async function seed(page: Page, count: number): Promise<{ artistId: string; ids:
 const tails: DocumentTail[] = [];
 test.afterEach(async () => { for (const t of tails.splice(0)) await t.close(); });
 
-/** State: still loading. The wall's markup and the hold script read, the rest of the document held by the proxy. */
-async function openLoading(page: Page, artistId: string): Promise<DocumentTail> {
+/**
+ * State: still loading. At `payload`, the wall's markup and the hold script read and the rest of the
+ * document held by the proxy; at `end`, every payload chunk read and only the document's end held.
+ */
+async function openLoading(page: Page, artistId: string, at: 'payload' | 'end' = 'payload'): Promise<DocumentTail> {
   const base = test.info().project.use.baseURL;
   if (base === undefined) throw new Error('the hold spec needs the project baseURL');
-  const tail = await holdDocumentTail(base);
+  const tail = await holdDocumentTail(base, at);
   tails.push(tail);
   await page.goto(`${tail.origin}/?artistId=${artistId}`, { waitUntil: 'commit' });
   await expect(page.locator('[data-wall="labelled"]')).toBeVisible({ timeout: 30_000 });
-  expect(tail.holding(), 'the proxy found the split after the wall and is holding the tail (document-tail.ts)').toBe(true);
+  expect(tail.holding(), `the proxy found the split (${at}) and is holding the tail (document-tail.ts)`).toBe(true);
   expect(await page.evaluate(() => document.readyState), 'the page is still loading').toBe('loading');
   return tail;
 }
@@ -210,23 +213,25 @@ test('Enter on an unhydrated wall whose page has loaded is not held, and React p
 });
 
 /*
-  State: parsed, Next's stream close held (holdHydration, then deliverPayload). The condition's premise
-  (29 Oct): "still loading" ends when the parser has read the last payload chunk,
-  and Next closes its stream later, 50 to 600ms on the dev server. A press in that gap is not held, so
-  the wall must be able to hydrate without the close. With the chunks fed to Next and its close held,
-  the wall hydrates. Fails if Next ever requires the close before hydrating, which would leave that gap's
-  presses dropped; the instrument is `holdHydration`, coupled to Next's internals as its file says.
+  State: every payload chunk read, Next's stream close held. The condition's premise (29 Oct): "still
+  loading" ends when the parser has read the last payload chunk, and Next closes its stream later, 50 to
+  600ms on the dev server. A press in that gap is not held, so the wall must be able to hydrate without
+  the close. Staged by the proxy holding the document's END, after the last chunk and before `</body>`:
+  the parser has read every chunk, and Next's close waits on DOMContentLoaded, which waits on the end.
+  Nothing of Next's is reached (the coordinator, 5 Nov, asked whether the claim could be made without
+  its internals: it can). Until then the instrument was `holdHydration`, which found Next's close
+  handler by a function name a production bundle minifies, and the first build-served run failed it
+  as its own comment of 29 Oct foretold. Fails if Next ever requires the close before hydrating, which
+  would leave that gap's presses dropped.
 */
 test('with the payload delivered and Next’s stream close held, the wall hydrates', async ({ page }) => {
   await login(page);
   const { artistId } = await seed(page, 12);
-  await holdHydration(page);
-  await page.goto(`/?artistId=${artistId}`);
-  await expect(page.locator('[data-wall="labelled"]')).toBeVisible({ timeout: 30_000 });
-  await expect.poll(async () => (await inTheWindow(page)).posted, { timeout: 30_000 }).toBeGreaterThan(0);
-  expect((await inTheWindow(page)).hydrated, 'not hydrated while the payload is held').toBe(false);
-  await deliverPayload(page);
-  await expect(region(page)).toHaveAttribute('data-hydrated', 'true', { timeout: 5000 });
+  const tail = await openLoading(page, artistId, 'end');
+  await expect(region(page), 'the wall hydrates with the document still open and Next’s close not fired').toHaveAttribute('data-hydrated', 'true', { timeout: 5000 });
+  expect(await page.evaluate(() => document.readyState), 'hydrated with the close still held').toBe('loading');
+  expect(tail.holding(), 'the end is still held after hydration').toBe(true);
+  tail.release();
 });
 
 /*

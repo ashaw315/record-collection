@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import { AppHeader } from '@/components/AppHeader';
 import { ErrorBody } from './ErrorBody';
 import { SCREEN_FRAME } from './screen-frame';
@@ -30,10 +31,28 @@ export default function ErrorScreen({ error, retry }: { error: Error & { digest?
     component that throws reaches the boundary above it, and above this one
     is the bare fallback. Next draws that file in development since 15.2, so
     a test and a capture can read the real file rather than a stand-in. Only
-    while the probe's second cookie says so, and not in a production build:
-    NODE_ENV is inlined into the client bundle, so this branch is not in it.
+    while the probe's second cookie says so, and only while the probe pages
+    are open: the root layout writes `data-e2e-probes` on the document from
+    the same gate the pages use (src/lib/probes.ts), which is never a deploy.
+    This read the NODE_ENV literal until 5 Nov; a build inlines that into the
+    client bundle whatever the server runs under, so the branch was gone from
+    every build-served run (Q39).
+
+    Thrown in the render where the gate is readable, and from the effect
+    after commit where it was not. Measured 5 Nov, both servers: a throw in the screen's
+    first render passes the boundary above in the same pass and reaches
+    global-error.tsx; a throw from a later render is caught by that boundary,
+    which remounts this screen, whose effect throws again, without end (the
+    dev server, "Maximum update depth exceeded"). Under a build the 500
+    document's html carries no layout attribute until React commits the root
+    from the payload, so the first render reads no gate and commits; the
+    effect then throws, the boundary remounts the screen, and that fresh
+    first render throws in-pass. Neither server renders this screen
+    into the HTML.
   */
-  if (process.env.NODE_ENV !== 'production' && typeof document !== 'undefined' && document.cookie.split('; ').includes('error-probe-global=1')) throw error;
+  const asked = () => typeof document !== 'undefined' && document.documentElement.dataset.e2eProbes === '1' && document.cookie.split('; ').includes('error-probe-global=1');
+  useEffect(() => { if (asked()) throw error; }, [error]);
+  if (asked()) throw error;
   return (
     <>
       <AppHeader />

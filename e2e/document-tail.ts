@@ -14,12 +14,19 @@ import type { Duplex } from 'node:stream';
  * production build with cached scripts this measured 0 to 15ms wide (NOTES,
  * 29 Oct 16:40); here it is held open for as long as a test asks.
  *
- * Unlike `holdHydration` in `hold-window.ts`, nothing here reaches into
- * Next: every request passes through unchanged except the wall's document,
- * which is streamed up to the first payload chunk after the wall's container
- * and held there until `release()`. If a Next upgrade moves the payload
- * ahead of the markup, the split is not found and the document passes whole,
- * so `stillLoading` reads false and a test's precondition fails by name.
+ * Nothing here reaches into Next: every request passes through unchanged
+ * except the wall's document, which is held at one of two places until
+ * `release()`. At `payload` it is streamed up to the first payload chunk
+ * after the wall's container and held there: the markup read, no chunk
+ * arrived. At `end` it is held after the last `</body>`: every chunk read
+ * and the document still loading, so Next's stream close, which waits on
+ * DOMContentLoaded, has not fired (hold-160's premise test; until 5 Nov that
+ * state was staged by `holdHydration`, which found Next's close handler by a
+ * function name a production bundle minifies, and the first build-served run
+ * failed it as its comment foretold). If a Next upgrade moves the payload
+ * ahead of the markup, or the document loses its `</body>`, the split is not
+ * found and the document passes whole, so `holding()` reads false and a
+ * test's precondition fails by name.
  */
 export type DocumentTail = {
   /** The proxy's origin; navigate here instead of the dev server. */
@@ -34,7 +41,12 @@ export type DocumentTail = {
 const SPLIT_AFTER = 'data-wall-container';
 const SPLIT_AT = '<script>self.__next_f.push(';
 
-export async function holdDocumentTail(upstream: string): Promise<DocumentTail> {
+/** Where the document is held: `payload`, at the first chunk after the wall; `end`, after the last chunk, before `</body>`. */
+export type HoldAt = 'payload' | 'end';
+
+const SPLIT_END = '</body>';
+
+export async function holdDocumentTail(upstream: string, at: HoldAt = 'payload'): Promise<DocumentTail> {
   const target = new URL(upstream);
   let releaseHeld: (() => void) | null = null;
   let released = false;
@@ -64,6 +76,8 @@ export async function holdDocumentTail(upstream: string): Promise<DocumentTail> 
       up.setEncoding('utf8');
       up.on('data', (chunk: string) => {
         text += chunk;
+        /* The end is known only at the end: buffered whole, split there. */
+        if (at === 'end') return;
         if (split === -1) {
           const wall = text.indexOf(SPLIT_AFTER);
           const at = wall === -1 ? -1 : text.indexOf(SPLIT_AT, wall);
@@ -79,6 +93,15 @@ export async function holdDocumentTail(upstream: string): Promise<DocumentTail> 
       });
       up.on('end', () => {
         ended = true;
+        if (at === 'end') {
+          const end = text.lastIndexOf(SPLIT_END);
+          if (end === -1 || released) { res.end(text.slice(sent)); return; }
+          split = end;
+          res.write(text.slice(sent, split));
+          sent = split;
+          releaseHeld = () => { releaseHeld = null; flushTail(); };
+          return;
+        }
         if (split === -1) { res.end(text.slice(sent)); return; }
         if (releaseHeld === null) flushTail();
       });

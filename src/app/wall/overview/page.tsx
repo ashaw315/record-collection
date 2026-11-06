@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import { probesOpen } from '@/lib/probes';
 import { WallOverview } from '../WallOverview';
 import { ROW_PITCH, SPINE_HEIGHT } from '../geometry';
 import type { ShelfSeat } from '../shelf-runs';
@@ -48,7 +49,7 @@ function synthesise(count: number): ShelfSeat[] {
 }
 
 export default function WallOverviewPage() {
-  if (process.env.NODE_ENV === 'production') notFound();
+  if (!probesOpen()) notFound();
 
   return (
     <main style={{ padding: 24, fontFamily: 'Geist, sans-serif', background: '#f9f7f4' }}>

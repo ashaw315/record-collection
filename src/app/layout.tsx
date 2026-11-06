@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Inter_Tight } from 'next/font/google';
 import localFont from 'next/font/local';
 import { TooltipProvider } from '@/components/ui/tooltip';
+import { probesOpen } from '@/lib/probes';
 import './globals.css';
 
 /**
@@ -45,8 +46,14 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: LayoutProps<'/'>) {
+  /*
+    `data-e2e-probes` is written only while the probe pages are open (src/lib/probes.ts: a test
+    harness, never a deploy), so `error.tsx`, a client component, can read the gate from the document
+    instead of from `process.env.NODE_ENV`, which a build inlines into its bundle (Q39, 5 Nov). Absent
+    on production: checked by curl after the deploy, the bytes in NOTES.
+  */
   return (
-    <html lang="en" className={`${sans.variable} ${mono.variable} h-full antialiased`}>
+    <html lang="en" className={`${sans.variable} ${mono.variable} h-full antialiased`} data-e2e-probes={probesOpen() ? '1' : undefined}>
       <body className="flex min-h-full flex-col bg-background text-foreground">
         <TooltipProvider>{children}</TooltipProvider>
       </body>

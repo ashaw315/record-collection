@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import { probesOpen } from '@/lib/probes';
 import { IdentityCell } from '@/app/records/[id]/IdentityCell';
 import { BANDS } from '@/app/records/[id]/band-geometry';
 import { WORST } from '@/app/records/[id]/identity-extremes';
@@ -34,7 +35,7 @@ const CASES = [
 ] as const;
 
 export default function IdentityProbePage() {
-  if (process.env.NODE_ENV === 'production') notFound();
+  if (!probesOpen()) notFound();
 
   return (
     <div className="flex gap-[20px] p-[20px]">

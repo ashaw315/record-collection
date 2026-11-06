@@ -1,6 +1,7 @@
 import { execFileSync } from 'node:child_process';
 import { basename } from 'node:path';
 import { notFound } from 'next/navigation';
+import { probesOpen } from '@/lib/probes';
 import { WallComposition } from '../../WallComposition';
 import { COLLECTION_SPINES } from '../../../../../test/fixtures/collection-spines';
 import { collectionSeats, collectionSummaries } from '../collection-seats';
@@ -38,7 +39,7 @@ export default async function WallLabelledProbePage({
 }: {
   searchParams: Promise<{ cover?: string; count?: string }>;
 }) {
-  if (process.env.NODE_ENV === 'production') notFound();
+  if (!probesOpen()) notFound();
   const { cover, count } = await searchParams;
   const seats = collectionSeats(cover ?? null, Number(count) > 0 ? Number(count) : COLLECTION_SPINES.length);
 
