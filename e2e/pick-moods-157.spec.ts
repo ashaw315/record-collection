@@ -1,8 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
 import { sql } from 'drizzle-orm';
-import { bracketed } from './bracket';
 import { registerCleanup, trackArtist } from './cleanup';
 import { removeRecordsFor, seedRecords } from './seed';
+import { readSeventeen } from './seventeen';
 import { login } from './sign-in';
 import { wallMeasured } from './wall-measured';
 import { getTestDb } from '../test/helpers/db';
@@ -153,63 +153,38 @@ test('an inert mood cannot be selected and leaves ASK inert, and it is still a T
 });
 
 /*
-  The two reads the next test compares are of a count every other worker can
-  move, up (a record created untagged) and down (a record tagged, ring-144
-  and this file; an untagged record deleted, every cleanup). Between them on
-  CI at four workers another worker's record landed, "23" then "24", twice
-  (42053953453, 42059632838): §P.6's claim held and the reading was of two
-  collections. So the reads are bracketed (`bracket.ts`): taken between two
-  of Postgres's own snapshots and counted only when the snapshots agree,
-  which means no committed state changed across both loads; otherwise read
-  again, eight times at most, then failed with every pair of snapshots
-  named. The claim is unchanged; what changed is that the comparison is now
-  made of one collection.
+  One page load, under the filter, and only what that page can show (Q40, the coordinator, 5 Nov):
+  the untagged line is drawn and its count is the collection's, not the filter's. Until 6 Nov this
+  compared two loads, the whole collection on load and the filtered one, through a bracket of
+  Postgres snapshots that counted only when no other worker had written between them; at four
+  workers there is no quiet window of two page loads (run 42115186427: eight attempts, xmax
+  advancing 4 to 16 per window), so the bracket could not close, and its tests came out with it
+  (NOTES, 6 Nov, keeps the measurement). The equality itself, that the count is of the whole
+  collection whatever the filter, is held where no concurrent writer exists:
+  test/integration/mood-pool.test.ts, `untaggedCount` "counts the records with no row, over the
+  whole collection".
+
+  The threshold is DERIVED from the fixture and not stated. The pool under this filter is SETS,
+  every record tagged, so a count of the filter alone could reach at most the pool's untagged
+  records, `poolUntagged`; the collection holds the seventeen of docs/captures/real-records.json,
+  seeded untagged once per run (seventeen.ts), so the collection's count is at least
+  `collectionAtLeast`. The two readings are told apart only while the first is below the second,
+  and the test says so loudly before reading anything, so a fixture that grows a tagged pool past
+  the seventeen fails by name rather than passing on the wrong reading.
 */
-const snapshot = async () =>
-  String(((await getTestDb().execute(sql`SELECT pg_current_snapshot()::text AS s`)) as unknown as { rows: Array<{ s: string }> }).rows[0].s);
-async function countsAcrossFilter(page: Page, artistId: string, between: () => Promise<void> = async () => {}) {
-  await page.setViewportSize({ width: 1440, height: 900 });
-  await page.goto('/?view=grid');
-  await page.locator('[data-collection-filters][data-hydrated="true"]').first().waitFor({ timeout: 30_000 });
-  const whole = (await line(page).textContent()) ?? '';
-  await between();
-  await openGrid(page, artistId);
-  const filtered = (await line(page).textContent()) ?? '';
-  return { whole, filtered };
-}
-
-test('the untagged line counts the whole collection on load, and a filter does not change it', async ({ page }) => {
-  const { artistId } = await fixture(page);
-  try {
-    const { value: { whole, filtered }, attempts } = await bracketed(snapshot, () => countsAcrossFilter(page, artistId), { attempts: 8 });
-    expect(whole, `the seventeen are untagged, so the line is drawn (bracket closed on attempt ${attempts})`).toMatch(/^\d+ not tagged yet\.$/);
-    const n = Number(/^(\d+)/.exec(whole)?.[1]);
-    expect(n).toBeGreaterThanOrEqual(17);
-    expect(filtered, 'every record in this filter is tagged, and the line still counts the collection').toBe(whole);
-  } finally {
-    await removeRecordsFor(artistId);
+test('under a filter whose pool is all tagged, the untagged line is drawn and counts the collection, not the filter', async ({ page }) => {
+  const poolUntagged = Object.values(SETS).filter((moods) => moods.length === 0).length;
+  const collectionAtLeast = readSeventeen().length;
+  if (poolUntagged >= collectionAtLeast) {
+    throw new Error(`the fixture no longer distinguishes the two readings: a count of the filter alone could reach ${poolUntagged} and the collection's floor is ${collectionAtLeast}; a filtered count could satisfy the threshold`);
   }
-});
-
-/* Fails against a bracket that compares across a write: the write is this test's own, between the two reads, once. */
-test('a write between the two reads reopens the bracket rather than being compared', async ({ page }) => {
   const { artistId } = await fixture(page);
-  let written = false;
   try {
-    const result = await bracketed(
-      snapshot,
-      () =>
-        countsAcrossFilter(page, artistId, async () => {
-          if (written) return;
-          written = true;
-          /* One untagged record of this artist: the whole count moves by one, the flake's own shape, and this artist's cleanup removes it. */
-          await seedRecords(artistId, 'Mood X', `x${Date.now().toString(36)}`, 1);
-        }),
-      { attempts: 8 },
-    );
-    expect(result.reopened.length, `the write reopened the bracket: ${result.reopened.join(', ')}`).toBeGreaterThanOrEqual(1);
-    expect(result.attempts).toBeGreaterThanOrEqual(2);
-    expect(result.value.filtered, 'and the reads that counted were of one collection').toBe(result.value.whole);
+    await openGrid(page, artistId);
+    const filtered = (await line(page).textContent()) ?? '';
+    expect(filtered, 'the line is drawn under the filter').toMatch(/^\d+ not tagged yet\.$/);
+    const n = Number(/^(\d+)/.exec(filtered)?.[1]);
+    expect(n, `the count is the collection's (at least the seventeen, ${collectionAtLeast}), not the filter's (at most ${poolUntagged})`).toBeGreaterThanOrEqual(collectionAtLeast);
   } finally {
     await removeRecordsFor(artistId);
   }

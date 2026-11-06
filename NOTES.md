@@ -53304,3 +53304,30 @@ committed. The guard did what it is for; the chain's shell was stopped before it
 push of the two held NOTES commits alone and a gate on them would have been a wasted CI run. The
 rule, which §9 already states for runs and holds for commits: while a check runs, the tree is the
 check's, and nothing edits it.
+
+## Q40: the untagged line asserts what the page can show, the bracket out (6 Nov)
+
+**The ruling (the coordinator, 5 Nov) applied.** pick-moods-157's whole-collection test is one
+page load under the artist filter, asserting the untagged line is drawn and counts the
+collection, not the filter. **The threshold is derived from the fixture, not stated:** the pool's
+untagged count from SETS (every record tagged, so 0) and the collection's floor from the
+seventeen capture (`readSeventeen().length`, 17, seeded untagged once per run); the test refuses
+before reading anything if the first reaches the second, "the fixture no longer distinguishes
+the two readings: a count of the filter alone could reach N and the collection's floor is M; a
+filtered count could satisfy the threshold". Watched refusing by mutation (the floor read as 0,
+the message above with 0 and 0), then restored: the file 12 passed under dev in 34.8s and 12
+passed against the build in 32.3s, local, two workers; typecheck 0, lint 0. The equality itself,
+that the count is of the whole collection whatever the filter, stays at the query layer with no
+concurrent writer: test/integration/mood-pool.test.ts, `untaggedCount` "counts the records with
+no row, over the whole collection".
+
+**Removed, not kept inert:** the second bracket test ("a write between the two reads reopens
+the bracket"), `e2e/bracket.ts` and its four unit tests in `test/e2e-helpers/bracket.test.ts`.
+Nothing else used them.
+
+**The bracket's finding stays as a measurement (above, 5 Nov, "What the four say"):** at four
+workers on CI there is no quiet window of two page loads; on run 42115186427 the bracket did not
+close in eight attempts and the snapshots' xmax advanced by 11, 10, 14, 4, 7, 11, 16 and 13
+across the windows, a write transaction every 200 to 700ms from four workers for the 24 seconds
+the attempts took. The mechanism refused to compare two collections and said why; the test that
+needed a quiet window could not have one, and now needs none.
