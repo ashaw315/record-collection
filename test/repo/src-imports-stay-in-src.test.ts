@@ -113,8 +113,14 @@ describe('a source file’s imports stay inside src, or the file itself stays ou
       const pages = walk(full).filter((f) => /\/page\.tsx$/.test(f));
       expect(pages.length, `${dir} has pages`).toBeGreaterThan(0);
       for (const page of pages) {
-        /* The gate is `probesOpen()` (src/lib/probes.ts, Q39, 5 Nov): closed unless a test harness set E2E_PROBES=1 AND the parsed env is not production. It was the NODE_ENV literal until a build inlined that as production and closed every probe under the suite; this line followed the gate's text, since the text is all this layer can read. */
-        expect(readFileSync(page, 'utf8'), `${relative(REPO_ROOT, page)} 404s in production`).toMatch(/if \(!probesOpen\(\)\) notFound\(\)/);
+        /*
+          A PROXY, and named as one: the claim is "this page answers 404 on the production deployment", and that
+          check cannot run here (it needs the deployment and a session; Adam made it on 6 Nov, NOTES). What this
+          layer can read is the page's text, so it asserts the gate's call, `probesOpen()` (src/lib/probes.ts,
+          Q39): closed unless a test harness set E2E_PROBES=1 AND the parsed env is not production. It was the
+          NODE_ENV literal until a build inlined that as production and closed every probe under the suite.
+        */
+        expect(readFileSync(page, 'utf8'), `${relative(REPO_ROOT, page)} calls the gate whose closed answer is production's 404`).toMatch(/if \(!probesOpen\(\)\) notFound\(\)/);
       }
     }
   });

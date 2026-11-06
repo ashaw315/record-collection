@@ -52744,12 +52744,13 @@ table wins.
 | 42108210395 | b749d61 | 4 | pick-moods-157:154, record-band-43:33, roving-148:83 |
 | 42115186427 | 50a18cc | 4 | record-navigation:295 (failed), hold-160:111, hold-160:123, pick-moods-157:154 (now :181) |
 | 42226410424 | fbec00d | 4 | want-list:739 (m), identity-cell:156, pick-moods-157:195 |
-| 42231886732 | 09044cf | 4 (build) | lineup-146:36 |
+| 42231886732 | 09044cf | 4 (build) | lineup-146:36 (unclassified: exact equality on a measured height, 32.5 then 33.0; not a flake until the re-run and the sweep say so) |
+| 42243942847 | 09044cf | 4 (build) | lineup-146:36 (unclassified, the same values again), pick-moods-157:195, wall-route:162, wall-route:213 |
 
-Derived: appearances 4 + 4 + 3 + 4 + 3 + 1 = **19**; distinct tests **13** (want-list:739,
+Derived: appearances 4 + 4 + 3 + 4 + 3 + 1 + 4 = **23**; distinct tests **15** (want-list:739,
 want-list:849, pick-moods-157:154, wall-arrival-104:120, wall-route:234, record-band-43:33,
 roving-148:83, record-navigation:295, hold-160:111, hold-160:123, identity-cell:156,
-pick-moods-157:195, lineup-146:36). From 42231886732 the gate serves a build (Q39), so a row
+pick-moods-157:195, lineup-146:36, wall-route:162, wall-route:213). From 42231886732 the gate serves a build (Q39), so a row
 says "(build)" in its workers column and dev-served rows are compared with dev-served rows. pick-moods-157:195 is the bracket's own test, "a write between the two
 reads reopens the bracket", not :154 moved; Q40 removes the bracket and its tests together. The "nine" written above
 this table was wrong, recalled rather than read; corrected in the commit that made the table.
@@ -53141,3 +53142,107 @@ navigating away mid-stream, which `next dev` does not log. Read on CI, four work
 
 **Q39 closes here: both gates serve a build, the measurement is in the table above, and the
 switch's row is the first "(build)" row of the runs table.** Q40 and Q20 follow.
+
+**The production gate verified on the real deployment (Adam, 6 Nov).** Logged in on
+record-collection-rust.vercel.app, Adam visited `/wall/overview`: the app's nav rendered, so the
+session was live, and the page was the app's own "Not found.", not the probe. With the
+unauthenticated 307 to `/login` on all nine paths and no `data-e2e-probes` in the login page's
+bytes (above), both conditions are confirmed where they matter: the session boundary in front,
+the gate behind it. Q39's row closes on this, not on the curl.
+
+**The stream noise, stated right (the coordinator, 6 Nov).** 480 on the local two-worker smoke
+run with 111 failures against 255 on the clean build-served CI run: about 225 of the 480 were
+failure-related and **255 is the per-run constant** for chromium (56 for mobile), zero in a real
+browser session, so it is test-shaped noise, a page navigating away mid-stream. A figure to
+watch rather than ignore: if 255 moves on a clean run, something changed.
+
+**lineup-146:36 is UNCLASSIFIED, not a flake (the coordinator, 6 Nov).** The assertion is not a
+tolerance: `expect([counted.height, done.height]).toEqual([first.height, first.height])`, exact
+equality on `getBoundingClientRect().height` of the reserved slot at 1280. Measured values on
+run 42231886732, exact as the browser gave them: first **32.500**, counted **32.500**, done
+**33.000**. The slot grew half a pixel when the result replaced the count. Whether it
+reproduces (run 42243942847 and a local repeat against the build), and the sweep of every
+pixel-measured assertion's margin under the build, below, decide what it is.
+
+**lineup-146:36, measured rather than classified (6 Nov, local, against the build at 1280,
+chromium).** The assertion at :95 is exact equality on the reserved slot's
+`getBoundingClientRect().height`: first word, count, result. On run 42231886732 the three read
+32.500, 32.500, 33.000. Locally, 11 passing repeats through the sweep's instrument read the three
+as [32.5, 32.5, 32.5] ten times and [33, 33, 33] once; with the document's font status logged
+beside every measurement, 24 measurements, every one `fonts.status=loaded`, Inter Tight checked
+loaded, the computed family Inter Tight: **17 at 32.5 and 7 at 33.0, and the row above the slot
+at 56.5 and 57.0 in step.** So the half pixel is not a font swap and not a dev-calibrated
+constant: the table's rows snap to one of two heights half a pixel apart from load to load, with
+fonts loaded, and the test compares the slot to itself, so it passes whenever the snap holds
+through the walk and failed on CI when the snap changed between the count and the result. That
+is a layout fact of the build, reproducible, and the exact-equality assertion cannot hold under
+it. What the claim means, "the slot keeps its stated lines, no reflow", is a difference of a line
+(13px and more), not of a snap; the ruling on how the assertion should say that is the
+coordinator's, since it changes an assertion. One failed repeat in the eight was my own setup,
+two workers seeding the same walk (a 409 on the POST), not the subject.
+
+**CI run 42243942847 on 09044cf at four workers, the build gate re-run as asked (6 Nov): GREEN
+WITH FLAKES on chromium, no failure.** Unit 4879 OK; chromium 1055 passed, 4 flaky, 1 skipped,
+16.9m; mobile 390 passed, no flake, 9.8m. **lineup-146:36 reproduced, at the same values**:
+first 32.500, counted 32.500, done 33.000, the half pixel arriving with the result both times on
+CI, and the retry passing both times at 3.1s and 3.3s. Locally the snap never moved within a run
+(11 repeats) and moved between runs; on CI's runner it moved at the result's arrival twice of
+two first attempts. Reproducible at a consistent value: not a flake. The other three:
+pick-moods-157:195 (the bracket's test, Q40), and two first appearances under a build,
+wall-route:162 (the top face's y read -190 where ≥ 52 was asserted, "its top face is not cut
+off", §W.28) and wall-route:213 ("the whole wall is visible" false), both the wall's landing
+read before it settled under four workers, 4.0s and 2.9s on the failing attempt, passing on the
+retry; in the table, not read further here. **The stream noise on two clean build-served runs: 255
+and 284 lines on chromium, 56 and 47 on mobile.** Not one constant, a band; what to watch is the
+band moving.
+
+**The sweep of pixel-measured assertions under the build (the coordinator, 6 Nov; local, two
+workers, chromium 1059 passed in 27.1m and mobile 390 in 7.3m, both clean).** The measurements
+are not logged by the suite, so they were logged for this: a transformed, untracked copy of
+`e2e/` in which every `expect(` goes through a proxy that records a numeric assertion's received
+value, its arguments and its site, then calls the real matcher (an override through
+`expect.extend` cannot take, Playwright skips built-in names; a one-line patch to the bundle was
+refused by the machine's permissions and not worked around). 14,117 numeric calls: 6,959
+exact, 2,530 toBeCloseTo, 4,628 bounds. By SITE, worst call under the build:
+
+- **toBeCloseTo, 202 sites** (141 at precision 0, the half pixel; 38 at precision 1). At
+  precision 0: 125 sites read their constant exactly, 14 consume under a tenth of the half pixel,
+  one under half, **one 90.6%: identity-band-holds:79**, the band measured 668.547 against
+  `bandHeightAt(1100)` = 669. `bandHeightAt` rounds (547 × 1100 / 900 = 668.556 → 669) and the
+  band as drawn does not, so the product's own helper and the product's own render disagree by
+  0.45px and the tolerance absorbs it: the quantised-value member in this coat, exactly as
+  described, with the constant in src and not in the test. Two more consume half or more:
+  row-rules-33:218, 175.933 measured against a figure stated to one decimal, 175.9, at precision
+  1 (66.7%); identity-band-23:193, 431 against 432 at precision −0.5, a 1.58px allowance by
+  design (63.2%).
+- **Bounds, 538 sites, 422 at pixel scale.** Eight within half a pixel of their bound on a
+  fractional value: four are epsilons of 0.01 on ratios and degrees (gatefold-88:156/:157,
+  record-modal-81:579/:580), one a degree (record-modal-81:585, 0.034 to go); **wall-labelled:188
+  and :187, 0.043 and 0.216 to go**: the label's box against the spine's edge plus the 1px the
+  comment allows, the overhang measured 0.957 and 0.784; part1-145:98, 1.8 against ≤ 2.
+- **Exact equality on a fractional pixel value, 10 sites, no tolerance at all**: auth:229,
+  band-100:51, gatefold-88:190, lineup-146:95, pick-control-156:290, rail-set-bar:42,
+  record-lines:142, record-modal-81:105/:106, wall-panel:187. Each green under the build; each
+  the lineup shape, a half-pixel snap away from red.
+
+**Then the files those twenty sites live in, run again under dev with the same instrument (132
+passed, 4.0m): every site read the same value under dev as under the build, to the last digit,
+668.546875 and 175.933 and 602.077 and all the rest.** So the answer to the question asked is:
+no pixel assertion in the suite is calibrated to dev and off under the build; the build moves
+no pixel measurement at any named site. What sits within half a pixel of an edge is rounding,
+a constant rounded or stated to fewer digits than the render, the same under either server,
+and it was there before the switch. Three are worth their own look (Q43); the other near-edge
+sites are designed epsilons.
+
+**lineup-146:36, classified on the evidence: not a flake.** Reproduced on CI twice at the same
+three values (32.500, 32.500, 33.000, the half pixel arriving with the result), reproduced
+locally as a two-valued snap with fonts loaded, the same 32.5 under dev. A layout snap under an
+exact-equality assertion. The claim, "the slot holds its stated lines from the first word to the
+result", is a difference of a line, not of a snap; how the assertion should carry that is a
+change to an assertion, and it waits on the coordinator (Q42).
+
+**The instrument stays in the scratchpad, its method here.** Re-running the sweep is: copy
+`e2e/` beside itself, append to each file an import of a proxy that logs numeric matchers and
+replace `expect(` with it, run the copy under `E2E_SERVER=build` with `SWEEP_LOG` set, and read
+the log by site; worst-call consumption of each tolerance is the figure. Not a test, since it
+asserts nothing; a measurement, so it is not committed as one.
