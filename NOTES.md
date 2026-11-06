@@ -54004,3 +54004,107 @@ says a test does not exist when it does is the kind of claim this file exists to
 **Intake:** after the entries, assertion 6 refused as comment-stale, `scripts/derive-withdrawals.mjs`
 rewrote the comment (263 entries), then `node scripts/apply-code-region.mjs`: code region 55
 already present, index 14 PASS of 14, the document suite 781 passed, INTAKE OK.
+
+**The coordinator's card check on the 6 Nov drop, answered (6 Nov, 18:10).** (1) §W.8's step quote,
+"One bound caps how long a held press waits…", is verifiable without asking Design: the Wall and
+Pull target is tracked in the repo, and the sentence stands in it once, character for character
+with the change file's, so the step's quote is checked against a card in hand; the step stays
+unnumbered until it is built, as every unnumbered step does. (2) The governs-row text is Code's
+and is rightly absent from the card. (3) §43's two sentences are Q10's answer and arrived in the
+card outside the change file's scope; Q10's row names both and holds the measurement owed (the
+band's height in the fallback frame against its settled height at the ruled windows, both
+reported), after the Q45 sites and sweep-twice. No handoff step carries it and it does not land
+unnumbered. (4) The reconciliation: 18 is the count of "Withdrawn within §" alone; the checker's
+87 (85 yesterday, plus the drop's two) is every declared phrasing the index pairs with
+WITHDRAWALS entries, `withdrawals.mjs` PHRASING: "Withdrawn [in part | in whole] by §",
+"Withdrawn within §", "Superseded [in part] by §", read on the card's own text with quoted
+examples blanked, on this card alone. On the card now: 18 within, 13 by, 4 in part by, 28
+superseded by, 25 superseded in part by. Both figures stand.
+
+## 6 Nov, 18:35: a second drop at 18:22, taken in; "First paint is styled" never arrived; the §W.8 step numbered; the count derived
+
+**The drop.** `docs/design/Name every ruling a card carries - for Code to apply.md` appeared on disk
+at 18:22, after the 17:36 capture; `drop-ref` captured it as `refs/drops/2026-11-06-02` at
+18:26:54. It travels with the Wall and Pull target, which it says is unchanged since its last
+send; the coordinator verified the card byte-identical to the previous one (same sha256, 654,578
+bytes, 701 opens and closes, depth 1). Its one change, the DESIGN-RULES bullet that a change file
+names every ruling the cards it travels with carry since each card's last send, is applied as
+written. Intake OK: code region 1 restored (step-170, below), index 14 of 14, the document suite
+783 passed.
+
+**"First paint is styled": not held, never arrived.** It is not on disk under docs/design and is
+in none of the six drop refs (2026-11-04-02 to 2026-11-06-02), so Adam's request to Design is a
+first send, not a resend. Until it lands, §43's ruling is in the 8a card with no step and no
+governs row, the DESIGN-RULES bullet's own founding case, and Q10's row holds it. The change file
+on disk names it and says to apply it with this card; nothing is reconstructed from the card's
+prose.
+
+**The §W.8 step numbered 170, on the coordinator's word.** A code-region block, `step-170`,
+standing before Design's unnumbered line and discharging its head; its unbuilt entry removed, so
+the twins read 41 unnumbered steps, 33 discharged, 8 unbuilt, none in neither. The line says
+"Not built" and what is owed. The step's quote was checked against the Wall and Pull target
+tracked in the repo, where it stands once, so no card was asked for.
+
+**The reconciliation, corrected by deriving.** My by-form figures were a raw grep of the card's
+text, which counted a quoted example and skipped a form; the checker now prints the breakdown
+and the total from one pass over the same sentences (`withdrawalReport.byForm`, three tests
+watched failing first), and on the 8a card it reads: **87 declared: within 17, by 13, in part by
+4, in whole by 1, superseded by 27, superseded in part by 25.** So: the 85 baseline stands (85 +
+2 = 87); "within 18" was wrong, one of the 18 being the quoted example in §33 ("Withdrawn within
+§33: stated plainly, so the fallback is not read as a rule it is not,"), which the coordinator's
+count and my grep both took as a declaration; "superseded by 28" was wrong by the same kind of
+example, and "in whole by" was listed with no figure and is 1. The coordinator's 18 and my 18
+agreed because both were the same raw count. The runs table's lesson applied: the two figures now
+come from one instrument.
+
+**Two instances the coordinator names for repeating.** (1) The fixture-blind guard: a pure test
+whose staged break did not fail it, because the fixture (matches r50 to r52, r50 a shelf's head
+at that width) satisfied the precondition by accident; caught by staging the break and not by the
+green, and fixed by asserting the precondition. (2) queue-1's first live catch, on Code's Q8 row
+restating the §W.8 step's head two days after the assertion was ruled with the coordinator's own
+restatement as its motivating defect: a second instance by a different author.
+
+**The ordering, said as it is (the coordinator, 6 Nov).** Drops land in the tree, the intake
+applies them, and the relay reaches the coordinator afterwards; so the coordinator's card check
+confirms and cannot prevent, and is not a gate. For prose changes that are gated by the index and
+reversible through the drop ref that is accepted and not slowed. A check described as
+verification that runs after application must not later be read as a guard it never was.
+
+**§43's second sentence is a requirement.** A band whose height in the fallback font differs
+from its settled height is a defect to fix; the measurement comes first, both heights at the
+ruled windows to three decimals, before any fix is proposed. Held in Q10's row, after the Q45
+wait's equality and sweep-twice.
+
+**A new hazard, and the guard proposed (the coordinator, 6 Nov).** The 8a target changed on disk
+during this unit's e2e runs, so a run was asserting against a document that moved under it; its
+result is void, not green or red, and nothing went wrong only because the refusal came first.
+Asked for: a run records the drop-ref state when it starts and checks it when it ends; if a drop
+landed between, the run is void and re-dispatched, not judged; the tree-CHANGED guard extended to
+the one input it does not watch. What stands today, read before proposing: `run-tests.ts`
+fingerprints the tree from git (HEAD and each modified or untracked path), so a tracked target
+edited mid-run is a changed tree for a unit run, but an ignored file under docs/design (every
+change file) is invisible to it; and for an end-to-end run a change under docs/design is
+reported and not counted as a changed tree, by the ruling that end-to-end reads nothing there
+and three gates in a row met a Design export mid-run. The runs that met this drop were typed
+`npx playwright test` directly and went through no fingerprint at all. So the proposal touches
+three things: (a) the fingerprint takes docs/design as drop-ref sees it, ignored files included,
+by hashing the folder's files rather than asking git; (b) a drop landing during ANY run voids it
+with a verdict of its own, `DROP LANDED — void, re-run`, distinct from tree CHANGED, which means
+the end-to-end exemption is withdrawn for drops while kept for the tree's other paths, and that
+is a change to a ruling the coordinator should confirm; (c) the gate and the step-level e2e runs
+go through the runner so the fingerprint is on their path (`gate.sh` does; the step-level runs
+here did not, and that is the fourth shape again, a guard not on the path). Tests:
+`run-result.test.ts` for the verdict, `run-tests-cli.test.ts` for a staged drop mid-run. Not
+built until the coordinator says.
+
+**ship.sh, re-proposed with the fourth shape.** A check that passes and a stage that fails (git
+add on an ignored path) left the other paths staged and the next commit refusing on the index.
+So `commit-checked.sh` checks every named path is addable before it runs the check (an ignored
+or absent path is refused in a second, naming it), and on any failure after the check it resets
+the index to HEAD so nothing stays staged; two tests, each watched failing. Then `scripts/ship.sh
+-m "message" [--workers N] paths…`: commit-checked, push HEAD, ci-gate HEAD N, and the run id
+whose headSha matches, each on the previous step's own status, no pipe to tail; four tests with
+stub scripts and a bare remote. CLAUDE.md §10's items 1 to 3 then name ship.sh, on the
+coordinator's words. Touches: `scripts/ship.sh` (new), `test/repo/ship.test.ts` (new),
+`scripts/commit-checked.sh`, `test/repo/commit-checked.test.ts`, CLAUDE.md. Not built until the
+coordinator says.

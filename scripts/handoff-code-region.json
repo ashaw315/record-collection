@@ -588,5 +588,17 @@
         "part": "the fields; the shelf's reason on the pull is the rest"
       }
     ]
+  },
+  {
+    "id": "step-170",
+    "before": "- **Unnumbered, for Code to number — §W.8: the bound at a candidate.**",
+    "why": "Code's number for Design's unnumbered §W.8 step.",
+    "text": "170. **§W.8 — the bound at a candidate: Code's number for that step.** Not built. The measurement at 3000, 4000 and 6000ms on production, each held press that would navigate compared against when its record's page would have loaded, is owed after the Q45 wait's equality and sweep-twice (the coordinator, 6 Nov); the only figure so far is Run A's at 2000ms on 30 Oct. The step's quote stands once in the tracked Wall and Pull target, checked 6 Nov against the change file character for character. Numbered on the coordinator's word, 6 Nov.",
+    "discharges": [
+      {
+        "head": "§W.8: the bound at a candidate",
+        "clause": "- **Unnumbered, for Code to number — §W.8: the bound at a candidate.**\n  - **Measure** at 3000, 4000 and 6000ms on production, on the current collection.\n  - **For each figure,** report how many held presses would navigate. For each of those, compare when the record's page would have finished loading after navigating with when the pull would have landed.\n  - **Why the comparison:** the ruled basis is reaching the record's page sooner than the pull. On a slow connection the page load itself takes seconds, so a press that navigates may arrive later, not sooner.\n  - **No change to the bound's basis.** This is the instrument for the \"sooner\" it names.\n  > One bound caps how long a held press waits, and it sits where reaching the record’s page sooner serves the reader better than waiting for the pull."
+      }
+    ]
   }
 ]

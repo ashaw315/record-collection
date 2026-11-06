@@ -38,10 +38,5 @@
     "head": "§60: the disc at 390",
     "status": "unbuilt",
     "evidence": "Arrived 6 Nov (refs/drops/2026-11-06-01). The disc at 390 × 844 reads 56.000 at one or two images and 97.500 from three (figures-q6 JSONL, 6 Nov, from the build); 345.300 at 1440 and 425.300 at 1920 at every count. Which term binds at 390 is not yet found; no test asserts equality across counts."
-  },
-  {
-    "head": "§W.8: the bound at a candidate",
-    "status": "unbuilt",
-    "evidence": "Arrived 6 Nov (refs/drops/2026-11-06-01). The only measurement is Run A at 2000ms on 30 Oct (42 of 89 held presses would navigate); nothing measured at 3000, 4000 or 6000ms, and no comparison of the page's load against the pull's landing exists."
   }
 ]

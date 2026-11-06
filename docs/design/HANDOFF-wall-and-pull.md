@@ -798,6 +798,8 @@ Its rows are in the governs table above, one per section; this section does not 
   - **Capture** a record with one image and one with several at 1440 × 900, 1920 × 900 and 390 × 844, for Adam to judge the size.
   > The Images quarter-disc is sized against a stated reference height: the section’s heading, its padding and one tile row, with the cover note excluded at every count.
 
+170. **§W.8 — the bound at a candidate: Code's number for that step.** Not built. The measurement at 3000, 4000 and 6000ms on production, each held press that would navigate compared against when its record's page would have loaded, is owed after the Q45 wait's equality and sweep-twice (the coordinator, 6 Nov); the only figure so far is Run A's at 2000ms on 30 Oct. The step's quote stands once in the tracked Wall and Pull target, checked 6 Nov against the change file character for character. Numbered on the coordinator's word, 6 Nov.
+
 - **Unnumbered, for Code to number — §W.8: the bound at a candidate.**
   - **Measure** at 3000, 4000 and 6000ms on production, on the current collection.
   - **For each figure,** report how many held presses would navigate. For each of those, compare when the record's page would have finished loading after navigating with when the pull would have landed.

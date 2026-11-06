@@ -57,12 +57,38 @@ export function documentShape(html) {
   return { doctype: /^﻿?\s*<!doctype\s+html/i.test(html), closingHtml: /<\/html>\s*$/i.test(html) };
 }
 
-/** The declared withdrawal sentences (withdrawals.mjs, which leaves a quoted example out), and those standing more than once. */
+/** The declared forms (withdrawals.mjs PHRASING), each as the opening of a declared sentence; the order is the printed order. */
+const FORMS = [
+  ['within', /^Withdrawn within §/],
+  ['by', /^Withdrawn by §/],
+  ['inPartBy', /^Withdrawn in part by §/],
+  ['inWholeBy', /^Withdrawn in whole by §/],
+  ['supersededBy', /^Superseded by §/],
+  ['supersededInPartBy', /^Superseded in part by §/],
+];
+const FORM_LABELS = { within: 'within', by: 'by', inPartBy: 'in part by', inWholeBy: 'in whole by', supersededBy: 'superseded by', supersededInPartBy: 'superseded in part by' };
+
+/**
+ * The declared withdrawal sentences (withdrawals.mjs, which leaves a quoted
+ * example out), those standing more than once, and the count by form from the
+ * SAME sentences, so the forms sum to the count: on 6 Nov a total recalled
+ * from one statement and a breakdown grepped in another gave 87 against 88,
+ * and nothing in either could say which was wrong.
+ */
 export function withdrawalReport(html) {
   const sentences = withdrawalSentencesIn(plainText(html));
   const seen = new Map();
-  for (const s of sentences) seen.set(s, (seen.get(s) ?? 0) + 1);
-  return { count: sentences.length, duplicates: [...seen].filter(([, n]) => n > 1).map(([s]) => s) };
+  const byForm = Object.fromEntries(FORMS.map(([name]) => [name, 0]));
+  for (const s of sentences) {
+    seen.set(s, (seen.get(s) ?? 0) + 1);
+    const form = FORMS.find(([, re]) => re.test(s));
+    if (form !== undefined) byForm[form[0]] += 1;
+  }
+  return { count: sentences.length, duplicates: [...seen].filter(([, n]) => n > 1).map(([s]) => s), byForm };
+}
+
+export function byFormLine(byForm) {
+  return FORMS.map(([name]) => `${FORM_LABELS[name]} ${byForm[name]}`).join(', ');
 }
 
 /**
@@ -130,7 +156,7 @@ function report(args) {
   out.push(`doctype: ${shape.doctype ? 'present' : 'ABSENT'}; closing </html>: ${shape.closingHtml ? 'present at the end' : 'ABSENT or not at the end'}`);
 
   const w = withdrawalReport(html);
-  out.push(`withdrawal sentences: ${w.count} declared${w.duplicates.length > 0 ? `; standing more than once: ${w.duplicates.length}` : '; none twice'}`);
+  out.push(`withdrawal sentences: ${w.count} declared (${byFormLine(w.byForm)})${w.duplicates.length > 0 ? `; standing more than once: ${w.duplicates.length}` : '; none twice'}`);
   for (const d of w.duplicates) out.push(`  twice: ${d}`);
 
   const change = opt('--change');
