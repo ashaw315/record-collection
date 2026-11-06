@@ -52748,11 +52748,13 @@ table wins.
 | 42243942847 | 09044cf | 4 (build) | lineup-146:36 (unclassified, the same values again), pick-moods-157:195, wall-route:162, wall-route:213 |
 | 42259273834 | e5076b8 | 4 (build) | pick-moods-157:195 |
 | 42261818896 | 6b20ff1 | 4 (build) | none: the first four-worker run with no flake and no failure |
+| 42268956664 | ffa709a | 4 (build) | wall-route:213 (failed, named by the wait), wall-settle:53 (failed, named by the wait), want-list:1086 (m) |
 
-Derived: appearances 4 + 4 + 3 + 4 + 3 + 1 + 4 + 1 + 0 = **24**; distinct tests **15** (want-list:739,
+Derived: appearances 4 + 4 + 3 + 4 + 3 + 1 + 4 + 1 + 0 + 3 = **27**; distinct tests **17** (want-list:739,
 want-list:849, pick-moods-157:154, wall-arrival-104:120, wall-route:234, record-band-43:33,
 roving-148:83, record-navigation:295, hold-160:111, hold-160:123, identity-cell:156,
-pick-moods-157:195, lineup-146:36, wall-route:162, wall-route:213). From 42231886732 the gate serves a build (Q39), so a row
+pick-moods-157:195, lineup-146:36, wall-route:162, wall-route:213, wall-settle:53,
+want-list:1086). From 42231886732 the gate serves a build (Q39), so a row
 says "(build)" in its workers column and dev-served rows are compared with dev-served rows. pick-moods-157:195 is the bracket's own test, "a write between the two
 reads reopens the bracket", not :154 moved; Q40 removes the bracket and its tests together. The "nine" written above
 this table was wrong, recalled rather than read; corrected in the commit that made the table.
@@ -53490,3 +53492,25 @@ identity-band-23:183 expects `bandHeightAt(1000) - 48 - 1` against a rounded mea
 must round the helper's value as :119 already does; identity-band-holds:79's consumption falls
 from 90.6% to 1.8%, and layout-sweep's ±1 is untouched. Four lines in two test files and one in
 src. Not built here: the assertions are the tests' and the change is the coordinator's to agree.
+
+**CI run 42268956664 on ffa709a (Q45's wait) at four workers from a build: NOT OK on chromium,
+2 failed on both attempts, and the wait named them.** Unit 4893 OK; mobile 389 passed, 1 flaky
+(want-list:1086, the phone's engine, a new line in that file's family), 10.1m; chromium 1058
+passed, 2 failed, 22.3m. **wall-settle:53, the wait's own first test, on both attempts, with
+the message the unit built: "the region's scroll (307, 565) is not the landing's write (329,
+565) for landing 1" and "(307, 194) is not (322, 194)".** The top is the write's, the left is
+not, and both reads sit at 307, the scroller's limit at 1440 (wall-route:199 holds that bound):
+the write was clamped by the limit as it stood, 329 and 322, and the limit then fell by 22 and
+15, the scroller clamping the view to a new edge. **wall-route:213, on both attempts, stopped on
+its own "the whole wall is visible", with the wait satisfied**: the scroll was the write, and the
+wall, widened by its measured excess so that it fit before the zoom round-trip, no longer fit
+after it. The two are one shape from opposite directions: a wall narrower after the landing
+than at it, a wall wider after the round-trip than before it. §W.12 sizes the wall by the whole
+collection, and at four workers three other workers seed into that collection and clean out of
+it continuously (the bracket's finding, 5 Nov: a write transaction every 200 to 700ms). A wall
+whose width is the collection's cannot be measured twice across a window in which the
+collection moved: the lineup shape again, a self-comparison across state changes, with the
+state being every other worker's. Not yet proved from these two runs, since neither message
+carries the frame; the next does: the write now records the content's width, the region's and
+the seats drawn, the wait's message names both frames, and :213's "fits" names the seat counts
+and widths it compared. The stream band: 272 chromium, 61 mobile.

@@ -240,9 +240,10 @@ test('a wall that fits the region has no horizontal landing to make, and still p
   const got = await page.evaluate((id) => {
     const el = document.querySelector('[data-region="wall"]') as HTMLElement | null;
     const rect = (q: string) => { const r = document.querySelector(q)?.getBoundingClientRect(); return r ? { top: r.top } : null; };
-    return { scrollLeft: el === null ? null : Math.round(el.scrollLeft), fits: el !== null && el.scrollWidth <= el.clientWidth, region: rect('[data-region="wall"]'), shelf: rect(`[data-seat="${id}"] [data-face="top"]`) };
+    return { scrollLeft: el === null ? null : Math.round(el.scrollLeft), fits: el !== null && el.scrollWidth <= el.clientWidth, scroll: el?.scrollWidth ?? null, client: el?.clientWidth ?? null, count: (document.querySelector('[data-testid="wall-zoom-out"]')?.textContent ?? '').trim(), region: rect('[data-region="wall"]'), shelf: rect(`[data-seat="${id}"] [data-face="top"]`) };
   }, ids[0]);
-  expect(got.fits, 'the whole wall is visible').toBe(true);
+  /* Both measurements named (run 42268956664 failed here twice with the wait satisfied): a count that moved is the collection changing under a wall §W.12 sizes by the whole collection, which every other worker seeds into and cleans out of. */
+  expect(got.fits, `the whole wall is visible (before the round-trip: content ${narrow.scroll}, region ${narrow.client}, count ${narrow.count}; now content ${got.scroll}, region ${got.client}, count ${got.count})`).toBe(true);
   expect(got.scrollLeft, 'nothing to pan: the landing resolves to zero').toBe(0);
   /* The run pressed is the first occupied one, and its first seat is this test's first record, as the test above establishes. */
   expect(got.region !== null && got.shelf !== null, 'the addressed seat is drawn').toBe(true);

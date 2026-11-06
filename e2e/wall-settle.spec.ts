@@ -62,5 +62,6 @@ test('a view moved after the landing is named by the wait rather than passed: th
   await zoomInLanding(page);
   await settled(page, 1);
   await page.evaluate(() => { const el = document.querySelector('[data-region="wall"]') as HTMLElement; el.scrollTop += 240; });
-  await expect(settled(page, 1)).rejects.toThrow(/not the landing’s write/);
+  /* Named with both frames, the write's and the read's, so a clamp can be told from a widening and a changed collection from either. */
+  await expect(settled(page, 1)).rejects.toThrow(/not the landing’s write \(\d+, \d+\) for landing 1: at the write content \d+, region \d+, seats \d+; at this read content \d+, region \d+, seats \d+/);
 });

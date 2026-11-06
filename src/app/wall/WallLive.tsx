@@ -140,8 +140,10 @@ export function WallLive({
     was wrong. Recorded on either branch, the arrival applied or the person's scroll kept, with the count it belongs to.
   */
   const recordLandingWrite = (write: { left: number; top: number }) => {
-    const w = window as unknown as { __landings?: number; __landingWrite?: { left: number; top: number; landings: number } };
-    w.__landingWrite = { ...write, landings: w.__landings ?? 0 };
+    const el = region.current;
+    const w = window as unknown as { __landings?: number; __landingWrite?: { left: number; top: number; landings: number; scrollWidth: number; clientWidth: number; seats: number } };
+    /* The frame the write was made against, so a later clamp can be told from a later widening: the content's width, the region's, and the seats drawn (run 42268956664 read 329 then 307 and could not say which moved). */
+    w.__landingWrite = { ...write, landings: w.__landings ?? 0, scrollWidth: el?.scrollWidth ?? 0, clientWidth: el?.clientWidth ?? 0, seats: el?.querySelectorAll('[data-seat]').length ?? 0 };
   };
   /* §W.29: the desktop opens near and ARRIVES on the occupied shelf, through the same landing a zoom-in uses. */
   const arrived = useRef(false);
