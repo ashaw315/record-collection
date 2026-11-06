@@ -52748,9 +52748,11 @@ table wins.
 | 42243942847 | 09044cf | 4 (build) | lineup-146:36 (unclassified, the same values again), pick-moods-157:195, wall-route:162, wall-route:213 |
 | 42259273834 | e5076b8 | 4 (build) | pick-moods-157:195 |
 | 42261818896 | 6b20ff1 | 4 (build) | none: the first four-worker run with no flake and no failure |
-| 42268956664 | ffa709a | 4 (build) | wall-route:213 (failed, named by the wait), wall-settle:53 (failed, named by the wait), want-list:1086 (m) |
+| 42268956664 | ffa709a | 4 (build) | wall-route:213 (failed on fits, the wait satisfied), wall-settle:53 (failed, named by the wait), want-list:1086 (m) |
+| 42273938707 | 169ce12 | 4 (build) | wall-route:162, wall-route:213 (the wait's frames: the wall 883 wider between two reads); mobile half pending, the job past ninety minutes |
+| 42281210779 | 20e79a8 | 4 (build) | wall-route:213 (the wait's frames: content 2224 to 2204 with the region and the filtered seats unchanged, the scroll (20, 1323) to (0, 813)) |
 
-Derived: appearances 4 + 4 + 3 + 4 + 3 + 1 + 4 + 1 + 0 + 3 = **27**; distinct tests **17** (want-list:739,
+Derived: appearances 4 + 4 + 3 + 4 + 3 + 1 + 4 + 1 + 0 + 3 + 2 + 1 = **30**; distinct tests **17** (want-list:739,
 want-list:849, pick-moods-157:154, wall-arrival-104:120, wall-route:234, record-band-43:33,
 roving-148:83, record-navigation:295, hold-160:111, hold-160:123, identity-cell:156,
 pick-moods-157:195, lineup-146:36, wall-route:162, wall-route:213, wall-settle:53,
@@ -53619,3 +53621,18 @@ reporter on (a temporary config, as sweep-pixels does), its JSONL read by site: 
 list, with the shared quantity still a reading per site, since a reporter cannot tell a count
 of the test's own records from the collection's. `scripts/sweep-twice.mjs`, run and read,
 nothing calling it, if the coordinator takes it.
+
+**CI run 42281210779 on 20e79a8 (the judge's fix) at four workers from a build: GREEN WITH
+FLAKES on chromium, no failure.** Unit 4895 passed, 2 skipped, the judge's two among them;
+mobile 390 passed, no flake, 10.4m; chromium 1059 passed, 1 flaky, 1 skipped, 21.4m, the flake
+wall-route:213 on its first attempt, and this time the wait named it with both frames:
+**"the region's scroll (0, 813) is not the landing's write (20, 1323) for landing 2: at the
+write content 2224, region 2204, seats 20; at this read content 2204, region 2204, seats
+20."** The region unchanged, the filtered seats unchanged, and the wall's content 20 narrower
+at the read than at the write, now exactly the region's width, with the view clamped to 0 on
+the left and 510 higher on the top: the wall re-laid between the write and the read with this
+test's own twenty seats as they were, which is the whole collection changing under it (the
+seat count the message carries is the filter's; the collection's total is what moved, and the
+next message should carry it). The reading of 42273938707 confirmed from the other side: there
+the wall grew by another worker's seed; here it shrank by another worker's cleanup. The stream
+band: 253 chromium, 78 mobile. The hung mobile half of 42273938707 is still running at 1h50m.
