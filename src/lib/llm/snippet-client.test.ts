@@ -6,6 +6,7 @@ import {
   type SnippetSubject,
 } from './snippet-client';
 import { GAP_ANALYSIS_MAX_TOKENS } from './client';
+import type { ReleaseFacts } from './about-grounding';
 
 /**
  * SPEC.md §10b's snippet prompt, and R5's finding 4 decided for both callers.
@@ -296,5 +297,26 @@ describe('a truncated response is never stored', () => {
     if (!result.ok) return;
     expect(result.snippet).toBe('A complete note about the record.');
     expect(result.outputTokens).toBe(40);
+  });
+});
+
+describe('a per-record constraint, for a note regenerated after a fact-check (Q47, 6 Nov)', () => {
+  /*
+    Three stored notes carried a claim the coordinator could not confirm or found false (a bonus track
+    named as on the LP; a side's order reversed; a group's leader named and the recommendation rested on
+    it). A regenerated note needs the correction stated to the model as this record's own constraint,
+    beside the catalogue's facts and under them. Fails against a prompt that carries no such slot, and
+    against one that carries it when nothing was given.
+  */
+  it('carries each constraint given for this record, verbatim, as an instruction', () => {
+    const facts = { label: null, country: null, year: null, format: null, artistId: null, credits: [], companies: [], community: null } as unknown as ReleaseFacts;
+    const prompt = buildSnippetPrompt(SUBJECT, { facts, discography: [], constraints: ['Do not name who led the group.', 'Side one closes with Light My Fire (A6); Alabama Song is A5.'] });
+    expect(prompt).toMatch(/FOR THIS RECORD IN PARTICULAR/);
+    expect(prompt).toContain('Do not name who led the group.');
+    expect(prompt).toContain('Side one closes with Light My Fire (A6); Alabama Song is A5.');
+  });
+
+  it('carries no such section when none was given', () => {
+    expect(buildSnippetPrompt(SUBJECT)).not.toMatch(/FOR THIS RECORD IN PARTICULAR/);
   });
 });

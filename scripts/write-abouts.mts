@@ -32,11 +32,26 @@ import { recordLlmRun } from '@/lib/llm/rate-limit';
 import { getSnippetClient } from '@/lib/llm/snippet-client';
 
 type Row = { id: string; artist: string; title: string; year: number | null; releaseId: number | null; payload: unknown };
-type Draft = { id: string; artist: string; title: string; year: number | null; facts: ReleaseFacts | null; discography: DiscographyEntry[]; note: string | null; status: string; inputTokens: number | null; outputTokens: number | null; ms: number; conflicts: Conflict[] };
+type Draft = { id: string; artist: string; title: string; year: number | null; facts: ReleaseFacts | null; discography: DiscographyEntry[]; note: string | null; status: string; inputTokens: number | null; outputTokens: number | null; ms: number; conflicts: Conflict[]; constraints: string[] };
 
 const args = process.argv.slice(2);
 /* `--rerender`: the last drafts again through the checker and into the file, no call spent; for a checker that learned something after the run. */
 const mode = args.includes('--store') ? 'store' : args.includes('--rerender') ? 'rerender' : args.includes('--all') ? 'all' : 'sample';
+/*
+  `--note <id prefix>=<text>`, repeatable (Q47, 6 Nov): a record's own constraint for a note regenerated after a
+  fact-check, carried into the prompt verbatim (snippet-client.ts) and printed under the draft so the reader sees
+  what was asked. The id prefix is matched as `--sample`'s are.
+*/
+const notes: Array<{ prefix: string; text: string }> = [];
+for (let i = 0; i < args.length; i += 1) {
+  if (args[i] !== '--note') continue;
+  const spec = args[i + 1] ?? '';
+  const at = spec.indexOf('=');
+  if (at < 7) { console.error(`write-abouts: --note wants <id prefix>=<text>, got "${spec}"`); process.exit(2); }
+  notes.push({ prefix: spec.slice(0, at), text: spec.slice(at + 1) });
+  i += 1;
+}
+const constraintsFor = (id: string): string[] => notes.filter((n) => id.startsWith(n.prefix)).map((n) => n.text);
 const db = getDb();
 const date = new Date().toISOString().slice(0, 10);
 const OUT = join(homedir(), 'Downloads');
@@ -76,6 +91,7 @@ function render(drafts: Draft[], title: string): string {
     lines.push(`Discogs: ${c === null || c === undefined ? 'no community figures' : `${c.have} have, ${c.want} want, rated ${c.rating} by ${c.ratings}`}${d.facts?.label ? ` · ${d.facts.label}` : ''}${d.facts?.country ? ` · ${d.facts.country}` : ''}${d.facts?.format ? ` · ${d.facts.format}` : ''}${d.discography.length > 0 ? ` · the artist's releases: ${d.discography.map((e) => `${e.title} (${e.year})`).join(', ')}` : ' · no discography fetched'}`);
     lines.push('');
     lines.push(`Run: ${d.status}${d.inputTokens === null ? '' : `, ${d.inputTokens} in, ${d.outputTokens} out`}, ${d.ms}ms`);
+    if ((d.constraints ?? []).length > 0) { lines.push(''); lines.push(`Asked for this record (Q47): ${(d.constraints ?? []).join(' · ')}`); }
     lines.push('');
     if (d.note !== null) {
       lines.push(d.note);
@@ -143,10 +159,10 @@ for (const r of selected) {
   const facts = groundingFromPayload(r.payload);
   const discography = await discographyFor(facts?.artistId ?? null);
   const t0 = Date.now();
-  const draft: Draft = { id: r.id, artist: r.artist, title: r.title, year: r.year, facts, discography, note: null, status: 'not run', inputTokens: null, outputTokens: null, ms: 0, conflicts: [] };
+  const draft: Draft = { id: r.id, artist: r.artist, title: r.title, year: r.year, facts, discography, note: null, status: 'not run', inputTokens: null, outputTokens: null, ms: 0, conflicts: [], constraints: constraintsFor(r.id) };
   if (subject === null) { draft.status = 'failed: no subject'; drafts.push(draft); continue; }
   try {
-    const result = await client.write(subject, facts === null ? undefined : { facts, discography });
+    const result = await client.write(subject, facts === null ? undefined : { facts, discography, constraints: constraintsFor(r.id) });
     draft.ms = Date.now() - t0;
     draft.inputTokens = result.inputTokens ?? null;
     draft.outputTokens = result.outputTokens ?? null;

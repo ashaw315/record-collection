@@ -31,14 +31,15 @@ item going missing.
 
 | id | status | item | record lives in |
 |---|---|---|---|
-| Q1 | open | Store the 45 ABOUT notes. Two to fix by hand first: `e1e349f6` (999: "Found Out Too Late" is not on the LP) and `e315c6a7` (The Doors: Alabama Song is A5, Light My Fire A6, so side one runs the other way). Mark the other 43, Carly Simon `e931d933` included. | the drafts file; nothing else |
-| Q2 | open | The 640px rail captures: look and judge | nothing |
-| Q3 | open | The far-view sheet at 1044 / 1273 / 1440: look and judge | nothing |
-| Q4 | open | The re-roll at about 2.5s: look and judge | nothing |
-| Q5 | open | The §62 covers group's look: look and judge | nothing |
-| Q6 | open | The Images disc size, and eight unconfirmed §55 figures | §55 |
-| Q7 | open | The 455px put back | nothing |
-| Q8 | open | The hold's bound figure | nothing |
+| Q1 | open | Store the 45 ABOUT notes. Stored by Adam, 6 Nov: 43 of 43, so 53 of the 55 records carry an ABOUT; Q22's blocker is cleared. Closes with the commit that records it. The two held back and a third are Q47 | the drafts file; NOTES, 6 Nov |
+| Q47 | open | Three ABOUT notes to regenerate and store (the coordinator, 6 Nov), each with its constraint: `e1e349f6`, 999, The Biggest Prize In Sport: "Found Out Too Late" is not on the 1980 LP (a 1999 Anagram CD bonus track), the other two titles stand, and rule 2 of the checker should catch it on the regenerated note, a live test of the rule; `e315c6a7`, The Doors: side one's order is reversed in the note, Alabama Song is A5 and Light My Fire A6 closes the side; `dbcf97f0`, The Ink Spots' Greatest: the note names "a Deek Watson–led quartet" and rests its recommendation on it, unconfirmable and the record's own Discogs list points the other way, so regenerate without naming who led the group, saying at most a later lineup working the original formula. Store all three when they come back, same as the 43 (Adam). The third was lost between the fact-check and the queue and stored by mistake: the row each item gets the moment it is raised, which this one did not | NOTES, 6 Nov |
+| Q2 | open | The 640px rail captures: look and judge. In the bundle `~/Downloads/Q2 to Q5 for Adam, 6 Nov/` from the build on the real collection, with the decision line in READ ME FIRST (6 Nov) | the bundle; NOTES, 6 Nov |
+| Q3 | open | The far-view sheet at 1044 / 1273 / 1440: look and judge. In the bundle, from the build on the real collection (6 Nov) | the bundle; NOTES, 6 Nov |
+| Q4 | open | The re-roll at about 2.5s: look and judge. In the bundle as a video from the build at 1440 × 900, measured 3006ms press-to-settled against 2462 by the constants (6 Nov) | the bundle; NOTES, 6 Nov |
+| Q5 | open | The §62 covers group's look: look and judge. In the bundle, from the build at 1440 × 900 and 390 (6 Nov) | the bundle; NOTES, 6 Nov |
+| Q6 | open | The Images disc size, and §55's figures: measured 6 Nov on the real collection from the build, none checked against a build before. The counts follow the collection (39 of 55 at 1440 × 1200, 28 at 900 against 11 and 6 of 17); Wired and On The Radio and The Hurdy Gurdy Man suppressed at 1200 as stated, Grave New World gone; **Bitches Brew suppressed at 1440 × 900 (aspect 4.694, gap-bound) where §55 states 443 × 113.9 drawn**, read as the ABOUT notes shortening the gap; the disc two-thirds of its reference at every count at 1440 and 1920 (345.300, 425.300), caption-bound at 390 by count (56.000, 97.500), and **"about 160" describes it at no window**. Two findings to the coordinator with both numbers; nothing adjusted | NOTES, 6 Nov; the JSONL |
+| Q7 | open | The 455px put back: measured 6 Nov on the build, ten of ten returned to where they began (delta 0, 0; 200 records at 1440 × 900); the 31 Oct one-in-three was on production and never reproduced. Agrees; closes with the commit that records it | NOTES, 6 Nov |
+| Q8 | open | The hold's bound figure: the target states no figure, the code's 2000 is provisional, and the measurement exists (Run A, 30 Oct, production): at 2000ms, 42 of 89 held presses would navigate instead of pulling, all 20 at cold fast-3g and 22 of 40 at slow-3g, none on a fast connection. A judgement with the numbers beside it, Adam's or the coordinator's | NOTES, 6 Nov; docs/measurements/window-160 |
 
 Q1 blocks Q22. Q2 to Q8 block nothing and have been parked longest.
 
@@ -61,7 +62,7 @@ here; see above.
 | Q19 | done b749d61 | The queue file and its check | this file |
 | Q20 | done 6b20ff1 | `scripts/check-design-card.mjs`: tag balance, nesting depth 1, doctype, closing tag, withdrawal-sentence count and uniqueness, change-file quotes matched character for character including curly apostrophes, and the bold-sentence set diff against the previous card. A report that never refuses, not in ASSERTIONS-spec; 15 tests in the document suite | the script |
 | Q21 | open | inferReissue is wrong on 2 records | NOTES |
-| Q22 | open | The vibe search: embed the ABOUT notes, rank the collection by closeness to a typed vibe, 3 to 5 results, an honest weak-match state. Blocked on Q1. Replaces the mood buttons; they survive as presets at most | nothing yet |
+| Q22 | open | The vibe search: embed the ABOUT notes, rank the collection by closeness to a typed vibe, 3 to 5 results, an honest weak-match state. Its blocker, Q1, cleared 6 Nov (53 of 55 records carry an ABOUT). Replaces the mood buttons; they survive as presets at most | nothing yet |
 | Q23 | open | Want-list tagging (Phase 4): never designed | mood-search-scope doc |
 | Q24 | open | lookup-flows:1743: an unread flake | the known-flaky table |
 | Q25 | open | Mood tagging: the retry and the run-record | SPEC §5.10 |

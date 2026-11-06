@@ -34,7 +34,12 @@ export type ReleaseFacts = {
 
 export type DiscographyEntry = { title: string; year: number; format: string };
 
-export type Grounding = { facts: ReleaseFacts; discography: DiscographyEntry[] };
+export type Grounding = {
+  facts: ReleaseFacts;
+  discography: DiscographyEntry[];
+  /** This record's own instructions, for a note regenerated after a fact-check (Q47, 6 Nov): a correction the catalogue's facts cannot carry, stated to the model verbatim. */
+  constraints?: string[];
+};
 
 const Person = z.object({ name: z.string().optional(), role: z.string().optional() });
 const Release = z.object({

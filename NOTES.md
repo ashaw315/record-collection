@@ -52752,8 +52752,9 @@ table wins.
 | 42273938707 | 169ce12 | 4 (build) | wall-route:162, wall-route:213 (the wait's frames: the wall 883 wider between two reads); mobile 390 passed, no flake, the suite 8.3m inside a 77-minute job, 68 of them in `playwright install --with-deps webkit` |
 | 42281210779 | 20e79a8 | 4 (build) | wall-route:213 (the wait's frames: content 2224 to 2204 with the region and the filtered seats unchanged, the scroll (20, 1323) to (0, 813)) |
 | 42283660959 | 116aec7 | 4 (build) | wall-route:213 (failed, both attempts: the wall 1341 to 2136 and 2136 to 2224 across the round-trip), wall-settle:53 (the wait's frames: content 2224 to 1179 with 240 seats and the region unchanged) |
+| 42292989122 | fda52ef | 4 (build) | wall-settle:61 (the wait's frames on its first call: content 1267 to 1179, 240 seats and the region unchanged; :213 rewritten passed) |
 
-Derived: appearances 4 + 4 + 3 + 4 + 3 + 1 + 4 + 1 + 0 + 3 + 2 + 1 + 2 = **32**; distinct tests **17** (want-list:739,
+Derived: appearances 4 + 4 + 3 + 4 + 3 + 1 + 4 + 1 + 0 + 3 + 2 + 1 + 2 + 1 = **33**; distinct tests **18** (wall-settle:61 joins) (want-list:739,
 want-list:849, pick-moods-157:154, wall-arrival-104:120, wall-route:234, record-band-43:33,
 roving-148:83, record-navigation:295, hold-160:111, hold-160:123, identity-cell:156,
 pick-moods-157:195, lineup-146:36, wall-route:162, wall-route:213, wall-settle:53,
@@ -53692,3 +53693,141 @@ clamp, min(target, limit), applied to nearView's target: route-view.test.ts hold
 with no writer competing, and the clamp is the platform's, which no test of ours can fail. The
 file 8 passed under dev; with identity-band-23, 12 passed against the build; typecheck 0, lint
 0 errors.
+
+## Q1 stored, three notes to regenerate, and the miss the queue file cannot catch (6 Nov)
+
+**Q1 stored by Adam: 43 of 43, so 53 of the 55 records now carry an ABOUT, and Q22's blocker is
+cleared.** Three notes to regenerate, not two: the two held back from the 45 (999's "Found Out
+Too Late", which is the 1999 CD's bonus track and not the 1980 LP's; The Doors' side one, which
+the note runs the wrong way, Alabama Song at A5 and Light My Fire closing at A6) and a third,
+The Ink Spots' Greatest (`dbcf97f0`), whose note names "a Deek Watson–led quartet" and rests
+its recommendation on that name; the coordinator could not confirm it and the record's own
+Discogs list points the other way, so the note is regenerated naming no leader, saying at most a
+later lineup working the original formula. Q47 holds the three; they are stored when they come
+back, same as the 43, by Adam.
+
+**The miss, recorded as the coordinator asked, because it is the gap QUEUE.md cannot close
+demonstrated within a day of saying it could not be tested.** Three notes were named in one
+message; none was given a queue row; one fell out one step later, between the fact-check and
+the queue, and was stored by mistake. The check over QUEUE.md holds ids unique, statuses valid
+and closures resolvable, and it cannot notice an item that was never written down, which is
+exactly what happened. The rule that follows is the one already at the top of the file and not
+kept: an item gets its row the moment it is raised. Q47's row was written before anything else
+in this entry.
+
+## Q6, Q7 and Q8 measured from the build, against the target's figures (6 Nov)
+
+**Q7, the 455px put back: measured 0 of 0 on ten runs, which agrees with where it should return.**
+The case as recorded on 31 Oct: 200 records at 1440 × 900, scrolled to the bottom, `collection-0`
+pulled and put back, once in three runs left 455px from where it began. Re-run 6 Nov on the build,
+`/wall/probe/labelled?count=200` at 1440 × 900 (the same synthetic wall), ten runs at one worker:
+began at (0, 530), the scroller's limit; pulled to (0, 34); back to (0, 530); delta (0, 0) ten
+times of ten. The target states no figure for it; the expectation is the pull's own, that a put
+back returns the wall to where it began, and the measurement agrees. **Checked against a build
+before: yes.** The 31 Oct reading was taken on production (docs/captures/pan-prod-30-oct, the
+window recorder's pan mode in a headed Chrome), which is a build; it was once in three and never
+reproduced, and ten clean runs today do not explain the one, they bound it: whatever it was, it
+is not reproducible on this build at one worker in ten tries. Closed as agreeing, with that
+sentence beside it; a put back that lands off its origin again reopens it with the trace.
+
+**Q8, the hold's bound: the figure exists, measured on production on 30 Oct, and the target
+states none to agree with.** `HOLD_BOUND_MS` is 2000, and the code says it is provisional, "a
+judgement of tolerance, not derived from the window's widest run". The target's words (§W.8):
+"One bound caps how long a held press waits, and it sits where reaching the record's page sooner
+serves the reader better than waiting for the pull", no figure. The measurement is Run A of the
+window recorder (`docs/measurements/window-160/run-a-2026-10-30T15-07-04-848Z.jsonl`, Adam's
+loads of the live wall, a build): the window's width by cell, median and widest, cold/none 31
+and 38ms (occurred in 8 of 20 loads), cold/fast-3g 508 and 732ms (20 of 20), warm/none 16ms (1
+of 20), warm/fast-3g 253 and 1267ms, warm/slow-3g 2663 and 16743ms, warm/slow-3g with a 4×
+CPU slowdown 2103 and 9716ms. **At a 2000ms bound, 42 of the 89 held presses would navigate
+instead of pulling**: all 20 at cold/fast-3g, 10 of 20 at warm/slow-3g, 12 of 20 at slow-3g
+with the slow CPU, none on a fast connection; at 1000ms, 59 of 89; at 4000ms, 30; at 12000ms,
+24. Checked against a build before: yes, this is it. So Q8 is not a figure that can agree or
+disagree with the target: the target states a tolerance and the code states 2000 as a
+provisional one, and the measured consequence of 2000 is 42 held presses in 89 navigating to
+the record's page rather than pulling, nearly all of them on a slow connection. That is the
+decision, and it is a judgement, Adam's or the coordinator's, with these numbers beside it.
+
+**Q47: the three notes regenerated under their constraints, grounded and checked (6 Nov; the file
+is `~/Downloads/ABOUT grounded samples, 2026-11-06.md`, to be stored by Adam).** A per-record
+constraint now rides into the prompt (`Grounding.constraints`, "FOR THIS RECORD IN PARTICULAR",
+`--note <id>=<text>` on the drafting script, two tests first), and the file prints what was
+asked under each note. 999: "Boys In The Gang and Trouble carry it", the bonus track gone, 535
+characters; the checker flags three, all the known shape, Guy Days not in the release's credits
+(the credits are the designer, the photographer and the producer, not the band) and Nick Cash
+and Guy Days read as tracks. **Rule 2's live test, as asked: run over the OLD wording with the
+same cached tracklist, it flags "Found Out Too Late — not on this release's tracklist; it is the
+artist's 1979 release".** It would have caught the stored note. The Doors: "Side one tightens
+as it goes, Alabama Song giving way to the seven-minute Light My Fire", the order right, 537
+characters; two flags, the debut claim marked unchecked against the Alabama Song single and
+"Sunset Strip" read as a track. The Ink Spots: "A later lineup working the original formula",
+no leader named, 543 characters, nothing the checker could read against. All three are Adam's to
+store with `--store` and the ids, as the 43 were.
+
+**CI run 42292989122 on fda52ef (:213 rewritten) at four workers from a build: GREEN WITH
+FLAKES, no failure, main green again.** Unit 4896 passed OK; mobile 390 passed, no flake,
+10.4m; chromium 1059 passed, 1 flaky, 1 skipped, 19.0m. wall-route:213 passed on its first
+attempt under its single-read claim. The one flake is the wait's own second test,
+wall-settle:61, and it is the frames again on the test's FIRST `settled()` call, before the test
+moved anything: "the region's scroll (307, 390) is not the landing's write (395, 390): at the
+write content 1267, seats 240; at this read content 1179, seats 240", the wall 88 narrower with
+the test's own seats unchanged, the collection shrinking under it. The wait's equality as a
+throwing assertion is what the remaining Q45 sites are ruled to take out (a diagnostic, not an
+assertion); until that unit, wall-settle:53 and :61 carry the flake for the whole family. The
+stream band: 248 chromium, 86 mobile.
+
+**Q6, measured on the real collection from the build (6 Nov; `e2e/sheet/figures-q6.sheet.ts`
+against a read-only `next start` on the production data, the session minted locally, 55
+records at 1440 × 1200, 1440 × 900, 390 × 844 and 1920 × 900; the file
+`docs/captures/figures-q6/field-disc-2026-11-06T21-23-05-016Z.jsonl`).** Every figure below is
+derived from that file; each target figure was stated on the 17-record collection and, as far
+as NOTES records, measured then under `next dev` on the real collection (step 63) or on the
+fixture (steps 65 and 66): none had been read against a build, and none since the collection
+became 55.
+
+| §55 states | measured 6 Nov, build, 55 records | reading |
+|---|---|---|
+| eleven fields draw at 1440 × 1200, all bound by the ink cap, aspects 2.76 to 3.79 : 1 | 39 of 55 draw, 38 bound by the cap and one (Break Out) by the stack; aspects 2.510 to 3.897 : 1; 16 suppressed | the count follows the collection (11 of 17, 39 of 55); the band is wider at both ends by 0.25 and 0.11; one record binds on the stack, which §55 did not foresee |
+| six draw at 1440 × 900 | 28 of 55 draw, 27 suppressed, 19 of the 27 by the gap term and not the cap | the count follows the collection; the GAP binds most of what is suppressed at 900, which §55 does not describe |
+| four fall past 4 : 1 and are suppressed: Grave New World, Wired, On The Radio, The Hurdy Gurdy Man | at 1200: Wired 5.14 (cap), On The Radio 7.05 (gap), The Hurdy Gurdy Man 8.72 (gap) suppressed; Grave New World is not in the collection's 55; at 900 The Hurdy Gurdy Man DRAWS at 3.486 : 1 | three of the four hold at 1200; one is gone; one of them draws at 900 |
+| Bitches Brew at 1440 × 900: 443 × 113.9, 3.89 : 1, reads as a low plane | at 1440 × 900 SUPPRESSED, the page's aspect 4.69, bound by the gap (94.4); at 1440 × 1200 drawn, 443.000 × 116.891, 3.790 : 1 | **disagrees at the stated window**: the field Adam judged as a low plane no longer draws at 900 |
+| Wired's 443 × 190 beside the sparsest construction outweighs its mark | suppressed at both windows, the page's aspect 5.14 by the cap (86.223) | agrees: suppressed |
+| the bounded Gaucho | drawn at both, 443.000 × 128.297, 3.453 : 1 | drawn and within the band |
+
+**The disagreement that matters, with both numbers: Bitches Brew is suppressed at 1440 × 900
+(the page's aspect 4.694 by the gap term, gap 94.4) where §55 states 443 × 113.9 at 3.89 : 1
+drawn, Adam's own judged case.** The likely cause is read, not proved: 19 of the 27 suppressions
+at 900 bind on the gap, the room between the title stack and the pressing block, and 53 of the
+55 records now carry an ABOUT note under the title, which the 17-record measurement had none
+of; a taller stack leaves a smaller gap. That is a product finding for the coordinator, not an
+adjustment: the rule works as written and the collection changed under its figures.
+
+**§60, the Images disc.** The target: sized against a stated reference, the same at every image
+count, varying with width, "about 160 where the height term binds, and smaller at 390". Measured:
+the disc's radius is two-thirds of its stated reference at every image count, 345.300 at 1440
+(reference 518, the box 690.656), 425.300 at 1920 (reference 638), 1 image or 11; at 390 it is
+caption-bound by §59, 56.000 at one and two images (the free height, 56) and 97.500 at three and
+more. So "the same at every image count" holds at 1440 and 1920 and not at 390, where §59's
+yield to the caption depends on the count, and **"about 160" does not describe the disc at any
+window: 345.300 at 1440.** Whether 160 was a radius, a visible height or a figure from the
+one-image rendering §60 replaced is not readable from the target; both numbers go to the
+coordinator.
+
+**Q2 to Q5, the bundle for Adam.** `~/Downloads/Q2 to Q5 for Adam, 6 Nov/` with `READ ME
+FIRST.md`, one decision line per item: Q2 the rail at 640 (rail-157.sheet, the real collection
+read-only, 1274 × 640 and 1440 × 640, at the top and scrolled to ADD RECORD); Q3 the far view
+(pick-far-156.sheet, the real collection, the band at 1044 and 1273 by 768 and 900, the column
+at 1440, with and without the answer, and the worst cases); Q4 the re-roll as a video at 1440 ×
+900 from the build (`e2e/capture/reroll-q4.capture.ts`, seeded pool of three; measured 3006ms
+from the second press to the next record settled, which includes the instrument's polling,
+against 2462 by the constants); Q5 the §62 covers group at 1440 × 900 and 390 from the build
+(covers-group-165.capture, three seeded covers, and the page after the shown one is deleted).
+All generated, nothing drawn.
+
+**A duplicate gate, dispatched by a chain that did not read its commit's status (6 Nov, 16:26).**
+The commit of Q47 was refused by the document suite (the governance test for specs that drive
+the record screen wanted the new sheet named, which it is now), and the chain went on to push,
+which had nothing to push, and to dispatch a gate on fda52ef, which was already gated: run
+42297220375, cancelled on reading. The lint slip's shape again, one step later in the chain: a
+chain reads each command's status before the next, or the next is not in the chain. The chains
+from here are joined with `&&` from the commit onward.

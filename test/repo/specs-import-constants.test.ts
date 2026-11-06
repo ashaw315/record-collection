@@ -119,6 +119,8 @@ const GOVERNED = [
   'e2e/sheet/collection-survey.sheet.ts',
   /* The five screens' survey reaches a record's edit form by its id. */
   'e2e/sheet/screens-survey.sheet.ts',
+  /* Q6 (6 Nov): the identity field's and the Images disc's marks on every record, from the build; its two 900s are NO_SCROLL_HEIGHT, imported, which this test caught on the first commit. */
+  'e2e/sheet/figures-q6.sheet.ts',
   /* The count of controls meeting 44 reaches the same form the same way. */
   'e2e/sheet/hit-44.sheet.ts',
   /* Step 128's captures open a record's page for its delete confirmation. */

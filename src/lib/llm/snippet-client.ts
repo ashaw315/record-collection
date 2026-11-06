@@ -146,6 +146,16 @@ export function buildSnippetPrompt(subject: SnippetSubject, grounding?: Groundin
           ].filter((line): line is string => line !== null),
           '',
         ];
+  /*
+    A record's own constraints (Q47, 6 Nov): three stored notes carried a claim the fact-check found false
+    or could not confirm, a bonus track named as on the LP, a side's order reversed, a group's leader named
+    with the recommendation resting on it. The catalogue's facts cannot carry such a correction, so the
+    regenerated note is told it here, verbatim, as an instruction and not a fact to recite.
+  */
+  const constraints =
+    grounding === undefined || grounding.constraints === undefined || grounding.constraints.length === 0
+      ? []
+      : ['FOR THIS RECORD IN PARTICULAR, from the collector’s own fact-check; follow each as written:', ...grounding.constraints.map((c) => `- ${c}`), ''];
   return [
     'Write a short note about a record in a collector’s collection.',
     '',
@@ -153,6 +163,7 @@ export function buildSnippetPrompt(subject: SnippetSubject, grounding?: Groundin
     `TITLE: ${subject.title}`,
     '',
     ...facts,
+    ...constraints,
     /* §33: written to fit ten lines of the record's frame; §34: 535 characters is the writing guide, not a limit. */
     'At most ten lines of a narrow column -- about 535 characters, and never much',
     'past it: what the record is, roughly when it landed, and why it matters. Write',
