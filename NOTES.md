@@ -53662,3 +53662,33 @@ read from both sides on three consecutive gates. The gate is red on :213 for the
 ruling named, and stays red until :213's claim is rewritten as ruled (the single-read claim
 derived from the rule, in the table above), which waits on the coordinator's word site by
 site. The stream band: 253 chromium, 87 mobile.
+
+## Q45, :213 first and alone; Q44's tolerance re-expressed (6 Nov, the coordinator's rulings)
+
+**Q44's e2e assertion was the lineup shape for an hour, and is the claim now.** identity-band-23:183
+pinned the rendered 558.766 at three decimals, a tolerance of 0.0005 against a value that snaps to
+1/64px, 0.015625, thirty times that: green only while the snap landed on that step. It asserts
+the ruling's figure now, `bandHeightAt(1000) − 48 − 1`, within 1/64, the snap stated as the
+snap and not a figure anyone chose; the render's 0.012 under the ruling is inside it wherever
+the snap lands. The helper's own test asserts the ruling's figure exactly, unchanged. 4 passed
+under dev, 4 against the build.
+
+**wall-route:213 rewritten as a single read over what the page owns.** The old claim measured
+the wall, widened the window by the excess, polled the fit, zoomed out and in, and read again;
+three gates read the collection moving across that window from both sides (883 wider; 2136 to
+2224; 2224 to 1179 with the test's own 240 seats unchanged). Now: seed 20, open, settled, zoom
+out, click the run, settled, ONE read: the landing consumed exactly once (before + 1), the view
+within the scroller's bounds on both axes, 0 to scrollWidth − clientWidth and 0 to scrollHeight
+− clientHeight, derived from the rule and not from a sample, and the addressed seat drawn. The
+widening, the 240 scenery seed and the fit precondition are gone with the claim that needed
+them. **Where "a wall that fits has no horizontal landing to make" lives now, and why not in
+one pass:** the coordinator asked for scroll, target and limit read together so the three agree
+whatever the collection did before. Read together they still compare two times: the scroll was
+written once at the landing and is never re-applied (§W.29, once only), and a target read now
+comes from a seat whose content position other workers' seeds have moved since, which is what
+the frames showed (the write (20, 1323), the read (0, 813), seats unchanged). So the three agree
+at one read only while the collection held still, and the claim reduces to the scroller's own
+clamp, min(target, limit), applied to nearView's target: route-view.test.ts holds the target
+with no writer competing, and the clamp is the platform's, which no test of ours can fail. The
+file 8 passed under dev; with identity-band-23, 12 passed against the build; typecheck 0, lint
+0 errors.
