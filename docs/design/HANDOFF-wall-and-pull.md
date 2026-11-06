@@ -101,7 +101,7 @@ The wall at rest is line, ink and paper; colour arrives with the pull. Everythin
 | §52 | The ink cap is taken at the construction’s minimum | Why a cap against the construction’s current size forks at every breakpoint, and why its minimum across widths does not; what that costs, and which records it suppresses. Withdrawn in part by §54. |
 | §53 | The About has one cell | Why the lower About row goes; what the cell carries at rest and while editing; where the by-line’s qualifier goes; the two figures needed before build. |
 | §54 | The record with no cover is ink, flat | Why §5.3 stands as written; why the opacity goes and the disc merging into the faces is accepted; which three marks the build omits and why that is the defect; why the tint field is not drawn. |
-| §55 | What the real collection confirms | Which fixture figures the real collection supersedes, confirms or has not reached, and why the images row is unruled for more than one image. |
+| §55 | What the real collection confirms | Which fixture figures the real collection supersedes, confirms or has not reached, and why the images row is unruled for more than one image. And a figure that names a record as a dated record, the rule it illustrates being what is asserted. |
 | §56 | The images row with more than one image | Why the quarter-disc is sized against the one-image section; why the images flow in one grid without group labels. Withdrawn in part by §60. |
 | §57 | Figures yield to type by size | Why §34’s test moves into the figure; why the Price history solo is sized below its entries rather than hidden or moved; why a ruling measured on data the collection lacks is unverified. Withdrawn in part by §58. |
 | §58 | The Price history solo sits beside its entries | Why the solo’s host is the summary column at every width, from a drawing. |
@@ -786,6 +786,25 @@ Its rows are in the governs table above, one per section; this section does not 
   - **Order:** land it with the shelf's reason line or before it.
   > The record page shows the tracklist and the credits, in one section of the lower region headed TRACKLIST, the tracks first, each by its position and title, and beneath them the credits, each by its name and role, with the companies among them by theirs.
 
+- **Unnumbered, for Code to number — §55: assert the field's rule, not its records.**
+  - **Replace** every test that asserts a named record's field size, or a count of drawn fields, with one assertion over every record at 1440 × 1200, 1440 × 900, 1920 × 900 and 390 × 844: each drawn field has an aspect of at most 4 : 1 and an area of at most the construction's minimum ink, and each suppressed field fails at least one.
+  - **Report** the tests removed by name.
+  > A figure that names a record is a record of one measurement, true of the collection and the build it was taken on, and is never asserted; what is asserted is the rule the figure illustrates, on whatever the collection holds.
+
+- **Unnumbered, for Code to number — §60: the disc at 390.**
+  - **Find** why the disc at 390 × 844 is 56.0 at one or two images and 97.5 at three or more, against §60's reference, which counts no tiles.
+  - **Make it one figure.** Report which term binds.
+  - **Assert** the disc is equal across image counts at every width tested.
+  - **Capture** a record with one image and one with several at 1440 × 900, 1920 × 900 and 390 × 844, for Adam to judge the size.
+  > The Images quarter-disc is sized against a stated reference height: the section’s heading, its padding and one tile row, with the cover note excluded at every count.
+
+- **Unnumbered, for Code to number — §W.8: the bound at a candidate.**
+  - **Measure** at 3000, 4000 and 6000ms on production, on the current collection.
+  - **For each figure,** report how many held presses would navigate. For each of those, compare when the record's page would have finished loading after navigating with when the pull would have landed.
+  - **Why the comparison:** the ruled basis is reaching the record's page sooner than the pull. On a slow connection the page load itself takes seconds, so a press that navigates may arrive later, not sooner.
+  - **No change to the bound's basis.** This is the instrument for the "sooner" it names.
+  > One bound caps how long a held press waits, and it sits where reaching the record’s page sooner serves the reader better than waiting for the pull.
+
 No step: §G.7. It rules nothing. Hover and focus wait on Code's second pass, the breakpoint is settled and recorded in §G.8, and the eyebrow repetition is an observation, not a ruling.
 
 No step: §P.1. It rules where the feature is ruled and which view presents an answer; what that means for the build is in the steps for §P.3 and §P.4.
@@ -831,7 +850,7 @@ The provisionals in force, for the note in Maintaining this file that a provisio
 - **§T.6 · where the fragment stops drawing.** "The control leaves less room, so the fragment may stop drawing at windows where it drew, which the step measures and reports." Unit 2's report did not give these windows, and Code folded the measurement into 3b. Closed by unit 3b: with the control and an answer in place the fragment draws from 1054 and at 1280, 1440 and 1920, and its draw condition is width alone. The sentence quoted here is withdrawn, `T.6/control-may-stop-fragment`.
 - **§P.5 · the control's fit in the rail as a column.** Closed by the moods step's measurement. At the rail's pitch the control doesn't fit at 900 tall, and the fit requirement is withdrawn (`P.5/control-must-fit`). The rail runs with the page, and ADD RECORD is reached by scrolling.
 - **§P.5 · the overflow at short windows.** "640 is provisional, for Adam to judge from a capture." Captured at 1274 by 640 and 1440 by 640, scrolled to the top and to ADD RECORD, labelled by host. If Adam judges it too far, a height condition on the shelf is §W's to rule. Returns from Adam's judgement of the moods step's captures. Open.
-- **§W.8 · the hold's bound.** "Its figure is provisional: Code sets beside each candidate how many loads would navigate, and Adam judges it." Returns from Run A's table. Open. Built was settled on 29 October. The ×1.5 basis is withdrawn by `W.8/bound-above-widest`.
+- **§W.8 · the hold's bound.** "Its figure is provisional: Code sets beside each candidate how many loads would navigate, and Adam judges it." Returns from the candidate step (6 Nov; until then from Run A's table). Open. Built was settled on 29 October. The ×1.5 basis is withdrawn by `W.8/bound-above-widest`.
 - **§W.8 · the held press's acknowledgement.** "Code proposes the acknowledgement's form in the wall's own vocabulary, with no spinner and no motion of its own, and proposes the delay from the run." Returns from the hold step's build, with captures taken from the build at a stated viewport. Open.
 - **§T.6 · the Discogs import on Manage.** Closed by step 159 (`docs/captures/import-159/`, at 1280 fine and 390 coarse: before a run, after with the report closed and open, and returned after leaving Manage). The placement is as ruled. Each of the four lines sits on the 44 line under both pointers, in the row names' type, and the four counts add up to the nine Discogs holds. The report survives a return beneath its run line. An open list's entries clear contrast. The open glyph is §T.1's −, not a dash character. Step 158's underlines were the resting pointer, and 159 clears pointer and focus before every capture and shows none. The 97.5 before a run is the reserved failure slot.
 - **§W.8 · a pull before its cover arrives.** "The pending field's look, and how often a pull lands on it, are provisional until built and captured on a slow connection." Returns from the covers step. Open.
@@ -845,6 +864,7 @@ The provisionals in force, for the note in Maintaining this file that a provisio
 - **§W.24 · the shelf's reason on the pull.** "Where in the facts the line stands, and how it reads, are provisional until built and captured." Returns from the search step. Open.
 - **§T.3 · the reason line.** "The line's wording, where it stands in the row and the cell, and whether it moves what follows are provisional until built and captured at 1280 and 390." Returns from the reason step. Open.
 - **§65 · the tracklist section.** "How it reads at 32 tracks, whether the tracks take two columns where the span is wide, and whether the credits start folded, are all provisional until built and captured at 1440 × 900 and at 390, on the longest and the shortest tracklist in the collection." Returns from the tracklist step. Open.
+- **§60 · the disc at the reference's size.** "How it reads at that size is provisional until captured and judged." Returns from the disc step. Open.
 
 ## Findings for screens without a pass
 

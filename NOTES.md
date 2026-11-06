@@ -52753,6 +52753,7 @@ table wins.
 | 42281210779 | 20e79a8 | 4 (build) | wall-route:213 (the wait's frames: content 2224 to 2204 with the region and the filtered seats unchanged, the scroll (20, 1323) to (0, 813)) |
 | 42283660959 | 116aec7 | 4 (build) | wall-route:213 (failed, both attempts: the wall 1341 to 2136 and 2136 to 2224 across the round-trip), wall-settle:53 (the wait's frames: content 2224 to 1179 with 240 seats and the region unchanged) |
 | 42292989122 | fda52ef | 4 (build) | wall-settle:61 (the wait's frames on its first call: content 1267 to 1179, 240 seats and the region unchanged; :213 rewritten passed) |
+| 42299055762 | 4ece9b6 | 4 (build) | none: unit 4900 passed, 2 skipped; chromium 1060 passed, 1 skipped, 21.4m; mobile 390 passed, 4 skipped, 10.4m; no flaky line in any job's log (Q47 and the tools; :213 single-read passed again) |
 
 Derived: appearances 4 + 4 + 3 + 4 + 3 + 1 + 4 + 1 + 0 + 3 + 2 + 1 + 2 + 1 = **33**; distinct tests **18** (wall-settle:61 joins) (want-list:739,
 want-list:849, pick-moods-157:154, wall-arrival-104:120, wall-route:234, record-band-43:33,
@@ -53831,3 +53832,175 @@ which had nothing to push, and to dispatch a gate on fda52ef, which was already 
 42297220375, cancelled on reading. The lint slip's shape again, one step later in the chain: a
 chain reads each command's status before the next, or the next is not in the chain. The chains
 from here are joined with `&&` from the commit onward.
+
+## 6 Nov, 16:50: Q6 to Q8 ruled, and the chain's third occurrence named as a family member
+
+**Q7 closed** by the coordinator; nothing owed. **Q6 held open with Design:** §55's figures
+were stated at 17 records and describe data that no longer exists, so they are not reconciled
+and nothing is built against §55 until Design says whether its figures are rules or examples.
+§60's "about 160" goes to Design as a clean disagreement with the build's numbers. **Q8 goes to
+Design as evidence,** not a measurement to settle: the target names no bound and nobody here
+invents one.
+
+**The Hurdy Gurdy Man against the trend, chased from the JSONL and not fixed.** The taller
+window draws more fields overall (39 of 55 at 1440 × 1200 against 28 at 900) and this one record
+runs the other way: suppressed at 1200, drawn at 900. The three terms at each window, from
+`docs/captures/figures-q6/field-disc-2026-11-06T21-23-05-016Z.jsonl`:
+
+| window | cap | stack | gap | term | aspect | state |
+|---|---|---|---|---|---|---|
+| 1440 × 1200 | 127.173 | 517.2 | 50.8 | gap | 8.72 | suppressed |
+| 1440 × 900 | 127.173 | 175.3 | 210.7 | cap | 3.48 | drawn |
+
+The cap is the server's and identical. The stack is by construction the title and artist
+heights at the pair the ladder chose (`TitleStep.tsx:195`), so 517.2 against 175.3 says the
+ladder chose a larger pair at the taller window; that pair's demand consumes the supply, the
+gap it leaves is 50.8, and the gap is the smallest term, past 4 : 1. At 900 the smaller pair
+leaves a gap of 210.7 and the cap sets the height. **The term that differs is the chosen pair,
+not a computation:** every term is computed the same way at both windows, and this is not the
+bandHeightAt family. Gaucho, for comparison, keeps its pair at both windows (stack 178.8) and
+its gap grows with the window (207.2 to 389.2), which is the trend. Whether a ladder that takes
+a larger title and loses the field is the ruling is §49 to §52's question and Design's.
+
+**The disc, confirmed for Design from the JSONL:** at 1440 (either height) one radius, 345.300,
+across all eight image counts present (1, 2, 3, 4, 5, 6, 10, 11); at 1920 one radius, 425.300,
+across the same eight; at 390 two, 56.000 at one or two images (37 records) and 97.500 from
+three up (18 records). So at 1440 and 1920 the count makes no difference and at 390 it does.
+
+**Q8's figure, said plainly in the row:** at a 2000ms bound, 42 of 89 held presses on production
+would navigate, from Run A on 30 October; Run A's weigh counted 43 covers and the collection is
+55 records now with the ABOUT notes landed, so it is an order of magnitude, not a current reading.
+
+**The chain, third occurrence, the same family member as ci-gate.sh (the coordinator, 6 Nov).**
+One: two refusals piped through `tail`, exit codes lost (4 Nov). Two: lint errors printed and
+pushed anyway (6 Nov, morning). Three: push and dispatch not guarded on the commit's status, a
+duplicate gate on fda52ef cancelled by hand (6 Nov, afternoon). Each fix was to that chain, and
+each next chain was assembled fresh by hand and free to omit the guard. The family member is the
+one named for ci-gate.sh: **a guard that is present, correct, and not on the path**, except
+that here the path is assembled fresh each time, which is why it keeps happening. The
+structural fix is ci-gate.sh's: commit, push and dispatch become one script with the guards
+inside it, so typing the steps individually is what becomes impossible rather than what
+becomes discouraged. Proposed to the coordinator with what it touches, below; not built.
+
+**The proposal: `scripts/ship.sh`, the unit's last commit, push and dispatch as one script.**
+`scripts/ship.sh -m "message" [--workers N] path [path...]`. Inside it, in order, each step
+reached only on the previous one's own exit status, `set -euo pipefail`, no pipe to `tail`
+anywhere: (1) `scripts/commit-checked.sh -m … paths`, which keeps every guard it has (the unread
+refusal marker, nothing staged beforehand, lint and typecheck by status, the judged suite); a
+refusal ends the script with commit-checked's status and its log's path printed, nothing pushed,
+nothing dispatched; (2) `git push origin HEAD`, whose failure ends the script with nothing
+dispatched; (3) `scripts/ci-gate.sh HEAD N`, which keeps the full-id and on-a-remote-branch
+refusals; (4) the run id, read from `gh run list` with the dispatched id matched against
+`headSha`, printed as the last line so a watcher takes it from the script and not from a list
+typed by hand (the duplicate on fda52ef was found by the list, not by the chain). The script
+owns the sequence, so there is no second place to type it: NOTES-only commits still go through
+`commit-checked.sh` alone and ride with the next unit, which is unchanged, and `ci-gate.sh` stays
+callable for a gate on request. What it touches: `scripts/ship.sh`, new; `test/repo/ship.test.ts`,
+new, under the document suite by its directory, a temp repo with a bare remote and stub
+`commit-checked.sh` and `ci-gate.sh` beside the script recording their arguments, four tests
+each watched failing: a refused commit pushes nothing and dispatches nothing and exits with the
+refusal's status; a failed push dispatches nothing; a green commit pushes the id and dispatches
+that id with the worker count; the printed run id is the one whose `headSha` matches, not the
+first row. CLAUDE.md §10's items 1 to 3 would then say the unit's last commit goes through
+`ship.sh`, on the coordinator's words; the memory note on pushing per unit follows. Not built
+until the coordinator says.
+
+## 6 Nov, 17:35: gate 42299055762 green; Q45's :162 and wall-arrival-104 sites to the pure function
+
+**Gate 42299055762 on 4ece9b6, four workers from a build: green, no flake.** Unit 4900 passed, 2
+skipped; chromium 1060 passed, 1 skipped, 21.4m; mobile 390 passed, 4 skipped, 10.4m. The three
+job logs judged through `readRunResult` after stripping gh's per-line job, step and timestamp
+prefix (the judge's summary-line pattern anchors at the line's start, and `gh run view --log`
+prefixes every line; unstripped, all three read "no summary line found"): unit OK; the two
+Playwright halves "1060 passed, 1 skipped" and "390 passed, 4 skipped" with the ledger ABSENT,
+which is CI's shape (the workflow names its reporter on the command line, so the local ledger
+reporter never runs) and not this run's. The counts are the finding; the table has the row, 33
+appearances, 18 distinct, unchanged.
+
+**Q45, the second unit: :162 and wall-arrival-104 :146/:156, option 1 applied.** Step level:
+route-view.test.ts 11 passed; wall-route, wall-arrival-104 and wall-settle on chromium under
+dev, 15 passed then wall-arrival-104 6 passed after its second build (below); the mobile project
+matches none of the three files; typecheck, lint (0 errors, 3 warnings, all pre-existing in
+check-index.mjs and Section.tsx), build. Load 8.6 to 12 during the e2e runs, this unit alone.
+
+- **The landing's write now carries the seat it was made for** (`recordLandingWrite(el, write,
+  seat.id)`, both branches). The page's own fact at the write: which seat the landing addressed.
+  The seat's box against the region's was a reading of a layout the collection sizes.
+- **wall-route:161's test** reads once and asserts: landings 1; the write names `ids[0]`, the
+  run's first seat (§W.28), and is landing 1's; the seat drawn; the scroll within the scroller's
+  bounds. Watched failing first: "Expected e957d5ad…, Received undefined", the recorder without
+  the seat. The seat-at-the-left, top-uncut and useful-half claims were already
+  route-view.test.ts's (:162, :139, :174); the one it lacked, **the addressed seat inside the
+  clamped view ACROSS**, was a `void Math.min(…)` beside the vertical assertion, and now asserts
+  both axes at 17, 200 and 400 seats. Watched failing against a staged break of
+  `nearView`'s return (`left + _region.width`): "n=200 seat r50 left inside: expected -129.904 to
+  be ≥ -99".
+- **wall-arrival-104:121's test** keeps `inRegion(first)` (one read, ruled to stay) and drops the
+  two scroll comparisons with the open and the `toEqual(start.scroll)` after the clear. At each
+  read the page asserts what it owns: the write is landing 1's, its seat is in this document
+  (`[data-seat]` or `[data-footprint]`), and `__arrival` is `applied` (§W.29). "Down, not
+  sideways" is now route-view.test.ts's: under a filter whose first match is on a lower shelf,
+  the arrival's view is straight down from the unfiltered one's by the row pitch per shelf.
+- **The first build of that assertion was wrong and the page said so.** It asserted the write
+  names the first match's own id; the page answered with another id: the HEAD of the match's
+  shelf, a footprint, which is exactly route-view.ts:64's rule and route-view.test.ts:81's claim.
+  The e2e read had never asserted which seat, only that the match's shelf was framed, so nothing
+  had said it before. Rewritten to the owned facts above.
+- **The new pure test passed first time and its staged break did not fail it:** with matches
+  r50 to r52, r50 is a shelf's head at this width (50 to a shelf), so an `arrivalSeat` returning
+  the match itself gave the same seat and "not sideways" held by accident. The precondition is
+  now asserted (the match sits along its shelf, not at its head) and the matches are r55 to r57;
+  the same break then fails it: "not sideways: expected -90.292 to be close to -163.904".
+  CLAUDE.md §2's fourth variant, a precondition silently satisfied, caught by the staged break
+  and not by the green.
+- **Why no within-the-limit assertion on the write.** The write is `el.scrollLeft` read back
+  after `writeView`, which the scroller has already clamped, so "the write was within the limit
+  at the write" is the platform's and no test of ours can fail it; the same answer is owed for
+  the wait's equality and is given with that unit.
+
+**What the diff carries that this unit did not touch:** `docs/design/Record Detail 8a - build
+target.dc.html` is modified in the tree and is not this unit's; left out of the commit and
+reported.
+
+## 6 Nov, 17:50: a Design drop in the tree at 17:25, taken in; it refused the unit's commit first
+
+**How it was found:** the Q45 unit's commit was refused by the document suite (index assertion 7,
+two declared withdrawal sentences unquoted in §51 and §55 of the 8a target; three test files that
+run the index failed with it), and `git diff --stat` showed `Record Detail 8a - build
+target.dc.html` modified at 17:25, during this unit's e2e runs, by nothing this session ran. The
+drop was not relayed and did not arrive through the handoff; the channel that wrote it into the
+tree is not known here, and the coordinator is asked. First command on it, `scripts/drop-ref.mjs`:
+captured as `refs/drops/2026-11-06-01` at 17:36:09, differing from 2026-11-05-01 in three files:
+the handoff (the §65 lines, already in HEAD since fcab6ed), the 8a target, and a new file,
+`docs/design/Rules not snapshots - for Code to apply.md`, a change file of five prose changes
+anchored on the fcab6ed exports. The sentence-level report is in the scratchpad and relayed in
+the report to the coordinator.
+
+**What the target now says (the drop-ref report, the 8a target's added sentences):** §43 defines
+first paint as the first frame with the page's stylesheets applied, fonts or not, and asks Code
+which of the two record-band-43:33 caught (no entry: nothing was ruled there before); §51
+withdraws within itself Bitches Brew's field standing at 113.9 at 1440 × 900 (on 55 records it is
+suppressed there by §50's aspect bound, the rule working); §55 withdraws within itself every
+per-record figure as a claim, 17 records then and 55 now, the build unknown, a figure naming a
+record a dated record and the rule the thing asserted, with Code to assert §50's two bounds over
+every record at the four windows; §60 states the disc is the same at every count at every width,
+390 included, so 56.0 and 97.5 at 390 by count is a defect against the section, and the disc at
+the reference's size is provisional until captured.
+
+**The five changes applied as written, with one fact corrected and flagged.** WITHDRAWALS.md
+gained `51/bitches-brew-stands` and `55/figures-as-claims` before `63/arrow-subset`;
+DESIGN-RULES.md the bullet on figures that name a record; the handoff three unnumbered steps
+before "No step: §G.7." (§55 assert the rule not its records; §60 the disc at 390; §W.8 the bound
+at a candidate), the §60 provisional, the §W.8 bound's figure line returning from the candidate
+step, and §55's governs row appended; `scripts/handoff-unbuilt.json` three entries with evidence
+from this session's measurements. **The correction:** Design's §51 entry read "Build: did not
+follow it". The page follows §50's rule, as measured; but `e2e/title-ladder-45.spec.ts:192`
+holds the figure, GAP_UNDER_CAP naming Bitches Brew drawn at its gap at 1440 × 900, on the
+seventeen fixture, with GAP_FAILS_CAP naming The Hurdy Gurdy Man, Grave New World and On The
+Radio. The entry's Build line now says so, marked as Code's on intake. That table is what the
+new §55 step replaces; the unbuilt entry names it. Over-filing costs nothing; a Build line that
+says a test does not exist when it does is the kind of claim this file exists to stop.
+
+**Intake:** after the entries, assertion 6 refused as comment-stale, `scripts/derive-withdrawals.mjs`
+rewrote the comment (263 entries), then `node scripts/apply-code-region.mjs`: code region 55
+already present, index 14 PASS of 14, the document suite 781 passed, INTAKE OK.
