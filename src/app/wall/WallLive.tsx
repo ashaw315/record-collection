@@ -133,6 +133,16 @@ export function WallLive({
    * what it sees MATCHES that intent — see `onScroll`.
    */
   const landingWriteRef = useRef<{ left: number; top: number } | null>(null);
+  /*
+    The landing's write, beside `__landings`, for the specs' wait (e2e/wall-settle.ts, Q45, 6 Nov): the count says a
+    landing was consumed, the mark says the wall is landed, and neither says where the view was written. On run
+    42243942847 a wait holding on those two returned on a landing a row off and nothing in it could say which side
+    was wrong. Recorded on either branch, the arrival applied or the person's scroll kept, with the count it belongs to.
+  */
+  const recordLandingWrite = (write: { left: number; top: number }) => {
+    const w = window as unknown as { __landings?: number; __landingWrite?: { left: number; top: number; landings: number } };
+    w.__landingWrite = { ...write, landings: w.__landings ?? 0 };
+  };
   /* §W.29: the desktop opens near and ARRIVES on the occupied shelf, through the same landing a zoom-in uses. */
   const arrived = useRef(false);
   /* §W.29: whether the pending landing is the arrival's, the one a person's scroll wins over; a zoom-in's or a filter's is their own act. */
@@ -316,6 +326,7 @@ export function WallLive({
             el.scrollLeft += dx;
             el.scrollTop += dy;
             landingWriteRef.current = { left: Math.round(el.scrollLeft), top: Math.round(el.scrollTop) };
+            recordLandingWrite(landingWriteRef.current);
             (window as unknown as { __arrival?: string }).__arrival = 'skipped';
             originRef.current = [frameX, frameY];
             viewNowRef.current = readView(el, [frameX, frameY]);
@@ -344,6 +355,7 @@ if (offset !== null) offset.style.transform = '';
         writeView(el, [frameX, frameY], target);
         /* What this write actually landed on, clamped: the listener ignores exactly this and nothing else. */
         landingWriteRef.current = { left: Math.round(el.scrollLeft), top: Math.round(el.scrollTop) };
+        recordLandingWrite(landingWriteRef.current);
         originRef.current = [frameX, frameY];
         /* Clamped by the scroller: near the wall's left or top edge the region cannot pan that far. */
         viewNowRef.current = readView(el, [frameX, frameY]);
