@@ -52751,8 +52751,9 @@ table wins.
 | 42268956664 | ffa709a | 4 (build) | wall-route:213 (failed on fits, the wait satisfied), wall-settle:53 (failed, named by the wait), want-list:1086 (m) |
 | 42273938707 | 169ce12 | 4 (build) | wall-route:162, wall-route:213 (the wait's frames: the wall 883 wider between two reads); mobile 390 passed, no flake, the suite 8.3m inside a 77-minute job, 68 of them in `playwright install --with-deps webkit` |
 | 42281210779 | 20e79a8 | 4 (build) | wall-route:213 (the wait's frames: content 2224 to 2204 with the region and the filtered seats unchanged, the scroll (20, 1323) to (0, 813)) |
+| 42283660959 | 116aec7 | 4 (build) | wall-route:213 (failed, both attempts: the wall 1341 to 2136 and 2136 to 2224 across the round-trip), wall-settle:53 (the wait's frames: content 2224 to 1179 with 240 seats and the region unchanged) |
 
-Derived: appearances 4 + 4 + 3 + 4 + 3 + 1 + 4 + 1 + 0 + 3 + 2 + 1 = **30**; distinct tests **17** (want-list:739,
+Derived: appearances 4 + 4 + 3 + 4 + 3 + 1 + 4 + 1 + 0 + 3 + 2 + 1 + 2 = **32**; distinct tests **17** (want-list:739,
 want-list:849, pick-moods-157:154, wall-arrival-104:120, wall-route:234, record-band-43:33,
 roving-148:83, record-navigation:295, hold-160:111, hold-160:123, identity-cell:156,
 pick-moods-157:195, lineup-146:36, wall-route:162, wall-route:213, wall-settle:53,
@@ -53646,3 +53647,18 @@ time. A runner-side stall in the browser's download or its apt dependencies, not
 four workers against a build, and not in anything of ours: the suite that followed it ran at
 its usual pace with no flake. So the first such job is not the first such hang; the table says
 so, and the rule for the next long job is to read its step timings before calling it anything.
+
+**CI run 42283660959 on 116aec7 (Q44 and the lint gate) at four workers from a build: NOT OK
+on chromium, 1 failed.** Unit 4896 passed, 2 skipped, OK, the lint gate's test and Q44's among
+them; mobile 390 passed, no flake, 10.2m; chromium 1058 passed, 1 failed, 1 flaky, 1 skipped,
+17.8m. **Q44 holds under the build: identity-band-23 and identity-band-holds passed.** The
+failure is wall-route:213 on both attempts and the flake wall-settle:53, and the wait's frames
+say the same thing for the third run running: :213 read "content 1341, region 872" before the
+round-trip and "content 2136, region 1409" after, then on the retry "2136, 872" to "2224,
+2204", the wall growing by other workers' seeds between the test's two reads; :53 read "at the
+write content 2224, seats 240; at this read content 1179, seats 240", the wall halving with the
+test's own seats unchanged, other workers' cleanup. The collection moving under a §W.12 wall,
+read from both sides on three consecutive gates. The gate is red on :213 for the reason the
+ruling named, and stays red until :213's claim is rewritten as ruled (the single-read claim
+derived from the rule, in the table above), which waits on the coordinator's word site by
+site. The stream band: 253 chromium, 87 mobile.
