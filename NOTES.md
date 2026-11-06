@@ -53331,3 +53331,31 @@ close in eight attempts and the snapshots' xmax advanced by 11, 10, 14, 4, 7, 11
 across the windows, a write transaction every 200 to 700ms from four workers for the 24 seconds
 the attempts took. The mechanism refused to compare two collections and said why; the test that
 needed a quiet window could not have one, and now needs none.
+
+## Q20: `scripts/check-design-card.mjs`, the hand checks as one report (6 Nov)
+
+**Built to spec B (the coordinator, 5 Nov): a report, never a refusal, not in ASSERTIONS-spec.**
+One card, an optional change file, and the previous card, which defaults to the newest drop under
+refs/drops holding the same file (drop-ref.mjs keeps them). Seven readings: strong opens and
+closes and the deepest nesting, with the lines where a strong opened inside another; doctype and
+`</html>` as the last thing in the file; the declared withdrawal sentences by withdrawals.mjs's
+own reader (a quoted example left out) and any standing twice; the change file's quotes, curly
+or straight quotation marks and each blockquote as a ruling, matched character for character
+against the card's decoded, collapsed prose with the marks as written, and for one that fails,
+whether straightening every apostrophe and quote mark on both sides would have matched, which
+is the mismatch the match exists to catch; and the bold-sentence set diff, added and removed,
+with a sentence that only moved in neither. Exit 0 whatever it finds; the foot says what it is.
+Tests first, `test/repo/check-design-card.test.ts`, 15 on fixtures each built to carry its
+defect and one command test on the real 8a card, run before the script existed ("Cannot find
+module"), then 15 passed; typecheck 0, lint 0. The test joins the document suite, a change to
+the commit path's test set, so a gate: CI on the push.
+
+**Run over the real cards.** `Record Detail 8a - build target.dc.html` with `Tracklist and
+credits - for Code to apply.md` and refs/drops/2026-11-05-01 as the previous: strong 1018 and
+1018, deepest 1; doctype and closing present; 85 withdrawal sentences, none twice; 4 quotes, 1
+ruling, the ruling carried, 2 quotations not in the card, "does the record page show the
+tracklist and the credits?" and "No step: §G.7.", both quotes of other documents (the question
+the change file answers, a handoff line it addresses), which the report states as not in the
+card and leaves to the reader, as a reading aid should; bold sentences added 0, removed 0 since
+the drop. `Mood Pick - build target.dc.html` alone: 64 and 64, 16 withdrawal sentences, none
+twice, nothing changed in bold since the drop.
