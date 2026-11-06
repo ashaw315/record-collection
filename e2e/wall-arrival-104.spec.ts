@@ -2,7 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist, trackCreated } from './cleanup';
 import { login } from './sign-in';
 import { pointerIs } from './hit-area';
-import { settled } from './wall-settle';
+import { settled, type LandingWrite } from './wall-settle';
 
 registerCleanup();
 
@@ -87,6 +87,23 @@ const read = (page: Page, ids: string[]) =>
   }, ids);
 
 type Read = Awaited<ReturnType<typeof read>>;
+
+/**
+ * What the page owns about its landing at one read (Q45, option 1, 6 Nov): the write, with the count and the
+ * seat it was made for; whether that seat is in THIS document; and which way the arrival went (§W.29). Which
+ * seat the arrival names on a layout is the pure function's claim (route-view.test.ts: the first MATCHING
+ * shelf's first seat under a filter, the first occupied shelf's unfiltered), and the layout is the collection's.
+ */
+const landed = (page: Page) =>
+  page.evaluate(() => {
+    const w = window as unknown as { __landingWrite?: LandingWrite; __arrival?: string };
+    const write = w.__landingWrite ?? null;
+    return {
+      write,
+      present: write === null ? false : document.querySelector(`[data-seat="${write.seat}"], [data-footprint="${write.seat}"]`) !== null,
+      arrival: w.__arrival ?? null,
+    };
+  });
 /** The seat's shelf is the one in the region: its spine within the region's height and its top face uncut. Across is the shelf's own placing, read apart. */
 const inRegion = (m: Read, index: number) => {
   const s = m.seats[index];
@@ -121,7 +138,6 @@ test('under a filter the near view arrives on the first matching record’s shel
 test('a search applied while the near view is open moves it to the first match, and clearing it returns to the unfiltered arrival', async ({ page }) => {
   const f = await seed(page);
   await near(page, '/');
-  const start = await read(page, f.ids);
   /*
     Read once each landing is consumed and the region still, by the wall's
     own count (`wall-settle.ts`), not after a clock. The 900ms this replaces
@@ -147,14 +163,34 @@ test('a search applied while the near view is open moves it to the first match, 
   const m = await read(page, f.ids);
   const first = [...m.seats].sort((a, b) => a.order - b.order)[0];
   expect(inRegion(m, m.seats.indexOf(first)), 'the first match’s shelf is the one framed').toBe(true);
-  expect(m.scroll.top, 'and the wall has moved down to it').toBeGreaterThan(start.scroll.top);
-  expect(m.scroll.left, 'and not sideways').toBe(start.scroll.left);
+  /*
+    "Moved down to it, and not sideways" compared this read's scroll with the open's, two documents apart, over
+    a wall the whole collection sizes (§W.12) and another worker can resize between them (Q45, option 1, 6 Nov).
+    The direction is the arrival's pure function's claim and route-view.test.ts holds it, as it holds that the
+    seat the arrival names is the head of the first match's shelf (a footprint here, not the match: the first
+    build of this asserted the match's own id and the page answered with the shelf's head). Here the page says
+    what it owns at this read.
+  */
+  const searched = await landed(page);
+  expect(searched.write?.landings, 'the landing consumed is the write’s').toBe(1);
+  expect(searched.present, 'written for a seat of this document, not the last one’s').toBe(true);
+  expect(searched.arrival, 'and it was the arrival, applied (§W.29)').toBe('applied');
 
   await page.locator('#rail-search').fill('');
   await page.locator('#rail-search').press('Enter');
   await expect(page.locator('[data-footprint]')).toHaveCount(0, { timeout: 15_000 });
   await settled(page, 1);
-  expect((await read(page, f.ids)).scroll, 'cleared, it is back where the unfiltered wall arrives').toEqual(start.scroll);
+  /*
+    Back where the unfiltered wall arrives: "toEqual(start.scroll)" compared two documents' scrolls across the
+    window the collection moves in. The unfiltered arrival's seat on a layout is route-view.test.ts's (the first
+    occupied shelf's first seat); which record that is at the read is the collection's, since another worker's
+    artist can sort before it between the write and the read. Owned here: no footprint stands, the landing
+    consumed is the write's, its seat is of this document, and the arrival was applied.
+  */
+  const cleared = await landed(page);
+  expect(cleared.write?.landings, 'cleared, the landing consumed is the write’s').toBe(1);
+  expect(cleared.present, 'written for a seat of this document').toBe(true);
+  expect(cleared.arrival, 'and it was the arrival, applied (§W.29)').toBe('applied');
 });
 
 /*

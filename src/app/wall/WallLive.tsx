@@ -316,7 +316,7 @@ export function WallLive({
             el.scrollLeft += dx;
             el.scrollTop += dy;
             landingWriteRef.current = { left: Math.round(el.scrollLeft), top: Math.round(el.scrollTop) };
-            recordLandingWrite(el, landingWriteRef.current);
+            recordLandingWrite(el, landingWriteRef.current, seat.id);
             (window as unknown as { __arrival?: string }).__arrival = 'skipped';
             originRef.current = [frameX, frameY];
             viewNowRef.current = readView(el, [frameX, frameY]);
@@ -345,7 +345,7 @@ if (offset !== null) offset.style.transform = '';
         writeView(el, [frameX, frameY], target);
         /* What this write actually landed on, clamped: the listener ignores exactly this and nothing else. */
         landingWriteRef.current = { left: Math.round(el.scrollLeft), top: Math.round(el.scrollTop) };
-        recordLandingWrite(el, landingWriteRef.current);
+        recordLandingWrite(el, landingWriteRef.current, seat.id);
         originRef.current = [frameX, frameY];
         /* Clamped by the scroller: near the wall's left or top edge the region cannot pan that far. */
         viewNowRef.current = readView(el, [frameX, frameY]);
@@ -705,9 +705,11 @@ if (offset !== null) offset.style.transform = '';
   to and the frame it was made against (the content's width, the region's, the seats drawn), so a later clamp can
   be told from a later widening: run 42268956664 read 329 then 307 and could not say which moved. A module-level
   function, not one made in render: a closure created in the component that writes outside React is what the
-  compiler's lint refuses, and it was right to.
+  compiler's lint refuses, and it was right to. The SEAT the write was made for is in it too (Q45, option 1):
+  a spec asserts over what the page owns at one read, and which seat the landing addressed is the page's own
+  fact at the write, where the seat's box against the region's is a reading of a layout the collection moves.
 */
-function recordLandingWrite(el: HTMLElement, write: { left: number; top: number }): void {
-  const w = window as unknown as { __landings?: number; __landingWrite?: { left: number; top: number; landings: number; scrollWidth: number; clientWidth: number; seats: number } };
-  w.__landingWrite = { ...write, landings: w.__landings ?? 0, scrollWidth: el.scrollWidth, clientWidth: el.clientWidth, seats: el.querySelectorAll('[data-seat]').length };
+function recordLandingWrite(el: HTMLElement, write: { left: number; top: number }, seat: string): void {
+  const w = window as unknown as { __landings?: number; __landingWrite?: { left: number; top: number; seat: string; landings: number; scrollWidth: number; clientWidth: number; seats: number } };
+  w.__landingWrite = { ...write, seat, landings: w.__landings ?? 0, scrollWidth: el.scrollWidth, clientWidth: el.clientWidth, seats: el.querySelectorAll('[data-seat]').length };
 }

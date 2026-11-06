@@ -3,7 +3,7 @@ import { registerCleanup, trackArtist } from './cleanup';
 import { seedRecords } from './seed';
 import { login } from './sign-in';
 import { clickSpine } from './wall-ready';
-import { landings, settled } from './wall-settle';
+import { landings, settled, type LandingWrite } from './wall-settle';
 
 registerCleanup();
 
@@ -177,36 +177,40 @@ test('clicking a run lands the near view on that run’s first seat, by the rule
   /* Read once the landing has settled: the frame grows once the region is measured, and the landing's count is what proves it was not undone. */
   await settled(page, 1);
 
+  /*
+    One read, of what the page owns at it (Q45, option 1, 6 Nov): the landing's own write, which carries the seat
+    it was made for and the count it belongs to; the count; the scroller's bounds at this read; the seat drawn.
+    Until 6 Nov this read the seat's and its shelf's boxes against the region's, which is geometry on a layout
+    the whole collection sizes (§W.12), and at four workers the collection moved between the landing's write and
+    the read: run 42243942847 read the top face's y at -190 where ≥ 52 was asserted. Those are the pure
+    function's claims and route-view.test.ts holds them: the seat at the region's left, the shelf's top uncut,
+    the useful half after the seat, and the addressed seat inside the clamped view on both axes at every
+    collection size.
+  */
   const landed = await page.evaluate((id) => {
     const el = document.querySelector('[data-region="wall"]') as HTMLElement | null;
-    const rect = (q: string) => { const r = document.querySelector(q)?.getBoundingClientRect(); return r ? { left: r.left, top: r.top, right: r.right, bottom: r.bottom } : null; };
+    const w = window as unknown as { __landings?: number; __landingWrite?: LandingWrite };
     return {
       scrollLeft: el === null ? null : Math.round(el.scrollLeft),
       scrollTop: el === null ? null : Math.round(el.scrollTop),
       limitX: el === null ? null : el.scrollWidth - el.clientWidth,
       limitY: el === null ? null : el.scrollHeight - el.clientHeight,
-      landings: (window as unknown as { __landings?: number }).__landings,
-      region: rect('[data-region="wall"]'),
-      seat: rect(`[data-seat="${id}"] [data-spine]`),
-      shelf: rect(`[data-seat="${id}"] [data-face="top"]`),
+      landings: w.__landings,
+      write: w.__landingWrite ?? null,
+      drawn: document.querySelector(`[data-seat="${id}"] [data-spine]`) !== null,
     };
   }, ids[0]);
 
   expect(landed.landings, 'the landing is applied exactly once').toBe(1);
+  /* §W.28: the run is the click target, and the run's FIRST seat is the one the landing was written for. */
+  expect(landed.write?.seat, 'the landing’s write names the run’s first seat').toBe(ids[0]);
+  expect(landed.write?.landings, 'and it is landing 1’s write').toBe(1);
+  expect(landed.drawn, 'the addressed seat is drawn').toBe(true);
   /* Within the scroller's bounds on both axes — the rule, not a fixed position. */
   expect(landed.scrollLeft).toBeGreaterThanOrEqual(0);
   expect(landed.scrollLeft).toBeLessThanOrEqual(landed.limitX ?? 0);
   expect(landed.scrollTop).toBeGreaterThanOrEqual(0);
   expect(landed.scrollTop).toBeLessThanOrEqual(landed.limitY ?? 0);
-
-  /* The run's FIRST seat is the one addressed, and it is inside the region with its top face uncut. */
-  expect(landed.region && landed.seat && landed.shelf).toBeTruthy();
-  if (landed.region && landed.seat && landed.shelf) {
-    expect(landed.seat.left, 'the run’s first seat is in the region').toBeGreaterThanOrEqual(landed.region.left - 1);
-    expect(landed.seat.right).toBeLessThanOrEqual(landed.region.right + 1);
-    expect(landed.shelf.top, 'and its top face is not cut off (§W.28)').toBeGreaterThanOrEqual(landed.region.top - 1);
-    expect(landed.region.right - landed.seat.left, 'the useful half of the region is after the seat').toBeGreaterThan((landed.region.right - landed.region.left) / 2);
-  }
 });
 
 /*

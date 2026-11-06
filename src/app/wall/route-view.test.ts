@@ -107,6 +107,39 @@ describe('the route’s two views (§W.12, §W.29)', () => {
     expect(arrivalSeat(placed, new Set())?.id, 'and with no seat emptied').toBe('r0');
   });
 
+  it('under a filter whose first match is on a lower shelf, the arrival is below the unfiltered one and not sideways (§W.29)', () => {
+    /*
+      wall-arrival-104 compared the region's scroll after a search with its scroll at the open, two documents
+      apart, over a wall the whole collection sizes (§W.12) and another worker can resize between them (Q45,
+      6 Nov). The direction is this function's: the unfiltered arrival is the first occupied shelf's first
+      seat, the filtered one the first MATCHING shelf's first seat, and a lower shelf's first seat lands the
+      view straight down from the first's by the row pitch per shelf, never across.
+    */
+    const region = { width: 872, height: 799 };
+    const all = Array.from({ length: 100 }, (_, i) => ({ id: `r${i}`, section: 'S' }));
+    const { placed } = wallLayout(all, [], region.width, region.height);
+    const zs = [...new Set(placed.map((p) => p.z))].sort((a, b) => b - a);
+    const whole = arrivalSeat(placed);
+    const matches = new Set(['r55', 'r56', 'r57']);
+    const filtered = arrivalSeat(placed, new Set(all.filter((s) => !matches.has(s.id)).map((s) => s.id)));
+    expect(whole).not.toBeNull();
+    expect(filtered).not.toBeNull();
+    if (whole === null || filtered === null) return;
+    /*
+      The precondition, asserted: the first match is NOT its shelf's first seat. With r50 it was (a shelf
+      holds 50 at this width), and an arrival returning the match itself passed "not sideways" by accident.
+    */
+    const match = placed.find((p) => p.id === 'r55');
+    expect(match).toBeDefined();
+    expect(placed.find((p) => p.z === match?.z)?.id, 'the precondition: the match sits along its shelf, not at its head').not.toBe('r55');
+    const shelves = zs.indexOf(filtered.z) - zs.indexOf(whole.z);
+    expect(shelves, 'the precondition: the first match is on a lower shelf').toBeGreaterThan(0);
+    const here = nearView(whole, region, placed.filter((p) => p.z === whole.z));
+    const there = nearView(filtered, region, placed.filter((p) => p.z === filtered.z));
+    expect(there[0], 'not sideways').toBeCloseTo(here[0], 6);
+    expect(there[1] - here[1], 'down by the row pitch per shelf').toBeCloseTo(shelves * ROW_PITCH, 6);
+  });
+
   it('keeps the addressed seat inside the region at every collection size, the vertical target being reachable (§W.28)', () => {
     /*
       A row spans ~99px of screen height per seat (198 pitch × sin30), so a
@@ -128,10 +161,19 @@ describe('the route’s two views (§W.12, §W.29)', () => {
         const [tx, ty] = nearView(seat, region, row);
         /* Clamped exactly as the scroller does. */
         const viewTop = fy + Math.min(Math.max(0, ty - fy), Math.max(0, fh - region.height));
-        void Math.min(Math.max(0, tx - fx), Math.max(0, fw - region.width));
-        const ys = [...topFace(seat), ...frontFace(seat)].map(([, y]) => y);
+        const viewLeft = fx + Math.min(Math.max(0, tx - fx), Math.max(0, fw - region.width));
+        const faces = [...topFace(seat), ...frontFace(seat)];
+        const ys = faces.map(([, y]) => y);
+        const xs = faces.map(([x]) => x);
         expect(Math.min(...ys), `n=${n} seat ${seat.id} top inside`).toBeGreaterThanOrEqual(viewTop - 1);
         expect(Math.max(...ys), `n=${n} seat ${seat.id} bottom inside`).toBeLessThanOrEqual(viewTop + region.height + 1);
+        /*
+          And across (Q45, 6 Nov): wall-route read the seat's box against the region's after a run click, on a
+          page whose wall the whole collection sizes (§W.12) and another worker resized between the landing's
+          write and the read. The seat inside the clamped view is this function's claim on the layout.
+        */
+        expect(Math.min(...xs), `n=${n} seat ${seat.id} left inside`).toBeGreaterThanOrEqual(viewLeft - 1);
+        expect(Math.max(...xs), `n=${n} seat ${seat.id} right inside`).toBeLessThanOrEqual(viewLeft + region.width + 1);
       }
     }
   });

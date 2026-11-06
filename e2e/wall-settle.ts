@@ -3,8 +3,8 @@ import { expect, type Page } from '@playwright/test';
 /** The wall's own count of landings consumed (`WallLive.tsx`, "Counted so the ordering can be asserted"). */
 export const landings = (page: Page) => page.evaluate(() => (window as unknown as { __landings?: number }).__landings ?? 0);
 
-/** The view the last consumed landing wrote, with the count it belongs to (`WallLive.tsx`, `recordLandingWrite`), or null before any. */
-export type LandingWrite = { left: number; top: number; landings: number; scrollWidth: number; clientWidth: number; seats: number };
+/** The view the last consumed landing wrote, the seat it was written for, and the count it belongs to (`WallLive.tsx`, `recordLandingWrite`), or null before any. */
+export type LandingWrite = { left: number; top: number; seat: string; landings: number; scrollWidth: number; clientWidth: number; seats: number };
 export const landingWrite = (page: Page) => page.evaluate(() => (window as unknown as { __landingWrite?: LandingWrite }).__landingWrite ?? null);
 
 /**
