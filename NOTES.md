@@ -53377,3 +53377,25 @@ passed, 2 skipped (the bracket's four out, check-design-card's fifteen in); chro
 passed, 1 skipped, 16.7m; mobile 390 passed, 4 skipped, 9.9m. The stream band: 236 on
 chromium, 76 on mobile; across four clean build-served runs chromium reads 236 to 303 and
 mobile 47 to 76. Q40 and Q20 close on this run (their rows in QUEUE.md name their commits).
+
+**Q39's gain, stated as a range and not a figure (the coordinator, 6 Nov).** Three clean
+build-served four-worker runs: chromium 16.4, 21.7 and 16.7m (42231886732, 42259273834,
+42261818896) against 37.0 and 42.7m dev-served (42226410424, 42108210395); mobile 6.9, 7.2 and
+9.9m against 14.9 and 12.4m. The claim is "about twice as fast, roughly 25 minutes on a typical
+run", with the run ids, never one pair's difference. Mobile's 9.9m on the clean run against its
+6.9m best is up 43 percent while chromium moved the other way across the same two runs; separate
+runners, so probably variance: watched in the table, not chased.
+
+**The three equalities of measured boxes, the distinction written (the coordinator, 6 Nov).**
+"They snap together" was also true of lineup-146:36 and it broke, so that phrase is not the
+distinction. The distinction is WHAT SEPARATES THE TWO READS. lineup-146:95 read the slot three
+times across a walk, the first word, the count and the result, each a state change and a layout
+pass between, and the table's rows snapped to a different half pixel on one of those passes.
+gatefold-88:190 reads the two leaves' tops by two consecutive evaluates with no action between
+them, and record-modal-81:105 and :106 read the button, the cover and the cell in one evaluate:
+two boxes from one layout, nothing changing the document between the reads, so a snap that
+moved one would have moved the other in the same pass. An equality of two boxes read from one
+layout holds; an equality of one box read across state changes does not, and that is the
+class to read a site into. The no-movement pair, auth:229 and rail-set-bar:42, are of the
+second shape and are named above as such; they have not moved, and the next one that does is
+read as this class before it is read as a flake.

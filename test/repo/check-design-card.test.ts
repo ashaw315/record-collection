@@ -120,13 +120,15 @@ describe('the command', () => {
     const change = join(dir, 'change.md');
     writeFileSync(card, `<html><body><p><strong>A lead.</strong> Withdrawn in part by §7: the slot.</p><p><strong>Open lead.</p></body></html>`);
     writeFileSync(previous, `<!DOCTYPE html><html><body><p><strong>Old lead.</strong></p></body></html>`);
-    writeFileSync(change, `> The slot's height.\n`);
+    writeFileSync(change, `Answers "what is the slot?" here.\n\n> The slot's height.\n`);
     const r = spawnSync('node', ['scripts/check-design-card.mjs', card, '--change', change, '--previous', previous], { encoding: 'utf8' });
     expect(r.status, r.stderr).toBe(0);
     expect(r.stdout).toMatch(/strong.*opens 2.*closes 1/i);
     expect(r.stdout).toMatch(/doctype.*absent/i);
     expect(r.stdout).toMatch(/withdrawal.*1/i);
-    expect(r.stdout).toMatch(/The slot's height\./);
+    /* Two lists: a ruling not carried is the mismatch; a quotation of the change file's own prose is reported apart, so it cannot bury one. */
+    expect(r.stdout).toMatch(/1 ruling .*1 NOT CARRIED\n\s+ruling not carried: The slot's height\./);
+    expect(r.stdout).toMatch(/quotations in the change file's prose, which may quote another document: 1, 1 not in the card\n\s+not in the card: what is the slot\?/);
     expect(r.stdout).toMatch(/added[\s\S]*A lead\./);
     expect(r.stdout).toMatch(/removed[\s\S]*Old lead\./);
     expect(r.stdout).toMatch(/A report, not a verdict/);

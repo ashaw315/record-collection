@@ -138,8 +138,20 @@ function report(args) {
     const md = readFileSync(change, 'utf8');
     const quotes = quotesOf(md);
     const unmatched = unmatchedQuotes(md, html);
-    out.push(`change file ${change}: ${quotes.length} quote${quotes.length === 1 ? '' : 's'} (${quotes.filter((q) => q.kind === 'ruling').length} ruling${quotes.filter((q) => q.kind === 'ruling').length === 1 ? '' : 's'}), ${unmatched.length} not in the card character for character`);
-    for (const q of unmatched) out.push(`  ${q.kind} not carried${q.onlyByMarks ? ' (differs only by apostrophes or quote marks)' : ''}: ${q.text}`);
+    /*
+      Two lists, never one (the coordinator, 6 Nov): a blockquote is the sentence the change file presents
+      as card text, so one not carried is the mismatch this reading exists for; a quotation in the change
+      file's prose may quote the handoff, a question or an old wording, and two of those stand on every
+      card. In one list a reader learns to skip them, and that is how a real one gets missed.
+    */
+    const rulings = quotes.filter((q) => q.kind === 'ruling');
+    const missingRulings = unmatched.filter((q) => q.kind === 'ruling');
+    out.push(`change file ${change}: ${rulings.length} ruling${rulings.length === 1 ? '' : 's'} (blockquotes, presented as card text), ${missingRulings.length === 0 ? 'all carried character for character' : `${missingRulings.length} NOT CARRIED`}`);
+    for (const q of missingRulings) out.push(`  ruling not carried${q.onlyByMarks ? ' (differs only by apostrophes or quote marks)' : ''}: ${q.text}`);
+    const quotations = quotes.filter((q) => q.kind === 'quotation');
+    const missingQuotations = unmatched.filter((q) => q.kind === 'quotation');
+    out.push(`  quotations in the change file's prose, which may quote another document: ${quotations.length}, ${missingQuotations.length} not in the card`);
+    for (const q of missingQuotations) out.push(`    not in the card${q.onlyByMarks ? ' (differs only by apostrophes or quote marks)' : ''}: ${q.text}`);
   } else {
     out.push('change file: none given (--change <file.md>)');
   }
