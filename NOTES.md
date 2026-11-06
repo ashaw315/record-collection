@@ -52749,7 +52749,7 @@ table wins.
 | 42259273834 | e5076b8 | 4 (build) | pick-moods-157:195 |
 | 42261818896 | 6b20ff1 | 4 (build) | none: the first four-worker run with no flake and no failure |
 | 42268956664 | ffa709a | 4 (build) | wall-route:213 (failed on fits, the wait satisfied), wall-settle:53 (failed, named by the wait), want-list:1086 (m) |
-| 42273938707 | 169ce12 | 4 (build) | wall-route:162, wall-route:213 (the wait's frames: the wall 883 wider between two reads); mobile half pending, the job past ninety minutes |
+| 42273938707 | 169ce12 | 4 (build) | wall-route:162, wall-route:213 (the wait's frames: the wall 883 wider between two reads); mobile 390 passed, no flake, the suite 8.3m inside a 77-minute job, 68 of them in `playwright install --with-deps webkit` |
 | 42281210779 | 20e79a8 | 4 (build) | wall-route:213 (the wait's frames: content 2224 to 2204 with the region and the filtered seats unchanged, the scroll (20, 1323) to (0, 813)) |
 
 Derived: appearances 4 + 4 + 3 + 4 + 3 + 1 + 4 + 1 + 0 + 3 + 2 + 1 = **30**; distinct tests **17** (want-list:739,
@@ -53636,3 +53636,13 @@ seat count the message carries is the filter's; the collection's total is what m
 next message should carry it). The reading of 42273938707 confirmed from the other side: there
 the wall grew by another worker's seed; here it shrank by another worker's cleanup. The stream
 band: 253 chromium, 78 mobile. The hung mobile half of 42273938707 is still running at 1h50m.
+
+**The 77-minute mobile job on 42273938707, read as data (the coordinator, 6 Nov).** It finished
+on its own, success: 390 passed, 4 skipped, OK, the Playwright run 8.3m, the build inside it
+compiled in 10.9s and ready in 93ms. The job's own steps say where the time went: `npx
+playwright install --with-deps webkit` ran from 18:48:30 to 19:56:50, **68 minutes**, against
+the 20 to 40 seconds it takes on every other run; every step before and after took its usual
+time. A runner-side stall in the browser's download or its apt dependencies, not a hang at
+four workers against a build, and not in anything of ours: the suite that followed it ran at
+its usual pace with no flake. So the first such job is not the first such hang; the table says
+so, and the rule for the next long job is to read its step timings before calling it anything.
