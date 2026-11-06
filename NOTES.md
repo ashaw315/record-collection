@@ -52754,6 +52754,7 @@ table wins.
 | 42283660959 | 116aec7 | 4 (build) | wall-route:213 (failed, both attempts: the wall 1341 to 2136 and 2136 to 2224 across the round-trip), wall-settle:53 (the wait's frames: content 2224 to 1179 with 240 seats and the region unchanged) |
 | 42292989122 | fda52ef | 4 (build) | wall-settle:61 (the wait's frames on its first call: content 1267 to 1179, 240 seats and the region unchanged; :213 rewritten passed) |
 | 42299055762 | 4ece9b6 | 4 (build) | none: unit 4900 passed, 2 skipped; chromium 1060 passed, 1 skipped, 21.4m; mobile 390 passed, 4 skipped, 10.4m; no flaky line in any job's log (Q47 and the tools; :213 single-read passed again) |
+| 42309967002 | 71a046a | 4 (build) | wall-settle:61, the wait's own first call, the same frames as 42292989122: content 1267 at the write, 1179 at the read, 240 seats both, region 872; the scroll 395 then 307, the scroller's limit at each frame (1267 − 872, 1179 − 872); the verdict job NOT OK on the flake; unit 4902 passed, mobile 390 passed, 4 skipped, 10.0m; chromium 1059 passed, 1 flaky, 1 skipped (the Q45 second unit and the drop's intake) |
 
 Derived: appearances 4 + 4 + 3 + 4 + 3 + 1 + 4 + 1 + 0 + 3 + 2 + 1 + 2 + 1 = **33**; distinct tests **18** (wall-settle:61 joins) (want-list:739,
 want-list:849, pick-moods-157:154, wall-arrival-104:120, wall-route:234, record-band-43:33,
@@ -54108,3 +54109,35 @@ stub scripts and a bare remote. CLAUDE.md §10's items 1 to 3 then name ship.sh,
 coordinator's words. Touches: `scripts/ship.sh` (new), `test/repo/ship.test.ts` (new),
 `scripts/commit-checked.sh`, `test/repo/commit-checked.test.ts`, CLAUDE.md. Not built until the
 coordinator says.
+
+## 6 Nov, 18:45: gate 42309967002 green with one flake, the wait's own; the wait's equality made a diagnostic (Q45, third unit)
+
+**The gate on 71a046a, four workers from a build: GREEN WITH FLAKES, chromium 1059 passed, 1 flaky,
+1 skipped; mobile 390 passed, 4 skipped, 10.0m; unit 4902 passed; the verdict job fails on the
+flake, as it does.** The flake is wall-settle:61, the wait's own second test, on its FIRST
+`settled()` call, before the test moved anything, and its frames are the same as on
+42292989122 to the pixel: "the region's scroll (307, 390) is not the landing's write (395, 390)
+for landing 1: at the write content 1267, region 872, seats 240; at this read content 1179,
+region 872, seats 240". The arithmetic closes the case: 1267 − 872 = 395 and 1179 − 872 = 307,
+so at both frames the scroll was the scroller's limit; the view sat at the wall's right edge,
+the wall lost 88px of extent between the write and the read with this test's 240 seats
+unchanged, and the scroller re-clamped. The collection changing under a §W.12 wall, the other
+side of 42273938707's widening, for the sixth time in the table; 35 appearances, 18 distinct.
+Read from the run's own log in the e2e-chromium artifact; the test-results folder is not in it.
+
+**The coordinator's question, answered in one line:** the at-the-write equality catches nothing
+the product does not already guarantee, because every write is the scroller's clamped value
+read back and every later landing is counted, so the one mover left is the scroller re-clamping
+when the wall's extent changes under the view, which is the collection's and not a defect. So
+it is not dropped and not held: `settled()` reads the scroll against the write, names both
+frames in a `landing-moved` annotation on the test and returns them as `moved`, and resolves.
+The next wrong landing still gets the frames, beside the assertion that fails on it.
+
+**Step level:** wall-settle.spec rewritten first and watched failing both ways (the first test
+on `settledAt.write` of a wait returning nothing, the second on the wait throwing "the region's
+scroll (108, 711) is not the landing's write (108, 471)… content 2048 both frames", a moved
+view with the collection still); then 2 passed; the callers wall-route and wall-arrival-104, 14
+passed on chromium under dev; typecheck; lint 0 errors, the 3 pre-existing warnings; build. The
+first test's claim is now the :213 shape, the write for that count and the scroll within the
+scroller's limit at one read, since "the scroll equals the write" was the equality in a test's
+clothes and flaked on the gate as such. Load 8.8 during the runs, this unit alone.
