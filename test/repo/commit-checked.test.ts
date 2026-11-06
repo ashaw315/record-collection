@@ -171,6 +171,9 @@ describe('the default check is the document suite', () => {
     const record = join(dir, 'npx-args');
     writeFileSync(join(bin, 'npx'), `#!/bin/sh\nprintf '%s\\n' "$@" > '${record}'\nprintf '%s' "$COMMIT_PATHS" > '${record}-paths'\nexit 1\n`);
     chmodSync(join(bin, 'npx'), 0o755);
+    /* Lint and typecheck pass here (a stub `npm` that exits 0), so the chain reaches the suite; the test below is where they refuse. */
+    writeFileSync(join(bin, 'npm'), '#!/bin/sh\nexit 0\n');
+    chmodSync(join(bin, 'npm'), 0o755);
     writeFileSync(join(dir, 'second.txt'), 'second\n');
     const before = git('rev-parse', 'HEAD');
     const env: NodeJS.ProcessEnv = { ...process.env, PATH: `${bin}:${process.env.PATH ?? ''}` };
@@ -189,6 +192,42 @@ describe('the default check is the document suite', () => {
     expect(args.slice(at + 1), 'on the document suite, whole and nothing else').toEqual(DOCUMENT_SUITE);
     /* Fails against a check told nothing of the commit it guards: CLAUDE.md's integrity test reads this to tell the commit's own edit from a stray one. */
     expect(readFileSync(`${record}-paths`, 'utf8').split('\n'), 'the check is told the paths it is guarding').toEqual(['second.txt']);
+  });
+
+  /*
+    **Lint's own exit status gates the commit, before any suite runs (the coordinator, 6 Nov).** A chain printed
+    "lint exit 1, 2 errors" and committed and pushed anyway, because nothing in it read lint's status; the fix
+    recorded first was a NOTES rule, which is a note and not a watch. Here `npm run lint` refuses (a stub `npm`
+    exiting 1 on `run lint`), and the script commits nothing and never reaches the suite: the stub `npx` records
+    nothing. Fails against the default check that ran the suite alone, and against one that runs lint but reads
+    its output rather than its status.
+  */
+  it('refuses on lint’s own exit status, running no suite, and commits nothing', () => {
+    const { dir, git } = repo();
+    mkdirSync(join(dir, 'scripts'));
+    copyFileSync(join(process.cwd(), 'scripts', 'document-suite.mjs'), join(dir, 'scripts', 'document-suite.mjs'));
+    const bin = join(dir, 'bin');
+    mkdirSync(bin);
+    const npmRecord = join(dir, 'npm-args');
+    const npxRecord = join(dir, 'npx-args');
+    writeFileSync(join(bin, 'npm'), `#!/bin/sh\nprintf '%s\\n' "$@" >> '${npmRecord}'\ncase "$*" in *lint*) exit 1 ;; esac\nexit 0\n`);
+    chmodSync(join(bin, 'npm'), 0o755);
+    writeFileSync(join(bin, 'npx'), `#!/bin/sh\nprintf '%s\\n' "$@" > '${npxRecord}'\nexit 0\n`);
+    chmodSync(join(bin, 'npx'), 0o755);
+    writeFileSync(join(dir, 'second.txt'), 'second\n');
+    const before = git('rev-parse', 'HEAD');
+    const env: NodeJS.ProcessEnv = { ...process.env, PATH: `${bin}:${process.env.PATH ?? ''}` };
+    delete env.COMMIT_CHECK;
+    let status = 0;
+    try {
+      execFileSync('bash', [join(dir, 'commit-checked.sh'), '-m', 'second', 'second.txt'], { cwd: dir, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], env });
+    } catch (error) {
+      status = (error as { status?: number }).status ?? 1;
+    }
+    expect(status, 'lint refused, so the script does not commit').not.toBe(0);
+    expect(git('rev-parse', 'HEAD'), 'no commit was made').toBe(before);
+    expect(readFileSync(npmRecord, 'utf8'), 'lint was run').toMatch(/run\nlint/);
+    expect(existsSync(npxRecord), 'and the suite was never reached').toBe(false);
   });
 
   /* Fails against a default that passes an empty list on: `vitest run` with no path runs every suite and says nothing of why. */

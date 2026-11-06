@@ -53545,3 +53545,77 @@ summary. The instrument-reads-its-own-output family, §2's fourth row in its own
 the judge was given, read as a number the judge counts. The comment is reworded (no number
 followed by "failed"), and the judge is to read Playwright's summary block and nothing else
 (Q46); the verdict on this half is GREEN WITH FLAKES, not NOT OK.
+
+**Q46, the stored logs re-judged (6 Nov).** Every CI log on this machine, 118 of them across
+every run read this week, re-judged with the fixed judge against the foot line the old judge
+wrote: **no row of the runs table moves.** Two logs differ, neither a row: the chromium half of
+42273938707, the misread itself, now "1058 passed, 2 flaky, 1 skipped — GREEN WITH FLAKES"; and a
+placeholder file holding "run 41647646221 is still in progress", which was never a log. Every
+other foot line's counts and verdict are what the fixed judge reads, 116 of 116. The useful
+answer is "no row moved", and it is this one.
+
+**Q44 built as ruled (6 Nov): the helper is the ruling, and the assertions state rendered values
+to three decimals.** `bandHeightAt` returns `max(547, 547/900 × h)` unrounded. Watched failing
+first against the unrounded helper: region-rows.test.ts's three lines (they expected the
+rounded figures) and identity-band-23:183 ("Expected 558.778, Received 559"). The rendered
+values, measured against the build at 1440 wide by a throwaway probe, to three decimals: the
+band 607.766 at 1000, 638.156 at 1050, 656.391 at 1080, 577.375 at 950, 668.547 at 1100; the
+still cell's inner box 558.766 at 1000. The ruling's figures are 607.778, 638.167, 656.400,
+577.389, 668.556: the page draws the share as a four-decimal vh and the layout snaps to 1/64px,
+so the render sits under the ruling by at most 0.012, which is the render's quantisation and
+not a rounding anywhere in src or test. So the helper's own test asserts the ruling's figure
+exactly, with the rendered figure stated beside it; identity-band-23:183 asserts the rendered
+558.766 to three decimals (toBeCloseTo at 3, a tolerance of 0.0005, which is the stating
+precision and not a widening); identity-band-23:119 rounds explicitly and is unchanged;
+identity-band-holds:79's consumption of its half pixel falls from 90.6% to 1.8%; layout-sweep's
+±1 is untouched. **The coordinator's question: yes, the same helper.** Q44's row IS
+identity-band-holds:79, the one site whose constant was `bandHeightAt`; Q43 holds the two
+others, row-rules-33:218 (175.9 stated to one decimal) and wall-labelled:187/:188 (a 1px
+allowance), which are different constants and stay separate.
+
+## The family member named, Q45 ruled, and the instrument proposed (6 Nov)
+
+**The family member: a test that measures a shared quantity across an action, where the
+quantity can move for reasons the test does not control.** Three appearances in one day:
+pick-moods-157's whole-collection count read on two page loads (Q40, the bracket could not
+close at four workers); lineup-146:36's slot height read across a walk (the table's rows
+snapped between the reads); and the wall's width read across a zoom round-trip
+(wall-route:213, 883px wider between two reads of one test, another worker's seed). The
+quantity differs each time, a count, a height, a width; the shape is the same: two reads, an
+action between, and the thing read owned by more than the test. The fix is the same each time
+too (the coordinator's ruling on Q45, option 1): a test asserts over what it owns; where a
+claim genuinely needs the shared figure, the page asserts what one read can show and the
+exact claim moves down to the query layer or the pure function, where no writer competes.
+Rejected with reasons, so they do not come back: serialising the sites (the other sixty specs
+still write, and the only one-worker that fixes this is the whole suite at one worker, retired
+in August) and scoping the wall for tests (§W.12 is a ruling; a scoped wall would test what
+the app does not do).
+
+**The seven call sites of `settled()` and the wait's own test, each read for its claim (by
+inspection; the mechanical sweep below is what bounds the list).**
+
+| site | the claim | reads of a shared quantity | class |
+|---|---|---|---|
+| wall-route:130 | a bare / opens near, framed on the occupied shelf | one, after the wait | fine: one read |
+| wall-route:179 (:162's test) | a run click lands the near view on the run's first seat, exactly once, top faces uncut | one read; but the landing's target was computed on a layout another worker can change before the read (run 42243942847: -190) | push the geometry down: the landing's target for a seat on a layout is a pure function; the page asserts the count, the bounds, and scroll at the write |
+| wall-route:229, :239 (:213's test) | a wall that fits has no horizontal landing: scrollLeft 0 | the wall's width read before and after a widen, a zoom out and a zoom in | single-read claim derived from the rule: at one read, scrollLeft equals min(target, scrollWidth − clientWidth), which is 0 when the wall fits; the fit itself is not a precondition the test can own |
+| wall-route:345 | Escape returns to the collection, or dismisses the pull | one wait, then a key: the claim is the pull's, not the wall's size | fine |
+| wall-arrival-104:146, :156 | a search moves the near view to the first match; clearing returns to the unfiltered arrival | the region's scroll read at the open, after the search, after the clear, compared across the two navigations | the framed claim (`inRegion`) is one read and stays; "moved down" (> start) and "back where it arrives" (toEqual start) compare arrivals of a wall whose layout other workers change: push down to the arrival's pure function; at each read the page asserts the scroll is the landing's write |
+| wall-settle:53 | after a zoom-in landing the scroll is the landing's own write | the write, taken by the product at its commit, against the scroll at the test's read: two reads of the view across a window the collection moves in | the wait's equality is the diagnostic and stays as the message; as a claim it is owned only as "the write was within the limit at the write" |
+
+Not built: these are changes to what tests claim, and they wait on the sweep's list and the
+coordinator's agreement, site by site.
+
+**The instrument, proposed and not built.** Every site that reads the same measurement twice
+with an action between is findable from Playwright's own steps, with no transformed copy: a
+reporter sees every API step with its category, title and source location (`onStepBegin`:
+`page.evaluate`, `locator.evaluate`, `locator.boundingBox`, `locator.textContent` are reads;
+`click`, `goto`, `setViewportSize`, `press`, `fill`, `reload`, `goBack`, `hover` are actions).
+Per test, the sequence of (location, kind); a hit is a read location that recurs with an action
+step between its occurrences, which is exactly `wall()` twice around the widen in :213, `boxOf`
+three times around the walk in lineup-146, and `line(page).textContent()` twice around the
+goto in the old pick-moods test. One run of the whole suite under either server with the
+reporter on (a temporary config, as sweep-pixels does), its JSONL read by site: the bounded
+list, with the shared quantity still a reading per site, since a reporter cannot tell a count
+of the test's own records from the collection's. `scripts/sweep-twice.mjs`, run and read,
+nothing calling it, if the coordinator takes it.

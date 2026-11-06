@@ -180,7 +180,13 @@ test('§33: the drawing fits its OWN box, binding on one axis', async ({ page })
 
   expect(Math.round(drawn.innerWidth), 'the cell’s inner box after §26’s 24px margin').toBe(432);
   /* §30: the band is max(547, 547/900 × viewport height) from the fork up -- 608 at 1000 -- and "the band's extra height passes to the construction cell in full, so its inner box is the band less 48". Less the band's bottom rule. */
-  expect(Math.round(drawn.innerHeight), 'the band less the 48 margin, less the bottom rule (§30)').toBe(bandHeightAt(1000) - 48 - 1);
+  /*
+    The rendered value to three decimals, not a rounded one (Q44, the coordinator, 6 Nov): the band at 1000 renders
+    607.766 (the ruling's 607.778 drawn as a four-decimal vh share and snapped to 1/64px, measured against the
+    build), so its inner box is that less 48 less the rule. Until then this rounded the measurement to a whole pixel
+    and expected the helper's rounded 608 less 49, which only agreed because both had rounded.
+  */
+  expect(drawn.innerHeight, 'the band less the 48 margin, less the bottom rule (§30): 607.766 rendered at 1000').toBeCloseTo(607.766 - 48 - 1, 3);
 
   /* §33's fit: the smaller of the two ratios, so the drawing fills exactly one axis. */
   const scale = Math.min(drawn.innerWidth / boxW, drawn.innerHeight / boxH);

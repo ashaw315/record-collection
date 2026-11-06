@@ -558,7 +558,13 @@ export function upperSpansAt(viewport: number): { identity: number; still: numbe
  * whose content is fitted rather than fixed.
  */
 export function bandHeightAt(viewportHeight: number): number {
-  return Math.max(BAND_AT_REFERENCE, Math.round((BAND_AT_REFERENCE / REFERENCE_HEIGHT) * viewportHeight));
+  /*
+    Unrounded, as the ruling is and as the page draws it (`max(547px, 60.7778vh)`, below): until 6 Nov this
+    rounded to a whole pixel, 669 where the band renders 668.547 at 1100, and a half-pixel tolerance in
+    identity-band-holds:79 absorbed the difference for a month (Q44; the coordinator: fix the constant, widen
+    nothing). The helper's consumers are tests; the product's construction is fitted by CSS.
+  */
+  return Math.max(BAND_AT_REFERENCE, (BAND_AT_REFERENCE / REFERENCE_HEIGHT) * viewportHeight);
 }
 /** §28's ruled band at the reference viewport, and the height it is a share of. */
 export const BAND_AT_REFERENCE = 547;

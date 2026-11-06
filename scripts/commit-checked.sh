@@ -95,7 +95,10 @@ if [ -z "${COMMIT_CHECK:-}" ]; then
     exit 1
   fi
 fi
-check="${COMMIT_CHECK:-npx tsx scripts/run-tests.ts npx vitest run $suite}"
+# Lint and typecheck gate the suite by their own exit status (the coordinator, 6 Nov): a chain
+# printed two lint errors and pushed them, because reading what a chain prints is a note, and
+# an exit status is a watch. Nothing here reads the output; `&&` reads the status.
+check="${COMMIT_CHECK:-npm run lint && npm run typecheck && npx tsx scripts/run-tests.ts npx vitest run $suite}"
 # The check is told what this commit will carry, so a guard can tell the
 # commit's own edit from a stray one (scripts/commit-paths.mjs).
 export COMMIT_PATHS="$(printf '%s\n' "${paths[@]}")"

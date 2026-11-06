@@ -419,9 +419,16 @@ describe('§30: the page above 1440 — 14 and 16 columns, a wider construction,
     */
     expect(bandHeightAt(900), 'at the reference viewport, the ruled 547').toBe(547);
     expect(bandHeightAt(800), 'never below it').toBe(547);
-    expect(bandHeightAt(1050)).toBe(Math.round((547 / 900) * 1050));
-    expect(bandHeightAt(1080)).toBe(Math.round((547 / 900) * 1080));
-    expect(bandHeightAt(950), 'the real maximised window').toBe(Math.round((547 / 900) * 950));
+    /*
+      The ruling's figure, unrounded (Q44, 6 Nov): until then these expected `Math.round` of it, 669 where the
+      page renders 668.547 at 1100, and nothing rules a whole pixel. The page draws the share to four decimals as
+      vh and the layout snaps to 1/64px, so the rendered band is the ruling's figure less at most 0.012: measured
+      against the build on 6 Nov, 638.156 at 1050, 656.391 at 1080, 577.375 at 950, 668.547 at 1100, against the
+      ruling's 638.167, 656.400, 577.389, 668.556. The helper is the ruling; the render is held by the e2e.
+    */
+    expect(bandHeightAt(1050), '638.167 by the ruling; 638.156 rendered').toBe((547 / 900) * 1050);
+    expect(bandHeightAt(1080), '656.400 by the ruling; 656.391 rendered').toBe((547 / 900) * 1080);
+    expect(bandHeightAt(950), 'the real maximised window: 577.389 by the ruling; 577.375 rendered').toBe((547 / 900) * 950);
   });
 
   it('never lets the construction’s drawn scale fall as the window widens (§30’s invariant)', () => {
