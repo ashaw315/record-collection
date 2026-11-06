@@ -53464,3 +53464,29 @@ consume guard's width-only test is where to look (the height's measurement arriv
 landing under four workers is the one asymmetry read in the code). If the scroll is not the
 write, something moved the view after the landing, and the message names both positions. Not
 reproduced locally in twelve runs; the instrument is what this unit could honestly build.
+
+## Q44: which of the two is right (6 Nov, read, not built)
+
+**The ruling, in the target's words (Record Detail 8a, §30/§40):** "above 1440 wide, the upper
+band is 547 ÷ 900 of the viewport's height, and never less than 547." The target's prose then
+says "638 at 1050 and 656 at 1080", whole numbers for illustration of 638.17 and 656.40.
+
+**The render follows the ruling; the helper rounds it.** RecordPage8a's stylesheet draws the
+band as `height: max(547px, 60.7778vh)` (region-rows.ts:609, the share to four decimals),
+which at 1100 is 668.556 and renders 668.547 (the layout's 1/64px). `bandHeightAt()` returns
+`Math.round` of the same formula, 669, and nothing rules the rounding. **Its consumers are
+tests, and only tests:** identity-band-holds:79 (toBeCloseTo at 0, 90.6% consumed),
+identity-band-23:119 and :183 (exact, after rounding of their own at :119 and not at :183),
+layout-sweep:249 and :374 (±1), and `constructionScaleAt()`, which fits §31's frame into the
+band less 48 and is called by region-rows.test.ts alone. So "src disagreeing with src" is the
+tests' model of the band against the render, 0.45px apart at 1100 and 0.39 at Adam's 950,
+and the product's own drawing takes no part: the construction is fitted by CSS, not by the
+helper. The render is right.
+
+**The fix, which waits on agreement because three assertions pin the rounding (§2):** the
+helper returns the formula unrounded, `Math.max(547, 547 / 900 × viewportHeight)`; then
+region-rows.test.ts:422 to :424 expect `Math.round(...)` and must expect the formula;
+identity-band-23:183 expects `bandHeightAt(1000) - 48 - 1` against a rounded measurement and
+must round the helper's value as :119 already does; identity-band-holds:79's consumption falls
+from 90.6% to 1.8%, and layout-sweep's ±1 is untouched. Four lines in two test files and one in
+src. Not built here: the assertions are the tests' and the change is the coordinator's to agree.
