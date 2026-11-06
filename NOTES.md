@@ -52746,8 +52746,10 @@ table wins.
 | 42226410424 | fbec00d | 4 | want-list:739 (m), identity-cell:156, pick-moods-157:195 |
 | 42231886732 | 09044cf | 4 (build) | lineup-146:36 (unclassified: exact equality on a measured height, 32.5 then 33.0; not a flake until the re-run and the sweep say so) |
 | 42243942847 | 09044cf | 4 (build) | lineup-146:36 (unclassified, the same values again), pick-moods-157:195, wall-route:162, wall-route:213 |
+| 42259273834 | e5076b8 | 4 (build) | pick-moods-157:195 |
+| 42261818896 | 6b20ff1 | 4 (build) | none: the first four-worker run with no flake and no failure |
 
-Derived: appearances 4 + 4 + 3 + 4 + 3 + 1 + 4 = **23**; distinct tests **15** (want-list:739,
+Derived: appearances 4 + 4 + 3 + 4 + 3 + 1 + 4 + 1 + 0 = **24**; distinct tests **15** (want-list:739,
 want-list:849, pick-moods-157:154, wall-arrival-104:120, wall-route:234, record-band-43:33,
 roving-148:83, record-navigation:295, hold-160:111, hold-160:123, identity-cell:156,
 pick-moods-157:195, lineup-146:36, wall-route:162, wall-route:213). From 42231886732 the gate serves a build (Q39), so a row
@@ -53359,3 +53361,19 @@ the change file answers, a handoff line it addresses), which the report states a
 card and leaves to the reader, as a reading aid should; bold sentences added 0, removed 0 since
 the drop. `Mood Pick - build target.dc.html` alone: 64 and 64, 16 withdrawal sentences, none
 twice, nothing changed in bold since the drop.
+
+**CI run 42259273834 on e5076b8 (the instrument, the arms test, Q42's assertions) at four
+workers from a build: GREEN WITH FLAKES on chromium, no failure.** Unit 4882 passed, 2 skipped,
+OK, error.test.tsx's three among them; chromium 1058 passed, 1 flaky, 1 skipped, 21.7m; mobile
+390 passed, no flake, 7.2m. The one flake is pick-moods-157:195, the bracket's own test, which
+Q40 removed in the commit after this one. **lineup-146:36 did not flake under its ruled
+assertion**, the first build-served run on which it has not. The stream band: 303 on chromium,
+60 on mobile, so the chromium band is 255 to 303 across three clean build-served runs. The row
+is in the table: 24 appearances, 15 distinct.
+
+**CI run 42261818896 on 6b20ff1 (Q40 and Q20) at four workers from a build: OK on every job,
+exit 0, the first four-worker run in the table with no flake and no failure.** Unit 4893
+passed, 2 skipped (the bracket's four out, check-design-card's fifteen in); chromium 1058
+passed, 1 skipped, 16.7m; mobile 390 passed, 4 skipped, 9.9m. The stream band: 236 on
+chromium, 76 on mobile; across four clean build-served runs chromium reads 236 to 303 and
+mobile 47 to 76. Q40 and Q20 close on this run (their rows in QUEUE.md name their commits).
