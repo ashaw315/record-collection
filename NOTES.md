@@ -52743,10 +52743,15 @@ table wins.
 | 42059632838 | dfbe205 | 4 | want-list:849 (m), pick-moods-157:154, wall-route:234 (failed), record-band-43:33 |
 | 42108210395 | b749d61 | 4 | pick-moods-157:154, record-band-43:33, roving-148:83 |
 | 42115186427 | 50a18cc | 4 | record-navigation:295 (failed), hold-160:111, hold-160:123, pick-moods-157:154 (now :181) |
+| 42226410424 | fbec00d | 4 | want-list:739 (m), identity-cell:156, pick-moods-157:195 |
+| 42231886732 | 09044cf | 4 (build) | lineup-146:36 |
 
-Derived: appearances 4 + 4 + 3 + 4 = **15**; distinct tests **10** (want-list:739,
+Derived: appearances 4 + 4 + 3 + 4 + 3 + 1 = **19**; distinct tests **13** (want-list:739,
 want-list:849, pick-moods-157:154, wall-arrival-104:120, wall-route:234, record-band-43:33,
-roving-148:83, record-navigation:295, hold-160:111, hold-160:123). The "nine" written above
+roving-148:83, record-navigation:295, hold-160:111, hold-160:123, identity-cell:156,
+pick-moods-157:195, lineup-146:36). From 42231886732 the gate serves a build (Q39), so a row
+says "(build)" in its workers column and dev-served rows are compared with dev-served rows. pick-moods-157:195 is the bracket's own test, "a write between the two
+reads reopens the bracket", not :154 moved; Q40 removes the bracket and its tests together. The "nine" written above
 this table was wrong, recalled rather than read; corrected in the commit that made the table.
 By script, when the rows are many: count the comma-separated ids in the last column for
 appearances, and the set of them for distinct. A test that moves line number keeps its first
@@ -53082,3 +53087,57 @@ under either command. Re-applied, not re-developed: 8 passed (the file and the l
 typecheck 0. Held unpushed until run 42226410424 reads green under dev; then pushed and gated
 at four workers, and that run against 42115186427 is the measurement for the five tests, the
 chromium stream count on a clean build-served run, and the next row of the runs table.
+
+**CI run 42226410424 on fbec00d (unit one) at four workers, under dev: GREEN WITH FLAKES, no
+failure.** Unit 4874 passed, 2 skipped, OK (the document suite's 756 among them). Chromium 1057
+passed, 2 flaky, 1 skipped, 37.0m: identity-cell:156, a first appearance, and pick-moods-157:195,
+the bracket's own test. Mobile 389 passed, 1 flaky, 4 skipped, 14.9m: want-list:739. The row is
+in the table; derived there, 18 appearances, 12 distinct. The five tests the switch is for, on
+this dev-served run, CI, four workers, passing attempt: record-navigation:295 40.5s (62.0s
+failed on 42115186427), hold-160:111 (now :114) 8.6s, hold-160:123 (now :126) 7.5s,
+wall-route:234 7.9s and 8.3s, record-band-43:33 4.1m, roving-148:83 5.9s. `The destination
+stream closed early` 2 lines on the dev-served chromium log. Unit two pushed on this reading
+(09044cf, fbec00d..09044cf) and gated at four workers: run 42231886732, through ci-gate.sh,
+read below.
+
+**CI run 42231886732 on 09044cf (unit two, the switch) at four workers, the first gate served
+from a build: GREEN WITH FLAKES on chromium, no failure.** Unit 4879 passed, 2 skipped, OK.
+Chromium 1058 passed, 1 flaky, 1 skipped, **16.4m** (the job 17.6m); mobile 390 passed, 4
+skipped, no flake, **6.9m** (the job 8.5m). The build inside each webServer: Compiled in 9.6s
+(chromium) and 8.5s (mobile), Ready in 78ms and 66ms, so the cost the proposal estimated at about
+30s a job was under 10s of compile on a warm runner. The one flake, lineup-146:36 at 1280, a first
+appearance: the slot's height read 33 where 32.5 was expected, half a pixel on one of three
+measurements, passed on the retry at 3.1s; in the table and in Q42, not read further here.
+
+**The five tests, before and after, CI four workers against CI four workers, dev against build;
+the dev side is 42115186427 as agreed, with 42108210395 and 42226410424 beside it since each
+is a dev-served four-worker reading of the same test.** Passing attempt's time unless marked.
+
+| test | dev 42108210395 | dev 42115186427 | dev 42226410424 | build 42231886732 |
+|---|---|---|---|---|
+| record-navigation:295 | 51.4s | failed both attempts, 1.0m of 60s | 40.5s | 18.3s |
+| hold-160:111 (now :114) | 7.2s | 12.0s, flaky | 8.6s | 2.8s |
+| hold-160:123 (now :126) | 7.5s | 12.6s, flaky | 7.5s | 3.5s |
+| wall-route:213 and :252 (the file wall-route:234 failed in) | 8.8s, 10.1s | 9.6s, 11.2s | 7.9s, 8.3s | 3.3s, 3.4s |
+| record-band-43:33 | 5.0m, flaky | 6.3m | 4.1m | 1.4m |
+| roving-148:83 | 30.4s, flaky | 8.0s | 5.9s | 3.0s |
+
+Whole halves, same machines (ubuntu-latest), same four workers: chromium 42.7m, 37.0m dev
+against 16.4m build; mobile 12.4m, 14.9m dev against 6.9m build. The local two-worker mobile pair
+(7.1m against 11.4m and 11.7m) was the floor, as the coordinator said it would be: the gain at
+four workers is larger, since the contention a build removes is worse there.
+
+**record-band-43:33 passed under the build at 1.4m. That is not a ruling on §43; Q10 stays
+open, as its row says.** A build serves its CSS as a static asset, so the unstyled first frame
+the test met under dev at four workers is a state the build may simply not produce; whether
+"first-painted height" means the first frame or the first styled frame is Design's question
+and a green test does not answer it.
+
+**The stream noise, read on the clean build-served run.** `The destination stream closed early`
+255 lines on chromium (1058 passed, 1 flaky), 56 on mobile (390 passed, none). Against 480 on
+the local two-worker smoke run with 111 failures: it does not drop with the failures, so it is
+noise and not a symptom, about one line per four tests of a passing build-served run, a page
+navigating away mid-stream, which `next dev` does not log. Read on CI, four workers.
+
+**Q39 closes here: both gates serve a build, the measurement is in the table above, and the
+switch's row is the first "(build)" row of the runs table.** Q40 and Q20 follow.
