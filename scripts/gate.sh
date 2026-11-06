@@ -133,6 +133,9 @@ export TEST_DATABASE_URL="postgresql://postgres:postgres@localhost:5433/$GATE_DB
 export DATABASE_URL="$TEST_DATABASE_URL"
 export E2E_PORT=3101
 export GATE_WORKTREE=1
+# The Playwright halves run against a build, as Vercel serves the app, and not next dev (Q39, 5 Nov;
+# playwright.config.ts, E2E_SERVER). Each half's webServer builds `.next-test` and starts it.
+export E2E_SERVER=build
 
 # Beside the worktree and not in it: a log growing inside the tree is a change to the tree the run is checking.
 LOGS="$GATE-logs"

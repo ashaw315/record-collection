@@ -6,6 +6,39 @@ import './e2e/no-kept-connections';
 const PORT = process.env.E2E_PORT ?? '3100';
 const baseURL = process.env.E2E_BASE_URL ?? `http://localhost:${PORT}`;
 
+/**
+ * **`E2E_SERVER=build` serves the suite from a build, as Vercel does; the
+ * default stays `next dev` for a spec run while working.** Both gates set
+ * it (Q39, the coordinator, 5 Nov): a dev server's first response to a route
+ * is a compile, and under four workers five tests missed their budgets on
+ * that first response alone (record-navigation:295 at 62.0s of 60s on both
+ * attempts, against 11.1s and 17.5s at one worker; NOTES, the runs table).
+ * The build is INSIDE the command, not a step before it, so a run can never
+ * meet a stale build; `reuseExistingServer: false` below closes the same trap
+ * for a stale server. `NODE_ENV=test` on both halves: the build writes to
+ * `.next-test` (next.config.ts) and `next start` loads `.env.test`, and Next
+ * keeps the value at runtime, so the session cookie is set without Secure, as
+ * measured 5 Nov. The probe pages are served by `E2E_PROBES` below, not by
+ * NODE_ENV, which a build inlines (unit one). Any other value is refused
+ * rather than read as dev, so a misspelling cannot gate the wrong artifact.
+ */
+const SERVER = process.env.E2E_SERVER ?? 'dev';
+if (SERVER !== 'dev' && SERVER !== 'build') throw new Error(`E2E_SERVER is "${SERVER}"; it is dev (the default) or build`);
+const webServer = SERVER === 'build'
+  ? {
+      command: `NODE_ENV=test npm run build && NODE_ENV=test npm run start -- --port ${PORT}`,
+      /* CI's build took 29s and 31s on 5 Nov, warm; five minutes leaves room for a cold cache on a loaded runner. */
+      timeout: 300_000,
+      /* The build's own "Compiled" line lands in the run's log, so its cost is read, never inferred. */
+      stdout: 'pipe' as const,
+    }
+  : {
+      // NODE_ENV=test makes Next load .env.test and skip .env.local, so an E2E run
+      // never authenticates against the developer's own APP_PASSWORD_HASH.
+      command: `NODE_ENV=test npm run dev -- --port ${PORT}`,
+      timeout: 120_000,
+    };
+
 export default defineConfig({
   testDir: './e2e',
   /**
@@ -265,20 +298,17 @@ export default defineConfig({
     },
   ],
   webServer: {
-    // NODE_ENV=test makes Next load .env.test and skip .env.local, so an E2E run
-    // never authenticates against the developer's own APP_PASSWORD_HASH.
-    command: `NODE_ENV=test npm run dev -- --port ${PORT}`,
+    ...webServer,
     /*
       The probe pages open on E2E_PROBES=1 and a parsed NODE_ENV that is not production
       (src/lib/probes.ts, Q39, 5 Nov). Set here and nowhere else: Playwright merges this over its
-      own process env for the server it starts, so every run through this config carries it,
-      the capture project and both gates included, and nothing on Vercel ever does.
+      own process env for the server it starts, whichever command above, so every run through this
+      config carries it, the capture project and both gates included, and nothing on Vercel ever does.
     */
     env: { E2E_PROBES: '1' },
     url: baseURL,
     // A stale dev server would carry the developer's own env, not these values,
     // and the login tests would fail confusingly.
     reuseExistingServer: false,
-    timeout: 120_000,
   },
 });

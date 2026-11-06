@@ -128,9 +128,14 @@ jobs:
       - run: docker compose up -d --wait
       # Locally the unit suite's setup migrates; here each job has a database of its own.
       - run: NODE_ENV=test npx drizzle-kit migrate
+      # Against a build, as Vercel serves the app, and not next dev: the webServer builds and starts
+      # (playwright.config.ts, E2E_SERVER). Under four workers a dev server's first response to a route
+      # is a compile, and five tests missed their budgets on it (Q39, 5 Nov). The build's own output is
+      # in the log, so its cost is read there and not inferred.
       - name: Playwright, ${{ matrix.project }}
         env:
           PROJECT: ${{ matrix.project }}
+          E2E_SERVER: build
         run: |
           LOG="$RUNNER_TEMP/gate-logs/$(git rev-parse --short=7 HEAD)-e2e-$PROJECT.log"
           mkdir -p "$(dirname "$LOG")"

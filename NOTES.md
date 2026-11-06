@@ -53054,3 +53054,31 @@ mid-stream. The full chromium count on a clean run is read from unit two's CI lo
 
 **The suite total.** Read from commit-checked's own summary line on each commit and written
 beside the commit, never derived here and never recalled.
+
+**The production read, after unit one's deploy (fbec00d, Vercel status success at 08:34:25
+local, x-vercel-id iad1::x468z, etag "56d7f863efa226f5a67f12620ce8d385").** Not logged in, each
+of the eight probe paths and the error probe answered **307** to `/login`, as `/` does: the
+session boundary (middleware) sits in front of the probe gate, which `wall/overview`'s own
+comment says, "behind the session cookie either way". The html tag served, bytes: `<html
+lang="en" class="inter_tight_b604a981-module__MkScNa__variable
+mono_1eb2a8c5-module__-IPlVa__variable h-full antialiased">`, no `data-e2e-probes`, on `/login`
+(static, the build's answer) and on `/` followed to its redirect. The 404 behind the session is
+not readable without Adam's password, which this machine does not hold and should not: one
+logged-in visit to `/wall/overview` on production, expecting 404, is his to make, and the gate's
+two conditions there are the build's env (no `E2E_PROBES`, `NODE_ENV` production at build and at
+run), the same pair the local build answered 404 to above.
+
+**CI on fbec00d, four workers: run 42226410424, dispatched through ci-gate.sh at 13:33Z,
+read below when it lands.**
+
+## Q39 unit two: the switch, re-applied (6 Nov)
+
+The five files from branch `q39-switch` (c6ff360) on top of unit one: `playwright.config.ts`
+gains the `E2E_SERVER` switch with `E2E_PROBES` kept on either command's env; `gate.yml`'s
+Playwright step and `gate.sh` set `E2E_SERVER=build`; `tsconfig.json` carries the include a
+NODE_ENV=test build writes; `test/repo/e2e-server.test.ts` carries the switch's three tests,
+watched failing on 5 Nov before c6ff360, beside unit one's env test, now asserting the env
+under either command. Re-applied, not re-developed: 8 passed (the file and the literal watch),
+typecheck 0. Held unpushed until run 42226410424 reads green under dev; then pushed and gated
+at four workers, and that run against 42115186427 is the measurement for the five tests, the
+chromium stream count on a clean build-served run, and the next row of the runs table.
