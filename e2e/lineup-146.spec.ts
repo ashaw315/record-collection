@@ -24,6 +24,8 @@ const WINDOWS = [[1280, 'fine'], [390, 'coarse']] as const;
 
 type Box = { left: number; right: number; top: number; bottom: number; height: number };
 const boxOf = (page: Page, selector: string) => page.locator(selector).first().evaluate((el): Box => { const r = el.getBoundingClientRect(); return { left: r.left, right: r.right, top: r.top, bottom: r.bottom, height: r.height }; });
+/** How many of its own lines an element's box holds: its height over its computed line-height. One is one line; a half-pixel snap is 0.03 of it. */
+const linesIn = (page: Page, selector: string) => page.locator(selector).first().evaluate((el) => el.getBoundingClientRect().height / parseFloat(getComputedStyle(el).lineHeight));
 
 async function makeArtist(page: Page, name: string) {
   const response = await page.request.post('/api/artists', { data: { name } });
@@ -83,16 +85,29 @@ for (const [width, pointer] of WINDOWS) test(`the lineup walk at ${width} under 
   const slot = page.locator(`[data-lineup-slot="${walker}"]`);
   await expect(slot, 'the slot beneath the row').toBeVisible();
   const first = await boxOf(page, `[data-lineup-slot="${walker}"]`);
+  const firstLines = await linesIn(page, `[data-lineup-slot="${walker}"] [data-testid="lineup-progress"]`);
   expect.soft(Math.abs(first.left - w.edges.left), `${width}: the slot starts at the row's left`).toBeLessThanOrEqual(1);
   expect.soft(Math.abs(first.right - w.edges.right), `${width}: the slot ends at the row's right`).toBeLessThanOrEqual(1);
   const lineupBox = await w.lineup.evaluate((el) => el.getBoundingClientRect().bottom);
   expect.soft(first.top, `${width}: the slot is beneath the row`).toBeGreaterThanOrEqual(lineupBox - 1);
   await expect(progress, 'a count, not a spinner').toContainText(/12/, { timeout: 15_000 });
-  const counted = await boxOf(page, `[data-lineup-slot="${walker}"]`);
+  const countedLines = await linesIn(page, `[data-lineup-slot="${walker}"] [data-testid="lineup-progress"]`);
   finish?.();
   await expect(page.getByTestId('lineup-result')).toContainText(/3 members/i, { timeout: 15_000 });
-  const done = await boxOf(page, `[data-lineup-slot="${walker}"]`);
-  expect.soft([counted.height, done.height], `${width}: the slot holds its height from the first word (${first.height}) to the count and the result`).toEqual([first.height, first.height]);
+  const doneLines = await linesIn(page, `[data-lineup-slot="${walker}"] [data-testid="lineup-result"]`);
+  /*
+    The claim is one reserved line, from the first word to the count to the result, and it is asserted as
+    one line: the content's box against its own computed line-height (Q42, the coordinator, 6 Nov). Until
+    then this pinned the slot's measured height to itself, exact, and the table's rows snap to one of two
+    heights half a pixel apart from load to load with fonts loaded (32.5 or 33.0 at 1280, measured 6 Nov,
+    the same under dev and under a build), so the pin failed when the snap moved between the count and
+    the result, twice on CI at the same values. The range below survives a snap and excludes zero lines
+    and two: the slot collapsing or the text wrapping is what this is for.
+  */
+  for (const [state, lines] of [['the first word', firstLines], ['the count', countedLines], ['the result', doneLines]] as const) {
+    expect.soft(lines, `${width}: at ${state} the slot holds one line (box / line-height)`).toBeGreaterThan(0.75);
+    expect.soft(lines, `${width}: at ${state} the slot holds one line, not two (box / line-height)`).toBeLessThan(2);
+  }
   if (actionsBefore !== null) {
     const actionsAfter = await boxOf(page, `[data-lineup-for="${walker}"]`);
     expect.soft(actionsAfter.right - actionsAfter.left, `${width}: the actions cell keeps its width`).toBeCloseTo(actionsBefore.right - actionsBefore.left, 0);

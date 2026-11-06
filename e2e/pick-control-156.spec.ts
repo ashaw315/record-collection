@@ -279,7 +279,8 @@ for (const host of HOSTS) {
         const range = document.createRange();
         range.selectNodeContents(slot);
         const lines = range.getClientRects().length;
-        const result = { message, empty, height: slot.getBoundingClientRect().height, lines, overflow: slot.scrollWidth - slot.clientWidth };
+        const lineHeight = parseFloat(getComputedStyle(slot).lineHeight);
+        const result = { message, empty, height: slot.getBoundingClientRect().height, lines, lineHeight, overflow: slot.scrollWidth - slot.clientWidth };
         slot.textContent = '';
         return result;
       });
@@ -287,7 +288,16 @@ for (const host of HOSTS) {
     if (fits === null) throw new Error('no slot drawn');
     for (const f of fits) {
       expect(f.empty, 'the slot is reserved before anything is asked').toBeGreaterThan(0);
-      expect(f.height, `${f.message}: the slot keeps its height`).toBe(f.empty);
+      /*
+        The slot reserves one line, and it is asserted as one line: the box against the slot's own computed line-height,
+        empty and with the message, a range that survives a half-pixel snap and excludes zero lines and two (Q42, the
+        coordinator, 6 Nov). Until then the height with the message was pinned exactly to the empty height, the lineup
+        shape, one snap from red; the line count by the range's rects stays beside it.
+      */
+      for (const [state, height] of [['empty', f.empty], [f.message, f.height]] as const) {
+        expect(height / f.lineHeight, `${state}: the slot holds one line (box / line-height)`).toBeGreaterThan(0.75);
+        expect(height / f.lineHeight, `${state}: the slot holds one line, not two (box / line-height)`).toBeLessThan(2);
+      }
       expect(f.lines, `${f.message}: one line`).toBe(1);
       expect(f.overflow, `${f.message}: nothing past the slot’s width`).toBeLessThanOrEqual(0);
     }

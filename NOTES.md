@@ -53246,3 +53246,61 @@ change to an assertion, and it waits on the coordinator (Q42).
 replace `expect(` with it, run the copy under `E2E_SERVER=build` with `SWEEP_LOG` set, and read
 the log by site; worst-call consumption of each tolerance is the figure. Not a test, since it
 asserts nothing; a measurement, so it is not committed as one.
+
+## Q42 ruled and applied, the arms asserted, the instrument committed (6 Nov)
+
+**The ten exact-equality-on-a-fraction sites, each read for its claim (the coordinator, 6 Nov:
+two patterns honestly applied rather than one forced).** Two claim a count of lines and now say
+so: **lineup-146:95**, the reserved slot from the first word to the count to the result, and
+**pick-control-156:290**, the pick slot empty and with each message. Both assert the content's
+box over its own computed line-height, greater than 0.75 and less than 2: a half-pixel snap is
+0.03 of a 19.5px line, zero lines and two are out, and the slot collapsing or the text wrapping is
+what the tests are for. Watched failing first by mutation (one line read as "not two" with the
+bound at 1, 5 failures reading `Received: 1`), then restored: 23 passed on dev, 23 passed against
+the build, local, two workers. A further claim I added beside them, "the slot stayed where it
+was", came out: it failed at 57px under `--repeat-each=2`, the other worker's walk inserting its
+own slot row above in the same manage table, my repeat setup and not the product, and it was no
+part of the ruling. The other eight are specific measurements and stay exact, by site:
+auth:229, the heading, field and button's tops unchanged after the error line, rounded to 0.1,
+a no-movement claim; band-100:51, the band's 136.5 is §T.1's stated figure; gatefold-88:190,
+two leaves level, one measured value against another that snaps with it; rail-set-bar:42, the
+rail's tops unchanged, no movement; record-lines:142, `PAPER.L` is a constant, not a render;
+record-modal-81:105 and :106, the button's box equal to the cover's and the cover flush to its
+cell, measured boxes that snap together; wall-panel:187, "Open the full record is drawn 19.5
+tall" is a stated figure. The no-movement pair (auth, rail-set-bar) compare a page to itself
+across a change and would fail on a snap that moved between the two reads; none has, and they
+are named here so the next one is read as this class.
+
+**error.tsx's two arms asserted in one place (`src/app/error.test.tsx`, jsdom for that file
+alone by its docblock; jsdom 29.1.1 a devDependency, 152.8M weekly downloads against
+happy-dom's 33.0M, approved 6 Nov).** The render arm by a server render, which runs no effect;
+the effect arm by a wrapper whose layout effect writes the attribute in the commit before the
+passive effects run, the order the real root gives; and neither arm without both the attribute
+and the cookie. Three tests; each arm's test fails with that arm removed, which is the point: the
+gate runs against a build and takes the effect arm every time, so the render arm, the dev
+server's, went dark in CI the day the switch landed. **The shape, recorded as the coordinator
+asked: a branch whose arms are reachable only under different servers, where CI now reaches
+one.** A server difference is not a test; the arms are asserted by the order React gives them.
+
+**The sweep instrument committed: `scripts/sweep-pixels.mjs`, `run` and `read`.** Nothing calls
+it, it asserts nothing, no gate runs it; its header says so and says how it works, since
+Playwright gives no other way in. `read` over the 6 Nov logs reproduces the sweep's figures
+(202, 538, 10; identity-band-holds:79 at 90.6%).
+
+**wall-route:213, answered.** The test at :234 the 64aa789 fix covered is the test at :213 now,
+the same test. The fix's own part held: its seed is one statement and the failing attempt ran
+2.9s, not 30. What failed on 42243942847 was after `settled()` returned, in :213 and in :162: the
+landing wait's condition met and the landing not applied. More than a row; Q45, with the two
+traces to read first.
+
+**Q44 and Q43 split as ruled**: identity-band-holds:79 is src disagreeing with src by 0.45px
+under a tolerance, its own row; row-rules-33:218 and wall-labelled:187/:188 are housekeeping.
+
+**A refusal of my own making, kept (6 Nov, 11:56).** Three commits were chained in the background
+and I began Q40's edits while the first commit's check was running: the runner read "761 passed,
+tree CHANGED — NOT OK — the tree changed during the run (e2e/bracket.ts,
+e2e/pick-moods-157.spec.ts, test/e2e-helpers/bracket.test.ts) — not a result", and nothing was
+committed. The guard did what it is for; the chain's shell was stopped before its push, since a
+push of the two held NOTES commits alone and a gate on them would have been a wasted CI run. The
+rule, which §9 already states for runs and holds for commits: while a check runs, the tree is the
+check's, and nothing edits it.
