@@ -534,3 +534,42 @@ it('a run with a passed count of zero and nothing failed is not a pass either', 
   expect(result.ok).toBe(false);
   expect(result.reason).toBe('every test skipped — nothing ran');
 });
+
+/**
+ * **The judge read a run id as the failed count (6 Nov, run 42273938707).**
+ * Playwright prints the source around a failing line, and a comment there
+ * read "run 42268956664 failed here twice"; nothing had failed, so Playwright
+ * printed no "N failed" line of its own, and the last "N failed" anywhere in
+ * the output was the comment's. The summary line then said "1058 passed,
+ * 42268956664 failed — NOT OK". §2's fourth row in another coat: a number
+ * the judge was given, read as one it counts. A count is read from a
+ * summary line only, a line that is nothing but count-word pairs, as
+ * Playwright and Vitest print them. Fails against `countOf` as it stood,
+ * which searched the whole output.
+ */
+describe('counts are read from summary lines only, never from a printed source line', () => {
+  const excerpt = [
+    '  1) [chromium] › e2e/wall-route.spec.ts:213:5 › a wall that fits the region (retry #1)',
+    '      244 |   }, ids[0]);',
+    '    > 245 |   /* Both measurements named (run 42268956664 failed here twice with the wait satisfied) */',
+    '          |   ^',
+    '  2 flaky',
+    '    [chromium] › e2e/wall-route.spec.ts:213:5 › a wall that fits the region',
+    '  1 skipped',
+    '  1058 passed (16.7m)',
+    '',
+  ].join('\n');
+
+  it('a run id in a printed comment is not the failed count', () => {
+    const result = readRunResult({ output: excerpt, exitCode: 0 });
+    expect(result.failed, 'nothing failed; the 42268956664 is a comment').toBe(0);
+    expect(result.passed).toBe(1058);
+    expect(result.flaky).toBe(2);
+    expect(summarise(result)).not.toMatch(/42268956664/);
+  });
+
+  it('still reads a genuine failed line beside such a comment', () => {
+    const result = readRunResult({ output: `  1 failed\n${excerpt}`, exitCode: 0 });
+    expect(result.failed).toBe(1);
+  });
+});

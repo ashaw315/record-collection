@@ -168,12 +168,36 @@ const ledgerOf = (output: string, suite: Suite): { state: RunResult['ledger']; s
   word. Vitest's "Test Files" line is deliberately NOT preferred: the "Tests"
   line is the finer-grained one, and taking the last match of each keyword lands
   on it.
-*/
-const countOf = (output: string, word: string): number | null => {
-  const matches = [...output.matchAll(new RegExp(String.raw`(\d+)\s+${word}\b`, 'g'))];
-  const last = matches.at(-1);
 
+  **Read from summary lines only (6 Nov, run 42273938707).** Playwright prints
+  the source around a failing line, and a comment there read "run 42268956664
+  failed here twice"; nothing had failed, so no "N failed" line of Playwright's
+  own existed, and the last "N failed" anywhere was the comment's: the summary
+  said "42268956664 failed — NOT OK". A summary line is nothing but count-word
+  pairs, with Vitest's "Tests" prefix, a duration or total in brackets, and "|"
+  between pairs; a line with anything else on it, a comment, a test's name, the
+  judge's own earlier verdict with its commas, is not one.
+*/
+const PAIRS = String.raw`(?:\d+\s+(?:passed|failed|flaky|skipped|todo|pending)\b(?:\s+\([^)]*\))?(?:\s*[|,]\s*)?)+`;
+/* A runner's own summary line: nothing on it but the pairs. */
+const SUMMARY_LINE = new RegExp(String.raw`^\s*(?:Tests\s+)?${PAIRS}\s*$`);
+/*
+  The judge's own earlier verdict, as a gate log carries it at its foot ("0 passed, 29 skipped,
+  ledger clean — NOT OK"): read ONLY where no runner's line exists, so a judged line fed back
+  reads as the zero it says and never outranks the runner's own counts above it.
+*/
+const JUDGED_LINE = new RegExp(String.raw`^\s*(${PAIRS})`);
+const countIn = (lines: string[], word: string): number | null => {
+  const matches = lines.flatMap((line) => [...line.matchAll(new RegExp(String.raw`(\d+)\s+${word}\b`, 'g'))]);
+  const last = matches.at(-1);
   return last === undefined ? null : Number(last[1]);
+};
+const countOf = (output: string, word: string): number | null => {
+  const lines = output.split('\n');
+  const runnerLines = lines.filter((line) => SUMMARY_LINE.test(line));
+  if (runnerLines.length > 0) return countIn(runnerLines, word);
+  const judgedPrefixes = lines.map((line) => JUDGED_LINE.exec(line)?.[1]).filter((p): p is string => p !== undefined);
+  return countIn(judgedPrefixes, word);
 };
 
 export function readRunResult({

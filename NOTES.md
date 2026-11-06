@@ -53514,3 +53514,34 @@ state being every other worker's. Not yet proved from these two runs, since neit
 carries the frame; the next does: the write now records the content's width, the region's and
 the seats drawn, the wait's message names both frames, and :213's "fits" names the seat counts
 and widths it compared. The stream band: 272 chromium, 61 mobile.
+
+**Two lint errors pushed and fixed forward (6 Nov, 169ce12 then 3591845).** The chain that
+committed the frames commit printed "lint exit 1, 2 errors" and went on to commit and push,
+because nothing in it stopped on lint; commit-checked runs the document suite, not the linter.
+The errors were the compiler's rule on a closure made in render that writes outside React
+(`recordLandingWrite` defined in the component body), right on its face; the recorder is a
+module-level function now, lint 0 errors, pushed as 3591845 on top of the gate already running
+on 169ce12, whose code behaves the same. The rule for me: a chain that runs lint reads lint
+before it commits, or lint is not in the chain.
+
+**CI run 42273938707 on 169ce12 at four workers from a build, the chromium half read before
+the mobile half landed (6 Nov, 19:28).** Chromium 1058 passed, 2 flaky, 1 skipped, no failure:
+wall-route:162 and :213 on the first attempt, passing on the retry. **The wait's frame message
+fired on :213 and says it: "before the round-trip: content 1253, region 872; now content
+2136, region 1321".** The region widened by the test's own 449 (the window widened by the
+measured excess and the pad), and the wall's content grew by 883 between the two reads, which
+is a seed of a few hundred records by another worker (the whole collection read "20 of 524" in
+one of this test's screenshots and "240 of 288" in :162's). So the reading above is read now,
+not guessed: §W.12 sizes the wall by the whole collection, and at four workers the collection
+moves between any two reads of the wall's width. A test that measures the wall, acts, and
+measures again is the lineup shape with the other workers as the state change. wall-settle:53
+did not fail on this run.
+
+**The judge read a run id as the failed count.** The half's summary line said "1058 passed,
+42268956664 failed, 2 flaky, 1 skipped — NOT OK — 42268956664 failed". Playwright prints the
+source around a failing line, and the comment beside :213's assertion read "run 42268956664
+failed here twice"; the judge's search for "N failed" found that before Playwright's own
+summary. The instrument-reads-its-own-output family, §2's fourth row in its own coat: a number
+the judge was given, read as a number the judge counts. The comment is reworded (no number
+followed by "failed"), and the judge is to read Playwright's summary block and nothing else
+(Q46); the verdict on this half is GREEN WITH FLAKES, not NOT OK.

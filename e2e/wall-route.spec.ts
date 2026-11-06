@@ -242,7 +242,12 @@ test('a wall that fits the region has no horizontal landing to make, and still p
     const rect = (q: string) => { const r = document.querySelector(q)?.getBoundingClientRect(); return r ? { top: r.top } : null; };
     return { scrollLeft: el === null ? null : Math.round(el.scrollLeft), fits: el !== null && el.scrollWidth <= el.clientWidth, scroll: el?.scrollWidth ?? null, client: el?.clientWidth ?? null, count: (document.querySelector('[data-testid="wall-zoom-out"]')?.textContent ?? '').trim(), region: rect('[data-region="wall"]'), shelf: rect(`[data-seat="${id}"] [data-face="top"]`) };
   }, ids[0]);
-  /* Both measurements named (run 42268956664 failed here twice with the wait satisfied): a count that moved is the collection changing under a wall §W.12 sizes by the whole collection, which every other worker seeds into and cleans out of. */
+  /*
+    Both measurements named (run 42268956664 stopped here on both attempts with the wait satisfied): a content width
+    that grew is the collection changing under a wall §W.12 sizes by the whole collection, which every other worker
+    seeds into and cleans out of. Playwright prints this comment beside the failing line, and the judge once read a
+    run id in it as the failed count (6 Nov, run 42273938707), so no number here is followed by the word "failed".
+  */
   expect(got.fits, `the whole wall is visible (before the round-trip: content ${narrow.scroll}, region ${narrow.client}, count ${narrow.count}; now content ${got.scroll}, region ${got.client}, count ${got.count})`).toBe(true);
   expect(got.scrollLeft, 'nothing to pan: the landing resolves to zero').toBe(0);
   /* The run pressed is the first occupied one, and its first seat is this test's first record, as the test above establishes. */
