@@ -2,7 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist } from './cleanup';
 import { seedRecords } from './seed';
 import { login } from './sign-in';
-import { settled } from './wall-settle';
+import { markDocument, settled } from './wall-settle';
 
 registerCleanup();
 
@@ -92,9 +92,10 @@ test('a zoom-in keeps the wall’s region and the reader’s view: no remount, n
   await expect(page.locator('[data-wall="overview"]')).toBeVisible();
   await page.evaluate(() => { (window as unknown as { __landings?: number }).__landings = 0; });
   await sample(page);
+  const zoomed = await markDocument(page);
   await page.locator('[data-run]').first().click();
   await expect(page.locator('[data-wall="labelled"]')).toBeVisible();
-  const at = await settled(page, 1);
+  const at = await settled(page, 1, { same: zoomed });
   await page.waitForTimeout(4000);
   /*
     The sampler lives in the document, so a replaced document has none. Staged on 7 Nov by aborting the RSC fetch:

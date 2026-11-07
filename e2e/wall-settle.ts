@@ -39,7 +39,61 @@ export const landingWrite = (page: Page) => page.evaluate(() => (window as unkno
  * Held here since 5 Nov, when wall-arrival-104:120 flaked at four workers on
  * the same defect as wall-route: one wait for the one fact, in both files.
  */
-export async function settled(page: Page, landed: number): Promise<{ write: LandingWrite; moved: string | null }> {
+/** A token written into the document before an action, so the wait can say which document it landed in. */
+export type DocumentMark = { token: string };
+export async function markDocument(page: Page): Promise<DocumentMark> {
+  const token = `${Date.now()}-${Math.random()}`;
+  await page.evaluate((t) => { (window as unknown as { __settleDoc?: string }).__settleDoc = t; }, token);
+  return { token };
+}
+export type DocumentOption = { same: DocumentMark } | { after: DocumentMark };
+
+/* The document's mark, or undefined while no document answers (mid-navigation, a destroyed context). */
+const markIn = (page: Page) => page.evaluate(() => (window as unknown as { __settleDoc?: string }).__settleDoc ?? null).catch(() => undefined);
+
+/* Whether the document still carries the mark, once a document answers. */
+async function stillMarked(page: Page, mark: DocumentMark): Promise<boolean> {
+  for (let i = 0; i < 50; i += 1) {
+    const found = await markIn(page);
+    if (found !== undefined) return found === mark.token;
+    await page.waitForTimeout(100);
+  }
+  return false;
+}
+
+/**
+ * **Which document the landing is in, stated by every caller (the coordinator,
+ * 7 Nov).** The count and the write live in the window, and a new document
+ * starts them afresh, so before this the wait caught two classes and named
+ * neither: a document REPLACED under a same-document wait (the zoom's RSC
+ * fetch failing, when Next loads the `?shelf=` URL whole and the new page's
+ * own landing satisfies the count), and a navigating wait satisfied by the
+ * page it was LEAVING, whose landing had already been counted. The caller
+ * marks the document before its action (`markDocument`) and says `same` or
+ * `after`; the option is required, so no caller is silent by default.
+ * `e2e/wall-settle.spec.ts` stages both arms.
+ */
+export async function settled(page: Page, landed: number, document: DocumentOption): Promise<{ write: LandingWrite; moved: string | null }> {
+  if ('after' in document) {
+    const mark = document.after;
+    await expect
+      .poll(async () => { const found = await markIn(page); return found !== undefined && found !== mark.token; }, { timeout: 15_000, message: 'the navigation has not committed: the document is still the one marked before the action' })
+      .toBe(true);
+    return land(page, landed);
+  }
+  const replaced = new Error('the document was replaced between the mark and the landing: the landing read is the new page’s, not the one the action was taken in');
+  let result: Awaited<ReturnType<typeof land>>;
+  try {
+    result = await land(page, landed);
+  } catch (error) {
+    if (!(await stillMarked(page, document.same))) throw replaced;
+    throw error;
+  }
+  if (!(await stillMarked(page, document.same))) throw replaced;
+  return result;
+}
+
+async function land(page: Page, landed: number): Promise<{ write: LandingWrite; moved: string | null }> {
   await expect.poll(() => landings(page), { timeout: 15_000, message: `the landing is consumed (${landed})` }).toBeGreaterThanOrEqual(landed);
   /* The region's own mark of the same fact, which clickSpine waits on (28 Oct): held here where the count is also known. */
   await expect(page.locator('[data-wall-container][data-landed="true"]').first()).toBeAttached();

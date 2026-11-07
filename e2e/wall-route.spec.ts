@@ -3,7 +3,7 @@ import { registerCleanup, trackArtist } from './cleanup';
 import { seedRecords } from './seed';
 import { login } from './sign-in';
 import { clickSpine } from './wall-ready';
-import { landings, settled, type LandingWrite } from './wall-settle';
+import { landings, markDocument, settled, type LandingWrite } from './wall-settle';
 
 registerCleanup();
 
@@ -116,6 +116,7 @@ test('a bare / opens NEAR with the occupied shelf framed, and the far view is a 
     on the keyboard's path, which with no filter is the first placed.
   */
   await seed(page, 24);
+  const loaded = await markDocument(page);
   await page.goto('/');
   await expect(page.getByTestId('wall')).toBeAttached({ timeout: 30_000 });
 
@@ -126,7 +127,7 @@ test('a bare / opens NEAR with the occupied shelf framed, and the far view is a 
   await expect(page.locator('[data-footprint]'), 'the precondition: no filter, so no seat is emptied').toHaveCount(0);
 
   /* Framed on the occupied shelf: the first seat is in the region, and so are its top faces. */
-  await settled(page, 1);
+  await settled(page, 1, { after: loaded });
   const framed = await page.evaluate(() => {
     const rect = (q: string) => { const r = document.querySelector(q)?.getBoundingClientRect(); return r ? { left: r.left, top: r.top, right: r.right, bottom: r.bottom } : null; };
     return { region: rect('[data-region="wall"]'), seat: rect('a[data-seat][data-seat-order="1"] [data-spine]'), top: rect('a[data-seat][data-seat-order="1"] [data-face="top"]') };
@@ -172,10 +173,11 @@ test('clicking a run lands the near view on that run’s first seat, by the rule
   await page.getByTestId('wall-zoom-out').click();
   await expect(page.locator('[data-wall="overview"]')).toBeVisible();
   await page.evaluate(() => { (window as unknown as { __landings?: number }).__landings = 0; });
+  const zoomed = await markDocument(page);
   await clickFarRun(page);
   await expect(page.locator('[data-wall="labelled"]')).toBeVisible();
   /* Read once the landing has settled: the frame grows once the region is measured, and the landing's count is what proves it was not undone. */
-  await settled(page, 1);
+  await settled(page, 1, { same: zoomed });
 
   /*
     One read, of what the page owns at it (Q45, option 1, 6 Nov): the landing's own write, which carries the seat
@@ -229,15 +231,17 @@ test('clicking a run lands the near view on that run’s first seat, by the rule
 */
 test('a zoom-in landing is consumed once and lands within the scroller’s bounds, whatever the collection’s size at the read (§W.12)', async ({ page }) => {
   const { artistId, ids } = await seed(page, 20);
+  const loaded = await markDocument(page);
   await page.goto(`/?artistId=${artistId}`);
   await expect(page.locator('[data-wall="labelled"]')).toBeVisible({ timeout: 30_000 });
-  await settled(page, 1);
+  await settled(page, 1, { after: loaded });
   const before = await landings(page);
+  const zoomed = await markDocument(page);
   await page.getByTestId('wall-zoom-out').click();
   await expect(page.locator('[data-wall="overview"]')).toBeVisible();
   await clickFarRun(page);
   await expect(page.locator('[data-wall="labelled"]')).toBeVisible();
-  await settled(page, before + 1);
+  await settled(page, before + 1, { same: zoomed });
   /* One read, everything from one layout. */
   const got = await page.evaluate((id) => {
     const el = document.querySelector('[data-region="wall"]') as HTMLElement | null;
@@ -341,6 +345,7 @@ test('the run is reachable by keyboard after the rail, and Enter zooms to that s
 
 test('Escape returns to the collection when nothing is pulled, and dismisses the pull when something is', async ({ page }) => {
   const { artistId } = await seed(page, 12);
+  const loaded = await markDocument(page);
   await page.goto(`/?artistId=${artistId}`);
   await expect(page.locator('[data-wall="labelled"]')).toBeVisible({ timeout: 30_000 });
   /*
@@ -349,7 +354,7 @@ test('Escape returns to the collection when nothing is pulled, and dismisses the
     gates with no pull begun (28 Oct). The arrival scrolls the region after the wall is visible, measured
     in 9 of 16 probe runs, and a click dispatched across that scroll lands where the seat was.
   */
-  await settled(page, 1);
+  await settled(page, 1, { after: loaded });
 
   /* With a record out, Escape is the put-back it already was — the near view stays. */
   await clickSpine(page, page.locator('[data-seat] [data-spine]').first());
@@ -402,9 +407,10 @@ test('the wall’s view and its shelf survive a reload, Back, Forward and a cold
   const cold = await browser.newContext({ storageState: await page.context().storageState() });
   try {
     const fresh = await cold.newPage();
+    const blank = await markDocument(fresh);
     await fresh.goto(nearUrl);
     await expect(fresh.locator('[data-wall="labelled"]')).toBeVisible({ timeout: 30_000 });
-    await settled(fresh, 1);
+    await settled(fresh, 1, { after: blank });
     const landed = await fresh.evaluate(() => {
       const el = document.querySelector('[data-region="wall"]') as HTMLElement | null;
       return el === null ? null : { left: Math.round(el.scrollLeft), top: Math.round(el.scrollTop) };

@@ -52761,6 +52761,7 @@ table wins.
 | 42331535800 | 4331f9d | 4 (build) | none: unit 4936 passed, 2 skipped; chromium 1060 passed, 1 skipped; mobile 390 passed, 4 skipped; no flaky line (both of be96671's defects fixed) |
 | 42332875787 | fa0eed8 | 4 (build) | none: unit 4936 passed, 2 skipped; chromium 1061 passed, 1 skipped (the Q48 test the one more, passing at four workers on its first gate); mobile 390 passed, 4 skipped; no flaky line |
 | 42374235352 | dddcdbe | 4 (build) | none: unit 4936 passed, 2 skipped; chromium 1061 passed, 1 skipped (the Q48 test with its server-render precondition); mobile 390 passed, 4 skipped; no flaky line |
+| 42377203547 | 9211955 | 4 (build) | none: unit 4955 passed, 2 skipped (the intersection's 19 the more); chromium 1061 passed, 1 skipped; mobile 390 passed, 4 skipped; no flaky line |
 
 Derived: appearances 4 + 4 + 3 + 4 + 3 + 1 + 4 + 1 + 0 + 3 + 2 + 1 + 2 + 1 = **33**; distinct tests **18** (wall-settle:61 joins) (want-list:739,
 want-list:849, pick-moods-157:154, wall-arrival-104:120, wall-route:234, record-band-43:33,
@@ -54577,3 +54578,81 @@ them. The 65 are candidates, each still to be read for its claim.
 
 **Gate 42374235352 on dddcdbe (the Q48 unit): green.** Unit 4936 passed, 2 skipped; chromium 1061
 passed, 1 skipped; mobile 390 passed, 4 skipped; no flaky line; ledger ABSENT as on every runner.
+
+## 7 Nov, 09:10: two rules recorded; the client-side navigation bounded; the order changed
+
+**An instance, against the coordinator's name, at the coordinator's asking.** Q45's enumeration of
+`settled()`'s call sites was seven; there are eleven. The coordinator approved it site by site as
+though exhaustive, and it had been produced by inspection, the method the same message argued the
+mechanical sweep should replace. The third time the sweep has beaten reading: NODE_ENV's twelve
+against nine; sweep-pixels finding identity-band-holds; four call sites not seen. In the
+coordinator's words: "I ruled an enumeration complete on the strength of the method I was
+replacing."
+
+**The rule: check an instrument against a case whose answer you hold before believing its output.**
+A figure is read first against something already known; a figure that disagrees with the known case
+is the instrument's defect until shown otherwise. Two instances:
+1. *The coordinator's, 6 Nov:* a count taken as confirmed because it agreed with Code's grep. Two
+   instruments built on the same reading are one instrument; their agreement checked nothing.
+2. *The intersection, 7 Nov:* item 3 read 0 when pick-moods-157 is the spec known to read the
+   untagged count. Checking that one case found the reader's blind spot (a selector written at the
+   callers), and asking the same question of other figures found two more ($$eval, a locator from
+   the callers). Each became a test before the result was reported.
+
+**The client-side navigation blind spot, bounded and not chased (the coordinator, 7 Nov).** The
+intersection attributes a read to the route of the last goto before it. The log keeps API steps
+only, not `toHaveURL`, so the count is bounded by the actions between that goto and the read's last
+occurrence (scratch count, its rules here): **of 198 sites, at least 42 and at most 107; of the 65,
+at least 25 and at most 46.** The lower bound counts clicks on links, the nav, seats and runs,
+Enter, back and forward; the upper bound any click or press. Seat and run clicks are zoom-ins, a URL
+push that stays on the wall, so on the wall's 32 they cannot misattribute and the lower bound
+over-counts there. Misattribution can move a site either way.
+
+**The order changed (the coordinator, 7 Nov; put to Adam, who may overrule):** settled() with both
+arms staged; the landed record; ship.sh with Q49 and commit-checked's guards; then §65, the
+tracklist and the credits, from `discogs_release_text` (4,031 rows over 97 cached releases, read by
+nothing in the app yet). The 65 are not started: the intersection is the deliverable, queued as one
+row to be fixed by quantity, one pattern at a time.
+
+## 7 Nov, 09:10: settled() states its document, both arms staged; twelve callers, not eleven
+
+**Built as approved, with the coordinator's condition: both arms staged.** `settled(page, landed,
+{ same | after: mark })`, the mark written into the window by `markDocument` before the action, the
+option required. **It catches two classes, not one:** (1) a document replaced under a same-document
+wait, staged by aborting the zoom's RSC fetch (Next loads the `?shelf=` URL whole), now failing
+"the document was replaced between the mark and the landing"; (2) **a navigating wait satisfied by
+the page it was leaving**, whose landing had already been counted, which nobody had named, staged by
+delaying the rail search's document 3s (the wait holds and returns on the searched page, `q` read
+independently) and 25s (it fails "the navigation has not committed", not returning on the old page).
+wall-route :240, which failed by timeout on a replaced document, now fails by name under `same`.
+
+*Seen failing against a wait that took the option and ignored it:* `same` on Playwright's
+"Execution context was destroyed", `after`-holding the same, `after`-never on "the landing is
+consumed (1)": three failures, none named. **Two defects of the staging, found by running it:** the
+first `after` staging used `press('Enter')`, which waits for the navigation it starts to commit, so
+the old page was never there to read and the holding test passed against the ignoring wait; it now
+submits from inside the page (`requestSubmit`), a navigation Playwright does not wait on, which is
+the class. And the arm's own setup marked the document after the goto it then waited across, so
+both `after` tests failed by name for the wrong reason, the "pass by name" of the never-committing
+test spurious; read from the screenshot (the search box empty, nothing submitted) and a probe
+(submit commits 3.2s after a 3s delay), then marked before the goto. The probe is deleted; its
+finding is the comment at the mark.
+
+*Q48's spec keeps its own document check* beside the wait's: the wait's covers the mark to the
+landing, the spec's sampler covers the four seconds after the wait returns, which the wait cannot.
+
+**Twelve callers, not eleven, and the count was mine.** This morning's eleven came from a grep for
+`settled(page`; the twelfth is `settled(fresh, 1)` (wall-route:412, a cold context opening the near
+URL), found by the compiler the moment the document became required. The same error as Q45's
+seven, an hour after recording it against the coordinator's name: an enumeration taken with a
+pattern narrower than the thing enumerated, believed because it was mechanical. A grep is an
+instrument too, and it is checked against a case whose answer is held: here the type checker,
+which counts every call whatever its argument is named. Now the twelve: 6 `after` (wall-route
+:129, :234, :352, :412; wall-arrival-104 :162, :182) and 6 `same` (wall-route :178, :240;
+wall-settle.spec :66, :80, :88; region-remount-q48 :97); the three new tests' own waits besides.
+(Code's first tally of this, 8 and 4, counted those test waits as callers; corrected against the
+grep's per-file output before reporting.)
+
+Step level: wall-settle, wall-route, wall-arrival-104, region-remount-q48 on chromium (mobile does
+not run them), one worker, dev, load 3.1 to 6.1: 20 passed, 2.2m; typecheck; lint; build. A gate
+follows: the shared wait is shared infrastructure.

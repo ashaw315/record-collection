@@ -2,7 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { registerCleanup, trackArtist, trackCreated } from './cleanup';
 import { login } from './sign-in';
 import { pointerIs } from './hit-area';
-import { settled, type LandingWrite } from './wall-settle';
+import { markDocument, settled, type LandingWrite } from './wall-settle';
 
 registerCleanup();
 
@@ -155,11 +155,12 @@ test('a search applied while the near view is open moves it to the first match, 
     footprint counts that precede each wait hold only in the new document,
     so the old one's consumed landing cannot satisfy it.
   */
+  const beforeSearch = await markDocument(page);
   await page.locator('#rail-search').fill(f.word);
   await page.locator('#rail-search').press('Enter');
   await expect(page).toHaveURL(new RegExp(`q=${f.word}`), { timeout: 15_000 });
   await expect(page.locator('a[data-seat]')).toHaveCount(3, { timeout: 15_000 });
-  await settled(page, 1);
+  await settled(page, 1, { after: beforeSearch });
   const m = await read(page, f.ids);
   const first = [...m.seats].sort((a, b) => a.order - b.order)[0];
   expect(inRegion(m, m.seats.indexOf(first)), 'the first match’s shelf is the one framed').toBe(true);
@@ -176,10 +177,11 @@ test('a search applied while the near view is open moves it to the first match, 
   expect(searched.present, 'written for a seat of this document, not the last one’s').toBe(true);
   expect(searched.arrival, 'and it was the arrival, applied (§W.29)').toBe('applied');
 
+  const beforeClear = await markDocument(page);
   await page.locator('#rail-search').fill('');
   await page.locator('#rail-search').press('Enter');
   await expect(page.locator('[data-footprint]')).toHaveCount(0, { timeout: 15_000 });
-  await settled(page, 1);
+  await settled(page, 1, { after: beforeClear });
   /*
     Back where the unfiltered wall arrives: "toEqual(start.scroll)" compared two documents' scrolls across the
     window the collection moves in. The unfiltered arrival's seat on a layout is route-view.test.ts's (the first
