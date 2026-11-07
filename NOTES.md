@@ -52760,6 +52760,7 @@ table wins.
 | 42324913034 | be96671 | 4 (build) | wall-settle:78 (its own first wait named the re-clamp, the same frames a third time: content 1267 then 1179, scroll 395 then 307, so "exactly one annotation" failed on two); unit 1 failed, the export test on a runner with no drop refs; mobile 390 passed |
 | 42331535800 | 4331f9d | 4 (build) | none: unit 4936 passed, 2 skipped; chromium 1060 passed, 1 skipped; mobile 390 passed, 4 skipped; no flaky line (both of be96671's defects fixed) |
 | 42332875787 | fa0eed8 | 4 (build) | none: unit 4936 passed, 2 skipped; chromium 1061 passed, 1 skipped (the Q48 test the one more, passing at four workers on its first gate); mobile 390 passed, 4 skipped; no flaky line |
+| 42374235352 | dddcdbe | 4 (build) | none: unit 4936 passed, 2 skipped; chromium 1061 passed, 1 skipped (the Q48 test with its server-render precondition); mobile 390 passed, 4 skipped; no flaky line |
 
 Derived: appearances 4 + 4 + 3 + 4 + 3 + 1 + 4 + 1 + 0 + 3 + 2 + 1 + 2 + 1 = **33**; distinct tests **18** (wall-settle:61 joins) (want-list:739,
 want-list:849, pick-moods-157:154, wall-arrival-104:120, wall-route:234, record-band-43:33,
@@ -54494,3 +54495,85 @@ set could be found was wrong, written without searching NOTES; it reached only t
 this file, so no entry carried it and the survey's framing stands. What the seven read sits inside
 the list: pick-moods-157 item 3; wall-arrival-104, wall-route and shelf item 1; stats item 4 and
 collection-filters item 5, both now scoped to their own artist.
+
+**Q49, raised from ship 4's output (7 Nov).** `basename: illegal option -- d` after "816 passed,
+tree unchanged — OK": commit-checked's carry check passes a staged file's path-shaped tokens to
+`basename`, and a token beginning with `-` is read as an option, so the check prints an error and
+skips that token. Present in ship 3's output too, three times, unread. Queued with the ship.sh and
+commit-checked unit; not fixed here.
+
+## 7 Nov, 08:50: settled() and the replaced document; the intersection, 65 of 198; Q48 ruled watched
+
+**Q48, ruled (the coordinator, 7 Nov): stop chasing it, keep it open and watched, no more runs.**
+The row carries the coverage as it is: 16 runs at load 2.7 to 4.3, 30 at 16 to 53 (wall-settle:78's
+ten to 84), the failure's own band of roughly 4 to 16 covered only by one build run's first minute.
+And the observation: the failure's load was changing and every repeat held load steady.
+
+**settled() does not check which document it is reading; only Q48's spec does.** The shared wait
+(`e2e/wall-settle.ts:42`) reads `window.__landings` and `__landingWrite`, which a new document starts
+afresh, so a replaced document whose own first landing reaches the count satisfies it: staged this
+morning by aborting the RSC fetch, when Next loaded the `?shelf=` URL whole and the wait returned on
+the new page's landing. It has **11 call sites**, not the seven of Q45's row (wall-route 5,
+wall-settle.spec 3, wall-arrival-104 2, region-remount-q48 1; `ring-routes.ts` has its own
+`settled`, a different function). Read for what each waits across:
+
+| waits across | sites | a replaced document |
+|---|---|---|
+| a page load (goto), a new document on purpose | wall-route :129, :234, :352 | is the document waited for |
+| the rail's search submit, a navigation, on purpose | wall-arrival-104 :162, :182 | is the document waited for |
+| a zoom-in in the same document | wall-route :178; wall-settle.spec :66, :80, :88; region-remount-q48 :97 | **accepted silently**, except Q48's own check after the wait |
+| a zoom-in, counted from before | wall-route :240 (`before + 1`) | times out, since a new document counts from nothing; not silent, not named |
+
+*Proposed, not built:* the document becomes part of the wait's contract, stated by every caller.
+`markDocument(page)` writes a token into the window before the action and returns it;
+`settled(page, landed, { same: token })` fails by name, "the document was replaced between the
+mark and the landing", when the token is gone, and `settled(page, landed, { after: token })` (the
+five navigating callers) fails when it is still there, since then the wait could resolve on the old
+document before the navigation committed. The option is required, so no caller can leave it
+unstated, and Q48's spec drops its own check for the wait's. Test first in wall-settle.spec: the
+aborted RSC fetch staged by `page.route` (the test owns the route), failing by name under
+`{ same }`; a navigation that never commits failing under `{ after }`. Touches `e2e/wall-settle.ts`,
+`e2e/wall-settle.spec.ts`, `e2e/wall-route.spec.ts`, `e2e/wall-arrival-104.spec.ts`,
+`e2e/region-remount-q48.spec.ts`: five files, one decision. A gate after, by §10's spirit if not its
+letter: every wall-landing spec moves.
+
+**A shared wait is a shared assumption, and its defects are invisible at every call site by
+construction (the coordinator, 7 Nov).** This wait has now been wrong twice in a way no caller could
+see: first the landing count returning before the landing applied (the clock in another coat, 6 Nov),
+now a landing belonging to another document. Both times it was found by something else going wrong,
+never by a caller, because each caller reads the wait's return as the fact it waited for. A defect in
+a shared wait is fixed once and lives in every caller until then.
+
+**The intersection, run (the list confirmed at seven).** `scripts/twice-intersect.mjs` over the
+rerun's log (`docs/measurements/twice/2026-11-07T01-35-59-752Z-chromium.jsonl`), test first in
+`test/repo/twice-intersect.test.ts` (19 tests). A site is in when the page its read ran on renders
+a shared quantity from rows the test does not own (the route of the last goto before the read; an
+`artistId=` scope makes 2, 4-stats and 5 the test's own but not the wall, §W.12, nor facets, §5.2,
+`records.ts:905`), and the read measures something the quantity moves (geometry, a count, text, a
+list), not a font load, a focus or a style. **65 of 198 sites, in 36 specs:**
+
+| quantity | sites | specs |
+|---|---|---|
+| 1 the wall's layout | 32 | 18, shelf 4, pick-pull 3, record-navigation 3, wall-arrival-104 3, wall-settle.ts 3 |
+| 2 the collection's count | 2 | pick-answer-156, sidebar-113 |
+| 3 the untagged count, the mood pool | 2 | pick-moods-157 :64, :226 |
+| 4 facets and stats | 11 | 7, stats-names-144 3 |
+| 5 listRecords: order and total | 15 | 9, collection-filters-97 4, filter-container-113 3 |
+| 6 the Manage lists, the want list | 15 | 9, lineup-146 3 |
+| 7 the ownership check | 2 | lookup-flows :1971, result-card-150 :121 |
+
+(A site reading several counts under each, so the column does not sum to 65.) Output kept beside
+the log as `….intersect.txt`. **The reader was wrong three times before this result, each a blind
+spot found by asking why a figure was what it was, each now a test:** item 3 read 0 although
+pick-moods-157 is the spec known to read the untagged count, because :226's selector is passed in
+and written at its callers; `$$eval` reads (record-navigation:81, ring-144:182, the wall's seats)
+were lost because the body kept only the call's arguments; result-card-150:121's locator comes from
+its callers. The first run read 61; this one 65. **What the rules cannot see, said here so the
+figure is not read as whole:** a client-side navigation (the rail's search, a link) leaves the
+route at the last goto; identity reads, such as record-navigation :90 and :340 reading which record
+is pulled, are excluded as not measurements, and a pick drawn from a pool wider than the test's own
+records would move them; a marker found in a caller can widen a site's quantities and never narrow
+them. The 65 are candidates, each still to be read for its claim.
+
+**Gate 42374235352 on dddcdbe (the Q48 unit): green.** Unit 4936 passed, 2 skipped; chromium 1061
+passed, 1 skipped; mobile 390 passed, 4 skipped; no flaky line; ledger ABSENT as on every runner.

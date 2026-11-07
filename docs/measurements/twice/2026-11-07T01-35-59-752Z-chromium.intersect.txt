@@ -1,0 +1,96 @@
+in the intersection: 65 of 198 sites; outside: 133
+by quantity (a site reading several quantities counts under each, so these do not sum to the site total): {"1":32,"2":2,"3":2,"4":11,"5":15,"6":15,"7":2}
+caveat: the route is the last goto before the read, so a client-side navigation (the rail’s search, a link) is not seen; the sites are candidates, each still to be read for its claim
+
+1 the wall’s layout (§W.12): 32
+  e2e/colour-103.spec.ts:35                Evaluate       /want-list /lookup /?view=table / /records/ID /login
+  e2e/colour-103.spec.ts:141               Evaluate       /want-list /?view=table /
+  e2e/header-114.spec.ts:24                Evaluate       /?view=table / /want-list
+  e2e/nav-menu-76.spec.ts:47               Evaluate       / /records/ID
+  e2e/nav-type-74.spec.ts:65               Evaluate       /
+  e2e/pick-answer-156.spec.ts:27           Evaluate       /?artistId=ID /
+  e2e/pick-moods-157.spec.ts:226           Evaluate       /?artistId=ID /?view=grid&artistId=ID
+  e2e/pick-pull-156.spec.ts:78             Query count    /?artistId=ID
+  e2e/pick-pull-156.spec.ts:66             Evaluate       /?artistId=ID
+  e2e/pick-pull-156.spec.ts:82             Query count    /?artistId=ID
+  e2e/pick-zoom-race-156.spec.ts:80        Evaluate       /?artistId=ID
+  e2e/pick-zoom-race-156.spec.ts:64        Evaluate       /?artistId=ID
+  e2e/rail-set-bar.spec.ts:21              Evaluate       /
+  e2e/record-navigation.spec.ts:254        Evaluate       /?artistId=ID
+  e2e/record-navigation.spec.ts:81         Evaluate       /?artistId=ID
+  e2e/record-navigation.spec.ts:339        Evaluate       /?artistId=ID
+  e2e/ring-144.spec.ts:182                 Evaluate       /
+  e2e/ring-144.spec.ts:197                 Query count    /
+  e2e/scroll-lock.spec.ts:123              Evaluate       /
+  e2e/shelf.spec.ts:169                    Evaluate       /?artistId=ID
+  e2e/shelf.spec.ts:354                    Evaluate       /?artistId=ID&sort=title%3Aasc
+  e2e/shelf.spec.ts:431                    Evaluate       /
+  e2e/shelf.spec.ts:494                    Evaluate       /?artistId=ID
+  e2e/wall-arrival-104.spec.ts:76          Evaluate       /
+  e2e/wall-settle.ts:4                     Evaluate       / /?artistId=ID
+  e2e/wall-settle.ts:8                     Evaluate       / /?artistId=ID
+  e2e/wall-settle.ts:49                    Evaluate       / /?artistId=ID
+  e2e/wall-arrival-104.spec.ts:98          Evaluate       /
+  e2e/wall-arrival-104.spec.ts:233         Evaluate       /?genreId=ID&q=zzzz-no-such-record-104
+  e2e/wall-first-paint.spec.ts:149         Evaluate       /?artistId=ID
+  e2e/wall-reduced-motion.spec.ts:28       Evaluate       /
+  e2e/zoom-out-pulled.spec.ts:47           Evaluate       /?artistId=ID
+
+2 the collection’s count: 2
+  e2e/pick-answer-156.spec.ts:55           Evaluate       /?view=table&artistId=ID /?view=grid&artistId=ID
+  e2e/sidebar-113.spec.ts:31               Evaluate       /?view=grid /?view=table
+
+3 the untagged count, the mood pool: 2
+  e2e/pick-moods-157.spec.ts:64            Evaluate       /?view=grid&artistId=ID
+  e2e/pick-moods-157.spec.ts:226           Evaluate       /?artistId=ID /?view=grid&artistId=ID
+
+4 facets and stats: 11
+  e2e/collection-filters-97.spec.ts:73     Evaluate       /?view=table
+  e2e/collection-filters-97.spec.ts:85     Evaluate       /?view=table
+  e2e/filter-container-113.spec.ts:49      Evaluate       /?view=table
+  e2e/filter-container-113.spec.ts:144     Evaluate       /?view=table
+  e2e/pinned-118.spec.ts:24                Evaluate       /stats
+  e2e/rail-set-bar.spec.ts:21              Evaluate       /
+  e2e/ring-144.spec.ts:35                  Evaluate       /
+  e2e/sidebar-113.spec.ts:31               Evaluate       /?view=grid /?view=table
+  e2e/stats-names-144.spec.ts:104          Query count    /stats
+  e2e/stats-names-144.spec.ts:50           Evaluate       /stats
+  e2e/stats-names-144.spec.ts:59           Screenshot     /stats
+
+5 listRecords under a filter: order and total: 15
+  e2e/collection-band-97.spec.ts:155       Evaluate       /?view=table /?view=grid
+  e2e/collection-filters-97.spec.ts:73     Evaluate       /?view=table
+  e2e/collection-filters-97.spec.ts:85     Evaluate       /?view=table
+  e2e/collection-filters-97.spec.ts:88     Evaluate       /?view=table
+  e2e/collection-filters-97.spec.ts:96     Evaluate       /?view=table
+  e2e/collection-filters.spec.ts:138       Query count    /?view=table&artistId=ID /?view=table&artistId=ID&yearFrom=1980&yearTo=1983 /?view=table
+  e2e/colour-103.spec.ts:35                Evaluate       /want-list /lookup /?view=table / /records/ID /login
+  e2e/colour-103.spec.ts:141               Evaluate       /want-list /?view=table /
+  e2e/empty-figure-103e.spec.ts:36         Evaluate       /?view=table
+  e2e/filter-container-113.spec.ts:49      Evaluate       /?view=table
+  e2e/filter-container-113.spec.ts:144     Evaluate       /?view=table
+  e2e/filter-container-113.spec.ts:23      Evaluate       /?view=table
+  e2e/header-114.spec.ts:24                Evaluate       /?view=table / /want-list
+  e2e/sidebar-113.spec.ts:31               Evaluate       /?view=grid /?view=table
+  e2e/table-row-box-105.spec.ts:86         Query count    /?view=table
+
+6 the Manage lists and the want list: 15
+  e2e/colour-103.spec.ts:35                Evaluate       /want-list /lookup /?view=table / /records/ID /login
+  e2e/colour-103.spec.ts:141               Evaluate       /want-list /?view=table /
+  e2e/type-read.ts:14                      Evaluate       /records/ID /records/new /manage
+  e2e/header-114.spec.ts:24                Evaluate       /?view=table / /want-list
+  e2e/import-159.spec.ts:41                Evaluate       /manage
+  e2e/import-159.spec.ts:63                Evaluate       /manage
+  e2e/lineup-146.spec.ts:76                Evaluate       /manage?artists=all
+  e2e/lineup-146.spec.ts:26                Evaluate       /manage?artists=all
+  e2e/lineup-146.spec.ts:72                Evaluate       /manage?artists=all
+  e2e/manage-146.spec.ts:30                Evaluate       /manage
+  e2e/manage.spec.ts:915                   Evaluate       /manage
+  e2e/manage.spec.ts:1053                  Bounding box   /manage
+  e2e/review-146.spec.ts:29                Evaluate       /manage
+  e2e/want-list.spec.ts:1034               Evaluate       /want-list
+  e2e/want-list.spec.ts:1170               Evaluate       /want-list
+
+7 the ownership check: 2
+  e2e/lookup-flows.spec.ts:1971            Evaluate       /lookup
+  e2e/result-card-150.spec.ts:121          Evaluate       /lookup
