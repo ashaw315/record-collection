@@ -54309,3 +54309,47 @@ time is the capture's: "Rules not snapshots" was on disk at 17:25 and captured a
 
 **Not done, and why:** CLAUDE.md §10's items 1 to 3 do not yet name ship.sh. The proposal said
 "on the coordinator's words", and CLAUDE.md is the coordinator's text; the wording is owed from them.
+
+## 6 Nov, 21:55: gate 42324913034 not OK on two of Code's own test defects; the rerun of the twice sweep; Q48 raised
+
+**Gate 42324913034 on be96671, four workers from a build: NOT OK.** Unit 4934 passed, 1 failed;
+chromium 1059 passed, 1 flaky; mobile 390 passed. Both are defects in tests written this evening,
+neither in the product: (1) the export-bundle test asserted the 6 Nov change files from the drop
+refs, which are local and never pushed, so the runner had none and the list was empty; and an
+empty list there would read as "Code applied nothing". Fixed by the absence line, "NO DROP REFS
+in this repository: the list cannot be derived here, which is not the same as none applied",
+watched failing first and staged for real in a fresh clone (0 drop refs, the line printed); the
+bundle test asserts the 6 Nov lines only where refs exist and says so in its name. (2)
+wall-settle:78 asserted exactly one landing-moved annotation, and its own first wait named the
+collection's re-clamp with the same frames for the third gate running (content 1267 then 1179,
+240 seats, the scroll 395 then 307), so it found two: "exactly one" read the shared quantity
+again, in the test written to stop doing that. Now the last annotation is asserted to be this
+call's. The runs table: 36 appearances, 18 distinct.
+
+**A different failure on the local repeat, raised as Q48 and not fixed.** wall-settle:78 at
+--repeat-each=3 under dev, one worker, load 7.8 falling from 16.7: 2 passed, 1 flaky; on the
+third, the second wait read the region as absent ("no region") at 12.65s, the screenshot showing
+the near view drawn with Next's dev indicator "Rendering…", and the network log the zoom-in's URL
+push fetching `?shelf=257&_rsc=…`. Read as the push's server render remounting the region under
+the read; unverified, since the trace's call clock and its network clock do not align from what
+the trace carries. Owed before anything changes: the same staging under a build, repeated.
+
+**The twice sweep, rerun with the fixed classifier, chromium under dev, 1060 passed in 1.1h**,
+load 2.6 at the start and 20.5 at the end with nothing else of Code's running, so not comparable
+with the first run's 53.9m. Log: `docs/measurements/twice/2026-11-07T01-35-59-752Z-chromium.jsonl`,
+steps kept. The distribution: 10,877 reads, 19,492 actions, 8,039 other; 72 evaluate write
+sites. **198 hit sites in 311 tests**, by the action between:
+
+| action between | sites | tests |
+|---|---|---|
+| navigation, a new document | 72 | 87 |
+| a gesture | 70 | 127 |
+| a write by evaluate | 40 | 78 |
+| viewport only | 13 | 21 |
+| a collection write | 2 | 35 |
+| other (set content) | 1 | 3 |
+
+The founding case now shows: `e2e/wall-settle.ts:49`, the wait's read of the scroll, is a hit
+across an evaluate that writes, as are wall-arrival-104:76 and :233. Forty sites moved from
+"gesture" or "navigation" into "a write by evaluate" and two new sites appeared, so the blind
+spot was real and the class is now its own row.

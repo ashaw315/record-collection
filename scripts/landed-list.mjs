@@ -49,8 +49,10 @@ export function landedList({ drops, commits }) {
   });
 }
 
-export function landedText(list, { sha, date }) {
+/* Absent is not empty: drop refs are local and never pushed, so a runner has none, and an empty list there would read as "Code applied nothing". */
+export function landedText(list, { sha, date }, { drops } = { drops: list.length }) {
   const head = `Export note, not part of the file: the change files Code has applied, as of ${sha} on ${date}, each with the drop ref and date it arrived on and the commit it landed at. Read-only for Design: it is derived from the drop refs and the history, and the comparison against Design's own list is Design's half.`;
+  if (drops === 0) return `${head}\n\nNO DROP REFS in this repository: the list cannot be derived here, which is not the same as none applied.\n`;
   const lines = list.map((l) => `- ${l.file} — arrived ${l.ref} (${l.arrived}); ${l.landed === null ? 'not yet landed' : `landed ${l.landed.sha} (${l.landed.date})`}`);
   return `${head}\n\n${lines.join('\n')}\n`;
 }
@@ -76,5 +78,6 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   const sha = execFileSync('git', ['rev-parse', '--short', 'HEAD'], { encoding: 'utf8' }).trim();
   const d = new Date();
   const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-  process.stdout.write(landedText(landedList(fromGit()), { sha, date }));
+  const input = fromGit();
+  process.stdout.write(landedText(landedList(input), { sha, date }, { drops: input.drops.length }));
 }

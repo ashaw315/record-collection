@@ -224,15 +224,21 @@ describe('the script', () => {
   Design's "landed / relayed, not yet in an export / not landed" states have a comparable date on Code's side.
 */
 describe('the applied change files are exported beside the handoff', () => {
-  it('writes the list under the same note, named by the date and the commit, with the 6 Nov files and their drop refs', () => {
+  /* Drop refs are local and never pushed, so a runner has none: there the list says it cannot be derived, and the 6 Nov lines are asserted only where the refs exist. landed-list.test.ts holds the derivation itself. */
+  it('writes the list under the same note, named by the date and the commit: the 6 Nov files where the drop refs exist, the absence where they do not', () => {
     const dir = mkdtempSync(join(tmpdir(), 'export-landed-'));
     execFileSync('node', [SCRIPT, '--out', dir], { encoding: 'utf8' });
     const name = readdirSync(dir).find((f) => f.startsWith('Applied change files — export for Design, '));
     expect(name, 'the list is in the bundle').toBeDefined();
     const text = readFileSync(join(dir, name ?? ''), 'utf8');
     expect(text.split('\n')[0]).toMatch(/^Export note, not part of the file: the change files Code has applied, as of [0-9a-f]+ on \d{4}-\d{2}-\d{2}/);
-    expect(text).toMatch(/^- Rules not snapshots — arrived refs\/drops\/2026-11-06-01 \(2026-11-06T17:36:09[^)]*\); landed [0-9a-f]{7} \(/m);
-    expect(text).toMatch(/^- First paint is styled — arrived refs\/drops\/2026-11-06-03 \(2026-11-06T19:04:58[^)]*\); landed [0-9a-f]{7} \(/m);
+    const refs = execFileSync('git', ['for-each-ref', '--count=1', 'refs/drops'], { encoding: 'utf8' }).trim();
+    if (refs === '') {
+      expect(text).toMatch(/^NO DROP REFS in this repository/m);
+    } else {
+      expect(text).toMatch(/^- Rules not snapshots — arrived refs\/drops\/2026-11-06-01 \(2026-11-06T17:36:09[^)]*\); landed [0-9a-f]{7} \(/m);
+      expect(text).toMatch(/^- First paint is styled — arrived refs\/drops\/2026-11-06-03 \(2026-11-06T19:04:58[^)]*\); landed [0-9a-f]{7} \(/m);
+    }
     rmSync(dir, { recursive: true, force: true });
   });
 });

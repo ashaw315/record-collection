@@ -68,3 +68,16 @@ describe('landedText', () => {
     expect(text).toContain('- First paint is styled — arrived refs/drops/2026-11-06-03 (2026-11-06T19:04:58-05:00); not yet landed');
   });
 });
+
+/*
+  Absent is not empty (6 Nov): drop refs are local and never pushed, so on the gate's runner there are none, and
+  the export test that asserted the 6 Nov files failed there (run 42324913034). An empty list would read as "Code
+  applied nothing"; with no drop refs the text says the list cannot be derived here.
+*/
+describe('with no drop refs the list says it cannot be derived, not that nothing was applied', () => {
+  it('writes the absence as its one line', () => {
+    const text = landedText(landedList({ drops: [], commits }), { sha: '41bbc92', date: '2026-11-06' }, { drops: 0 });
+    expect(text).toMatch(/^NO DROP REFS in this repository: the list cannot be derived here, which is not the same as none applied\.$/m);
+    expect(text).not.toMatch(/^- /m);
+  });
+});

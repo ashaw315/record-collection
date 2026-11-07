@@ -109,7 +109,8 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   */
   const { landedList, landedText, fromGit } = await import('./landed-list.mjs');
   const landedPath = join(outDir, `Applied change files — export for Design, ${date} at ${sha}.md`);
-  writeFileSync(landedPath, landedText(landedList(fromGit()), { sha, date }));
+  const landedInput = fromGit();
+  writeFileSync(landedPath, landedText(landedList(landedInput), { sha, date }, { drops: landedInput.drops.length }));
   process.stdout.write(`${landedPath}\n`);
   /*
     A step's captures beside them (the coordinator, 28 Oct): captures were

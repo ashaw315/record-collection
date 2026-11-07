@@ -87,7 +87,12 @@ test('a view moved after the landing is named by the wait as a diagnostic, with 
   const frames = /not the landing’s write \(\d+, \d+\) for landing 1: at the write content \d+, region \d+, seats \d+; at this read content \d+, region \d+, seats \d+/;
   const settledAt = await settled(page, 1);
   expect(settledAt.moved, 'the wait says the view moved, with both frames').toMatch(frames);
+  /*
+    The annotation for THIS call is the last one, and not the only one: the first wait above can name the
+    collection's re-clamp too, which run 42324913034 did with the same frames as 42292989122 and 42309967002
+    (content 1267 then 1179, the scroll 395 then 307). "Exactly one" read the shared quantity again.
+  */
   const noted = test.info().annotations.filter((a) => a.type === 'landing-moved');
-  expect(noted, 'and the run carries it as an annotation the report shows').toHaveLength(1);
-  expect(noted[0]?.description).toMatch(frames);
+  expect(noted.length, 'the run carries it as an annotation the report shows').toBeGreaterThanOrEqual(1);
+  expect(noted.at(-1)?.description, 'and the last is this call’s').toBe(settledAt.moved);
 });
