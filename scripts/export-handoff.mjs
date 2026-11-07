@@ -105,12 +105,12 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   /*
     The change files Code has applied beside them (Design's ask, the coordinator, 6 Nov): each by name with the
     drop ref and date it arrived on and the commit it landed at, so Design's own list of what it offered and
-    what Adam relayed has dates to compare against on Code's side. Derived from the drop refs and the history.
+    what Adam relayed has dates to compare against on Code's side. From the committed record (7 Nov), the drop refs
+    only where HEAD has none.
   */
-  const { landedList, landedText, fromGit } = await import('./landed-list.mjs');
+  const { landedExport } = await import('./landed-list.mjs');
   const landedPath = join(outDir, `Applied change files — export for Design, ${date} at ${sha}.md`);
-  const landedInput = fromGit();
-  writeFileSync(landedPath, landedText(landedList(landedInput), { sha, date }, { drops: landedInput.drops.length }));
+  writeFileSync(landedPath, landedExport({ sha, date }));
   process.stdout.write(`${landedPath}\n`);
   /*
     A step's captures beside them (the coordinator, 28 Oct): captures were
