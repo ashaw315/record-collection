@@ -53,3 +53,4 @@
 {"file":"Name every ruling a card carries","ref":"refs/drops/2026-11-06-02","captured":"2026-11-06T18:26:54-05:00","landed":{"sha":"9467e4d","date":"2026-11-06T18:39:08-05:00","by":"backfill: the first design-touching commit after the capture"}}
 {"file":"First paint is styled","ref":"refs/drops/2026-11-06-03","captured":"2026-11-06T19:04:58-05:00","landed":{"sha":"b1d4a5e","date":"2026-11-06T19:13:56-05:00","by":"backfill: the first design-touching commit after the capture"}}
 {"file":"Landed list","ref":"refs/drops/2026-11-06-04","captured":"2026-11-06T19:58:58-05:00","landed":{"sha":"be96671","date":"2026-11-06T20:35:44-05:00","by":"backfill: the first design-touching commit after the capture"}}
+{"file":"Credits fold","ref":"refs/drops/2026-11-07-01","captured":"2026-11-07T17:26:11-05:00"}

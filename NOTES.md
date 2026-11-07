@@ -54846,3 +54846,86 @@ moves the day (the coordinator, 7 Nov). The check is not widened inside 172.
 
 **Observed, not acted on:** the twins read "Done: built in part" as built (step-169, §W.24), so §W.24
 counts built while the shelf's reason on the pull, the half §65 lands with or before, is not.
+
+
+## 7 Nov, 17:40: 172 shipped; built-in-part enumerated; Design's five files traced
+
+**Shipped 53ae4c1, gate 42420231435 dispatched.** The twins re-run with their four inputs equal to
+HEAD: "built 32, numbered and not built 3, listed as unbuilt 7, in neither 0", §65 "not built
+(step-173)". Same as on the tree. check-queue's fixture is now synthetic (the coordinator: a fixture
+naming a live step breaks the day it is built; the first repair, to another live step, moved the day).
+
+**§65 goes back to Design as a size question, not a reading question (the coordinator, 7 Nov).** The
+target's figures are out by an order of magnitude under either reading: release-level credits 0 to
+91 and track-level 0 to 100 against "3 to 10", and ATLiens at 147 lines. The section needs a shape
+for the dense case before which credits it reads matters. The companies: the section would repeat
+Pressing detail on 45 of 50 records with companies, 24 more by containment, so nine in ten, the
+norm. The tracklist range (13 to 32) describes the cache's 97 releases and not the collection's 55
+(2 to 32): the third figure this week stated against other data than it is applied to, the §55
+family Design ruled on 6 Nov. 173 does not start on the current ruling.
+
+**Built-in-part, enumerated (Q53).** Of 59 blocks, 56 are Done; 13 read "Done: built." and nothing
+else. By reading every Done head line, the steps the twins count built whose Done line says something
+is left:
+- Code's work unbuilt, five steps: the rail's inset and reserved slot (123: the market panel on the
+  want list and record page); Phase 0, surprise me (156: 4b parked); a press before the wall hydrates
+  (160: the held press's acknowledgement open); reduced motion, the panel title, the corner at 200,
+  the swipe (162: reduced motion only, no other block discharges the rest); what search reaches
+  (169: the shelf's reason on the pull, which §65 is ordered against).
+- A capture or measurement owed, two: the pan before the pull (161); a pull before its cover arrives
+  (164, the first-pull rate on production).
+- A judgement held for Design or Adam, six: the five screens' figures (125 a result's card, 130 the
+  record page's genres where they wrap), one focus ring (144), part 2's passes (146), look up's
+  result card (150), the moods and ASK and the split to the pull (157, 640 for Adam).
+- A look provisional for Design, two: the two years (166), the arrow (167). Every ruling is
+  provisional until captured, so likely built; listed so the reader decides.
+- Not counted by the twins but partial: 137 (manage's exits ruling, "the rest" not built) and 159
+  (an intake held on assertion 12) discharge no unnumbered step.
+The remainders are as each Done line states them, not re-checked against the code. A pattern over
+the phrasing would have to match "in part", "held", "open", "outstanding", "only", "parked": the
+coordinator's rule from 7 Nov applies, each block declaring its state rather than a pattern matching
+them all. The figure depends on which states count as built, which is not Code's.
+
+**Design's five unaccounted files, traced (Q54).**
+- "Record cut at the row front- pan overlapped": in refs/drops/2026-11-01-01 (and 11-01-02, 11-02-01),
+  applied; missing from the record because its name has no `.md` and landed-list's pattern requires
+  one. The only name in any ref without it. Code's defect.
+- "Two rules and the arrow": applied by hand at 35da788c (5 Nov 08:11); drop-ref recorded no ref, the
+  file prose only and not placed in docs/design (NOTES, 5 Nov). Said then to replace "the two that
+  never landed", not named.
+- "Host change and two-author list": in no ref by name. "Ruling travels with target"
+  (refs/drops/2026-10-27-09) assumes it applied; 15e7f3db (27 Oct 16:31) applied "Design's change file
+  of 27 Oct, 15:59", the two-author wording, and no ref between 15:25 and 16:14 holds a new change
+  file. That it is this file is inferred from its content and the later file's assumption.
+- "Press before hydration": in no ref by name; superseded before arriving, by "Hold step v2"
+  (refs/drops/2026-10-28-12, "This file replaces 'Press before hydration'") and then "Hold-
+  consolidated on 5abc1f1" (refs/drops/2026-10-29-03), which lists it as replaced.
+- "Arrow closed": in no ref, commit or note by that name. §63's Provisionals line was closed by "Two
+  rules and the arrow"; whether that is the content Design means is Design's to say.
+
+
+## 7 Nov, 18:10: "Credits fold" taken in; the order clause stands
+
+**The drop.** "Credits fold - for Code to apply.md" with the 8a target, placed in docs/design before
+drop-ref so the ref holds the change file (Q54's second cause). Five changes, every anchor held once
+before any edit: WITHDRAWALS `65/credits-whole`; the §65 step's bullets and quote; the Provisionals
+line ("how the credits read opened"); DESIGN-RULES' header rule for a file that supersedes another;
+§65's governs row. The intake first failed index assertion 6, comment-stale: I had not run
+`derive-withdrawals.mjs`, the documented first step after a drop, and the index caught it. The step's
+rewording moved the clause under 172 and 173; the twins named both MOVED. 173 is not built and
+carries the new clause and the ruling in its text; 172 carries it with a sentence that it was built
+against the 6 Nov wording and that nothing it built changes, the fold, roles and companies being
+173's. Intake OK: 14 PASS of 14, document suite 847 passed; the record appended "Credits fold".
+
+**The order clause stands (Design, 7 Nov), and an instance recorded against the coordinator's name,
+at their asking.** The objection to §65 landing before §T.3 was that a reader who searched a credit
+would land on a folded section with nothing saying why. That gap is live today: search has reached
+credits since 4 Nov, and such a record comes back with no reason anywhere. §65 first narrows it, the
+credit one press behind the count line. The shape, distinct from the three already recorded: **a
+change judged against a hypothetical alternative rather than against the current state**: the
+folded section compared with an unfolded one instead of with what the app does now, and the second
+comparison was the one that mattered.
+
+**169 and §65 (the coordinator, 7 Nov).** §T.3's reason line on the pull is the unbuilt half of step
+169, a step the twins count built. Building §65 and then the reason line completes 169 rather than
+starting something new.

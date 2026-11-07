@@ -111,7 +111,7 @@ The wall at rest is line, ink and paper; colour arrives with the pull. Everythin
 | §62 | What the Images count counts | Why the count is what the page shows, and how covers other than the one shown as the cover are named (the not-shown wording withdrawn); covers managed in the Images section's own group, and the line's wrap held by §53's floor rather than a count |
 | §63 | The arrow | → drawn in Geist Mono from the family's own file wherever the app sets it, rather than a system fallback (the subset wording withdrawn) |
 | §64 | The two years on the record form | Why the record form is ruled here, and why its two years stand together inside the disclosure. |
-| §65 | The tracklist and the credits | Why the page lists a release's tracks and credits, why the back cover keeps its place in Images, and the order it lands in against the shelf's reason line. |
+| §65 | The tracklist and the credits | Why the page lists a release's tracks and credits, why the back cover keeps its place in Images, why the credits fold behind a count at every count, which companies are drawn, and the order it lands in against the shelf's reason line. |
 | §G.1 | The header joins the record detail’s system, because the record detail already ruled it | Why the header is not chrome kept apart, which settled clauses it builds (§4.1 and §3), the type, colour and weights it takes, and the shared label style’s tracking with its reach into §W.6 and §62. |
 | §G.2 | The 53 holds | Why the header’s height is the box’s and not the type’s, why no other height needs ruling, and the line height. |
 | §G.3 | The header’s measure is the screen’s | Why the header has no cap of its own, the inset taken from §47 and the earlier draft it corrects, the gap between links, and their hit area. |
@@ -776,19 +776,23 @@ Its rows are in the governs table above, one per section; this section does not 
   - **Capture** at 1280 and 390, with a match by a credit and by a track.
   > In the table and the grid, a record that matched by its tracklist or its credits, and not by its title or artist, carries one line saying what matched: the track by its position and title, or the credit by its name and role.
 
-172. **Done: the words and the data; the section is step 173.** **§65 — the tracklist and the credits: Code's first number for that step.** One function writes a release-text row in the words §T.3's reason line and this section share (`releaseTextWords`: a track by its position, then its title; a credit or a company by its name, then its role; Discogs' "(n)" dropped from names), so a match reads the same in a result and on the page; the section's read (`releaseTextFor`: tracks, then credits, then companies, each in the release's order); and the measurements on production (`docs/measurements/release-text/2026-11-07-step172.txt`): the extremes the captures are taken on, the credits as two figures, release-level and track-level, and the companies Pressing detail already shows, measured and not resolved.
+172. **Done: the words and the data; the section is step 173.** **§65 — the tracklist and the credits: Code's first number for that step.** One function writes a release-text row in the words §T.3's reason line and this section share (`releaseTextWords`: a track by its position, then its title; a credit or a company by its name, then its role; Discogs' "(n)" dropped from names), so a match reads the same in a result and on the page; the section's read (`releaseTextFor`: tracks, then credits, then companies, each in the release's order); and the measurements on production (`docs/measurements/release-text/2026-11-07-step172.txt`): the extremes the captures are taken on, the credits as two figures, release-level and track-level, and the companies Pressing detail already shows, measured and not resolved. Built against the step's 6 Nov wording; the 7 Nov rewording ("Credits fold") changes nothing 172 built, and the fold, the credits by role and then by track, and the companies Pressing detail does not show are 173's.
 
-173. **§65 — the tracklist and the credits: Code's second number for that step, the section.** Not built. The TRACKLIST section in the record page's lower region, its span, place, columns and folding as proposed (a full-width row below Pressing detail, the tracks in two columns at 8 columns or more, the credits unfolded), §25's distribution checked with one more section, and the captures at 1440 × 900 and 390. Held for Design's rulings from step 172's report: whether the section shows track-level credits beside the release-level ones, and whether a company Pressing detail already shows is drawn again.
+173. **§65 — the tracklist and the credits: Code's second number for that step, the section.** Not built. The TRACKLIST section in the record page's lower region as ruled on 7 Nov ("Credits fold"): the tracks whole; the credits folded behind one count line, closed on every load, at every count, none where a release has none; opened, the release's credits one line to a role, then each track's beneath its position and title; a company drawn only where Pressing detail shows no name the same as it, the count drawn and suppressed reported per record. Code proposes the count line's wording, the span and place against §25, and two columns for the tracks; captures at 1440 × 900 and 390, closed and opened.
 
 - **Unnumbered, for Code to number — §65: the tracklist and the credits.**
-  - **Draw** one TRACKLIST section in the record page's lower region from `discogs_release_text`: tracks by position and title, then credits by name and role, with the companies among them.
+  - **Draw** the tracks whole, by position and title.
+  - **Fold the credits** beneath the tracks behind one line counting them, closed whenever the page loads, at every count. A release with no credits draws no count line.
+  - **Opened:** the release's credits first, one line to a role with its names in the release's order, then each track's credits beneath that track's position and title.
+  - **Companies:** draw a company only where Pressing detail shows no name the same as it. Report the count drawn and suppressed per record.
   - **Use the reason line's words** for each line.
-  - **No cached release:** no section. **No credits:** tracks alone.
-  - **Propose** its span and place against §25's distribution, two columns for the tracks where the span allows, and whether the credits start folded.
-  - **Report** which companies Pressing detail already shows, so a company isn't drawn twice.
-  - **Capture** the longest and the shortest tracklist in the collection at 1440 × 900 and 390, and a record with no cached release.
+  - **Propose** the count line's wording, the section's span and place against §25, and two columns for the tracks.
+  - **Capture** at 1440 × 900 and 390, closed and opened, on:
+    - the record with the most credits, and the ones with the most release credits and the most track credits;
+    - the longest and the shortest tracklist;
+    - a seeded record with no cached release.
   - **Order:** land it with the shelf's reason line or before it.
-  > The record page shows the tracklist and the credits, in one section of the lower region headed TRACKLIST, the tracks first, each by its position and title, and beneath them the credits, each by its name and role, with the companies among them by theirs.
+  > The tracks are drawn whole, and the credits stand folded beneath them behind one line that counts them, on every record, so the section at rest is the tracklist and one line whatever the release holds.
 
 - **Unnumbered, for Code to number — §55: assert the field's rule, not its records.**
   - **Replace** every test that asserts a named record's field size, or a count of drawn fields, with one assertion over every record at 1440 × 1200, 1440 × 900, 1920 × 900 and 390 × 844: each drawn field has an aspect of at most 4 : 1 and an area of at most the construction's minimum ink, and each suppressed field fails at least one.
@@ -878,7 +882,7 @@ The provisionals in force, for the note in Maintaining this file that a provisio
 - **§64 · the two years.** Closed on step 166's captures, at 1440 fine and 390 coarse: side by side at 1440 and one beneath the other at 390, Release year first, each hint under its own field, the two hints reading against each other.
 - **§W.24 · the shelf's reason on the pull.** "Where in the facts the line stands, and how it reads, are provisional until built and captured." Returns from the search step. Open.
 - **§T.3 · the reason line.** "The line's wording, where it stands in the row and the cell, and whether it moves what follows are provisional until built and captured at 1280 and 390." Returns from the reason step. Open.
-- **§65 · the tracklist section.** "How it reads at 32 tracks, whether the tracks take two columns where the span is wide, and whether the credits start folded, are all provisional until built and captured at 1440 × 900 and at 390, on the longest and the shortest tracklist in the collection." Returns from the tracklist step. Open.
+- **§65 · the tracklist section.** "How it reads at 32 tracks, whether the tracks take two columns where the span is wide, and how the credits read opened, are all provisional until built and captured at 1440 × 900 and at 390, on the longest and the shortest tracklist in the collection." Returns from the tracklist step. Open.
 - **§60 · the disc at the reference's size.** "How it reads at that size is provisional until captured and judged." Returns from the disc step. Open.
 
 ## Findings for screens without a pass
