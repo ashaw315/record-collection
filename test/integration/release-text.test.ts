@@ -2,7 +2,7 @@ import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { sql } from 'drizzle-orm';
 import { getTestDb, truncateAll, closeTestDb } from '../helpers/db';
 import { writeCachedRelease } from '@/lib/discogs/cache';
-import { backfillReleaseText } from '@/lib/discogs/release-text-store';
+import { backfillReleaseText, releaseTextFor } from '@/lib/discogs/release-text-store';
 
 /**
  * The free-text unit's storage (the coordinator, 4 Nov): `discogs_release_text`,
@@ -80,6 +80,42 @@ describe('the backfill over the cache', () => {
     const second = await backfillReleaseText();
     expect(second).toEqual({ releases: 3, rows: 4 });
     expect((await rowsFor(1)).length).toBe(4);
+  });
+});
+
+/*
+  What the record page reads for its TRACKLIST section (§65, step 172): one release's rows in the order the section
+  draws them, the tracks, then the credits, then the companies, each in the release's own order, which is the order
+  `releaseText` gave them ordinals in. Fails against a read ordered as the table stores it (kind alphabetically puts
+  the companies first), by text, or across releases; and against a read that returns anything for a release with no
+  cached text, where §38's rule draws no section.
+*/
+describe('releaseTextFor: one release’s text, in the order the section draws it', () => {
+  it('returns the tracks, then the credits, then the companies, each by ordinal, and nothing of another release', async () => {
+    await writeCachedRelease(RELEASE.id, {
+      ...RELEASE,
+      tracklist: [
+        { position: 'A1', title: 'The Blood Runs Red', duration: '', extraartists: [{ name: 'Cal', role: 'Vocals' }] },
+        { position: 'A2', title: 'Anarchy', duration: '' },
+      ],
+      extraartists: [{ name: 'Mike Stone (2)', role: 'Producer' }, { name: 'BilBo (3)', role: 'Lacquer Cut By' }],
+      companies: [{ name: 'Orlake Records Ltd.', entity_type_name: 'Pressed By' }, { name: 'Clay Records', entity_type_name: 'Phonographic Copyright (p)' }],
+    });
+    await writeCachedRelease(42, { id: 42, tracklist: [{ position: 'A1', title: 'Elsewhere' }] });
+    expect(await releaseTextFor(RELEASE.id)).toEqual([
+      { kind: 'track', text: 'The Blood Runs Red', detail: 'A1' },
+      { kind: 'track', text: 'Anarchy', detail: 'A2' },
+      { kind: 'credit', text: 'Mike Stone (2)', detail: 'Producer' },
+      { kind: 'credit', text: 'BilBo (3)', detail: 'Lacquer Cut By' },
+      { kind: 'credit', text: 'Cal', detail: 'Vocals, A1' },
+      { kind: 'company', text: 'Orlake Records Ltd.', detail: 'Pressed By' },
+      { kind: 'company', text: 'Clay Records', detail: 'Phonographic Copyright (p)' },
+    ]);
+  });
+
+  it('returns nothing for a release with no cached text, beside one that has some', async () => {
+    await writeCachedRelease(42, { id: 42, tracklist: [{ position: 'A1', title: 'Elsewhere' }] });
+    expect(await releaseTextFor(999)).toEqual([]);
   });
 });
 

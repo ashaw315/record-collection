@@ -52763,6 +52763,7 @@ table wins.
 | 42374235352 | dddcdbe | 4 (build) | none: unit 4936 passed, 2 skipped; chromium 1061 passed, 1 skipped (the Q48 test with its server-render precondition); mobile 390 passed, 4 skipped; no flaky line |
 | 42377203547 | 9211955 | 4 (build) | none: unit 4955 passed, 2 skipped (the intersection's 19 the more); chromium 1061 passed, 1 skipped; mobile 390 passed, 4 skipped; no flaky line |
 | 42380542460 | bccf2a4 | 4 (build) | none: unit 4955 passed, 2 skipped; chromium 1064 passed, 1 skipped (settled()'s three staged arms the more); mobile 390 passed, 4 skipped; no flaky line |
+| 42382907743 | 3fef4f6 | 4 (build) | none: unit 4960 passed, 3 skipped (the record-against-refs test the third skip, by name, as a runner has no drop refs); chromium 1064 passed, 1 skipped; mobile 390 passed, 4 skipped; no flaky line |
 
 Derived: appearances 4 + 4 + 3 + 4 + 3 + 1 + 4 + 1 + 0 + 3 + 2 + 1 + 2 + 1 = **33**; distinct tests **18** (wall-settle:61 joins) (want-list:739,
 want-list:849, pick-moods-157:154, wall-arrival-104:120, wall-route:234, record-band-43:33,
@@ -54794,3 +54795,54 @@ in commit-checked.sh) and a second such file is added to it, not given a copy of
 **Negative assertions, counted for the queue (Q51), not read:** 986 `.not.` assertions in 607 test
 files, 534 of them text-shaped (`not.toContain` 322, `not.toMatch` 212); eight are negative text
 assertions on a process's output, the shape Q49's was, listed in the row. Not before §65.
+
+
+## 7 Nov, 17:00: step 172, the words and the data for §65
+
+**Gates 42384053705 (0641b53) and 42385122959 (a5ae5ae): green on every half.** 0641b53: unit 4961
+passed, 3 skipped; chromium 1064 passed, 1 skipped; mobile 390 passed, 4 skipped. a5ae5ae: unit 4965
+passed, 3 skipped; chromium 1064 passed, 1 skipped; mobile 390 passed, 4 skipped. Read from each job's
+own last line ("— OK"); both on GitHub's runners, so no local load.
+
+**Step 172 built, 173 numbered (the coordinator, 7 Nov: two numbers, both blocks in one commit).**
+`releaseTextWords` writes a row in the words §T.3's reason line and §65's section share (a track by
+position · title, a credit or company by name · role, Discogs' "(n)" dropped from names only);
+`releaseTextFor` reads one release's rows in the section's order. Tests first: five for the words,
+failing against a stub; two for the read, failing against a read with no release filter and one in the
+table's stored order (the empty-result test first passed against an unfiltered read on an empty
+database, and now seeds another release first). The twins: a step named by a Done block and a numbered
+one reads numbered-and-not-built in either order, passing on the code and failing against a copy where
+the last block decides.
+
+**What §65 reads, derived on the tree with both blocks in:** "unnumbered steps 42: built 32, numbered
+and not built 3, listed as unbuilt 7, in neither 0", with "numbered §65: the tracklist and the credits
+— not built (step-173)". The backlog is 10, as before. The twins read the working tree, so the same
+figure is to be read again on HEAD once committed.
+
+**The production read (`npm run discogs:inventory-text`, saved at
+docs/measurements/release-text/2026-11-07-step172.txt).** 55 records, each on its own release, every
+one cached: no record in production has no cached release, so that capture needs a seeded record. The
+target's figures are the cache's, not the collection's: 97 cached releases, 55 held. Held tracklists
+run 2 to 32 (target: 13 to 32). Credits, as two figures: release-level 766 rows on 54 releases, 0 to 91
+per release (target: 3 to 10); track-level 729 rows on 42 releases, 0 to 100. Longest tracklist Cindy
+Lee, Diamond Jubilee (32); shortest Pharoah Sanders, Jewels Of Thought (2). Most release-level credits
+Pointer Sisters, Break Out (91); most track-level Luther Vandross, Never Too Much (100); most of both
+OutKast, ATLiens (126; 147 rows with tracks and companies). None is the longest tracklist. The stored
+rows tell the two kinds apart without a flag (a track credit's detail is, or ends in, a track
+position): 55 of 55 agree with the payload.
+
+**Companies Pressing detail already shows:** on 45 of the 50 records with companies, a company's name
+equals the record's label or its pressing's plant (case and "(n)" folded); by role Pressed By 32,
+Manufactured By 15, Copyright (c) 7, Phonographic Copyright (p) 6, Distributed By 4, five others once.
+On 24 more, one name contains the other ("Columbia Records Pressing Plant, Pitman" beside a plant
+"Columbia Records"). Measured, not resolved: whether the section draws a company again is Design's.
+
+**Found: check-queue has the §W.8 gap (Q52).** Its fixture named §65 as an unbuilt head; when 172 took
+§65 off the list the test failed on its moved precondition, and the reason is that queue-1 reads only
+the unbuilt list. The fixture is now a synthetic step in a synthetic list, passed by `UNBUILT_FILE`
+as the queue is by `QUEUE_FILE`, failing first against the script that ignored it: a fixture naming a
+live step breaks the day that step is built, and moving it to another live step (my first repair) only
+moves the day (the coordinator, 7 Nov). The check is not widened inside 172.
+
+**Observed, not acted on:** the twins read "Done: built in part" as built (step-169, §W.24), so §W.24
+counts built while the shelf's reason on the pull, the half §65 lands with or before, is not.

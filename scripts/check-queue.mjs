@@ -111,7 +111,8 @@ export function restatements(items, heads) {
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   const text = readFileSync(process.env.QUEUE_FILE ?? 'QUEUE.md', 'utf8');
   const items = parseQueue(text);
-  const unbuilt = JSON.parse(readFileSync('scripts/handoff-unbuilt.json', 'utf8'));
+  /* UNBUILT_FILE is for the test's synthetic step only (7 Nov); the check reads the repo's list. */
+  const unbuilt = JSON.parse(readFileSync(process.env.UNBUILT_FILE ?? 'scripts/handoff-unbuilt.json', 'utf8'));
   const design = 'docs/design';
   const targetsText = [
     ...readdirSync(design).filter((f) => /\.(md|dc\.html)$/.test(f)).map((f) => join(design, f)),

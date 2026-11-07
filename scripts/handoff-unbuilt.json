@@ -25,11 +25,6 @@
     "evidence": "§T.3's reason line on a row or cell that matched by tracklist or credits: not built; it is the next search step, a proposal with captures at 1280 and 390. Checked 4 Nov."
   },
   {
-    "head": "§65: the tracklist and the credits",
-    "status": "unbuilt",
-    "evidence": "Arrived 5 Nov with §65 in the 8a target (refs/drops/2026-11-05-01). No component reads discogs_release_text for the page; the record page's lower region has no TRACKLIST section (grep over src/app and src/components, 5 Nov). Ruled to land with the shelf's reason line or before it."
-  },
-  {
     "head": "§55: assert the field's rule, not its records",
     "status": "unbuilt",
     "evidence": "Arrived 6 Nov with the §55 withdrawal in the 8a target (refs/drops/2026-11-06-01). title-ladder-45.spec.ts still names records' field states per window (GAP_UNDER_CAP, GAP_FAILS_CAP: Bitches Brew, The Hurdy Gurdy Man, Grave New World, On The Radio) on the seventeen fixture; no test asserts the two bounds over every record at the four windows."

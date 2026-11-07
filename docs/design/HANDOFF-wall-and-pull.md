@@ -776,6 +776,10 @@ Its rows are in the governs table above, one per section; this section does not 
   - **Capture** at 1280 and 390, with a match by a credit and by a track.
   > In the table and the grid, a record that matched by its tracklist or its credits, and not by its title or artist, carries one line saying what matched: the track by its position and title, or the credit by its name and role.
 
+172. **Done: the words and the data; the section is step 173.** **§65 — the tracklist and the credits: Code's first number for that step.** One function writes a release-text row in the words §T.3's reason line and this section share (`releaseTextWords`: a track by its position, then its title; a credit or a company by its name, then its role; Discogs' "(n)" dropped from names), so a match reads the same in a result and on the page; the section's read (`releaseTextFor`: tracks, then credits, then companies, each in the release's order); and the measurements on production (`docs/measurements/release-text/2026-11-07-step172.txt`): the extremes the captures are taken on, the credits as two figures, release-level and track-level, and the companies Pressing detail already shows, measured and not resolved.
+
+173. **§65 — the tracklist and the credits: Code's second number for that step, the section.** Not built. The TRACKLIST section in the record page's lower region, its span, place, columns and folding as proposed (a full-width row below Pressing detail, the tracks in two columns at 8 columns or more, the credits unfolded), §25's distribution checked with one more section, and the captures at 1440 × 900 and 390. Held for Design's rulings from step 172's report: whether the section shows track-level credits beside the release-level ones, and whether a company Pressing detail already shows is drawn again.
+
 - **Unnumbered, for Code to number — §65: the tracklist and the credits.**
   - **Draw** one TRACKLIST section in the record page's lower region from `discogs_release_text`: tracks by position and title, then credits by name and role, with the companies among them.
   - **Use the reason line's words** for each line.

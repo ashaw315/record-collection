@@ -150,8 +150,8 @@ describe('the repo’s QUEUE.md', () => {
 });
 
 describe('the check as a command', () => {
-  const run = (queueFile: string) => {
-    const r = spawnSync('node', ['scripts/check-queue.mjs'], { env: { ...process.env, QUEUE_FILE: queueFile }, encoding: 'utf8' });
+  const run = (queueFile: string, unbuiltFile?: string) => {
+    const r = spawnSync('node', ['scripts/check-queue.mjs'], { env: { ...process.env, QUEUE_FILE: queueFile, ...(unbuiltFile === undefined ? {} : { UNBUILT_FILE: unbuiltFile }) }, encoding: 'utf8' });
     return { status: r.status, out: r.stdout };
   };
 
@@ -163,16 +163,25 @@ describe('the check as a command', () => {
   });
 
   it('exits 1 with FAIL queue-1 on a staged file that carries an unbuilt step’s head as an item, and still prints the report', () => {
+    /*
+      A step written for this test, in a list written for this test, that no one will build. Until 7 Nov the fixture
+      named a live step, §65, and failed when step 172 numbered it (expected 1, got 0); naming another live step only
+      moves the day it breaks (the coordinator, 7 Nov).
+    */
+    const head = '§Z.0: a step that exists only in this test';
+    const unbuilt = join(tmpdir(), `unbuilt-${process.pid}.json`);
+    writeFileSync(unbuilt, JSON.stringify([{ head, status: 'unbuilt', evidence: 'synthetic' }]));
     const staged = join(tmpdir(), `queue-${process.pid}.md`);
-    writeFileSync(staged, '## Q\n\n| id | status | item | record lives in |\n|---|---|---|---|\n| Q18 | open | §65: the tracklist and the credits, read from the release text | the handoff |\n');
+    writeFileSync(staged, `## Q\n\n| id | status | item | record lives in |\n|---|---|---|---|\n| Q18 | open | ${head}, restated as an item | the handoff |\n`);
     try {
-      const { status, out } = run(staged);
+      const { status, out } = run(staged, unbuilt);
       expect(status).toBe(1);
       expect(out).toMatch(/^FAIL queue-1 restates no unbuilt handoff step/m);
-      expect(out).toMatch(/Q18 restates "§65: the tracklist and the credits"/);
+      expect(out).toContain(`Q18 restates "${head}"`);
       expect(out).toMatch(/consistency, report only/);
     } finally {
       unlinkSync(staged);
+      unlinkSync(unbuilt);
     }
   });
 });

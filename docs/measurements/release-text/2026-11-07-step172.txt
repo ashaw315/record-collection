@@ -1,0 +1,83 @@
+records                  55
+records_with_release_id  55
+cache_rows               97
+cache_rows_held          55
+with_tracklist           97
+with_credits             91
+with_notes               92
+with_companies           85
+tracks                   1021
+credits                  1196
+notes_chars              31823
+companies                515
+cache_size               800 kB
+stale_rows               91
+text_rows_now            4031
+
+releases held by a record  55
+release-level credit rows 766, on 54 releases, 0 to 91 per release
+track-level credit rows   729, on 42 releases, 0 to 100 per release
+
+longest tracklists
+   32  Cindy Lee — Diamond Jubilee (record 01ad99d8-5938-4a14-a1af-b0ed7bae4a3e, release 33132765)
+   21  Bob Dylan — Bob Dylan's Greatest Hits Volume II (record 73ea635d-2955-43c4-a93a-96993c9cc8ed, release 1153244)
+   18  Pavement — Wowee Zowee (record d975683b-dbd2-45fd-9d1e-173d420312af, release 9818877)
+
+shortest tracklists
+    2  Pharoah Sanders — Jewels Of Thought (record 05d37b5f-6757-4e68-b09b-02ae0d68eb09, release 31126154)
+    3  Paul Whiteman And His Orchestra — Great Gershwin (record 22d34772-3c46-4247-9878-2256dfc33291, release 16072422)
+    4  Isaac Hayes — Hot Buttered Soul (record e2e5edc0-8278-4b02-92d1-9d3d6be90f55, release 11630128)
+
+most release-level credit rows
+   91  Pointer Sisters — Break Out (record b38d7c37-e91d-411f-b7a3-87e08c7953b7, release 1296391)
+   73  OutKast — ATLiens (record 3fc9c4fb-53be-41f1-8fd8-b0266403aa3c, release 15661267)
+   34  Joff Bush — Bluey The Album (record 47b69af6-0902-4735-864a-7144932c6556, release 35784901)
+
+most track-level credit rows
+  100  Luther Vandross — Never Too Much (record d7047c62-149e-42fa-8cda-fac3f90c47cc, release 8275183)
+   77  Carly Simon — No Secrets (record e931d933-688f-4473-9f79-3b8edee60a17, release 22548410)
+   53  OutKast — ATLiens (record 3fc9c4fb-53be-41f1-8fd8-b0266403aa3c, release 15661267)
+
+most credit rows of both kinds
+  126  OutKast — ATLiens (record 3fc9c4fb-53be-41f1-8fd8-b0266403aa3c, release 15661267)
+  117  Luther Vandross — Never Too Much (record d7047c62-149e-42fa-8cda-fac3f90c47cc, release 8275183)
+  115  Pointer Sisters — Break Out (record b38d7c37-e91d-411f-b7a3-87e08c7953b7, release 1296391)
+
+most rows the section would draw (tracks, credits of both kinds, companies)
+  147  OutKast — ATLiens (record 3fc9c4fb-53be-41f1-8fd8-b0266403aa3c, release 15661267)
+  136  Pointer Sisters — Break Out (record b38d7c37-e91d-411f-b7a3-87e08c7953b7, release 1296391)
+  131  Luther Vandross — Never Too Much (record d7047c62-149e-42fa-8cda-fac3f90c47cc, release 8275183)
+
+stored credit rows equal to the payload's two kinds summed, per release: 55 of 55
+track-level credits told from the stored rows alone (detail is, or ends in, a track position) agree with the payload: 55 of 55
+
+companies Pressing detail already shows (the record's label, its pressing's plant), name folded for case and Discogs' "(n)"
+  records with a company equal to one: 45 of 50 with companies
+  records with a company only one name contains the other: 24
+  equal companies by role: Pressed By 32, Manufactured By 15, Copyright (c) 7, Phonographic Copyright (p) 6, Distributed By 4, Made By 1, Manufactured For 1, Licensed To 1, Mastered At 1
+  contains: Columbia Records Pressing Plant, Santa Maria (Pressed By) against Columbia / Columbia Records  Miles Davis — Bitches Brew (record 2be8579e-2ee7-44fa-81e8-9713a6aaa714, release 37006)
+  contains: Oasis Records (3) (Record Company) against Oasis / Casablanca Records, Inc.  Donna Summer — A Love Trilogy (record 7b9a5ee9-41e6-46b0-8bed-4ee8ceeb5583, release 407390)
+  contains: Polar Music AB (Record Company); Polar Music AB (Phonographic Copyright (p)) against Polar  ABBA — ABBA (record 309a4726-d345-4ac9-ba68-f775fb289b2e, release 465186)
+  contains: Epic Records (Manufactured By) against Epic / Columbia Records Pressing Plant, Terre Haute  Donovan — Donovan In Concert (record d962c494-6443-428b-80f0-c14c2ed179c5, release 489070)
+  contains: Capitol Records Pressing Plant, Jacksonville (Pressed By) against Capitol Records / Capitol Records, Inc.  John Lennon — Mind Games (record ce57a185-6182-4a9d-9af1-37bae019db10, release 611596)
+  contains: Warner Bros. Records Inc. (Phonographic Copyright (p)); Warner Bros. Records Inc. (Copyright (c)); Warner Bros. Records Inc. (Record Company) against Warner Bros. Records / Capitol Records Pressing Plant, Winchester  Dire Straits — Dire Straits (record fadd5c0e-5146-4421-aebc-cd53eed2f8b1, release 621110)
+  contains: A&M Records, Inc. (Phonographic Copyright (p)) against A&M Records / Columbia Records Pressing Plant, Pitman  Chuck Mangione — Chase The Clouds Away (record 1bcbce5d-9936-4a35-9e28-69701cb36339, release 636365)
+  contains: Columbia Records Pressing Plant, Pitman (Pressed By) against Columbia / Columbia Records  Bob Dylan — Bob Dylan's Greatest Hits Volume II (record 73ea635d-2955-43c4-a93a-96993c9cc8ed, release 1153244)
+  contains: Dunhill Records (Record Company) against Dunhill / Keel Mfg. Corp.  The Mamas & The Papas — The Mamas & The Papas (record 0af4723d-6bfe-4862-878f-32e53988bec9, release 1238549)
+  contains: Planet Records (5) (Phonographic Copyright (p)); Planet Records (5) (Copyright (c)); RCA Records Pressing Plant, Indianapolis (Pressed By) against Planet (15) / RCA Records  Pointer Sisters — Break Out (record b38d7c37-e91d-411f-b7a3-87e08c7953b7, release 1296391)
+  contains: Capitol Records Pressing Plant, Los Angeles (Pressed By) against Capitol Records / Capitol Records, Inc.  The Beatles — Sgt. Pepper's Lonely Hearts Club Band (record 63d720c0-636d-4f9c-a78e-dff370af4e92, release 1334394)
+  contains: RCA Records (Copyright (c)) against RCA Victor / RCA Records Pressing Plant, Rockaway  Hot Tuna — Hot Tuna (record c8b0af3d-9f7e-4402-bb5a-47e6e646ab0f, release 1458122)
+  contains: Warner Bros. Records Inc. (Record Company); Warner Bros. Records Inc. (Copyright (c)) against Warner Bros. Records / Columbia Records Pressing Plant, Terre Haute  Peter, Paul & Mary — (Ten) Years Together (The Best Of Peter, Paul And Mary) (record 8120765c-32bd-466d-9e51-6ef975313eac, release 1623320)
+  contains: Warner Bros. Records Inc. (Record Company) against Warner Bros. Records / Columbia Records Pressing Plant, Terre Haute  James Taylor (2) — Sweet Baby James (record 3505ac9c-7269-4830-887a-0a264bd5aeea, release 1708761)
+  contains: Matador Records (2) (Phonographic Copyright (p)); Matador Records (2) (Copyright (c)) against Matador / Optimal Media GmbH  Darkside (22) — Psychic (record bac64213-9673-4ae7-862f-fc5b17dc16d3, release 4970787)
+  contains: Capitol Records, Inc. (Phonographic Copyright (p)); Capitol Records, Inc. (Manufactured By) against Capitol Records / Capitol Records Pressing Plant, Winchester  Kraftwerk — The Man • Machine (record ed971f49-eb04-4094-81f6-4913b51fc847, release 7518472)
+  contains: RCA Records (Copyright (c)) against RCA Victor / RCA Records Pressing Plant, Rockaway  Hot Tuna — First Pull Up, Then Pull Down (record 307c2754-58ea-404d-a2b1-78d128aa57e1, release 9480273)
+  contains: Matador Records (2) (Copyright (c)); Matador Records (2) (Phonographic Copyright (p)) against Matador / GZ Media  Pavement — Wowee Zowee (record d975683b-dbd2-45fd-9d1e-173d420312af, release 9818877)
+  contains: Elektra Sound Recorders (Recorded At); Elektra Records (Record Company) against Elektra / Columbia Records Pressing Plant, Terre Haute  The Doors — The Soft Parade (record 9a514311-ad88-4205-a37a-a5a4cdd231d2, release 11781659)
+  contains: Epic Records (Manufactured By) against Epic / Columbia Records Pressing Plant, Pitman  Jeff Beck — Wired (record 48461309-e0e0-42a8-b903-f60642c923ca, release 12029069)
+  contains: XL Recordings Ltd. (Phonographic Copyright (p)); XL Recordings Ltd. (Copyright (c)) against XL Recordings / Optimal Media GmbH  Smerz (2) — Believer (record de2ad140-86af-44e1-84a4-977324346cca, release 17594047)
+  contains: Elektra Records (Phonographic Copyright (p)); Elektra Records (Copyright (c)) against Elektra / Columbia Records Pressing Plant, Pitman  Carly Simon — No Secrets (record e931d933-688f-4473-9f79-3b8edee60a17, release 22548410)
+  contains: Chrysalis Records (Phonographic Copyright (p)); Chrysalis Records (Copyright (c)) against Chrysalis / Columbia Records Pressing Plant, Carrollton, GA  Huey Lewis & The News — Sports (record 7cfdc4cb-cc93-4f07-8981-9688031de9ac, release 23952254)
+  contains: Matador Records (2) (Licensed To); Matador Records (2) (Phonographic Copyright (p)); Matador Records (2) (Copyright (c)) against Matador / Optimal Media GmbH  Kim Gordon — The Collective (record a950eb99-6298-48b7-b594-f3cb4820ea4b, release 32524380)
+
+records whose release has no cached text (no section): 0; for example none

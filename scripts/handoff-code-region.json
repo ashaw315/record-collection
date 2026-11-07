@@ -612,5 +612,29 @@
         "clause": "- **Unnumbered, for Code to number — §43: which frame is first paint.**\n  - **Recorder:** in record-band-43:33, wait for the page's stylesheets before taking the band's first height. Don't wait for web fonts.\n  - **Report** which of the two the failing run caught, from its trace.\n  - **If it was the font,** report the band's height in the fallback against the settled height on the records and widths the test covers, before choosing a remedy.\n  - **Re-run** under four workers.\n  > First paint, in this section, is the first frame painted with the page’s own stylesheets applied, whether or not its web fonts have arrived."
       }
     ]
+  },
+  {
+    "id": "step-172",
+    "before": "- **Unnumbered, for Code to number — §65: the tracklist and the credits.**",
+    "why": "Code's first number for Design's unnumbered §65 step, the words and the data; the section is 173, and the step is built only when both are.",
+    "text": "172. **Done: the words and the data; the section is step 173.** **§65 — the tracklist and the credits: Code's first number for that step.** One function writes a release-text row in the words §T.3's reason line and this section share (`releaseTextWords`: a track by its position, then its title; a credit or a company by its name, then its role; Discogs' \"(n)\" dropped from names), so a match reads the same in a result and on the page; the section's read (`releaseTextFor`: tracks, then credits, then companies, each in the release's order); and the measurements on production (`docs/measurements/release-text/2026-11-07-step172.txt`): the extremes the captures are taken on, the credits as two figures, release-level and track-level, and the companies Pressing detail already shows, measured and not resolved.",
+    "discharges": [
+      {
+        "head": "§65: the tracklist and the credits",
+        "clause": "- **Unnumbered, for Code to number — §65: the tracklist and the credits.**\n  - **Draw** one TRACKLIST section in the record page's lower region from `discogs_release_text`: tracks by position and title, then credits by name and role, with the companies among them.\n  - **Use the reason line's words** for each line.\n  - **No cached release:** no section. **No credits:** tracks alone.\n  - **Propose** its span and place against §25's distribution, two columns for the tracks where the span allows, and whether the credits start folded.\n  - **Report** which companies Pressing detail already shows, so a company isn't drawn twice.\n  - **Capture** the longest and the shortest tracklist in the collection at 1440 × 900 and 390, and a record with no cached release.\n  - **Order:** land it with the shelf's reason line or before it.\n  > The record page shows the tracklist and the credits, in one section of the lower region headed TRACKLIST, the tracks first, each by its position and title, and beneath them the credits, each by its name and role, with the companies among them by theirs."
+      }
+    ]
+  },
+  {
+    "id": "step-173",
+    "before": "- **Unnumbered, for Code to number — §65: the tracklist and the credits.**",
+    "why": "Code's second number for Design's unnumbered §65 step, the section itself.",
+    "text": "173. **§65 — the tracklist and the credits: Code's second number for that step, the section.** Not built. The TRACKLIST section in the record page's lower region, its span, place, columns and folding as proposed (a full-width row below Pressing detail, the tracks in two columns at 8 columns or more, the credits unfolded), §25's distribution checked with one more section, and the captures at 1440 × 900 and 390. Held for Design's rulings from step 172's report: whether the section shows track-level credits beside the release-level ones, and whether a company Pressing detail already shows is drawn again.",
+    "discharges": [
+      {
+        "head": "§65: the tracklist and the credits",
+        "clause": "- **Unnumbered, for Code to number — §65: the tracklist and the credits.**\n  - **Draw** one TRACKLIST section in the record page's lower region from `discogs_release_text`: tracks by position and title, then credits by name and role, with the companies among them.\n  - **Use the reason line's words** for each line.\n  - **No cached release:** no section. **No credits:** tracks alone.\n  - **Propose** its span and place against §25's distribution, two columns for the tracks where the span allows, and whether the credits start folded.\n  - **Report** which companies Pressing detail already shows, so a company isn't drawn twice.\n  - **Capture** the longest and the shortest tracklist in the collection at 1440 × 900 and 390, and a record with no cached release.\n  - **Order:** land it with the shelf's reason line or before it.\n  > The record page shows the tracklist and the credits, in one section of the lower region headed TRACKLIST, the tracks first, each by its position and title, and beneath them the credits, each by its name and role, with the companies among them by theirs."
+      }
+    ]
   }
 ]

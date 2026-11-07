@@ -118,19 +118,34 @@ describe('numbered is not built: a numbered line without Done is its own bucket'
     expect(numberedNotBuilt([done, partly, numbered])).toEqual(new Map([['§X: a third', 'step-11']]));
   });
 
-  it('on the handoff as it stands, names steps 170 and 171 as numbered and not built, so the backlog is the listed unbuilt plus them', () => {
+  /*
+    One step discharged by two blocks (the coordinator, 7 Nov): §65 is one unnumbered instruction built as 172 (the
+    words and the data) and 173 (the section). The step is built only when both are; a Done 172 beside a numbered 173
+    is the §W.8 defect if the Done line decides. Nothing in the check knows a step needs two blocks; this holds only
+    that an unfinished block is never outweighed by a finished one. Fails against a check where the last block decides.
+  */
+  it('reads a step discharged by a Done block and a numbered block, in either order, as numbered and not built', () => {
+    const first = { ...done, id: 'step-12', discharges: [{ head: '§W: two halves', clause: '' }] };
+    const second = { ...numbered, id: 'step-13', discharges: [{ head: '§W: two halves', clause: '' }] };
+    expect(numberedNotBuilt([first, second]).get('§W: two halves')).toBe('step-13');
+    expect(numberedNotBuilt([second, first]).get('§W: two halves')).toBe('step-13');
+  });
+
+  it('on the handoff as it stands, names steps 170, 171 and 173 as numbered and not built, so the backlog is the listed unbuilt plus them; §65 among them while 172 is Done', () => {
     const blocks = JSON.parse(readFileSync('scripts/handoff-code-region.json', 'utf8'));
     const unbuilt = JSON.parse(readFileSync('scripts/handoff-unbuilt.json', 'utf8')) as { head: string }[];
     const numberedOnly = numberedNotBuilt(blocks);
-    expect([...numberedOnly.values()].sort()).toEqual(['step-170', 'step-171']);
+    expect([...numberedOnly.values()].sort()).toEqual(['step-170', 'step-171', 'step-173']);
+    expect(numberedOnly.get('§65: the tracklist and the credits'), 'two blocks discharge §65; the unfinished one decides').toBe('step-173');
     for (const head of numberedOnly.keys()) expect(unbuilt.some((u) => u.head === head), `${head} is numbered, so it is not also listed`).toBe(false);
   });
 
   it('prints the three buckets, with each numbered-and-not-built step by head, and exits 0 on the tree', () => {
     const out = spawnSync('node', ['scripts/handoff-twins.mjs'], { encoding: 'utf8' });
     expect(out.status).toBe(0);
-    expect(out.stdout).toMatch(/^unnumbered steps \d+: built \d+, numbered and not built 2, listed as unbuilt \d+, in neither 0$/m);
+    expect(out.stdout).toMatch(/^unnumbered steps \d+: built \d+, numbered and not built 3, listed as unbuilt \d+, in neither 0$/m);
     expect(out.stdout).toMatch(/^  numbered §W\.8: the bound at a candidate  — not built \(step-170\)$/m);
     expect(out.stdout).toMatch(/^  numbered §43: which frame is first paint  — not built \(step-171\)$/m);
+    expect(out.stdout).toMatch(/^  numbered §65: the tracklist and the credits  — not built \(step-173\)$/m);
   });
 });
