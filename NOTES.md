@@ -52757,6 +52757,9 @@ table wins.
 | 42309967002 | 71a046a | 4 (build) | wall-settle:61, the wait's own first call, the same frames as 42292989122: content 1267 at the write, 1179 at the read, 240 seats both, region 872; the scroll 395 then 307, the scroller's limit at each frame (1267 − 872, 1179 − 872); the verdict job NOT OK on the flake; unit 4902 passed, mobile 390 passed, 4 skipped, 10.0m; chromium 1059 passed, 1 flaky, 1 skipped (the Q45 second unit and the drop's intake) |
 | 42314309767 | 1012260 | 4 (build) | none: unit 4903 passed, 2 skipped; chromium 1060 passed, 1 skipped; mobile 390 passed, 4 skipped; no flaky line in any job's log (the wait's equality as a diagnostic, the second drop's intake); the first gate with none of the seven settled() sites in it since the wait was built |
 | 42317657088 | da23ad5 | 4 (build) | none: unit 4906 passed, 2 skipped; chromium 1060 passed, 1 skipped, 19.4m; mobile 390 passed, 4 skipped, 11.1m; no flaky line in any job's log (the twins' third bucket, the third drop's intake); the second gate running with no settled() site in the table |
+| 42324913034 | be96671 | 4 (build) | wall-settle:78 (its own first wait named the re-clamp, the same frames a third time: content 1267 then 1179, scroll 395 then 307, so "exactly one annotation" failed on two); unit 1 failed, the export test on a runner with no drop refs; mobile 390 passed |
+| 42331535800 | 4331f9d | 4 (build) | none: unit 4936 passed, 2 skipped; chromium 1060 passed, 1 skipped; mobile 390 passed, 4 skipped; no flaky line (both of be96671's defects fixed) |
+| 42332875787 | fa0eed8 | 4 (build) | none: unit 4936 passed, 2 skipped; chromium 1061 passed, 1 skipped (the Q48 test the one more, passing at four workers on its first gate); mobile 390 passed, 4 skipped; no flaky line |
 
 Derived: appearances 4 + 4 + 3 + 4 + 3 + 1 + 4 + 1 + 0 + 3 + 2 + 1 + 2 + 1 = **33**; distinct tests **18** (wall-settle:61 joins) (want-list:739,
 want-list:849, pick-moods-157:154, wall-arrival-104:120, wall-route:234, record-band-43:33,
@@ -54428,3 +54431,66 @@ file. One shape question for the coordinator: a NOTES-only commit that rides bet
 intake would carry the line too, so "first commit holding it" could be a NOTES commit; the guard is
 that drop-ref writes the line and the intake's own commit is the first to stage it, which
 commit-checked's named paths already ensure, since NOTES-only commits do not name the file.
+
+## 7 Nov, 07:45: Q48's server render recorded and the repeat run under load; the list's seventh item; the seven specs corrected
+
+**The coordinator, 7 Nov: the 6 Nov repeats ran at load 2.7 to 4.3, where the defect was not
+expected, which is the inert-condition shape; and "the push happened and nothing remounted" is
+not "the server render happened and was survived".** Both taken.
+
+*The server render, recorded.* `e2e/region-remount-q48.spec.ts` reads the page's resource timing
+for every RSC fetch (`_rsc=`) of a `shelf=` URL, on the frames' own clock, and requires one to end
+inside the sampled window with frames after it. Staged twice before the unstaged run: (1) the RSC
+fetch aborted: **Next fell back to a full load of the `?shelf=` URL, a new document whose own first
+landing satisfied `settled()`**, and the test's first form read the missing sampler as a TypeError,
+not as a remount; it now fails by name, "the same document throughout". (2) The RSC response
+delayed 8s: fails by name, "the condition arose". Unstaged under a build at one worker, load 3.5 to
+4.3: 5 of 5, the render 112-120ms to 192-202ms, the landing at 114-121ms, so the render ends after
+the landing and the frames after it are the survival.
+
+*The repeat under load.* CPU spinners (`node -e 'for(;;){}'`) beside the run, which touch nothing
+the tests read; the one-minute load sampled every 10s. One worker, as the failure ran.
+
+| server | test | spinners | runs | passed | load (1-min) | render seen and survived |
+|---|---|---|---|---|---|---|
+| build | region-remount-q48 | 16 | 10 | 10 | 16 to 43 | 10 of 10, ending 282-621ms |
+| dev | region-remount-q48 | 8 | 10 | 10 | 16 to 53 | 10 of 10, ending 663-1294ms |
+| dev | wall-settle:78 | 8 | 10 | 10 | 26 to 84 | (not instrumented) |
+
+Machine: 12 cores, 16 GB. Not reproduced in 30 runs at and well above the failure's load. **A
+correction to my own figure:** the failure's load was 7.8 falling from 16.7 (above, 6 Nov 21:55);
+the 22:10 entry's "16 to 20" was wrong, and the coordinator's ruling quoted it. The loaded runs
+start at 16, so 7.8 to 16 is covered only by the first samples of the build run's ramp.
+
+*§9, said plainly.* The "two attempts" were the build repeats at one worker and at four. §9's stop
+is for a problem one keeps trying to fix; it does not forbid making a condition, and load can be
+made whenever no gate runs (§10). Citing it stopped the measurement at the wrong place; nothing
+forbids the loaded repeat, so there is no standing gap.
+
+*The candidate mechanism.* The staging shows one path by which a zoom replaces the whole document:
+a failed RSC fetch. That would show the region absent and then a new one, with the view rebuilt
+from the landing, which fits the failure's "no region" beside "Rendering…". Unverified: no loaded
+run produced a failed fetch. If one does, the test now says so by name.
+
+**The list, the coordinator's search check.** Search is a filter: `q` is a clause of `buildWhere`
+(`records.ts:330`), which `listRecords` uses for the collection's rows and its `total`, and
+`shelfRecords` (`shelf.ts:148`) for the wall. So a search's order is item 5 and its place on the
+wall item 1, but **its match count is `listRecords`'s `total` under a filter**, which item 2
+(`countAllRecords`, unfiltered) does not name. Item 5 widened: `listRecords` under any filter, `q`
+included, its order and its total. **A seventh item, found while checking:** the ownership check,
+`matchOwnership` and `matchOwnershipForResults` (`ownership.ts`), reads every record by Discogs
+release id and by artist and title similarity, so a lookup result's badge (this pressing, another
+pressing of the album, not owned) moves when another worker seeds a record with the same release id
+or a similar name. Whether two gated specs actually collide is the intersection's question, not
+settled here: a first grep finds the repeated fixed ids (6779382, 381756) in result-card-150 and in
+two capture scripts outside the suite, and the release ids `seed.ts` and the lookup specs use are
+not yet read. The quantity is shared whether or not today's fixtures collide. The list stands at
+seven.
+
+**The seven specs, corrected.** The 5 Nov entry was right: seven specs say "whole collection" by
+grep (collection-filters, pick-moods-157, ring-144, shelf, stats, wall-arrival-104, wall-route),
+above at "a pointer not a survey", and the lock survey read each. My 6 Nov message saying no such
+set could be found was wrong, written without searching NOTES; it reached only the message, not
+this file, so no entry carried it and the survey's framing stands. What the seven read sits inside
+the list: pick-moods-157 item 3; wall-arrival-104, wall-route and shelf item 1; stats item 4 and
+collection-filters item 5, both now scoped to their own artist.

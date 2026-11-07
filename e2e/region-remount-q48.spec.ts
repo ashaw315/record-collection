@@ -32,13 +32,33 @@ type Frame = { t: number; present: boolean; same: boolean; left: number; top: nu
 */
 const unclamped = (f: Frame, left: number, top: number) => (f.left !== left && f.left !== f.limitX) || (f.top !== top && f.top !== f.limitY);
 
+/*
+  The server render the failing trace showed (`?shelf=257&_rsc=…`), on the frames' own clock: the page's resource
+  timing for every RSC fetch of a `shelf=` URL, start and end measured from the sample's first frame. "The push
+  happened and nothing remounted" is not "the server render happened and was survived" (the coordinator, 7 Nov);
+  a render that ends inside the window, with frames after it, is the second.
+*/
+type Render = { name: string; start: number; end: number };
+
+async function renders(page: Page): Promise<Render[]> {
+  return page.evaluate(() => {
+    const t0 = (window as unknown as { __q48t0: number }).__q48t0;
+    return performance
+      .getEntriesByType('resource')
+      .filter((e) => e.name.includes('_rsc=') && e.name.includes('shelf=') && e.startTime >= t0)
+      .map((e) => ({ name: e.name.slice(e.name.indexOf('?')), start: Math.round(e.startTime - t0), end: Math.round((e as PerformanceResourceTiming).responseEnd - t0) }));
+  });
+}
+
 async function sample(page: Page) {
   await page.evaluate(() => {
-    const w = window as unknown as { __q48?: Frame[]; __q48el?: Element | null; __q48stop?: boolean };
+    const w = window as unknown as { __q48?: Frame[]; __q48el?: Element | null; __q48stop?: boolean; __q48t0?: number };
     w.__q48 = [];
     w.__q48el = null;
     w.__q48stop = false;
     const t0 = performance.now();
+    w.__q48t0 = t0;
+    performance.setResourceTimingBufferSize(10_000);
     const tick = () => {
       const el = document.querySelector('[data-region="wall"]') as HTMLElement | null;
       if (el !== null && w.__q48el === null && document.querySelector('[data-wall="labelled"]') !== null) w.__q48el = el;
@@ -76,7 +96,19 @@ test('a zoom-in keeps the wall’s region and the reader’s view: no remount, n
   await expect(page.locator('[data-wall="labelled"]')).toBeVisible();
   const at = await settled(page, 1);
   await page.waitForTimeout(4000);
-  const frames = await page.evaluate(() => { const w = window as unknown as { __q48: Frame[]; __q48stop: boolean }; w.__q48stop = true; return w.__q48; });
+  /*
+    The sampler lives in the document, so a replaced document has none. Staged on 7 Nov by aborting the RSC fetch:
+    Next falls back to a full load of the `?shelf=` URL, whose own first landing satisfies the wait above, and the
+    first form of this test read that as a TypeError. A replaced document is the remount of everything, named so.
+  */
+  const sampled = await page.evaluate(() => { const w = window as unknown as { __q48?: Frame[]; __q48stop?: boolean }; w.__q48stop = true; return w.__q48 ?? null; });
+  expect(sampled, 'the same document throughout: a replaced document (no sampler left in it) remounts the region and rebuilds the view').not.toBeNull();
+  const frames = sampled ?? [];
+  const rendered = await renders(page);
+  const lastFrame = frames[frames.length - 1]?.t ?? 0;
+  const survived = rendered.filter((r) => r.end > 0 && r.end < lastFrame);
+  test.info().annotations.push({ type: 'q48-rsc', description: JSON.stringify({ rendered, lastFrame, survived: survived.length }) });
+  expect(survived.length, 'the condition arose: a server render of the zoom’s shelf= URL ended inside the sampled window, with frames after it').toBeGreaterThanOrEqual(1);
   const landedAt = frames.findIndex((f) => f.landings >= 1);
   const after = frames.slice(landedAt);
   const absent = after.filter((f) => !f.present);
