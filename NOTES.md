@@ -52755,6 +52755,7 @@ table wins.
 | 42292989122 | fda52ef | 4 (build) | wall-settle:61 (the wait's frames on its first call: content 1267 to 1179, 240 seats and the region unchanged; :213 rewritten passed) |
 | 42299055762 | 4ece9b6 | 4 (build) | none: unit 4900 passed, 2 skipped; chromium 1060 passed, 1 skipped, 21.4m; mobile 390 passed, 4 skipped, 10.4m; no flaky line in any job's log (Q47 and the tools; :213 single-read passed again) |
 | 42309967002 | 71a046a | 4 (build) | wall-settle:61, the wait's own first call, the same frames as 42292989122: content 1267 at the write, 1179 at the read, 240 seats both, region 872; the scroll 395 then 307, the scroller's limit at each frame (1267 − 872, 1179 − 872); the verdict job NOT OK on the flake; unit 4902 passed, mobile 390 passed, 4 skipped, 10.0m; chromium 1059 passed, 1 flaky, 1 skipped (the Q45 second unit and the drop's intake) |
+| 42314309767 | 1012260 | 4 (build) | none: unit 4903 passed, 2 skipped; chromium 1060 passed, 1 skipped; mobile 390 passed, 4 skipped; no flaky line in any job's log (the wait's equality as a diagnostic, the second drop's intake); the first gate with none of the seven settled() sites in it since the wait was built |
 
 Derived: appearances 4 + 4 + 3 + 4 + 3 + 1 + 4 + 1 + 0 + 3 + 2 + 1 + 2 + 1 = **33**; distinct tests **18** (wall-settle:61 joins) (want-list:739,
 want-list:849, pick-moods-157:154, wall-arrival-104:120, wall-route:234, record-band-43:33,
@@ -54176,3 +54177,39 @@ things, with a bracket saying the clause was correct and the intake note mis-mar
 correction. **The shape, named:** a correction derived from a partial reading of the thing
 being corrected; the near relative of the comment that states the right rule above code doing
 the opposite, read in reverse: here the text was right in full and read as wrong by half.
+
+## 6 Nov, 19:30: gate 42314309767 green with no flake; the twins distinguish numbered from built; an instance with the coordinator's name on it
+
+**Gate 42314309767 on 1012260, four workers from a build: green, no flake.** Unit 4903 passed, 2
+skipped; chromium 1060 passed, 1 skipped; mobile 390 passed, 4 skipped; the verdict job
+success. Judged through the judge's export after stripping gh's prefix; the two Playwright
+halves read ledger ABSENT, CI's shape. The first gate since the wait was built with none of the
+seven `settled()` sites in the table. Q45's row closes on it once sweep-twice has run, as the
+row says.
+
+**The coordinator's reading of the twins was right, and the fix is the first of their two
+options.** "Discharged" meant "a block names the head", and every such block was a Done line
+until §W.8 was numbered 170 with nothing measured, so the twins counted it built: the backlog,
+the figure Adam and the coordinator steer by, undercounted, and the fact lived in prose no test
+read, the lapsed-deferral shape inside the one instrument built to stop it. Now a numbered line
+without "Done" is its own bucket, `numberedNotBuilt`, printed by head with its block id, three
+tests watched failing first ("numberedNotBuilt is not a function"). On the tree as it stands:
+**42 unnumbered steps: 32 built, 2 numbered and not built (170 §W.8, 171 §43), 8 listed
+unbuilt, none in neither; the backlog is 10.** The coordinator's arithmetic reconciles: 38 + 3
+= 41 (+ §43's = 42), 32 + §W.8 + §43 = 34 discharged, 6 + §55 + §60 = 8 listed.
+
+**An instance, recorded with the coordinator's name on it, at their asking.** Their count of
+"Withdrawn within §" and Code's agreed at 18, and the coordinator read that agreement as
+evidence the discrepancy was not in the method. They agreed because they were the same
+instrument twice, a text grep with no notion of a quoted example, so the agreement was an
+instrument confirmed against itself, the family member the coordinator had named before. The
+rule they draw: agreement is evidence only between independent instruments; where two
+independent checks disagree the disagreement is the signal, and where they agree that is worth
+nothing on its own. Deriving the breakdown and the total in one pass settled the figure, the
+fourth time this week deriving settled what recall could not.
+
+**Both proposals approved by the coordinator, 6 Nov**: the void-run guard with the ruling
+change (the end-to-end exemption withdrawn for drops; a drop during a gate costs about twenty
+minutes and is accepted), the fingerprint as drop-ref sees it and step-level e2e runs on the
+runner's path; and ship.sh with the fourth shape as scoped. Built after sweep-twice, in that
+order: sweep-twice, ship.sh, the void-run guard.

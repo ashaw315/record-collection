@@ -50,11 +50,28 @@ export function discharged(blocks) {
   return byHead;
 }
 
+/**
+ * Numbered is not built (the coordinator, 6 Nov). Until 6 Nov every
+ * discharging block was a Done line, so discharged and built were one
+ * bucket; then §W.8 was numbered 170 with nothing measured and the twins
+ * counted it built, the backlog undercounting by one with the fact in prose
+ * no test read. A numbered line without "Done" is its own bucket: the heads
+ * such blocks discharge, each with its block id.
+ */
+export function numberedNotBuilt(blocks) {
+  const out = new Map();
+  for (const b of blocks) {
+    if (!/^\d+[a-z]?\. \*\*Done\b/.test(b.text ?? '')) for (const d of b.discharges ?? []) out.set(d.head, b.id);
+  }
+  return out;
+}
+
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   const steps = stepsOf(readFileSync('docs/design/HANDOFF-wall-and-pull.md', 'utf8'));
   const blocks = JSON.parse(readFileSync('scripts/handoff-code-region.json', 'utf8'));
   const unbuilt = JSON.parse(readFileSync('scripts/handoff-unbuilt.json', 'utf8'));
   const done = discharged(blocks);
+  const numbered = numberedNotBuilt(blocks);
   const listed = new Map(unbuilt.map((u) => [u.head, u]));
   const moved = [];
   for (const b of blocks) for (const d of b.discharges ?? []) {
@@ -62,7 +79,10 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
     if (step && step.clause !== d.clause) moved.push(`${b.id}: "${d.head}" moved after its Done`);
   }
   const unnamed = steps.filter((s) => !done.has(s.head) && !listed.has(s.head));
-  console.log(`unnumbered steps ${steps.length}: discharged ${steps.filter((s) => done.has(s.head)).length}, listed as unbuilt ${steps.filter((s) => listed.has(s.head)).length}, in neither ${unnamed.length}`);
+  const built = steps.filter((s) => done.has(s.head) && !numbered.has(s.head)).length;
+  const numberedOnly = steps.filter((s) => numbered.has(s.head));
+  console.log(`unnumbered steps ${steps.length}: built ${built}, numbered and not built ${numberedOnly.length}, listed as unbuilt ${steps.filter((s) => listed.has(s.head)).length}, in neither ${unnamed.length}`);
+  for (const s of numberedOnly) console.log(`  numbered ${s.head}  — not built (${numbered.get(s.head)})`);
   for (const s of steps) if (listed.has(s.head)) console.log(`  unbuilt  ${s.head}  — ${listed.get(s.head).status}`);
   for (const s of unnamed) console.log(`  NEITHER  ${s.head}`);
   for (const m of moved) console.log(`  MOVED    ${m}`);

@@ -1,6 +1,7 @@
+import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { discharged, stepsOf } from '../../scripts/handoff-twins.mjs';
+import { discharged, numberedNotBuilt, stepsOf } from '../../scripts/handoff-twins.mjs';
 
 /**
  * **Every unnumbered step in the handoff is discharged by a numbered one, or
@@ -99,3 +100,37 @@ describe('the unbuilt list is exact: what no block discharges, and nothing else'
   });
 });
 
+
+/*
+  Numbered is not built (the coordinator, 6 Nov). A block that discharges a head is Code's numbered line, and until
+  6 Nov every such line was a Done line, so "discharged" and "built" were one bucket. Then §W.8 was numbered 170 on
+  the coordinator's word with nothing measured, its unbuilt entry removed, and the twins counted it among the
+  discharged: the backlog, the figure Adam and the coordinator steer by, undercounted by one, and the fact lived
+  only in prose no test reads, the lapsed-deferral shape inside the instrument built to stop it. So a numbered line
+  without "Done" is its own bucket, numbered and not built, printed by head beside the listed unbuilt.
+*/
+describe('numbered is not built: a numbered line without Done is its own bucket', () => {
+  const done = { id: 'step-9', before: '- **Unnumbered, for Code to number — §Z: a thing.**', why: '', text: '9. **Done: built.** **§Z — a thing: Code’s number for that step.** Built.', discharges: [{ head: '§Z: a thing', clause: '' }] };
+  const partly = { ...done, id: 'step-10', text: '10. **Done: built in part; the rest is owed.** **§Y — another: Code’s number for that step.**', discharges: [{ head: '§Y: another', clause: '' }] };
+  const numbered = { ...done, id: 'step-11', text: '11. **§X — a third: Code’s number for that step.** Not built. Owed after the next unit.', discharges: [{ head: '§X: a third', clause: '' }] };
+
+  it('reads a Done line, whole or in part, as built, and a numbered line without Done as not built', () => {
+    expect(numberedNotBuilt([done, partly, numbered])).toEqual(new Map([['§X: a third', 'step-11']]));
+  });
+
+  it('on the handoff as it stands, names steps 170 and 171 as numbered and not built, so the backlog is the listed unbuilt plus them', () => {
+    const blocks = JSON.parse(readFileSync('scripts/handoff-code-region.json', 'utf8'));
+    const unbuilt = JSON.parse(readFileSync('scripts/handoff-unbuilt.json', 'utf8')) as { head: string }[];
+    const numberedOnly = numberedNotBuilt(blocks);
+    expect([...numberedOnly.values()].sort()).toEqual(['step-170', 'step-171']);
+    for (const head of numberedOnly.keys()) expect(unbuilt.some((u) => u.head === head), `${head} is numbered, so it is not also listed`).toBe(false);
+  });
+
+  it('prints the three buckets, with each numbered-and-not-built step by head, and exits 0 on the tree', () => {
+    const out = spawnSync('node', ['scripts/handoff-twins.mjs'], { encoding: 'utf8' });
+    expect(out.status).toBe(0);
+    expect(out.stdout).toMatch(/^unnumbered steps \d+: built \d+, numbered and not built 2, listed as unbuilt \d+, in neither 0$/m);
+    expect(out.stdout).toMatch(/^  numbered §W\.8: the bound at a candidate  — not built \(step-170\)$/m);
+    expect(out.stdout).toMatch(/^  numbered §43: which frame is first paint  — not built \(step-171\)$/m);
+  });
+});
