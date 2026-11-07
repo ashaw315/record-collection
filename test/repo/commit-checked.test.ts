@@ -488,3 +488,52 @@ describe('the captures a commit message names are exported after the commit', ()
     expect(result.output).toMatch(/COMMITTED, but the captures were NOT exported/);
   });
 });
+
+/*
+  The fourth shape (the coordinator, 6 Nov): a check that passed, then `git add` refusing an ignored path, which
+  left the other named paths staged and the next commit refusing on the index. Two guards: an unaddable path,
+  ignored or absent, is refused before the check runs, naming it; and any failure after the check resets the
+  index to HEAD, so nothing stays staged behind a refusal.
+*/
+describe('a path the commit could not carry is refused before the check, and a failure after the check leaves nothing staged', () => {
+  it('refuses an ignored named path before the check, running nothing, and names it', () => {
+    const { dir, git } = repo();
+    writeFileSync(join(dir, '.gitignore'), 'secret.txt\n');
+    git('add', '.gitignore');
+    git('commit', '-q', '-m', 'ignore');
+    const before = git('rev-parse', 'HEAD');
+    writeFileSync(join(dir, 'secret.txt'), 'x\n');
+    writeFileSync(join(dir, 'second.txt'), 'second\n');
+    const result = run(dir, 'touch ran.marker; echo "1 passed"', ['-m', 'both', 'second.txt', 'secret.txt']);
+    expect(result.status, 'refused').not.toBe(0);
+    expect(result.output).toMatch(/secret\.txt.*ignored|ignored.*secret\.txt/);
+    expect(existsSync(join(dir, 'ran.marker')), 'the check never ran').toBe(false);
+    expect(git('diff', '--cached', '--name-only'), 'nothing staged').toBe('');
+    expect(git('rev-parse', 'HEAD')).toBe(before);
+  });
+
+  it('refuses an absent named path before the check, running nothing, and names it', () => {
+    const { dir, git } = repo();
+    writeFileSync(join(dir, 'second.txt'), 'second\n');
+    const result = run(dir, 'touch ran.marker; echo "1 passed"', ['-m', 'both', 'second.txt', 'missing.txt']);
+    expect(result.status).not.toBe(0);
+    expect(result.output).toMatch(/missing\.txt/);
+    expect(existsSync(join(dir, 'ran.marker'))).toBe(false);
+    expect(git('diff', '--cached', '--name-only')).toBe('');
+  });
+
+  it('resets the index when the commit itself fails after a passing check, so the next commit does not refuse on it', () => {
+    const { dir, git } = repo();
+    const before = git('rev-parse', 'HEAD');
+    /* A pre-commit hook that refuses stands in for whatever fails between the check and the commit. */
+    mkdirSync(join(dir, '.git', 'hooks'), { recursive: true });
+    writeFileSync(join(dir, '.git', 'hooks', 'pre-commit'), '#!/bin/sh\nexit 1\n');
+    chmodSync(join(dir, '.git', 'hooks', 'pre-commit'), 0o755);
+    writeFileSync(join(dir, 'second.txt'), 'second\n');
+    const result = run(dir, 'echo "1 passed"', ['-m', 'second', 'second.txt']);
+    expect(result.status).not.toBe(0);
+    expect(git('rev-parse', 'HEAD'), 'no commit').toBe(before);
+    expect(git('diff', '--cached', '--name-only'), 'and nothing left staged').toBe('');
+    expect(result.output).toMatch(/NOT COMMITTED.*(unstaged|reset|nothing (is|was) left staged)/i);
+  });
+});

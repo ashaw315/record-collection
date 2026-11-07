@@ -108,7 +108,8 @@ describe('the script', () => {
       const sha = execFileSync('git', ['rev-parse', '--short', 'HEAD'], { encoding: 'utf8' }).trim();
       const stdout = execFileSync('node', [SCRIPT, '--out', out], { encoding: 'utf8' });
       const files = readdirSync(out).sort();
-      expect(files).toHaveLength(4);
+      /* Five since 6 Nov: the handoff, DESIGN-RULES, WITHDRAWALS, ASSERTIONS-spec and the applied change files (Design's ask, the coordinator's approval). */
+      expect(files).toHaveLength(5);
       const rules = files.find((f) => f.startsWith('DESIGN-RULES'));
       expect(rules).toBe(`DESIGN-RULES — export for Design, ${localDate()} at ${sha}.md`);
       const written = readFileSync(join(out, rules ?? ''), 'utf8');
@@ -214,5 +215,24 @@ describe('the script', () => {
     } finally {
       rmSync(dir, { recursive: true, force: true });
     }
+  });
+});
+
+/*
+  The applied change files beside the rest (Design's ask, the coordinator's approval and addition, 6 Nov): every
+  change file Code has applied, by name, with the drop ref and date it arrived on and the commit it landed at, so
+  Design's "landed / relayed, not yet in an export / not landed" states have a comparable date on Code's side.
+*/
+describe('the applied change files are exported beside the handoff', () => {
+  it('writes the list under the same note, named by the date and the commit, with the 6 Nov files and their drop refs', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'export-landed-'));
+    execFileSync('node', [SCRIPT, '--out', dir], { encoding: 'utf8' });
+    const name = readdirSync(dir).find((f) => f.startsWith('Applied change files — export for Design, '));
+    expect(name, 'the list is in the bundle').toBeDefined();
+    const text = readFileSync(join(dir, name ?? ''), 'utf8');
+    expect(text.split('\n')[0]).toMatch(/^Export note, not part of the file: the change files Code has applied, as of [0-9a-f]+ on \d{4}-\d{2}-\d{2}/);
+    expect(text).toMatch(/^- Rules not snapshots — arrived refs\/drops\/2026-11-06-01 \(2026-11-06T17:36:09[^)]*\); landed [0-9a-f]{7} \(/m);
+    expect(text).toMatch(/^- First paint is styled — arrived refs\/drops\/2026-11-06-03 \(2026-11-06T19:04:58[^)]*\); landed [0-9a-f]{7} \(/m);
+    rmSync(dir, { recursive: true, force: true });
   });
 });

@@ -69,6 +69,21 @@ if ! git diff --cached --quiet; then
   exit 1
 fi
 
+# Every named path is one the commit can carry, checked before the check runs (the coordinator, 6 Nov).
+# A check passed and then `git add` refused an ignored change file under docs/design/*, leaving the other
+# named paths staged and the next commit refusing on the index: the fourth shape of a sequence assembled
+# by hand. An absent path, or an ignored one not already tracked, is refused here in a second, naming it.
+uncarried=()
+for p in "${paths[@]}"; do
+  if [ ! -e "$p" ] && [ -z "$(git ls-files -- "$p")" ]; then uncarried+=("$p: absent, and not tracked");
+  elif [ -z "$(git ls-files -- "$p")" ] && git check-ignore -q -- "$p"; then uncarried+=("$p: ignored, so git add would refuse it"); fi
+done
+if [ ${#uncarried[@]} -gt 0 ]; then
+  echo "NOT COMMITTED: the commit could not carry every named path, so the check did not run. Nothing was staged:" >&2
+  printf '  %s\n' "${uncarried[@]}" >&2
+  exit 7
+fi
+
 # A named path that is untracked is intent-added for the check's duration.
 # The fresh-clone migration test copies `git ls-files`, so a new migration
 # failed it on three units while the journal already named it (NOTES 4137,
@@ -116,7 +131,10 @@ if ! bash -o pipefail -c "$check" 2>&1 | tee "$log"; then
 fi
 rm -f "$log"
 
-git add -- "${paths[@]}" || exit 1
+# Any failure from here leaves nothing staged (the coordinator, 6 Nov): a refusal behind a half-staged
+# index made the next commit refuse on the index and not on its own content.
+unstage_all() { git reset -q; undo_intent; }
+git add -- "${paths[@]}" || { unstage_all; echo "NOT COMMITTED: git add refused after the check passed; the index was reset, nothing is left staged." >&2; exit 1; }
 
 # A commit carries what it names (the coordinator, 4 Nov). The check reads
 # the working tree and the commit carries the named paths, so twice in one
@@ -155,7 +173,7 @@ if [ ${#unnamed[@]} -gt 0 ]; then
   exit 6
 fi
 
-git commit -q -m "$message" && git log --oneline -1 || exit 1
+git commit -q -m "$message" && git log --oneline -1 || { unstage_all; echo "NOT COMMITTED: git commit failed after the check passed; the index was reset, nothing is left staged." >&2; exit 1; }
 rm -f "$unread"
 
 # The export follows the commit (the coordinator, 29 Oct). Design rules

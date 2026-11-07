@@ -30,6 +30,7 @@
 import { spawnSync } from 'node:child_process';
 import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
+import { pathToFileURL } from 'node:url';
 
 const ROOT = process.cwd();
 const COPY = join(ROOT, 'e2e-sweep');
@@ -133,10 +134,19 @@ function run(args) {
   process.exit(status);
 }
 
-/* `read`: per site, the worst call. toBeCloseTo in share of its tolerance; bounds in distance to the bound; exact on a fraction listed whole. */
-function read(paths) {
-  const rows = [];
-  for (const p of paths) for (const line of readFileSync(p, 'utf8').split('\n')) { if (line) try { rows.push(JSON.parse(line)); } catch { /* a torn line */ } }
+/*
+  A sweep prints its classification distribution beside its findings, always, and a run where nothing was
+  classified is a BROKEN READER and not a clean result (the coordinator, 6 Nov, from the twice sweep's first run,
+  which read 26 of 26 steps as other and would have reported a confident zero). Here the distribution is the calls
+  by matcher; a log with no call read is a broken proxy, not a suite with no pixel assertion.
+*/
+export function reportOf(rows) {
+  const byMatcher = {};
+  for (const r of rows) byMatcher[r.name] = (byMatcher[r.name] ?? 0) + 1;
+  const broken = rows.length === 0;
+  const head = [];
+  if (broken) head.push('BROKEN READER: 0 calls read; the proxy logged nothing, so no site count from this log means anything');
+  head.push(`calls by matcher: ${JSON.stringify(byMatcher)} (${rows.length} calls read)`);
   const frac = (x) => typeof x === 'number' && !Number.isInteger(x);
   const site = (at) => at.split(':').slice(0, 2).join(':');
   const close = new Map(); const bounds = new Map(); const exact = new Map();
@@ -162,7 +172,7 @@ function read(paths) {
       }
     }
   }
-  const out = [];
+  const out = [...head];
   out.push(`sites: toBeCloseTo ${close.size}, bounds ${bounds.size}, exact-on-a-fraction ${exact.size} (${rows.length} calls read)`);
   out.push('', 'toBeCloseTo sites consuming half or more of their tolerance on the worst call:');
   for (const [k, s] of [...close].filter(([, s]) => s.worst >= 0.5).sort((x, y) => y[1].worst - x[1].worst)) out.push(`  ${k.padEnd(44)} p=${String(s.p).padEnd(4)} consumed ${(s.worst * 100).toFixed(1).padStart(5)}%  received ${s.rec}  expected ${s.exp}  calls ${s.calls}`);
@@ -174,10 +184,21 @@ function read(paths) {
   for (const [k, s] of [...bounds].filter(([, s]) => s.scale >= 2 && s.worst < 0.5 && (frac(s.rec) || frac(s.exp))).sort((x, y) => x[1].worst - y[1].worst)) out.push(`  ${k.padEnd(44)} ${s.name.padEnd(22)} margin ${s.worst.toFixed(3)}  received ${s.rec}  bound ${s.exp}  calls ${s.calls}`);
   out.push('', 'exact equality on a fractional number (no tolerance), every site:');
   for (const [k, s] of [...exact].sort()) out.push(`  ${k.padEnd(44)} received ${JSON.stringify(s.rec)} expected ${JSON.stringify(s.exp)}  calls ${s.calls}`);
-  process.stdout.write(`${out.join('\n')}\n`);
+  return { broken, lines: out };
 }
 
-const [command, ...rest] = process.argv.slice(2);
-if (command === 'run') run(rest);
-else if (command === 'read' && rest.length > 0) read(rest);
-else { process.stderr.write('usage: scripts/sweep-pixels.mjs run [playwright args...] | read <log.jsonl> [more...]\n'); process.exit(2); }
+/* `read`: per site, the worst call. toBeCloseTo in share of its tolerance; bounds in distance to the bound; exact on a fraction listed whole. */
+function read(paths) {
+  const rows = [];
+  for (const p of paths) for (const line of readFileSync(p, 'utf8').split('\n')) { if (line) try { rows.push(JSON.parse(line)); } catch { /* a torn line */ } }
+  const { broken, lines } = reportOf(rows);
+  process.stdout.write(`${lines.join('\n')}\n`);
+  if (broken) process.exitCode = 1;
+}
+
+if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
+  const [command, ...rest] = process.argv.slice(2);
+  if (command === 'run') run(rest);
+  else if (command === 'read' && rest.length > 0) read(rest);
+  else { process.stderr.write('usage: scripts/sweep-pixels.mjs run [playwright args...] | read <log.jsonl> [more...]\n'); process.exit(2); }
+}

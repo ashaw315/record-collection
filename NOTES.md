@@ -52756,6 +52756,7 @@ table wins.
 | 42299055762 | 4ece9b6 | 4 (build) | none: unit 4900 passed, 2 skipped; chromium 1060 passed, 1 skipped, 21.4m; mobile 390 passed, 4 skipped, 10.4m; no flaky line in any job's log (Q47 and the tools; :213 single-read passed again) |
 | 42309967002 | 71a046a | 4 (build) | wall-settle:61, the wait's own first call, the same frames as 42292989122: content 1267 at the write, 1179 at the read, 240 seats both, region 872; the scroll 395 then 307, the scroller's limit at each frame (1267 − 872, 1179 − 872); the verdict job NOT OK on the flake; unit 4902 passed, mobile 390 passed, 4 skipped, 10.0m; chromium 1059 passed, 1 flaky, 1 skipped (the Q45 second unit and the drop's intake) |
 | 42314309767 | 1012260 | 4 (build) | none: unit 4903 passed, 2 skipped; chromium 1060 passed, 1 skipped; mobile 390 passed, 4 skipped; no flaky line in any job's log (the wait's equality as a diagnostic, the second drop's intake); the first gate with none of the seven settled() sites in it since the wait was built |
+| 42317657088 | da23ad5 | 4 (build) | none: unit 4906 passed, 2 skipped; chromium 1060 passed, 1 skipped, 19.4m; mobile 390 passed, 4 skipped, 11.1m; no flaky line in any job's log (the twins' third bucket, the third drop's intake); the second gate running with no settled() site in the table |
 
 Derived: appearances 4 + 4 + 3 + 4 + 3 + 1 + 4 + 1 + 0 + 3 + 2 + 1 + 2 + 1 = **33**; distinct tests **18** (wall-settle:61 joins) (want-list:739,
 want-list:849, pick-moods-157:154, wall-arrival-104:120, wall-route:234, record-band-43:33,
@@ -54195,7 +54196,7 @@ read, the lapsed-deferral shape inside the one instrument built to stop it. Now 
 without "Done" is its own bucket, `numberedNotBuilt`, printed by head with its block id, three
 tests watched failing first ("numberedNotBuilt is not a function"). On the tree as it stands:
 **42 unnumbered steps: 32 built, 2 numbered and not built (170 §W.8, 171 §43), 8 listed
-unbuilt, none in neither; the backlog is 10.** The coordinator's arithmetic reconciles: 38 + 3
+unbuilt, none in neither; the backlog is 10.** The backlog read 8 yesterday and 6 two days ago, and each move was a correction and not new work: steps found that the list had not carried, and now numbering told apart from building; nobody should read the trend as the backlog growing. The coordinator's arithmetic reconciles: 38 + 3
 = 41 (+ §43's = 42), 32 + §W.8 + §43 = 34 discharged, 6 + §55 + §60 = 8 listed.
 
 **An instance, recorded with the coordinator's name on it, at their asking.** Their count of
@@ -54213,3 +54214,98 @@ change (the end-to-end exemption withdrawn for drops; a drop during a gate costs
 minutes and is accepted), the fingerprint as drop-ref sees it and step-level e2e runs on the
 runner's path; and ship.sh with the fourth shape as scoped. Built after sweep-twice, in that
 order: sweep-twice, ship.sh, the void-run guard.
+
+## 6 Nov, 20:05: "Landed list" taken in; the export bundle gains the applied change files, with the drop ref and date each came in on
+
+**The drop.** `Landed list - for Code to apply.md` on disk at 19:58, captured as
+`refs/drops/2026-11-06-04`. No card travels with it, so there is nothing to verify against a
+card; its one change, the DESIGN-RULES bullet that each send states which change files have
+landed and Code's export lists every change file it has applied, anchors on the bullet about
+figures that name a record, which holds (one occurrence), and is applied as written. Design's
+own landed list against 41bbc92 reads: landed "Rules not snapshots"; relayed after 41bbc92 and
+not yet in an export, "First paint is styled" (resent) and "Name every ruling a card carries";
+not landed and not resent, none. Against this tree all three are applied (9467e4d, b1d4a5e,
+and the 17:50 intake at 41bbc92). The intake command runs after the sweep frees the database.
+
+**Design's ask, approved by the coordinator: the applied-files list in the export bundle.** A
+listing, not a new record: the drop refs already hold every change file as it arrived. Each
+line carries the file's name, the drop ref it first appeared in and that ref's date, and the
+commit it landed at with its date, the commit being derived as the first commit on main after
+the capture that touches `docs/design/`, `scripts/handoff-code-region.json` or
+`scripts/handoff-unbuilt.json`, which is what an intake commit is. **The coordinator's addition,
+and why:** Design's list has three states and a comparison by name alone uses two, so a file can
+sit in "relayed, not yet in an export" indefinitely, reported truthfully each time, with
+nothing firing, which is where "First paint is styled" sat for a day. With the arrival date
+beside each applied file, a file Design reports as relayed and absent from Code's list has a
+comparable date on the other side, and a gap of more than one export cycle is visible rather
+than inferred. Design's half does the flagging; the dates exist on both sides for it.
+
+**The Landed list, updated at 20:00 (refs/drops/2026-11-06-05).** Design reworded its own file
+two minutes after the first send: the bullet now names three states (offered, relayed by Adam,
+landed), keeps the offered and relayed dates apart, flags a file absent from two consecutive
+exports in Design's own list, and adds the reverse: a file in Code's list and not in Design's is
+one Code applied that Design does not own, and is reported. The 19:58 bullet was in the tree and
+uncommitted, so it is replaced in place by the 20:00 wording rather than amended by a second
+change; the anchor holds. Design's state for "First paint is styled" now reads "offered 5 Nov
+and not relayed then; offered again and relayed 6 Nov", which places the loss before the relay,
+consistent with it being in no drop ref until 06-03. Code's list carries the arrival ref and
+date per file; with Design's offered and relayed dates that is three dates per file across the
+two lists, so a loss between offer, relay and arrival is placed and not inferred.
+
+## 6 Nov, 20:45: sweep-twice's first whole-suite run read; its reader fixed and made to log steps; ship.sh and commit-checked's two guards built; the applied-files list in the export
+
+**The run.** `node scripts/sweep-twice.mjs run --project=chromium`, the whole suite under dev, one
+worker as the config sets, 19:27 to 20:21, load 7.3 at the start and 13.8 at the end, nothing else
+running: 1060 passed, 1 skipped, 53.9m; 1061 tests logged at
+`docs/measurements/twice/2026-11-07T00-27-22-694Z-chromium.jsonl`. **196 hit sites in 298 tests.**
+The classification distribution, printed by the run: 12,624 reads, 17,529 actions, 8,255 other, the
+other being waits (5,870), contexts and pages (440), style tags (869), clocks (77) and GETs; so the
+reader was not broken, but it had two defects this run showed: action names kept their arguments
+(one kind per URL; a word boundary after a closing quote at a title's end never matches), and "Query
+count" and "Clear" were unclassified. Both fixed with tests first.
+
+**The hits by the action between, the classified sample (names normalised in the reading):**
+
+| action between | sites | tests | the reading |
+|---|---|---|---|
+| a gesture (click, key, hover) | 102 | 186 | the lineup shape's candidates: lineup-146:26, :72, :76; wall-route:294; ring-walk.ts:105 (a helper read 495 times across walks) |
+| navigation, a new document | 78 | 105 | per-page loops mostly (title-ladder-45:265 across records and windows), but wall-arrival-104's Q45 sites were exactly this, so navigation is not benign by itself |
+| viewport only | 13 | 21 | loops over windows, a different quantity per window by construction (page-fills-viewport:50, layout-sweep) |
+| a collection write (POST, DELETE) | 2 | 35 | hit-area.ts:55, identity-extremes:159: the shared-quantity case at its plainest |
+| other (Set content) | 1 | 3 | hairlines.ts:116 |
+
+A site inside a shared helper (ring-walk.ts, wall-settle.ts:4) is one call site read across every
+call by design; its callers are the sites to read. The reporter cannot tell the collection's quantity
+from the test's own, so each row is a site to read and not a finding.
+
+**The blind spot, counted and closed by the classifier, not by enumeration (the coordinator, 6
+Nov).** Of 837 evaluate calls in e2e/, 72 write by their body's tokens (scrolls, focus, probe resets,
+style and attribute writes), too many to enumerate by hand. The reporter now reads each evaluate call
+site's body from the source before the run, and an evaluate at a write site is an action, named "(a
+write)"; token-based, so a write by a helper the body calls is missed, and the reader prints the
+write-site count beside its hits. This first run predates the fix and kept only counts, so its 196
+are without the 72; the reporter now logs each test's steps, so a later reader re-reads a run
+instead of repeating it. The run goes again after this commit.
+
+**The rule, made a line every sweep prints (the coordinator, 6 Nov).** A sweep prints its
+classification distribution beside its hits, always, and a run where one bucket holds everything,
+or nothing acts, is a BROKEN READER and not a clean result: the first run of this instrument read
+26 of 26 steps as other and would have reported a confident zero, caught only because it printed
+its kinds line. Both sweeps' readers now do it, `reportOf` in each, tests first: sweep-twice heads
+its output `BROKEN READER: …` and exits 1 on such a log; sweep-pixels does the same on a log with
+no call read. The absent-versus-broken member.
+
+**Built, each watched failing first:** `scripts/ship.sh` (five tests: a refused commit pushes and
+dispatches nothing with the refusal's status; a failed push dispatches nothing; a green commit
+dispatches the pushed head with the worker count; the printed run is the one on the pushed head,
+not the first listed; a failed dispatch is the script's status after the push stood);
+`commit-checked.sh` refusing an absent or ignored named path before the check (status 7) and
+resetting the index on any failure after it (three tests); `scripts/landed-list.mjs` and the
+export's fifth file, "Applied change files — export for Design, <date> at <sha>.md" (four tests and
+one on the bundle; the bundle-size assertion moved from four to five, since it encoded the bundle
+as built and the ruling extends it). On the real refs: 55 change files since 26 Oct, each with its
+arrival ref and landing commit; Landed list itself "not yet landed" until this commit. The arrival
+time is the capture's: "Rules not snapshots" was on disk at 17:25 and captured at 17:36.
+
+**Not done, and why:** CLAUDE.md §10's items 1 to 3 do not yet name ship.sh. The proposal said
+"on the coordinator's words", and CLAUDE.md is the coordinator's text; the wording is owed from them.

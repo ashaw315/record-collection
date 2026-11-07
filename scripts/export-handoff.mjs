@@ -103,6 +103,15 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   writeFileSync(assertionsPath, `Export note, not part of the file: this is the repository's ASSERTIONS-spec.md as committed at ${sha} on ${date}. It is read-only for Design: changes come back as change files anchored on this text.\n\n${git('show', 'HEAD:scripts/ASSERTIONS-spec.md')}`);
   process.stdout.write(`${assertionsPath}\n`);
   /*
+    The change files Code has applied beside them (Design's ask, the coordinator, 6 Nov): each by name with the
+    drop ref and date it arrived on and the commit it landed at, so Design's own list of what it offered and
+    what Adam relayed has dates to compare against on Code's side. Derived from the drop refs and the history.
+  */
+  const { landedList, landedText, fromGit } = await import('./landed-list.mjs');
+  const landedPath = join(outDir, `Applied change files — export for Design, ${date} at ${sha}.md`);
+  writeFileSync(landedPath, landedText(landedList(fromGit()), { sha, date }));
+  process.stdout.write(`${landedPath}\n`);
+  /*
     A step's captures beside them (the coordinator, 28 Oct): captures were
     the one thing still hand-carried, and the import's Provisionals line was
     held open twice by a folder upload rather than by anything left to do.
