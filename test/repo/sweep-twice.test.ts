@@ -135,6 +135,8 @@ describe('reportOf: the distribution is always printed, and one bucket holding e
     expect(r.broken).toBe(false);
     expect(r.lines.join('\n')).toMatch(/^steps by kind: \{"read":4,"action":2,"other":1\}/m);
     expect(r.lines[0]).toMatch(/^hits: 1 site/);
+    /* A site with actions of several kinds counts under each, so the per-kind figures do not sum to the total; said beside them, or 351 against 311 reads as an error (the coordinator, 6 Nov). */
+    expect(r.lines.join('\n')).toMatch(/^by the action between \(a site with actions of several kinds counts under each, so these do not sum to the site total\): /m);
   });
   it('calls a run where every step is other a broken reader, not zero hits', () => {
     const r = reportOf([row({ read: 0, action: 0, other: 26 }), row({ read: 0, action: 0, other: 19 })]);

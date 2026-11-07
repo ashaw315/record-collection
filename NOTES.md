@@ -54353,3 +54353,78 @@ The founding case now shows: `e2e/wall-settle.ts:49`, the wait's read of the scr
 across an evaluate that writes, as are wall-arrival-104:76 and :233. Forty sites moved from
 "gesture" or "navigation" into "a write by evaluate" and two new sites appeared, so the blind
 spot was real and the class is now its own row.
+
+## 6 Nov, 22:10: Q48 staged under a build and not reproduced; two instances; the shared-quantity list; the landed record made durable, proposed
+
+**Q48, first in the order (the coordinator, 6 Nov).** The claim staged is not "the region is
+found" but "the reader's view does not reset". `e2e/region-remount-q48.spec.ts` samples every
+animation frame from just before the zoom-in's click to four seconds after its landing, then four
+seconds after a reader's 240px scroll, recording the region present, the same element (a remount is
+a new one), the scroll, the scroller's limits, the landing count and the URL. A frame moved the
+reader when its scroll is not where it was put and not at the scroller's limit at that frame: the
+re-clamp when another worker changes the wall's extent is the platform's, and the first version,
+which counted it, would have failed at a gate as wall-settle:78 did.
+
+| server | workers | repeats | passed | absent, remounted, moved |
+|---|---|---|---|---|
+| build (`.next-test`, built by the run) | 1 | 10 | 10 | 0, 0, 0 |
+| dev | 1 | 10 | 10 | 0, 0, 0 |
+| dev, with the reader's scroll | 1 | 5 | 5 | 0, 0, 0 |
+| build, with the reader's scroll | 4 | 5 | 5 | 0, 0, 0 |
+
+Load 2.7 to 4.3 throughout, nothing else running. At four workers the landing's write was (108,
+471), the failing run's own write. A staged 1px scroll a second after the landing fails it,
+"Received + 1640" frames, so it can fail. Two attempts to reproduce, so stopped (CLAUDE.md §9). The
+one failure was under dev at load 16 to 20; whether it was dev's render or load is not settled.
+The test stays in the suite at every gate, which is the next chance to catch it. Nothing to bring
+to the coordinator with a trace: it did not reproduce under a build.
+
+**Two instances, recorded at the coordinator's asking.** (1) The applied-files list reading as
+"Code applied nothing" on a runner with no drop refs: the absent-versus-broken member, caught by a
+gate before it reached Design, not after. (2) wall-settle:78's "exactly one annotation" reading the
+shared quantity again, in the test written to stop doing that, an hour after the family was named
+in the same file: the sharpest instance yet, because it shows the family committed by the one who
+has just finished naming it. The Q48 test's first form did it a third time, counting the re-clamp
+as a move, and was caught before it ran at a gate.
+
+**The sweep, said plainly:** the first whole-suite run's output was wrong by 42 sites (40 moved
+into "a write by evaluate", 2 new) and would have been read as a result. The rerun found the
+founding case, wall-settle.ts:49. The reader now says beside its per-kind figures that a site with
+actions of several kinds counts under each, so they do not sum to the site total (351 against 311
+in the table above).
+
+**The shared quantities, derived from the query layer, before any intersection (the coordinator's
+inversion, 6 Nov).** A hit matters when it reads a quantity another worker's write can move. The
+candidates are every query that reads across all rows rather than rows a test owns, from the 16
+source files with an aggregate:
+
+1. **The wall's layout under §W.12**: `wallLayout` over the whole collection (`shelf.ts`), so the
+   wall's extent, the scroller's limits, every seat's position, the shelf index in `?shelf=N`.
+2. **The collection's count**: `countAllRecords`, the headline count and "240 of 497 records".
+3. **The untagged count**: `untaggedCount` (`record-moods.ts`), and with it the mood pick's pool.
+4. **The facets and stats**: `recordFacets`, `recordStats`, `genreRollup`, the stats page and the
+   filter options' counts.
+5. **The collection's order**: `listRecords`'s sort, so a record's row in the table or grid, its
+   page under pagination, and which record is first.
+6. **The Manage lists' totals and positions**: `listArtists`, `listGenres`, `listLabels`,
+   `listFormats`, `listStores`, `listTags`, `listWantList`, `listPressings`, each a total and an
+   order over every row (lineup-146 reads `/manage?artists=all`).
+
+Considered and left out: `rate-limit.ts`, whose count is per key and mocked in tests; the
+`…TakenByOther` and `count…References` queries, which read one id a test names. Not built: the
+intersection, which waits on the coordinator's word that the list is whole.
+
+**The landed record made durable, proposed with the export's list (the coordinator, 6 Nov).** The
+applied-files list lives only in this working copy's drop refs: not reproducible from a clone,
+backed up by nothing, and the thing Design is to diff against. Proposal: `scripts/drop-ref.mjs`
+appends one line per change file it captures for the first time to a committed
+`docs/design-landed.jsonl` (the file's name, the drop ref, the capture's time); the intake commit
+carries the line, so the landing commit is the commit that first holds it, derived with `git log
+-S` in any clone, since a file cannot name the commit that adds it. `landed-list.mjs` reads the
+committed file first and the drop refs only to backfill what predates it (the 55 since 26 Oct,
+written into the file once, by one commit), and the "NO DROP REFS" line becomes the fallback for a
+clone with neither. Touches: `drop-ref.mjs` and its test, `landed-list.mjs` and its test, the new
+file. One shape question for the coordinator: a NOTES-only commit that rides between capture and
+intake would carry the line too, so "first commit holding it" could be a NOTES commit; the guard is
+that drop-ref writes the line and the intake's own commit is the first to stage it, which
+commit-checked's named paths already ensure, since NOTES-only commits do not name the file.

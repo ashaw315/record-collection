@@ -199,7 +199,7 @@ export function reportOf(rows) {
   if (broken) lines.push(`BROKEN READER: ${kinds.other} of ${total} steps read as other, ${kinds.read} as reads, ${kinds.action} as actions; no hit count from this run means anything`);
   lines.push(`hits: ${sites.size} site${sites.size === 1 ? '' : 's'} in ${new Set(rows.flatMap((r) => ((r.hits?.length ?? 0) > 0 ? [r.test] : []))).size} tests, of ${rows.length} tests read`);
   lines.push(`steps by kind: ${JSON.stringify(kinds)}; titles read as neither, so a kind the classifier lacks is on this line: ${JSON.stringify(others)}`);
-  lines.push(`by the action between: ${JSON.stringify(byAction)}`);
+  lines.push(`by the action between (a site with actions of several kinds counts under each, so these do not sum to the site total): ${JSON.stringify(byAction)}`);
   lines.push('', 'sites, most reads first (the quantity read is a reading per site: the reporter cannot tell the collection’s from the test’s own):');
   for (const s of [...sites.values()].sort((a, b) => b.reads - a.reads || a.site.localeCompare(b.site))) lines.push(`  ${s.site.padEnd(40)} ${s.title.padEnd(20)} reads ${String(s.reads).padStart(2)}  across ${[...s.actions].join(', ')}  in ${s.tests.size} test${s.tests.size === 1 ? '' : 's'}`);
   return { broken, lines };
