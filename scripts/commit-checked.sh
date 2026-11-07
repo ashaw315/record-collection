@@ -84,6 +84,27 @@ if [ ${#uncarried[@]} -gt 0 ]; then
   exit 7
 fi
 
+# A generated record rides with the commit or refuses it (the coordinator, 7 Nov). The intake appends to
+# docs/design-landed.jsonl and a line's landing is the first commit holding it; an intake commit that left it
+# unnamed passed its own check and every later one, because the check reads the working tree, where the append
+# sits whether or not the commit carries it. A check that reads the tree to make a claim about the commit: so
+# a listed file that differs from HEAD in the tree, or is new and untracked, must be among the named paths.
+# A list: a second generated file expected to commit with its generator goes here, not into a copy.
+generated=(docs/design-landed.jsonl)
+unridden=()
+for g in "${generated[@]}"; do
+  [ -e "$g" ] || continue
+  if [ -z "$(git ls-files -- "$g")" ] || ! git diff --quiet HEAD -- "$g"; then
+    named=0
+    for p in "${paths[@]}"; do [ "$p" = "$g" ] && named=1; done
+    [ "$named" -eq 1 ] || unridden+=("$g")
+  fi
+done
+if [ ${#unridden[@]} -gt 0 ]; then
+  for g in "${unridden[@]}"; do echo "NOT COMMITTED: $g differs from HEAD in the tree and is not named; the tree holds what was generated and this commit would not, so name it with its generator's commit. Nothing was staged." >&2; done
+  exit 8
+fi
+
 # A named path that is untracked is intent-added for the check's duration.
 # The fresh-clone migration test copies `git ls-files`, so a new migration
 # failed it on three units while the journal already named it (NOTES 4137,

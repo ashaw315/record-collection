@@ -556,3 +556,60 @@ describe('a path the commit could not carry is refused before the check, and a f
     expect(result.output).toMatch(/NOT COMMITTED.*(unstaged|reset|nothing (is|was) left staged)/i);
   });
 });
+
+/*
+  **A generated record rides with the commit or refuses it (the coordinator, 7 Nov).** The intake appends to
+  `docs/design-landed.jsonl`, and a line's landing is the first commit holding it; an intake commit that leaves the
+  record unnamed passed its own check and every later one, since the check reads the working tree, where the append
+  sits whether or not the commit carries it: a check that reads the tree to make a claim about the commit. So a
+  generated file that differs from HEAD in the tree and is not named refuses the commit before the check, naming it.
+  A list, so a second generated file is added to it rather than the guard copied. Fails against a script without the
+  guard (the first and third commit), and against one that refuses whenever the file exists (the fourth).
+*/
+describe('a generated record that differs from HEAD rides with the commit or refuses it', () => {
+  const RECORD = join('docs', 'design-landed.jsonl');
+  const withRecord = () => {
+    const r = repo();
+    mkdirSync(join(r.dir, 'docs'));
+    writeFileSync(join(r.dir, RECORD), '{"horizon":"h"}\n');
+    r.git('add', RECORD);
+    r.git('commit', '-q', '-m', 'record');
+    return r;
+  };
+  it('refuses a commit that leaves a changed record unnamed, naming it, and commits nothing', () => {
+    const { dir, git } = withRecord();
+    writeFileSync(join(dir, RECORD), '{"horizon":"h"}\n{"file":"x"}\n');
+    writeFileSync(join(dir, 'second.txt'), 'second\n');
+    const before = git('rev-parse', 'HEAD');
+    const result = run(dir, 'echo "1 passed"', ['-m', 'intake', 'second.txt']);
+    expect(result.status, result.output).toBe(8);
+    expect(result.output).toMatch(/docs\/design-landed\.jsonl differs from HEAD in the tree and is not named/);
+    expect(git('rev-parse', 'HEAD')).toBe(before);
+    expect(git('diff', '--cached', '--name-only'), 'nothing left staged').toBe('');
+  });
+  it('commits when the changed record is named with it', () => {
+    const { dir, git } = withRecord();
+    writeFileSync(join(dir, RECORD), '{"horizon":"h"}\n{"file":"x"}\n');
+    writeFileSync(join(dir, 'second.txt'), 'second\n');
+    const result = run(dir, 'echo "1 passed"', ['-m', 'intake', 'second.txt', RECORD]);
+    expect(result.status, result.output).toBe(0);
+    expect(git('show', '--name-only', '--format=', 'HEAD').split('\n').sort()).toEqual([RECORD, 'second.txt']);
+  });
+  it('refuses when the record is new and untracked and not named', () => {
+    const { dir, git } = repo();
+    mkdirSync(join(dir, 'docs'));
+    writeFileSync(join(dir, RECORD), '{"horizon":"h"}\n');
+    writeFileSync(join(dir, 'second.txt'), 'second\n');
+    const before = git('rev-parse', 'HEAD');
+    const result = run(dir, 'echo "1 passed"', ['-m', 'intake', 'second.txt']);
+    expect(result.status, result.output).toBe(8);
+    expect(git('rev-parse', 'HEAD')).toBe(before);
+  });
+  it('does not refuse an unrelated commit while the record is as HEAD has it', () => {
+    const { dir, git } = withRecord();
+    writeFileSync(join(dir, 'second.txt'), 'second\n');
+    const result = run(dir, 'echo "1 passed"', ['-m', 'second', 'second.txt']);
+    expect(result.status, result.output).toBe(0);
+    expect(git('log', '-1', '--format=%s')).toBe('second');
+  });
+});

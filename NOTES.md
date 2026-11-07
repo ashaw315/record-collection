@@ -54773,3 +54773,24 @@ commit path.
 
 *Still proposed, awaiting the coordinator:* the record guard, commit-checked refusing a commit when
 `docs/design-landed.jsonl` differs from HEAD in the tree and is not named.
+
+## 7 Nov, 11:00: the record guard; a family member named; the negative assertions counted
+
+**Built as proposed (the coordinator, 7 Nov):** commit-checked refuses, exit 8, before the check and
+with nothing staged, a commit that leaves `docs/design-landed.jsonl` changed from HEAD in the tree,
+or new and untracked, and unnamed. Four tests first (two refusals failing against the script, a
+named record committing, an unchanged record not blocking an unrelated commit); staged on the real
+repository, a line appended to the record and a NOTES-only commit attempted: refused by name, HEAD
+unchanged, nothing staged, no refusal marker, the record restored.
+
+**The family member: a check that reads the working tree to make a claim about the commit.** The
+tree always holds what the author just did; the commit may not. The asymmetry is the signature: a
+tree one line SHORT of HEAD fails the record-against-refs test, a tree one line AHEAD passes, and
+nothing in the test's own text shows it, since it reads as though it verifies the record. The tree
+answers "was it generated", the question asked was "was it committed". **Any generated file expected
+to be committed with its generator has the same shape**, so the guard is a list (`generated=(…)`
+in commit-checked.sh) and a second such file is added to it, not given a copy of the guard.
+
+**Negative assertions, counted for the queue (Q51), not read:** 986 `.not.` assertions in 607 test
+files, 534 of them text-shaped (`not.toContain` 322, `not.toMatch` 212); eight are negative text
+assertions on a process's output, the shape Q49's was, listed in the row. Not before §65.
