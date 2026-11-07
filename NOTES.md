@@ -52762,6 +52762,7 @@ table wins.
 | 42332875787 | fa0eed8 | 4 (build) | none: unit 4936 passed, 2 skipped; chromium 1061 passed, 1 skipped (the Q48 test the one more, passing at four workers on its first gate); mobile 390 passed, 4 skipped; no flaky line |
 | 42374235352 | dddcdbe | 4 (build) | none: unit 4936 passed, 2 skipped; chromium 1061 passed, 1 skipped (the Q48 test with its server-render precondition); mobile 390 passed, 4 skipped; no flaky line |
 | 42377203547 | 9211955 | 4 (build) | none: unit 4955 passed, 2 skipped (the intersection's 19 the more); chromium 1061 passed, 1 skipped; mobile 390 passed, 4 skipped; no flaky line |
+| 42380542460 | bccf2a4 | 4 (build) | none: unit 4955 passed, 2 skipped; chromium 1064 passed, 1 skipped (settled()'s three staged arms the more); mobile 390 passed, 4 skipped; no flaky line |
 
 Derived: appearances 4 + 4 + 3 + 4 + 3 + 1 + 4 + 1 + 0 + 3 + 2 + 1 + 2 + 1 = **33**; distinct tests **18** (wall-settle:61 joins) (want-list:739,
 want-list:849, pick-moods-157:154, wall-arrival-104:120, wall-route:234, record-band-43:33,
@@ -54656,3 +54657,65 @@ grep's per-file output before reporting.)
 Step level: wall-settle, wall-route, wall-arrival-104, region-remount-q48 on chromium (mobile does
 not run them), one worker, dev, load 3.1 to 6.1: 20 passed, 2.2m; typecheck; lint; build. A gate
 follows: the shared wait is shared infrastructure.
+
+## 7 Nov, 09:30: three practices named (the coordinator, on the settled() unit)
+
+**Where a count has to be right, make every call site declare itself rather than write a pattern
+that has to match them all.** Q45's seven (inspection), this morning's eleven (a grep for
+`settled(page`) and the twelfth were all pattern-width failures: each method saw the calls its
+pattern was wide enough for. Making the document option required turned the count into a compile
+error: the compiler does not miss a call because its argument is named `fresh`. The series ended
+there, not with a better pattern.
+
+**A new assertion is run twice before it is believed: against the unchanged code, and against a
+version that deliberately ignores it.** They are different claims. Failing against unchanged code
+says the assertion can fail; failing against a version that accepts the new input and throws it
+away says it fails for the reason it names. In the settled() unit the second run found two staging
+defects neither would have shown otherwise: a test passing against a wait that discarded the
+option (`press` waits for its own navigation), and two tests failing by name for the wrong reason
+(the setup's mark after its goto). "A red test is a claim too" and the staged break, working twice
+in one unit.
+
+**A comment that explains is not a watch, and the comment-is-not-a-watch rule is not for it.** The
+rule is for a condition that can lapse unnoticed with only a comment recording it. The deleted
+probe's finding, kept as the comment at the mark (the navigation commits 3.2s after a 3s delay;
+marked after the goto, the arm waits for a navigation already past), explains why the mark sits
+where it does, and the test fails if the mark moves. The coordinator, 7 Nov: keep the distinction
+straight so the rule is not applied mechanically to every comment.
+
+## 7 Nov, 09:50: the landed record made durable
+
+**Built as scoped (the coordinator, 7 Nov), in 1c18f69.** Each intake (`apply-code-region.mjs`)
+appends the change file's name, its first drop ref and the capture's time to the committed
+`docs/design-landed.jsonl`; a line's landing is the first commit holding it (`git log -S`, any clone);
+the export and `landed-list.mjs` read HEAD's record, the refs only where HEAD has none, the absence
+line where there is neither. The drop refs stay the mechanism the intake reads.
+
+**The horizon, in the file's first line, derived from the refs at creation and never rewritten:**
+"This record begins at refs/drops/2026-10-26-02 (2026-10-26T16:45:50-04:00), the first change file in
+the drop refs, backfilled on 2026-11-07 from 55 drop refs (refs/drops/2026-10-25-00 to
+refs/drops/2026-11-06-05). Drop refs begin at refs/drops/2026-10-25-00 (2026-10-25T09:51:27-04:00); a
+change file applied before the first ref is not in this record, and nothing in the repository says
+whether there was one." **The coordinator's ruling put the start at 4 November; the refs begin on
+25 October**, and the first change file in them arrived on 26 October. Read from `git for-each-ref
+refs/drops` before writing anything, and the head is derived, not typed, so it cannot carry either
+date wrongly.
+
+**A defect in Code's own design, caught before it shipped:** dating every line by the first commit
+holding it would have given all 54 backfilled files this unit's commit as their landing, when they
+landed between 26 Oct and 6 Nov. The backfill's lines carry their landing from history (the first
+design-touching commit after the capture, the list's existing rule, marked `by: backfill`); an
+intake's own lines carry none and are dated by the commit that adds them. All 54 backfilled
+landings equal the refs-derived list's.
+
+*Tests first:* landed-list.test.ts, 11 (the head; appends without repeats or rewrites; the backfill's
+landings; the list and its horizon; the record against this working copy's refs, which fails when an
+intake did not append, skipped by name on a runner with no refs). The export test names its three
+states. *Staged:* the export test's record branch failing against an export that ignores the record
+(the horizon missing); a fresh clone, no drop refs, printing the whole list with its horizon and
+historical landings; an appended line in a scratch clone dated by the commit that added it (53a1c48)
+and not by a later one. Intake OK twice, the second appending nothing. Step level: the document
+suite (841), typecheck, lint. A gate follows: `apply-code-region.mjs` is the commit path.
+
+*Open, not built:* nothing stops an intake commit that leaves the record unnamed; the record-against-
+refs test then fails the next commit-checked locally, which is the catch, not a prevention.
