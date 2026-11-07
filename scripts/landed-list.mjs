@@ -23,7 +23,11 @@
  * `docs/design-landed.jsonl`, whose first line is its horizon. A line's landing
  * is the first commit holding it; the backfill's lines carry theirs from
  * history (the first design-touching commit after the capture), since the
- * backfill commit is not when they landed. The export reads HEAD's record, the
+ * backfill commit is not when they landed. Two dating rules, because the
+ * ruling's one rule ("the landing commit is the first commit holding the
+ * line", 7 Nov) is right for a line an intake adds and cannot describe the
+ * backfill, whose 54 lines arrive in one commit: the coordinator recorded the
+ * hole against the ruling, and Code's build caught it before it shipped. The export reads HEAD's record, the
  * refs only where HEAD has none (`scripts/export-handoff.mjs`).
  * `test/repo/landed-list.test.ts` holds the pure part and the record against
  * the refs.

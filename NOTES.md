@@ -54719,3 +54719,57 @@ suite (841), typecheck, lint. A gate follows: `apply-code-region.mjs` is the com
 
 *Open, not built:* nothing stops an intake commit that leaves the record unnamed; the record-against-
 refs test then fails the next commit-checked locally, which is the catch, not a prevention.
+
+## 7 Nov, 10:20: the coordinator's second instance of one habit; the record's open gap corrected; 835 to 841
+
+**A second instance against the coordinator's name, beside Q45's seven: one habit, taking a quoted
+subset for the whole set.** On 6 Nov Code wrote that "First paint is styled" was "in none of the six
+drop refs from 4 Nov to today": a search window. The coordinator read it as the beginning of the
+record and ruled the landed record's horizon at 4 November; the refs begin on 25 October. Q45's
+seven was an enumeration approved as complete; this was a window read as a start. Both are a part
+quoted for the whole, taken without asking what bounded it.
+
+**A hole in the coordinator's ruling, recorded against it (the coordinator, 7 Nov).** "The landing
+commit is the first commit that holds the line" is correct for a line an intake adds and wrong for
+the backfill's 54 lines, which all arrive in one commit; the ruling was approved without seeing that
+the backfill is the one case it cannot describe. Hence two dating rules, now said in
+`landed-list.mjs`'s header: backfilled lines carry their historical landing, marked `by: backfill`;
+an intake's lines are dated by the commit that adds them.
+
+**The open gap, corrected: it was wider than reported.** The 09:50 entry said an intake commit that
+leaves the record unnamed is caught by the NEXT local commit check. It is not caught at all while the
+tree holds the append. commit-checked runs the document suite in the working tree, and the
+record-against-refs test reads the record from the tree, where the intake wrote it whether or not the
+commit names it; so the forgetting commit passes, and so does every later one, until the file is
+committed (its landing then dated late, silently) or reverted. Staged: the tree's record one line
+short of HEAD's fails the test, so it reads the tree; the forgetting case is the reverse, the tree
+ahead of the commit, and passes. Not the ordering of the append against the ref, as the coordinator
+guessed: the append and the ref are both in place before the commit; what is missing is only the
+file's name in the commit, which no test in the tree can see. *Proposed for the commit-checked unit,
+next in order:* commit-checked refuses a commit when `docs/design-landed.jsonl` differs from HEAD in
+the tree and is not among the named paths, naming it; a few lines beside the carry check, one test
+in commit-checked.test.ts. That makes the intake commit refuse itself.
+
+**835 to 841 is six, and six were added.** landed-list.test.ts went from 5 tests (bccf2a4) to 11
+(1c18f69): the four record tests, the backfill-landing test, the record-against-refs test. The
+export test was rewritten in place, 11 before and after. Code's report said "11 tests" for the file's
+total after the unit and did not say so; the coordinator read it as the number added.
+
+## 7 Nov, 10:40: Q49 fixed, test first
+
+`commit-checked.sh:160` passes `--` to `basename`, so option parsing ends before the path: a staged
+file naming an untracked `-draft.ts` is refused (exit 6, "names -draft.ts, which the tree holds
+untracked") where the script before it committed, printed "basename: illegal option" and skipped the
+token. The bypass of the carry guard built 6 Nov (be96671), fixed with the guard's own tests.
+
+**The test's first form had a vacuous assertion, found by reading the red.** It failed against the
+unfixed script on the exit status, while its "no option error printed" passed: the file's `run()`
+helper returns stdout alone on a successful run and keeps stderr only on a failure, and the error is
+on stderr of a run that committed, so through `run()` that assertion could not fail. The test now
+captures both streams whatever the status; against the unfixed line it fails on the error itself.
+No other assertion in commit-checked.test.ts asserts on what a run did not print, so the shape
+occurred once. Step level: commit-checked.test.ts 30 passed; typecheck; lint. A gate follows: the
+commit path.
+
+*Still proposed, awaiting the coordinator:* the record guard, commit-checked refusing a commit when
+`docs/design-landed.jsonl` differs from HEAD in the tree and is not named.

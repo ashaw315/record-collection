@@ -1,4 +1,4 @@
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { chmodSync, copyFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -393,6 +393,25 @@ describe('a commit carries the files it names', () => {
     expect(result.output).toMatch(/names e2e\/arrow-167\.spec\.ts, which the tree holds untracked/);
     expect(git('rev-parse', 'HEAD')).toBe(before);
     expect(git('diff', '--cached', '--name-only'), 'nothing left staged').toBe('');
+  });
+
+  /*
+    Q49 (7 Nov): a token beginning with `-` reached `basename` as an option, printed "illegal option" and was
+    skipped, since `find -name ""` matches nothing: a bypass of the guard above, seen in ship output three times
+    unread. Fails against the script without `--` before the path.
+  */
+  it('refuses a staged file naming an untracked file whose name begins with a dash, and prints no option error', () => {
+    const { dir, git } = repo();
+    writeFileSync(join(dir, 'list.ts'), "export const GOVERNED = ['-draft.ts'];\n");
+    writeFileSync(join(dir, '-draft.ts'), 'draft\n');
+    const before = git('rev-parse', 'HEAD');
+    /* Both streams whatever the status: `run` keeps stderr only on a failure, and the option error is on stderr of a run that committed, so through `run` this assertion could not fail. */
+    const r = spawnSync('bash', [join(dir, 'commit-checked.sh'), '-m', 'list', 'list.ts'], { cwd: dir, encoding: 'utf8', env: { ...process.env, COMMIT_CHECK: 'echo "1 passed"' } });
+    const result = { status: r.status ?? 1, output: `${r.stdout}${r.stderr}` };
+    expect(result.output).not.toMatch(/illegal option|usage: basename/);
+    expect(result.status, result.output).toBe(6);
+    expect(result.output).toMatch(/names -draft\.ts, which the tree holds untracked/);
+    expect(git('rev-parse', 'HEAD')).toBe(before);
   });
 
   it('refuses a journal whose tag names a migration file still untracked', () => {

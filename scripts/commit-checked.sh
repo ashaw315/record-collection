@@ -156,7 +156,8 @@ while IFS= read -r staged; do
     tok="${tok#./}"
     [ -n "$tok" ] || continue
     # Exact case: the filesystem answers `-f notes.md` with NOTES.md, and git, case-sensitive, calls that untracked (found on the guard's second real commit).
-    [ -n "$(find "$(dirname "./$tok")" -maxdepth 1 -name "$(basename "$tok")" -type f -print -quit 2>/dev/null)" ] || continue
+    # `--` ends option parsing before the path (Q49, 7 Nov): a token beginning with `-` was read as an option, printed an error and was skipped.
+    [ -n "$(find "$(dirname "./$tok")" -maxdepth 1 -name "$(basename -- "$tok")" -type f -print -quit 2>/dev/null)" ] || continue
     # An ignored file is held by the tree on purpose (node_modules, test-results), not left out of a commit by omission: the guard's first real commit named two.
     git check-ignore -q -- "$tok" && continue
     if [ -z "$(git ls-files -- "$tok")" ]; then unnamed+=("$staged names $tok, which the tree holds untracked"); fi
