@@ -807,6 +807,15 @@ Its rows are in the governs table above, one per section; this section does not 
   - **No change to the bound's basis.** This is the instrument for the "sooner" it names.
   > One bound caps how long a held press waits, and it sits where reaching the record’s page sooner serves the reader better than waiting for the pull.
 
+171. **§43 — which frame is first paint: Code's number for that step.** Not built. The recorder in record-band-43:33 is to wait for the page's stylesheets and not its web fonts before taking the band's first height; which of the two the four-worker failure caught is read from its trace; if the font, the band's height in the fallback against the settled height is reported, to three decimals at the ruled windows, before any remedy (the coordinator, 6 Nov: a difference is a defect in §43, not the recorder's). The step's quote stands once in the 8a target, checked 6 Nov. Owed after sweep-twice. Numbered on the coordinator's word, 6 Nov.
+
+- **Unnumbered, for Code to number — §43: which frame is first paint.**
+  - **Recorder:** in record-band-43:33, wait for the page's stylesheets before taking the band's first height. Don't wait for web fonts.
+  - **Report** which of the two the failing run caught, from its trace.
+  - **If it was the font,** report the band's height in the fallback against the settled height on the records and widths the test covers, before choosing a remedy.
+  - **Re-run** under four workers.
+  > First paint, in this section, is the first frame painted with the page’s own stylesheets applied, whether or not its web fonts have arrived.
+
 No step: §G.7. It rules nothing. Hover and focus wait on Code's second pass, the breakpoint is settled and recorded in §G.8, and the eyebrow repetition is an observation, not a ruling.
 
 No step: §P.1. It rules where the feature is ruled and which view presents an answer; what that means for the build is in the steps for §P.3 and §P.4.

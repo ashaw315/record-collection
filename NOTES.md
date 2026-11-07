@@ -54141,3 +54141,38 @@ passed on chromium under dev; typecheck; lint 0 errors, the 3 pre-existing warni
 first test's claim is now the :213 shape, the write for that count and the scroll within the
 scroller's limit at one read, since "the scroll equals the write" was the equality in a test's
 clothes and flaked on the gate as such. Load 8.8 during the runs, this unit alone.
+
+## 6 Nov, 19:10: "First paint is styled" arrived and is taken in; §43's step numbered 171; the §51 Build clause put straight
+
+**The drop.** `First paint is styled - for Code to apply.md` on disk at 19:03, captured as
+`refs/drops/2026-11-06-03` at 19:04:58. Design's note says the first send reached the card and
+not Code, which matches what the repo showed (in no ref, not on disk). Change 1, the §43 step,
+inserted before "No step: §G.7."; Change 2, §43's governs row unchanged; Change 3, the §51 Build
+clause, below. Intake OK: code region 1 restored (step-171), index 14 of 14, the document suite
+783 passed; the twins 42 unnumbered, 34 discharged, 8 unbuilt, none in neither.
+
+**Order, said honestly.** Design's order was this file first, then "Name every ruling a card
+carries", because that file's bullet cites the §43 case and the step should exist before the
+rule naming it lands. The bullet was applied at 18:35 (9467e4d) and the step at 19:10, because
+the step's file had not arrived when the bullet's had; the repo carried the rule's founding case
+without its step for 35 minutes, which is the defect the rule names, and the two commits say so.
+
+**§43's step numbered 171** on the coordinator's word, the quote checked against the 8a target
+(one occurrence, exact to the curly apostrophe, under §43). The line says "Not built" and what
+is owed: the recorder waits for stylesheets and not fonts; which of the two the four-worker
+failure caught, from its trace; if the font, both heights at the ruled windows to three
+decimals before any remedy, a difference being a defect in §43. Owed after sweep-twice.
+
+**The §51 Build clause: the provenance, straight, because WITHDRAWALS.md is the record.**
+Design's clause read "Build: did not follow it; the build follows §50's rule, by Code's 6 Nov
+measurement." "Did not follow it" means the build did not follow the WITHDRAWN claim, which is
+the Build clause's convention, and the clause was correct. Code's intake note at 17:50 quoted
+its first half alone, read it as wrong, and "corrected" it to what its second half already
+said; the real gap was that nothing in the entry said a test carried the figure
+(title-ladder-45's GAP_UNDER_CAP and GAP_FAILS_CAP), which §55's step replaces, and that was an
+addition, not a correction. The entry now carries Design's Change 3 wording, which says both
+things, with a bracket saying the clause was correct and the intake note mis-marked it. The
+17:50 NOTES entry above stands as written, as the record of the mistake; this entry is its
+correction. **The shape, named:** a correction derived from a partial reading of the thing
+being corrected; the near relative of the comment that states the right rule above code doing
+the opposite, read in reverse: here the text was right in full and read as wrong by half.
