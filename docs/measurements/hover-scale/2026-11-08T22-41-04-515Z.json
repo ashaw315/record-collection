@@ -1,0 +1,29 @@
+{
+ "window": "1044x768",
+ "instrument": {
+  "hovered": "underline",
+  "left": "none"
+ },
+ "surpriseMe": {
+  "afterPressPointerOnIt": "underline",
+  "afterPointerLeft": "none"
+ },
+ "drawing": {
+  "without": {
+   "scale": 0.367,
+   "height": 406,
+   "opacity": 1,
+   "filter": "none"
+  },
+  "withAnswer": {
+   "scale": 0.146,
+   "height": 161.5,
+   "opacity": 1,
+   "filter": "none"
+  },
+  "strokeScreenWidth": {
+   "without": 0.367,
+   "withAnswer": 0.146
+  }
+ }
+}

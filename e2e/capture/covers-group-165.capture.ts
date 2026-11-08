@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
@@ -12,6 +13,11 @@ import { login } from '../sign-in';
  * The group with three covers, and the page after the shown cover is
  * deleted, at 1440 × 900 and at 390, scrolled to the Images section. Written
  * to `docs/captures/covers-group-165/`. Run with CAPTURE=1 --project=capture.
+ *
+ * **Seeded rows, then the upload route's own after-work (8 Nov).** The covers go into the table directly, since the
+ * capture server has no Blob store, and each is followed by `afterImageStored` through its script, as the route
+ * follows each upload. Before 8 Nov the seed stopped at the row, so these shots showed a record with covers and no
+ * colour, which no real record can be, and Design reviewed it believing it was the page.
  */
 const OUT = join('docs', 'captures', 'covers-group-165');
 registerCleanup();
@@ -25,7 +31,10 @@ async function seedThreeCovers(page: Page, stamp: string): Promise<string> {
   trackArtist(artistId);
   const r = await page.request.post('/api/records', { data: { title: `Covers group ${stamp}`, artistId } });
   const { id } = (await r.json()) as { id: string };
-  for (const url of [await solid(200, 40, 40), await solid(40, 160, 60), await solid(40, 60, 200)]) await seedImage({ recordId: id, imageType: 'cover', url });
+  for (const url of [await solid(200, 40, 40), await solid(40, 160, 60), await solid(40, 60, 200)]) {
+    await seedImage({ recordId: id, imageType: 'cover', url });
+    execFileSync(process.execPath, ['--conditions=react-server', '--import', 'tsx', 'scripts/after-image-stored.mts', id, 'cover'], { env: { ...process.env, NODE_ENV: 'test' }, stdio: 'pipe' });
+  }
   return id;
 }
 
@@ -46,6 +55,8 @@ for (const [width, height] of [[1440, NO_SCROLL_HEIGHT], [390, 844]] as const) {
     page.on('dialog', (dialog) => dialog.accept());
     await group.locator('[data-cover-tile][data-shown]').getByRole('button', { name: 'Delete this cover image' }).click();
     await expect(group.locator('[data-cover-tile]')).toHaveCount(2, { timeout: 15_000 });
+    /* The click leaves the pointer over the next cover's Delete, whose hover underline would read as a state of the page. */
+    await page.mouse.move(0, 0);
     await group.scrollIntoViewIfNeeded();
     await page.screenshot({ path: join(OUT, `deleted-shown-${width}x${height}.png`) });
     await page.evaluate(() => window.scrollTo(0, 0));

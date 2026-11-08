@@ -4,7 +4,7 @@ import { badRequest, isUuid, notConfigured, notFound, validationError } from '@/
 import { withErrorHandling } from '@/lib/api/handler';
 import { createImage } from '@/lib/db/queries/images';
 import { findRecordById } from '@/lib/db/queries/records';
-import { rederiveSpineColour } from '@/lib/images/follow-cover';
+import { afterImageStored } from '@/lib/images/follow-cover';
 import { getBlobStorage, isBlobConfigured, storageKeyFor } from '@/lib/storage/blob';
 import { ACCEPTED_IMAGE_TYPES, MAX_IMAGE_BYTES, sniffImageType } from '@/lib/storage/image-type';
 
@@ -124,14 +124,12 @@ export const POST = withErrorHandling(
     });
 
     /*
-      §61 (step 72): the record shows its newest cover and its colour follows
-      it. An upload typed cover IS the newest the moment its row exists, so
-      the colour is re-derived from these bytes. §7.8's gap-fill -- "a
-      second cover does not replace the first one's colour" -- is withdrawn.
+      Everything a stored image changes beyond its row, in the one function
+      the capture tools also call, so a capture shows what an upload leaves
+      (8 Nov). Today: §61's colour from a cover's bytes; §7.8's gap-fill is
+      withdrawn.
     */
-    if (parsed.data.imageType === 'cover') {
-      await rederiveSpineColour(id, { bytes: buffer });
-    }
+    await afterImageStored(id, { imageType: parsed.data.imageType ?? null, bytes: buffer });
     return NextResponse.json(row, { status: 201 });
   },
 );

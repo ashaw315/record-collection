@@ -55273,3 +55273,77 @@ mid-check, and refused the Q4/Q5 commit on the index until taken in.
 - **One plant:** a pressing has one `pressing_plant` and a record one label, so the comparison is against
   at most two names. A plant named a second way in a company ("Columbia Records Pressing Plant, Pitman"
   against a stored "Pitman") is drawn.
+
+## 8 Nov, 17:15: the watch fired; Q5's captures showed a state no record can be in
+
+- **The watch fired on 72b73290's gate (42490893928):** GREEN WITH FLAKES. unit 4998 passed, 3 skipped;
+  chromium 1062 passed, 2 flaky, 1 skipped; mobile 390 passed, 4 skipped. `WATCH: e2e/record-band-43.spec.ts:33
+  failed in chromium`. Its failure: "The Soft Parade @1000: band painted at 73 and settled at 233.9; provenance
+  moved 42px (…72 → …114); matrix moved 42px". The coordinator's clue, carried into 171: unlike Super Rich, two
+  cells grew by the same 42 at the same top at the same moment, which looks like content arriving rather than
+  layout racing. The run's five screenshots are downloaded (scratchpad gate-72b); reading them is 171's first act.
+  The other flake, region-remount-q48:82, is outside 171. The coordinator put Q5 before 171 as an exception,
+  saying so: "jumps the queue" meant the work queue.
+- **Q4 reconciled:** the report left out a fourth part, the press to the return's first frame, 3.1 to 15.4ms.
+  Every run's total is its four parts exactly; the part ranges were the lowest and highest across runs, not one
+  run. Closed.
+- **The plant, closed from the schema:** `records.pressing_id` is one column, so a record holds at most one
+  pressing and the page draws only that one.
+- **The §62 anchor:** refuse on a failed anchor and ask, even when the intent looks plain (the coordinator). Design
+  confirmed the placement was what it meant and took the miss as its own.
+- **Seeded images against the upload route.** The route, beyond its row (the same four columns `seedImage`
+  writes), checks size and type (nothing stored), puts the bytes in Blob storage (the seed stores a data URL), and
+  for a cover re-derives the record's colour (§61). The colour is the only stored effect the seed skipped. Built
+  that way: `covers-group-165` with no colour at all, and four tools that write a colour by hand beside a one-pixel
+  white cover (`step29`, `real-captures`, `built-page`, `breakpoints`). Those four are marked in
+  the HAND-COLOURED note in docs/captures and left as they are until something else needs them regenerated (the
+  coordinator). E2e specs that seed images are assertions, not looks, and are left.
+- **Fixed so it cannot drift (the coordinator's condition on option A):** the route's work after its row is one
+  function, `afterImageStored` in `follow-cover.ts`. The route calls it, and so does the capture after each seeded
+  cover, through `scripts/after-image-stored.mts`. The capture server has no Blob store, and `server-only` keeps the
+  function out of a Playwright worker, so the script is the capture's way in. It refuses unless the database client
+  would select the local test database. Q5 recaptured: the bar, the journal's bar and the quarter-disc now draw,
+  blue with three covers, green after the delete. The pointer is moved off before the after-delete shots, since the
+  click left it over the next Delete, whose hover underline read as a state of the page (likely the same cause as
+  item 3's SURPRISE ME underline, still to be checked).
+- **The contrast against paper (for Design, the coordinator sending it):** the suite asserts the record colour at
+  4.5:1 against ink and nothing against paper. A one-off sweep at the clamp's lightest (L 0.74, chroma 0 to 0.09,
+  every 5° of hue) found 1.77:1 at its lowest (C 0.09, h 175). The usual floor for a non-text element is 3:1; the
+  ruling is Design's. The sweep becomes a test in the next unit. The inventory of where the derived colour is drawn,
+  both axes, is queued after 171 and 173.
+- **The Images count:** the arithmetic follows §62's rule (3 covers: 1 shown, 2 earlier; after a delete 1 and 1).
+  The tension, sent to Design by the coordinator: "what the page shows" read literally would count 2 now that the
+  group draws every cover, while the 8 Nov withdrawal says the count's meaning does not change.
+- **The two unconfirmed intake changes:** all three clauses landed in bf6419e4; Design had read be3993fa's export.
+  The fix the coordinator ordered is the intake reporting per change (applied, skipped with a reason, refused on its
+  anchor), carried in the export beside the landed list, with the export's unbuilt list.
+- **The order (the coordinator):** Q5's fix, 171, then 173b (approved at 7 files) with the export's unbuilt list,
+  the per-change intake record and the band-43 workflow alongside, then 173c (the gate: the seed helper, the e2e
+  assertions, the captures), then items 3 to 5, then the inventory.
+- **"Images count names its parts" taken in (8f7248bd, refs/drops/2026-11-08-02):** Design settled the count's
+  tension: the displayed cover plus the gallery's tiles, and no other image, which the build counts. The §62 step
+  gains the count's assertion, Code's work unbuilt under block 165. The intake's first run read NOT OK, 862 passed
+  and 2 failed (the twins' MOVED check on 165), while exiting 0; the summary line is what was read.
+- **The working rules changed (the coordinator, for Adam):** proceed without asking on method, measurement,
+  known-cause fixes and anchored drops; stop only on a change to what a test claims, over the file limit, a ruling or
+  a divergence, a production write, anything Adam looks at, or a red turned green unexplained. Where no ruling
+  covers a choice, choose, build, and say "chose by default" in the report.
+- **Captures stay untracked:** `captures-unchanged` refuses any tracked change under docs/captures, an added file
+  included, so Q5's recaptured shots and the HAND-COLOURED note in docs/captures sit there untracked, as the other step
+  captures do. The marking's content: the `step29-*`, `real-*`, `record-detail-*` and `breakpoint-*` captures carry a
+  colour written by hand (`#a25829`; `#6a7f8c` on the ordinary record) beside a one-pixel white cover, not derived
+  from the cover shown.
+- **Two of Q3's readings, measured (e2e/capture/hover-and-scale.capture.ts; a build at 1044 × 768, the band host,
+  a seeded pool of 30; this Mac, load 6.5 to 7.4).** The instrument checked first: hovered `underline`, pointer
+  off `none`. (1) SURPRISE ME after a press reads `underline` while the pointer stays where the click left it and
+  `none` once it leaves: the answer captures' underline is hover, a capture artifact, and Design's item 3 closes.
+  (2) The far drawing with an answer is not dimmed: opacity 1 and no filter in both states. Its scale goes from 0.367
+  to 0.146, so its 1-unit lines (no non-scaling stroke) go from 0.37 to 0.15 of a screen pixel. Lines that thin are
+  anti-aliased to a paler grey, so the drawing reads lighter only because it is smaller. Already 0.37 without an
+  answer: the far view's hairlines are below a pixel at this window in both states. The real collection's
+  drawing heights (407 and 191 in Q3's files) differ from the pool's (406 and 161.5); the mechanism does not.
+- **The general pointer fix needs asking:** 51 capture and sheet tools take screenshots, 21 after a click or hover.
+  Playwright has no per-shot hook in a config, so the fix is a shared fixture or helper imported into each tool:
+  mechanical fan-out past the file limit.
+- **A check refused for my edit:** I wrote the hover tool while ship's check ran ("tree CHANGED", 865 passed, not a
+  result). The rule was already in memory.

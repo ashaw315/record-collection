@@ -1,5 +1,5 @@
 import 'server-only';
-import { newestCoverFor } from '@/lib/db/queries/images';
+import { newestCoverFor, type ImageType } from '@/lib/db/queries/images';
 import { setSpineColour } from '@/lib/db/queries/records';
 import { averageColour } from './spine-colour';
 
@@ -35,4 +35,18 @@ async function fetchBytes(url: string): Promise<ArrayBuffer | null> {
   } catch {
     return null;
   }
+}
+
+/**
+ * **What a stored image changes beyond its own row: one function, so nothing can call half of it (the coordinator,
+ * 8 Nov).** The upload route calls it once its row exists, and the capture tools call it after seeding a row
+ * (`scripts/after-image-stored.mts`), so a capture shows the state a real upload leaves. On 8 Nov a capture seeded
+ * covers straight into the table, skipped the colour, and Design reviewed a page no real record can show. Anything
+ * the route comes to do after storing an image belongs here, where both reach it.
+ *
+ * Today that is §61's colour, for a cover only: a cover is the newest the moment its row exists. `bytes` is the
+ * upload's shortcut; without it the newest cover is read back from its stored URL.
+ */
+export async function afterImageStored(recordId: string, image: { imageType: ImageType | null; bytes?: ArrayBuffer | Buffer }): Promise<void> {
+  if (image.imageType === 'cover') await rederiveSpineColour(recordId, { bytes: image.bytes });
 }
