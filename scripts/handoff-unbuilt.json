@@ -33,5 +33,10 @@
     "head": "§60: the disc at 390",
     "status": "unbuilt",
     "evidence": "Arrived 6 Nov (refs/drops/2026-11-06-01). The disc at 390 × 844 reads 56.000 at one or two images and 97.500 from three (figures-q6 JSONL, 6 Nov, from the build); 345.300 at 1440 and 425.300 at 1920 at every count. Which term binds at 390 is not yet found; no test asserts equality across counts."
+  },
+  {
+    "head": "§W.24: the view in the address",
+    "status": "unbuilt: three confirmation tests owed",
+    "evidence": "Design (\"Audit answers\", 7 Nov): nothing to build if step 134 stands as reported, confirmed by test: a bare address draws the shelf from 1044 with a fine pointer and the grid otherwise; widening a bare address restores the shelf; ?view=grid stays the grid when widened. None of the three is yet a test named for this step; not checked beyond that, 7 Nov."
   }
 ]

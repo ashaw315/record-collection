@@ -131,11 +131,11 @@ describe('numbered is not built: a numbered line without Done is its own bucket'
     expect(numberedNotBuilt([second, first]).get('§W: two halves')).toBe('step-13');
   });
 
-  it('on the handoff as it stands, names steps 170, 171 and 173 as numbered and not built, so the backlog is the listed unbuilt plus them; §65 among them while 172 is Done', () => {
+  it('on the handoff as it stands, names steps 170, 171, 173 and 174 as numbered and not built, so the backlog is the listed unbuilt plus them; §65 among them while 172 is Done', () => {
     const blocks = JSON.parse(readFileSync('scripts/handoff-code-region.json', 'utf8'));
     const unbuilt = JSON.parse(readFileSync('scripts/handoff-unbuilt.json', 'utf8')) as { head: string }[];
     const numberedOnly = numberedNotBuilt(blocks);
-    expect([...numberedOnly.values()].sort()).toEqual(['step-170', 'step-171', 'step-173']);
+    expect([...numberedOnly.values()].sort()).toEqual(['step-170', 'step-171', 'step-173', 'step-174']);
     expect(numberedOnly.get('§65: the tracklist and the credits'), 'two blocks discharge §65; the unfinished one decides').toBe('step-173');
     for (const head of numberedOnly.keys()) expect(unbuilt.some((u) => u.head === head), `${head} is numbered, so it is not also listed`).toBe(false);
   });
@@ -143,10 +143,11 @@ describe('numbered is not built: a numbered line without Done is its own bucket'
   it('prints the three buckets, with each numbered-and-not-built step by head, and exits 0 on the tree', () => {
     const out = spawnSync('node', ['scripts/handoff-twins.mjs'], { encoding: 'utf8' });
     expect(out.status).toBe(0);
-    expect(out.stdout).toMatch(/^unnumbered steps \d+: built \d+, numbered and not built 3, listed as unbuilt \d+, in neither 0$/m);
+    expect(out.stdout).toMatch(/^unnumbered steps \d+: built \d+, numbered and not built 4, listed as unbuilt \d+, in neither 0$/m);
     expect(out.stdout).toMatch(/^  numbered §W\.8: the bound at a candidate  — not built \(step-170\)$/m);
     expect(out.stdout).toMatch(/^  numbered §43: which frame is first paint  — not built \(step-171\)$/m);
     expect(out.stdout).toMatch(/^  numbered §65: the tracklist and the credits  — not built \(step-173\)$/m);
+    expect(out.stdout).toMatch(/^  numbered §T\.6: every exit the page owns asks  — not built \(step-174\)$/m);
   });
 });
 

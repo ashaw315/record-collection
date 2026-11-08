@@ -236,8 +236,7 @@
       }
     ],
     "states": [
-      "Code's work unbuilt",
-      "judgement held"
+      "Code's work unbuilt"
     ]
   },
   {
@@ -256,7 +255,7 @@
       }
     ],
     "states": [
-      "judgement held"
+      "built, nothing owed"
     ]
   },
   {
@@ -641,7 +640,6 @@
       }
     ],
     "states": [
-      "judgement held",
       "look provisional"
     ]
   },
@@ -754,6 +752,18 @@
       {
         "head": "§65: the tracklist and the credits",
         "clause": "- **Unnumbered, for Code to number — §65: the tracklist and the credits.**\n  - **Draw** the tracks whole, by position and title.\n  - **Fold the credits** beneath the tracks behind one line counting them, closed whenever the page loads, at every count. A release with no credits draws no count line.\n  - **Opened:** the release's credits first, one line to a role with its names in the release's order, then each track's credits beneath that track's position and title.\n  - **Companies:** draw a company only where Pressing detail shows no name the same as it. Report the count drawn and suppressed per record.\n  - **Use the reason line's words** for each line.\n  - **Propose** the count line's wording, the section's span and place against §25, and two columns for the tracks.\n  - **Capture** at 1440 × 900 and 390, closed and opened, on:\n    - the record with the most credits, and the ones with the most release credits and the most track credits;\n    - the longest and the shortest tracklist;\n    - a seeded record with no cached release.\n  - **Order:** land it with the shelf's reason line or before it.\n  > The tracks are drawn whole, and the credits stand folded beneath them behind one line that counts them, on every record, so the section at rest is the tracklist and one line whatever the release holds."
+      }
+    ]
+  },
+  {
+    "id": "step-174",
+    "before": "- **Unnumbered, for Code to number — §T.6: every exit the page owns asks.**",
+    "why": "Code's number for Design's unnumbered §T.6 exits step (\"Audit answers\", 7 Nov).",
+    "text": "174. **§T.6 — every exit the page owns asks: Code's number for that step.** Not built. Below 640, with an open manage form that has changes, the line asks before changing section, following a link in the app, and Back; opening a row adds one history entry and closing it by any means removes it, so Back with nothing open goes to the previous screen; the unload prompt for the browser's exits; what an iPhone and Android do on reload and on Back with changes reported; captures at 390 under a coarse pointer, each exit asked. Step 133's unbuilt guards are this step's. If the history mechanism cannot satisfy \"closing it by any means removes it\" (a Forward press after a button close, two rows opened in succession), that goes back to Design rather than being approximated (the coordinator, 7 Nov). Numbered on the coordinator's word, 7 Nov: second in the order, after 173.",
+    "discharges": [
+      {
+        "head": "§T.6: every exit the page owns asks",
+        "clause": "- **Unnumbered, for Code to number — §T.6: every exit the page owns asks.**\n  - **Below 640,** with an open form that has changes, the line asks before:\n    - changing section;\n    - following a link in the app;\n    - Back.\n  - **Back:** opening a row adds one history entry, and closing it by any means removes it, so Back with nothing open goes to the previous screen.\n  - **The browser's exits:** add the unload prompt.\n  - **Report** what an iPhone and Android do on reload and on Back with changes.\n  - **Capture** at 390 under a coarse pointer: each exit asked.\n  > Every exit the page owns asks first with the same line, and Back is one of them: opening a row adds one entry to the history, so Back closes the row and asks as a close does."
       }
     ]
   }

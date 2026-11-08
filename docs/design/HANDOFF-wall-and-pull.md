@@ -44,7 +44,7 @@ The wall at rest is line, ink and paper; colour arrives with the pull. Everythin
 | §W.21 | The finish’s window, and what the growth scales about | The finish added after the rotation, with its two bounds stated and its length chosen, not derived. Growth scales about the foot of the pivot edge, so rotation and growth share one fixed point. Also: a transform's origin is invisible to every still. |
 | §W.22 | The view pans; the gesture does not move | The interim drift withdrawn — the record's transforms stay as §W.21 rules them and the drawing region pans to frame the landing with the pull, overlapped as Adam judged it, resolving to zero when the landing is already in frame (pan-first withdrawn). Why a drift negates §W.21's shared fixed point rather than weakening it; why no page room is needed (§W.13's bands unchanged); §W.19's composition is a statement about the framed view. Also: a ruling whose terms are all in one coordinate system cannot discharge an obligation in another. |
 | §W.23 | Tiling withdrawn, paint order separated from reading order | The wall as one fixture whose row length grows, and why tiling was withdrawn on the full-collection drawing; why paint order interleaves rows by column and the keyboard walk gets its own sequence; why the pitch does not grow; the reduced disjoint proxy for every interpenetrating object; the reframe as §W.22's pan. |
-| §W.24 | The filter belongs in the rail; the narrow shelf is the far view | GENRE and SORT in the rail, and why the control must be on the shelf; the shelf offered only above its fork and under a fine pointer, with the far view, not the shelf, below it; and the rail as one band. Supersedes §W.8's withdrawn fork with a shelf-side one. And what search reaches, and the shelf's reason on the pull. |
+| §W.24 | The filter belongs in the rail; the narrow shelf is the far view | GENRE and SORT in the rail, and why the control must be on the shelf; the shelf offered only above its fork and under a fine pointer, with the far view, not the shelf, below it; and the rail as one band. Supersedes §W.8's withdrawn fork with a shelf-side one. And what search reaches, and the shelf's reason on the pull. And the view carried by the address alone (the stored preference withdrawn). |
 | §W.25 | Growth rides the rotation, not the travel | Why growth rides the rotation's window, not the travel (§W.20's reason withdrawn; §W.21 untouched): an orthographic projection has no size change on approach. The join point, adjustable; why growth on the travel's ease gave a constant ratio that could not be tuned. Also: what a still cannot judge, a ruling should not fix. |
 | §W.26 | The pan clears the seat; the fork is the landing's | How the pan clears the empty seat without shortening the travel or shrinking the cover; why the seat must stay visible; the fork moved to the landing's width and why; Add record not wrapping in the band. |
 | §W.27 | The chrome on the drawn paper | Why the generic hairlines take §3's value, why chip hover surfaces invert to one proportional step below paper, and the rule that the chrome borrows the drawing's steps and is ruled only where it contradicts a value the drawings depend on. |
@@ -823,6 +823,24 @@ Its rows are in the governs table above, one per section; this section does not 
   - **If it was the font,** report the band's height in the fallback against the settled height on the records and widths the test covers, before choosing a remedy.
   - **Re-run** under four workers.
   > First paint, in this section, is the first frame painted with the page’s own stylesheets applied, whether or not its web fonts have arrived.
+
+174. **§T.6 — every exit the page owns asks: Code's number for that step.** Not built. Below 640, with an open manage form that has changes, the line asks before changing section, following a link in the app, and Back; opening a row adds one history entry and closing it by any means removes it, so Back with nothing open goes to the previous screen; the unload prompt for the browser's exits; what an iPhone and Android do on reload and on Back with changes reported; captures at 390 under a coarse pointer, each exit asked. Step 133's unbuilt guards are this step's. If the history mechanism cannot satisfy "closing it by any means removes it" (a Forward press after a button close, two rows opened in succession), that goes back to Design rather than being approximated (the coordinator, 7 Nov). Numbered on the coordinator's word, 7 Nov: second in the order, after 173.
+
+- **Unnumbered, for Code to number — §T.6: every exit the page owns asks.**
+  - **Below 640,** with an open form that has changes, the line asks before:
+    - changing section;
+    - following a link in the app;
+    - Back.
+  - **Back:** opening a row adds one history entry, and closing it by any means removes it, so Back with nothing open goes to the previous screen.
+  - **The browser's exits:** add the unload prompt.
+  - **Report** what an iPhone and Android do on reload and on Back with changes.
+  - **Capture** at 390 under a coarse pointer: each exit asked.
+  > Every exit the page owns asks first with the same line, and Back is one of them: opening a row adds one entry to the history, so Back closes the row and asks as a close does.
+- **Unnumbered, for Code to number — §W.24: the view in the address.** Nothing to build if step 134 stands as reported. Confirm by test:
+  - a bare address draws the shelf from 1044 with a fine pointer, and the grid otherwise;
+  - widening a bare address restores the shelf;
+  - `?view=grid` stays the grid when widened.
+  > The view lives in the address and nowhere else: an address that names a view draws that view where it is offered, and a bare address draws the shelf wherever the shelf is offered and the grid where it is not, so widening a bare address brings the shelf back.
 
 No step: §G.7. It rules nothing. Hover and focus wait on Code's second pass, the breakpoint is settled and recorded in §G.8, and the eyebrow repetition is an observation, not a ruling.
 

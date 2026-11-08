@@ -55047,3 +55047,35 @@ reader-scroll half starts its sampler at about 8.25s, and the `scrollTop += 240`
 100ms. The one moved frame, t=140, top 186, is the view before the scroll (426 after it, inside limitY
 719); every later frame holds. A test defect: a timing precondition assumed and not asserted. Q53 changed
 no app code. QUEUE Q57.
+## 7 Nov, 22:30: "Audit answers" and "Flag after offer" taken in; the order held
+
+**The coordinator, on Q54's report.** Q56 is framed as Design's "undated until read": the check that the
+54 backfilled landings matched the refs-derived list used the rule that produced them, an instrument
+confirmed against itself that could not have failed, and it passed with DESIGN-RULES misdated (QUEUE Q56).
+"Arrow closed": the overrule stands, Design having ruled it in Credits fold's landed list ("overrule me
+whenever you hold evidence I do not"). The first-line rule: the coordinator is asking Design whether it
+counts the four FOR CODE notes as change files it offered; if it does, the rule comes back.
+
+**The order, held by the coordinator:** 173; then §T.6's exits (step 174), ruled product work, the second
+visible item, since a reader can lose typed changes by changing section, following a link or pressing Back;
+then Q54's guard (as proposed, in commit-checked), Q57 before Q55 and Q56. "Not before 173": the coordinator
+approved five infrastructure units in a row on Saturday, none of them what Adam is waiting for.
+
+**For step 174, carried from the coordinator:** opening a row adds one history entry and closing it by any
+means removes it. The usual consumer, history.back() on close, has known edges: Forward after a
+button-close, and two rows opened in succession. Report what is found before any capture; if the mechanism
+cannot satisfy "closing it by any means removes it", that goes back to Design, not approximated.
+
+**The drop** (refs/drops/2026-11-07-02, 22:29): "Audit answers - for Code to apply" with both cards, and
+"Flag after offer - for Code to apply", offered 19:55 and not taken in until now. Every anchor held once
+before an edit. Applied: WITHDRAWALS `W.24/stored-preference` and `T.6/exits-browser-prompt`; two
+unnumbered steps before "No step: §G.7."; §W.24's governs row; DESIGN-RULES' "taken after it was offered".
+derive-withdrawals run. §T.6's exits numbered 174 (the coordinator's order names it second); §W.24's
+confirmation listed as unbuilt, three tests owed, nothing to build if 134 stands. States moved by Design's
+answers: 133 to Code's work unbuilt alone (Back and iOS answered; its guards are 174's); 134 to built,
+nothing owed (the preference and 1044-as-fork withdrawn, the build's address-only view ruled; the
+confirmation is the listed step's); 165 to look provisional alone (§62's question answered from the record,
+nothing changes; the Provisionals line open until Design reads `docs/captures/covers-group-165/` or Adam
+judges them). **134, flagged as the coordinator asked:** Design ruled it a withdrawal and a confirmation,
+not product work. Twins: 44 steps, built 32, numbered 4, listed 8, in neither 0; Code has work 19,
+waiting 7, done 18. The twins' tree tests name 174 among the numbered (a tree record, moved as with 172).

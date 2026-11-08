@@ -61,3 +61,5 @@
 {"file":"Host change and two-author list","ref":null,"captured":null,"how":"applied by hand from outside docs/design on 27 Oct; no drop ref holds it","landed":{"sha":"15e7f3d","date":"2026-10-27T16:31:58-04:00","by":"inferred: the commit applying Design change file of 27 Oct, 15:59, whose content matches; nothing names the file","inferred":true}}
 {"file":"Press before hydration","ref":null,"captured":null,"how":"resent 28 Oct; in no ref by this name","supersededBy":["Hold step v2","Hold- consolidated on 5abc1f1"]}
 {"file":"Arrow closed","ref":null,"captured":null,"how":"offered 4 Nov; in no ref, commit or note by this name","supersededBy":["Two rules and the arrow"]}
+{"file":"Audit answers","ref":"refs/drops/2026-11-07-02","captured":"2026-11-07T22:29:45-05:00"}
+{"file":"Flag after offer","ref":"refs/drops/2026-11-07-02","captured":"2026-11-07T22:29:45-05:00"}
