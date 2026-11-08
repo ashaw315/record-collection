@@ -55161,3 +55161,51 @@ the eighth entry of that list, "in neither 0", and the tree test that requires e
 listed would fail without it. The gap is the export's: `export-handoff.mjs` does not carry the unbuilt list,
 so Design cannot see a step Code listed rather than numbered. No blind spot in the twins; one in what
 Design is sent.
+
+## 8 Nov, 09:00: step 173a, the TRACKLIST section's model
+
+`src/app/records/[id]/tracklist.ts`, `tracklistModel(rows, shown)`, pure, from the rows `releaseTextFor`
+returns and the names the page already shows for the pressing:
+- the tracks as "position · title";
+- the release's credits one line to a role, roles in first-seen order, names in the release's order, "names ·
+  role" (the reason line's order);
+- each track's credits under "position · title", also one line to a role, for the tracks that have any;
+- the companies drawn and the ones suppressed;
+- the count, release credits plus track credits plus companies drawn, by entry and not by line;
+- the count line "Credits · n", none where the fold would hold nothing;
+- null where there are no rows.
+
+Track credits are told from release credits by a trailing track position, never by the first comma, since a
+role can hold one ("Bass, Vocals"): 172's rule, checked on 55 of 55. Tests first: 10, nine failing against a
+stub returning null; the tenth (no rows, no section) passes against it by construction and constrains any
+version that builds a model from nothing.
+
+**Code's proposals, flagged for Design:**
+- **Tracks' credits are also grouped one line to a role.** §65 rules that for the release's credits only;
+  ungrouped, Never Too Much's 100 track credits would be 100 lines.
+- **"The label or the plant Pressing detail shows".** The build draws the label in the frame's PRESSING cell,
+  and Pressing detail shows only the plant. The model takes both, because §65's own figure of 45 of 50 was
+  counted on both. If "Pressing detail" means the section strictly, only the plant is compared and more
+  companies are drawn.
+- **A release with no credits but a company drawn** would get a count line on companies alone. On production
+  that case does not occur (0 records).
+
+**Production (`npm run discogs:tracklist-counts`, read-only; saved as
+`docs/measurements/release-text/2026-11-08-step173a-counts.txt`).** 55 records hold a release; all 55 draw a
+section and a count line. 45 lose at least one company to suppression. No release held by two records
+counts differently on this collection. The six capture records:
+
+| record | count line | credits | companies drawn | suppressed |
+|---|---|---|---|---|
+| OutKast, ATLiens (most credits) | Credits · 127 | 126 | 1 of 6 | LaFace Records ×2, Arista Records, Inc. ×3 |
+| Pointer Sisters, Break Out (most release credits) | Credits · 124 | 115 | 9 of 11 | RCA Records ×2 |
+| Luther Vandross, Never Too Much (most track credits) | Credits · 123 | 117 | 6 of 7 | Columbia Records Pressing Plant, Carrollton, GA |
+| Cindy Lee, Diamond Jubilee (longest, 32) | Credits · 31 | 21 | 10 of 12 | W.25th, Schallplattenfabrik Pallas GmbH |
+| Pharoah Sanders, Jewels Of Thought (shortest, 2) | Credits · 20 | 17 | 3 of 4 | MPO |
+| a seeded record with no cached release | no section | | | |
+
+Without suppression ATLiens would read 131: the one record where the suppressed companies are most of what
+it holds.
+
+**Two columns (the coordinator, 8 Nov):** `columnsFor` gives 1, 4, 8, 12, 14 and 16 columns and never 5 to 7,
+so the tracks take two columns from 960 and one below. That is for 173b.
