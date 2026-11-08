@@ -55130,3 +55130,34 @@ not run there. The coordinator's reading stands on the numbers: 161px is not a f
 it is the page's defect, not the recorder's. The 23 gates before 007a4551 back to 6 Nov hold no failure
 and no flake of this test. A gate on be3993fa at 4 workers is dispatched to answer whether main is red on
 it now.
+
+**Main is not red on record-band-43 (8 Nov, 08:50).** The gate on be3993fa ran at 4 workers, the same as
+007a4551's: run 42483069704, unit 4981 passed, 3 skipped; chromium 1064 passed, 1 skipped; mobile 390
+passed, 4 skipped; verdict OK. A first dispatch at the script's default of 1 worker (42483035987) was
+cancelled before it ran its suites, since it would not have reproduced 007a4551's conditions. So the
+failure has been seen once in 25 gates since 6 Nov, on both of that gate's attempts, and be3993fa runs
+the same app code as 007a4551. The defect is intermittent and real (§43), and it has not been measured in
+the conditions it appears in.
+
+**The coordinator, 8 Nov, on 171 and the bundle.** The escalation of record-band-43 as a standing red is
+withdrawn against the coordinator's name: one failure in 25 gates is intermittent, assumed before asking.
+The Super Rich clue (cells at their settled tops while the band's own height was 73) is carried in QUEUE
+Q58's row. The CI instrument runs after 173a, while 173b is built. **The watch is a mechanism, not a
+note:** `scripts/gate-watches.txt`, read by `scripts/gate-report.sh`, prints "WATCH: <test> failed in
+<half> — <order>" beside the verdict whenever a watched test has a ✘ line, its exit status unchanged;
+record-band-43:33 is watched until 173 is finished. Tests first: two failing against the script without
+it, and the negative failing against a version that printed a watch on any ✘.
+
+**Made for someone to judge: into the repo first, Downloads second (the coordinator, 8 Nov).** Q4 and Q5
+survived the vanished bundle because they also lived in docs/captures; Q2 and Q3 had to be regenerated
+because the folder was their only copy. A lost folder should cost a copy command, not a rebuild. The
+be3993fa exports written to Downloads were also gone by 8 Nov 09:00; not chased, as directed, and the same
+rule covers them: the export is derived from HEAD and is re-run, not rebuilt.
+
+**The §W.24 view-in-the-address step: both readings are true, and the figure of 44 stands.** Design reads
+it in the handoff (line 839 in the repo, 841 in Design's copy) as unnumbered with no Done line, which is so:
+listing a step in `scripts/handoff-unbuilt.json` writes nothing into the handoff. The twins see it: it is
+the eighth entry of that list, "in neither 0", and the tree test that requires every step discharged or
+listed would fail without it. The gap is the export's: `export-handoff.mjs` does not carry the unbuilt list,
+so Design cannot see a step Code listed rather than numbered. No blind spot in the twins; one in what
+Design is sent.

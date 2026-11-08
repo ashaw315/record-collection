@@ -29,6 +29,7 @@ COMMIT="$1"
 UNIT="$2"
 shift 2
 
+WATCHES="${GATE_WATCHES:-$(dirname "$0")/gate-watches.txt}"
 red=0
 refused=0
 flaky=0
@@ -72,6 +73,13 @@ for PAIR in "$@"; do
   LC_ALL=C grep -h "\[margins\]" "$E2E" | sed -n 2p | cut -c1-200
   # The tests that failed at least once, by line: a flake's artifacts are kept beside the log and this names them.
   LC_ALL=C grep -h "^  ✘" "$E2E" | cut -c1-200
+  # A watch (the coordinator, 8 Nov): a condition that lives only in a message is a note. Read beside the verdict, never judged.
+  if [ -s "$WATCHES" ]; then
+    while IFS=$'\t' read -r test order; do
+      case "$test" in ''|'#'*) continue ;; esac
+      if LC_ALL=C grep -q "^  ✘.* › ${test}:" "$E2E"; then echo "WATCH: ${test} failed in ${P} — ${order}"; fi
+    done < "$WATCHES"
+  fi
 done
 
 if [ "$(printf '%s\n' "$dirs" | sed '/^$/d' | sort -u | wc -l)" -gt 1 ]; then

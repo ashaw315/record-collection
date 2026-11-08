@@ -237,3 +237,39 @@ describe('the verdict tells a half that did not finish from one that failed', ()
     expect(result.output).toMatch(/^verdict: OK$/m);
   });
 });
+
+/*
+  A watch (the coordinator, 8 Nov): "if record-band-43:33 fails again before 173 is finished, it jumps the queue. A
+  condition that lives only in this message is a note, not a watch." So the condition lives in a committed file the
+  verdict reads, `scripts/gate-watches.txt` (a test's location, a tab, the order it carries), and any ✘ line naming a
+  watched test, a flake's first attempt included, prints that order beside the verdict. It changes no exit status: a
+  watch is read, not judged.
+*/
+describe('a watched test that fails prints the order it carries', () => {
+  const WATCHED = 'e2e/record-band-43.spec.ts:33';
+  const BAND_RED = [`  ✘  618 [chromium] › ${WATCHED}:5 › §43: the record band paints packed (2.0m)`, '[projects] chromium 1065', '  1 failed', '  1063 passed (1.2h)', '', '1063 passed, 1 failed, 1 skipped, ledger clean, tree unchanged — NOT OK — 1 failed'];
+  const watches = (lines: string): string => { const d = mkdtempSync(join(tmpdir(), 'gate-watch-')); const f = join(d, 'gate-watches.txt'); writeFileSync(f, lines); return f; };
+
+  it('names the watched test, its half and its order when the test has a ✘ line, and leaves the exit status to the halves', () => {
+    const file = watches(`# comment\n${WATCHED}\tjumps the queue: QUEUE Q58\n`);
+    const result = report('007a455', logs('007a455', { unit: UNIT_OK, chromium: BAND_RED, mobile: MOBILE_OK }), { GATE_WATCHES: file });
+    expect(result.output).toContain(`WATCH: ${WATCHED} failed in chromium — jumps the queue: QUEUE Q58`);
+    expect(result.status, result.output).toBe(1);
+  });
+
+  it('prints nothing for a watch whose test did not fail, nor for a failing test no watch names', () => {
+    const file = watches(`${WATCHED}\tjumps the queue: QUEUE Q58\n`);
+    const quiet = report('f4c265e', logs('f4c265e', { unit: UNIT_OK, chromium: CHROMIUM_RED, mobile: MOBILE_OK }), { GATE_WATCHES: file });
+    expect(quiet.output).not.toContain('WATCH:');
+    const clean = report('f4c265e', logs('f4c265e', { unit: UNIT_OK, chromium: CHROMIUM_OK, mobile: MOBILE_OK }), { GATE_WATCHES: file });
+    expect(clean.output).not.toContain('WATCH:');
+    expect(clean.status, clean.output).toBe(0);
+  });
+
+  it('reads the committed file by default, which watches record-band-43:33 with its order until 173 is finished', () => {
+    const committed = readFileSync(join(process.cwd(), 'scripts', 'gate-watches.txt'), 'utf8');
+    expect(committed).toMatch(new RegExp(`^${WATCHED.replace(/[.]/g, '\\.')}\\t.*jumps the queue.*Q58`, 'm'));
+    const result = report('007a455', logs('007a455', { unit: UNIT_OK, chromium: BAND_RED, mobile: MOBILE_OK }));
+    expect(result.output).toContain(`WATCH: ${WATCHED} failed in chromium`);
+  });
+});

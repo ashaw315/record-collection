@@ -1,0 +1,3 @@
+# Watches the gate verdict prints beside its verdict (scripts/gate-report.sh): a test location, a tab, the order it carries.
+# A line leaves this file in the commit that discharges its order, and says so in that commit.
+e2e/record-band-43.spec.ts:33	jumps the queue: if it fails before step 173 is finished, step 171 goes ahead of what is in hand (the coordinator, 8 Nov; QUEUE Q58)
