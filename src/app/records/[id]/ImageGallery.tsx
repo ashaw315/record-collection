@@ -1,12 +1,11 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { LABEL } from './grid-type';
+import { HAIRLINE, INK, LABEL, LABEL_TYPE } from './grid-type';
 import type { RecordLadder } from '@/lib/colour/record-ladder';
 import { Section } from './Section';
 import { CONTROL_HEIGHT, FIELD_HEIGHT } from './extended-grid';
 import { useRef, useState } from 'react';
-import { Button } from '@/components/ui/button';
 import { IMAGE_TYPE_ORDER, coverGroup, imageTypeLabel, orderImages, type GalleryImage } from './gallery-order';
 import { imagesDiscReference } from './images-disc';
 import { MAX_IMAGE_BYTES } from '@/lib/storage/image-type';
@@ -26,6 +25,14 @@ import { MAX_IMAGE_BYTES } from '@/lib/storage/image-type';
  */
 
 const ACCEPT = 'image/jpeg,image/png,image/webp';
+
+/*
+  A tile's Delete, in the app's label type and ink in a hairline box (Design's review of Q5, 8 Nov: it was the button
+  library's outline, a grey box in the system font, §63's mistake). Over the tile's top-right corner as step 71 placed
+  it; the paper ground is kept because a control on a photograph has no ground of its own, which is where this
+  departs from CONTROL_BOX's "no fill".
+*/
+const TILE_DELETE = `${LABEL_TYPE} ${INK} absolute top-1 right-1 box-border inline-flex h-6 items-center border ${HAIRLINE} bg-background/90 px-1.5 decoration-1 underline-offset-[3px] hover:underline disabled:opacity-50`;
 
 export function ImageGallery({
   recordId,
@@ -226,17 +233,15 @@ export function ImageGallery({
                   className="aspect-square w-full border border-border object-cover"
                 />
               )}
-              <Button
+              <button
                 type="button"
-                size="sm"
-                variant="outline"
                 disabled={busy}
                 onClick={() => void remove(image.id, 'Cover')}
-                className="absolute top-1 right-1 h-6 bg-background/90 px-1.5 text-label"
+                className={TILE_DELETE}
                 aria-label="Delete this cover image"
               >
                 Delete
-              </Button>
+              </button>
               <span data-testid="cover-badge" className={`mt-1 block ${LABEL}`}>{shown ? 'Cover · Shown' : 'Cover'}</span>
             </li>
           ))}
@@ -306,17 +311,15 @@ export function ImageGallery({
                 referrerPolicy="no-referrer"
                 className="aspect-square w-full border border-border object-cover"
               />
-              <Button
+              <button
                 type="button"
-                size="sm"
-                variant="outline"
                 disabled={busy}
                 onClick={() => void remove(image.id, imageTypeLabel(type))}
-                className="absolute top-1 right-1 h-6 bg-background/90 px-1.5 text-label"
+                className={TILE_DELETE}
                 aria-label={`Delete this ${imageTypeLabel(type).toLowerCase()} image`}
               >
                 Delete
-              </Button>
+              </button>
               {/* The badge: §4's one label treatment, under the tile rather than over the photograph (§34). */}
               <span data-testid="image-badge" className={`mt-1 block ${LABEL}`}>{imageTypeLabel(type)}</span>
               {image.caption !== null && (

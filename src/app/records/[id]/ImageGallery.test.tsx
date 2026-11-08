@@ -182,3 +182,24 @@ describe('the upload form’s default type is one the gallery will show', () => 
     expect(select).toContain('value="cover"');
   });
 });
+
+/*
+  Design's review of Q5 (8 Nov): the covers group's Delete was drawn in the browser's default button, a grey box in
+  the system font, beside actions in the app's label type: §63's mistake, the machine's type and not the app's. The
+  grid's tile Delete is the same element. Asserted on the class strings the app's controls share, so the type comes
+  from `grid-type.ts` and cannot drift back to a component library's default.
+*/
+describe('every tile Delete is drawn in the app’s label type, in ink, in a hairline box', () => {
+  it('gives the covers group’s and the grid’s Delete the label type, the ink and the hairline, and none of the button library’s outline', async () => {
+    const { LABEL_TYPE, INK, HAIRLINE } = await import('./grid-type');
+    const covers = [image('c1', 'cover'), image('c2', 'cover'), image('b1', 'back')];
+    const html = renderToStaticMarkup(<ImageGallery recordId="r1" images={covers} base="oklch(0.7 0.06 60)" />);
+    const deletes = [...html.matchAll(/<button[^>]*aria-label="Delete this [a-z ]+ image"[^>]*>/g)].map((m) => m[0]);
+    expect(deletes, 'two covers and one back').toHaveLength(3);
+    for (const b of deletes) {
+      for (const cls of `${LABEL_TYPE} ${INK} ${HAIRLINE}`.split(' ')) expect(b, cls).toContain(cls);
+      expect(b, 'not the library’s rounded box').not.toContain('rounded-lg');
+      expect(b, 'not the library’s own type').not.toMatch(/text-sm|font-medium/);
+    }
+  });
+});

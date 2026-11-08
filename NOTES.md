@@ -55209,3 +55209,67 @@ it holds.
 
 **Two columns (the coordinator, 8 Nov):** `columnsFor` gives 1, 4, 8, 12, 14 and 16 columns and never 5 to 7,
 so the tracks take two columns from 960 and one below. That is for 173b.
+
+## 8 Nov, 09:25: Q4's 544ms read; Q5's Delete in the app's type
+
+**Q4: the 544 was the instrument's, not the motion's.** The 2462 is `RETURN_MS` + `OUT_MS` from
+`src/app/wall/gesture.ts`: the put back is 700 × 1600 / 1300 = 861.5ms (the whole gesture reversed, §W.21),
+then the queued pull is SWING 1300 + FINISH 300 = 1600ms. Total 2461.5.
+
+The 3006 was taken in Node, from before a Playwright click to the end of two `expect.poll`s. Their intervals
+step 100, 250, 500 and 1000ms, so that figure carried up to a second of polling.
+
+Timed now on the page's own clock (`e2e/capture/reroll-timing.capture.ts`):
+- the recorder keeps every animation frame's time and the wall's phase;
+- a capture-phase listener keeps the press;
+- it ran on a build at 1440 × 900, five re-rolls without video and five with, as Q4 was recorded;
+- load 6.34 at the start, 14.86 at the end (video encoding).
+
+| leg | constant | measured, ten runs |
+|---|---|---|
+| press to the return's first frame | | 3.1 to 15.4 |
+| return | 861.5 | 883.2 to 883.4 |
+| gap before the pull | | 0.0 (the queued pull begins in the commit that drops the returned record) |
+| pull to landed | 1600 | 1616.6 to 1633.3 |
+| total | 2461.5 | 2503.1 to 2531.9 |
+
+So it ran 42 to 70ms long, every run. The return is long by 21.8 and the pull by one or two frames. That is
+the phase being read at a frame boundary, one 16.7ms frame at each end, not a slowdown in the motion, and the
+same with video and without.
+
+**There is no stall of anything like 544.** The longest single frame interval in a re-roll is 16.8 to 50.1ms
+without video and 16.8 to 83.4ms with it: up to four frames dropped once, under video encoding. So Adam
+watched the ruled motion within a few frames, possibly with one hitch of up to 83ms that the recording
+itself causes. His judgement carries to the ruled motion. `docs/measurements/reroll-q4/`.
+
+**Q5: the tile Delete in the app's label type.** Design found it drawn in the button library's outline (a
+grey box, the library's text-sm sans), §63's mistake. Both tile Deletes, the covers group's and the grid's,
+are now a plain button: the label type and ink from `grid-type.ts`, a hairline box, the paper ground at
+90% kept because a control on a photograph has none of its own, and step 71's place over the top-right
+corner. Test first, failing against the library button on `font-mono`. One clause of it was replaced
+before the build because it named a class the library never emits (`shadow-xs`), so it could not fail; it
+now names `rounded-lg`, which the library does emit.
+
+Step level: the gallery's component tests 11 of 11; the covering e2e specs (delete-control-71,
+covers-group-165, images-row-56, images) 22 passed on chromium and mobile, load 6.55 to 15.47; typecheck,
+lint (0 errors). Q5 recaptured from a build into `docs/captures/covers-group-165/` and copied into both
+bundles, with the READ ME saying why.
+
+**The 8 Nov drop taken in (bf6419e4, pushed at once).** It came in as Design's "Credits by role and the
+count line" and "ASK lit and the cell held", with the 8a and Mood Pick cards. It arrived at 09:17,
+mid-check, and refused the Q4/Q5 commit on the index until taken in.
+- One anchor did not hold: §62's step has no "**Capture**" bullet. Its Capture is the step's last
+  sentence, so the new Assert line sits beneath it.
+- The corrected count line ("drawn when the fold holds anything") is what 173a's model already does.
+  Design confirmed the label-or-plant comparison and the track grouping as built.
+- §P.4 and §P.6's steps are listed as unbuilt, behind 173 and 174.
+- The coordinator asks that §P.4's "report the smallest visible column height" become an assertion naming
+  both figures. Design has been asked and not yet answered; recorded on the step's unbuilt entry.
+
+**The coordinator's two §65 questions, answered from the code (`tracklist.ts`).**
+- **Exact, not containment:** a company is suppressed only when its name, folded for case and Discogs'
+  "(n)", equals the label's or the plant's; a containing name is drawn. Design's 45 of 50 is that
+  population (172's "equal to one"); the 24 is the containment population, which 173a draws.
+- **One plant:** a pressing has one `pressing_plant` and a record one label, so the comparison is against
+  at most two names. A plant named a second way in a company ("Columbia Records Pressing Plant, Pitman"
+  against a stored "Pitman") is drawn.
