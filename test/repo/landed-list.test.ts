@@ -61,6 +61,56 @@ describe('landedList', () => {
   });
 });
 
+/*
+  Q54 (Design and the coordinator, 7 Nov): three change files sent and landed were missing from the record because
+  their names did not end " - for Code to apply.md": one had no `.md`, two said "insert" and "add". Widened by name;
+  the first line cannot tell a change file from a FOR CODE note (both open "# For Code"), and one note says it has
+  no change to apply. Fails against the name pattern as it stood, and against one that takes the notes.
+*/
+describe('landedList takes every change file Design names as one', () => {
+  it('a name with no .md, and "for Code to insert" or "to add", but not a FOR CODE note', () => {
+    const list = landedList({
+      drops: [{ ref: 'refs/drops/2026-10-26-02', date: '2026-10-26T16:45:50-04:00', files: [
+        'docs/design/Provisionals - for Code to insert.md',
+        'docs/design/DESIGN-RULES - for Code to add.md',
+        'docs/design/Record cut at the row front- pan overlapped - for Code to apply',
+        'docs/design/FOR CODE - source of 15, 15 and 18.md',
+        'docs/design/DESIGN-RULES.md',
+      ] }],
+      commits: [],
+    });
+    expect(list.map((l) => l.file)).toEqual(['Provisionals - for Code to insert', 'DESIGN-RULES - for Code to add', 'Record cut at the row front- pan overlapped']);
+  });
+});
+
+/*
+  Q54: entries no drop ref holds. A file applied by hand from outside docs/design has a landing and no arrival; a
+  file superseded before it arrived has neither, and says what replaced it. The export printed "arrived null (null)"
+  for the first, and a record line with no landing is dated by the commit that adds it, which for a superseded file
+  is false. Fails against the export and the record read as they stood.
+*/
+describe('the record’s entries with no drop ref', () => {
+  const record = parseRecord([
+    JSON.stringify({ horizon: 'This record begins somewhere.' }),
+    JSON.stringify({ file: 'Two rules and the arrow', ref: null, captured: null, how: 'applied by hand from outside docs/design', landed: { sha: '35da788', date: '2026-11-04T12:00:00-05:00', by: 'the commit that applied it' } }),
+    JSON.stringify({ file: 'Host change', ref: null, captured: null, how: 'applied by hand from outside docs/design', landed: { sha: '15e7f3d', date: '2026-10-27T12:00:00-04:00', by: 'inferred from its content', inferred: true } }),
+    JSON.stringify({ file: 'Press before hydration', ref: null, captured: null, how: 'resent 28 Oct, never in a ref by this name', supersededBy: ['Hold step v2', 'Hold- consolidated on 5abc1f1'] }),
+  ].join('\n'));
+
+  it('reads a superseded entry as not landed, never as the commit that adds its line, and keeps a stated landing', () => {
+    const list = landedFromRecord(record, () => ({ sha: 'addedit', date: '2026-11-07T19:30:00-05:00' }));
+    expect(list.map((l: { landed: { sha: string } | null }) => l.landed?.sha ?? null)).toEqual(['35da788', '15e7f3d', null]);
+  });
+
+  it('prints how each arrived, its landing, "inferred" where it is, and what superseded it', () => {
+    const out = landedText(landedFromRecord(record, () => null), { sha: 'abc1234', date: '2026-11-07' }, { drops: 0, horizon: record.horizon });
+    expect(out).toContain('- Two rules and the arrow — no drop ref (applied by hand from outside docs/design); landed 35da788 (2026-11-04T12:00:00-05:00)\n');
+    expect(out).toContain('- Host change — no drop ref (applied by hand from outside docs/design); landed 15e7f3d (2026-10-27T12:00:00-04:00), inferred\n');
+    expect(out).toContain('- Press before hydration — no drop ref (resent 28 Oct, never in a ref by this name); not landed: superseded by Hold step v2 and Hold- consolidated on 5abc1f1\n');
+    expect(out).not.toMatch(/null/);
+  });
+});
+
 describe('landedText', () => {
   it('writes one line per file in arrival order, the name, the ref and date, and the commit and date or "not yet landed"', () => {
     const text = landedText(landedList({ drops, commits }), { sha: '41bbc92', date: '2026-11-06' });

@@ -55003,3 +55003,47 @@ the 21 clean steps.**
 - One change to the 18:40 table: 156 carries judgement held beside Code's work, since §P.3's re-roll
   order "returns from Adam's report by use. Open."; it stays in Code has work.
 So 42 = 16 done, 17 Code has work (7 by a Done block's own words, 3 numbered, 7 listed), 9 waiting.
+
+## 7 Nov, 20:05: the coordinator's instance; 134 flagged; Q54's record half
+
+**The coordinator's instance, recorded against their name (7 Nov):** a cause proposed without checking
+what the instrument actually reads. The coordinator read Design's "Credits fold" flag as the unpushed
+intake hiding it; `export-handoff.mjs` reads HEAD and never GitHub, and both exports Design read predate
+the file (53ae4c1's taken at 17:25, the file arriving at 17:26; be96671's on 6 Nov). Design's "Flag after
+offer", counting only exports taken after a file was offered, is the fix. Pushing an intake at once stands
+on its own merits and is kept, not as the fix for this.
+
+**Q53's figure** is the first taken from a complete read (QUEUE Q53): 15 qualified blocks, 24 unqualified,
+3 numbered steps, all 42. The series 6, 8, 10, 15, 17 rose at every revision; a further move is a finding.
+133, 134 and 165 went to Design (the coordinator, 7 Nov); 145 is Code's, queued as Q55.
+
+**134 to be flagged hardest when Design answers (the coordinator):** the step rules a fork at 1044 where
+the build has one at 1274, and says "keeping the preference" where nothing is stored: a ruling and a build
+disagreeing in two places with nobody noticing. Design's ruling may be product work, not a wording fix.
+
+**Q54, the record half.** The name pattern widened to any "for Code to <verb>", `.md` optional; not the
+first line, which the FOR CODE notes share ("# For Code:", one "a question, no change to apply"), the
+reason written in the code. The record gains seven entries:
+- by the widened pattern, from the refs: "Provisionals - for Code to insert" (2026-10-26-02, landed
+  a8840cd), "DESIGN-RULES - for Code to add" (2026-10-27-01, landed 26669c0) and "Record cut at the row
+  front- pan overlapped" (2026-11-01-01, landed d7bcb10, the commit naming the ref);
+- no ref: "Two rules and the arrow" (35da788, the commit naming it), "Host change and two-author list"
+  (15e7f3d, marked inferred);
+- superseded, never landed: "Press before hydration" (by "Hold step v2" and "Hold- consolidated on
+  5abc1f1"), "Arrow closed" (by "Two rules and the arrow").
+"Arrow closed" was to stay empty until Design said; Design did say, in "Credits fold"'s landed list ("it
+was superseded by 'Two rules and the arrow', though its header didn't say so"), and the entry carries that.
+The export prints an entry with no ref by how it came, "inferred" where it is, and a superseded one by what
+replaced it; a superseded line is never dated by the commit adding it. A finding on the way: the backfill
+rule dates DESIGN-RULES' file to 319e5d3, the earlier drop's intake (QUEUE Q56).
+
+## 7 Nov, 20:20: Q53's gate, one flake read
+
+Gate 42429020684 on eca4594: unit 4978 passed, 3 skipped; mobile 390 passed, 4 skipped; chromium 1063
+passed, 1 flaky, 1 skipped, so GREEN WITH FLAKES and not OK. The flake: `region-remount-q48.spec.ts:82`,
+"and the view stays where the reader put it", one frame. Read from the run's trace, not guessed: the
+reader-scroll half starts its sampler at about 8.25s, and the `scrollTop += 240` evaluate runs 8.34 to
+8.46s, so the scroll lands 100 to 200ms after the sampler's t0, while the test skips only frames before
+100ms. The one moved frame, t=140, top 186, is the view before the scroll (426 after it, inside limitY
+719); every later frame holds. A test defect: a timing precondition assumed and not asserted. Q53 changed
+no app code. QUEUE Q57.

@@ -35,7 +35,21 @@
 import { execFileSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 
-const CHANGE_FILE = /^docs\/design\/(.+) - for Code to apply\.md$/;
+/*
+  A change file by its name, widened (Q54, 7 Nov) to any "for Code to <verb>", with or without `.md`: "Provisionals -
+  for Code to insert", "DESIGN-RULES - for Code to add" and "Record cut at the row front- pan overlapped - for Code to
+  apply" (no extension) were sent and landed and missing from the record. Not by the first line, which would be the
+  better witness if it told one kind from another: change files open "# For Code to apply", "# For Code to add as a
+  new file" or "# For Code: the four lines partition", and the FOR CODE notes open "# For Code:" too, one of them "a
+  question, no change to apply". So the name is the convention Design declares; do not narrow it back to "apply.md",
+  and do not swap it for the header without a header that only change files carry. The key drops " - for Code to
+  apply" and keeps any other verb, as Design's own list names them.
+*/
+const CHANGE_FILE = /^docs\/design\/(.+ - for Code to [a-z]+)(?:\.md)?$/;
+const changeName = (path) => {
+  const m = path.match(CHANGE_FILE);
+  return m === null ? null : m[1].replace(/ - for Code to apply$/, '');
+};
 
 /**
  * @param {{ drops: { ref: string, date: string, files: string[] }[], commits: { sha: string, date: string, touchesDesign: boolean }[] }} input
@@ -45,9 +59,9 @@ export function landedList({ drops, commits }) {
   const seen = new Map();
   for (const d of drops) {
     for (const f of d.files) {
-      const m = f.match(CHANGE_FILE);
-      if (m === null || seen.has(m[1])) continue;
-      seen.set(m[1], { file: m[1], ref: d.ref, arrived: d.date });
+      const name = changeName(f);
+      if (name === null || seen.has(name)) continue;
+      seen.set(name, { file: name, ref: d.ref, arrived: d.date });
     }
   }
   return [...seen.values()].map((entry) => {
@@ -61,7 +75,13 @@ export function landedList({ drops, commits }) {
 export function landedText(list, { sha, date }, { drops, horizon = null } = { drops: list.length }) {
   const head = `Export note, not part of the file: the change files Code has applied, as of ${sha} on ${date}, each with the drop ref and date it arrived on and the commit it landed at. Read-only for Design: it is derived from ${horizon === null ? 'the drop refs' : 'the committed record (docs/design-landed.jsonl)'} and the history, and the comparison against Design's own list is Design's half.`;
   if (horizon === null && drops === 0) return `${head}\n\nNO DROP REFS in this repository: the list cannot be derived here, which is not the same as none applied.\n`;
-  const lines = list.map((l) => `- ${l.file} — arrived ${l.ref} (${l.arrived}); ${l.landed === null ? 'not yet landed' : `landed ${l.landed.sha} (${l.landed.date})`}`);
+  /* Q54: an entry no drop ref holds says how it came instead of an arrival, and a superseded one what replaced it. */
+  const arrival = (l) => (l.ref === null || l.ref === undefined ? `no drop ref (${l.how})` : `arrived ${l.ref} (${l.arrived})`);
+  const landing = (l) =>
+    Array.isArray(l.supersededBy) ? `not landed: superseded by ${l.supersededBy.join(' and ')}`
+    : l.landed === null ? 'not yet landed'
+    : `landed ${l.landed.sha} (${l.landed.date})${l.landed.inferred ? ', inferred' : ''}`;
+  const lines = list.map((l) => `- ${l.file} — ${arrival(l)}; ${landing(l)}`);
   return `${head}\n\n${horizon === null ? '' : `${horizon}\n\n`}${lines.join('\n')}\n`;
 }
 
@@ -108,7 +128,11 @@ export function parseRecord(text) {
 
 /** The list from the record; `landingOf(line)` is the first commit holding the line, or null. */
 export function landedFromRecord(record, landingOf) {
-  return record.entries.map((e) => ({ file: e.file, ref: e.ref, arrived: e.captured, landed: e.landed === undefined ? landingOf(e.line) : { sha: e.landed.sha, date: e.landed.date } }));
+  /* A superseded entry never landed: the commit adding its line is not a landing (Q54). */
+  return record.entries.map((e) => ({
+    file: e.file, ref: e.ref, arrived: e.captured, how: e.how, supersededBy: e.supersededBy,
+    landed: Array.isArray(e.supersededBy) ? null : e.landed === undefined ? landingOf(e.line) : { sha: e.landed.sha, date: e.landed.date, ...(e.landed.inferred ? { inferred: true } : {}) },
+  }));
 }
 
 /** The export's text: from the committed record at HEAD where it exists, else from the drop refs, else the absence line. */
