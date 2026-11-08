@@ -1,7 +1,7 @@
 import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { discharged, numberedNotBuilt, stepsOf } from '../../scripts/handoff-twins.mjs';
+import { discharged, numberedNotBuilt, standing, stateErrors, STATES, stepsOf } from '../../scripts/handoff-twins.mjs';
 
 /**
  * **Every unnumbered step in the handoff is discharged by a numbered one, or
@@ -147,5 +147,70 @@ describe('numbered is not built: a numbered line without Done is its own bucket'
     expect(out.stdout).toMatch(/^  numbered §W\.8: the bound at a candidate  — not built \(step-170\)$/m);
     expect(out.stdout).toMatch(/^  numbered §43: which frame is first paint  — not built \(step-171\)$/m);
     expect(out.stdout).toMatch(/^  numbered §65: the tracklist and the credits  — not built \(step-173\)$/m);
+  });
+});
+
+/*
+  Q53 (the coordinator, 7 Nov): a Done line's head is a claim, not the state. Fifteen steps whose Done lines carried a
+  qualifier were rechecked against the code and four moved; the 21 that carried none were counted clean on that alone,
+  which is absent read as "nothing owed". So every discharging Done block declares its state in `states`, one or more
+  of five names, the clean ones included: a block that omits it is refused, so an omission can never stand for
+  "nothing owed". The step's standing is derived from its blocks, and the figure Adam steers by is printed from it.
+*/
+describe('every discharging Done block declares its state', () => {
+  const block = (id: string, text: string, states?: unknown) => ({ id, before: '', why: '', text, discharges: [{ head: `§${id}: a step`, clause: '' }], ...(states === undefined ? {} : { states }) });
+
+  it('names the five states', () => {
+    expect(STATES).toEqual(['built, nothing owed', "Code's work unbuilt", 'capture or measurement owed', 'judgement held', 'look provisional']);
+  });
+
+  it('refuses a Done block with no states, an empty list, a name outside the five, a name twice, or "built, nothing owed" beside another; accepts more than one state', () => {
+    const errors = stateErrors([
+      block('a', '1. **Done: built.**'),
+      block('b', '2. **Done: built.**', []),
+      block('c', '3. **Done: built.**', ['built, mostly']),
+      block('d', '4. **Done: built.**', ['judgement held', 'judgement held']),
+      block('e', '5. **Done: built.**', ['built, nothing owed', 'judgement held']),
+      block('f', '6. **Done: built.**', ["Code's work unbuilt", 'judgement held']),
+      block('g', '7. **Done: built.**', ['built, nothing owed']),
+      block('h', '8. **§H — numbered: Code’s number for that step.** Not built.'),
+      { id: 'i', before: '', why: '', text: '9. **Done: built.**', origin: 'a half of a numbered step, in words long enough' },
+    ]);
+    expect(errors.map((e) => e.split(':')[0])).toEqual(['a', 'b', 'c', 'd', 'e']);
+  });
+
+  it('on the region as it stands, every discharging Done block declares its state', () => {
+    expect(stateErrors(blocks())).toEqual([]);
+  });
+});
+
+describe('the standing: each step by its blocks’ states, and the roll-up', () => {
+  const steps = ['§A', '§B', '§C', '§D', '§E', '§F'].map((head) => ({ head, clause: '', line: 0 }));
+  const done = (id: string, head: string, states: string[]) => ({ id, before: '', why: '', text: `${id}. **Done: built.**`, discharges: [{ head, clause: '' }], states });
+  const blocksOf = [
+    done('1', '§A', ['built, nothing owed']),
+    done('2', '§B', ['built, nothing owed']),
+    done('3', '§B', ['judgement held']),
+    done('4', '§C', ["Code's work unbuilt", 'look provisional']),
+    done('5', '§D', ['built, nothing owed']),
+    { id: '6', before: '', why: '', text: '6. **§D — numbered.** Not built.', discharges: [{ head: '§D', clause: '' }] },
+    done('7', '§F', ['capture or measurement owed']),
+  ];
+  const unbuilt = [{ head: '§E', status: 'not built', evidence: '' }];
+
+  it('counts a step under every state its Done blocks name, "built, nothing owed" only when every block says it, unless numbered or listed; Code has work where any part is Code’s, else waits where anything is owed or held, else is done', () => {
+    const s = standing(steps, blocksOf, unbuilt);
+    expect(Object.fromEntries(s.byState)).toEqual({ 'built, nothing owed': 1, "Code's work unbuilt": 1, 'capture or measurement owed': 1, 'judgement held': 1, 'look provisional': 1 });
+    expect({ numbered: s.numbered, listed: s.listed, codeHasWork: s.codeHasWork, waiting: s.waiting, done: s.done }).toEqual({ numbered: 1, listed: 1, codeHasWork: 3, waiting: 2, done: 1 });
+  });
+
+  it('prints the states and the roll-up on the tree, the roll-up summing to the steps', () => {
+    const out = spawnSync('node', ['scripts/handoff-twins.mjs'], { encoding: 'utf8' });
+    const states = out.stdout.match(/^built steps by state: built, nothing owed (\d+); Code's work unbuilt (\d+); capture or measurement owed (\d+); judgement held (\d+); look provisional (\d+)$/m);
+    const roll = out.stdout.match(/^Code has work (\d+), waiting (\d+), done (\d+)$/m);
+    const total = out.stdout.match(/^unnumbered steps (\d+):/m);
+    expect(states, out.stdout).not.toBeNull();
+    expect(roll, out.stdout).not.toBeNull();
+    expect(Number(roll?.[1]) + Number(roll?.[2]) + Number(roll?.[3])).toBe(Number(total?.[1]));
   });
 });

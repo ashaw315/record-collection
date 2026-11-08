@@ -54929,3 +54929,77 @@ comparison was the one that mattered.
 **169 and §65 (the coordinator, 7 Nov).** §T.3's reason line on the pull is the unbuilt half of step
 169, a step the twins count built. Building §65 and then the reason line completes 169 rather than
 starting something new.
+
+
+## 7 Nov, 18:40: the 15 checked against the code and the history; Q54's pattern misses three
+
+**The 15 the Done lines claimed outstanding, each checked (the coordinator: a Done line's remainder
+is a claim, not the state).** Evidence is the code, the handoff's Provisionals and NOTES after each
+block.
+- Code's work unbuilt, 5 of 5 still outstanding: 123 (MarketPanel has no slot; the want list and
+  record page keep step 121's floor); 156 (§P.3's 455px put back, Provisionals open, 4b parked); 160
+  (no acknowledgement of a held press in src; Provisionals open); 162 (no title clamp and no swipe
+  handling in src/app/wall; no other block discharges them); 169 (no reason line on the pull in src;
+  Provisionals open).
+- Capture or measurement owed, 1 of 2: 164 (the first-pull rate, Provisionals open). 161 is
+  resolved: §W.22's pan closed on Adam's judgement by use, the overlapped pan built in 163.
+- Judgement held, 5 of 6 steps: the five screens' figures (125's card was built by step 150; 130's
+  genres at 320 "stay held", Design, 12 Oct); 146 (the target names CANCEL and MERGE THEM and still
+  not box or label); 150 (the §9.3 box under a fine pointer, no ruling found after 16 Oct); 157 on two
+  steps (640, Provisionals open for Adam). 144 is resolved: stats' names built on the 14 Oct ruling,
+  the tab index by step 148's roving index, the calendar button ruled the exception.
+- Look provisional, 0 of 2: §64 closed on 166's captures, §63 on 167's.
+So 42 = 21 built with nothing owed, 5 Code's work unbuilt, 3 numbered and not built, 7 listed, 1
+measurement owed, 5 judgement held, 0 provisional. Code has work on 15; 6 wait on evidence or a
+person. The 17 read "built, nothing owed" from their head lines were not re-checked.
+
+**Q54: the record's name pattern missed three files, not one.** By name ("for Code to apply"):
+"Record cut at the row front- pan overlapped" (no `.md`, refs/drops/2026-11-01-01), "Provisionals -
+for Code to insert" (refs/drops/2026-10-26-02, landed a8840cdb) and "DESIGN-RULES - for Code to add"
+(refs/drops/2026-10-27-01, landed 26669c01). Design lists the last two as never sent; they were sent
+and landed. A content rule (first line "# For Code to apply") would catch those and miss "Import
+report partition" (header "# For Code: the four lines partition"). Neither the name nor the header
+alone tells a change file from a target; the ref cannot say what it holds.
+
+
+## 7 Nov, 19:15: the intake pushed; Q53's field, and the audit of the clean blocks
+
+**The intake pushed on its own (the coordinator, 7 Nov):** f5a45d04 to main at 19:02, the unit it
+enables not waited for; an intake commit is pushed once its own checks are green from now on. Gate
+42420231435 on 53ae4c1 green: unit 4973 passed, 3 skipped; chromium 1064 passed, 1 skipped; mobile 390
+passed, 4 skipped. One fact against the premise, for the coordinator: `export-handoff.mjs` reads HEAD,
+not origin, and the export taken at f5a45d04 (17:43, in ~/Downloads) lists "Credits fold, landed
+f5a45d04". No export Code wrote after the drop arrived (17:26) lacks it, so the two Design read were
+either taken before 17:26 or are not Code's exports.
+
+**Q53 built.** Every discharging Done block carries `states`, one or more of: built, nothing owed;
+Code's work unbuilt; capture or measurement owed; judgement held; look provisional. The twins refuse an
+omission, an empty list, a name outside the five, a repeat, and "built, nothing owed" beside another
+(test and CLI, exit 1, staged on the real region with step-120's field removed). The figure is derived
+from the field and printed: `built steps by state: built, nothing owed 16; Code's work unbuilt 7;
+capture or measurement owed 1; judgement held 10; look provisional 1` and `Code has work 17, waiting 9,
+done 16` (a step counts under every state its blocks name; the roll-up puts it once).
+
+**The audit: 24 Done blocks not in the 18:40 recheck, each read whole; 4 carry something, moving 5 of
+the 21 clean steps.**
+- **133, manage's pass: Code's work unbuilt and judgement held.** The step (drop of 12 Oct) rules asking
+  before a section change and an in-app navigation, and the browser's prompt on unload. Step 137 built
+  the ask on a row's own exits and Escape; `src` has no `beforeunload` and no guard on section or link.
+  Code's note of mid-Oct (NOTES "Can an in-app navigation be made to wait?") said section and links are
+  buildable, unload cheap but not shown on iOS, Back not possible, and asked Design to rule knowing the
+  two holes; no answer is on record. The five defaults 133 declared were ruled into the step's text.
+- **134, both §W.24 shelf steps: judgement held.** Its three for Design are unanswered: the step still
+  says "keeping the preference" where nothing is stored, and its 1044 is not the built fork (1274).
+- **145, part 1's passes: Code's work unbuilt.** "Five older copies of the same string stand unfolded,
+  named for a later unit": ErrorBody, ShelfEmpty and CollectionList still carry their own box string.
+  Code's own debt, not a ruling; counted because the block owes it in words.
+- **165, §62: look provisional and judgement held.** The Provisionals line "§62 · the covers group"
+  stands Open though 165 built and captured it; and "whether 'the page does not show' still describes
+  them is Design's", sent with the captures, unanswered.
+- Read as clean with something stated that owes nothing: 122 (look up's tint tested stubbed, not seen
+  on the real collection), 129 (drawn changes beyond the ruling, declared), 132 (Edit beside the title,
+  a declared default), 138 and 141 (closed by 141 and 143), 139, 140, 142 and 148 (statements to Design
+  with no choice asked), 163 (the curve closed in Provisionals), 172 (its rest is 173's own number).
+- One change to the 18:40 table: 156 carries judgement held beside Code's work, since §P.3's re-roll
+  order "returns from Adam's report by use. Open."; it stays in Code has work.
+So 42 = 16 done, 17 Code has work (7 by a Done block's own words, 3 numbered, 7 listed), 9 waiting.

@@ -66,6 +66,52 @@ export function numberedNotBuilt(blocks) {
   return out;
 }
 
+/*
+  Q53 (the coordinator, 7 Nov): a Done line's head is a claim, not the state, and a clean one could not be told from
+  one nobody had read. Every discharging Done block declares `states`, the clean ones included, so an omission is
+  refused rather than read as "nothing owed". "built, nothing owed" stands alone: beside another state it would say
+  two contrary things.
+*/
+export const STATES = ['built, nothing owed', "Code's work unbuilt", 'capture or measurement owed', 'judgement held', 'look provisional'];
+const CLEAN = STATES[0];
+const isDone = (b) => /^\d+[a-z]?\. \*\*Done\b/.test(b.text ?? '');
+
+export function stateErrors(blocks) {
+  const errors = [];
+  for (const b of blocks) {
+    if (!isDone(b) || !(b.discharges ?? []).length) continue;
+    const s = b.states;
+    if (!Array.isArray(s) || s.length === 0) errors.push(`${b.id}: no states declared`);
+    else if (s.some((x) => !STATES.includes(x))) errors.push(`${b.id}: a state outside the five (${s.filter((x) => !STATES.includes(x)).join(', ')})`);
+    else if (new Set(s).size !== s.length) errors.push(`${b.id}: a state named twice`);
+    else if (s.includes(CLEAN) && s.length > 1) errors.push(`${b.id}: "${CLEAN}" beside another state`);
+  }
+  return errors;
+}
+
+/**
+ * Each step's standing from its blocks: numbered (a block without Done), listed (unbuilt), or the union of its Done
+ * blocks' states, "built, nothing owed" only where no block names anything else. The roll-up puts each step in one
+ * place: Code has work where any part is Code's, waiting where anything is owed, held or provisional, else done.
+ */
+export function standing(steps, blocks, unbuilt) {
+  const numbered = numberedNotBuilt(blocks);
+  const listed = new Set(unbuilt.map((u) => u.head));
+  const byState = new Map(STATES.map((s) => [s, 0]));
+  const out = { byState, numbered: 0, listed: 0, codeHasWork: 0, waiting: 0, done: 0 };
+  for (const step of steps) {
+    if (numbered.has(step.head)) { out.numbered += 1; out.codeHasWork += 1; continue; }
+    if (listed.has(step.head)) { out.listed += 1; out.codeHasWork += 1; continue; }
+    const states = new Set(blocks.filter((b) => isDone(b) && (b.discharges ?? []).some((d) => d.head === step.head)).flatMap((b) => b.states ?? []));
+    if (states.size > 1) states.delete(CLEAN);
+    for (const s of states) byState.set(s, byState.get(s) + 1);
+    if (states.has(STATES[1])) out.codeHasWork += 1;
+    else if (states.has(CLEAN) || states.size === 0) out.done += 1;
+    else out.waiting += 1;
+  }
+  return out;
+}
+
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   const steps = stepsOf(readFileSync('docs/design/HANDOFF-wall-and-pull.md', 'utf8'));
   const blocks = JSON.parse(readFileSync('scripts/handoff-code-region.json', 'utf8'));
@@ -86,5 +132,10 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   for (const s of steps) if (listed.has(s.head)) console.log(`  unbuilt  ${s.head}  — ${listed.get(s.head).status}`);
   for (const s of unnamed) console.log(`  NEITHER  ${s.head}`);
   for (const m of moved) console.log(`  MOVED    ${m}`);
-  process.exit(moved.length > 0 || unnamed.length > 0 ? 1 : 0);
+  const st = standing(steps, blocks, unbuilt);
+  console.log(`built steps by state: ${[...st.byState].map(([s, n]) => `${s} ${n}`).join('; ')}`);
+  console.log(`Code has work ${st.codeHasWork}, waiting ${st.waiting}, done ${st.done}`);
+  const undeclared = stateErrors(blocks);
+  for (const e of undeclared) console.log(`  STATE    ${e}`);
+  process.exit(moved.length > 0 || unnamed.length > 0 || undeclared.length > 0 ? 1 : 0);
 }
