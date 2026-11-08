@@ -168,6 +168,8 @@ const GOVERNED = [
   'e2e/ring-routes.ts',
   /* §62 (step 165): the covers group in the Images section, read and captured on seeded records. */
   'e2e/covers-group-165.spec.ts',
+  /* Step 171 (8 Nov): the record band's first-painted and settled heights, measured cold; its 900 is NO_SCROLL_HEIGHT, imported. */
+  'e2e/capture/band-43-measure.capture.ts',
   'e2e/capture/covers-group-165.capture.ts',
 ];
 

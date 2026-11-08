@@ -1,0 +1,71 @@
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { test } from '@playwright/test';
+import { NO_SCROLL_HEIGHT } from '../../src/app/records/[id]/band-geometry';
+import { isSettled } from '../paint-settle';
+import { readSeventeen } from '../seventeen';
+import { login } from '../sign-in';
+
+/**
+ * **Step 171's measurement (Design's §43 step; the coordinator, 8 Nov: "a
+ * measurement, not a build").** Not a test: it asserts nothing and leaves
+ * `record-band-43.spec.ts` as it stands. Over the records and widths that spec
+ * covers, cold, it keeps every frame's band height to three decimals and, per
+ * frame, what the page had applied when it painted: the stylesheets whose
+ * sheet is attached, `document.fonts.status`, the band's computed display and
+ * row template. The spec's recorder rounds to 0.1 and keeps none of that, so
+ * on 007a4551's gate it could say the band painted at 73 and settled at 233.9
+ * and not which of the two §43 names, stylesheets or web fonts, the first
+ * frame lacked.
+ *
+ *     CAPTURE=1 E2E_SERVER=build npx playwright test --project=capture band-43-measure
+ *
+ * Writes docs/measurements/band-43/<stamp>.jsonl, a line per load.
+ */
+test.use({ launchOptions: { args: ['--font-render-hinting=none'] } });
+
+const RECORDER = `window.__m = { frames: [] };
+(function () { var rec = window.__m; function tick() { var band = document.querySelector('[data-band="record"]'); if (band) { var b = band.getBoundingClientRect(); var cs = getComputedStyle(band); var links = Array.from(document.querySelectorAll('link[rel="stylesheet"]')); rec.frames.push({ t: Math.round(performance.now() * 1000) / 1000, band: Math.round(b.height * 1000) / 1000, display: cs.display, rows: cs.gridTemplateRows, links: links.length, attached: links.filter(function (l) { return l.sheet !== null; }).length, sheets: document.styleSheets.length, fonts: document.fonts.status, ready: document.readyState, cells: Array.from(band.querySelectorAll(':scope > [data-cell]')).map(function (c) { var r = c.getBoundingClientRect(); return [c.getAttribute('data-cell'), Math.round(r.left * 1000) / 1000, Math.round(r.top * 1000) / 1000, Math.round(r.width * 1000) / 1000, Math.round(r.height * 1000) / 1000]; }) }); } if (rec.frames.length < 400) requestAnimationFrame(tick); } requestAnimationFrame(tick); })();`;
+
+const WIDTHS = [960, 1000, 1092, 1200, 1240, 1300, 1439];
+const SETTLE_SPAN = 20;
+
+test('step 171: the band’s first-painted and settled heights, to three decimals, on the records and widths record-band-43 covers', async ({ browser, page }) => {
+  test.skip(process.env.CAPTURE !== '1', 'A measurement tool: run with CAPTURE=1');
+  test.setTimeout(1_800_000);
+  await login(page);
+  const cookies = await page.context().cookies();
+  const passes = Number(process.env.BAND43_PASSES ?? '1');
+  const dir = 'docs/measurements/band-43';
+  mkdirSync(dir, { recursive: true });
+  const out = join(dir, `${new Date().toISOString().replace(/[:.]/g, '-')}.jsonl`);
+  const lines: string[] = [];
+  for (let pass = 1; pass <= passes; pass += 1) for (const r of readSeventeen()) for (const width of WIDTHS) {
+    const ctx = await browser.newContext({ viewport: { width, height: NO_SCROLL_HEIGHT } });
+    await ctx.addCookies(cookies);
+    await ctx.addInitScript(RECORDER);
+    const p = await ctx.newPage();
+    await p.goto(`/records/${r.id}`, { waitUntil: 'load' });
+    /* The spec's settle rule, on the spec's rounding, so "settled" means here what it means there. */
+    await p
+      .waitForFunction(
+        ([src, span]) => {
+          const f = (window as unknown as { __m: { frames: Array<{ band: number; cells: Array<[string, number, number, number, number]> }> } }).__m.frames;
+          const rounded = f.map((x) => ({ band: Math.round(x.band * 10) / 10, cells: x.cells.map((c) => [c[0], Math.round(c[1]), Math.round(c[2]), Math.round(c[3]), Math.round(c[4])]) }));
+          return document.fonts.status === 'loaded' && (new Function('return ' + src)() as (a: unknown, n: number) => boolean)(rounded, span);
+        },
+        [isSettled.toString(), SETTLE_SPAN] as const,
+        { timeout: 5_000, polling: 'raf' },
+      )
+      .catch(() => undefined);
+    const frames = (await p.evaluate('window.__m.frames')) as Array<{ t: number; band: number; display: string; rows: string; links: number; attached: number; sheets: number; fonts: string; ready: string; cells: unknown[] }>;
+    await ctx.close();
+    const first = frames[0];
+    const last = frames[frames.length - 1];
+    const line = { pass, record: r.title, width, frames: frames.length, first: first ?? null, settled: last ?? null, firstBand: first?.band ?? null, settledBand: last?.band ?? null, diff: first && last ? Math.round((last.band - first.band) * 1000) / 1000 : null, changes: frames.filter((f, i) => i > 0 && f.band !== frames[i - 1].band).map((f) => ({ t: f.t, band: f.band, attached: f.attached, fonts: f.fonts, rows: f.rows })) };
+    lines.push(JSON.stringify(line));
+    console.log(`${pass} ${r.title.slice(0, 28).padEnd(28)} @${width}: first ${first?.band.toFixed(3)} settled ${last?.band.toFixed(3)} diff ${line.diff?.toFixed(3)} | first frame t=${first?.t} sheets ${first?.attached}/${first?.links} fonts ${first?.fonts} display ${first?.display}`);
+  }
+  writeFileSync(out, `${lines.join('\n')}\n`);
+  console.log(`wrote ${out}`);
+});

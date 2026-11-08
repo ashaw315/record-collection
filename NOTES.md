@@ -55079,3 +55079,54 @@ nothing changes; the Provisionals line open until Design reads `docs/captures/co
 judges them). **134, flagged as the coordinator asked:** Design ruled it a withdrawal and a confirmation,
 not product work. Twins: 44 steps, built 32, numbered 4, listed 8, in neither 0; Code has work 19,
 waiting 7, done 18. The twins' tree tests name 174 among the numbered (a tree record, moved as with 172).
+
+## 7 Nov, 22:55: Q54's gate, one failure read
+
+Gate 42432854033 on 007a4551: unit 4981 passed, 3 skipped; mobile 390 passed, 4 skipped; chromium 1063
+passed, 1 failed, 1 skipped, so NOT OK. The failure is `record-band-43.spec.ts:33`, first paint against the
+settled layout, failing on both attempts on different records: The Money Store at 960, band painted 229.9
+and settled 233.9, market and note moved 4px; on the retry Super Rich at 1092, band painted at 73 and
+settled at 233.9, three cells moved 42px. 007a4551 changed scripts and data only, no app code. This is the
+test step 171 exists for (the recorder taking the band's first height before the page's stylesheets, under
+four workers); the run is evidence for 171's question, which of the two it caught, and its artifact is kept
+at the run. Not fixed here: 171 is numbered and ordered, and the order is 173, then 174.
+
+## 8 Nov, 08:10: Q2 to Q5's bundle was missing, rebuilt; 171's measurement, run locally
+
+**The bundle.** Adam reported that `~/Downloads/Q2 to Q5 for Adam, 6 Nov/` did not exist. It had been
+written on 6 Nov: the session transcript holds the mkdir, the sheet runs writing into it, the copy of Q4
+and Q5, the READ ME's Write and a listing of all four folders. On 8 Nov it was not on disk, and a search of
+the whole disk found no READ ME FIRST.md anywhere; how it went is not known. Rebuilt at the same path:
+- Q4 and Q5 are copies of the 6 Nov files in `docs/captures/reroll-q4/` and
+  `docs/captures/covers-group-165/`, byte for byte, the latter checked with cmp.
+- Q2 and Q3 had been written only into the folder, so they were generated again on 8 Nov: `npm run
+  build`, assert-read-only OK, a read-only `next start` on the production data, then rail-157.sheet (1
+  passed) and pick-far-156.sheet (2 passed).
+- The READ ME says which items are dated which day and why.
+**Q5 and Design's "fifth look" are one item:** the six PNGs in the bundle are the §62 captures. Design to
+be told so, not sent a second copy under a second name. Design's own check of them against §62's rules is
+a separate question, on the same files.
+
+**171's measurement (the coordinator, 8 Nov: a measurement before any remedy; the test untouched).**
+`e2e/capture/band-43-measure.capture.ts` keeps, per frame, the band's height to three decimals and what the
+page had applied: the stylesheets attached, `document.fonts.status`, the band's display and row template.
+It covers record-band-43's records and widths (17 × 7, cold), uses the spec's settle rule, and runs on a
+build with the chromium project's unhinted flag. Run on this Mac, alone (no gate, no other run), load 2.38
+before and 1.47 after, 1 worker: **119 loads, the first frame equal to the settled one to three decimals
+on every load**. Every first frame had both stylesheets attached and the fonts still loading (first frame
+at 70.6 to 301.8ms). So on this machine the first frame lacks the web fonts and not the stylesheets, and
+the band's height does not move when the fonts arrive. The settled heights are 233.906 (77 loads), 301.406,
+435.406, 262.406, 415.906, 454.906, 320.906 and 281.906.
+`docs/measurements/band-43/2026-11-08T12-53-31-365Z.jsonl`.
+
+**What this does not settle.** 007a4551's gate (42432854033, chromium at 4 workers, in CI beside the rest
+of the suite) failed twice:
+- The Money Store at 960: 229.9 to 233.9.
+- Super Rich at 1092: 73 to 233.9. On Super Rich the trace shows both stylesheets received within about
+  53ms of the document, and the first recorded frame at 362ms.
+
+The local run reproduces neither, so the defect is only seen in CI's conditions, and this instrument has
+not run there. The coordinator's reading stands on the numbers: 161px is not a font fallback, and by §43
+it is the page's defect, not the recorder's. The 23 gates before 007a4551 back to 6 Nov hold no failure
+and no flake of this test. A gate on be3993fa at 4 workers is dispatched to answer whether main is red on
+it now.
