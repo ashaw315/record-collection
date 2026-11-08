@@ -38,5 +38,15 @@
     "head": "§W.24: the view in the address",
     "status": "unbuilt: three confirmation tests owed",
     "evidence": "Design (\"Audit answers\", 7 Nov): nothing to build if step 134 stands as reported, confirmed by test: a bare address draws the shelf from 1044 with a fine pointer and the grid otherwise; widening a bare address restores the shelf; ?view=grid stays the grid when widened. None of the three is yet a test named for this step; not checked beyond that, 7 Nov."
+  },
+  {
+    "head": "§P.6: inert ASK in the label colour",
+    "status": "unbuilt",
+    "evidence": "Ruled 8 Nov (\"ASK lit and the cell held\"), queued after 173 and 174 by the change file. PickControl draws ASK with CONTROL_LABEL, in ink, whatever its state (src/app/PickControl.tsx:205), checked 8 Nov."
+  },
+  {
+    "head": "§P.4: the cell held in the count column",
+    "status": "unbuilt",
+    "evidence": "Ruled 8 Nov (\"ASK lit and the cell held\"), queued after 173 and 174. The coordinator asks that the report of the smallest visible column height become an assertion failing when the column's visible height falls below the cell's, naming both (8 Nov), pending Design. Not checked against the code beyond that, 8 Nov."
   }
 ]
