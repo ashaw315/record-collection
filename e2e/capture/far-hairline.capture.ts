@@ -275,23 +275,33 @@ async function crossSection(page: Page, selector: string, dpr: number) {
 }
 
 async function shoot(page: Page, name: string, dir: string) {
+  if (!SHOTS) return Buffer.alloc(0);
   await page.mouse.move(0, 0);
   const png = await drawing(page).screenshot({ animations: 'disabled' });
   writeFileSync(join(dir, name), png);
   return png;
 }
 
-for (const dpr of [1, 2]) {
+/*
+  The scale follows the collection (the coordinator, 9 Nov): the far view lays out every record in the database (a
+  filter's misses are emptied seats, still placed), so its scale is crossed by records being added, not by an edit.
+  FAR_POOL seeds that many, FAR_SIZE sets the window, FAR_DPR the device scales, FAR_SHOTS=0 skips the captures; each
+  run reports the seats laid out (seated plus emptied) beside the scale and the failures.
+*/
+const POOL = Number(process.env.FAR_POOL ?? '30');
+const [W, H] = (process.env.FAR_SIZE ?? '1044x768').split('x').map(Number);
+const SHOTS = process.env.FAR_SHOTS !== '0';
+for (const dpr of (process.env.FAR_DPR ?? '1,2').split(',').map(Number)) {
   test(`the far view's rendered line contrast, and the one-device-pixel floor, at 1044 × 768 @${dpr}x`, async ({ browser }) => {
     test.skip(process.env.CAPTURE !== '1', 'A measurement tool: run with CAPTURE=1');
     test.setTimeout(240_000);
-    const ctx = await browser.newContext({ viewport: { width: 1044, height: 768 }, deviceScaleFactor: dpr });
+    const ctx = await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: dpr });
     const page = await ctx.newPage();
     await login(page);
     const suffix = `fh${dpr}${Date.now().toString(36)}`;
     const artist = (await (await page.request.post('/api/artists', { data: { name: `FarHairline-${suffix}` } })).json()) as { id: string };
     trackArtist(artist.id);
-    await seedRecords(artist.id, 'FarHairline', suffix, 30);
+    await seedRecords(artist.id, 'FarHairline', suffix, POOL);
     await page.goto(`/?artistId=${artist.id}`);
     await page.locator('[data-wall-container]:not([data-unmeasured])').waitFor({ timeout: 30_000 });
     await drawing(page).waitFor({ timeout: 30_000 });
@@ -357,6 +367,7 @@ for (const dpr of [1, 2]) {
     const floorRule = `${SVG} polygon, ${SVG} line { vector-effect: non-scaling-stroke; stroke-width: ${1 / dpr}px; }`;
     const read = async (state: string) => {
       const scale = await drawing(page).evaluate((svg) => Math.round(((svg as SVGSVGElement).getScreenCTM()?.a ?? 0) * 1000) / 1000);
+      const laidOut = await drawing(page).evaluate((svg) => { const faces = Array.from(svg.querySelectorAll('polygon')).filter((p) => p.closest('[data-piece]') === null && !p.hasAttribute('data-footprint') && p.closest('[data-run]') === null).length; return { seated: Math.round(faces / 3), emptied: svg.querySelectorAll('[data-footprint]').length }; });
       await page.mouse.move(0, 0);
       const plain = await readLines(await drawing(page).screenshot({ animations: 'disabled' }), planeLum);
       const crossPlain = await crossSection(page, SVG, dpr);
@@ -365,7 +376,7 @@ for (const dpr of [1, 2]) {
       const crossFloored = await crossSection(page, SVG, dpr);
       await floor.evaluate((el) => (el as Element).remove());
       console.log(`@${dpr}x ${state}: cross-section median of lines ${crossPlain.medianOfLines} (${crossPlain.linesAtOrAbove174} of ${crossPlain.lines} lines at or above 1.74), floored ${crossFloored.medianOfLines} (${crossFloored.linesAtOrAbove174})`);
-      return { scale, strokeCssPx: scale, strokeDevicePx: Math.round(scale * dpr * 1000) / 1000, plain, floored, crossPlain, crossFloored };
+      return { scale, laidOut, strokeCssPx: scale, strokeDevicePx: Math.round(scale * dpr * 1000) / 1000, plain, floored, crossPlain, crossFloored };
     };
 
     const rest = await read('rest');
@@ -386,7 +397,7 @@ for (const dpr of [1, 2]) {
     await shoot(page, `answer-floored-1044x768@${dpr}x.png`, capDir);
     await f.evaluate((el) => (el as Element).remove());
 
-    const out = { window: '1044x768', dpr, reference: '§W.28 hovered hairline 1.74:1', instrument: { inkOnPaper, lines: refs, crossSection: refCross }, planeLum, rest, answer };
+    const out = { window: `${W}x${H}`, pool: POOL, dpr, reference: '§W.28 hovered hairline 1.74:1', instrument: { inkOnPaper, lines: refs, crossSection: refCross }, planeLum, rest, answer };
     console.log(JSON.stringify(out, null, 1));
     const dir = join('docs', 'measurements', 'far-hairline');
     mkdirSync(dir, { recursive: true });

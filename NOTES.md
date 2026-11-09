@@ -55517,3 +55517,30 @@ cells, no row template set before content); its settled heights run 233.9 to 435
 "heights are fixed, not content-derived" describes the older bands (BANDS.record 300 is SPENT, used by nothing at
 runtime). A reserved height would need a server estimate of wrapped text, the same class of estimate as the
 quarters, whose misses record-band-43's residual already reports.
+
+**When Adam's far view crosses the failing scale (the coordinator, 9 Nov; e2e/capture/far-hairline.capture.ts with
+FAR_POOL and FAR_SIZE, a build, @2x, load 6.5 to 7.5).** The far view lays out every record in the database (a
+filter's misses are emptied seats), so the seeded runs are read by records laid out; 47 laid out gives the rest
+drawing 406 tall at 1044 × 768 against Adam's 407 at his 55 (Q3's files), so seeded spines stand in for his closely
+there. Failing lines (below 1.74:1, every kind) by records laid out:
+- 1044 × 768 at rest: 0 at 47 (scale 0.367), 77 (0.367), 117 (0.341), 132 (0.333), 147 (0.324); 1 carcass line at
+  167 (0.314) and at 267 (0.269). **The rest state first fails between 147 and 167 records, about three times his
+  55.**
+- 1044 × 768 with an answer: failing at every size measured, from today's (47: 33 lines at 0.146, or more when the
+  pulled record makes the answer taller and the scale 0.128) to 267 (540 lines at 0.094).
+- 1273 × 900 at rest: 0 at 57 (0.486), 167 (0.416), 267 (0.357). With an answer: 4 lines at 57 (0.248), 18 at 167,
+  22 at 267.
+- 1440 × 900: not measured; the far view is not on screen at load there, and the tool waits for it. The three
+  failures in that series are those runs, and the figure printed after each was the previous run's.
+So the answer state is past the line now at both measured widths, and the rest state is not near it. The
+answer-state scale also depends on the record pulled (0.146 and 0.128 on the same pool), since a taller answer
+leaves the drawing less room.
+
+**§W.34's tests assert existence, confirmed (before the fix, as Design asked).** WallOverview.test.tsx:185 counts
+`data-footprint=""` in server-rendered HTML ("one per emptied seat"); WallLabelled.test.tsx:383 counts them and
+checks stroke-width 1, fill none and the 0.72 colour; e2e/shelf.spec.ts:543 counts `[data-footprint]` among the
+fixture's records. All three pass on a far view where no footprint owns a pixel. **A family member, the sharpest
+yet:** a test that asserts a DOM element and nothing about whether it does its job, green for as long as the
+feature has existed. What would have caught it: an assertion on paint order (the footprint after the top face it
+lies on, as the ruling now says), or a hit test along the footprint's own edges (`elementFromPoint` returns the
+top-most painted element, and a stroke is hit-tested on its geometry however thin it renders).

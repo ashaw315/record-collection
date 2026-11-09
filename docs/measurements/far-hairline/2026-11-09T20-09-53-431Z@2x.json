@@ -1,0 +1,1128 @@
+{
+ "window": "1273x900",
+ "pool": 150,
+ "dpr": 2,
+ "reference": "§W.28 hovered hairline 1.74:1",
+ "instrument": {
+  "inkOnPaper": 14.75,
+  "lines": {
+   "1": {
+    "paper": 0.793,
+    "pixels": 1120,
+    "of": 24000,
+    "median": 14.75,
+    "darkest": 14.75
+   },
+   "0.5": {
+    "paper": 0.793,
+    "pixels": 1120,
+    "of": 24000,
+    "median": 3.29,
+    "darkest": 3.29
+   },
+   "0.25": {
+    "paper": 0.793,
+    "pixels": 1120,
+    "of": 24000,
+    "median": 1.7,
+    "darkest": 1.7
+   }
+  },
+  "crossSection": {
+   "lines": 4,
+   "medianOfLines": 14.75,
+   "linesAtOrAbove174": 0.75,
+   "samplesMedian": 3.29,
+   "samples": 1930,
+   "occludedSamples": 38,
+   "ownedByKind": {
+    "spine-division": 1981
+   },
+   "segmentsByKind": {
+    "spine-division": 4
+   },
+   "byKind": {
+    "spine-division": {
+     "lines": 4,
+     "below174": 1,
+     "lowest": 1.7,
+     "failing": [
+      1.7
+     ],
+     "failingLines": [
+      {
+       "median": 1.7,
+       "seg": [
+        20,
+        101,
+        580,
+        101
+       ],
+       "samples": 557,
+       "occluded": 0,
+       "mid": [
+        {
+         "d": -2,
+         "drawn": 0.793,
+         "ground": 0.793
+        },
+        {
+         "d": -1,
+         "drawn": 0.445,
+         "ground": 0.793
+        },
+        {
+         "d": 0,
+         "drawn": 0.445,
+         "ground": 0.793
+        },
+        {
+         "d": 1,
+         "drawn": 0.793,
+         "ground": 0.793
+        },
+        {
+         "d": 2,
+         "drawn": 0.793,
+         "ground": 0.793
+        }
+       ]
+      }
+     ]
+    }
+   },
+   "verticalCheck": {
+    "lines": 0,
+    "pathMedianOfLines": null,
+    "scanMedianOfLines": null,
+    "linesDifferingOver5Percent": 0,
+    "largestRelativeDifference": null,
+    "medianOffsetPx": null,
+    "largestOffsetPx": null,
+    "isolated": {
+     "lines": 0,
+     "rows": 0,
+     "pathMedianOfLines": null,
+     "scanMedianOfLines": null,
+     "linesDifferingOver5Percent": 0,
+     "largestRelativeDifference": null,
+     "medianOffsetPx": null,
+     "largestOffsetPx": null
+    }
+   },
+   "byTag": {
+    "1": 14.75,
+    "0.5": 3.29,
+    "0.25": 1.7,
+    "1@30deg": 14.75
+   }
+  }
+ },
+ "planeLum": 0.7400336199490174,
+ "rest": {
+  "scale": 0.416,
+  "laidOut": {
+   "seated": 150,
+   "emptied": 17
+  },
+  "strokeCssPx": 0.416,
+  "strokeDevicePx": 0.832,
+  "plain": {
+   "paper": 0.7913,
+   "pixels": 110655,
+   "of": 1689320,
+   "median": 3.15,
+   "darkest": 13.1
+  },
+  "floored": {
+   "paper": 0.7913,
+   "pixels": 111190,
+   "of": 1689320,
+   "median": 4.19,
+   "darkest": 15.03
+  },
+  "crossPlain": {
+   "lines": 963,
+   "medianOfLines": 7.09,
+   "linesAtOrAbove174": 1,
+   "samplesMedian": 5.97,
+   "samples": 57439,
+   "occludedSamples": 72536,
+   "ownedByKind": {
+    "carcass": 3667,
+    "spine-division": 54925,
+    "shelf": 3319
+   },
+   "segmentsByKind": {
+    "break": 1,
+    "footprint": 68,
+    "carcass": 17,
+    "shelf": 36,
+    "spine-division": 1350
+   },
+   "byKind": {
+    "carcass": {
+     "lines": 15,
+     "below174": 0,
+     "lowest": null,
+     "failing": [],
+     "failingLines": []
+    },
+    "shelf": {
+     "lines": 18,
+     "below174": 0,
+     "lowest": null,
+     "failing": [],
+     "failingLines": []
+    },
+    "spine-division": {
+     "lines": 930,
+     "below174": 0,
+     "lowest": null,
+     "failing": [],
+     "failingLines": []
+    }
+   },
+   "verticalCheck": {
+    "lines": 314,
+    "pathMedianOfLines": 6.36,
+    "scanMedianOfLines": 6.77,
+    "linesDifferingOver5Percent": 50,
+    "largestRelativeDifference": 0.675,
+    "medianOffsetPx": -0.01,
+    "largestOffsetPx": 2.48,
+    "isolated": {
+     "lines": 61,
+     "rows": 9290,
+     "pathMedianOfLines": 5.18,
+     "scanMedianOfLines": 5.18,
+     "linesDifferingOver5Percent": 0,
+     "largestRelativeDifference": 0,
+     "medianOffsetPx": 0.02,
+     "largestOffsetPx": 1.47
+    }
+   },
+   "byTag": {}
+  },
+  "crossFloored": {
+   "lines": 963,
+   "medianOfLines": 10.29,
+   "linesAtOrAbove174": 1,
+   "samplesMedian": 8.97,
+   "samples": 57439,
+   "occludedSamples": 72536,
+   "ownedByKind": {
+    "carcass": 3667,
+    "spine-division": 54925,
+    "shelf": 3319
+   },
+   "segmentsByKind": {
+    "break": 1,
+    "footprint": 68,
+    "carcass": 17,
+    "shelf": 36,
+    "spine-division": 1350
+   },
+   "byKind": {
+    "carcass": {
+     "lines": 15,
+     "below174": 0,
+     "lowest": null,
+     "failing": [],
+     "failingLines": []
+    },
+    "shelf": {
+     "lines": 18,
+     "below174": 0,
+     "lowest": null,
+     "failing": [],
+     "failingLines": []
+    },
+    "spine-division": {
+     "lines": 930,
+     "below174": 0,
+     "lowest": null,
+     "failing": [],
+     "failingLines": []
+    }
+   },
+   "verticalCheck": {
+    "lines": 314,
+    "pathMedianOfLines": 9.53,
+    "scanMedianOfLines": 10.04,
+    "linesDifferingOver5Percent": 49,
+    "largestRelativeDifference": 0.7,
+    "medianOffsetPx": 0.02,
+    "largestOffsetPx": 2.48,
+    "isolated": {
+     "lines": 61,
+     "rows": 9290,
+     "pathMedianOfLines": 8.14,
+     "scanMedianOfLines": 8.14,
+     "linesDifferingOver5Percent": 0,
+     "largestRelativeDifference": 0,
+     "medianOffsetPx": 0.07,
+     "largestOffsetPx": 1.47
+    }
+   },
+   "byTag": {}
+  }
+ },
+ "answer": {
+  "scale": 0.212,
+  "laidOut": {
+   "seated": 150,
+   "emptied": 17
+  },
+  "strokeCssPx": 0.212,
+  "strokeDevicePx": 0.424,
+  "plain": {
+   "paper": 0.7913,
+   "pixels": 49876,
+   "of": 860360,
+   "median": 1.84,
+   "darkest": 6.45
+  },
+  "floored": {
+   "paper": 0.7913,
+   "pixels": 50935,
+   "of": 860360,
+   "median": 4.65,
+   "darkest": 14.94
+  },
+  "crossPlain": {
+   "lines": 660,
+   "medianOfLines": 2.81,
+   "linesAtOrAbove174": 0.973,
+   "samplesMedian": 2.58,
+   "samples": 27238,
+   "occludedSamples": 36462,
+   "ownedByKind": {
+    "carcass": 1868,
+    "spine-division": 27139,
+    "shelf": 1593
+   },
+   "segmentsByKind": {
+    "break": 1,
+    "footprint": 68,
+    "carcass": 17,
+    "shelf": 36,
+    "spine-division": 1350
+   },
+   "byKind": {
+    "carcass": {
+     "lines": 10,
+     "below174": 5,
+     "lowest": 1.38,
+     "failing": [
+      1.38,
+      1.54,
+      1.63,
+      1.67,
+      1.7
+     ],
+     "failingLines": [
+      {
+       "median": 1.63,
+       "seg": [
+        1531,
+        1228.5,
+        1586,
+        1196.7
+       ],
+       "samples": 52,
+       "occluded": 8,
+       "mid": [
+        {
+         "d": -2,
+         "drawn": 0.791,
+         "ground": 0.791
+        },
+        {
+         "d": -1,
+         "drawn": 0.791,
+         "ground": 0.791
+        },
+        {
+         "d": 0,
+         "drawn": 0.408,
+         "ground": 0.774
+        },
+        {
+         "d": 1,
+         "drawn": 0.71,
+         "ground": 0.74
+        },
+        {
+         "d": 2,
+         "drawn": 0.74,
+         "ground": 0.74
+        }
+       ]
+      },
+      {
+       "median": 1.7,
+       "seg": [
+        1589.7,
+        1198.8,
+        1589.7,
+        1534.2
+       ],
+       "samples": 79,
+       "occluded": 253,
+       "mid": [
+        {
+         "d": -2,
+         "drawn": 0.618,
+         "ground": 0.791
+        },
+        {
+         "d": -1,
+         "drawn": 0.373,
+         "ground": 0.791
+        },
+        {
+         "d": 0,
+         "drawn": 0.21,
+         "ground": 0.791
+        },
+        {
+         "d": 1,
+         "drawn": 0.658,
+         "ground": 0.791
+        },
+        {
+         "d": 2,
+         "drawn": 0.791,
+         "ground": 0.791
+        }
+       ]
+      },
+      {
+       "median": 1.38,
+       "seg": [
+        1531,
+        1228.5,
+        1531,
+        1563.9
+       ],
+       "samples": 317,
+       "occluded": 15,
+       "mid": [
+        {
+         "d": -2,
+         "drawn": 0.543,
+         "ground": 0.74
+        },
+        {
+         "d": -1,
+         "drawn": 0.326,
+         "ground": 0.74
+        },
+        {
+         "d": 0,
+         "drawn": 0.529,
+         "ground": 0.791
+        },
+        {
+         "d": 1,
+         "drawn": 0.791,
+         "ground": 0.791
+        },
+        {
+         "d": 2,
+         "drawn": 0.791,
+         "ground": 0.791
+        }
+       ]
+      },
+      {
+       "median": 1.67,
+       "seg": [
+        1796.5,
+        1381.8,
+        1851.5,
+        1350
+       ],
+       "samples": 60,
+       "occluded": 0,
+       "mid": [
+        {
+         "d": -2,
+         "drawn": 0.849,
+         "ground": 0.849
+        },
+        {
+         "d": -1,
+         "drawn": 0.689,
+         "ground": 0.849
+        },
+        {
+         "d": 0,
+         "drawn": 0.409,
+         "ground": 0.808
+        },
+        {
+         "d": 1,
+         "drawn": 0.695,
+         "ground": 0.74
+        },
+        {
+         "d": 2,
+         "drawn": 0.74,
+         "ground": 0.74
+        }
+       ]
+      },
+      {
+       "median": 1.54,
+       "seg": [
+        1855.2,
+        1352.1,
+        1855.2,
+        1687.5
+       ],
+       "samples": 332,
+       "occluded": 0,
+       "mid": [
+        {
+         "d": -2,
+         "drawn": 0.791,
+         "ground": 0.791
+        },
+        {
+         "d": -1,
+         "drawn": 0.791,
+         "ground": 0.791
+        },
+        {
+         "d": 0,
+         "drawn": 0.352,
+         "ground": 0.776
+        },
+        {
+         "d": 1,
+         "drawn": 0.606,
+         "ground": 0.74
+        },
+        {
+         "d": 2,
+         "drawn": 0.74,
+         "ground": 0.74
+        }
+       ]
+      }
+     ]
+    },
+    "shelf": {
+     "lines": 11,
+     "below174": 2,
+     "lowest": 1.63,
+     "failing": [
+      1.63,
+      1.64
+     ],
+     "failingLines": [
+      {
+       "median": 1.63,
+       "seg": [
+        1531,
+        1563.9,
+        1800.2,
+        1719.3
+       ],
+       "samples": 280,
+       "occluded": 27,
+       "mid": [
+        {
+         "d": -2,
+         "drawn": 0.529,
+         "ground": 0.74
+        },
+        {
+         "d": -1,
+         "drawn": 0.74,
+         "ground": 0.74
+        },
+        {
+         "d": 0,
+         "drawn": 0.384,
+         "ground": 0.763
+        },
+        {
+         "d": 1,
+         "drawn": 0.776,
+         "ground": 0.791
+        },
+        {
+         "d": 2,
+         "drawn": 0.791,
+         "ground": 0.791
+        }
+       ]
+      },
+      {
+       "median": 1.64,
+       "seg": [
+        1531,
+        1308.9,
+        1586,
+        1277.2
+       ],
+       "samples": 54,
+       "occluded": 6,
+       "mid": [
+        {
+         "d": -2,
+         "drawn": 0.74,
+         "ground": 0.74
+        },
+        {
+         "d": -1,
+         "drawn": 0.74,
+         "ground": 0.74
+        },
+        {
+         "d": 0,
+         "drawn": 0.524,
+         "ground": 0.74
+        },
+        {
+         "d": 1,
+         "drawn": 0.524,
+         "ground": 0.74
+        },
+        {
+         "d": 2,
+         "drawn": 0.74,
+         "ground": 0.74
+        }
+       ]
+      }
+     ]
+    },
+    "spine-division": {
+     "lines": 639,
+     "below174": 11,
+     "lowest": 1.55,
+     "failing": [
+      1.55,
+      1.55,
+      1.62,
+      1.63,
+      1.64,
+      1.64,
+      1.66,
+      1.66,
+      1.66,
+      1.71,
+      1.71
+     ],
+     "failingLines": [
+      {
+       "median": 1.66,
+       "seg": [
+        1572.1,
+        1520.7,
+        1572.1,
+        1584.2
+       ],
+       "samples": 60,
+       "occluded": 0,
+       "mid": [
+        {
+         "d": -2,
+         "drawn": 0.791,
+         "ground": 0.791
+        },
+        {
+         "d": -1,
+         "drawn": 0.791,
+         "ground": 0.791
+        },
+        {
+         "d": 0,
+         "drawn": 0.456,
+         "ground": 0.791
+        },
+        {
+         "d": 1,
+         "drawn": 0.521,
+         "ground": 0.791
+        },
+        {
+         "d": 2,
+         "drawn": 0.4,
+         "ground": 0.791
+        }
+       ]
+      },
+      {
+       "median": 1.55,
+       "seg": [
+        1597,
+        1535.1,
+        1597,
+        1598.6
+       ],
+       "samples": 60,
+       "occluded": 0,
+       "mid": [
+        {
+         "d": -2,
+         "drawn": 0.791,
+         "ground": 0.791
+        },
+        {
+         "d": -1,
+         "drawn": 0.791,
+         "ground": 0.791
+        },
+        {
+         "d": 0,
+         "drawn": 0.491,
+         "ground": 0.791
+        },
+        {
+         "d": 1,
+         "drawn": 0.491,
+         "ground": 0.791
+        },
+        {
+         "d": 2,
+         "drawn": 0.25,
+         "ground": 0.791
+        }
+       ]
+      },
+      {
+       "median": 1.55,
+       "seg": [
+        1597,
+        1451.2,
+        1597,
+        1514.7
+       ],
+       "samples": 60,
+       "occluded": 0,
+       "mid": [
+        {
+         "d": -2,
+         "drawn": 0.791,
+         "ground": 0.791
+        },
+        {
+         "d": -1,
+         "drawn": 0.791,
+         "ground": 0.791
+        },
+        {
+         "d": 0,
+         "drawn": 0.491,
+         "ground": 0.791
+        },
+        {
+         "d": 1,
+         "drawn": 0.491,
+         "ground": 0.791
+        },
+        {
+         "d": 2,
+         "drawn": 0.451,
+         "ground": 0.791
+        }
+       ]
+      },
+      {
+       "median": 1.64,
+       "seg": [
+        1678.1,
+        1498,
+        1678.1,
+        1561.5
+       ],
+       "samples": 60,
+       "occluded": 0,
+       "mid": [
+        {
+         "d": -2,
+         "drawn": 0.791,
+         "ground": 0.791
+        },
+        {
+         "d": -1,
+         "drawn": 0.791,
+         "ground": 0.791
+        },
+        {
+         "d": 0,
+         "drawn": 0.462,
+         "ground": 0.791
+        },
+        {
+         "d": 1,
+         "drawn": 0.511,
+         "ground": 0.791
+        },
+        {
+         "d": 2,
+         "drawn": 0.41,
+         "ground": 0.791
+        }
+       ]
+      },
+      {
+       "median": 1.71,
+       "seg": [
+        1759.1,
+        1544.8,
+        1759.1,
+        1608.3
+       ],
+       "samples": 60,
+       "occluded": 0,
+       "mid": [
+        {
+         "d": -2,
+         "drawn": 0.791,
+         "ground": 0.791
+        },
+        {
+         "d": -1,
+         "drawn": 0.791,
+         "ground": 0.791
+        },
+        {
+         "d": 0,
+         "drawn": 0.441,
+         "ground": 0.791
+        },
+        {
+         "d": 1,
+         "drawn": 0.539,
+         "ground": 0.791
+        },
+        {
+         "d": 2,
+         "drawn": 0.371,
+         "ground": 0.791
+        }
+       ]
+      },
+      {
+       "median": 1.62,
+       "seg": [
+        1784,
+        1559.2,
+        1784,
+        1622.7
+       ],
+       "samples": 60,
+       "occluded": 0,
+       "mid": [
+        {
+         "d": -2,
+         "drawn": 0.791,
+         "ground": 0.791
+        },
+        {
+         "d": -1,
+         "drawn": 0.791,
+         "ground": 0.791
+        },
+        {
+         "d": 0,
+         "drawn": 0.468,
+         "ground": 0.791
+        },
+        {
+         "d": 1,
+         "drawn": 0.503,
+         "ground": 0.791
+        },
+        {
+         "d": 2,
+         "drawn": 0.232,
+         "ground": 0.791
+        }
+       ]
+      },
+      {
+       "median": 1.66,
+       "seg": [
+        1572.1,
+        1353,
+        1572.1,
+        1416.5
+       ],
+       "samples": 60,
+       "occluded": 0,
+       "mid": [
+        {
+         "d": -2,
+         "drawn": 0.791,
+         "ground": 0.791
+        },
+        {
+         "d": -1,
+         "drawn": 0.791,
+         "ground": 0.791
+        },
+        {
+         "d": 0,
+         "drawn": 0.456,
+         "ground": 0.791
+        },
+        {
+         "d": 1,
+         "drawn": 0.521,
+         "ground": 0.791
+        },
+        {
+         "d": 2,
+         "drawn": 0.4,
+         "ground": 0.791
+        }
+       ]
+      },
+      {
+       "median": 1.66,
+       "seg": [
+        1621.9,
+        1381.8,
+        1621.9,
+        1445.3
+       ],
+       "samples": 60,
+       "occluded": 0,
+       "mid": [
+        {
+         "d": -2,
+         "drawn": 0.791,
+         "ground": 0.791
+        },
+        {
+         "d": -1,
+         "drawn": 0.515,
+         "ground": 0.791
+        },
+        {
+         "d": 0,
+         "drawn": 0.456,
+         "ground": 0.791
+        },
+        {
+         "d": 1,
+         "drawn": 0.505,
+         "ground": 0.791
+        },
+        {
+         "d": 2,
+         "drawn": 0.305,
+         "ground": 0.791
+        }
+       ]
+      },
+      {
+       "median": 1.63,
+       "seg": [
+        1703,
+        1428.6,
+        1703,
+        1492.1
+       ],
+       "samples": 60,
+       "occluded": 0,
+       "mid": [
+        {
+         "d": -2,
+         "drawn": 0.791,
+         "ground": 0.791
+        },
+        {
+         "d": -1,
+         "drawn": 0.492,
+         "ground": 0.791
+        },
+        {
+         "d": 0,
+         "drawn": 0.48,
+         "ground": 0.791
+        },
+        {
+         "d": 1,
+         "drawn": 0.467,
+         "ground": 0.791
+        },
+        {
+         "d": 2,
+         "drawn": 0.339,
+         "ground": 0.791
+        }
+       ]
+      },
+      {
+       "median": 1.64,
+       "seg": [
+        1678.1,
+        1330.3,
+        1678.1,
+        1393.8
+       ],
+       "samples": 60,
+       "occluded": 0,
+       "mid": [
+        {
+         "d": -2,
+         "drawn": 0.791,
+         "ground": 0.791
+        },
+        {
+         "d": -1,
+         "drawn": 0.791,
+         "ground": 0.791
+        },
+        {
+         "d": 0,
+         "drawn": 0.462,
+         "ground": 0.791
+        },
+        {
+         "d": 1,
+         "drawn": 0.511,
+         "ground": 0.791
+        },
+        {
+         "d": 2,
+         "drawn": 0.41,
+         "ground": 0.791
+        }
+       ]
+      },
+      {
+       "median": 1.71,
+       "seg": [
+        1759.1,
+        1377.1,
+        1759.1,
+        1440.6
+       ],
+       "samples": 60,
+       "occluded": 0,
+       "mid": [
+        {
+         "d": -2,
+         "drawn": 0.791,
+         "ground": 0.791
+        },
+        {
+         "d": -1,
+         "drawn": 0.791,
+         "ground": 0.791
+        },
+        {
+         "d": 0,
+         "drawn": 0.441,
+         "ground": 0.791
+        },
+        {
+         "d": 1,
+         "drawn": 0.539,
+         "ground": 0.791
+        },
+        {
+         "d": 2,
+         "drawn": 0.371,
+         "ground": 0.791
+        }
+       ]
+      }
+     ]
+    }
+   },
+   "verticalCheck": {
+    "lines": 299,
+    "pathMedianOfLines": 2.76,
+    "scanMedianOfLines": 3.07,
+    "linesDifferingOver5Percent": 51,
+    "largestRelativeDifference": 0.475,
+    "medianOffsetPx": -0.15,
+    "largestOffsetPx": 2.46,
+    "isolated": {
+     "lines": 65,
+     "rows": 4311,
+     "pathMedianOfLines": 3.34,
+     "scanMedianOfLines": 3.34,
+     "linesDifferingOver5Percent": 0,
+     "largestRelativeDifference": 0,
+     "medianOffsetPx": -0.14,
+     "largestOffsetPx": 1.5
+    }
+   },
+   "byTag": {}
+  },
+  "crossFloored": {
+   "lines": 660,
+   "medianOfLines": 11.3,
+   "linesAtOrAbove174": 1,
+   "samplesMedian": 10.6,
+   "samples": 27238,
+   "occludedSamples": 36462,
+   "ownedByKind": {
+    "carcass": 1868,
+    "spine-division": 27139,
+    "shelf": 1593
+   },
+   "segmentsByKind": {
+    "break": 1,
+    "footprint": 68,
+    "carcass": 17,
+    "shelf": 36,
+    "spine-division": 1350
+   },
+   "byKind": {
+    "carcass": {
+     "lines": 10,
+     "below174": 0,
+     "lowest": null,
+     "failing": [],
+     "failingLines": []
+    },
+    "shelf": {
+     "lines": 11,
+     "below174": 0,
+     "lowest": null,
+     "failing": [],
+     "failingLines": []
+    },
+    "spine-division": {
+     "lines": 639,
+     "below174": 0,
+     "lowest": null,
+     "failing": [],
+     "failingLines": []
+    }
+   },
+   "verticalCheck": {
+    "lines": 299,
+    "pathMedianOfLines": 11.43,
+    "scanMedianOfLines": 11.88,
+    "linesDifferingOver5Percent": 65,
+    "largestRelativeDifference": 0.709,
+    "medianOffsetPx": -0.1,
+    "largestOffsetPx": 2.46,
+    "isolated": {
+     "lines": 65,
+     "rows": 4311,
+     "pathMedianOfLines": 12.36,
+     "scanMedianOfLines": 12.36,
+     "linesDifferingOver5Percent": 0,
+     "largestRelativeDifference": 0,
+     "medianOffsetPx": -0.12,
+     "largestOffsetPx": 1.5
+    }
+   },
+   "byTag": {}
+  }
+ }
+}
