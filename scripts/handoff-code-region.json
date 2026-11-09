@@ -767,5 +767,20 @@
         "clause": "- **Unnumbered, for Code to number — §T.6: every exit the page owns asks.**\n  - **Below 640,** with an open form that has changes, the line asks before:\n    - changing section;\n    - following a link in the app;\n    - Back.\n  - **Back:** opening a row adds one history entry, and closing it by any means removes it, so Back with nothing open goes to the previous screen.\n  - **The browser's exits:** add the unload prompt.\n  - **Report** what an iPhone and Android do on reload and on Back with changes.\n  - **Capture** at 390 under a coarse pointer: each exit asked.\n  > Every exit the page owns asks first with the same line, and Back is one of them: opening a row adds one entry to the history, so Back closes the row and asks as a close does."
       }
     ]
+  },
+  {
+    "id": "step-175",
+    "before": "- **Unnumbered, for Code to number — §W.34: the footprint drawn on its face.**",
+    "why": "Code's number for Design's unnumbered §W.34 footprint step (\"Footprints and §62 closed\", 9 Nov); built before the step arrived, on Design's ruling relayed by the coordinator.",
+    "text": "175. **Done: §W.34 — the footprint drawn on its face: Code's number for that step.** Built at 45d1f24a. Each footprint paints straight after the shelf top it lies on, inside that shelf's group and its place in §W.18's sort (WallOverview.tsx); footprints had never been visible, every one under its own shelf top. Asserted on the order (WallOverview.test: inside a shelf piece, after its top face, on it) and on what is seen (e2e/footprint-visible-34.spec.ts: along each footprint's own edges, visible, hidden by what is in front of its shelf, or hidden by its own shelf top, found by geometry, which fails; on the old drawing 0 visible and 13 hidden by their own shelf top). Per footprint at the four states (e2e/capture/far-hairline.capture.ts, 1044 × 768, 17 footprints): visible at @1x and @2x, at rest and with an answer, each with its visible pixels, 4 to 242, none hidden by its own top face. The hairline measure on footprints is parked with the far-view thread.",
+    "discharges": [
+      {
+        "head": "§W.34: the footprint drawn on its face",
+        "clause": "- **Unnumbered, for Code to number — §W.34: the footprint drawn on its face.**\n  - **Paint each footprint straight after the shelf's top face it lies on,** sorted with that face by §W.18. The build draws footprints before the furniture, so the top face has always covered them: §W.34 was never followed, and no ruling changes.\n  - **Report, per footprint, at the four states, one of three:**\n    1. **Visible,** with its visible pixels.\n    2. **Hidden, by what:** the board above, an upright, or a record in front. A pass when §W.18's sort puts that in front of the top face.\n    3. **Hidden by its own top face.** Fail the step on any one.\n  - **Weight:** 1px is one screen pixel. The hairline measure runs on footprints once they're visible. That is parked with the far-view thread, so report the pixels only.\n  > The first option: an emptied seat draws its footprint — the seat’s own rectangle on the shelf’s top face, 12 × 150, one hairline at 0.72."
+      }
+    ],
+    "states": [
+      "built, nothing owed"
+    ]
   }
 ]
