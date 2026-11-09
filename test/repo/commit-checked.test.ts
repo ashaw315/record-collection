@@ -454,8 +454,9 @@ describe('a commit carries the files it names', () => {
 
 /*
   **A step's captures follow the commit that names them (the coordinator, 4 Nov).**
-  Captures are untracked, so they cannot ride a commit, and three times a step's
-  look was held because Adam had to find PNGs by hand. After the commit, the
+  Judgement captures ride the commit that reports them (8 Nov; until then they
+  were left untracked, because of the intent-add collision captures-unchanged's
+  file describes), and three times a step's look was held because Adam had to find PNGs by hand. After the commit, the
   folders the message names as `docs/captures/<name>` are exported from the
   working tree by `scripts/export-captures.mjs`, under the same ~/Downloads
   naming as the documents. Staged with the export replaced by a recorder
@@ -495,6 +496,31 @@ describe('the captures a commit message names are exported after the commit', ()
     const result = runCaptures(dir, recorder(dir), ['-m', 'NOTES: a read of a run', 'a.txt']);
     expect(result.status, result.output).toBe(0);
     expect(existsSync(join(dir, 'captures-exported'))).toBe(false);
+  });
+
+  /*
+    Judgement captures are committed with the commit that reports them (the coordinator, 8 Nov). A capture the commit
+    does not carry is reported, whatever the reason it was left: no size or kind rule decides it silently.
+  */
+  it('reports each file under a named captures folder that the commit leaves out, with its size', () => {
+    const { dir, git } = repo();
+    mkdirSync(join(dir, 'docs', 'captures', 'q3'), { recursive: true });
+    writeFileSync(join(dir, 'docs', 'captures', 'q3', 'shot.png'), 'png');
+    writeFileSync(join(dir, 'docs', 'captures', 'q3', 'pan.webm'), 'webm-bytes');
+    const result = runCaptures(dir, 'true', ['-m', 'Q3 in docs/captures/q3', 'docs/captures/q3/shot.png']);
+    expect(result.status, result.output).toBe(0);
+    expect(git('show', '--name-only', '--format=', 'HEAD')).toBe('docs/captures/q3/shot.png');
+    expect(result.output).toContain('captures left out of this commit, untracked: docs/captures/q3/pan.webm (10 bytes)');
+    expect(result.output).not.toMatch(/left out[^\n]*shot\.png/);
+  });
+
+  it('reports nothing left out when the commit carries the whole named folder', () => {
+    const { dir } = repo();
+    mkdirSync(join(dir, 'docs', 'captures', 'q3'), { recursive: true });
+    writeFileSync(join(dir, 'docs', 'captures', 'q3', 'shot.png'), 'png');
+    const result = runCaptures(dir, 'true', ['-m', 'Q3 in docs/captures/q3', 'docs/captures/q3/shot.png']);
+    expect(result.status, result.output).toBe(0);
+    expect(result.output).not.toContain('left out of this commit');
   });
 
   it('keeps the commit when the captures export fails, and says so with the export status', () => {

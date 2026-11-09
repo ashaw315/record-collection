@@ -1,7 +1,9 @@
 import { execFileSync } from 'node:child_process';
-import { readdirSync, readFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { rewrittenCaptures } from '../../scripts/captures-rewritten.mjs';
 
 const REPO_ROOT = join(import.meta.dirname, '..', '..');
 
@@ -16,19 +18,61 @@ const REPO_ROOT = join(import.meta.dirname, '..', '..');
  * writers now write only with `WRITE_CAPTURES=1`; this is what catches the
  * next writer, which will not know about the flag.
  *
- * Tracked files only. A new capture beside the old ones is how a step adds
- * evidence, so untracked files are allowed; a tracked file that differs
- * from HEAD, staged or not, or has been deleted, fails here by name.
+ * Committed files only. A new capture beside the old ones is how a step adds
+ * evidence, so a file added since HEAD, untracked or intent-added, is allowed;
+ * a committed file that differs from HEAD, staged or not, or has been
+ * deleted, fails here by name (scripts/captures-rewritten.mjs).
  */
 describe('committed captures are unchanged', () => {
   it('no tracked file under docs/captures differs from HEAD', () => {
-    const changed = execFileSync('git', ['diff', '--name-only', 'HEAD', '--', 'docs/captures'], {
-      cwd: REPO_ROOT,
-      encoding: 'utf-8',
-    })
-      .split('\n')
-      .filter((line) => line.trim() !== '');
+    const changed = rewrittenCaptures(REPO_ROOT);
     expect(changed, `committed captures were rewritten or removed:\n  ${changed.join('\n  ')}`).toEqual([]);
+  });
+});
+
+/**
+ * **A capture added since HEAD is not a rewritten one (the coordinator, 8 Nov).** This narrows the assertion back to
+ * the defect it was written for, a run overwriting committed captures, and is not a weakening: modified, deleted and
+ * retyped committed captures still fail. What it stops counting is a file ADDED since HEAD, which is how a step adds
+ * evidence. Since 27 Oct commit-checked.sh intent-adds every untracked path a commit names for its check, and an
+ * intent-added capture showed in `git diff HEAD` as changed, so a commit naming a new capture was refused. On 4 Nov
+ * that collision was written down as "captures are untracked, so they cannot ride a commit" and held twelve days as
+ * if someone had chosen it. Staged in a throwaway repository, each case as the commit path leaves it.
+ */
+describe('rewrittenCaptures: what counts as a rewritten capture', () => {
+  const staged = () => {
+    const dir = mkdtempSync(join(tmpdir(), 'captures-rewritten-'));
+    const git = (...args: string[]) => execFileSync('git', args, { cwd: dir, encoding: 'utf-8' }).trim();
+    git('init', '-q');
+    git('config', 'user.email', 'test@example.invalid');
+    git('config', 'user.name', 'Test');
+    git('config', 'commit.gpgsign', 'false');
+    mkdirSync(join(dir, 'docs', 'captures', 'step'), { recursive: true });
+    writeFileSync(join(dir, 'docs', 'captures', 'step', 'kept.png'), 'kept');
+    git('add', '.');
+    git('commit', '-q', '-m', 'a committed capture');
+    return { dir, git, done: () => rmSync(dir, { recursive: true, force: true }) };
+  };
+
+  it('does not count a new capture intent-added for a commit check', () => {
+    const { dir, git, done } = staged();
+    writeFileSync(join(dir, 'docs', 'captures', 'step', 'new.png'), 'new');
+    git('add', '--intent-to-add', '--', 'docs/captures/step/new.png');
+    expect(git('diff', '--name-only', 'HEAD', '--', 'docs/captures'), 'the precondition: git diff HEAD lists the intent-added capture').toBe('docs/captures/step/new.png');
+    expect(rewrittenCaptures(dir)).toEqual([]);
+    done();
+  });
+
+  it('counts a committed capture modified, staged or not, or deleted', () => {
+    const { dir, git, done } = staged();
+    writeFileSync(join(dir, 'docs', 'captures', 'step', 'kept.png'), 'a later build');
+    expect(rewrittenCaptures(dir)).toEqual(['docs/captures/step/kept.png']);
+    git('add', '--', 'docs/captures/step/kept.png');
+    expect(rewrittenCaptures(dir), 'staged').toEqual(['docs/captures/step/kept.png']);
+    git('rm', '-q', '--cached', '--', 'docs/captures/step/kept.png');
+    rmSync(join(dir, 'docs', 'captures', 'step', 'kept.png'));
+    expect(rewrittenCaptures(dir), 'deleted').toEqual(['docs/captures/step/kept.png']);
+    done();
   });
 });
 

@@ -5,7 +5,11 @@
  *     node scripts/export-captures.mjs years-166              # into ~/Downloads
  *     node scripts/export-captures.mjs --out DIR years-166 arrow-167
  *
- * Captures are untracked, so they cannot ride a commit, and the look of a
+ * Written on the premise that captures are untracked and cannot ride a commit.
+ * That premise was a collision between two guards, not a decision (found 8 Nov:
+ * captures-unchanged counted the paths commit-checked intent-adds), and since
+ * 8 Nov judgement captures are committed with the commit that reports them.
+ * The export stays as Adam's copy to relay. The look of a
  * step is "provisional until captured" in Design's targets; three times
  * (step 159, 166, 167) the captures were the bottleneck because Adam had to
  * find PNGs by hand in `docs/captures/`. `commit-checked.sh` runs this after
@@ -14,7 +18,7 @@
  * commit that reports them, under the same naming as the documents.
  *
  * From the working tree, not HEAD: `export-handoff.mjs --captures` reads a
- * folder as committed, and no capture folder is committed. The folder is
+ * folder as committed, and until 8 Nov no capture folder was. The folder is
  * copied whole, subfolders included, as it stands.
  */
 import { execFileSync } from 'node:child_process';

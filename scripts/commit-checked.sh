@@ -224,6 +224,15 @@ fi
 captures=()
 while IFS= read -r name; do [ -n "$name" ] && captures+=("$name"); done < <(grep -oE 'docs/captures/[A-Za-z0-9][A-Za-z0-9._-]*' <<<"$message" | sed 's#^docs/captures/##; s#[._-]*$##' | awk '!seen[$0]++')
 if [ ${#captures[@]} -gt 0 ]; then
+  # Judgement captures ride the commit that reports them (the coordinator,
+  # 8 Nov), so a file under a named folder that this commit leaves untracked
+  # is said, with its size, whatever the reason it was left: no size or kind
+  # rule excludes a capture silently.
+  for name in "${captures[@]}"; do
+    while IFS= read -r left; do
+      [ -n "$left" ] && echo "captures left out of this commit, untracked: $left ($(wc -c < "$left" | tr -d ' ') bytes)"
+    done < <(git ls-files --others --exclude-standard -- "docs/captures/$name")
+  done
   if ! bash -o pipefail -c "${COMMIT_EXPORT_CAPTURES:-node scripts/export-captures.mjs} \"\$@\"" -- "${captures[@]}"; then
     echo "COMMITTED, but the captures were NOT exported: run node scripts/export-captures.mjs ${captures[*]} and read why." >&2
     exit 3
