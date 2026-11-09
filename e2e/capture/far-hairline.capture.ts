@@ -118,6 +118,14 @@ async function crossSection(page: Page, selector: string, dpr: number) {
   const lines: Array<{ tag: string; median: number }> = [];
   const all: number[] = [];
   let occluded = 0;
+  /*
+    The path checked against the pixels (the coordinator, 9 Nov). Sampling along the drawing's own account of a line
+    trusts that the line is where the drawing says; if the render sits beside it (identity-band-holds:79, 0.45px with
+    nothing noticing), the path measure reads ground and reports a low contrast as a finding. On the vertical lines,
+    where a row scan needs no direction, each row's darkest pixel within ±2 device px of the path is found from the
+    pixels alone, and its figure and its offset from the path are kept beside the path's.
+  */
+  const verticals: Array<{ path: number; scan: number; meanOffset: number }> = [];
   for (const { tag, seg } of segs) {
     const [x1, y1, x2, y2] = seg.map((v) => v * dpr);
     const length = Math.hypot(x2 - x1, y2 - y1);
@@ -143,6 +151,24 @@ async function crossSection(page: Page, selector: string, dpr: number) {
       samples.push(best === 0 ? 1 : best);
     }
     all.push(...samples);
+    if (Math.abs(x2 - x1) < 0.01 && samples.length >= 3) {
+      const scans: number[] = []; const offsets: number[] = [];
+      for (let t = 2; t <= length - 2; t += 1) {
+        const y = Math.floor(y1 + uy * t);
+        let best = 0; let at = -1; let visible = false;
+        for (let x = Math.floor(x1) - 2; x <= Math.floor(x1) + 2; x += 1) {
+          if (x < 0 || x >= drawn.width || y < 0 || y >= drawn.height) continue;
+          const [l, g] = [lumAt(drawn, x, y), lumAt(ground, x, y)];
+          if (Math.abs(g - l) > 0.002) visible = true;
+          if (l < g && ratio(g, l) > best) { best = ratio(g, l); at = x; }
+        }
+        if (!visible) continue;
+        scans.push(best === 0 ? 1 : best);
+        if (at >= 0) offsets.push(at + 0.5 - x1);
+      }
+      const [pm, sm] = [median(samples), median(scans)];
+      if (pm !== null && sm !== null) verticals.push({ path: pm, scan: sm, meanOffset: offsets.length === 0 ? 0 : Math.round((offsets.reduce((a, b) => a + b, 0) / offsets.length) * 100) / 100 });
+    }
     const m = median(samples);
     if (samples.length >= 3 && m !== null) lines.push({ tag, median: m });
   }
@@ -154,6 +180,15 @@ async function crossSection(page: Page, selector: string, dpr: number) {
     samplesMedian: median(all),
     samples: all.length,
     occludedSamples: occluded,
+    verticalCheck: {
+      lines: verticals.length,
+      pathMedianOfLines: median(verticals.map((v) => v.path)),
+      scanMedianOfLines: median(verticals.map((v) => v.scan)),
+      linesDifferingOver5Percent: verticals.filter((v) => Math.abs(v.path - v.scan) / v.scan > 0.05).length,
+      largestRelativeDifference: verticals.length === 0 ? null : Math.round(Math.max(...verticals.map((v) => Math.abs(v.path - v.scan) / v.scan)) * 1000) / 1000,
+      medianOffsetPx: median(verticals.map((v) => v.meanOffset)),
+      largestOffsetPx: verticals.length === 0 ? null : Math.max(...verticals.map((v) => Math.abs(v.meanOffset))),
+    },
     byTag: Object.fromEntries(lines.filter((l) => l.tag !== '').map((l) => [l.tag, l.median])),
   };
 }

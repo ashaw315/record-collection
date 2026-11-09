@@ -55450,3 +55450,10 @@ truncates and holds the test database and a second run beside the suite would re
 1066 that was negligible; spanning the suite it holds one worker of four for twenty minutes, so the suite around it
 runs on three, and the load it measures under is lighter than a gate's by that worker. Known, chosen, and not a
 defect to rediscover.
+
+**The path checked against the pixels, on the far view's 86 vertical lines (the coordinator, 9 Nov).** Position
+agrees: the darkest pixel's centre sits a median 0.02 to 0.05 device px from the drawn path @2x and at rest @1x,
+0.18 and 0.30 @1x with an answer. The median-of-lines figures agree within 0 to 14% (path against scan: @2x rest
+4.61/4.80, answer 2.10/2.10; @1x rest 2.28/2.51, answer 1.50/1.59). But 9 to 41 of the 86 to 87 lines differ by more
+than 5%, and the largest offsets (2.0 to 2.5 px) sit at the scan window's edge (±2), which reads as the scan reaching
+a neighbouring line rather than the path missing its own; not yet shown which. Unresolved, not claimed as agreement.
