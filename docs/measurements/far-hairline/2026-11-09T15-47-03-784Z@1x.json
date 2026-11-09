@@ -1,0 +1,602 @@
+{
+ "window": "1044x768",
+ "dpr": 1,
+ "reference": "§W.28 hovered hairline 1.74:1",
+ "instrument": {
+  "inkOnPaper": 14.75,
+  "lines": {
+   "1": {
+    "paper": 0.793,
+    "pixels": 280,
+    "of": 6000,
+    "median": 14.75,
+    "darkest": 14.75
+   },
+   "0.5": {
+    "paper": 0.793,
+    "pixels": 280,
+    "of": 6000,
+    "median": 3.29,
+    "darkest": 3.29
+   },
+   "0.25": {
+    "paper": 0.793,
+    "pixels": 280,
+    "of": 6000,
+    "median": 1.7,
+    "darkest": 1.7
+   }
+  },
+  "crossSection": {
+   "lines": 4,
+   "medianOfLines": 7.09,
+   "linesAtOrAbove174": 0.75,
+   "samplesMedian": 3.29,
+   "samples": 978,
+   "occludedSamples": 0,
+   "byKind": {
+    "spine-division": {
+     "lines": 4,
+     "below174": 1,
+     "lowest": 1.7,
+     "failing": [
+      1.7
+     ]
+    }
+   },
+   "verticalCheck": {
+    "lines": 0,
+    "pathMedianOfLines": null,
+    "scanMedianOfLines": null,
+    "linesDifferingOver5Percent": 0,
+    "largestRelativeDifference": null,
+    "medianOffsetPx": null,
+    "largestOffsetPx": null,
+    "isolated": {
+     "lines": 0,
+     "rows": 0,
+     "pathMedianOfLines": null,
+     "scanMedianOfLines": null,
+     "linesDifferingOver5Percent": 0,
+     "largestRelativeDifference": null,
+     "medianOffsetPx": null,
+     "largestOffsetPx": null
+    }
+   },
+   "byTag": {
+    "1": 14.75,
+    "0.5": 3.29,
+    "0.25": 1.7,
+    "1@30deg": 7.09
+   }
+  }
+ },
+ "planeLum": 0.7400336199490174,
+ "rest": {
+  "scale": 0.367,
+  "strokeCssPx": 0.367,
+  "strokeDevicePx": 0.367,
+  "plain": {
+   "paper": 0.7913,
+   "pixels": 11800,
+   "of": 225736,
+   "median": 1.54,
+   "darkest": 5.2
+  },
+  "floored": {
+   "paper": 0.7913,
+   "pixels": 11997,
+   "of": 225736,
+   "median": 3.48,
+   "darkest": 14.97
+  },
+  "crossPlain": {
+   "lines": 216,
+   "medianOfLines": 2.12,
+   "linesAtOrAbove174": 0.87,
+   "samplesMedian": 2.06,
+   "samples": 10101,
+   "occludedSamples": 5345,
+   "byKind": {
+    "break": {
+     "lines": 1,
+     "below174": 0,
+     "lowest": null,
+     "failing": []
+    },
+    "carcass": {
+     "lines": 11,
+     "below174": 6,
+     "lowest": 1.35,
+     "failing": [
+      1.35,
+      1.35,
+      1.36,
+      1.45,
+      1.49,
+      1.72
+     ]
+    },
+    "footprint": {
+     "lines": 17,
+     "below174": 2,
+     "lowest": 1.55,
+     "failing": [
+      1.55,
+      1.55
+     ]
+    },
+    "shelf": {
+     "lines": 17,
+     "below174": 10,
+     "lowest": 1.48,
+     "failing": [
+      1.48,
+      1.49,
+      1.49,
+      1.5,
+      1.51,
+      1.53,
+      1.56,
+      1.66,
+      1.69,
+      1.72
+     ]
+    },
+    "spine-division": {
+     "lines": 170,
+     "below174": 10,
+     "lowest": 1.38,
+     "failing": [
+      1.38,
+      1.43,
+      1.49,
+      1.55,
+      1.56,
+      1.56,
+      1.56,
+      1.64,
+      1.7,
+      1.72
+     ]
+    }
+   },
+   "verticalCheck": {
+    "lines": 86,
+    "pathMedianOfLines": 2.61,
+    "scanMedianOfLines": 2.67,
+    "linesDifferingOver5Percent": 15,
+    "largestRelativeDifference": 0.531,
+    "medianOffsetPx": 0.01,
+    "largestOffsetPx": 2.12,
+    "isolated": {
+     "lines": 21,
+     "rows": 1220,
+     "pathMedianOfLines": 2.69,
+     "scanMedianOfLines": 2.69,
+     "linesDifferingOver5Percent": 0,
+     "largestRelativeDifference": 0,
+     "medianOffsetPx": 0.17,
+     "largestOffsetPx": 1.38
+    }
+   },
+   "byTag": {}
+  },
+  "crossFloored": {
+   "lines": 216,
+   "medianOfLines": 8.68,
+   "linesAtOrAbove174": 1,
+   "samplesMedian": 6.96,
+   "samples": 10102,
+   "occludedSamples": 5344,
+   "byKind": {
+    "break": {
+     "lines": 1,
+     "below174": 0,
+     "lowest": null,
+     "failing": []
+    },
+    "carcass": {
+     "lines": 11,
+     "below174": 0,
+     "lowest": null,
+     "failing": []
+    },
+    "footprint": {
+     "lines": 17,
+     "below174": 0,
+     "lowest": null,
+     "failing": []
+    },
+    "shelf": {
+     "lines": 17,
+     "below174": 0,
+     "lowest": null,
+     "failing": []
+    },
+    "spine-division": {
+     "lines": 170,
+     "below174": 0,
+     "lowest": null,
+     "failing": []
+    }
+   },
+   "verticalCheck": {
+    "lines": 86,
+    "pathMedianOfLines": 12.33,
+    "scanMedianOfLines": 12.38,
+    "linesDifferingOver5Percent": 16,
+    "largestRelativeDifference": 0.757,
+    "medianOffsetPx": 0.02,
+    "largestOffsetPx": 2.12,
+    "isolated": {
+     "lines": 21,
+     "rows": 1219,
+     "pathMedianOfLines": 12.38,
+     "scanMedianOfLines": 12.38,
+     "linesDifferingOver5Percent": 0,
+     "largestRelativeDifference": 0,
+     "medianOffsetPx": 0.17,
+     "largestOffsetPx": 1.38
+    }
+   },
+   "byTag": {}
+  }
+ },
+ "answer": {
+  "scale": 0.146,
+  "strokeCssPx": 0.146,
+  "strokeDevicePx": 0.146,
+  "plain": {
+   "paper": 0.7913,
+   "pixels": 3284,
+   "of": 90072,
+   "median": 1.26,
+   "darkest": 2.2
+  },
+  "floored": {
+   "paper": 0.7913,
+   "pixels": 3486,
+   "of": 90072,
+   "median": 4.13,
+   "darkest": 14.85
+  },
+  "crossPlain": {
+   "lines": 212,
+   "medianOfLines": 1.53,
+   "linesAtOrAbove174": 0.024,
+   "samplesMedian": 1.48,
+   "samples": 3926,
+   "occludedSamples": 1510,
+   "byKind": {
+    "break": {
+     "lines": 1,
+     "below174": 1,
+     "lowest": 1.59,
+     "failing": [
+      1.59
+     ]
+    },
+    "carcass": {
+     "lines": 11,
+     "below174": 11,
+     "lowest": 1.06,
+     "failing": [
+      1.06,
+      1.17,
+      1.17,
+      1.17,
+      1.23,
+      1.24,
+      1.31,
+      1.32,
+      1.36,
+      1.39,
+      1.41
+     ]
+    },
+    "footprint": {
+     "lines": 16,
+     "below174": 16,
+     "lowest": 1.16,
+     "failing": [
+      1.16,
+      1.3,
+      1.3,
+      1.53,
+      1.53,
+      1.53,
+      1.53,
+      1.53,
+      1.53,
+      1.53,
+      1.53,
+      1.53,
+      1.53,
+      1.53,
+      1.59,
+      1.59
+     ]
+    },
+    "shelf": {
+     "lines": 18,
+     "below174": 18,
+     "lowest": 1.09,
+     "failing": [
+      1.09,
+      1.16,
+      1.16,
+      1.18,
+      1.19,
+      1.24,
+      1.26,
+      1.26,
+      1.26,
+      1.28,
+      1.28,
+      1.32,
+      1.43,
+      1.56,
+      1.6,
+      1.66,
+      1.71,
+      1.72
+     ]
+    },
+    "spine-division": {
+     "lines": 166,
+     "below174": 161,
+     "lowest": 1.05,
+     "failing": [
+      1.05,
+      1.05,
+      1.21,
+      1.23,
+      1.25,
+      1.25,
+      1.26,
+      1.28,
+      1.29,
+      1.3,
+      1.3,
+      1.3,
+      1.3,
+      1.32,
+      1.32,
+      1.32,
+      1.33,
+      1.36,
+      1.36,
+      1.37,
+      1.37,
+      1.37,
+      1.37,
+      1.37,
+      1.38,
+      1.39,
+      1.39,
+      1.4,
+      1.41,
+      1.42,
+      1.43,
+      1.43,
+      1.43,
+      1.43,
+      1.44,
+      1.44,
+      1.44,
+      1.44,
+      1.44,
+      1.45,
+      1.45,
+      1.45,
+      1.45,
+      1.47,
+      1.47,
+      1.47,
+      1.48,
+      1.48,
+      1.48,
+      1.48,
+      1.49,
+      1.49,
+      1.49,
+      1.49,
+      1.5,
+      1.5,
+      1.5,
+      1.51,
+      1.51,
+      1.51,
+      1.52,
+      1.52,
+      1.52,
+      1.52,
+      1.52,
+      1.53,
+      1.53,
+      1.53,
+      1.53,
+      1.53,
+      1.53,
+      1.53,
+      1.53,
+      1.53,
+      1.53,
+      1.53,
+      1.53,
+      1.53,
+      1.53,
+      1.53,
+      1.53,
+      1.53,
+      1.53,
+      1.54,
+      1.54,
+      1.54,
+      1.54,
+      1.54,
+      1.54,
+      1.54,
+      1.54,
+      1.54,
+      1.54,
+      1.54,
+      1.55,
+      1.55,
+      1.56,
+      1.56,
+      1.56,
+      1.56,
+      1.56,
+      1.56,
+      1.56,
+      1.56,
+      1.56,
+      1.56,
+      1.56,
+      1.57,
+      1.57,
+      1.58,
+      1.58,
+      1.58,
+      1.58,
+      1.58,
+      1.58,
+      1.58,
+      1.58,
+      1.58,
+      1.58,
+      1.59,
+      1.59,
+      1.59,
+      1.59,
+      1.59,
+      1.59,
+      1.59,
+      1.59,
+      1.59,
+      1.59,
+      1.59,
+      1.59,
+      1.6,
+      1.6,
+      1.6,
+      1.6,
+      1.61,
+      1.61,
+      1.61,
+      1.63,
+      1.63,
+      1.63,
+      1.63,
+      1.64,
+      1.64,
+      1.64,
+      1.64,
+      1.64,
+      1.64,
+      1.64,
+      1.64,
+      1.65,
+      1.65,
+      1.67,
+      1.67,
+      1.67,
+      1.67,
+      1.67,
+      1.67,
+      1.68,
+      1.68,
+      1.68
+     ]
+    }
+   },
+   "verticalCheck": {
+    "lines": 87,
+    "pathMedianOfLines": 1.53,
+    "scanMedianOfLines": 1.58,
+    "linesDifferingOver5Percent": 28,
+    "largestRelativeDifference": 0.286,
+    "medianOffsetPx": 0.24,
+    "largestOffsetPx": 2.48,
+    "isolated": {
+     "lines": 3,
+     "rows": 181,
+     "pathMedianOfLines": 1.17,
+     "scanMedianOfLines": 1.17,
+     "linesDifferingOver5Percent": 0,
+     "largestRelativeDifference": 0,
+     "medianOffsetPx": 0.46,
+     "largestOffsetPx": 1.46
+    }
+   },
+   "byTag": {}
+  },
+  "crossFloored": {
+   "lines": 212,
+   "medianOfLines": 11.5,
+   "linesAtOrAbove174": 0.986,
+   "samplesMedian": 11.39,
+   "samples": 3932,
+   "occludedSamples": 1504,
+   "byKind": {
+    "break": {
+     "lines": 1,
+     "below174": 0,
+     "lowest": null,
+     "failing": []
+    },
+    "carcass": {
+     "lines": 11,
+     "below174": 1,
+     "lowest": 1.28,
+     "failing": [
+      1.28
+     ]
+    },
+    "footprint": {
+     "lines": 16,
+     "below174": 0,
+     "lowest": null,
+     "failing": []
+    },
+    "shelf": {
+     "lines": 18,
+     "below174": 0,
+     "lowest": null,
+     "failing": []
+    },
+    "spine-division": {
+     "lines": 166,
+     "below174": 2,
+     "lowest": 1.43,
+     "failing": [
+      1.43,
+      1.43
+     ]
+    }
+   },
+   "verticalCheck": {
+    "lines": 87,
+    "pathMedianOfLines": 12.2,
+    "scanMedianOfLines": 13.03,
+    "linesDifferingOver5Percent": 42,
+    "largestRelativeDifference": 0.601,
+    "medianOffsetPx": -0.06,
+    "largestOffsetPx": 2.47,
+    "isolated": {
+     "lines": 3,
+     "rows": 181,
+     "pathMedianOfLines": 3.56,
+     "scanMedianOfLines": 3.56,
+     "linesDifferingOver5Percent": 0,
+     "largestRelativeDifference": 0,
+     "medianOffsetPx": 0.46,
+     "largestOffsetPx": 1.46
+    }
+   },
+   "byTag": {}
+  }
+ }
+}

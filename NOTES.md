@@ -55468,3 +55468,24 @@ both measures read the same pixels, so it confirms position, which was the risk;
 would read as crowded and drop out, so the bound on displacement comes from the all-lines median offset (0.02 to 0.05
 @2x, 0.18 to 0.30 @1x with an answer), which shows none systematic. The @2x-with-an-answer isolated set is four lines,
 which is thin.
+
+**171, the mechanism seen directly (band-43.yml run 42618583257 on d05bfda8; the measurement listed first, it ran
+as test 2 for 21.3 minutes across the suite: 1,428 loads, 12 passes, runner one-minute load 3.12 to 13.62, median
+11.13, while the suite around it ran on three workers, not the gate's four).** Two loads of 1,428 painted a first
+frame unlike their settled one, both with `readyState` "loading", both stylesheets applied and the fonts still
+loading in both frames: **Loss Of Life @1092** painted the band's element with NO cells (height 1), and all five
+arrived 108ms later (415.906); **Bridge Over Troubled Water @1200** had all five cells but its note cell at 160 and
+205.5 the next frame. So a frame is painted while the parser is partway through the band: the band empty, or a
+cell's content partial. record-band-43:33 passed in the same run, at test 619. The first-paint heights (73 three
+times, 53.5 once, 1 here) are whatever had arrived, not a constant fallback (the coordinator's reading). The
+remedy changes what a reader sees while a page loads, so it is asked, not chosen. Kept as
+docs/measurements/band-43/ci/42618583257-d05bfda8.jsonl.
+
+**The far view's failing lines, by kind (Design's standard: every drawn line at or above 1.74:1; the instrument
+confirmed first).** Seeded pool of 30 shown under an artist filter, so the filtered seats draw footprints.
+@2x with an answer, 80 of 216 below: carcass 10 of 10 (1.29 to 1.61), shelf 11 of 17 (from 1.37), footprint 16 of
+18 (from 1.15), spine division 43 of 170 (from 1.07), break 0 of 1. @2x at rest, 1 of 319: one spine division at
+1.15, which stays below when floored, so it is suspect as a measurement (a division along a fill edge or mostly
+occluded) and not yet read. @1x at rest 28 of 216 (carcass 6, shelf 10, footprint 2, division 10); @1x with an answer
+207 of 212. Floored at one device pixel, residuals: @2x answer footprint 1 and division 2; @1x answer carcass 1 and
+division 2; also unread.

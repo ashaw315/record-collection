@@ -85,7 +85,7 @@ const median = (xs: number[]) => { const s = [...xs].sort((a, b) => a - b); retu
 async function segmentsOf(page: Page, selector: string) {
   return page.evaluate((sel) => {
     const roots = Array.from(document.querySelectorAll(sel)).filter((r) => r.getBoundingClientRect().width > 0);
-    const out: Array<{ tag: string; seg: [number, number, number, number] }> = [];
+    const out: Array<{ tag: string; kind: string; seg: [number, number, number, number] }> = [];
     const seen = new Set<string>();
     for (const root of roots) for (const el of Array.from(root.querySelectorAll('polygon, line'))) {
       const cs = getComputedStyle(el);
@@ -101,7 +101,10 @@ async function segmentsOf(page: Page, selector: string) {
         const key = [a, b].map((p) => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).sort().join('|');
         if (seen.has(key)) continue;
         seen.add(key);
-        out.push({ tag: el.getAttribute('data-w') ?? '', seg: [a[0], a[1], b[0], b[1]] });
+        /* Design's kinds (9 Nov): an upright is the carcass, a shelf the shelf, a record's faces its spine divisions. */
+        const piece = el.closest('[data-piece]')?.getAttribute('data-piece');
+        const kind = piece === 'upright' ? 'carcass' : piece === 'shelf' ? 'shelf' : el.hasAttribute('data-break') ? 'break' : el.hasAttribute('data-footprint') ? 'footprint' : 'spine-division';
+        out.push({ tag: el.getAttribute('data-w') ?? '', kind, seg: [a[0], a[1], b[0], b[1]] });
       }
     }
     return out;
@@ -115,7 +118,7 @@ async function crossSection(page: Page, selector: string, dpr: number) {
   const bare = await page.addStyleTag({ content: `${selector} polygon, ${selector} line { stroke: transparent !important; }` });
   const ground = await raw(await page.screenshot({ animations: 'disabled' }));
   await bare.evaluate((el) => (el as Element).remove());
-  const lines: Array<{ tag: string; median: number }> = [];
+  const lines: Array<{ tag: string; kind: string; median: number }> = [];
   const all: number[] = [];
   let occluded = 0;
   /*
@@ -126,7 +129,7 @@ async function crossSection(page: Page, selector: string, dpr: number) {
     pixels alone, and its figure and its offset from the path are kept beside the path's.
   */
   const verticals: Array<{ path: number; scan: number; meanOffset: number; iso: { path: number; scan: number; meanOffset: number; rows: number } | null }> = [];
-  for (const { tag, seg } of segs) {
+  for (const { tag, kind, seg } of segs) {
     const [x1, y1, x2, y2] = seg.map((v) => v * dpr);
     const length = Math.hypot(x2 - x1, y2 - y1);
     if (length < 5) continue;
@@ -186,7 +189,7 @@ async function crossSection(page: Page, selector: string, dpr: number) {
       if (pm !== null && sm !== null) verticals.push({ path: pm, scan: sm, meanOffset: mean(offsets), iso: pathIso.length >= 3 ? { path: median(pathIso) ?? 0, scan: median(scanIso) ?? 0, meanOffset: mean(offIso), rows: pathIso.length } : null });
     }
     const m = median(samples);
-    if (samples.length >= 3 && m !== null) lines.push({ tag, median: m });
+    if (samples.length >= 3 && m !== null) lines.push({ tag, kind, median: m });
   }
   const figures = lines.map((l) => l.median);
   return {
@@ -196,6 +199,12 @@ async function crossSection(page: Page, selector: string, dpr: number) {
     samplesMedian: median(all),
     samples: all.length,
     occludedSamples: occluded,
+    /* Every drawn line reaches 1.74:1 (Design, 9 Nov): the lines that do not, by kind, with each kind's total. */
+    byKind: Object.fromEntries([...new Set(lines.map((l) => l.kind))].sort().map((k) => {
+      const of = lines.filter((l) => l.kind === k);
+      const failing = of.filter((l) => l.median < 1.74).map((l) => l.median).sort((a, b) => a - b);
+      return [k, { lines: of.length, below174: failing.length, lowest: failing[0] ?? null, failing }];
+    })),
     verticalCheck: {
       lines: verticals.length,
       pathMedianOfLines: median(verticals.map((v) => v.path)),
