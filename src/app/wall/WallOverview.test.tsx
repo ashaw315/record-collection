@@ -185,6 +185,37 @@ describe('§W.34: the far view draws emptied seats too', () => {
     expect([...html.matchAll(/data-footprint=""/g)], 'one per emptied seat').toHaveLength(1);
     expect(render({ seats: three, pulledId: null }), 'nothing filtered, no footprints').not.toContain('data-footprint');
   });
+
+  /*
+    **Painted where it can be seen (Design, 9 Nov: §W.34 was right and the build never followed it).** The far view
+    drew every footprint before the painter's order, so the opaque shelf top it lies on covered it, and no footprint
+    has ever owned a pixel. The test above counted elements and passed throughout. Each footprint now paints straight
+    after the top face it lies on, inside that shelf's place in §W.18's sort, so only what the sort puts in front of
+    that shelf can cover it. Asserted on the order: inside a shelf piece, after that piece's top face, and on it.
+  */
+  it('paints each footprint straight after the shelf top it lies on, in that shelf’s place in the order', () => {
+    const many = seats(24).map((seat, index) => (index % 5 === 2 ? { ...seat, empty: true } : seat));
+    const html = render({ seats: many, pulledId: null });
+    const footprints = [...html.matchAll(/data-footprint=""/g)].length;
+    expect(footprints, 'the precondition: some seats emptied').toBe(5);
+    const groups = [...html.matchAll(/<g data-piece="shelf">([\s\S]*?)<\/g>/g)].map((m) => m[1]);
+    const placed = groups.flatMap((group) => {
+      const top = /<polygon data-furniture="shelf-top" points="([^"]+)"/.exec(group);
+      const at = group.indexOf('data-furniture="shelf-top"');
+      return [...group.matchAll(/<polygon data-footprint="" points="([^"]+)"/g)].map((m) => ({ top, after: (m.index ?? 0) > at, points: m[1] }));
+    });
+    expect(placed, 'every footprint inside a shelf piece').toHaveLength(footprints);
+    const xs = (pts: string) => pts.split(' ').map((p) => Number(p.split(',')[0]));
+    for (const p of placed) {
+      expect(p.after, 'after its shelf’s top face').toBe(true);
+      expect(p.top, 'the shelf has a top face').not.toBeNull();
+      const [lo, hi] = [Math.min(...xs(p.top?.[1] ?? '')), Math.max(...xs(p.top?.[1] ?? ''))];
+      for (const x of xs(p.points)) {
+        expect(x, 'and on it').toBeGreaterThanOrEqual(lo - 0.01);
+        expect(x, 'and on it').toBeLessThanOrEqual(hi + 0.01);
+      }
+    }
+  });
 });
 
 describe('§W.30: reaching the run by keyboard', () => {

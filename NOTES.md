@@ -55591,3 +55591,28 @@ measurement file after each run; when the 1440 runs failed, it printed the previ
 looked like results and was caught only because 1440's number looked wrong. Worse than printing nothing. The tool now
 prints its own FAR-SUMMARY line only once it has its figures, and the loop prints "RUN FAILED, no figure" when that
 line is absent. Any tool that reports after a failure says it failed, never the last good value.
+
+## 9 Nov: §W.34's footprints painted where they can be seen (Design's ruling; the coordinator's new order, item 1)
+
+**Footprints have never been visible in the far view**, from the step that built them until this commit: drawn
+before the painter's order, every one lay under the opaque shelf top it stands on. Now each paints straight after the
+top face it lies on, inside that shelf's group and so in its place in §W.18's sort (WallOverview.tsx; a footprint's
+shelf is the shelf piece whose top equals the seat's height and whose bounds hold its span). No withdrawal: §W.34's
+sentence was right and the build never followed it (Design).
+
+**Tests first, each seen failing on the old drawing.** WallOverview.test: every footprint inside a shelf piece,
+after that piece's top face and on it (failed: none inside any piece). e2e/footprint-visible-34.spec.ts: along each
+footprint's own edges `elementFromPoint` gives the top-most painted element, and each footprint is visible, hidden by
+what is in front of its shelf (a pass, Design), or hidden by its own shelf top, found by geometry and not by where the
+markup puts it (fails). On the old drawing: 0 visible, 13 hidden by their own shelf top, 4 by uprights; fixed: 17 of 17
+visible at rest and with an answer. Chromium only; the mobile project runs a listed set.
+
+**Per footprint at four states (far-hairline.capture.ts, pool 30, 47 laid out, 1044 × 768, the pulled record
+fixed).** 17 footprints, 17 visible by the hit test at @1x and @2x, at rest and with an answer; pixels each owns on top
+in the ownership render, none zero: @2x at rest 26 to 242, @2x with an answer 9 to 95, @1x at rest 12 to 119, @1x with
+an answer 4 to 42 (the later ones partly under records in front). Whether a footprint's line reaches 1.74:1 is the
+parked thread's question, not this step's. The tool tags a footprint before its shelf, since it now paints inside one.
+
+Step level: wall unit tests 328 of 328; footprint-visible-34, shelf, wall-arrival-104, wall-route, far-region-band,
+wall-first-paint, wall-labelled, wall-access and the far-view specs, 55 passed; typecheck, lint (0 errors, 4
+warnings, none new), build.

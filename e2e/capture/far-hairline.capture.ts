@@ -110,13 +110,30 @@ async function segmentsOf(page: Page, selector: string) {
         seen.set(key, out.length);
         /* Design's kinds (9 Nov): an upright is the carcass, a shelf the shelf, a record's faces its spine divisions. */
         const piece = el.closest('[data-piece]')?.getAttribute('data-piece');
-        const kind = piece === 'upright' ? 'carcass' : piece === 'shelf' ? 'shelf' : el.hasAttribute('data-break') ? 'break' : el.hasAttribute('data-footprint') ? 'footprint' : 'spine-division';
+        /* A footprint first: since 9 Nov it paints inside its shelf's group. */
+        const kind = el.hasAttribute('data-footprint') ? 'footprint' : piece === 'upright' ? 'carcass' : piece === 'shelf' ? 'shelf' : el.hasAttribute('data-break') ? 'break' : 'spine-division';
         out.push({ tag: el.getAttribute('data-w') ?? '', kind, owners: [owner], seg: [a[0], a[1], b[0], b[1]] });
       }
     }
     return out;
   }, selector);
 }
+
+/* The same three-way verdict e2e/footprint-visible-34.spec.ts asserts: visible, hidden by what is in front, or hidden by its own shelf top. */
+const footprintVerdicts = (page: Page) =>
+  page.locator(SVG).filter({ visible: true }).evaluate((svg) => Array.from(svg.querySelectorAll('polygon[data-footprint]')).map((fp) => {
+    const m = (fp as SVGPolygonElement).getScreenCTM();
+    if (m === null) return 'unplaced';
+    const raw = Array.from((fp as SVGPolygonElement).points);
+    const pts = raw.map((p) => new DOMPoint(p.x, p.y).matrixTransform(m));
+    const centre = new DOMPoint(raw.reduce((a, p) => a + p.x, 0) / raw.length, raw.reduce((a, p) => a + p.y, 0) / raw.length);
+    const ownTop = Array.from(svg.querySelectorAll('[data-furniture="shelf-top"]')).find((t) => (t as SVGPolygonElement).isPointInFill(centre)) ?? null;
+    const hits = pts.map((p, i) => { const q = pts[(i + 1) % pts.length]; return document.elementFromPoint((p.x + q.x) / 2, (p.y + q.y) / 2); });
+    if (hits.some((h) => h === fp)) return 'visible';
+    if (ownTop !== null && hits.some((h) => h === ownTop)) return 'hidden by its own shelf top';
+    const by = hits.find((h) => h !== null);
+    return `hidden in front by ${by === undefined || by === null ? 'nothing' : by.closest('[data-piece]')?.getAttribute('data-piece') ?? by.tagName}`;
+  }));
 
 async function crossSection(page: Page, selector: string, dpr: number) {
   const segs = await segmentsOf(page, selector);
@@ -143,10 +160,14 @@ async function crossSection(page: Page, selector: string, dpr: number) {
   const kindOf = new Map<number, string>();
   for (const sg of segs) for (const o of sg.owners) kindOf.set(o, sg.kind);
   const ownedByKind: Record<string, number> = {};
+  const ownedByOwner = new Map<number, number>();
   for (let y = 0; y < owners.height; y += 1) for (let x = 0; x < owners.width; x += 1) {
     const o = ownerAt(x, y);
-    if (o !== 0) { const k = kindOf.get(o) ?? 'unknown'; ownedByKind[k] = (ownedByKind[k] ?? 0) + 1; }
+    if (o !== 0) { const k = kindOf.get(o) ?? 'unknown'; ownedByKind[k] = (ownedByKind[k] ?? 0) + 1; ownedByOwner.set(o, (ownedByOwner.get(o) ?? 0) + 1); }
   }
+  /* §W.34, per footprint (Design, 9 Nov): the pixels it owns on top, with the hit test's verdict along its own edges beside it. */
+  const footprintOwners = [...new Set(segs.filter((sg) => sg.kind === 'footprint').flatMap((sg) => sg.owners))];
+  const footprintPixels = footprintOwners.map((o) => ownedByOwner.get(o) ?? 0);
   const segmentsByKind: Record<string, number> = {};
   for (const sg of segs) segmentsByKind[sg.kind] = (segmentsByKind[sg.kind] ?? 0) + 1;
   const lines: Array<{ tag: string; kind: string; median: number; seg: number[]; samples: number; occluded: number; mid: unknown }> = [];
@@ -241,6 +262,7 @@ async function crossSection(page: Page, selector: string, dpr: number) {
     occludedSamples: occluded,
     ownedByKind,
     segmentsByKind,
+    footprintPixels,
     /* Every drawn line reaches 1.74:1 (Design, 9 Nov): the lines that do not, by kind, with each kind's total. */
     byKind: Object.fromEntries([...new Set(lines.map((l) => l.kind))].sort().map((k) => {
       const of = lines.filter((l) => l.kind === k);
@@ -375,12 +397,13 @@ for (const dpr of (process.env.FAR_DPR ?? '1,2').split(',').map(Number)) {
       await page.mouse.move(0, 0);
       const plain = await readLines(await drawing(page).screenshot({ animations: 'disabled' }), planeLum);
       const crossPlain = await crossSection(page, SVG, dpr);
+      const footprints = await footprintVerdicts(page);
       const floor = await page.addStyleTag({ content: floorRule });
       const floored = await readLines(await drawing(page).screenshot({ animations: 'disabled' }), planeLum);
       const crossFloored = await crossSection(page, SVG, dpr);
       await floor.evaluate((el) => (el as Element).remove());
       console.log(`@${dpr}x ${state}: cross-section median of lines ${crossPlain.medianOfLines} (${crossPlain.linesAtOrAbove174} of ${crossPlain.lines} lines at or above 1.74), floored ${crossFloored.medianOfLines} (${crossFloored.linesAtOrAbove174})`);
-      return { scale, laidOut, strokeCssPx: scale, strokeDevicePx: Math.round(scale * dpr * 1000) / 1000, plain, floored, crossPlain, crossFloored };
+      return { scale, laidOut, footprints, strokeCssPx: scale, strokeDevicePx: Math.round(scale * dpr * 1000) / 1000, plain, floored, crossPlain, crossFloored };
     };
 
     const rest = await read('rest');
@@ -405,6 +428,9 @@ for (const dpr of (process.env.FAR_DPR ?? '1,2').split(',').map(Number)) {
     /* One line per state, printed by THIS run only after it has its figures, so a failed run prints no figure at all. */
     for (const [state, v] of [['rest', rest], ['answer', answer]] as const) {
       const failing = Object.values(v.crossPlain.byKind as Record<string, { below174: number }>).reduce((a, k) => a + k.below174, 0);
+      const fpPx = v.crossPlain.footprintPixels as number[];
+      const verdicts = v.footprints.reduce<Record<string, number>>((a, f) => ({ ...a, [f]: (a[f] ?? 0) + 1 }), {});
+      console.log(`FOOTPRINTS ${W}x${H} @${dpr}x ${state}: ${v.footprints.length} footprints; ${JSON.stringify(verdicts)}; pixels owned on top per footprint ${fpPx.join(' ')}`);
       console.log(`FAR-SUMMARY ${W}x${H} @${dpr}x pool ${POOL} ${state}: scale ${v.scale}, laid out ${v.laidOut.seated + v.laidOut.emptied}, lines failing ${failing} of ${v.crossPlain.lines}${state === 'answer' ? `, pulled "${pulled.text}" (answer ${pulled.height} tall)` : ''}`);
     }
     const out = { window: `${W}x${H}`, pool: POOL, pulled, dpr, reference: '§W.28 hovered hairline 1.74:1', instrument: { inkOnPaper, lines: refs, crossSection: refCross }, planeLum, rest, answer };

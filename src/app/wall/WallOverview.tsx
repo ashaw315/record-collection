@@ -143,17 +143,8 @@ export function WallOverview({
         the shelf's top face — projected geometry at §W.27's hairline, not a
         page rule. A never-filled seat draws nothing: a filtered seat is a
         fact about the filter, a never-filled one a fact about the backlog.
+        Painted with the shelf they lie on, below (9 Nov).
       */}
-      {displaced.map((seat) => (
-        <polygon
-          key={`fp-${seat.id}`}
-          data-footprint=""
-          points={points(topFace({ ...seat, height: 0 }))}
-          fill="none"
-          stroke={FOOTPRINT}
-          strokeWidth="1"
-        />
-      ))}
       {paintOrder([
         ...pieces.map((piece) => ({ id: piece.id, ...piece.bounds })),
         ...seated.map((seat) => seatBounds(seat)),
@@ -165,6 +156,18 @@ export function WallOverview({
               {piece.faces.map((face, index) => (
                 <polygon key={index} data-furniture={face.kind} points={points(face.points)} fill={PLANE_FILL} stroke={RULE} strokeWidth="1" />
               ))}
+              {/*
+                §W.34's footprints, straight after the top face they lie on and in that shelf's place in §W.18's sort,
+                so only what the sort puts in front of this shelf can cover them (Design, 9 Nov). They were drawn
+                before the whole order, under every shelf top, and no footprint was ever seen.
+              */}
+              {piece.kind === 'shelf'
+                ? displaced
+                    .filter((seat) => Math.abs(seat.z - piece.bounds.z1) < 0.01 && seat.x >= piece.bounds.x0 - 0.01 && seat.x + seat.width <= piece.bounds.x1 + 0.01)
+                    .map((seat) => (
+                      <polygon key={`fp-${seat.id}`} data-footprint="" points={points(topFace({ ...seat, height: 0 }))} fill="none" stroke={FOOTPRINT} strokeWidth="1" />
+                    ))
+                : null}
             </g>
           );
         }
