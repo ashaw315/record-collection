@@ -1,0 +1,59 @@
+# Step 171's measurement in CI (Q58; the coordinator, 8 Nov): e2e/capture/band-43-measure.capture.ts run INSIDE the
+# chromium suite's own invocation at four workers, so it measures cold loads under the load the gate's failures
+# happened at (record-band-43:33, twice, never locally). One invocation because global setup truncates and holds
+# the test database: a second Playwright run beside the suite would refuse or wipe it. The filters select every
+# chromium spec and only this capture tool. It asserts nothing and is not a gate. Dispatch with
+# CI_WORKFLOW=band-43.yml scripts/ci-gate.sh <ref> 4. Delete it with step 171.
+name: Band 43 under load
+
+on:
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: The commit to measure, its full id
+        required: true
+      workers:
+        description: Playwright workers
+        default: '4'
+
+permissions:
+  contents: read
+
+env:
+  TEST_DATABASE_URL: postgresql://postgres:postgres@localhost:5433/record_collection_test
+  DATABASE_URL: postgresql://postgres:postgres@localhost:5433/record_collection_test
+  NO_COLOR: '1'
+
+jobs:
+  measure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.commit }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - run: docker compose up -d --wait
+      - run: NODE_ENV=test npx drizzle-kit migrate
+      - name: The chromium suite with the band measurement inside it
+        env:
+          E2E_SERVER: build
+          CAPTURE: '1'
+          BAND43_PASSES: '3'
+        run: |
+          LOG="$RUNNER_TEMP/band-43/$(git rev-parse --short=7 HEAD)-band-43.log"
+          mkdir -p "$(dirname "$LOG")"
+          npx tsx scripts/run-tests.ts npx playwright test --project=chromium --project=capture --workers=${{ inputs.workers }} --retries=0 '\.spec\.ts$' 'band-43-measure' > "$LOG" 2>&1 || true
+          tail -5 "$LOG"
+          find docs/measurements/band-43 -name '*.jsonl' -newer package.json -exec cp {} "$RUNNER_TEMP/band-43/" \;
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: band-43
+          path: ${{ runner.temp }}/band-43
+          retention-days: 14

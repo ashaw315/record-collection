@@ -19,6 +19,12 @@ set -euo pipefail
 
 REF="${1:?usage: scripts/ci-gate.sh <ref> [workers]}"
 WORKERS="${2:-1}"
+# Another dispatch-only workflow takes the same full-id guard (171's CI run, 8 Nov): CI_WORKFLOW names it.
+WORKFLOW="${CI_WORKFLOW:-gate.yml}"
+if [ ! -f "$(git rev-parse --show-toplevel)/.github/workflows/${WORKFLOW}" ]; then
+  echo "ci-gate: no workflow .github/workflows/${WORKFLOW}" >&2
+  exit 5
+fi
 
 if ! FULL="$(git rev-parse --verify --quiet --end-of-options "${REF}^{commit}")"; then
   echo "ci-gate: '${REF}' names no commit here" >&2
@@ -34,6 +40,6 @@ if [ -z "$(git branch -r --contains "$FULL" 2>/dev/null)" ]; then
   exit 4
 fi
 
-gh workflow run gate.yml -f "commit=${FULL}" -f "workers=${WORKERS}"
-echo "ci-gate: dispatched gate.yml on ${FULL} (${REF}), workers ${WORKERS}"
-echo "ci-gate: gh run list --workflow=gate.yml -L 1"
+gh workflow run "${WORKFLOW}" -f "commit=${FULL}" -f "workers=${WORKERS}"
+echo "ci-gate: dispatched ${WORKFLOW} on ${FULL} (${REF}), workers ${WORKERS}"
+echo "ci-gate: gh run list --workflow=${WORKFLOW} -L 1"

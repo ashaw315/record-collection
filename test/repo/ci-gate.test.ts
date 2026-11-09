@@ -30,9 +30,9 @@ function fakeGh(): { dir: string; log: string } {
   return { dir, log };
 }
 
-function dispatch(args: string[]): { status: number; output: string; calls: string[] } {
+function dispatch(args: string[], env: Record<string, string> = {}): { status: number; output: string; calls: string[] } {
   const gh = fakeGh();
-  const result = spawnSync('bash', [SCRIPT, ...args], { encoding: 'utf8', env: { ...process.env, PATH: `${gh.dir}:${process.env.PATH ?? ''}` } });
+  const result = spawnSync('bash', [SCRIPT, ...args], { encoding: 'utf8', env: { ...process.env, ...env, PATH: `${gh.dir}:${process.env.PATH ?? ''}` } });
   const calls = existsSync(gh.log) ? readFileSync(gh.log, 'utf8').trim().split('\n') : [];
   return { status: result.status ?? -1, output: `${result.stdout}${result.stderr}`, calls };
 }
@@ -57,6 +57,20 @@ describe('scripts/ci-gate.sh dispatches the gate on a full commit id', () => {
   it('passes the workers input through', () => {
     const { calls } = dispatch([pushed, '2']);
     expect(calls).toEqual(['workflow', 'run', 'gate.yml', '-f', `commit=${pushed}`, '-f', 'workers=2']);
+  });
+
+  /* 171's CI run (the coordinator, 8 Nov): a dispatch-only workflow takes the same forty-character guard, so it goes through here and not gh by hand. */
+  it('dispatches another workflow when CI_WORKFLOW names it, with the same full id', () => {
+    const { status, calls, output } = dispatch([pushed.slice(0, 7), '4'], { CI_WORKFLOW: 'band-43.yml' });
+    expect(status, output).toBe(0);
+    expect(calls).toEqual(['workflow', 'run', 'band-43.yml', '-f', `commit=${pushed}`, '-f', 'workers=4']);
+    expect(output).toContain('dispatched band-43.yml');
+  });
+
+  it('refuses a workflow that is not a file under .github/workflows, and dispatches nothing', () => {
+    const { status, calls } = dispatch([pushed], { CI_WORKFLOW: 'no-such.yml' });
+    expect(status).not.toBe(0);
+    expect(calls).toEqual([]);
   });
 
   it('refuses a ref that names no commit, and dispatches nothing', () => {

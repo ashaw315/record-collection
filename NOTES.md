@@ -55408,3 +55408,9 @@ every first frame. The About-and-journal lead is dead: 11 of the 17 have neither
 Claude hook touches Downloads. But every capture folder we exported is gone (years-166, arrow-167, import-159,
 covers-group-165, the Q2 to Q5 bundle), while the .md exports and Adam's own folders back to 2018 survive; the
 covers-group export was there at 19:56 and gone by 20:50. The coordinator has asked Adam.
+
+**Downloads, closed (the coordinator, 8 Nov).** Adam deletes the folders himself after relaying them, and keeps
+the .md files he has read. Four vanishings and a thorough look at every mechanism on our side (exporters, cron,
+launch agents, hooks, past commands), when one question to the person whose machine it was settled it; the cost
+sits in the asking coming at the fourth occurrence. The copy to Downloads is restored (the Q2 to Q5 bundle,
+recopied from docs/captures/bundle-q2-q5); committed captures, since 399edd08, are the durable copy.
