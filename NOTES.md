@@ -55457,3 +55457,14 @@ agrees: the darkest pixel's centre sits a median 0.02 to 0.05 device px from the
 4.61/4.80, answer 2.10/2.10; @1x rest 2.28/2.51, answer 1.50/1.59). But 9 to 41 of the 86 to 87 lines differ by more
 than 5%, and the largest offsets (2.0 to 2.5 px) sit at the scan window's edge (±2), which reads as the scan reaching
 a neighbouring line rather than the path missing its own; not yet shown which. Unresolved, not claimed as agreement.
+
+**The path check resolved on isolated lines (9 Nov).** A row of a vertical line counts as isolated when no pixel 1.5
+to 3.5 device px either side of the path is changed by any stroke. On those rows, path and pixel scan agree exactly
+on every line at every state (0 lines differing; @2x rest 16 lines, 3,536 rows, 3.13 both; @2x answer 4 lines, 327
+rows, 1.70 both; @1x rest 21 lines, 3.00 both; @1x answer 3 lines, 1.17 both), with the darkest pixel's centre a
+median 0.06 to 0.46 device px from the path and at most 1.46. So the earlier per-line differences were the scan
+reaching neighbouring lines, not the path missing its own. **What the check can and cannot see:** on an isolated row
+both measures read the same pixels, so it confirms position, which was the risk; a line displaced more than 1.5 px
+would read as crowded and drop out, so the bound on displacement comes from the all-lines median offset (0.02 to 0.05
+@2x, 0.18 to 0.30 @1x with an answer), which shows none systematic. The @2x-with-an-answer isolated set is four lines,
+which is thin.

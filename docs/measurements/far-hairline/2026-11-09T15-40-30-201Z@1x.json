@@ -1,0 +1,215 @@
+{
+ "window": "1044x768",
+ "dpr": 1,
+ "reference": "§W.28 hovered hairline 1.74:1",
+ "instrument": {
+  "inkOnPaper": 14.75,
+  "lines": {
+   "1": {
+    "paper": 0.793,
+    "pixels": 280,
+    "of": 6000,
+    "median": 14.75,
+    "darkest": 14.75
+   },
+   "0.5": {
+    "paper": 0.793,
+    "pixels": 280,
+    "of": 6000,
+    "median": 3.29,
+    "darkest": 3.29
+   },
+   "0.25": {
+    "paper": 0.793,
+    "pixels": 280,
+    "of": 6000,
+    "median": 1.7,
+    "darkest": 1.7
+   }
+  },
+  "crossSection": {
+   "lines": 4,
+   "medianOfLines": 7.09,
+   "linesAtOrAbove174": 0.75,
+   "samplesMedian": 3.29,
+   "samples": 978,
+   "occludedSamples": 0,
+   "verticalCheck": {
+    "lines": 0,
+    "pathMedianOfLines": null,
+    "scanMedianOfLines": null,
+    "linesDifferingOver5Percent": 0,
+    "largestRelativeDifference": null,
+    "medianOffsetPx": null,
+    "largestOffsetPx": null,
+    "isolated": {
+     "lines": 0,
+     "rows": 0,
+     "pathMedianOfLines": null,
+     "scanMedianOfLines": null,
+     "linesDifferingOver5Percent": 0,
+     "largestRelativeDifference": null,
+     "medianOffsetPx": null,
+     "largestOffsetPx": null
+    }
+   },
+   "byTag": {
+    "1": 14.75,
+    "0.5": 3.29,
+    "0.25": 1.7,
+    "1@30deg": 7.09
+   }
+  }
+ },
+ "planeLum": 0.7400336199490174,
+ "rest": {
+  "scale": 0.367,
+  "strokeCssPx": 0.367,
+  "strokeDevicePx": 0.367,
+  "plain": {
+   "paper": 0.7913,
+   "pixels": 11756,
+   "of": 225736,
+   "median": 1.53,
+   "darkest": 5.2
+  },
+  "floored": {
+   "paper": 0.7913,
+   "pixels": 12004,
+   "of": 225736,
+   "median": 3.32,
+   "darkest": 14.97
+  },
+  "crossPlain": {
+   "lines": 216,
+   "medianOfLines": 2,
+   "linesAtOrAbove174": 0.852,
+   "samplesMedian": 2,
+   "samples": 10037,
+   "occludedSamples": 5415,
+   "verticalCheck": {
+    "lines": 86,
+    "pathMedianOfLines": 2.51,
+    "scanMedianOfLines": 2.72,
+    "linesDifferingOver5Percent": 15,
+    "largestRelativeDifference": 0.646,
+    "medianOffsetPx": 0.02,
+    "largestOffsetPx": 2.14,
+    "isolated": {
+     "lines": 21,
+     "rows": 1217,
+     "pathMedianOfLines": 3,
+     "scanMedianOfLines": 3,
+     "linesDifferingOver5Percent": 0,
+     "largestRelativeDifference": 0,
+     "medianOffsetPx": 0.06,
+     "largestOffsetPx": 0.98
+    }
+   },
+   "byTag": {}
+  },
+  "crossFloored": {
+   "lines": 216,
+   "medianOfLines": 7.96,
+   "linesAtOrAbove174": 0.991,
+   "samplesMedian": 7.78,
+   "samples": 10038,
+   "occludedSamples": 5414,
+   "verticalCheck": {
+    "lines": 86,
+    "pathMedianOfLines": 11.88,
+    "scanMedianOfLines": 11.91,
+    "linesDifferingOver5Percent": 20,
+    "largestRelativeDifference": 1.949,
+    "medianOffsetPx": 0.09,
+    "largestOffsetPx": 1.93,
+    "isolated": {
+     "lines": 21,
+     "rows": 1216,
+     "pathMedianOfLines": 12.39,
+     "scanMedianOfLines": 12.39,
+     "linesDifferingOver5Percent": 0,
+     "largestRelativeDifference": 0,
+     "medianOffsetPx": 0.06,
+     "largestOffsetPx": 0.98
+    }
+   },
+   "byTag": {}
+  }
+ },
+ "answer": {
+  "scale": 0.146,
+  "strokeCssPx": 0.146,
+  "strokeDevicePx": 0.146,
+  "plain": {
+   "paper": 0.7913,
+   "pixels": 3287,
+   "of": 90072,
+   "median": 1.26,
+   "darkest": 2.2
+  },
+  "floored": {
+   "paper": 0.7913,
+   "pixels": 3490,
+   "of": 90072,
+   "median": 4.32,
+   "darkest": 14.94
+  },
+  "crossPlain": {
+   "lines": 213,
+   "medianOfLines": 1.5,
+   "linesAtOrAbove174": 0.009,
+   "samplesMedian": 1.45,
+   "samples": 3926,
+   "occludedSamples": 1510,
+   "verticalCheck": {
+    "lines": 87,
+    "pathMedianOfLines": 1.51,
+    "scanMedianOfLines": 1.59,
+    "linesDifferingOver5Percent": 31,
+    "largestRelativeDifference": 0.238,
+    "medianOffsetPx": 0.03,
+    "largestOffsetPx": 2.48,
+    "isolated": {
+     "lines": 3,
+     "rows": 181,
+     "pathMedianOfLines": 1.17,
+     "scanMedianOfLines": 1.17,
+     "linesDifferingOver5Percent": 0,
+     "largestRelativeDifference": 0,
+     "medianOffsetPx": 0.46,
+     "largestOffsetPx": 1.46
+    }
+   },
+   "byTag": {}
+  },
+  "crossFloored": {
+   "lines": 213,
+   "medianOfLines": 11.5,
+   "linesAtOrAbove174": 0.986,
+   "samplesMedian": 11.39,
+   "samples": 3932,
+   "occludedSamples": 1504,
+   "verticalCheck": {
+    "lines": 87,
+    "pathMedianOfLines": 12.23,
+    "scanMedianOfLines": 12.58,
+    "linesDifferingOver5Percent": 41,
+    "largestRelativeDifference": 0.598,
+    "medianOffsetPx": -0.03,
+    "largestOffsetPx": 2.41,
+    "isolated": {
+     "lines": 3,
+     "rows": 181,
+     "pathMedianOfLines": 3.56,
+     "scanMedianOfLines": 3.56,
+     "linesDifferingOver5Percent": 0,
+     "largestRelativeDifference": 0,
+     "medianOffsetPx": 0.46,
+     "largestOffsetPx": 1.46
+    }
+   },
+   "byTag": {}
+  }
+ }
+}

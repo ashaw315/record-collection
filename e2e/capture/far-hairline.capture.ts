@@ -125,7 +125,7 @@ async function crossSection(page: Page, selector: string, dpr: number) {
     where a row scan needs no direction, each row's darkest pixel within ±2 device px of the path is found from the
     pixels alone, and its figure and its offset from the path are kept beside the path's.
   */
-  const verticals: Array<{ path: number; scan: number; meanOffset: number }> = [];
+  const verticals: Array<{ path: number; scan: number; meanOffset: number; iso: { path: number; scan: number; meanOffset: number; rows: number } | null }> = [];
   for (const { tag, seg } of segs) {
     const [x1, y1, x2, y2] = seg.map((v) => v * dpr);
     const length = Math.hypot(x2 - x1, y2 - y1);
@@ -152,9 +152,23 @@ async function crossSection(page: Page, selector: string, dpr: number) {
     }
     all.push(...samples);
     if (Math.abs(x2 - x1) < 0.01 && samples.length >= 3) {
-      const scans: number[] = []; const offsets: number[] = [];
+      const scans: number[] = []; const offsets: number[] = []; const pathIso: number[] = []; const scanIso: number[] = []; const offIso: number[] = [];
       for (let t = 2; t <= length - 2; t += 1) {
         const y = Math.floor(y1 + uy * t);
+        /* Isolated: no pixel 1.5 to 3.5 device px either side of the path is changed by any stroke, so no other line is near. */
+        let crowded = false;
+        for (let x = Math.floor(x1 - 3.5); x <= Math.floor(x1 + 3.5); x += 1) {
+          const d = Math.abs(x + 0.5 - x1);
+          if (d <= 1.5 || d > 3.5 || x < 0 || x >= drawn.width || y < 0 || y >= drawn.height) continue;
+          if (Math.abs(lumAt(ground, x, y) - lumAt(drawn, x, y)) > 0.002) crowded = true;
+        }
+        let pathBest = 0;
+        for (const d of [-1, -0.5, 0, 0.5, 1]) {
+          const cx = Math.floor(x1 + d);
+          if (cx < 0 || cx >= drawn.width || y < 0 || y >= drawn.height) continue;
+          const [l, g] = [lumAt(drawn, cx, y), lumAt(ground, cx, y)];
+          if (l < g) pathBest = Math.max(pathBest, ratio(g, l));
+        }
         let best = 0; let at = -1; let visible = false;
         for (let x = Math.floor(x1) - 2; x <= Math.floor(x1) + 2; x += 1) {
           if (x < 0 || x >= drawn.width || y < 0 || y >= drawn.height) continue;
@@ -165,9 +179,11 @@ async function crossSection(page: Page, selector: string, dpr: number) {
         if (!visible) continue;
         scans.push(best === 0 ? 1 : best);
         if (at >= 0) offsets.push(at + 0.5 - x1);
+        if (!crowded) { pathIso.push(pathBest === 0 ? 1 : pathBest); scanIso.push(best === 0 ? 1 : best); if (at >= 0) offIso.push(at + 0.5 - x1); }
       }
       const [pm, sm] = [median(samples), median(scans)];
-      if (pm !== null && sm !== null) verticals.push({ path: pm, scan: sm, meanOffset: offsets.length === 0 ? 0 : Math.round((offsets.reduce((a, b) => a + b, 0) / offsets.length) * 100) / 100 });
+      const mean = (xs: number[]) => (xs.length === 0 ? 0 : Math.round((xs.reduce((a, b) => a + b, 0) / xs.length) * 100) / 100);
+      if (pm !== null && sm !== null) verticals.push({ path: pm, scan: sm, meanOffset: mean(offsets), iso: pathIso.length >= 3 ? { path: median(pathIso) ?? 0, scan: median(scanIso) ?? 0, meanOffset: mean(offIso), rows: pathIso.length } : null });
     }
     const m = median(samples);
     if (samples.length >= 3 && m !== null) lines.push({ tag, median: m });
@@ -188,6 +204,20 @@ async function crossSection(page: Page, selector: string, dpr: number) {
       largestRelativeDifference: verticals.length === 0 ? null : Math.round(Math.max(...verticals.map((v) => Math.abs(v.path - v.scan) / v.scan)) * 1000) / 1000,
       medianOffsetPx: median(verticals.map((v) => v.meanOffset)),
       largestOffsetPx: verticals.length === 0 ? null : Math.max(...verticals.map((v) => Math.abs(v.meanOffset))),
+      isolated: (() => {
+        const iso = verticals.flatMap((v) => (v.iso === null ? [] : [v.iso]));
+        const rel = iso.map((v) => Math.abs(v.path - v.scan) / v.scan);
+        return {
+          lines: iso.length,
+          rows: iso.reduce((a, v) => a + v.rows, 0),
+          pathMedianOfLines: median(iso.map((v) => v.path)),
+          scanMedianOfLines: median(iso.map((v) => v.scan)),
+          linesDifferingOver5Percent: rel.filter((r) => r > 0.05).length,
+          largestRelativeDifference: rel.length === 0 ? null : Math.round(Math.max(...rel) * 1000) / 1000,
+          medianOffsetPx: median(iso.map((v) => v.meanOffset)),
+          largestOffsetPx: iso.length === 0 ? null : Math.max(...iso.map((v) => Math.abs(v.meanOffset))),
+        };
+      })(),
     },
     byTag: Object.fromEntries(lines.filter((l) => l.tag !== '').map((l) => [l.tag, l.median])),
   };
