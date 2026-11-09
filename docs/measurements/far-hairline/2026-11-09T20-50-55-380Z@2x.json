@@ -1,0 +1,465 @@
+{
+ "window": "1273x900",
+ "pool": 40,
+ "pulled": {
+  "text": "FarHairline 00 fh2mw9qk0rcFarHairline-fh2mw9qk0rc",
+  "height": 220.5
+ },
+ "dpr": 2,
+ "reference": "§W.28 hovered hairline 1.74:1",
+ "instrument": {
+  "inkOnPaper": 14.75,
+  "lines": {
+   "1": {
+    "paper": 0.793,
+    "pixels": 1120,
+    "of": 24000,
+    "median": 14.75,
+    "darkest": 14.75
+   },
+   "0.5": {
+    "paper": 0.793,
+    "pixels": 1120,
+    "of": 24000,
+    "median": 3.29,
+    "darkest": 3.29
+   },
+   "0.25": {
+    "paper": 0.793,
+    "pixels": 1120,
+    "of": 24000,
+    "median": 1.7,
+    "darkest": 1.7
+   }
+  },
+  "crossSection": {
+   "lines": 4,
+   "medianOfLines": 14.75,
+   "linesAtOrAbove174": 0.75,
+   "samplesMedian": 3.29,
+   "samples": 1930,
+   "occludedSamples": 38,
+   "ownedByKind": {
+    "spine-division": 1981
+   },
+   "segmentsByKind": {
+    "spine-division": 4
+   },
+   "byKind": {
+    "spine-division": {
+     "lines": 4,
+     "below174": 1,
+     "lowest": 1.7,
+     "failing": [
+      1.7
+     ],
+     "failingLines": [
+      {
+       "median": 1.7,
+       "seg": [
+        20,
+        101,
+        580,
+        101
+       ],
+       "samples": 557,
+       "occluded": 0,
+       "mid": [
+        {
+         "d": -2,
+         "drawn": 0.793,
+         "ground": 0.793
+        },
+        {
+         "d": -1,
+         "drawn": 0.445,
+         "ground": 0.793
+        },
+        {
+         "d": 0,
+         "drawn": 0.445,
+         "ground": 0.793
+        },
+        {
+         "d": 1,
+         "drawn": 0.793,
+         "ground": 0.793
+        },
+        {
+         "d": 2,
+         "drawn": 0.793,
+         "ground": 0.793
+        }
+       ]
+      }
+     ]
+    }
+   },
+   "verticalCheck": {
+    "lines": 0,
+    "pathMedianOfLines": null,
+    "scanMedianOfLines": null,
+    "linesDifferingOver5Percent": 0,
+    "largestRelativeDifference": null,
+    "medianOffsetPx": null,
+    "largestOffsetPx": null,
+    "isolated": {
+     "lines": 0,
+     "rows": 0,
+     "pathMedianOfLines": null,
+     "scanMedianOfLines": null,
+     "linesDifferingOver5Percent": 0,
+     "largestRelativeDifference": null,
+     "medianOffsetPx": null,
+     "largestOffsetPx": null
+    }
+   },
+   "byTag": {
+    "1": 14.75,
+    "0.5": 3.29,
+    "0.25": 1.7,
+    "1@30deg": 14.75
+   }
+  }
+ },
+ "planeLum": 0.7400336199490174,
+ "rest": {
+  "scale": 0.486,
+  "laidOut": {
+   "seated": 40,
+   "emptied": 17
+  },
+  "strokeCssPx": 0.486,
+  "strokeDevicePx": 0.972,
+  "plain": {
+   "paper": 0.7913,
+   "pixels": 42859,
+   "of": 1689320,
+   "median": 3.38,
+   "darkest": 14.69
+  },
+  "floored": {
+   "paper": 0.7913,
+   "pixels": 42859,
+   "of": 1689320,
+   "median": 3.51,
+   "darkest": 14.86
+  },
+  "crossPlain": {
+   "lines": 280,
+   "medianOfLines": 9.5,
+   "linesAtOrAbove174": 1,
+   "samplesMedian": 5.7,
+   "samples": 21482,
+   "occludedSamples": 30228,
+   "ownedByKind": {
+    "carcass": 4362,
+    "spine-division": 15248,
+    "shelf": 2467
+   },
+   "segmentsByKind": {
+    "break": 1,
+    "footprint": 68,
+    "carcass": 17,
+    "shelf": 36,
+    "spine-division": 360
+   },
+   "byKind": {
+    "carcass": {
+     "lines": 15,
+     "below174": 0,
+     "lowest": null,
+     "failing": [],
+     "failingLines": []
+    },
+    "shelf": {
+     "lines": 19,
+     "below174": 0,
+     "lowest": null,
+     "failing": [],
+     "failingLines": []
+    },
+    "spine-division": {
+     "lines": 246,
+     "below174": 0,
+     "lowest": null,
+     "failing": [],
+     "failingLines": []
+    }
+   },
+   "verticalCheck": {
+    "lines": 90,
+    "pathMedianOfLines": 7.73,
+    "scanMedianOfLines": 9.3,
+    "linesDifferingOver5Percent": 10,
+    "largestRelativeDifference": 0.733,
+    "medianOffsetPx": -0.03,
+    "largestOffsetPx": 2.46,
+    "isolated": {
+     "lines": 36,
+     "rows": 7375,
+     "pathMedianOfLines": 5.7,
+     "scanMedianOfLines": 5.7,
+     "linesDifferingOver5Percent": 0,
+     "largestRelativeDifference": 0,
+     "medianOffsetPx": -0.02,
+     "largestOffsetPx": 0.57
+    }
+   },
+   "byTag": {}
+  },
+  "crossFloored": {
+   "lines": 280,
+   "medianOfLines": 9.95,
+   "linesAtOrAbove174": 1,
+   "samplesMedian": 5.97,
+   "samples": 21482,
+   "occludedSamples": 30228,
+   "ownedByKind": {
+    "carcass": 4362,
+    "spine-division": 15248,
+    "shelf": 2467
+   },
+   "segmentsByKind": {
+    "break": 1,
+    "footprint": 68,
+    "carcass": 17,
+    "shelf": 36,
+    "spine-division": 360
+   },
+   "byKind": {
+    "carcass": {
+     "lines": 15,
+     "below174": 0,
+     "lowest": null,
+     "failing": [],
+     "failingLines": []
+    },
+    "shelf": {
+     "lines": 19,
+     "below174": 0,
+     "lowest": null,
+     "failing": [],
+     "failingLines": []
+    },
+    "spine-division": {
+     "lines": 246,
+     "below174": 0,
+     "lowest": null,
+     "failing": [],
+     "failingLines": []
+    }
+   },
+   "verticalCheck": {
+    "lines": 90,
+    "pathMedianOfLines": 8.32,
+    "scanMedianOfLines": 9.68,
+    "linesDifferingOver5Percent": 9,
+    "largestRelativeDifference": 0.734,
+    "medianOffsetPx": -0.03,
+    "largestOffsetPx": 2.46,
+    "isolated": {
+     "lines": 36,
+     "rows": 7375,
+     "pathMedianOfLines": 5.97,
+     "scanMedianOfLines": 5.97,
+     "linesDifferingOver5Percent": 0,
+     "largestRelativeDifference": 0,
+     "medianOffsetPx": -0.02,
+     "largestOffsetPx": 0.57
+    }
+   },
+   "byTag": {}
+  }
+ },
+ "answer": {
+  "scale": 0.265,
+  "laidOut": {
+   "seated": 40,
+   "emptied": 17
+  },
+  "strokeCssPx": 0.265,
+  "strokeDevicePx": 0.53,
+  "plain": {
+   "paper": 0.7913,
+   "pixels": 21147,
+   "of": 923160,
+   "median": 1.89,
+   "darkest": 7.66
+  },
+  "floored": {
+   "paper": 0.7913,
+   "pixels": 21437,
+   "of": 923160,
+   "median": 3.64,
+   "darkest": 14.85
+  },
+  "crossPlain": {
+   "lines": 239,
+   "medianOfLines": 3.51,
+   "linesAtOrAbove174": 0.996,
+   "samplesMedian": 2.81,
+   "samples": 11216,
+   "occludedSamples": 16234,
+   "ownedByKind": {
+    "carcass": 2426,
+    "shelf": 1515,
+    "spine-division": 8409
+   },
+   "segmentsByKind": {
+    "break": 1,
+    "footprint": 68,
+    "carcass": 17,
+    "shelf": 36,
+    "spine-division": 360
+   },
+   "byKind": {
+    "carcass": {
+     "lines": 10,
+     "below174": 1,
+     "lowest": 1.49,
+     "failing": [
+      1.49
+     ],
+     "failingLines": [
+      {
+       "median": 1.49,
+       "seg": [
+        1576,
+        1200.7,
+        1576,
+        1620.6
+       ],
+       "samples": 398,
+       "occluded": 18,
+       "mid": [
+        {
+         "d": -2,
+         "drawn": 0.74,
+         "ground": 0.74
+        },
+        {
+         "d": -1,
+         "drawn": 0.74,
+         "ground": 0.74
+        },
+        {
+         "d": 0,
+         "drawn": 0.465,
+         "ground": 0.735
+        },
+        {
+         "d": 1,
+         "drawn": 0.387,
+         "ground": 0.791
+        },
+        {
+         "d": 2,
+         "drawn": 0.791,
+         "ground": 0.791
+        }
+       ]
+      }
+     ]
+    },
+    "shelf": {
+     "lines": 13,
+     "below174": 0,
+     "lowest": null,
+     "failing": [],
+     "failingLines": []
+    },
+    "spine-division": {
+     "lines": 216,
+     "below174": 0,
+     "lowest": null,
+     "failing": [],
+     "failingLines": []
+    }
+   },
+   "verticalCheck": {
+    "lines": 84,
+    "pathMedianOfLines": 3.41,
+    "scanMedianOfLines": 3.66,
+    "linesDifferingOver5Percent": 14,
+    "largestRelativeDifference": 0.531,
+    "medianOffsetPx": -0.08,
+    "largestOffsetPx": 2.46,
+    "isolated": {
+     "lines": 21,
+     "rows": 3011,
+     "pathMedianOfLines": 3.66,
+     "scanMedianOfLines": 3.66,
+     "linesDifferingOver5Percent": 0,
+     "largestRelativeDifference": 0,
+     "medianOffsetPx": -0.02,
+     "largestOffsetPx": 0.46
+    }
+   },
+   "byTag": {}
+  },
+  "crossFloored": {
+   "lines": 239,
+   "medianOfLines": 10.8,
+   "linesAtOrAbove174": 1,
+   "samplesMedian": 7.65,
+   "samples": 11216,
+   "occludedSamples": 16234,
+   "ownedByKind": {
+    "carcass": 2426,
+    "shelf": 1515,
+    "spine-division": 8409
+   },
+   "segmentsByKind": {
+    "break": 1,
+    "footprint": 68,
+    "carcass": 17,
+    "shelf": 36,
+    "spine-division": 360
+   },
+   "byKind": {
+    "carcass": {
+     "lines": 10,
+     "below174": 0,
+     "lowest": null,
+     "failing": [],
+     "failingLines": []
+    },
+    "shelf": {
+     "lines": 13,
+     "below174": 0,
+     "lowest": null,
+     "failing": [],
+     "failingLines": []
+    },
+    "spine-division": {
+     "lines": 216,
+     "below174": 0,
+     "lowest": null,
+     "failing": [],
+     "failingLines": []
+    }
+   },
+   "verticalCheck": {
+    "lines": 84,
+    "pathMedianOfLines": 10.73,
+    "scanMedianOfLines": 11.02,
+    "linesDifferingOver5Percent": 14,
+    "largestRelativeDifference": 0.655,
+    "medianOffsetPx": 0.06,
+    "largestOffsetPx": 2.46,
+    "isolated": {
+     "lines": 21,
+     "rows": 3011,
+     "pathMedianOfLines": 10.88,
+     "scanMedianOfLines": 10.88,
+     "linesDifferingOver5Percent": 0,
+     "largestRelativeDifference": 0,
+     "medianOffsetPx": -0.02,
+     "largestOffsetPx": 1.44
+    }
+   },
+   "byTag": {}
+  }
+ }
+}

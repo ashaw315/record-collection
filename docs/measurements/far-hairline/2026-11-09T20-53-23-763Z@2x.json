@@ -1,0 +1,428 @@
+{
+ "window": "1440x900",
+ "pool": 150,
+ "pulled": {
+  "text": "FarHairline 00 fh2mw9qn197FarHairline-fh2mw9qn197",
+  "height": 220.5
+ },
+ "dpr": 2,
+ "reference": "§W.28 hovered hairline 1.74:1",
+ "instrument": {
+  "inkOnPaper": 14.75,
+  "lines": {
+   "1": {
+    "paper": 0.793,
+    "pixels": 1120,
+    "of": 24000,
+    "median": 14.75,
+    "darkest": 14.75
+   },
+   "0.5": {
+    "paper": 0.793,
+    "pixels": 1120,
+    "of": 24000,
+    "median": 3.29,
+    "darkest": 3.29
+   },
+   "0.25": {
+    "paper": 0.793,
+    "pixels": 1120,
+    "of": 24000,
+    "median": 1.7,
+    "darkest": 1.7
+   }
+  },
+  "crossSection": {
+   "lines": 4,
+   "medianOfLines": 14.75,
+   "linesAtOrAbove174": 0.75,
+   "samplesMedian": 3.29,
+   "samples": 1930,
+   "occludedSamples": 38,
+   "ownedByKind": {
+    "spine-division": 1981
+   },
+   "segmentsByKind": {
+    "spine-division": 4
+   },
+   "byKind": {
+    "spine-division": {
+     "lines": 4,
+     "below174": 1,
+     "lowest": 1.7,
+     "failing": [
+      1.7
+     ],
+     "failingLines": [
+      {
+       "median": 1.7,
+       "seg": [
+        20,
+        101,
+        580,
+        101
+       ],
+       "samples": 557,
+       "occluded": 0,
+       "mid": [
+        {
+         "d": -2,
+         "drawn": 0.793,
+         "ground": 0.793
+        },
+        {
+         "d": -1,
+         "drawn": 0.445,
+         "ground": 0.793
+        },
+        {
+         "d": 0,
+         "drawn": 0.445,
+         "ground": 0.793
+        },
+        {
+         "d": 1,
+         "drawn": 0.793,
+         "ground": 0.793
+        },
+        {
+         "d": 2,
+         "drawn": 0.793,
+         "ground": 0.793
+        }
+       ]
+      }
+     ]
+    }
+   },
+   "verticalCheck": {
+    "lines": 0,
+    "pathMedianOfLines": null,
+    "scanMedianOfLines": null,
+    "linesDifferingOver5Percent": 0,
+    "largestRelativeDifference": null,
+    "medianOffsetPx": null,
+    "largestOffsetPx": null,
+    "isolated": {
+     "lines": 0,
+     "rows": 0,
+     "pathMedianOfLines": null,
+     "scanMedianOfLines": null,
+     "linesDifferingOver5Percent": 0,
+     "largestRelativeDifference": null,
+     "medianOffsetPx": null,
+     "largestOffsetPx": null
+    }
+   },
+   "byTag": {
+    "1": 14.75,
+    "0.5": 3.29,
+    "0.25": 1.7,
+    "1@30deg": 14.75
+   }
+  }
+ },
+ "planeLum": 0.7400336199490174,
+ "rest": {
+  "scale": 0.602,
+  "laidOut": {
+   "seated": 150,
+   "emptied": 17
+  },
+  "strokeCssPx": 0.602,
+  "strokeDevicePx": 1.204,
+  "plain": {
+   "paper": 0.7913,
+   "pixels": 192905,
+   "of": 2505264,
+   "median": 4.52,
+   "darkest": 14.85
+  },
+  "floored": {
+   "paper": 0.7913,
+   "pixels": 165729,
+   "of": 2505264,
+   "median": 3.83,
+   "darkest": 14.97
+  },
+  "crossPlain": {
+   "lines": 1026,
+   "medianOfLines": 12.93,
+   "linesAtOrAbove174": 1,
+   "samplesMedian": 11.88,
+   "samples": 84870,
+   "occludedSamples": 105966,
+   "ownedByKind": {
+    "carcass": 5322,
+    "shelf": 4850,
+    "spine-division": 79699,
+    "footprint": 1
+   },
+   "segmentsByKind": {
+    "break": 1,
+    "footprint": 68,
+    "carcass": 17,
+    "shelf": 36,
+    "spine-division": 1354
+   },
+   "byKind": {
+    "carcass": {
+     "lines": 15,
+     "below174": 0,
+     "lowest": null,
+     "failing": [],
+     "failingLines": []
+    },
+    "shelf": {
+     "lines": 18,
+     "below174": 0,
+     "lowest": null,
+     "failing": [],
+     "failingLines": []
+    },
+    "spine-division": {
+     "lines": 993,
+     "below174": 0,
+     "lowest": null,
+     "failing": [],
+     "failingLines": []
+    }
+   },
+   "verticalCheck": {
+    "lines": 320,
+    "pathMedianOfLines": 11.8,
+    "scanMedianOfLines": 12.23,
+    "linesDifferingOver5Percent": 31,
+    "largestRelativeDifference": 0.948,
+    "medianOffsetPx": 0,
+    "largestOffsetPx": 2.44,
+    "isolated": {
+     "lines": 159,
+     "rows": 30570,
+     "pathMedianOfLines": 11.26,
+     "scanMedianOfLines": 11.26,
+     "linesDifferingOver5Percent": 0,
+     "largestRelativeDifference": 0,
+     "medianOffsetPx": 0.06,
+     "largestOffsetPx": 0.58
+    }
+   },
+   "byTag": {}
+  },
+  "crossFloored": {
+   "lines": 1026,
+   "medianOfLines": 9.92,
+   "linesAtOrAbove174": 1,
+   "samplesMedian": 8.79,
+   "samples": 84870,
+   "occludedSamples": 105966,
+   "ownedByKind": {
+    "carcass": 5322,
+    "shelf": 4850,
+    "spine-division": 79699,
+    "footprint": 1
+   },
+   "segmentsByKind": {
+    "break": 1,
+    "footprint": 68,
+    "carcass": 17,
+    "shelf": 36,
+    "spine-division": 1354
+   },
+   "byKind": {
+    "carcass": {
+     "lines": 15,
+     "below174": 0,
+     "lowest": null,
+     "failing": [],
+     "failingLines": []
+    },
+    "shelf": {
+     "lines": 18,
+     "below174": 0,
+     "lowest": null,
+     "failing": [],
+     "failingLines": []
+    },
+    "spine-division": {
+     "lines": 993,
+     "below174": 0,
+     "lowest": null,
+     "failing": [],
+     "failingLines": []
+    }
+   },
+   "verticalCheck": {
+    "lines": 320,
+    "pathMedianOfLines": 8.96,
+    "scanMedianOfLines": 9.5,
+    "linesDifferingOver5Percent": 37,
+    "largestRelativeDifference": 0.651,
+    "medianOffsetPx": 0,
+    "largestOffsetPx": 2.37,
+    "isolated": {
+     "lines": 174,
+     "rows": 31860,
+     "pathMedianOfLines": 8.96,
+     "scanMedianOfLines": 8.96,
+     "linesDifferingOver5Percent": 0,
+     "largestRelativeDifference": 0,
+     "medianOffsetPx": 0.06,
+     "largestOffsetPx": 0.58
+    }
+   },
+   "byTag": {}
+  }
+ },
+ "answer": {
+  "scale": 0.602,
+  "laidOut": {
+   "seated": 150,
+   "emptied": 17
+  },
+  "strokeCssPx": 0.602,
+  "strokeDevicePx": 1.204,
+  "plain": {
+   "paper": 0.7913,
+   "pixels": 192905,
+   "of": 2505264,
+   "median": 4.52,
+   "darkest": 14.85
+  },
+  "floored": {
+   "paper": 0.7913,
+   "pixels": 165729,
+   "of": 2505264,
+   "median": 3.83,
+   "darkest": 14.97
+  },
+  "crossPlain": {
+   "lines": 1026,
+   "medianOfLines": 12.93,
+   "linesAtOrAbove174": 1,
+   "samplesMedian": 11.88,
+   "samples": 84870,
+   "occludedSamples": 105966,
+   "ownedByKind": {
+    "carcass": 5322,
+    "shelf": 4850,
+    "spine-division": 79699,
+    "footprint": 1
+   },
+   "segmentsByKind": {
+    "break": 1,
+    "footprint": 68,
+    "carcass": 17,
+    "shelf": 36,
+    "spine-division": 1354
+   },
+   "byKind": {
+    "carcass": {
+     "lines": 15,
+     "below174": 0,
+     "lowest": null,
+     "failing": [],
+     "failingLines": []
+    },
+    "shelf": {
+     "lines": 18,
+     "below174": 0,
+     "lowest": null,
+     "failing": [],
+     "failingLines": []
+    },
+    "spine-division": {
+     "lines": 993,
+     "below174": 0,
+     "lowest": null,
+     "failing": [],
+     "failingLines": []
+    }
+   },
+   "verticalCheck": {
+    "lines": 320,
+    "pathMedianOfLines": 11.8,
+    "scanMedianOfLines": 12.23,
+    "linesDifferingOver5Percent": 31,
+    "largestRelativeDifference": 0.948,
+    "medianOffsetPx": 0,
+    "largestOffsetPx": 2.44,
+    "isolated": {
+     "lines": 159,
+     "rows": 30570,
+     "pathMedianOfLines": 11.26,
+     "scanMedianOfLines": 11.26,
+     "linesDifferingOver5Percent": 0,
+     "largestRelativeDifference": 0,
+     "medianOffsetPx": 0.06,
+     "largestOffsetPx": 0.58
+    }
+   },
+   "byTag": {}
+  },
+  "crossFloored": {
+   "lines": 1026,
+   "medianOfLines": 9.92,
+   "linesAtOrAbove174": 1,
+   "samplesMedian": 8.79,
+   "samples": 84870,
+   "occludedSamples": 105966,
+   "ownedByKind": {
+    "carcass": 5322,
+    "shelf": 4850,
+    "spine-division": 79699,
+    "footprint": 1
+   },
+   "segmentsByKind": {
+    "break": 1,
+    "footprint": 68,
+    "carcass": 17,
+    "shelf": 36,
+    "spine-division": 1354
+   },
+   "byKind": {
+    "carcass": {
+     "lines": 15,
+     "below174": 0,
+     "lowest": null,
+     "failing": [],
+     "failingLines": []
+    },
+    "shelf": {
+     "lines": 18,
+     "below174": 0,
+     "lowest": null,
+     "failing": [],
+     "failingLines": []
+    },
+    "spine-division": {
+     "lines": 993,
+     "below174": 0,
+     "lowest": null,
+     "failing": [],
+     "failingLines": []
+    }
+   },
+   "verticalCheck": {
+    "lines": 320,
+    "pathMedianOfLines": 8.96,
+    "scanMedianOfLines": 9.5,
+    "linesDifferingOver5Percent": 37,
+    "largestRelativeDifference": 0.651,
+    "medianOffsetPx": 0,
+    "largestOffsetPx": 2.37,
+    "isolated": {
+     "lines": 174,
+     "rows": 31860,
+     "pathMedianOfLines": 8.96,
+     "scanMedianOfLines": 8.96,
+     "linesDifferingOver5Percent": 0,
+     "largestRelativeDifference": 0,
+     "medianOffsetPx": 0.06,
+     "largestOffsetPx": 0.58
+    }
+   },
+   "byTag": {}
+  }
+ }
+}

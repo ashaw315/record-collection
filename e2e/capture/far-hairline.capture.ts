@@ -297,6 +297,8 @@ for (const dpr of (process.env.FAR_DPR ?? '1,2').split(',').map(Number)) {
     test.setTimeout(240_000);
     const ctx = await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: dpr });
     const page = await ctx.newPage();
+    /* FAR_PICK_FIRST=1: SURPRISE ME takes its first candidate every time, so the answer column varies with the collection and not with the draw (the coordinator, 9 Nov). */
+    if (process.env.FAR_PICK_FIRST === '1') await ctx.addInitScript(() => { Math.random = () => 0; });
     await login(page);
     const suffix = `fh${dpr}${Date.now().toString(36)}`;
     const artist = (await (await page.request.post('/api/artists', { data: { name: `FarHairline-${suffix}` } })).json()) as { id: string };
@@ -304,6 +306,8 @@ for (const dpr of (process.env.FAR_DPR ?? '1,2').split(',').map(Number)) {
     await seedRecords(artist.id, 'FarHairline', suffix, POOL);
     await page.goto(`/?artistId=${artist.id}`);
     await page.locator('[data-wall-container]:not([data-unmeasured])').waitFor({ timeout: 30_000 });
+    /* Past the fork (1274) the near view is the default; the count zooms out to the far view (§W.12), so ask for it rather than wait. */
+    if (!(await drawing(page).isVisible())) await page.getByTestId('wall-zoom-out').filter({ visible: true }).first().click();
     await drawing(page).waitFor({ timeout: 30_000 });
     await page.evaluate(() => document.fonts.ready);
 
@@ -391,13 +395,19 @@ for (const dpr of (process.env.FAR_DPR ?? '1,2').split(',').map(Number)) {
     await page.waitForTimeout(2500);
     const noText2 = await page.addStyleTag({ content: `${SVG} text { visibility: hidden !important; }` });
     const answer = await read('answer');
+    const pulled = await page.locator('[data-pick-answer]').filter({ visible: true }).evaluate((el) => ({ text: (el.textContent ?? '').replace(/\s+/g, ' ').trim().slice(0, 80), height: Math.round(el.getBoundingClientRect().height * 10) / 10 }));
     await noText2.evaluate((el) => (el as Element).remove());
     await shoot(page, `answer-unfloored-1044x768@${dpr}x.png`, capDir);
     f = await page.addStyleTag({ content: floorRule });
     await shoot(page, `answer-floored-1044x768@${dpr}x.png`, capDir);
     await f.evaluate((el) => (el as Element).remove());
 
-    const out = { window: `${W}x${H}`, pool: POOL, dpr, reference: '§W.28 hovered hairline 1.74:1', instrument: { inkOnPaper, lines: refs, crossSection: refCross }, planeLum, rest, answer };
+    /* One line per state, printed by THIS run only after it has its figures, so a failed run prints no figure at all. */
+    for (const [state, v] of [['rest', rest], ['answer', answer]] as const) {
+      const failing = Object.values(v.crossPlain.byKind as Record<string, { below174: number }>).reduce((a, k) => a + k.below174, 0);
+      console.log(`FAR-SUMMARY ${W}x${H} @${dpr}x pool ${POOL} ${state}: scale ${v.scale}, laid out ${v.laidOut.seated + v.laidOut.emptied}, lines failing ${failing} of ${v.crossPlain.lines}${state === 'answer' ? `, pulled "${pulled.text}" (answer ${pulled.height} tall)` : ''}`);
+    }
+    const out = { window: `${W}x${H}`, pool: POOL, pulled, dpr, reference: '§W.28 hovered hairline 1.74:1', instrument: { inkOnPaper, lines: refs, crossSection: refCross }, planeLum, rest, answer };
     console.log(JSON.stringify(out, null, 1));
     const dir = join('docs', 'measurements', 'far-hairline');
     mkdirSync(dir, { recursive: true });

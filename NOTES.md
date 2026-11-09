@@ -55544,3 +55544,50 @@ yet:** a test that asserts a DOM element and nothing about whether it does its j
 feature has existed. What would have caught it: an assertion on paint order (the footprint after the top face it
 lies on, as the ruling now says), or a hit test along the footprint's own edges (`elementFromPoint` returns the
 top-most painted element, and a stroke is hit-tested on its geometry however thin it renders).
+
+## 9 Nov: the far-view thread and §43's remedy PARKED (Adam's redirect, via the coordinator) — its state, for pick-up from the record
+
+**Parked, not cancelled.** Owed to Design and held: the far view's markup confirmation (what its region shows before
+measurement, whether its height is reserved); the with-answer column, controlled (below: not yet clean); the §43
+recordings and timings (four cases, the three slow-connection ones labelled as the remedy's worst-case cost, not a
+reproduction); the Linux dispatch and the gate decision; the 497.5 measurement and the labelled 640 capture.
+
+**The instrument, two corrections (both on 9 Nov, both found by checking it).** (1) The occlusion test counted a
+cross-section visible when any stroke changed it, so a line hidden under a later face beside a neighbour read as
+faint; replaced by an ownership render (each stroke crisp, one device pixel, its own colour over the real fills), a
+line counted only where it or a face sharing its edge is on top. (2) That render first kept one owner per shared
+edge and dropped 205 lines; every face sharing the edge now owns it. After both: no line fails floored at any state,
+and isolated verticals agree exactly between the path measure and a pixel scan (thinnest at @2x with an answer:
+three lines).
+
+**The corrected per-kind table (pool of 30, 47 laid out, 1044 × 768; below 1.74:1, a line's figure the median
+along its length):** @2x at rest 0 of 215; @2x with an answer 33 of 139 (carcass 10/10 from 1.26, shelf 11/14 from
+1.36, spine division 12/115 from 1.46); @1x at rest 18 of 141 (carcass 6/10, shelf 9/14, division 3/117); @1x with an
+answer 115 of 115, **the whole drawing below the line**, a case that reaches a reader only if Design's client-side
+route lets 1x draw an answer at that scale. Floored at one device pixel: 0 fail at every state.
+
+**The collection-size figures (@2x, a build, the pulled record fixed with FAR_PICK_FIRST=1; load 5.3 to 9.8).**
+At rest (the column a stated record count comes from):
+- 1044 × 768: 0 failing at 47, 77, 117, 132, 147 laid out (scale 0.367 to 0.324); 1 carcass line at 167 (0.314);
+  0 at 267 (0.269) in this run and 1 in the uncontrolled one. First failure between 147 and 167, about three times
+  Adam's 55, and at the margin: one line, appearing and not.
+- 1273 × 900: 0 at 57, 167, 267 (0.486 to 0.357).
+- 1440 × 900 (the far view asked for by its zoom-out, past the fork at 1274): 0 at 57, 167, 267 (0.704 to 0.517);
+  the answer stands in the count column there and does not shrink the drawing.
+With an answer, NOT yet comparable across rows: the same record ("FarHairline 00") was pulled every time, but its
+answer drew 220.5 tall on some runs and 240 on others, and the drawing's scale follows it (1044 × 768: 34 failing at
+77 with 220.5; 72 at 117 and 129 at 132 with 240; 41 at 147 and 68 at 167 with 220.5; 539 at 267 with 240). What it
+does show: lines fail with an answer at today's size at 1044 and 1273 (1 at 57 there), and none at 1440. The answer's
+height must be held too (why one record draws two heights is unread) before the column reads as growth.
+
+**§W.34's tests: existence, not visibility (a family member).** WallOverview.test.tsx:185 counts footprint elements;
+**WallLabelled.test.tsx:383 checks stroke-width 1, fill none and the 0.72 colour**, three appearance properties, and
+is exactly as blind as a count: checking a colour is not checking visibility, and a test that reads how a thing looks
+looks more thorough than one that counts it while seeing no more; e2e/shelf.spec.ts:543 counts them among the
+fixture's records. All pass on a far view where no footprint owns a pixel.
+
+**A family member, new: a stale figure printed after a failure.** The shell loop around the tool read the newest
+measurement file after each run; when the 1440 runs failed, it printed the previous run's figures under them, which
+looked like results and was caught only because 1440's number looked wrong. Worse than printing nothing. The tool now
+prints its own FAR-SUMMARY line only once it has its figures, and the loop prints "RUN FAILED, no figure" when that
+line is absent. Any tool that reports after a failure says it failed, never the last good value.
