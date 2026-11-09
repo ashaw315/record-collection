@@ -145,11 +145,17 @@ export function changedSections(before, after) {
  * stands, is unchanged or needs no change is a standing.
  */
 export function rowAddressed(changeFile, id) {
-  const names = new RegExp(`§${id.replace('.', '\\.')}(?![\\d.])`);
+  /* Not §W.80 or §W.8.1; a full stop that ends "**§P.5.**" is still §P.5. */
+  const names = new RegExp(`§${id.replace('.', '\\.')}(?!\\d|\\.\\d)`);
   const stands = sentencesOf(changeFile).some((s) => names.test(s) && /\brow (?:is |was )?(?:stands|unchanged)\b|\bno change\b/i.test(s));
   if (stands) return 'stands';
   const edited = changeFile.split(/\n[ \t]*\n/).some((para) => names.test(para) && /\b(?:description|title|governs row)\b/i.test(para));
-  return edited ? 'edited' : null;
+  if (edited) return 'edited';
+  /* "## Change 4 — governs rows" over a list of "- **§P.5.** Append: …" (8 Nov): the heading names the rows. */
+  const underRowsHeading = changeFile
+    .split(/^(?=#{1,6} )/m)
+    .some((part) => /^#{1,6} [^\n]*\bgoverns rows?\b/i.test(part) && names.test(part));
+  return underRowsHeading ? 'edited' : null;
 }
 
 function governs(from, to) {

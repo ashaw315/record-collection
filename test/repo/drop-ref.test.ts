@@ -328,4 +328,15 @@ describe('drop-ref: the row’s edit and its standing in Design’s own phrasing
     expect(rowAddressed("Anchored on the row's first cell, `| §W.80 |`. Append to its description: x.\n", 'W.8')).toBeNull();
     expect(rowAddressed('§W.8 rules the press; nothing here about rows.\n', 'W.8')).toBeNull();
   });
+
+  it('reads a governs-rows heading over a list of sections as an edit to each row it lists (8 Nov)', () => {
+    /* "ADD RECORD leaves the rail", Change 4: the heading names the rows, the list items name the sections. */
+    const change4 = '## Change 4 — governs rows\n\n- **§W.13.** Append: "And Add record out of the rail."\n- **§P.5.** Append: "And ADD RECORD out of the rail, the control ending it."\n\n## For Code\n\nThe §T.6 sentence is a dated record.\n';
+    expect(rowAddressed(change4, 'P.5')).toBe('edited');
+    expect(rowAddressed(change4, 'W.13')).toBe('edited');
+    /* A section named under another heading, and one the list does not name. */
+    expect(rowAddressed(change4, 'T.6')).toBeNull();
+    expect(rowAddressed(change4, 'P.50')).toBeNull();
+    expect(rowAddressed('## Change 2 — a step\n\n- **§P.5.** Append: "x."\n', 'P.5')).toBeNull();
+  });
 });

@@ -33,7 +33,7 @@ The wall at rest is line, ink and paper; colour arrives with the pull. Everythin
 | §W.10 | The unit, the pull in projection, two views | Four joined shelves as fixed furniture, why capacity could not make it read as one, that the pulled record stays sheared and its seat empties, and the far/near view pair. **Withdraws §W.9's straightening.** |
 | §W.11 | The three drawings, and the figures they fix | **Not illustration: it carries the figures §W.10's rulings depend on.** The unit's dimensions and seat pitch, the near view at true scale and its character cap, and the landed record as that drawing shows it (the ruled growth is §W.20/§W.21's). Also the wrong-axis finding in general form. |
 | §W.12 | The route, and moving between the views | Whether the app opens far or near, the way back out, whether the far view exists at one unit, where a zoom lands, and how a filter narrows it. A record that is out staying out across a zoom and a resize, whatever pulled it. Plus the one unruled composition: the landed record's corner over a full shelf. |
-| §W.13 | The controls leave the horizontal band | The header band withdrawn; the left rail at true scale with its type; why the drawing stays rightmost; how the duplicate identity resolves; the switcher as a stacked list; Add record at the foot. The narrow-viewport rail is ruled in §W.24. |
+| §W.13 | The controls leave the horizontal band | The header band withdrawn; the left rail at true scale with its type; why the drawing stays rightmost; how the duplicate identity resolves; the switcher as a stacked list; Add record at the foot. The narrow-viewport rail is ruled in §W.24. And Add record out of the rail where it is a column (its foot withdrawn). |
 | §W.14 | The pull has two phases, and the square is the second one’s end (sequencing and durations withdrawn by §W.19/§W.21) | Out then round: phase one in projection (§W.2 unchanged, scoped), phase two the turn onto the page's plane; why the boundary is zero-hold with velocity to rest; what stays still; what the motion probe must settle (the split, the boundary, the corner path). **Reconciles §W.9's square with §W.10's shear — both were stated over the wrong subject.** |
 | §W.15 | Which side the reader is on, and how units tile — orientation and tiling (sign withdrawn by §W.20; tiling withdrawn by §W.23) | Which edge is the near one (with the derivation), why an extent test cannot catch a front/back flip, why units tile along +x and project diagonally, the cost that lands on the far view, and that §W.12's filter ruling reaches the data layer. |
 | §W.16 | The turn is a rotation (sequencing withdrawn by §W.19) | Rigid rotation re-projected per frame, never interpolated corners; the rotation's axis and why that edge is the point the turn plants; the derived clearance that bounds phase one's travel; why there are two phases at all (their sequencing is withdrawn by §W.19); what it reverses in §W.2; and that the record lands on the page's plane. |
@@ -137,7 +137,7 @@ The wall at rest is line, ink and paper; colour arrives with the pull. Everythin
 | §P.2 | What an ask does | The toggles and ASK, the lean and why it only never empties, the one last-served record and what counts as served, the pool under a filter and why paging does not narrow it, why it is not a filter, why a zoom is not a navigation, an answer ending when its host changes, and SURPRISE ME. |
 | §P.3 | A second ask on the shelf | The first answer as §W's pull, the re-roll as a put back then a pull and the §W.8 sentence that gives its reason, the order between them left to Adam's use, an ask mid-motion, the record already out, and the unexplained put back. |
 | §P.4 | The answer on the table and the grid | The answer as one grid cell, beneath the control in the band host and in the count column in the column host, its width and its distance below what precedes it, what moves when its height changes and what does not, and the slot's message where the answer is the record already shown. And the cell held in view in the count column when the page has scrolled past it. |
-| §P.5 | The control | Its order, its place in the rail as a column and as a band, the sidebar and the band below the filters, how a mood is marked and why not as a filter, ASK and SURPRISE ME as labels, the moods' pitch in the rail, and the rail running with the page past the window's foot. |
+| §P.5 | The control | Its order, its place in the rail as a column and as a band, the sidebar and the band below the filters, how a mood is marked and why not as a filter, ASK and SURPRISE ME as labels, the moods' pitch in the rail, and the rail running with the page past the window's foot. And ADD RECORD out of the rail, the control ending it. |
 | §P.6 | The states | The inert mood and inert ASK, why both stay Tab stops and how each is named, the untagged line and why the difference is the collection's, SURPRISE ME alone with nothing tagged, the unanswerable ask, the slot's messages, and reduced motion. And inert ASK drawn in the label colour. |
 
 ## Structural sections — pointers
@@ -856,6 +856,13 @@ Its rows are in the governs table above, one per section; this section does not 
   - **Capture** both.
   > Where the page has scrolled past the cell’s place, the cell holds at the window’s top inside the count column, and never past the column’s foot, so an answer asked from the foot of the rail stands in view without the page moving.
 
+- **Unnumbered, for Code to number — §W.13: ADD RECORD out of the rail.**
+  - **Move:** where the rail is a column, take ADD RECORD and its rule out of the rail. Place it at the top right of the content beside the rail, as the table and the grid do, and propose its line and inset.
+  - **The band host:** unchanged.
+  - **Tab order:** update ring-144's sequence. Report where ADD RECORD falls.
+  - **Capture** 1274 × 640 and 1440 × 900, at rest and scrolled to SURPRISE ME. Adam judges the control's own fold at 640 from these.
+  > Where the rail is a column, Add record stands at the top right of the content beside the rail, as the table and the grid set it at their content column’s top right, so every view of the collection puts it in one place, in view at every height.
+
 No step: §G.7. It rules nothing. Hover and focus wait on Code's second pass, the breakpoint is settled and recorded in §G.8, and the eyebrow repetition is an observation, not a ruling.
 
 No step: §P.1. It rules where the feature is ruled and which view presents an answer; what that means for the build is in the steps for §P.3 and §P.4.
@@ -917,6 +924,8 @@ The provisionals in force, for the note in Maintaining this file that a provisio
 - **§65 · the tracklist section.** "How it reads at 32 tracks, whether the tracks take two columns where the span is wide, and how the credits read opened, are all provisional until built and captured at 1440 × 900 and at 390, on the longest and the shortest tracklist in the collection." Returns from the tracklist step. Open. And what the count line says when the fold holds companies alone.
 - **§60 · the disc at the reference's size.** "How it reads at that size is provisional until captured and judged." Returns from the disc step. Open.
 - **§P.4 · the held cell.** How the held cell reads at 1440 × 768 and 640. Returns from the held-cell step, for Adam. Open.
+- **§P.5 · the control's own fold at 640.** ASK and SURPRISE ME fall below the fold at 640, with the control ending at 919 by step 157. Returns from the ADD RECORD step's captures, for Adam. Open, with no answer pre-committed.
+- **§W.13 · where ADD RECORD stands.** "Where it stands exactly, on which line and how far in, is provisional until built and captured at 1274 × 640 and 1440 × 900." Returns from the same step. Open.
 
 ## Findings for screens without a pass
 
