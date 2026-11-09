@@ -55489,3 +55489,31 @@ confirmed first).** Seeded pool of 30 shown under an artist filter, so the filte
 occluded) and not yet read. @1x at rest 28 of 216 (carcass 6, shelf 10, footprint 2, division 10); @1x with an answer
 207 of 212. Floored at one device pixel, residuals: @2x answer footprint 1 and division 2; @1x answer carcass 1 and
 division 2; also unread.
+
+**The five floored residuals were the instrument's, and the figures before 9 Nov ~15:00 overstate failure (the
+coordinator asked them read first).** In each, the line's own pixels on its path were identical in the drawn and
+ground renders: its stroke was covered by a face painted later. A neighbouring line 1 to 2 px away changed pixels in
+the cross-section window, and the occlusion test ("did any stroke change this window") read the hidden line as
+visible, so the figure was the neighbour's antialiased edge (e.g. @2x answer, a division at x 1456: 0.791 against
+0.791 at its centre, 0.014 and 0.036 at ±2). Fixed with an ownership render: every stroke drawn crisp, one device
+pixel wide, in its own colour over the real fills, a cross-section counted only where its own line, or a face sharing
+that edge, owns a pixel (the first version kept one owner per shared edge and dropped 205 lines; corrected). After it,
+every floored residual is gone at all four states, and isolated verticals still agree exactly.
+
+**Corrected, every drawn line against 1.74:1 (a line's figure the median along its length):** @2x at rest 0 of 215
+fail (Design expected about two); @2x with an answer 33 of 139 (carcass 10 of 10 from 1.26, shelf 11 of 14 from 1.36,
+spine division 12 of 115 from 1.46; isolated confirmation three lines); @1x at rest 18 of 141 (carcass 6/10, shelf
+9/14, division 3/117); @1x with an answer 115 of 115. Floored at one device pixel: 0 fail at every state. The blank
+@1x-with-an-answer kinds in the last report were computed and left out by me (then: carcass 11/11, footprint 16/16,
+shelf 18/18, division 161/166, break 1/1); superseded by these.
+
+**Footprints are never seen: a §W.34 divergence, found by the ownership render.** The 68 footprint segments own 0
+pixels at three states and 1 at the fourth; the one break line owns none. WallOverview draws the footprints before
+paintOrder's pieces and records, and the shelf faces painted after them are opaque, so "an emptied seat is drawn"
+draws nothing a reader sees. Not fixed: a ruling's drawing diverging from the build is asked.
+
+**§43's band height is content-derived (FOUR).** The record band's rows are auto-sized (`min-height: 0` on its
+cells, no row template set before content); its settled heights run 233.9 to 435.4 by record. band-geometry.ts's
+"heights are fixed, not content-derived" describes the older bands (BANDS.record 300 is SPENT, used by nothing at
+runtime). A reserved height would need a server estimate of wrapped text, the same class of estimate as the
+quarters, whose misses record-band-43's residual already reports.

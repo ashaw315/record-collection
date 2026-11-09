@@ -85,13 +85,18 @@ const median = (xs: number[]) => { const s = [...xs].sort((a, b) => a - b); retu
 async function segmentsOf(page: Page, selector: string) {
   return page.evaluate((sel) => {
     const roots = Array.from(document.querySelectorAll(sel)).filter((r) => r.getBoundingClientRect().width > 0);
-    const out: Array<{ tag: string; kind: string; seg: [number, number, number, number] }> = [];
-    const seen = new Set<string>();
+    const out: Array<{ tag: string; kind: string; owners: number[]; seg: [number, number, number, number] }> = [];
+    let next = 0;
+    const seen = new Map<string, number>();
     for (const root of roots) for (const el of Array.from(root.querySelectorAll('polygon, line'))) {
       const cs = getComputedStyle(el);
       if (cs.stroke === 'none' || cs.visibility === 'hidden' || cs.display === 'none' || parseFloat(cs.strokeWidth) === 0) continue;
       const m = (el as SVGGraphicsElement).getScreenCTM();
       if (m === null) continue;
+      next += 1;
+      const owner = next;
+      /* The ownership render's colour for this element: red 255, its number in green and blue, never a grey fill. */
+      (el as SVGElement).style.setProperty('--xs-owner', `rgb(255, ${(owner >> 8) & 255}, ${owner & 255})`);
       const pts: Array<[number, number]> = el.tagName === 'line'
         ? [[(el as SVGLineElement).x1.baseVal.value, (el as SVGLineElement).y1.baseVal.value], [(el as SVGLineElement).x2.baseVal.value, (el as SVGLineElement).y2.baseVal.value]]
         : Array.from((el as SVGPolygonElement).points).map((p) => [p.x, p.y] as [number, number]);
@@ -99,12 +104,14 @@ async function segmentsOf(page: Page, selector: string) {
       const edges = el.tagName === 'line' ? [[screen[0], screen[1]]] : screen.map((p, i) => [p, screen[(i + 1) % screen.length]]);
       for (const [a, b] of edges) {
         const key = [a, b].map((p) => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).sort().join('|');
-        if (seen.has(key)) continue;
-        seen.add(key);
+        /* A shared edge is drawn by each face that has it, and whichever was painted last owns its pixels. */
+        const already = seen.get(key);
+        if (already !== undefined) { out[already].owners.push(owner); continue; }
+        seen.set(key, out.length);
         /* Design's kinds (9 Nov): an upright is the carcass, a shelf the shelf, a record's faces its spine divisions. */
         const piece = el.closest('[data-piece]')?.getAttribute('data-piece');
         const kind = piece === 'upright' ? 'carcass' : piece === 'shelf' ? 'shelf' : el.hasAttribute('data-break') ? 'break' : el.hasAttribute('data-footprint') ? 'footprint' : 'spine-division';
-        out.push({ tag: el.getAttribute('data-w') ?? '', kind, seg: [a[0], a[1], b[0], b[1]] });
+        out.push({ tag: el.getAttribute('data-w') ?? '', kind, owners: [owner], seg: [a[0], a[1], b[0], b[1]] });
       }
     }
     return out;
@@ -118,7 +125,31 @@ async function crossSection(page: Page, selector: string, dpr: number) {
   const bare = await page.addStyleTag({ content: `${selector} polygon, ${selector} line { stroke: transparent !important; }` });
   const ground = await raw(await page.screenshot({ animations: 'disabled' }));
   await bare.evaluate((el) => (el as Element).remove());
-  const lines: Array<{ tag: string; kind: string; median: number }> = [];
+  /*
+    Which line is on top, per pixel (9 Nov). The first version called a cross-section visible when any stroke changed
+    any pixel in it, so a line hidden under a later face, beside a neighbour 1 to 2 px away, read as a faint line: all
+    five lines that failed even floored at one device pixel were that. Here every stroke is drawn crisp, one device
+    pixel wide, in its own colour over the real fills, so the top-most stroke at each pixel is known, and a
+    cross-section counts only where its own line owns a pixel in it.
+  */
+  const own = await page.addStyleTag({ content: `${selector} polygon, ${selector} line { stroke: var(--xs-owner) !important; vector-effect: non-scaling-stroke; stroke-width: ${1 / dpr}px !important; shape-rendering: crispEdges; }` });
+  const owners = await raw(await page.screenshot({ animations: 'disabled' }));
+  await own.evaluate((el) => (el as Element).remove());
+  const ownerAt = (x: number, y: number) => {
+    const i = (y * owners.width + x) * owners.channels;
+    return owners.data[i] === 255 && !(owners.data[i + 1] > 200 && owners.data[i + 2] > 200) ? owners.data[i + 1] * 256 + owners.data[i + 2] : 0;
+  };
+  /* How many pixels each kind's strokes own on top, so a kind drawn and wholly covered is seen as covered, not as absent. */
+  const kindOf = new Map<number, string>();
+  for (const sg of segs) for (const o of sg.owners) kindOf.set(o, sg.kind);
+  const ownedByKind: Record<string, number> = {};
+  for (let y = 0; y < owners.height; y += 1) for (let x = 0; x < owners.width; x += 1) {
+    const o = ownerAt(x, y);
+    if (o !== 0) { const k = kindOf.get(o) ?? 'unknown'; ownedByKind[k] = (ownedByKind[k] ?? 0) + 1; }
+  }
+  const segmentsByKind: Record<string, number> = {};
+  for (const sg of segs) segmentsByKind[sg.kind] = (segmentsByKind[sg.kind] ?? 0) + 1;
+  const lines: Array<{ tag: string; kind: string; median: number; seg: number[]; samples: number; occluded: number; mid: unknown }> = [];
   const all: number[] = [];
   let occluded = 0;
   /*
@@ -129,13 +160,14 @@ async function crossSection(page: Page, selector: string, dpr: number) {
     pixels alone, and its figure and its offset from the path are kept beside the path's.
   */
   const verticals: Array<{ path: number; scan: number; meanOffset: number; iso: { path: number; scan: number; meanOffset: number; rows: number } | null }> = [];
-  for (const { tag, kind, seg } of segs) {
+  for (const { tag, kind, owners: mine, seg } of segs) {
     const [x1, y1, x2, y2] = seg.map((v) => v * dpr);
     const length = Math.hypot(x2 - x1, y2 - y1);
     if (length < 5) continue;
     const [ux, uy] = [(x2 - x1) / length, (y2 - y1) / length];
     const [nx, ny] = [-uy, ux];
     const samples: number[] = [];
+    const occludedBefore = occluded;
     for (let t = 2; t <= length - 2; t += 1) {
       const [px, py] = [x1 + ux * t, y1 + uy * t];
       const cells = new Set<string>();
@@ -144,10 +176,13 @@ async function crossSection(page: Page, selector: string, dpr: number) {
         if (cx >= 0 && cy >= 0 && cx < drawn.width && cy < drawn.height) cells.add(`${cx},${cy}`);
       }
       let best = 0; let visible = false;
+      for (const d of [-1.5, -1, -0.5, 0, 0.5, 1, 1.5]) {
+        const cx = Math.floor(px + nx * d); const cy = Math.floor(py + ny * d);
+        if (cx >= 0 && cy >= 0 && cx < owners.width && cy < owners.height && mine.includes(ownerAt(cx, cy))) visible = true;
+      }
       for (const c of cells) {
         const [cx, cy] = c.split(',').map(Number);
         const [l, g] = [lumAt(drawn, cx, cy), lumAt(ground, cx, cy)];
-        if (Math.abs(g - l) > 0.002) visible = true;
         if (l < g) best = Math.max(best, ratio(g, l));
       }
       if (!visible) { occluded += 1; continue; }
@@ -189,7 +224,12 @@ async function crossSection(page: Page, selector: string, dpr: number) {
       if (pm !== null && sm !== null) verticals.push({ path: pm, scan: sm, meanOffset: mean(offsets), iso: pathIso.length >= 3 ? { path: median(pathIso) ?? 0, scan: median(scanIso) ?? 0, meanOffset: mean(offIso), rows: pathIso.length } : null });
     }
     const m = median(samples);
-    if (samples.length >= 3 && m !== null) lines.push({ tag, kind, median: m });
+    if (samples.length >= 3 && m !== null) {
+      /* The pixels across the line at its midpoint, drawn against ground, so a failing line can be read and not only counted. */
+      const [mx, my] = [(x1 + x2) / 2, (y1 + y2) / 2];
+      const mid = [-2, -1, 0, 1, 2].map((d) => { const cx = Math.floor(mx + nx * d); const cy = Math.floor(my + ny * d); return cx < 0 || cy < 0 || cx >= drawn.width || cy >= drawn.height ? null : { d, drawn: Math.round(lumAt(drawn, cx, cy) * 1000) / 1000, ground: Math.round(lumAt(ground, cx, cy) * 1000) / 1000 }; });
+      lines.push({ tag, kind, median: m, seg: [x1, y1, x2, y2].map((v) => Math.round(v * 10) / 10), samples: samples.length, occluded: occluded - occludedBefore, mid });
+    }
   }
   const figures = lines.map((l) => l.median);
   return {
@@ -199,11 +239,13 @@ async function crossSection(page: Page, selector: string, dpr: number) {
     samplesMedian: median(all),
     samples: all.length,
     occludedSamples: occluded,
+    ownedByKind,
+    segmentsByKind,
     /* Every drawn line reaches 1.74:1 (Design, 9 Nov): the lines that do not, by kind, with each kind's total. */
     byKind: Object.fromEntries([...new Set(lines.map((l) => l.kind))].sort().map((k) => {
       const of = lines.filter((l) => l.kind === k);
       const failing = of.filter((l) => l.median < 1.74).map((l) => l.median).sort((a, b) => a - b);
-      return [k, { lines: of.length, below174: failing.length, lowest: failing[0] ?? null, failing }];
+      return [k, { lines: of.length, below174: failing.length, lowest: failing[0] ?? null, failing, failingLines: of.filter((l) => l.median < 1.74).map(({ median: md, seg, samples: n, occluded: o, mid }) => ({ median: md, seg, samples: n, occluded: o, mid })) }];
     })),
     verticalCheck: {
       lines: verticals.length,
