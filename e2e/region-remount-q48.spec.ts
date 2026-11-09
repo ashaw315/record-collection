@@ -129,14 +129,19 @@ test('a zoom-in keeps the wall’s region and the reader’s view: no remount, n
   */
   await sample(page);
   await page.evaluate(() => { (window as unknown as { __q48el?: Element | null }).__q48el = document.querySelector('[data-region="wall"]'); });
-  const put = await page.evaluate(() => { const el = document.querySelector('[data-region="wall"]') as HTMLElement; el.scrollTop += 240; return { left: Math.round(el.scrollLeft), top: Math.round(el.scrollTop) }; });
+  /*
+    Q57 (the coordinator, 7 Nov): the scroll records its own time on the sampler's clock, and only frames painted after
+    it are read. The 100ms this replaced assumed the scroll landed within 100ms of the sampler starting; on gate
+    42429020684 it ran 100 to 200ms after, so a frame of the view before the scroll was read as the view moving.
+  */
+  const put = await page.evaluate(() => { const el = document.querySelector('[data-region="wall"]') as HTMLElement; el.scrollTop += 240; const t0 = (window as unknown as { __q48t0: number }).__q48t0; return { left: Math.round(el.scrollLeft), top: Math.round(el.scrollTop), at: performance.now() - t0 }; });
   await page.waitForTimeout(4000);
   const later = await page.evaluate(() => { const w = window as unknown as { __q48: Frame[]; __q48stop: boolean }; w.__q48stop = true; return w.__q48; });
-  const settledLater = later.filter((f) => f.t > 100);
+  const settledLater = later.filter((f) => f.t > put.at);
   const absentLater = settledLater.filter((f) => !f.present);
   const remountedLater = settledLater.filter((f) => f.present && !f.same);
   const movedLater = settledLater.filter((f) => f.present && unclamped(f, put.left, put.top));
-  test.info().annotations.push({ type: 'q48-scroll', description: JSON.stringify({ frames: later.length, put: [put.left, put.top], absent: absentLater.length, remounted: remountedLater.length, moved: movedLater.length, firstMoved: movedLater[0] ?? null, firstAbsent: absentLater[0] ?? null, urls: [...new Set(later.map((f) => f.url))] }) });
+  test.info().annotations.push({ type: 'q48-scroll', description: JSON.stringify({ frames: later.length, put: [put.left, put.top], scrolledAtMs: Math.round(put.at), absent: absentLater.length, remounted: remountedLater.length, moved: movedLater.length, firstMoved: movedLater[0] ?? null, firstAbsent: absentLater[0] ?? null, urls: [...new Set(later.map((f) => f.url))] }) });
   expect(absentLater, 'after the reader’s scroll the region is present on every frame').toEqual([]);
   expect(remountedLater, 'and it is the same element').toEqual([]);
   expect(movedLater, 'and the view stays where the reader put it').toEqual([]);
