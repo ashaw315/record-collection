@@ -3,7 +3,8 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { nextRefName, rowAddressed, unattributedChanges } from '../../scripts/drop-ref.mjs';
+import { changedSections, nextRefName, rowAddressed, unattributedChanges } from '../../scripts/drop-ref.mjs';
+import { headingOf } from '../../scripts/export-diff.mjs';
 
 /**
  * **A copy of each drop as it arrived, and a word that a new one has (25 Oct).**
@@ -347,19 +348,63 @@ describe('drop-ref: the row’s edit and its standing in Design’s own phrasing
   "ADD RECORD leaves the rail" changed §W.13 beneath the rail figure's caption, and the governs check never saw §W.13
   change. A check that can only under-report has to say where, so the change is named rather than passed over.
 */
-describe('drop-ref: changes no section claims', () => {
+/*
+  One heading parser for every check (the coordinator, 9 Nov). The governs check took any uppercase line as a section
+  heading and read its id with a lettered pattern, so a figure caption ended its section (ADD RECORD's §W.13 change,
+  under the rail figure's caption, belonged to no section) and a plainly numbered card (Record Detail 8a, "26 · …")
+  had no section at all. The sweep of 62 drop refs found two governs rows passed silently since the check went live:
+  §43 (2026-11-06-01) and §W.23 (2026-11-01-01). Now `headingOf` names a section heading's id in every form a card uses,
+  a caption is a caption and ends nothing, and a heading shaped like a section with an id it cannot read throws.
+*/
+describe('headingOf: one parser for a card’s headings', () => {
+  it('reads a section’s id in each form the cards use', () => {
+    expect(headingOf('W.13 · The controls leave the horizontal band')).toEqual({ kind: 'section', id: 'W.13' });
+    expect(headingOf('26 · The page as a whole')).toEqual({ kind: 'section', id: '26' });
+    expect(headingOf('§65 · The tracklist and the credits')).toEqual({ kind: 'section', id: '65' });
+    expect(headingOf('P.5 · The control')).toEqual({ kind: 'section', id: 'P.5' });
+    /* Forms the drop refs hold: a part's letter, and dotted numbers on the exploratory cards. */
+    expect(headingOf('W · The wall, and what the pull is for')).toEqual({ kind: 'section', id: 'W' });
+    expect(headingOf('4.1 · The sheet — all seventeen')).toEqual({ kind: 'section', id: '4.1' });
+  });
+
+  it('reads anything else as a caption', () => {
+    expect(headingOf('The rail at 1 : 1 — 148 × 847, LABEL throughout')).toEqual({ kind: 'caption' });
+    expect(headingOf('records/[id] at 1440, the whole scroll')).toEqual({ kind: 'caption' });
+    expect(headingOf('genres · 11 top-level · 17 records'), 'a word before the dot').toEqual({ kind: 'caption' });
+    expect(headingOf('Released · pressed the same year')).toEqual({ kind: 'caption' });
+  });
+
+  it('throws on a heading shaped like a section whose id it cannot read, rather than reading it as no section', () => {
+    expect(() => headingOf('W13 · The controls')).toThrow(/an unreadable section heading/);
+    expect(() => headingOf('13-a · A section')).toThrow(/an unreadable section heading/);
+    expect(() => headingOf('§W.13_ · Underscored')).toThrow(/an unreadable section heading/);
+  });
+});
+
+describe('drop-ref: a change belongs to the section it stands in, under a caption or not', () => {
   const card = (para: string) =>
     `<p style="text-transform:uppercase">W.13 · The controls leave the horizontal band</p>\n<p><strong>Stacked.</strong> The rail stacks.</p>\n` +
     `<p style="text-transform:uppercase">The rail at 1 : 1 — 148 × 847</p>\n<p><strong>Add record sits at the foot.</strong> ${para}</p>\n` +
     `<p style="text-transform:uppercase">W.14 · The pull has two phases</p>\n<p>Unchanged.</p>\n`;
+  const numbered = (para: string) =>
+    `<p style="text-transform:uppercase">26 · The page as a whole</p>\n<p>Five rows.</p>\n` +
+    `<p style="text-transform:uppercase">The page at 1440, 960, 480 and 390, at one scale</p>\n<p>${para}</p>\n` +
+    `<p style="text-transform:uppercase">27 · The next</p>\n<p>Unchanged.</p>\n`;
 
-  it('names a change under a figure caption, which no section claims', () => {
-    expect(unattributedChanges(card('It is separated by a rule.'), card('It is separated by a rule. Withdrawn within §W.13: Add record at the foot.'))).toEqual(['The rail at 1 : 1 — 148 × 847']);
+  it('attributes a change under a figure caption to the section the caption stands in', () => {
+    const [a, b] = [card('It is separated by a rule.'), card('It is separated by a rule. Withdrawn within §W.13: Add record at the foot.')];
+    expect(changedSections(a, b)).toEqual(['W.13']);
+    expect(unattributedChanges(a, b)).toEqual([]);
   });
 
-  it('names nothing when only a section’s own paragraphs change, or nothing changes', () => {
-    const a = card('Same.');
-    expect(unattributedChanges(a, a)).toEqual([]);
-    expect(unattributedChanges(a, a.replace('The rail stacks.', 'The rail stacks, ruled.'))).toEqual([]);
+  it('does the same on a plainly numbered card, which had no sections at all', () => {
+    expect(changedSections(numbered('Six rows.'), numbered('Six rows, the tracklist second.'))).toEqual(['26']);
+    expect(changedSections(numbered('Same.'), numbered('Same.'))).toEqual([]);
+  });
+
+  it('names only a change that stands before any section heading', () => {
+    const lead = (para: string) => `<p style="text-transform:uppercase">A card’s opening caption</p>\n<p>${para}</p>\n<p style="text-transform:uppercase">W.1 · First</p>\n<p>One.</p>\n`;
+    expect(unattributedChanges(lead('Was.'), lead('Is now.'))).toEqual(['A card’s opening caption']);
+    expect(changedSections(lead('Was.'), lead('Is now.'))).toEqual([]);
   });
 });

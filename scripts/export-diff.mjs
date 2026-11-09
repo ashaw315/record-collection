@@ -114,20 +114,47 @@ export function diffProse(before, after) {
  * lead is a block that opens with `<strong>` or `**`. A block with neither
  * inherits the lead before it.
  */
+/**
+ * **A card's heading, read in one place (the coordinator, 9 Nov).** A section heading is its id and " · ": lettered
+ * ("W.13 · "), plainly numbered ("26 · ", the Record Detail cards), a part's letter ("W · "), dotted ("4.1 · "), or
+ * with a "§". A word before the dot is a caption's. Anything else set as a heading is a
+ * figure caption, and a caption ends no section. A heading shaped like a section, a short token and " · ", whose id is
+ * none of those forms throws, so a new form breaks the check loudly instead of reading as no section: before this the
+ * governs check read ids with a lettered pattern alone and attributed nothing on a numbered card, silently.
+ */
+/* Every id form a card in the drop refs uses: "W.13", "26", "173a", a part's letter "W", and dotted "4.1" (9 Nov). */
+const SECTION_ID = /^(?:[A-Z](?:\.\d+[a-z]?)*|\d+(?:\.\d+)*[a-z]?)$/;
+export function headingOf(text) {
+  const m = /^§?([^\s·]{1,12})\s·\s/.exec(text.trim());
+  if (m === null) return { kind: 'caption' };
+  /* A word before the dot is a caption's ("genres · 11 top-level", "Released · pressed the same year"), not an id. */
+  if (/[a-z]{2}/.test(m[1])) return { kind: 'caption' };
+  if (!SECTION_ID.test(m[1])) throw new Error(`export-diff: an unreadable section heading: "${text.trim().slice(0, 60)}"; add its form to headingOf`);
+  return { kind: 'section', id: m[1] };
+}
+
 export function blocksOf(source) {
   const isHtml = /<p\b/i.test(source);
   const raw = isHtml ? source.split(/(?<=<\/p>)/i) : source.split(/\n[ \t]*\n/);
   const out = [];
   let heading = '';
   let lead = '';
+  /* The section a block stands in, by `headingOf`: a caption changes the display heading and not this. */
+  let sectionId = null;
   for (const block of raw) {
     const text = block.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
     if (text === '') continue;
     const headingMatch = isHtml ? /<p[^>]*text-transform:\s*uppercase[^>]*>([\s\S]*?)<\/p>/i.exec(block) : /^\s*#{1,6}\s+(.+)$/m.exec(block);
-    if (headingMatch !== null) { heading = headingMatch[1].replace(/<[^>]*>/g, '').trim(); lead = ''; continue; }
+    if (headingMatch !== null) {
+      heading = headingMatch[1].replace(/<[^>]*>/g, '').trim();
+      lead = '';
+      const parsed = headingOf(heading);
+      if (parsed.kind === 'section') sectionId = parsed.id;
+      continue;
+    }
     const leadMatch = isHtml ? /^\s*<p[^>]*>\s*<strong>([\s\S]*?)<\/strong>/i.exec(block) : /^\s*(?:-\s*)?\*\*(.+?)\*\*/.exec(block);
     if (leadMatch !== null) lead = leadMatch[1].replace(/<[^>]*>/g, '').trim();
-    out.push({ section: [heading, lead].filter((part) => part !== '').join(' › '), block });
+    out.push({ section: [heading, lead].filter((part) => part !== '').join(' › '), sectionId, block });
   }
   return out;
 }

@@ -121,24 +121,24 @@ const OWN_FILES = new Set(['HANDOFF-wall-and-pull.md', 'WITHDRAWALS.md', 'DESIGN
 
 function sentencesBySection(html) {
   const out = new Map();
-  for (const { section, block } of blocksOf(html)) {
-    const id = /^([A-Z]\.\d+)\b/.exec(section)?.[1];
-    if (id === undefined) continue;
+  for (const { sectionId: id, block } of blocksOf(html)) {
+    if (id === null) continue;
     out.set(id, [...(out.get(id) ?? []), ...sentencesOf(block)]);
   }
   return out;
 }
 
 /*
-  The blind spot, named where it is read (8 Nov): a figure caption is set in the same uppercase as a section heading,
-  so the paragraphs beneath it are read as the caption's and no section's. A change there is attributed to no section
-  and no governs row is checked for it; this names each such caption so a green check is not read as covering it.
+  What no section claims, named where it is read (8 Nov): since 9 Nov a caption ends no section (`headingOf`), so this
+  is only a change before a card's first section heading; it is attributed to no section and no governs row is checked
+  for it, and it is named so a green check is not read as covering it.
 */
 function sentencesByCaption(html) {
   const out = new Map();
-  for (const { section, block } of blocksOf(html)) {
+  for (const { section, sectionId, block } of blocksOf(html)) {
+    if (sectionId !== null) continue;
     const heading = section.split(' › ')[0];
-    if (heading === '' || /^[A-Z]\.\d+\b/.test(heading)) continue;
+    if (heading === '') continue;
     out.set(heading, [...(out.get(heading) ?? []), ...sentencesOf(block)]);
   }
   return out;
@@ -189,7 +189,7 @@ function governs(from, to) {
   for (const [status, path] of changes) {
     if (status !== 'M' || !path.endsWith('.dc.html')) continue;
     for (const caption of unattributedChanges(git(['show', `${from}:${path}`]), git(['show', `${to}:${path}`]))) {
-      lines.push(`  governs: a change under "${caption.slice(0, 70)}" in ${path} sits beneath a figure caption, so it is attributed to no section and no governs row was checked for it (this check's blind spot: read that change by hand)`);
+      lines.push(`  governs: a change under "${caption.slice(0, 70)}" in ${path} stands before any section heading, so it is attributed to no section and no governs row was checked for it (read that change by hand)`);
     }
     for (const id of changedSections(git(['show', `${from}:${path}`]), git(['show', `${to}:${path}`]))) {
       const found = changeFiles.map((f) => ({ ...f, how: rowAddressed(f.text, id) })).find((f) => f.how !== null);

@@ -55654,3 +55654,20 @@ Step level: record page unit tests 513 of 513; 50 e2e across figures-type-57, fl
 identity-measure, images-row-56, layout-sweep, no-cover-54, page-fills-viewport, record-page-28, row-regroup-38,
 record-lines, row-rules-33, row-clip-29h; typecheck, lint (0 errors), build. Tests changed with the ruling first and
 seen failing (12) against the unchanged code.
+
+**The arrival check's blind spot: swept backwards, then fixed forwards (the coordinator, 9 Nov).** The governs check
+(live from fb74130f, 28 Oct 15:26) read a section's id with a lettered pattern alone and took any uppercase line as a
+heading, so a figure caption ended its section and a plainly numbered card (Record Detail 8a, "26 · …") had no
+sections at all. **The sweep** of all 62 drop refs, through the shipped check: since it went live, seven governs rows
+went unaddressed; five it saw and refused (§W.8 on 2026-10-28-09 and -11, §W.18 and §W.22 on 2026-11-01-01, §W.22 on
+2026-11-01-02); **two it passed silently**: §W.23 on 2026-11-01-01 (under a caption: "Withdrawn within §W.23: the
+reduced volume as the rule for every interpenetrating object…"), and §43 on 2026-11-06-01 (a numbered card: which
+frame first paint is). Both rows are stale today: §W.23's still names "the reduced disjoint proxy for every
+interpenetrating object", and §43's does not name first paint's frame. For Design. Of the numbered cards' changes,
+15 across 9 drops since 3 Nov, 14 were addressed by their change files and §43 was not. **The fix:** one parser,
+`headingOf` in export-diff.mjs, which every check reads through `blocksOf`'s `sectionId`: a section heading is its id
+and " · " in every form the refs hold ("W.13", "26", "173a", a part's letter "W", dotted "4.1", with or without "§");
+a word before the dot is a caption's; a caption ends no section; a heading shaped like a section with an unreadable id
+throws, naming it. Run over all 4,045 card and Markdown files in the 62 refs: the first form threw on 8 (part letters,
+dotted ids, captions with a middle dot), each a form now named; then 0. The earlier test that a change under a caption
+"belongs to no section" now asserts it belongs to the section the caption stands in.
