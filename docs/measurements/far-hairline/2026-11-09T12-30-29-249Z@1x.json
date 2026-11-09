@@ -1,0 +1,120 @@
+{
+ "window": "1044x768",
+ "dpr": 1,
+ "reference": "§W.28 hovered hairline 1.74:1",
+ "instrument": {
+  "inkOnPaper": 14.75,
+  "lines": {
+   "1": {
+    "paper": 0.793,
+    "pixels": 280,
+    "of": 6000,
+    "median": 14.75,
+    "darkest": 14.75
+   },
+   "0.5": {
+    "paper": 0.793,
+    "pixels": 280,
+    "of": 6000,
+    "median": 3.29,
+    "darkest": 3.29
+   },
+   "0.25": {
+    "paper": 0.793,
+    "pixels": 280,
+    "of": 6000,
+    "median": 1.7,
+    "darkest": 1.7
+   }
+  },
+  "crossSection": {
+   "lines": 4,
+   "medianOfLines": 7.09,
+   "linesAtOrAbove174": 0.75,
+   "samplesMedian": 3.29,
+   "samples": 978,
+   "occludedSamples": 0,
+   "byTag": {
+    "1": 14.75,
+    "0.5": 3.29,
+    "0.25": 1.7,
+    "1@30deg": 7.09
+   }
+  }
+ },
+ "planeLum": 0.7400336199490174,
+ "rest": {
+  "scale": 0.367,
+  "strokeCssPx": 0.367,
+  "strokeDevicePx": 0.367,
+  "plain": {
+   "paper": 0.7913,
+   "pixels": 11664,
+   "of": 225736,
+   "median": 1.56,
+   "darkest": 5.5
+  },
+  "floored": {
+   "paper": 0.7913,
+   "pixels": 11867,
+   "of": 225736,
+   "median": 3.68,
+   "darkest": 14.97
+  },
+  "crossPlain": {
+   "lines": 216,
+   "medianOfLines": 2,
+   "linesAtOrAbove174": 0.81,
+   "samplesMedian": 2,
+   "samples": 9983,
+   "occludedSamples": 5475,
+   "byTag": {}
+  },
+  "crossFloored": {
+   "lines": 216,
+   "medianOfLines": 7.78,
+   "linesAtOrAbove174": 1,
+   "samplesMedian": 7.05,
+   "samples": 9984,
+   "occludedSamples": 5474,
+   "byTag": {}
+  }
+ },
+ "answer": {
+  "scale": 0.146,
+  "strokeCssPx": 0.146,
+  "strokeDevicePx": 0.146,
+  "plain": {
+   "paper": 0.7913,
+   "pixels": 3326,
+   "of": 90072,
+   "median": 1.25,
+   "darkest": 2.15
+  },
+  "floored": {
+   "paper": 0.7913,
+   "pixels": 3486,
+   "of": 90072,
+   "median": 4.12,
+   "darkest": 14.81
+  },
+  "crossPlain": {
+   "lines": 213,
+   "medianOfLines": 1.5,
+   "linesAtOrAbove174": 0.005,
+   "samplesMedian": 1.47,
+   "samples": 3919,
+   "occludedSamples": 1517,
+   "byTag": {}
+  },
+  "crossFloored": {
+   "lines": 213,
+   "medianOfLines": 11.6,
+   "linesAtOrAbove174": 0.986,
+   "samplesMedian": 10.41,
+   "samples": 3926,
+   "occludedSamples": 1510,
+   "byTag": {}
+  }
+ }
+}

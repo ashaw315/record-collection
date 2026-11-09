@@ -15,6 +15,9 @@ on:
       workers:
         description: Playwright workers
         default: '4'
+      minutes:
+        description: Minutes the measurement keeps passing for, so it spans quiet and loaded slots of the suite
+        default: '20'
 
 permissions:
   contents: read
@@ -44,12 +47,14 @@ jobs:
         env:
           E2E_SERVER: build
           CAPTURE: '1'
-          BAND43_PASSES: '3'
+          BAND43_FOR_MIN: ${{ inputs.minutes }}
         run: |
           LOG="$RUNNER_TEMP/band-43/$(git rev-parse --short=7 HEAD)-band-43.log"
           mkdir -p "$(dirname "$LOG")"
-          npx tsx scripts/run-tests.ts npx playwright test --project=chromium --project=capture --workers=${{ inputs.workers }} --retries=0 '\.spec\.ts$' 'band-43-measure' > "$LOG" 2>&1 || true
-          tail -5 "$LOG"
+          echo "suite start $(date -u +%Y-%m-%dT%H:%M:%SZ), $(nproc) cpus" >> "$LOG"
+          npx tsx scripts/run-tests.ts npx playwright test --config=playwright.band-43.config.ts --project=chromium --project=capture --workers=${{ inputs.workers }} --retries=0 '\.spec\.ts$' 'band-43-measure' > "$LOG" 2>&1 || true
+          echo "suite end $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$LOG"
+          tail -6 "$LOG"
           find docs/measurements/band-43 -name '*.jsonl' -newer package.json -exec cp {} "$RUNNER_TEMP/band-43/" \;
       - uses: actions/upload-artifact@v4
         if: always()

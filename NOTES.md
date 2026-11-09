@@ -55414,3 +55414,39 @@ the .md files he has read. Four vanishings and a thorough look at every mechanis
 launch agents, hooks, past commands), when one question to the person whose machine it was settled it; the cost
 sits in the asking coming at the fourth occurrence. The copy to Downloads is restored (the Q2 to Q5 bundle,
 recopied from docs/captures/bundle-q2-q5); committed captures, since 399edd08, are the durable copy.
+
+## 9 Nov, early: Design's cross-section measure, the gate red on record-band-43, and where 171's CI tool ran
+
+**Design's measure, built and checked (e2e/capture/far-hairline.capture.ts, a build at 1044 × 768, pool of 30,
+load 2.7 to 4.3).** At each point along a line the darkest pixel across its width, then the median along its length.
+The far view is isometric (vertical and ±30° edges), so rows and columns are not cross-sections: each stroked edge
+is taken from the DOM in screen coordinates, sampled every device pixel 2px clear of its ends, the cross-section the
+pixels within ±1 device px along its normal, each read against the GROUND under it from a second render with the
+strokes transparent; a cross-section the strokes do not change at all is occluded by a face and skipped. Known
+answers through the same function: aligned 1px 14.75 (ink on paper) at both scales, 0.5px 3.29, 0.25px 1.70; a 1px
+line at 30° 14.75 @2x and 7.09 @1x. **Median of the lines' figures (share of lines at or above §W.28's 1.74:1):**
+@2x at rest 3.91 (99.4% of 319 lines), with an answer 1.86 (67.1% of 216); @1x at rest 2.00 (81% of 216), with an
+answer 1.50 (0.5% of 213). Floored at one device pixel: 7.00, 8.97, 7.78, 11.6, each 98.6% or more. Occluded samples
+skipped: 13,546 of 32,259 @2x at rest, which is the painter's order hiding back edges, not faint lines.
+
+**The gate on e1445e87 (42548809533) is RED: record-band-43:33 failed both attempts** (chromium 1063 passed,
+1 failed, 1 skipped, 22.7m; mobile 390 passed, 4 skipped; unit 5014 passed, 3 skipped). First attempt The Soft
+Parade @1300, band 73 → 233.9, provenance and matrix 72 → 114; the retry Bitches Brew @1439, band 53.5 → 301.4,
+provenance 53 → 114. Bitches Brew has an About and a journal entry, so that lead is dead on the failures too. The
+watch fired; 171 is already in hand.
+
+**Where 171's CI tool ran (42549436884, a4c23bc2, 4 workers).** 357 loads, three passes, first equal to settled on
+every one and no cell set changing on any frame; record-band-43:33 passed in the same run (1065 passed, 1 skipped;
+the judge's "tree CHANGED" is the tool's own measurement file). But it finished as test 1066 of 1066 in about 3.5
+minutes: it ran in the run's tail, when the other workers were finishing, so the clean result is a quiet slot and
+not evidence about load. Playwright hands out work in project order, and capture is listed after chromium.
+**Controlled now:** playwright.band-43.config.ts is the main config with the capture project first, so a worker takes
+the measurement at the start; BAND43_FOR_MIN (20 by default in the workflow) keeps it passing through the suite; each
+load records its time, the runner's one-minute load and its worker, and the log records the suite's start and end,
+so where it ran is read beside what it found.
+
+**The instrument is part of the system it observes.** Run inside the suite's own invocation, because global setup
+truncates and holds the test database and a second run beside the suite would refuse or wipe it. At one test of
+1066 that was negligible; spanning the suite it holds one worker of four for twenty minutes, so the suite around it
+runs on three, and the load it measures under is lighter than a gate's by that worker. Known, chosen, and not a
+defect to rediscover.

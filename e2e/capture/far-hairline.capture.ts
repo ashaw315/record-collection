@@ -58,6 +58,106 @@ async function readLines(png: Buffer, planeLum: number) {
   return { paper, pixels: line.length, of: lums.length, median: ratio(paper, line[Math.floor(line.length / 2)]), darkest: ratio(paper, line[0]) };
 }
 
+/**
+ * **Design's measure (8 Nov): at each point along a line, the darkest pixel across its width; then the median of
+ * those along its length.** The far view is isometric, so its lines run vertical and at ±30°, and a row or column
+ * scan is not a cross-section. Each stroked edge is taken from the DOM in screen coordinates (its own CTM), shared
+ * edges once, and sampled every device pixel along its length, 2px clear of each end so a joint's neighbour is not
+ * read. At each sample the pixels within ±1 device px along the normal are the cross-section, and the sample is the
+ * highest contrast among them against the GROUND under that pixel, read from a second render with every stroke
+ * transparent: the face or plane actually there, not an assumed paper. A cross-section the strokes do not change at
+ * all is occluded by a face (painter's order) and skipped, which is how a hidden stretch differs from a faint one: a
+ * faint line still changes its pixels. A line's figure is the median of its samples; lines with under three are left
+ * out. Reported: the median of the lines' figures, the share of lines at or above §W.28's 1.74:1, the samples'
+ * own median, and how many samples were occluded.
+ */
+type Raw = { data: Buffer; width: number; height: number; channels: number };
+const raw = async (png: Buffer): Promise<Raw> => {
+  const { data, info } = await sharp(png).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+  return { data, width: info.width, height: info.height, channels: info.channels };
+};
+const lumAt = (img: Raw, x: number, y: number) => {
+  const i = (y * img.width + x) * img.channels;
+  return lum(img.data[i], img.data[i + 1], img.data[i + 2]);
+};
+const median = (xs: number[]) => { const s = [...xs].sort((a, b) => a - b); return s.length === 0 ? null : s[Math.floor(s.length / 2)]; };
+
+async function segmentsOf(page: Page, selector: string) {
+  return page.evaluate((sel) => {
+    const roots = Array.from(document.querySelectorAll(sel)).filter((r) => r.getBoundingClientRect().width > 0);
+    const out: Array<{ tag: string; seg: [number, number, number, number] }> = [];
+    const seen = new Set<string>();
+    for (const root of roots) for (const el of Array.from(root.querySelectorAll('polygon, line'))) {
+      const cs = getComputedStyle(el);
+      if (cs.stroke === 'none' || cs.visibility === 'hidden' || cs.display === 'none' || parseFloat(cs.strokeWidth) === 0) continue;
+      const m = (el as SVGGraphicsElement).getScreenCTM();
+      if (m === null) continue;
+      const pts: Array<[number, number]> = el.tagName === 'line'
+        ? [[(el as SVGLineElement).x1.baseVal.value, (el as SVGLineElement).y1.baseVal.value], [(el as SVGLineElement).x2.baseVal.value, (el as SVGLineElement).y2.baseVal.value]]
+        : Array.from((el as SVGPolygonElement).points).map((p) => [p.x, p.y] as [number, number]);
+      const screen = pts.map(([x, y]) => { const q = new DOMPoint(x, y).matrixTransform(m); return [q.x, q.y] as [number, number]; });
+      const edges = el.tagName === 'line' ? [[screen[0], screen[1]]] : screen.map((p, i) => [p, screen[(i + 1) % screen.length]]);
+      for (const [a, b] of edges) {
+        const key = [a, b].map((p) => `${p[0].toFixed(1)},${p[1].toFixed(1)}`).sort().join('|');
+        if (seen.has(key)) continue;
+        seen.add(key);
+        out.push({ tag: el.getAttribute('data-w') ?? '', seg: [a[0], a[1], b[0], b[1]] });
+      }
+    }
+    return out;
+  }, selector);
+}
+
+async function crossSection(page: Page, selector: string, dpr: number) {
+  const segs = await segmentsOf(page, selector);
+  await page.mouse.move(0, 0);
+  const drawn = await raw(await page.screenshot({ animations: 'disabled' }));
+  const bare = await page.addStyleTag({ content: `${selector} polygon, ${selector} line { stroke: transparent !important; }` });
+  const ground = await raw(await page.screenshot({ animations: 'disabled' }));
+  await bare.evaluate((el) => (el as Element).remove());
+  const lines: Array<{ tag: string; median: number }> = [];
+  const all: number[] = [];
+  let occluded = 0;
+  for (const { tag, seg } of segs) {
+    const [x1, y1, x2, y2] = seg.map((v) => v * dpr);
+    const length = Math.hypot(x2 - x1, y2 - y1);
+    if (length < 5) continue;
+    const [ux, uy] = [(x2 - x1) / length, (y2 - y1) / length];
+    const [nx, ny] = [-uy, ux];
+    const samples: number[] = [];
+    for (let t = 2; t <= length - 2; t += 1) {
+      const [px, py] = [x1 + ux * t, y1 + uy * t];
+      const cells = new Set<string>();
+      for (const d of [-1, -0.5, 0, 0.5, 1]) {
+        const cx = Math.floor(px + nx * d); const cy = Math.floor(py + ny * d);
+        if (cx >= 0 && cy >= 0 && cx < drawn.width && cy < drawn.height) cells.add(`${cx},${cy}`);
+      }
+      let best = 0; let visible = false;
+      for (const c of cells) {
+        const [cx, cy] = c.split(',').map(Number);
+        const [l, g] = [lumAt(drawn, cx, cy), lumAt(ground, cx, cy)];
+        if (Math.abs(g - l) > 0.002) visible = true;
+        if (l < g) best = Math.max(best, ratio(g, l));
+      }
+      if (!visible) { occluded += 1; continue; }
+      samples.push(best === 0 ? 1 : best);
+    }
+    all.push(...samples);
+    const m = median(samples);
+    if (samples.length >= 3 && m !== null) lines.push({ tag, median: m });
+  }
+  const figures = lines.map((l) => l.median);
+  return {
+    lines: lines.length,
+    medianOfLines: median(figures),
+    linesAtOrAbove174: lines.length === 0 ? null : Math.round((figures.filter((f) => f >= 1.74).length / lines.length) * 1000) / 1000,
+    samplesMedian: median(all),
+    samples: all.length,
+    occludedSamples: occluded,
+    byTag: Object.fromEntries(lines.filter((l) => l.tag !== '').map((l) => [l.tag, l.median])),
+  };
+}
+
 async function shoot(page: Page, name: string, dir: string) {
   await page.mouse.move(0, 0);
   const png = await drawing(page).screenshot({ animations: 'disabled' });
@@ -103,7 +203,7 @@ for (const dpr of [1, 2]) {
       const ns = 'http://www.w3.org/2000/svg';
       const svg = document.createElementNS(ns, 'svg');
       svg.id = 'ref-lines';
-      svg.setAttribute('width', '300'); svg.setAttribute('height', '60');
+      svg.setAttribute('width', '300'); svg.setAttribute('height', '160');
       Object.assign(svg.style, { position: 'fixed', left: '0', top: '0', zIndex: '9999', background: 'oklch(0.925 0.004 75)' });
       [1, 0.5, 0.25].forEach((w, i) => {
         const l = document.createElementNS(ns, 'line');
@@ -113,6 +213,10 @@ for (const dpr of [1, 2]) {
         l.setAttribute('data-w', String(w));
         svg.append(l);
       });
+      const diag = document.createElementNS(ns, 'line');
+      diag.setAttribute('x1', '160'); diag.setAttribute('y1', '150'); diag.setAttribute('x2', '290'); diag.setAttribute('y2', String(150 - 130 * Math.tan(Math.PI / 6)));
+      diag.setAttribute('stroke', '#161412'); diag.setAttribute('stroke-width', '1'); diag.setAttribute('data-w', '1@30deg');
+      svg.append(diag);
       document.body.append(svg);
     });
     const refs: Record<string, unknown> = {};
@@ -120,12 +224,18 @@ for (const dpr of [1, 2]) {
       const png = await page.screenshot({ clip: { x: 0, y: i * 20, width: 300, height: 20 } });
       refs[String(w)] = await readLines(png, planeLum);
     }
+    const refCross = await crossSection(page, '#ref-lines', dpr);
     await page.evaluate(() => document.getElementById('ref-lines')?.remove());
     const r1 = refs['1'] as { darkest: number }; const r05 = refs['0.5'] as { darkest: number }; const r025 = refs['0.25'] as { darkest: number };
     const inkOnPaper = ratio(lum(0x16, 0x14, 0x12), (refs['1'] as { paper: number }).paper);
     expect(Math.abs(r1.darkest - inkOnPaper) / inkOnPaper, `a 1px ink line reads ink on paper (${r1.darkest} against ${inkOnPaper})`).toBeLessThan(0.1);
     expect(r05.darkest, 'a 0.5px line reads lighter than 1px').toBeLessThan(r1.darkest);
     expect(r025.darkest, 'a 0.25px line reads lighter than 0.5px').toBeLessThan(r05.darkest);
+    /* The cross-section on the same known answers: an aligned 1px line reads ink on paper along its whole length, thinner lower in order. */
+    const c = refCross.byTag as Record<string, number>;
+    expect(Math.abs(c['1'] - inkOnPaper) / inkOnPaper, `the cross-section reads a 1px line as ink on paper (${c['1']} against ${inkOnPaper})`).toBeLessThan(0.1);
+    expect(c['0.5'], 'the cross-section reads 0.5px lighter than 1px').toBeLessThan(c['1']);
+    expect(c['0.25'], 'and 0.25px lighter than 0.5px').toBeLessThan(c['0.5']);
 
     const noText = await page.addStyleTag({ content: `${SVG} text { visibility: hidden !important; }` });
     const floorRule = `${SVG} polygon, ${SVG} line { vector-effect: non-scaling-stroke; stroke-width: ${1 / dpr}px; }`;
@@ -133,10 +243,13 @@ for (const dpr of [1, 2]) {
       const scale = await drawing(page).evaluate((svg) => Math.round(((svg as SVGSVGElement).getScreenCTM()?.a ?? 0) * 1000) / 1000);
       await page.mouse.move(0, 0);
       const plain = await readLines(await drawing(page).screenshot({ animations: 'disabled' }), planeLum);
+      const crossPlain = await crossSection(page, SVG, dpr);
       const floor = await page.addStyleTag({ content: floorRule });
       const floored = await readLines(await drawing(page).screenshot({ animations: 'disabled' }), planeLum);
+      const crossFloored = await crossSection(page, SVG, dpr);
       await floor.evaluate((el) => (el as Element).remove());
-      return { scale, strokeCssPx: scale, strokeDevicePx: Math.round(scale * dpr * 1000) / 1000, plain, floored };
+      console.log(`@${dpr}x ${state}: cross-section median of lines ${crossPlain.medianOfLines} (${crossPlain.linesAtOrAbove174} of ${crossPlain.lines} lines at or above 1.74), floored ${crossFloored.medianOfLines} (${crossFloored.linesAtOrAbove174})`);
+      return { scale, strokeCssPx: scale, strokeDevicePx: Math.round(scale * dpr * 1000) / 1000, plain, floored, crossPlain, crossFloored };
     };
 
     const rest = await read('rest');
@@ -157,7 +270,7 @@ for (const dpr of [1, 2]) {
     await shoot(page, `answer-floored-1044x768@${dpr}x.png`, capDir);
     await f.evaluate((el) => (el as Element).remove());
 
-    const out = { window: '1044x768', dpr, reference: '§W.28 hovered hairline 1.74:1', instrument: { inkOnPaper, lines: refs }, planeLum, rest, answer };
+    const out = { window: '1044x768', dpr, reference: '§W.28 hovered hairline 1.74:1', instrument: { inkOnPaper, lines: refs, crossSection: refCross }, planeLum, rest, answer };
     console.log(JSON.stringify(out, null, 1));
     const dir = join('docs', 'measurements', 'far-hairline');
     mkdirSync(dir, { recursive: true });

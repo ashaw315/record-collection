@@ -1,4 +1,5 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
+import { loadavg } from 'node:os';
 import { join } from 'node:path';
 import { test } from '@playwright/test';
 import { NO_SCROLL_HEIGHT } from '../../src/app/records/[id]/band-geometry';
@@ -27,6 +28,12 @@ import { login } from '../sign-in';
  * parser has to yield inside the page. Each frame's cell names are kept, so a frame holding only some of the band's
  * cells shows as such, and `cellSets` keeps every frame at which the set of cells differs from the frame before, so
  * a cell that appears between frames is recorded as an appearance, not inferred from cells that moved.
+ *
+ * Where it ran, beside what it found (the coordinator, 8 Nov): in CI it is one test among the suite's, and where it
+ * lands decides the load it sees. Playwright gives no control of a test's slot across projects, so each load records
+ * its wall-clock time, the machine's one-minute load and the worker, for reading against the suite's start and end;
+ * and `BAND43_FOR_MIN` keeps passing until that many minutes have run, so one run can span quiet and loaded slots
+ * rather than landing in one. The instrument is then part of the load it observes: one worker of the run's four.
  */
 test.use({ launchOptions: { args: ['--font-render-hinting=none'] } });
 
@@ -48,7 +55,10 @@ test('step 171: the band’s first-painted and settled heights, to three decimal
   const lines: string[] = [];
   const only = process.env.BAND43_ONLY;
   const kbps = Number(process.env.BAND43_KBPS ?? '0');
-  for (let pass = 1; pass <= passes; pass += 1) for (const r of readSeventeen()) for (const width of WIDTHS) {
+  const forMs = Number(process.env.BAND43_FOR_MIN ?? '0') * 60_000;
+  const began = Date.now();
+  const more = (pass: number) => (forMs > 0 ? Date.now() - began < forMs : pass <= passes);
+  for (let pass = 1; more(pass); pass += 1) for (const r of readSeventeen()) for (const width of WIDTHS) {
     if (only !== undefined && only !== `${r.title}@${width}`) continue;
     const ctx = await browser.newContext({ viewport: { width, height: NO_SCROLL_HEIGHT } });
     await ctx.addCookies(cookies);
@@ -74,7 +84,7 @@ test('step 171: the band’s first-painted and settled heights, to three decimal
     await ctx.close();
     const first = frames[0];
     const last = frames[frames.length - 1];
-    const line = { pass, record: r.title, width, frames: frames.length, first: first ?? null, settled: last ?? null, firstBand: first?.band ?? null, settledBand: last?.band ?? null, diff: first && last ? Math.round((last.band - first.band) * 1000) / 1000 : null, kbps, cellSets: frames.filter((f, i) => i === 0 || (f.cells as Array<[string]>).map((c) => c[0]).join(',') !== (frames[i - 1].cells as Array<[string]>).map((c) => c[0]).join(',')).map((f) => ({ t: f.t, band: f.band, ready: f.ready, cells: (f.cells as Array<[string]>).map((c) => c[0]) })), changes: frames.filter((f, i) => i > 0 && f.band !== frames[i - 1].band).map((f) => ({ t: f.t, band: f.band, attached: f.attached, fonts: f.fonts, ready: f.ready, rows: f.rows, cells: (f.cells as Array<[string]>).map((c) => c[0]) })) };
+    const line = { pass, at: new Date().toISOString(), load1: Math.round(loadavg()[0] * 100) / 100, worker: test.info().workerIndex, record: r.title, width, frames: frames.length, first: first ?? null, settled: last ?? null, firstBand: first?.band ?? null, settledBand: last?.band ?? null, diff: first && last ? Math.round((last.band - first.band) * 1000) / 1000 : null, kbps, cellSets: frames.filter((f, i) => i === 0 || (f.cells as Array<[string]>).map((c) => c[0]).join(',') !== (frames[i - 1].cells as Array<[string]>).map((c) => c[0]).join(',')).map((f) => ({ t: f.t, band: f.band, ready: f.ready, cells: (f.cells as Array<[string]>).map((c) => c[0]) })), changes: frames.filter((f, i) => i > 0 && f.band !== frames[i - 1].band).map((f) => ({ t: f.t, band: f.band, attached: f.attached, fonts: f.fonts, ready: f.ready, rows: f.rows, cells: (f.cells as Array<[string]>).map((c) => c[0]) })) };
     lines.push(JSON.stringify(line));
     console.log(`${pass} ${r.title.slice(0, 28).padEnd(28)} @${width}: first ${first?.band.toFixed(3)} settled ${last?.band.toFixed(3)} diff ${line.diff?.toFixed(3)} | first frame t=${first?.t} sheets ${first?.attached}/${first?.links} fonts ${first?.fonts} display ${first?.display} ready ${first?.ready} cells ${(first?.cells as Array<[string]> | undefined)?.map((c) => c[0]).join(',')} -> ${(last?.cells as Array<[string]> | undefined)?.map((c) => c[0]).join(',')}`);
   }
