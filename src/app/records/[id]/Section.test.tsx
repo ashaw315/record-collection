@@ -146,10 +146,10 @@ describe('an air column is a cell with nothing in it but ornament (§26)', () =>
   });
 
   it('renders as an addressable item carrying no type', () => {
-    const html = render(<ExtendedGrid.Air index={0} ladder={ladder} figure={{ kind: 'pair', forms: ['slab', 'beam'] }} />);
+    const html = render(<ExtendedGrid.Air row="row-1" ladder={ladder} figure={{ kind: 'pair', forms: ['slab', 'beam'] }} />);
     expect(html).toContain('data-cell="air"');
-    /* The row index is what §28's stylesheet places and hides, per width. */
-    expect(html).toContain('data-air="0"');
+    /* The row's NAME is what §28's stylesheet places and hides, per width (§26, 9 Nov: row numbers are names). */
+    expect(html).toContain('data-air="row-1"');
     expect(html, 'nothing places it inline').not.toContain('grid-column');
     expect(html, 'the pair sits in it').toContain('data-figure="pair"');
     /* Air carries no label and no rule: it is where the rhythm makes room, not a cell with empty content. */
@@ -157,7 +157,7 @@ describe('an air column is a cell with nothing in it but ornament (§26)', () =>
   });
 
   it('renders empty when the record gives it no ornament, rather than vanishing', () => {
-    const html = render(<ExtendedGrid.Air index={0} ladder={null} figure={null} />);
+    const html = render(<ExtendedGrid.Air row="row-1" ladder={null} figure={null} />);
     expect(html, 'the air still holds the row’s shape').toContain('data-cell="air"');
     expect(html).not.toContain('data-ornament');
   });
@@ -177,7 +177,7 @@ describe('§54: the flats draw on a null ladder, at ink', () => {
     expect(html).toContain('background:oklch(0.19 0.008 60)');
   });
   it('draws the triangle in the air column with no ladder, and still no figure', () => {
-    const html = render(<ExtendedGrid.Air index={0} ladder={null} figure={{ kind: 'pair', forms: ['slab', 'beam'] }} flat={FLATS.left} />);
+    const html = render(<ExtendedGrid.Air row="row-1" ladder={null} figure={{ kind: 'pair', forms: ['slab', 'beam'] }} flat={FLATS.left} />);
     expect(html).toContain('data-flat="triangle"');
     expect(html).toContain('background:oklch(0.19 0.008 60)');
     expect(html, 'figures are not among the eight and keep their gate').not.toContain('data-figure');

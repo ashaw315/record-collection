@@ -140,6 +140,8 @@ export const TYPED_LEADING = 1.9;
  */
 export const SECTIONS = [
   'pressing-detail',
+  /* §65, §26 (9 Nov): the tracklist's own row, directly after Pressing detail's. */
+  'tracklist',
   'acquisition',
   'tags',
   'market',
@@ -174,6 +176,8 @@ export type SectionName = (typeof SECTIONS)[number];
 const MARKED: ReadonlySet<SectionName> = new Set<SectionName>([
   /* Plant, weight and colour are drawn in no frame cell. */
   'pressing-detail',
+  /* §65: the frame draws no track and no credit. */
+  'tracklist',
   /* The frame shows a count, never the images. */
   'images',
   /* The frame shows one figure, never the series. */

@@ -62,14 +62,31 @@ export type RegionRow = { items: RowItem[] };
  * starts with content at x = 0, so "flats on opposite page edges" needs one
  * cleared column on the left, and ordering this row air-first makes it.
  */
-export const REGION_ROWS: ReadonlyArray<{ sections: readonly SectionName[]; air: 'before' | 'after' | null }> = [
-  { sections: ['pressing-detail'], air: 'after' },
-  { sections: ['acquisition', 'tags', 'market'], air: null },
-  { sections: ['price-history'], air: null },
+/*
+  §26 ("Tracklist row", 9 Nov): "Rows 1 to 5, wherever this target numbers them, are names, not positions: row 1 is the
+  wide section beside air, row 2 the three tight columns, row 3 the full-width strip, row 4 the two halves, and row 5
+  the last row that begins with air; the tracklist's row is named by its section." Every rule below finds a row by its
+  name. Until 9 Nov they found it by its index, and inserting the tracklist's row would have moved row 1's air rule,
+  row 5's, §34's regrouping and the flats onto the wrong rows with nothing failing.
+*/
+export type RowName = 'row-1' | 'tracklist' | 'row-2' | 'row-3' | 'row-4' | 'row-5';
+
+export const REGION_ROWS: ReadonlyArray<{ name: RowName; sections: readonly SectionName[]; air: 'before' | 'after' | null }> = [
+  { name: 'row-1', sections: ['pressing-detail'], air: 'after' },
+  /* §26, §65: the tracklist's own row, directly after Pressing detail's, full width at every count, no figure and no air. */
+  { name: 'tracklist', sections: ['tracklist'], air: null },
+  { name: 'row-2', sections: ['acquisition', 'tags', 'market'], air: null },
+  { name: 'row-3', sections: ['price-history'], air: null },
   /* §53 (step 60b): with the lower About row gone the images row is one section, not a pair, so it spans the row at every width and takes the wide-row rule as a one-section row. */
-  { sections: ['images'], air: null },
-  { sections: ['journal'], air: 'before' },
+  { name: 'row-4', sections: ['images'], air: null },
+  { name: 'row-5', sections: ['journal'], air: 'before' },
 ];
+
+const rowNamed = (name: RowName) => {
+  const row = REGION_ROWS.find((r) => r.name === name);
+  if (row === undefined) throw new Error(`region-rows: no row named ${name}`);
+  return row;
+};
 
 /**
  * §28's spans, row by row, at each width — transcribed from the list.
@@ -83,11 +100,11 @@ export const REGION_ROWS: ReadonlyArray<{ sections: readonly SectionName[]; air:
  * upper cell, so it leaves the lower region entirely and the row is 8 wide.
  * Row 5's air is dropped at 4 and 1 because it would be under 240.
  */
-const SPANS: Record<RegionWidth, ReadonlyArray<ReadonlyArray<number>>> = {
-  /* 7+5 · 4/4/4 · 12 · 6/6 · 3+9 */
-  1440: [[7, 5], [4, 4, 4], [12], [12], [3, 9]],
+const SPANS: Record<RegionWidth, Record<RowName, ReadonlyArray<ReadonlyArray<number>>>> = {
+  /* 7+5 · 12 · 4/4/4 · 12 · 12 · 3+9 */
+  1440: { 'row-1': [[7, 5]], tracklist: [[12]], 'row-2': [[4, 4, 4]], 'row-3': [[12]], 'row-4': [[12]], 'row-5': [[3, 9]] },
   /*
-    8 · 4/4 · 8 · 8 · 4/4 · 3+5 air first. §28 wrote 3/3/2 here; §34
+    8 · 8 · 4/4 then 8 · 8 · 8 · 3+5 air first. §28 wrote 3/3/2 for row 2 here; §34
     supersedes it: "a grouping list says where sections sit; it does not
     guarantee each one a measure... At eight columns row 2 is therefore
     4 / 4, then the market at 8." Two columns of 125 gave the market's pair
@@ -95,56 +112,46 @@ const SPANS: Record<RegionWidth, ReadonlyArray<ReadonlyArray<number>>> = {
     content cell's measure holds its longest label on one line -- is
     asserted across the sweep in `e2e/layout-sweep.spec.ts`.
   */
-  960: [[8], [4, 4], [8], [8], [8], [3, 5]],
-  /* 4 · three rows of 4 · 4 · 2/2 · 4 with the air dropped */
-  480: [[4], [4], [4], [4], [4], [4], [4]],
-  390: [[1], [1], [1], [1], [1], [1], [1]],
+  960: { 'row-1': [[8]], tracklist: [[8]], 'row-2': [[4, 4], [8]], 'row-3': [[8]], 'row-4': [[8]], 'row-5': [[3, 5]] },
+  /* 4 · 4 · three rows of 4 · 4 · 4 · 4 with the air dropped */
+  480: { 'row-1': [[4]], tracklist: [[4]], 'row-2': [[4], [4], [4]], 'row-3': [[4]], 'row-4': [[4]], 'row-5': [[4]] },
+  390: { 'row-1': [[1]], tracklist: [[1]], 'row-2': [[1], [1], [1]], 'row-3': [[1]], 'row-4': [[1]], 'row-5': [[1]] },
 };
 
-/** Which row of `SPANS` each of §26's five rows becomes, at a width that splits it. */
-const SPLIT_ROWS: Record<RegionWidth, ReadonlyArray<number>> = {
-  1440: [1, 1, 1, 1, 1],
-  /* §34: row 2 is two rows at 8 -- acquisition and tags, then the market. */
-  960: [1, 2, 1, 1, 1],
-  /* Row 2's three sections take a row each; row 4 keeps its pair. */
-  480: [1, 3, 1, 1, 1],
-  390: [1, 3, 1, 1, 1],
-};
+/* How many grid rows a named row becomes at a width is the number of span lists it has there; no second table states it. */
 
 /** Whether a row keeps its air column at a given width. */
 /*
   How a split row's sections share its sub-rows, where it is not one per
   sub-row. §34's row 2 at 8: 4 / 4, then the market at 8.
 */
-const SUB_ROWS: Partial<Record<RegionWidth, Partial<Record<number, ReadonlyArray<ReadonlyArray<SectionName>>>>>> = {
-  960: { 1: [['acquisition', 'tags'], ['market']] },
+const SUB_ROWS: Partial<Record<RegionWidth, Partial<Record<RowName, ReadonlyArray<ReadonlyArray<SectionName>>>>>> = {
+  960: { 'row-2': [['acquisition', 'tags'], ['market']] },
 };
 
-function airAt(rowIndex: number, width: RegionWidth): 'before' | 'after' | null {
-  const air = REGION_ROWS[rowIndex].air;
+function airAt(name: RowName, width: RegionWidth): 'before' | 'after' | null {
+  const air = rowNamed(name).air;
   if (air === null) return null;
-  /* §28: at 8 the first row's air moves up beside the third upper cell. */
-  if (rowIndex === 0 && width !== 1440) return null;
+  /* §28: at 8 row 1's air moves up beside the third upper cell. */
+  if (name === 'row-1' && width !== 1440) return null;
   /* §28: below 960 no air column reaches 240, so row 5's is dropped. */
-  if (rowIndex === 4 && (width === 480 || width === 390)) return null;
+  if (name === 'row-5' && (width === 480 || width === 390)) return null;
   return air;
 }
 
 /** The region's rows at one width, each as the items it lays across the grid. */
 export function rowsAt(width: RegionWidth): RegionRow[] {
-  const spans = SPANS[width];
   const out: RegionRow[] = [];
-  let cursor = 0;
 
-  REGION_ROWS.forEach((row, rowIndex) => {
-    const air = airAt(rowIndex, width);
-    const taken = SPLIT_ROWS[width][rowIndex];
+  REGION_ROWS.forEach((row) => {
+    const air = airAt(row.name, width);
+    const subRows = SPANS[width][row.name];
+    const taken = subRows.length;
 
     for (let i = 0; i < taken; i += 1) {
-      const rowSpans = spans[cursor];
-      cursor += 1;
+      const rowSpans = subRows[i];
       /* All of a row's sections when it does not split; SUB_ROWS' grouping when it does, else one per sub-row. */
-      const groups = SUB_ROWS[width]?.[rowIndex];
+      const groups = SUB_ROWS[width]?.[row.name];
       const sections = taken === 1 ? row.sections : groups !== undefined ? groups[i] : [row.sections[i]];
       const items: RowItem[] = [];
 
@@ -166,9 +173,9 @@ export function rowsAt(width: RegionWidth): RegionRow[] {
 export const MAX_ROWS = Math.max(...WIDTHS.map((w) => rowsAt(w).length));
 
 export function airOf(width: RegionWidth, section: SectionName): { side: 'before' | 'after'; span: number } | undefined {
-  const rowIndex = REGION_ROWS.findIndex((row) => row.sections.includes(section));
-  if (rowIndex === -1) return undefined;
-  const side = airAt(rowIndex, width);
+  const row = REGION_ROWS.find((r) => r.sections.includes(section));
+  if (row === undefined) return undefined;
+  const side = airAt(row.name, width);
   if (side === null) return undefined;
 
   for (const row of rowsAt(width)) {
@@ -228,12 +235,11 @@ export function placementOf(width: RegionWidth, section: SectionName): Placement
   return { start: 1, span: COLUMNS_AT[width], endsRow: true };
 }
 
-/** Where row `rowIndex` of §26's five puts its air column, if it has one at this width. */
-export function airPlacement(width: RegionWidth, rowIndex: number): { start: number; span: number } | null {
-  const air = REGION_ROWS[rowIndex].air;
-  if (air === null) return null;
+/** Where the named row puts its air column, if it has one at this width. */
+export function airPlacement(width: RegionWidth, name: RowName): { start: number; span: number } | null {
+  if (airAt(name, width) === null) return null;
 
-  const sections = REGION_ROWS[rowIndex].sections;
+  const sections = rowNamed(name).sections;
   for (const row of rowsAt(width)) {
     if (!row.items.some((item) => item.kind === 'section' && sections.includes(item.section))) continue;
     let column = 1;
@@ -262,14 +268,14 @@ export function rowOf(width: RegionWidth, section: SectionName): number {
   return 1;
 }
 
-/** The grid row row `rowIndex` of §26's five occupies at this width — the row its air sits on. */
-export function airRow(width: RegionWidth, rowIndex: number): number {
-  const sections = REGION_ROWS[rowIndex].sections;
+/** The grid row the named row occupies at this width — the row its air sits on. */
+export function airRow(width: RegionWidth, name: RowName): number {
+  const sections = rowNamed(name).sections;
   const rows = rowsAt(width);
   for (let i = 0; i < rows.length; i += 1) {
     if (rows[i].items.some((item) => item.kind === 'section' && sections.includes(item.section))) return i + 1;
   }
-  return rowIndex + 1;
+  throw new Error(`region-rows: ${name} lays no grid row at ${width}`);
 }
 
 /**
@@ -438,12 +444,13 @@ export function regionStylesheet(): string {
       rules.push(`[data-section="${section}"] { border-right-width: ${endsRow ? 0 : 1}px; }`);
     }
 
-    REGION_ROWS.forEach((_, index) => {
-      const air = airPlacement(width, index);
+    REGION_ROWS.forEach(({ name, air: side }) => {
+      if (side === null) return;
+      const air = airPlacement(width, name);
       rules.push(
         air === null
-          ? `[data-air="${index}"] { display: none; }`
-          : `[data-air="${index}"] { grid-column: ${air.start} / span ${air.span}; grid-row: ${airRow(width, index)}; display: block; }`,
+          ? `[data-air="${name}"] { display: none; }`
+          : `[data-air="${name}"] { grid-column: ${air.start} / span ${air.span}; grid-row: ${airRow(width, name)}; display: block; }`,
       );
     });
     /*
@@ -461,7 +468,7 @@ export function regionStylesheet(): string {
       before this: flats at three at eight columns, "that third flat is the
       defect".
     */
-    if (upperAirAt(width) !== null) rules.push(`[data-air="${REGION_ROWS.length - 1}"] > [data-ornament="flat"] { display: none; }`);
+    if (upperAirAt(width) !== null) rules.push(`[data-air="row-5"] > [data-ornament="flat"] { display: none; }`);
     /* §38's guards go LAST in the block: nested in their own min-width query, and a reader (or a test) slicing on @media must find the block's own rules before it. */
     /*
       §38: the same rows, missing any of their sections. Under a min-width
@@ -627,12 +634,14 @@ export function widePageStylesheet(): string {
           region.push(`[data-section="${item.section}"] { grid-column: ${column} / span ${item.span} !important; grid-row: ${rowIndex + 1} !important; }`);
         } else {
           /*
-            A row's air keeps the index §26 gave it where it has one; a row
+            A row's air keeps the name §26 gave it where it has one; a row
             that GAINS air above 1440 has no `data-air` of its own, so the
             surplus is carried by the section's own margin instead — §26's
             five air slots are the only ones the markup renders.
           */
-          const owner = REGION_ROWS[rowIndex].air === null ? null : rowIndex;
+          /* The row that owns this air, found by the sections it lays, not by its index (§26, 9 Nov). */
+          const named = REGION_ROWS.find((r) => row.items.some((i) => i.kind === 'section' && r.sections.includes(i.section)));
+          const owner = named === undefined || named.air === null ? null : named.name;
           if (owner !== null && airIndex === 0) {
             region.push(`[data-air="${owner}"] { grid-column: ${column} / span ${item.span} !important; grid-row: ${rowIndex + 1} !important; display: block; }`);
           }

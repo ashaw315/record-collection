@@ -2,7 +2,7 @@ import type { RecordLadder } from '@/lib/colour/record-ladder';
 import { LABEL } from './grid-type';
 import { Figure, Flat } from './OrnamentMarks';
 import { FLATS, figureAt, type Figure as FigureSpec } from './ornament';
-import { MAX_ROWS, REGION_ROWS, airPlacement, placementOf } from './region-rows';
+import { MAX_ROWS, REGION_ROWS, airPlacement, placementOf, type RowName } from './region-rows';
 import {
   CELL_PADDING,
   CONTENT_SPLITS,
@@ -306,13 +306,13 @@ export function ExtendedGrid({ children, ladder = null }: { children: React.Reac
         />
       ))}
 
-      {REGION_ROWS.map((row, index) => {
-        const air = airPlacement(1440, index);
+      {REGION_ROWS.map((row) => {
+        const air = airPlacement(1440, row.name);
         if (air === null) return null;
         return (
           <ExtendedGrid.Air
-            key={`air-${index}`}
-            index={index}
+            key={`air-${row.name}`}
+            row={row.name}
             ladder={ladder}
             figure={figureAt(row.sections[0], 'air')}
             flat={FLATS.left.beside === row.sections[0] ? FLATS.left : null}
@@ -333,17 +333,16 @@ export function ExtendedGrid({ children, ladder = null }: { children: React.Reac
  * what make the left page edge in the last row (§26).
  */
 ExtendedGrid.Air = function Air({
-  index,
+  row,
   ladder,
   figure = null,
   flat = null,
 }: {
   /**
-   * Which of §26's five rows it belongs to. **The only placement it
-   * carries**: §28's generated stylesheet states its column, row and
-   * visibility per width, addressed by this index.
+   * Which of §26's rows it belongs to, by NAME (§26, 9 Nov: row numbers are names). **The only placement it
+   * carries**: §28's generated stylesheet states its column, row and visibility per width, addressed by this name.
    */
-  index?: number;
+  row?: RowName;
   ladder: RecordLadder | null;
   figure?: FigureSpec | null;
   flat?: (typeof FLATS)[keyof typeof FLATS] | null;
@@ -351,7 +350,7 @@ ExtendedGrid.Air = function Air({
   return (
     <div
       data-cell="air"
-      data-air={index}
+      data-air={row}
       aria-hidden="true"
       style={{
         /*
@@ -359,7 +358,7 @@ ExtendedGrid.Air = function Air({
           column per width, and an inline `grid-column` beats it: an air cell
           hidden at 8 columns still reached column 12 through its inline
           value and opened four implicit 0px tracks on the region's grid.
-          The `data-air` index is what the stylesheet addresses.
+          The `data-air` name is what the stylesheet addresses.
         */
         /* §33: the row's rule belongs to the row -- see `RowRule`. */
         ...CELL_LAYER,

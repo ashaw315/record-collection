@@ -55616,3 +55616,41 @@ parked thread's question, not this step's. The tool tags a footprint before its 
 Step level: wall unit tests 328 of 328; footprint-visible-34, shelf, wall-arrival-104, wall-route, far-region-band,
 wall-first-paint, wall-labelled, wall-access and the far-view specs, 55 passed; typecheck, lint (0 errors, 4
 warnings, none new), build.
+
+## 9 Nov: §26's rows keyed by name, and the tracklist's row laid (the coordinator's approval; "Tracklist row")
+
+**A family member, new: a positional key that survives an insertion with no failure.** Five places found a lower-region
+row by its index: region-rows.ts's air rules (row 1's moves up at 8, row 5's drops below 960), §34's regrouping
+(`SUB_ROWS` keyed 1), the per-width span and split tables (arrays aligned by position), the wide page's air owner
+(`REGION_ROWS[rowIndex]`, true only because nothing splits at 12), and ornament.ts's two flats (`rowIndex: 3` and
+`4`). The flats were the coordinator's, left off its list: their only reader, ornament.test.ts:179, compared the two
+constants with each other, so after an insertion they would have stayed 3 and 4 while the rows became 5 and 6, and the
+test would have passed on nothing. A positional index gives no sign when the thing it counts changes underneath it.
+The tests had the same shape seven times (`rowsAt(1440)[1]` for row 2), found when the re-keyed code failed them.
+
+**What changed.** Rows carry §26's names (row-1, tracklist, row-2 … row-5); spans are tables keyed by name, and a
+row's split count is derived from them; air, §34's regrouping and the wide page's air owner find their row by name or
+by the sections it lays; `data-air` carries the row's name; the flats keep only the section they sit beside, and their
+order is read from where those sections are laid. The tracklist is a section (SECTIONS, after Pressing detail) with
+its own row, full width at every count, no figure, no air; §9.3's predicate marks it (the frame draws no track or
+credit), five of eight. Its absence is the section's own: until 173b renders it there is no `data-section`, and the
+row collapses as §9.1 collapses any empty row, with no flag to switch.
+
+**Where each row name came from.** All from §26's naming sentence in the card at refs/drops/2026-11-09-02 ("row 1 is
+the wide section beside air, row 2 the three tight columns, row 3 the full-width strip, row 4 the two halves, and row
+5 the last row that begins with air; the tracklist's row is named by its section"), none from the withdrawn five-row
+listing. The card's 13 lower-region row references resolved by it (12 found by number and ordinal, one more, §28's
+"moved up from the first lower row", by the wider sweep); by-section references name sections and survive any
+insertion; §25 names no row.
+
+**The counts, before and after (old plus one at every width, as asked):** 5, 6, 7, 7 at 12, 8, 4 and one column became
+6, 7, 8, 8. §28's new sentence says six, six, eight and nine: its withdrawn counts (five, five, seven, eight) plus one,
+which already disagreed with §34 (the market's own row at 8) and §53 (images unsplit at one). For Design.
+
+**The arrival check's blind spot is owed a backwards sweep and a shared heading parser** (the coordinator, 9 Nov):
+not done in this unit.
+
+Step level: record page unit tests 513 of 513; 50 e2e across figures-type-57, flat-sizing-29, extended-grid,
+identity-measure, images-row-56, layout-sweep, no-cover-54, page-fills-viewport, record-page-28, row-regroup-38,
+record-lines, row-rules-33, row-clip-29h; typecheck, lint (0 errors), build. Tests changed with the ruling first and
+seen failing (12) against the unchanged code.

@@ -109,6 +109,8 @@ describe("§9.3's mark predicate", () => {
    */
   const FRAME_SHOWS: Record<SectionName, { holds: string; shownAbove: boolean }> = {
     'pressing-detail': { holds: 'plant, weight, colour variant', shownAbove: false },
+    /* §65: the frame draws no track and no credit. */
+    tracklist: { holds: 'the tracks and the folded credits', shownAbove: false },
     acquisition: { holds: 'paid / from / condition', shownAbove: true },
     tags: { holds: 'a control, not a fact', shownAbove: true },
     images: { holds: 'the images themselves', shownAbove: false },
@@ -129,7 +131,7 @@ describe("§9.3's mark predicate", () => {
     }
   });
 
-  it('marks four of seven, and Price history rather than Market', () => {
+  it('marks five of eight, and Price history rather than Market', () => {
     /*
       The flip, asserted by name because it is the specific error that shipped:
       the frame shows the median in full and never the series, so Market only
@@ -143,9 +145,10 @@ describe("§9.3's mark predicate", () => {
       output rather than as a target, and sets no minimum or maximum — so the
       count follows the rule. Snippet joined when its ground turned out to
       describe a duplication that does not exist, and left with its section
-      when §53 (step 60b) took the About into its own cell: four of seven.
+      when §53 (step 60b) took the About into its own cell: four of seven. §65's tracklist holds the tracks and
+      credits, which the frame never draws: five of eight (9 Nov).
     */
-    expect(marked).toHaveLength(4);
+    expect(marked).toHaveLength(5);
     expect(marked, 'the series is not shown above').toContain('price-history');
     expect(marked, 'the median IS shown above').not.toContain('market');
   });
@@ -322,9 +325,11 @@ describe('the eight sections', () => {
       agree, so there was no drawing-governs question to settle.
     */
     /* §53 (step 60b): the About has one cell, so the snippet is no section of the region. */
-    expect(SECTIONS).toHaveLength(7);
+    /* §26, §65 (9 Nov): the tracklist after Pressing detail, the release's facts before what was paid for it. */
+    expect(SECTIONS).toHaveLength(8);
     expect([...SECTIONS]).toEqual([
       'pressing-detail',
+      'tracklist',
       'acquisition',
       'tags',
       'market',

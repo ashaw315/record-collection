@@ -1,3 +1,4 @@
+import { rowOf, WIDTHS } from './region-rows';
 import { describe, expect, it } from 'vitest';
 import {
   ARCHETYPE_ASPECT,
@@ -175,7 +176,12 @@ describe('distribution (§26 over §25)', () => {
     expect(FLATS.left, 'tint triangle, left edge, last row’s air').toMatchObject({ shape: 'triangle', step: 'tint', edge: 'left' });
     /* §53 (steps 60b, 61): the lower About row is gone; the disc's host is Images, which ends the row at the page's right edge at every width. */
     expect(FLATS.right, 'base quarter-disc, right edge, beside Images').toMatchObject({ shape: 'quarterDisc', step: 'base', edge: 'right', beside: 'images' });
-    /* Weight lightens down the page: the base flat sits above the tint flat. */
-    expect(FLATS.right.rowIndex).toBeLessThan(FLATS.left.rowIndex);
+    /*
+      Weight lightens down the page: the base flat sits above the tint flat. Read from where each flat's section is
+      laid, not from a row number stored beside it: the stored 3 and 4 compared two constants, and when the tracklist's
+      row was inserted they would have stayed 3 and 4 while the rows became 5 and 6, passing on nothing (9 Nov).
+    */
+    for (const width of WIDTHS) expect(rowOf(width, FLATS.right.beside), `${width}`).toBeLessThan(rowOf(width, FLATS.left.beside));
+    expect(FLATS.right, 'no stored row number').not.toHaveProperty('rowIndex');
   });
 });

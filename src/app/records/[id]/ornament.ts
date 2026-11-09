@@ -274,11 +274,12 @@ export function figureAt(section: string, place: FigurePlace): Figure | null {
 }
 
 /**
- * §26's two flats, on opposite page edges. `rowIndex` is the row of §26's
- * five, so "weight lightens down the page" is a comparison and not a claim.
+ * §26's two flats, on opposite page edges, each found by the section it sits beside. "Weight lightens down the page"
+ * is read from where those sections are laid (ornament.test.ts), not from a row number stored here: the stored 3 and 4
+ * would have survived the tracklist's row unchanged while the rows they named moved (9 Nov).
  */
 export const FLATS = {
   /* §53 (steps 60b, 61): the lower About row is gone and Images ends its row at the page's right edge at every width, so the disc's host is Images. */
-  right: { shape: 'quarterDisc', step: 'base', edge: 'right', beside: 'images', rowIndex: 3, radius: 150 },
-  left: { shape: 'triangle', step: 'tint', edge: 'left', beside: 'journal', rowIndex: 4 },
+  right: { shape: 'quarterDisc', step: 'base', edge: 'right', beside: 'images', radius: 150 },
+  left: { shape: 'triangle', step: 'tint', edge: 'left', beside: 'journal' },
 } as const;

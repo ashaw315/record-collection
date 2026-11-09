@@ -33,6 +33,8 @@ import {
   rowsAt,
   type RegionWidth,
 } from './region-rows';
+import type { RegionRow } from './region-rows';
+import type { SectionName } from './extended-grid';
 
 /**
  * §26's five rows and §28's groupings at every width.
@@ -50,10 +52,32 @@ import {
  * air dropped (under 240) · 1.
  */
 
+/*
+  The row laying a section, found by name (§26, 9 Nov: row numbers are names). The tests indexed rows by position too
+  (rowsAt(1440)[1] for row 2), and the tracklist's row would have shifted every one onto its neighbour.
+*/
+const rowWith = (rows: readonly RegionRow[], section: SectionName) => {
+  const row = rows.find((r) => r.items.some((i) => i.kind === 'section' && i.section === section));
+  if (row === undefined) throw new Error(`no row lays ${section}`);
+  return row;
+};
+
 describe('§28’s groupings, transcribed from the section’s list', () => {
-  it('runs the eight sections in §9’s order, in five rows, with no section twice or missing', () => {
+  it('runs the nine sections in §9’s order, in six rows, with no section twice or missing', () => {
     const ordered = REGION_ROWS.flatMap((row) => row.sections);
     expect(ordered, 'every §9 section appears once, in order').toEqual([...SECTIONS]);
+  });
+
+  /*
+    §26 ("Tracklist row", 9 Nov): "Rows 1 to 5, wherever this target numbers them, are names, not positions: row 1 is
+    the wide section beside air, row 2 the three tight columns, row 3 the full-width strip, row 4 the two halves, and
+    row 5 the last row that begins with air; the tracklist's row is named by its section." Every rule that names a row
+    finds it by this name, so a row inserted anywhere moves no rule.
+  */
+  it('names the rows as §26 names them, the tracklist’s by its section, directly after row 1', () => {
+    expect(REGION_ROWS.map((row) => row.name)).toEqual(['row-1', 'tracklist', 'row-2', 'row-3', 'row-4', 'row-5']);
+    expect(REGION_ROWS.find((row) => row.name === 'row-2')?.sections, 'row 2 is the three tight columns').toEqual(['acquisition', 'tags', 'market']);
+    expect(REGION_ROWS.find((row) => row.name === 'tracklist'), 'one section, no air').toEqual({ name: 'tracklist', sections: ['tracklist'], air: null });
   });
 
   it('gives each width the column count §28 derives from a measurement', () => {
@@ -73,24 +97,34 @@ describe('§28’s groupings, transcribed from the section’s list', () => {
     const spansAt = (width: RegionWidth) => rowsAt(width).map((row) => row.items.map((item) => item.span));
 
     /* §53 (step 60b): the images row is one section of twelve; 6/6 was images and the lower About row. */
-    expect(spansAt(1440), '7+5 · 4/4/4 · 12 · 12 · 3+9').toEqual([[7, 5], [4, 4, 4], [12], [12], [3, 9]]);
+    expect(spansAt(1440), '7+5 · 12 (the tracklist) · 4/4/4 · 12 · 12 · 3+9').toEqual([[7, 5], [12], [4, 4, 4], [12], [12], [3, 9]]);
     /*
       §34 supersedes §28's 3/3/2: "a grouping list says where sections sit;
       it does not guarantee each one a measure... At eight columns row 2 is
       therefore 4 / 4, then the market at 8." Two columns of 125 gave the
       market's pair cells a 57px measure and set its label one word to a line.
     */
-    expect(spansAt(960), '8 · 4/4 · 8 (the market, §34) · 8 · 8 (§53: images alone) · 3+5').toEqual([[8], [4, 4], [8], [8], [8], [3, 5]]);
+    expect(spansAt(960), '8 · 8 (the tracklist) · 4/4 · 8 (the market, §34) · 8 · 8 (§53: images alone) · 3+5').toEqual([[8], [8], [4, 4], [8], [8], [8], [3, 5]]);
     /* At 4 the rows that cannot sit side by side stack, apart from row 4's pair. */
-    expect(spansAt(480), 'row 2 stacks three, row 4 keeps its pair, row 5 drops its air').toEqual([[4], [4], [4], [4], [4], [4], [4]]);
-    expect(spansAt(390), 'one fluid column throughout').toEqual([[1], [1], [1], [1], [1], [1], [1]]);
+    expect(spansAt(480), 'the tracklist full width, row 2 stacks three, row 5 drops its air').toEqual([[4], [4], [4], [4], [4], [4], [4], [4]]);
+    expect(spansAt(390), 'one fluid column throughout').toEqual([[1], [1], [1], [1], [1], [1], [1], [1]]);
   });
 
-  it('counts the rows: five at 12, six at 8 (§34 gives the market its own row), seven at 4, seven at one column (§53: the images row no longer splits)', () => {
-    expect(rowsAt(1440)).toHaveLength(5);
-    expect(rowsAt(960)).toHaveLength(6);
-    expect(rowsAt(480)).toHaveLength(7);
-    expect(rowsAt(390)).toHaveLength(7);
+  /*
+    Each count is the count before the tracklist plus one (the coordinator, 9 Nov: anything else means the re-keying
+    moved what it was not asked to): 5, 6, 7, 7 became 6, 7, 8, 8. §28's new sentence reads "six at 12 and 8, eight at 4
+    and nine at one", its withdrawn five-row counts plus one; those counts already disagreed with §34 (the market's own
+    row at 8) and §53 (the images row unsplit at one), and the build follows §34 and §53. Reported to Design.
+  */
+  it('counts the rows: the tracklist’s one more at every count, six at 12, seven at 8 (§34), eight at 4, eight at one column (§53)', () => {
+    expect(rowsAt(1440)).toHaveLength(6);
+    expect(rowsAt(960)).toHaveLength(7);
+    expect(rowsAt(480)).toHaveLength(8);
+    expect(rowsAt(390)).toHaveLength(8);
+    for (const width of WIDTHS) {
+      const tracklist = rowsAt(width).filter((row) => row.items.some((i) => i.kind === 'section' && i.section === 'tracklist'));
+      expect(tracklist.map((row) => row.items), `${width}: the tracklist full width, alone, no air`).toEqual([[{ kind: 'section', section: 'tracklist', span: COLUMNS_AT[width] }]]);
+    }
   });
 
   it('every row fills its width exactly — no row short, none overflowing', () => {
@@ -119,7 +153,7 @@ describe('where the air is, and what it carries', () => {
 
   it('moves row 1’s air up beside the third upper cell at 8 columns, leaving row 1 full width', () => {
     expect(airOf(960, 'pressing-detail'), 'the air has left the lower region').toBeUndefined();
-    expect(rowsAt(960)[0].items.map((i) => i.kind), 'row 1 is the section alone').toEqual(['section']);
+    expect(rowWith(rowsAt(960), 'pressing-detail').items.map((i) => i.kind), 'row 1 is the section alone').toEqual(['section']);
   });
 
   it('requires 240 of air before a figure may sit in it, at every width', () => {
@@ -199,41 +233,43 @@ describe('placement is derived from the section’s name, not passed in', () => 
   });
 
   it('places the air columns too, so the region can render them without knowing the list', () => {
-    expect(airPlacement(1440, 0), 'row 1: after the 7').toEqual({ start: 8, span: 5 });
-    expect(airPlacement(1440, 4), 'row 5: before the 9, making the left page edge').toEqual({ start: 1, span: 3 });
-    expect(airPlacement(1440, 1), 'row 2 has none').toBeNull();
+    expect(airPlacement(1440, 'row-1'), 'row 1: after the 7').toEqual({ start: 8, span: 5 });
+    expect(airPlacement(1440, 'row-5'), 'row 5: before the 9, making the left page edge').toEqual({ start: 1, span: 3 });
+    expect(airPlacement(1440, 'row-2'), 'row 2 has none').toBeNull();
+    expect(airPlacement(1440, 'tracklist'), 'nor the tracklist’s row').toBeNull();
   });
 });
 
 describe('rows are explicit, because a column placement alone does not pick a row', () => {
   it('gives each section the grid row its §26 row occupies', () => {
     expect(rowOf(1440, 'pressing-detail')).toBe(1);
-    expect(rowOf(1440, 'acquisition')).toBe(2);
-    expect(rowOf(1440, 'tags')).toBe(2);
-    expect(rowOf(1440, 'market')).toBe(2);
-    expect(rowOf(1440, 'price-history')).toBe(3);
-    expect(rowOf(1440, 'images')).toBe(4);
-    expect(rowOf(1440, 'journal')).toBe(5);
+    expect(rowOf(1440, 'tracklist')).toBe(2);
+    expect(rowOf(1440, 'acquisition')).toBe(3);
+    expect(rowOf(1440, 'tags')).toBe(3);
+    expect(rowOf(1440, 'market')).toBe(3);
+    expect(rowOf(1440, 'price-history')).toBe(4);
+    expect(rowOf(1440, 'images')).toBe(5);
+    expect(rowOf(1440, 'journal')).toBe(6);
   });
 
   it('splits a row into several at the widths §28 stacks it, and numbers them in order', () => {
     /* At 4 columns row 2's three sections take a row each, so what follows moves down. */
     /* §34 at 8: acquisition and tags share row 2, the market takes row 3, and everything after moves down one. */
-    expect(rowOf(960, 'tags')).toBe(2);
-    expect(rowOf(960, 'market')).toBe(3);
-    expect(rowOf(960, 'price-history')).toBe(4);
-    expect(rowOf(960, 'journal')).toBe(6);
-    expect(airRow(960, 4), 'row 5’s air follows Journal to the sixth row').toBe(6);
-    expect(rowOf(480, 'acquisition')).toBe(2);
-    expect(rowOf(480, 'tags')).toBe(3);
-    expect(rowOf(480, 'market')).toBe(4);
-    expect(rowOf(480, 'price-history')).toBe(5);
-    expect(rowOf(480, 'journal')).toBe(7);
+    expect(rowOf(960, 'tags')).toBe(3);
+    expect(rowOf(960, 'market'), '§34’s regrouping keyed to row 2 by name, not to the second row').toBe(4);
+    expect(rowOf(960, 'price-history')).toBe(5);
+    expect(rowOf(960, 'journal')).toBe(7);
+    expect(airRow(960, 'row-5'), 'row 5’s air follows Journal to the seventh grid row').toBe(7);
+    expect(rowOf(480, 'acquisition')).toBe(3);
+    expect(rowOf(480, 'tags')).toBe(4);
+    expect(rowOf(480, 'market')).toBe(5);
+    expect(rowOf(480, 'price-history')).toBe(6);
+    expect(rowOf(480, 'journal')).toBe(8);
   });
 
   it('puts an air column on the same row as the sections it sits beside', () => {
-    expect(airRow(1440, 0), 'row 1’s air is on row 1, beside Pressing detail').toBe(1);
-    expect(airRow(1440, 4), 'row 5’s air is on row 5, before Journal').toBe(5);
+    expect(airRow(1440, 'row-1'), 'row 1’s air is on grid row 1, beside Pressing detail').toBe(1);
+    expect(airRow(1440, 'row-5'), 'row 5’s air is on grid row 6, before Journal').toBe(6);
   });
 });
 
@@ -311,7 +347,7 @@ describe('§28’s breakpoints: the column count is derived, and the region foll
     const css = regionStylesheet();
     const blocks = css.split('@media');
     const eight = blocks.find((b) => b.startsWith(' (max-width: 1439px)'));
-    const hide = '[data-air="4"] > [data-ornament="flat"] { display: none; }';
+    const hide = '[data-air="row-5"] > [data-ornament="flat"] { display: none; }';
     expect(eight, 'the 8-column block exists').toBeDefined();
     expect(eight, 'row 5’s triangle is hidden at 8 columns').toContain(hide);
     expect(blocks[0], 'and drawn at 12').not.toContain(hide);
@@ -336,10 +372,11 @@ describe('the breakpoint stylesheet is generated from the same table the tests a
 
   it('places every section at each width from the rows, never by hand', () => {
     /* A spot check per width: if the generator stopped reading the table this diverges. */
-    expect(css, 'market takes the last 4 of row 2 at 12').toContain('[data-section="market"] { grid-column: 9 / span 4; grid-row: 2; }');
-    expect(css, 'and a full row of its own at 8 (§34)').toContain('[data-section="market"] { grid-column: 1 / span 8; grid-row: 3; }');
-    expect(css, 'so price history moves to row 4 at 8').toContain('[data-section="price-history"] { grid-column: 1 / span 8; grid-row: 4; }');
-    expect(css, 'a row of its own at 4').toContain('[data-section="market"] { grid-column: 1 / span 4; grid-row: 4; }');
+    expect(css, 'market takes the last 4 of row 2 at 12, on grid row 3 below the tracklist’s').toContain('[data-section="market"] { grid-column: 9 / span 4; grid-row: 3; }');
+    expect(css, 'and a full row of its own at 8 (§34)').toContain('[data-section="market"] { grid-column: 1 / span 8; grid-row: 4; }');
+    expect(css, 'so price history moves to grid row 5 at 8').toContain('[data-section="price-history"] { grid-column: 1 / span 8; grid-row: 5; }');
+    expect(css, 'a row of its own at 4').toContain('[data-section="market"] { grid-column: 1 / span 4; grid-row: 5; }');
+    expect(css, 'the tracklist full width on grid row 2 at 12').toContain('[data-section="tracklist"] { grid-column: 1 / span 12; grid-row: 2; }');
   });
 
   it('shows one row rule per grid row at each width, from the same table (§33: every row is ruled)', () => {
@@ -351,15 +388,15 @@ describe('the breakpoint stylesheet is generated from the same table the tests a
     */
     const blocks = css.split('@media');
     const at = (start: string) => blocks.find((b) => b.startsWith(start)) ?? '';
-    expect(MAX_ROWS, 'the most rows any width lays (§53: seven, once the images row stopped splitting at one column)').toBe(7);
-    expect(blocks[0], 'five rows at 12').toContain('[data-row-rule="4"] { display: block; }');
-    expect(blocks[0]).toContain('[data-row-rule="5"] { display: none; }');
-    expect(at(' (max-width: 1439px)'), 'six at 8').toContain('[data-row-rule="5"] { display: block; }');
-    expect(at(' (max-width: 1439px)')).toContain('[data-row-rule="6"] { display: none; }');
-    expect(at(' (max-width: 959px)'), 'seven at 4').toContain('[data-row-rule="6"] { display: block; }');
-    /* §53 (step 60b): seven rows at most, so the rules run 0 to 6 and there is no seventh to hide. */
-    expect(css, 'no eighth rule').not.toContain('data-row-rule="7"');
-    expect(at(' (max-width: 479px)'), 'seven at one column').toContain('[data-row-rule="6"] { display: block; }');
+    expect(MAX_ROWS, 'the most rows any width lays (§53: seven, once the images row stopped splitting at one column; eight with the tracklist’s row)').toBe(8);
+    expect(blocks[0], 'six rows at 12').toContain('[data-row-rule="5"] { display: block; }');
+    expect(blocks[0]).toContain('[data-row-rule="6"] { display: none; }');
+    expect(at(' (max-width: 1439px)'), 'seven at 8').toContain('[data-row-rule="6"] { display: block; }');
+    expect(at(' (max-width: 1439px)')).toContain('[data-row-rule="7"] { display: none; }');
+    expect(at(' (max-width: 959px)'), 'eight at 4').toContain('[data-row-rule="7"] { display: block; }');
+    /* Eight rows at most, so the rules run 0 to 7 and there is no ninth to hide. */
+    expect(css, 'no ninth rule').not.toContain('data-row-rule="8"');
+    expect(at(' (max-width: 479px)'), 'eight at one column').toContain('[data-row-rule="7"] { display: block; }');
   });
 
   it('drops the air columns where §28 drops them, rather than hiding them everywhere', () => {
@@ -373,8 +410,8 @@ describe('the breakpoint stylesheet is generated from the same table the tests a
       css.slice(css.indexOf(query) + query.length, next === '' ? undefined : css.indexOf(next));
     const at960 = block('@media (max-width: 1439px) {', '@media (max-width: 959px) {');
     const at480 = block('@media (max-width: 959px) {', '@media (max-width: 479px) {');
-    expect(at960, 'row 5 keeps its air at 8 columns, on the sixth grid row (§34)').toContain('[data-air="4"] { grid-column: 1 / span 3; grid-row: 6; display: block; }');
-    expect(at480, 'and loses it at 4, being under 240').toContain('[data-air="4"] { display: none; }');
+    expect(at960, 'row 5 keeps its air at 8 columns, on the seventh grid row (§34, and the tracklist’s row)').toContain('[data-air="row-5"] { grid-column: 1 / span 3; grid-row: 7; display: block; }');
+    expect(at480, 'and loses it at 4, being under 240').toContain('[data-air="row-5"] { display: none; }');
   });
 });
 
@@ -502,9 +539,9 @@ describe('§30: the lower region above 1440 — extra columns become air, altern
       and flats."
     */
     const at1920 = wideRowsAt(1920);
-    const pressing = at1920[0].items.find((i) => i.kind === 'section' && i.section === 'pressing-detail');
+    const pressing = rowWith(at1920, 'pressing-detail').items.find((i) => i.kind === 'section' && i.section === 'pressing-detail');
     expect(pressing?.span, 'Pressing detail keeps its 7 of §26’s 7 + 5').toBe(7);
-    expect(at1920[0].items.filter((i) => i.kind === 'air').reduce((s, i) => s + i.span, 0), 'the rest is air: 5 + 4 more').toBe(9);
+    expect(rowWith(at1920, 'pressing-detail').items.filter((i) => i.kind === 'air').reduce((s, i) => s + i.span, 0), 'the rest is air: 5 + 4 more').toBe(9);
   });
 
   it('alternates the new air column’s side row to row, so it does not stack into a margin', () => {
@@ -538,7 +575,7 @@ describe('§30: the lower region above 1440 — extra columns become air, altern
   });
 
   it('leaves the full-width strip full width, because spanning is what it is for', () => {
-    const strip = wideRowsAt(1920)[2];
+    const strip = rowWith(wideRowsAt(1920), 'price-history');
     expect(strip.items.filter((i) => i.kind === 'section')).toHaveLength(1);
     expect(strip.items[0].span, 'Price history takes all sixteen').toBe(16);
   });
@@ -617,7 +654,7 @@ describe('§26 placement: the rule is the HOST’s, not the figure’s (step 28)
  * columns, then market, and acquisition's right rule stood against nothing.
  */
 describe('§38: a row regroups over the sections that render (step 43)', () => {
-  const row2 = rowsAt(1440)[1].items;
+  const row2 = rowWith(rowsAt(1440), 'acquisition').items;
   const present = (...names: string[]) => new Set(names as Array<(typeof SECTIONS)[number]>);
 
   it('gives an absent middle section’s columns to the section before it', () => {
@@ -644,7 +681,7 @@ describe('§38: a row regroups over the sections that render (step 43)', () => {
 
   it('leaves a full row as §28 lists it, and leaves air its span', () => {
     expect(regroup(row2, present('acquisition', 'tags', 'market'))).toEqual(row2);
-    const row1 = rowsAt(1440)[0].items;
+    const row1 = rowWith(rowsAt(1440), 'pressing-detail').items;
     expect(regroup(row1, present('pressing-detail'))).toEqual(row1);
     expect(regroup(row1, present()), 'no section rendered: only the air remains, at its span').toEqual([{ kind: 'air', span: 5 }]);
   });
@@ -700,7 +737,7 @@ describe('§48: the identity track from 960 to 1439 (step 56; §41\'s half-page 
  */
 describe('§53: the images row spans the region at every width', () => {
   it('is one section of twelve at 1440, ending its row', () => {
-    const row = rowsAt(1440)[3];
+    const row = rowWith(rowsAt(1440), 'images');
     expect(row.items).toEqual([{ kind: 'section', section: 'images', span: 12 }]);
   });
 
