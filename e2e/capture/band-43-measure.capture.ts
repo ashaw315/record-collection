@@ -21,6 +21,12 @@ import { login } from '../sign-in';
  *     CAPTURE=1 E2E_SERVER=build npx playwright test --project=capture band-43-measure
  *
  * Writes docs/measurements/band-43/<stamp>.jsonl, a line per load.
+ *
+ * Two options for the streaming question (8 Nov): `BAND43_ONLY="The Soft Parade@1000"` limits the loads to one
+ * record and width, and `BAND43_KBPS=64` throttles the document's download through the DevTools protocol so the
+ * parser has to yield inside the page. Each frame's cell names are kept, so a frame holding only some of the band's
+ * cells shows as such, and `cellSets` keeps every frame at which the set of cells differs from the frame before, so
+ * a cell that appears between frames is recorded as an appearance, not inferred from cells that moved.
  */
 test.use({ launchOptions: { args: ['--font-render-hinting=none'] } });
 
@@ -40,12 +46,18 @@ test('step 171: the band’s first-painted and settled heights, to three decimal
   mkdirSync(dir, { recursive: true });
   const out = join(dir, `${new Date().toISOString().replace(/[:.]/g, '-')}.jsonl`);
   const lines: string[] = [];
+  const only = process.env.BAND43_ONLY;
+  const kbps = Number(process.env.BAND43_KBPS ?? '0');
   for (let pass = 1; pass <= passes; pass += 1) for (const r of readSeventeen()) for (const width of WIDTHS) {
+    if (only !== undefined && only !== `${r.title}@${width}`) continue;
     const ctx = await browser.newContext({ viewport: { width, height: NO_SCROLL_HEIGHT } });
     await ctx.addCookies(cookies);
     await ctx.addInitScript(RECORDER);
     const p = await ctx.newPage();
+    if (kbps > 0) await (await ctx.newCDPSession(p)).send('Network.emulateNetworkConditions', { offline: false, latency: 0, downloadThroughput: (kbps * 1024) / 8, uploadThroughput: -1 });
     await p.goto(`/records/${r.id}`, { waitUntil: 'load' });
+    /* BAND43_STAGE=1: the instrument's known answer, a cell detached for two frames and put back, which cellSets must show as a disappearance and an appearance. */
+    if (process.env.BAND43_STAGE === '1') await p.evaluate(() => new Promise<void>((done) => { const band = document.querySelector('[data-band="record"]'); const cell = band?.querySelector(':scope > [data-cell="note"]'); if (!band || !cell) { done(); return; } const next = cell.nextSibling; cell.remove(); requestAnimationFrame(() => requestAnimationFrame(() => { band.insertBefore(cell, next); done(); })); }));
     /* The spec's settle rule, on the spec's rounding, so "settled" means here what it means there. */
     await p
       .waitForFunction(
@@ -62,9 +74,9 @@ test('step 171: the band’s first-painted and settled heights, to three decimal
     await ctx.close();
     const first = frames[0];
     const last = frames[frames.length - 1];
-    const line = { pass, record: r.title, width, frames: frames.length, first: first ?? null, settled: last ?? null, firstBand: first?.band ?? null, settledBand: last?.band ?? null, diff: first && last ? Math.round((last.band - first.band) * 1000) / 1000 : null, changes: frames.filter((f, i) => i > 0 && f.band !== frames[i - 1].band).map((f) => ({ t: f.t, band: f.band, attached: f.attached, fonts: f.fonts, rows: f.rows })) };
+    const line = { pass, record: r.title, width, frames: frames.length, first: first ?? null, settled: last ?? null, firstBand: first?.band ?? null, settledBand: last?.band ?? null, diff: first && last ? Math.round((last.band - first.band) * 1000) / 1000 : null, kbps, cellSets: frames.filter((f, i) => i === 0 || (f.cells as Array<[string]>).map((c) => c[0]).join(',') !== (frames[i - 1].cells as Array<[string]>).map((c) => c[0]).join(',')).map((f) => ({ t: f.t, band: f.band, ready: f.ready, cells: (f.cells as Array<[string]>).map((c) => c[0]) })), changes: frames.filter((f, i) => i > 0 && f.band !== frames[i - 1].band).map((f) => ({ t: f.t, band: f.band, attached: f.attached, fonts: f.fonts, ready: f.ready, rows: f.rows, cells: (f.cells as Array<[string]>).map((c) => c[0]) })) };
     lines.push(JSON.stringify(line));
-    console.log(`${pass} ${r.title.slice(0, 28).padEnd(28)} @${width}: first ${first?.band.toFixed(3)} settled ${last?.band.toFixed(3)} diff ${line.diff?.toFixed(3)} | first frame t=${first?.t} sheets ${first?.attached}/${first?.links} fonts ${first?.fonts} display ${first?.display}`);
+    console.log(`${pass} ${r.title.slice(0, 28).padEnd(28)} @${width}: first ${first?.band.toFixed(3)} settled ${last?.band.toFixed(3)} diff ${line.diff?.toFixed(3)} | first frame t=${first?.t} sheets ${first?.attached}/${first?.links} fonts ${first?.fonts} display ${first?.display} ready ${first?.ready} cells ${(first?.cells as Array<[string]> | undefined)?.map((c) => c[0]).join(',')} -> ${(last?.cells as Array<[string]> | undefined)?.map((c) => c[0]).join(',')}`);
   }
   writeFileSync(out, `${lines.join('\n')}\n`);
   console.log(`wrote ${out}`);

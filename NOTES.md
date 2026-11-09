@@ -55347,3 +55347,64 @@ mid-check, and refused the Q4/Q5 commit on the index until taken in.
   mechanical fan-out past the file limit.
 - **A check refused for my edit:** I wrote the hover tool while ship's check ran ("tree CHANGED", 865 passed, not a
   result). The rule was already in memory.
+
+## 8 Nov, evening: ADD RECORD's intake, captures committed, the far view's lines as rendered, 171's instrument
+
+**A family member: a mechanical collision between two guards, written down as a rule.** On 27 Oct
+commit-checked.sh began intent-adding every untracked path a commit names, so the fresh-clone migration test
+would see a new migration. An intent-added path shows in `git diff HEAD`, and captures-unchanged read that diff,
+so from then on a commit that named a new capture was refused as though it had rewritten a committed one. On 4 Nov
+export-captures.mjs was written on the sentence "Captures are untracked, so they cannot ride a commit", and that
+sentence held twelve days because it read like a choice someone had made. Nobody chose it: captures-unchanged's
+own comment had always said new captures beside the old are allowed, and 1,924 are committed. I repeated it to
+the coordinator on 8 Nov as the guard's purpose. Found by reading the refusal log
+(.git/commit-checked/20261108-173033-72261.log: the six new covers-group PNGs and HAND-COLOURED.md listed as
+"rewritten or removed") against the test's comment. The shape: a constraint observed, explained by a sentence,
+and the sentence then treated as the reason.
+
+**captures-unchanged narrowed, not weakened (the coordinator, 8 Nov, approved).** It now fails on a committed
+capture modified, deleted or retyped since HEAD (scripts/captures-rewritten.mjs, `--diff-filter=MDTU`), and no
+longer on a file added since HEAD. That is exactly the defect it was written for, a run overwriting 18 committed
+captures (4 and 5 Oct); additions were never that defect. Tests first in a throwaway repository: an intent-added
+new capture is not counted (failed against the unfiltered diff, the precondition asserted), and a committed capture
+modified, staged, or deleted still is.
+
+**Judgement captures are committed with the commit that reports them.** commit-checked.sh now prints, for each
+folder the message names as docs/captures/<name>, every file there the commit leaves untracked, with its size:
+"captures left out of this commit, untracked: <path> (<n> bytes)". **Chose by default: no size threshold.** The
+approved 2 MB figure would have been arbitrary, and already sits below a committed PNG (2,376 KB, the largest
+tracked); rather than set a figure a growing capture silently crosses, nothing is excluded by rule and anything
+left out is said on every commit. The videos (pan-prod-30-oct, 5 to 6 MB each) are the only files today that a
+judgement would leave out, and they would be named. export-captures.mjs's two sentences built on the collision now
+say so.
+
+**The arrival check says where it is blind.** drop-ref's governs check attributes a paragraph to the heading above
+it, and a figure caption is set in the same uppercase as a section heading, so ADD RECORD's §W.13 change, beneath
+the rail figure's caption, was attributed to no section. It now prints, in its own output, each changed paragraph
+beneath a caption as attributed to no section with no governs row checked, "read that change by hand"; on
+refs/drops/2026-11-08-02 → 03 it names the rail caption. Test first, failing on the missing function.
+
+**The intake (6a961f28).** "ADD RECORD leaves the rail": every anchor held once except Change 3's "the line for
+§P.5's fit at 640", which names no Provisionals line; two §P.5 lines could be meant, refused and asked, and Design
+is answering which. drop-ref had refused Change 4 (a "governs rows" heading over a list, and "§P.5." read as not
+§P.5 because of its full stop); fixed test first.
+
+**The far view's lines as rendered (e2e/capture/far-hairline.capture.ts, a build at 1044 × 768, pool of 30, load
+2.5 to 3.6).** The premise was lines at 0.72; they are ink (#161412) on the faces and 0.44 on the furniture, only
+the footprint is 0.72. The instrument first: a 1px ink line reads 14.75, ink against paper; 0.5px 3.29, 0.25px
+1.70. Typical line pixel (darkest) against paper: @2x at rest 2.28 (11.34), with an answer 1.47 (3.95); @1x at
+rest 1.56 (5.20), with an answer 1.26 (2.15). Floored at one device pixel (the build plus one injected rule):
+3.10, 4.24, 3.67, 4.26. Against §W.28's 1.74:1 the two measures give opposite verdicts (typical: three of four
+below; darkest: none), and which measure §W.27's principle is about is Design's. Captures in
+docs/captures/far-hairline-q3: floored, the shelf still reads at rest; with an answer the spines run into dark
+blocks. **For reports of this kind (the coordinator):** say which figure a comparison uses.
+
+**171.** The step-171 tool now keeps the cell set at every frame where it changes (`cellSets`), checked on a staged
+detach of the note cell that reads five, four, five; the spec's own recorder compares only the first frame's cells,
+so a late cell left no trace. Throttled loads (256 and 64 kbps, Soft Parade @1000) did not reproduce: five cells in
+every first frame. The About-and-journal lead is dead: 11 of the 17 have neither. Next: the tool in CI.
+
+**Downloads.** Nothing of ours deletes: both exporters only create and copy; no cron, launch agent, git hook or
+Claude hook touches Downloads. But every capture folder we exported is gone (years-166, arrow-167, import-159,
+covers-group-165, the Q2 to Q5 bundle), while the .md exports and Adam's own folders back to 2018 survive; the
+covers-group export was there at 19:56 and gone by 20:50. The coordinator has asked Adam.

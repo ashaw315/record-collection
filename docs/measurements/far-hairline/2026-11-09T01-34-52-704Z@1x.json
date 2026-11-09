@@ -1,0 +1,70 @@
+{
+ "window": "1044x768",
+ "dpr": 1,
+ "reference": "§W.28 hovered hairline 1.74:1",
+ "instrument": {
+  "inkOnPaper": 14.75,
+  "lines": {
+   "1": {
+    "paper": 0.793,
+    "pixels": 280,
+    "of": 6000,
+    "median": 14.75,
+    "darkest": 14.75
+   },
+   "0.5": {
+    "paper": 0.793,
+    "pixels": 280,
+    "of": 6000,
+    "median": 3.29,
+    "darkest": 3.29
+   },
+   "0.25": {
+    "paper": 0.793,
+    "pixels": 280,
+    "of": 6000,
+    "median": 1.7,
+    "darkest": 1.7
+   }
+  }
+ },
+ "planeLum": 0.7400336199490174,
+ "rest": {
+  "scale": 0.367,
+  "strokeCssPx": 0.367,
+  "strokeDevicePx": 0.367,
+  "plain": {
+   "paper": 0.7913,
+   "pixels": 12102,
+   "of": 225736,
+   "median": 1.56,
+   "darkest": 5.2
+  },
+  "floored": {
+   "paper": 0.7913,
+   "pixels": 12308,
+   "of": 225736,
+   "median": 3.67,
+   "darkest": 14.85
+  }
+ },
+ "answer": {
+  "scale": 0.146,
+  "strokeCssPx": 0.146,
+  "strokeDevicePx": 0.146,
+  "plain": {
+   "paper": 0.7913,
+   "pixels": 3319,
+   "of": 90072,
+   "median": 1.26,
+   "darkest": 2.15
+  },
+  "floored": {
+   "paper": 0.7913,
+   "pixels": 3476,
+   "of": 90072,
+   "median": 4.26,
+   "darkest": 14.85
+  }
+ }
+}
