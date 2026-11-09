@@ -3,7 +3,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { nextRefName, rowAddressed } from '../../scripts/drop-ref.mjs';
+import { nextRefName, rowAddressed, unattributedChanges } from '../../scripts/drop-ref.mjs';
 
 /**
  * **A copy of each drop as it arrived, and a word that a new one has (25 Oct).**
@@ -338,5 +338,28 @@ describe('drop-ref: the row’s edit and its standing in Design’s own phrasing
     expect(rowAddressed(change4, 'T.6')).toBeNull();
     expect(rowAddressed(change4, 'P.50')).toBeNull();
     expect(rowAddressed('## Change 2 — a step\n\n- **§P.5.** Append: "x."\n', 'P.5')).toBeNull();
+  });
+});
+
+/*
+  The check's blind spot, said in its own output (the coordinator, 8 Nov). A card's figure caption is set in the
+  same uppercase as a section heading, so the paragraphs under it are read as the caption's and not their section's:
+  "ADD RECORD leaves the rail" changed §W.13 beneath the rail figure's caption, and the governs check never saw §W.13
+  change. A check that can only under-report has to say where, so the change is named rather than passed over.
+*/
+describe('drop-ref: changes no section claims', () => {
+  const card = (para: string) =>
+    `<p style="text-transform:uppercase">W.13 · The controls leave the horizontal band</p>\n<p><strong>Stacked.</strong> The rail stacks.</p>\n` +
+    `<p style="text-transform:uppercase">The rail at 1 : 1 — 148 × 847</p>\n<p><strong>Add record sits at the foot.</strong> ${para}</p>\n` +
+    `<p style="text-transform:uppercase">W.14 · The pull has two phases</p>\n<p>Unchanged.</p>\n`;
+
+  it('names a change under a figure caption, which no section claims', () => {
+    expect(unattributedChanges(card('It is separated by a rule.'), card('It is separated by a rule. Withdrawn within §W.13: Add record at the foot.'))).toEqual(['The rail at 1 : 1 — 148 × 847']);
+  });
+
+  it('names nothing when only a section’s own paragraphs change, or nothing changes', () => {
+    const a = card('Same.');
+    expect(unattributedChanges(a, a)).toEqual([]);
+    expect(unattributedChanges(a, a.replace('The rail stacks.', 'The rail stacks, ruled.'))).toEqual([]);
   });
 });
