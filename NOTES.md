@@ -55671,3 +55671,32 @@ a word before the dot is a caption's; a caption ends no section; a heading shape
 throws, naming it. Run over all 4,045 card and Markdown files in the 62 refs: the first form threw on 8 (part letters,
 dotted ids, captions with a middle dot), each a form now named; then 0. The earlier test that a change under a caption
 "belongs to no section" now asserts it belongs to the section the caption stands in.
+
+**Gate 42719165095 on 21958156 (the re-keying) is RED, on the parked watch only.** Chromium 1064 passed, 1 failed, 1
+skipped (22.4m); mobile 390 passed, 4 skipped; unit 5019 passed, 3 skipped. The failure is record-band-43:33 on both
+attempts, the report-only watch (Q58): The Hurdy Gurdy Man @1300 painted at 73 against 320.9, provenance and matrix 72
+then 114; the retry @960 with its note cell 157 then 225. The two shapes CI showed directly (a partial band, a partial
+cell), in the record band above the lower region, which the re-keying does not touch. The step is not closed on it;
+the next gate is.
+
+**The row counts at 4 and at one column, per row (check 2), printed from the code.** Before 21958156 both were seven:
+Pressing detail | acquisition | tags | market | Price history | Images | Journal, every section its own row; after,
+eight, the tracklist second. One partition, so the totals agree for the right reason. Images splits at neither width:
+since §53 it is a one-section row. The card's withdrawn "eight at one" came from before §53, when row 4 was Images with
+the About beside it, kept side by side at 4 and split at one.
+
+**A family member, new: a throw test satisfied by a different throw.** headingOf's test expected `toThrow(/heading/)`
+and passed before headingOf existed, on "headingOf is not a function", because the substring matched. Distinct from the
+vacuous negative assertion already in the family, which asserted against a discarded stream; this one asserted on the
+right stream and accepted the wrong failure. The general form: match the whole message or the error's type, never a
+substring the failure mode also contains. Tightened to the parser's own words.
+
+**Under "a positional key that survives an insertion": one correct only because what it indexes never varies where it
+runs.** The wide page's air owner, `REGION_ROWS[rowIndex]` indexed by `wideRowsAt`'s rows, was right only because no row
+splits at 12 columns, where those rows are built; the same shape as an insertion surviving, with the variation
+supplied by a width instead of a new row. Kept as a note under that member, since the fix and the reason are the same:
+find the thing by what it is, not where it falls.
+
+**Assertion 14 (ASSERTIONS-spec): a row count the card states is the count the build lays**, in
+test/repo/card-row-counts.test.ts; declared disagreements 960 (card 6, build 7, §34) and 390 (card 9, build 8, §53),
+seen failing undeclared and with a wrong declaration.
