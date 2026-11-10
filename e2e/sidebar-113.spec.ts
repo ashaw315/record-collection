@@ -211,10 +211,14 @@ const drawing = (page: Page) =>
     const lines = Array.from(document.querySelectorAll<HTMLElement>('[data-diagonal]')).filter((d) => d.getClientRects().length > 0).map((d) => {
       const cs = getComputedStyle(d);
       const m = new DOMMatrixReadOnly(cs.transform);
-      /* The untransformed box, in the page: its offset parent's box and its own offsets. */
+      /*
+        The untransformed box, in the page: its offset parent's box and its own used left and top. Not offsetLeft and
+        offsetTop, which are whole pixels: on gate 42824167411 the source record's head-rule started at 56.501156,
+        offsetTop read 57, and the end read exactly 0.5 off the header's rule where it was 0.0012 off (NOTES, 10 Nov).
+      */
       const parent = (d.offsetParent as HTMLElement).getBoundingClientRect();
-      const x1 = parent.left + d.offsetLeft + (d.offsetParent as HTMLElement).clientLeft;
-      const y1 = parent.top + d.offsetTop + (d.offsetParent as HTMLElement).clientTop;
+      const x1 = parent.left + parseFloat(cs.left) + (d.offsetParent as HTMLElement).clientLeft;
+      const y1 = parent.top + parseFloat(cs.top) + (d.offsetParent as HTMLElement).clientTop;
       const length = parseFloat(cs.width);
       return { name: d.dataset.diagonal ?? '', angle: (Math.atan2(m.b, m.a) * 180) / Math.PI, weight: cs.borderTopWidth, x1, y1, x2: x1 + m.a * length, y2: y1 + m.b * length };
     });

@@ -365,11 +365,14 @@ test('the duplicate-artist review shows enough to decide, and decline is as easy
    */
   const suffix = `${Date.now()}`;
   const name = `Discharge ${suffix}`;
-  await seedMatchCandidate({
+  /* Both artists tracked, and so their records: untracked, the local record outlived the run's pair tests, and its id's construction became §T.6's source for every later spec (gate 42824167411, sidebar-113 at 1054). */
+  const pair = await seedMatchCandidate({
     name,
     importedMbid: `mbid-${suffix}`,
     localRecordTitle: `Hear Nothing ${suffix}`,
   });
+  trackArtist(pair.importedId);
+  trackArtist(pair.localId);
 
   await page.goto('/manage');
 
@@ -423,7 +426,9 @@ test('the review shows only UNANSWERED pairs', async ({ page }) => {
    */
   const suffix = `${Date.now()}-answered`;
   const name = `Amebix ${suffix}`;
-  await seedMatchCandidate({ name, importedMbid: `mbid-${suffix}` });
+  const pair = await seedMatchCandidate({ name, importedMbid: `mbid-${suffix}` });
+  trackArtist(pair.importedId);
+  trackArtist(pair.localId);
 
   await page.goto('/manage');
 
@@ -449,11 +454,13 @@ test('merging names what moves and what is destroyed, then does it', async ({ pa
    */
   const suffix = `${Date.now()}-merge`;
   const name = `Discharge ${suffix}`;
-  const { localId } = await seedMatchCandidate({
+  const { localId, importedId } = await seedMatchCandidate({
     name,
     importedMbid: `mbid-${suffix}`,
     localRecordTitle: `Hear Nothing ${suffix}`,
   });
+  trackArtist(importedId);
+  trackArtist(localId);
 
   await page.goto('/manage');
 

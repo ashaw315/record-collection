@@ -55805,3 +55805,46 @@ which follows the drawn record. A start ending in .5 would miss by exactly 0.5, 
 settle it: the trace's values for the header bottom and the line's box, or a run with the fractional box
 (`getBoundingClientRect` of the offset parent plus the computed `top`). Not re-dispatched for a green, and not
 accepted.
+
+## 10 Nov: the mobile red settled; the card chain held for its files; marked sentences read
+
+**The mobile red on 42824167411 (sidebar-113:270 at 1054, exactly 0.5, four times): an unpinned input, read
+through a rounding instrument.** Started from the record, as the coordinator asked, not from the 0.5. The trace's DOM
+snapshots name the head figure's record in all four failing observations: a54b0e58, "Hear Nothing 1794317330295-merge",
+created during that gate by manage.spec's merge test (`seedMatchCandidate`), whose artists were never tracked, so the
+record lived until the run ended. §T.6's source is taken from the whole collection and a construction is a property of
+the id alone, so the random id became the source (first draws at 950.94). The report-only change is ruled out: the
+record was made in the mobile job itself. Reproduced locally: the record inserted after global-setup, both tests fail
+with 0.5; the seventeen alone, they pass (two runs of two). A passing run keeps no trace, so the green gate's record is
+not readable; the reproduction stands in for it. Then the 0.5, with the record held fixed: the head-rule's CSS top was
+56.501156, `offsetTop` 57; the end measured from the rounded start misses the header's rule by 0.5, from the used top
+by 0.0012 (the seventeen's source: 65.787 against 66, 0.219 against 0.006). The geometry is right for both records;
+the instrument rounded. **Fixes, the limit unchanged at under 0.5:** the instrument reads the start from the used
+`left`/`top`; manage.spec's three pair tests track both seeded artists, so their records go with them. With the record
+present, the fixed test passes 2 of 2; the pair tests now leave 0 records and 0 artists, where they left 2 and 5.
+**Not built, and asked:** a committed case that seeds a half-pixel source, since a seeded source becomes every
+parallel spec's source while it lives. **Found on the way:** the ledger prints records and artists left behind
+("records: 17 at the start, 19 at the end") and fails only on genres, so this leak was printed and passed; and the
+covering run left 2 tags (0 → 2), a separate leak, not chased.
+
+**The card chain: the change files were in docs/design, not missing.** Four files offered today ("Row 4 is Images", "53 sweep answered" as resent, "Weight pointer named", "One ruling per sentence") arrived where drops arrive, in docs/design/, gitignored there, so `git status` never listed them; I looked in Downloads, found only the first send of "53 sweep answered" and the last file, and nearly asked for files I had. Cost: one report's worth of a wrong "missing"; caught by the quote check's corpus, which listed them. The intake follows, through drop-ref, as its own commit. Before it, the tree's card already equals the final card byte for byte (437243, sha256 4af46490d7794eec52d4da5c), because the drop is the card: that match verifies the arrival, not an application, which is the WITHDRAWALS entries and the landed list.
+
+**Marked sentences, read whole.** Assertion 14's resolver keys on content (the count a withdrawal sentence repeats,
+"as N rows"), not adjacency, so it never read the disc's sentence either way. On the final card, every non-marker
+sentence naming "beside About this record", "nine sections", "ninth section", "two halves" or "6 / 6" is followed by its
+own marker, except §26 b2.s5 ("§65 gave the page a ninth section, the tracklist, …"), whose withdrawal sits a block
+later after b3.s9, and §53's past-tense account, correctly left.
+
+**A sibling member: a check that writes the working tree while making a claim about the commit (the coordinator,
+10 Nov).** code-region.test runs the real intake command in the real repo, and the command appends every drop the refs
+hold and the landed record does not; so while a drop waited (refs/drops/2026-11-10-02) each commit check appended to
+docs/design-landed.jsonl mid-run and refused itself as "tree CHANGED" (10:41), during exactly the busiest moments. The
+sibling of the 7 Nov member (a check reading the tree to make a claim about the commit): same root, opposite direction.
+Fixed by LANDED_RECORD, with the override asserted before the run and the real record's bytes after it.
+
+**The second stale-row incident of the day: Q2, Q4 and Q5.** Adam read the queue and said they were closed; they had
+been relayed to him an hour before as waiting on him. Closed from the record: Q4 done at 72b73290 (judged 8 Nov, the
+page-clock timing), Q2 ruled §W.13 (the work has its own files, 8 and 9 Nov), Q5 ruled §62 (his words, relayed 10 Nov).
+Q3 marked PARKED, as Q60 is. The header now says a row is closed in the turn its answer arrives, and a Blocked-on-Adam
+row carries the date it was put to him and his answer; the report-only check of those rows is owed. Adam's own words
+exist in Code's transcript only for Q5; Q2's and Q4's are the coordinator's relays, and the rows say so.
