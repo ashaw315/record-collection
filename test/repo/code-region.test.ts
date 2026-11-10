@@ -215,8 +215,25 @@ describe('the intake runs the index and the document suite, and fails on either'
     must fail the intake. INTAKE_SUITE exists for these two runs only; the
     intake proper runs test/repo, which a test inside test/repo cannot.
   */
-  const cli = (suite: string) =>
-    spawnSync('node', ['scripts/apply-code-region.mjs'], { cwd: REPO_ROOT, encoding: 'utf-8', env: { ...process.env, INTAKE_SUITE: suite } });
+  /*
+    **The command runs in the real repo, so its one side effect on a tracked file goes elsewhere (the coordinator,
+    10 Nov).** The intake appends every drop the refs hold and the landed record does not, so while a drop waited
+    (refs/drops/2026-11-10-02) each commit check ran these tests, appended to docs/design-landed.jsonl mid-check, and
+    refused itself as "tree CHANGED" (10:41). A check that writes the working tree while making a claim about the
+    commit. LANDED_RECORD sends the write to a temporary file; the override is asserted before the run, and the real
+    record's bytes after it, so an unset variable cannot put the test quietly back on the real path.
+  */
+  const REAL_RECORD = join(REPO_ROOT, 'docs', 'design-landed.jsonl');
+  const cli = (suite: string) => {
+    const landed = join(mkdtempSync(join(tmpdir(), 'landed-')), 'design-landed.jsonl');
+    const env = { ...process.env, INTAKE_SUITE: suite, LANDED_RECORD: landed };
+    expect(env.LANDED_RECORD, 'the precondition: the record is overridden, and not to the real file').not.toBe(REAL_RECORD);
+    const before = readFileSync(REAL_RECORD);
+    const r = spawnSync('node', ['scripts/apply-code-region.mjs'], { cwd: REPO_ROOT, encoding: 'utf-8', env });
+    expect(r.stdout, 'the command says it wrote the overridden record').toContain(`landed record (${landed}):`);
+    expect(readFileSync(REAL_RECORD).equals(before), 'the real docs/design-landed.jsonl is unchanged by the run').toBe(true);
+    return r;
+  };
 
   it('fails the intake on a suite path that collects nothing, with or without --passWithNoTests', () => {
     for (const suite of ['test/repoo', 'test/repoo --passWithNoTests']) {

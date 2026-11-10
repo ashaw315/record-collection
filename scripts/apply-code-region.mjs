@@ -119,13 +119,15 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
     names the file, so the landing commit is the first commit holding each line.
   */
   const { recordUpdate, fromGit, RECORD } = await import('./landed-list.mjs');
+  /* LANDED_RECORD is for code-region.test's runs of this command in the real repo, which must not write the real record (10 Nov). */
+  const target = process.env.LANDED_RECORD ?? RECORD;
   const existing = existsSync(RECORD) ? readFileSync(RECORD, 'utf8') : null;
   const d = new Date();
   const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   const git = fromGit();
   const landed = recordUpdate(existing, git.drops, today, git.commits);
-  if (landed.text !== null && landed.text !== existing) writeFileSync(RECORD, landed.text);
-  process.stdout.write(`landed record: ${landed.appended.length} appended${landed.appended.length > 0 ? ` (${landed.appended.join(', ')}); name ${RECORD} in this intake's commit` : ''}\n`);
+  if (landed.text !== null && landed.text !== existing) writeFileSync(target, landed.text);
+  process.stdout.write(`landed record (${target}): ${landed.appended.length} appended${landed.appended.length > 0 ? ` (${landed.appended.join(', ')}); name ${target} in this intake's commit` : ''}\n`);
   process.stdout.write(`code region: ${result.restored.length} restored (${result.restored.join(', ') || 'none'}), ${result.replaced.length} replaced (${result.replaced.join(', ') || 'none'}), ${result.present.length} already present, ${result.unanchored.length} with no anchor${result.unanchored.length > 0 ? ` (${result.unanchored.join(', ')})` : ''}\n`);
   const checks = intake(spawned);
   const ok = result.unanchored.length === 0 && checks.ok;
