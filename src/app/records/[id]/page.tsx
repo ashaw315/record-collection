@@ -18,6 +18,8 @@ import { Section } from './Section';
 import { marketFigures } from './market-median';
 import { listPricesForRecord } from '@/lib/db/queries/prices';
 import { hydrateRecord } from '@/lib/db/queries/records';
+import { releaseTextFor } from '@/lib/discogs/release-text-store';
+import { tracklistModel } from './tracklist';
 import { isUuid } from '@/lib/api/errors';
 
 /**
@@ -68,6 +70,12 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
    * component, so it is one more query rather than a client fetch.
    */
   const prices = await listPricesForRecord(id);
+  /*
+    §65 (173b): the tracklist and the credits from the cached release's text rows, drawn only where a release is
+    cached; the names the page already shows (the label, the pressing plant) decide which companies the fold draws.
+  */
+  const releaseId = record.pressing?.discogsReleaseId ?? null;
+  const tracklist = releaseId === null ? null : tracklistModel(await releaseTextFor(releaseId), [record.label?.name ?? null, record.pressing?.pressingPlant ?? null].filter((n): n is string => n !== null));
 
   /* §4's 40px figure, and it must be the number it claims to be. */
   const figures = marketFigures(prices.map((row) => row.price));
@@ -296,7 +304,7 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
               with it — which §26’s rows supersede.
             */}
             <ExtendedGrid ladder={ladder}>
-              <RecordDetail record={record} base={ladderBase} ladder={ladder} />
+              <RecordDetail record={record} base={ladderBase} ladder={ladder} tracklist={tracklist} />
 
               {/*
                 **No measure wrapper: §9.1 replaced it.** The rail is what holds

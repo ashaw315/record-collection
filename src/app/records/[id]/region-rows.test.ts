@@ -756,3 +756,22 @@ describe('§53: the images row spans the region at every width', () => {
     }
   });
 });
+
+/*
+  173b (§65, "two columns for the tracks" proposed, from 960): the TRACKLIST section's tracks stand in two columns at
+  eight columns and twelve, and in one below, by a stylesheet rule on the tracks grid; the cells carry an inline `fr`
+  template, so the rule carries `!important` as the region's own template does. Fails against a stylesheet with no rule
+  for the tracks, which would leave two columns at 390.
+*/
+describe('the tracklist’s two track columns, from 960 (173b)', () => {
+  const RULE = '[data-section="tracklist"] [data-tracks] { grid-template-columns: 1fr !important; }';
+
+  it('stacks the tracks to one column at four columns and at one, and leaves two at eight and twelve', () => {
+    const blocks = regionStylesheet().split('@media');
+    const at = (ceiling: string) => blocks.find((b) => b.startsWith(` (max-width: ${ceiling}px)`)) ?? '';
+    expect(at('479'), 'one column at 390').toContain(RULE);
+    expect(at('959'), 'one column at 480').toContain(RULE);
+    expect(at('1439'), 'two at 960').not.toContain(RULE);
+    expect(blocks[0], 'two at 1440').not.toContain(RULE);
+  });
+});

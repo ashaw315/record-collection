@@ -55917,3 +55917,28 @@ normalised opener (its two format tests updated to the new line), so a form the 
 (79661118: lineGeometry fed the gate's 56.501156, the rounded start missing by 0.5, a rounding version failing it; a
 proxy test named as one, whose first form wanted a call the spec does not make); the five leaked records closed by one
 helper after the named ledger listed them (624e55eb), CI's five on both shards the same five.
+
+## 10 Nov (night): 173b, the TRACKLIST section
+
+**Built (§65; "Credits fold" 7 Nov; "Credits by role and the count line" 8 Nov).** `TracklistSection` draws the model
+(173a) and nothing of its own: the tracks whole by position and title in two columns, the first half then the second;
+the credits folded beneath them in a `<details>` closed on every load, its `<summary>` the model's count line with §T.1's
+disclosure mark; opened, the release's credits first, then each track's beneath its position and title, then the
+companies drawn; no fold and no count line where the fold would hold nothing; no section for a record with no cached
+release. Placed in `RecordDetail` directly after Pressing detail's section, so reading order matches §26's rows, which
+the stylesheet lays. The page fetches the release's text rows and hands the model the names it already shows (the label,
+the pressing plant). Two track columns from 960: the tracks grid carries an inline template, and the region stylesheet
+stacks it to one column below eight columns with `!important`, as the region's own template does.
+
+**Chosen by default, said here:** the companies' place after the tracks' credits (§65 says they stand among the credits
+and not where); the section's single child in `shape="one"`, since the fold must run under both columns and a third child
+of a `pair` would be dropped by the split; the fold's summary in the label type. The count line's wording and the two
+columns are provisional until captured (§65 b1.s25), 173c's.
+
+**Tests first:** the component tests failed on the missing module, the stylesheet test on the missing rule; the first
+placement fixture rendered no Pressing detail at all (its index −1, so the tracklist first would have passed), and now
+carries a pressing with facts the grid does not show and asserts that precondition. Two script errors on the way, both
+caught by the runs: an anchor read with comment lines filtered out, and an insertion inside Pressing detail's conditional
+that broke the JSX. **Step level:** TracklistSection, region-rows and Section tests 73 of 73; typecheck; lint at baseline;
+build; e2e record-detail.spec on chromium 34 passed, which shows the page renders with the new fetch and not that any e2e
+saw the section: the test database holds no release-text rows, so no e2e record has a tracklist until 173c's seed helper.

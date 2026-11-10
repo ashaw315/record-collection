@@ -443,6 +443,8 @@ export function regionStylesheet(): string {
       /* A rule divides two cells; the last in a row has the page edge beside it. */
       rules.push(`[data-section="${section}"] { border-right-width: ${endsRow ? 0 : 1}px; }`);
     }
+    /* §65 (173b): the tracklist's two track columns from 960; one below eight columns. The cells carry an inline template, so this carries !important as the region's does. */
+    if (columns < 8) rules.push('[data-section="tracklist"] [data-tracks] { grid-template-columns: 1fr !important; }');
 
     REGION_ROWS.forEach(({ name, air: side }) => {
       if (side === null) return;

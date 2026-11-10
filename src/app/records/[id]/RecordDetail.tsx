@@ -2,6 +2,8 @@ import type { RecordLadder } from '@/lib/colour/record-ladder';
 import Link from 'next/link';
 import { HAIRLINE, LABEL } from './grid-type';
 import { Section } from './Section';
+import { TracklistSection } from './TracklistSection';
+import type { TracklistModel } from './tracklist';
 import { CHIP_HEIGHT, SECTION_RULE } from './extended-grid';
 import { formatPrice } from '../../collection-format';
 import { pressingFacts } from '../record-detail-format';
@@ -54,12 +56,15 @@ export function RecordDetail({
   record,
   base,
   ladder,
+  tracklist,
 }: {
   record: HydratedRecord;
   /** The record's ladder, for §25's figures and §26's flats. */
   ladder: RecordLadder | null;
   /** §5.5's base step, for §9.3's rail bar. Null when the record has no cover. */
   base: string | null;
+  /** §65 (173b): the TRACKLIST section's model, or null for a record with no cached release, which draws no section. */
+  tracklist: TracklistModel | null;
 }) {
   const facts = pressingFacts(
     record.pressing ?? {
@@ -156,6 +161,8 @@ export function RecordDetail({
           </dl>
         </Section>
       )}
+      {/* §26, §65 (173b): the tracklist in its own row directly after Pressing detail's; the stylesheet places it, and reading order matches the rows. */}
+      <TracklistSection model={tracklist} base={base} ladder={ladder} />
 
       {/*
         **Acquisition's Paid / Bought / From fields are gone** — the grid's
