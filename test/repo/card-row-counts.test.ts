@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { COLUMNS_AT, WIDTHS, columnsFor, rowsAt } from '../../src/app/records/[id]/region-rows';
+import { COLUMNS_AT, REGION_ROWS, WIDTHS, airPlacement, columnsFor, placementOf, rowsAt } from '../../src/app/records/[id]/region-rows';
 import { blocksOf, sentencesOf } from '../../scripts/export-diff.mjs';
 
 /**
@@ -67,5 +67,84 @@ describe('§26’s stated row count against the rows the build lays, at twelve c
     const stated = statedCounts(section26());
     expect(stated.find((s) => s.n === 5)?.withdrawn, 'five rows, withdrawn by its own sentence').toBe(true);
     expect(stated.find((s) => s.n === 6)?.withdrawn, 'six rows, in force').toBe(false);
+  });
+});
+
+/*
+  **Extended to the spans (the coordinator, 10 Nov), once "Row 4 is Images" landed.** The count alone read a listing
+  holding a figure known to be wrong, "two halves (6 / 6)", and passed, because at twelve columns a side-by-side pair
+  and one section are both one row. Each row's spans in the listing in force are now compared with what the build lays
+  at the twelve-column width: a row's sections' spans in order from `placementOf`, and which side its air sits from
+  `airPlacement`, the listing's "beside air" being air after and "begins with air" air first. **Row 4 is resolved from
+  its replacement sentence, not from the listing:** the listing still reads "two halves (6 / 6)" with its withdrawal
+  directly after it, and "Row 4 is Images, one section spanning the row at every width" is the ruling in force. The test
+  refuses to resolve row 4 at all unless that withdrawal stands directly after the listing, so a listing whose row 4 is
+  live and wrong fails rather than being read past. Passed first time because the card and the build already agree;
+  shown to fail against a reading that takes row 4 from the listing, and against a build laying Images as a pair.
+*/
+type Row = { spans: number[]; air: 'first' | 'after' | null };
+
+/** The listing's rows, in order, from its parentheticals: "(7 + 5)" is content and air, "(4 / 4 / 4)" sections side by side, "(12)" one section. */
+export function listingRows(listing: string): Row[] {
+  const body = listing.slice(listing.indexOf(':') + 1);
+  const rows: Row[] = [];
+  for (const m of body.matchAll(/([^(),]*?)\(([\d\s+/]+)\)/g)) {
+    const label = m[1];
+    const inner = m[2].trim();
+    if (inner.includes('+')) {
+      const [a, b] = inner.split('+').map((n) => Number(n.trim()));
+      if (/begins with air/.test(label)) rows.push({ spans: [b], air: 'first' });
+      else if (/beside air/.test(label)) rows.push({ spans: [a], air: 'after' });
+      else throw new Error(`a row with air and no side named: "${label.trim()} (${inner})"`);
+    } else rows.push({ spans: inner.split('/').map((n) => Number(n.trim())), air: null });
+  }
+  return rows;
+}
+
+/**
+ * The rows §26 rules, from the listing in force with row 4 taken from its replacement sentence. Refuses unless the
+ * listing's row 4 carries its withdrawal directly after the listing and a replacement sentence rules it.
+ */
+export function ruledRows(sentences: string[], columns: number): Row[] {
+  const at = sentences.findIndex((s) => STATED.test(s) && !/five rows/.test(s));
+  if (at === -1) throw new Error('no listing in force');
+  const rows = listingRows(sentences[at]);
+  const marker = sentences[at + 1] ?? '';
+  if (!/^Withdrawn within §26: row 4 as two halves \(6 \/ 6\)/.test(marker)) throw new Error(`row 4's withdrawal does not stand directly after the listing; found: "${marker.slice(0, 80)}"`);
+  const replacement = sentences.find((s) => /^Row 4 is Images, one section spanning the row at every width/.test(s));
+  if (replacement === undefined) throw new Error('no replacement sentence rules row 4');
+  rows[4] = { spans: [columns], air: null };
+  return rows;
+}
+
+/** What the build lays at a width, row by row, in the listing's terms. */
+export function builtRows(width: (typeof WIDTHS)[number]): Row[] {
+  return REGION_ROWS.map((r) => {
+    const air = airPlacement(width, r.name);
+    return { spans: r.sections.map((s) => placementOf(width, s).span), air: air === null ? null : air.start === 1 ? 'first' : 'after' };
+  });
+}
+
+describe('§26’s spans against the spans the build lays, at twelve columns', () => {
+  const TWELVE = WIDTHS.find((w) => COLUMNS_AT[w] === 12);
+
+  it('reads the listing’s rows: content beside air, air first, sections side by side, one section', () => {
+    expect(listingRows('The lower region runs as six rows: a wide section beside air (7 + 5), the tracklist full width (12), three tight columns carrying no ornament (4 / 4 / 4), a full-width strip (12), two halves (6 / 6), and a last row that begins with air (3 + 9).'))
+      .toEqual([{ spans: [7], air: 'after' }, { spans: [12], air: null }, { spans: [4, 4, 4], air: null }, { spans: [12], air: null }, { spans: [6, 6], air: null }, { spans: [9], air: 'first' }]);
+  });
+
+  it('refuses to resolve row 4 unless its withdrawal stands directly after the listing', () => {
+    const listing = 'The lower region runs as six rows: a wide section beside air (7 + 5), b (12), c (4 / 4 / 4), d (12), two halves (6 / 6), and a last row that begins with air (3 + 9).';
+    expect(() => ruledRows([listing, 'Some other sentence.', 'Row 4 is Images, one section spanning the row at every width, by §53.'], 12)).toThrow(/does not stand directly after/);
+    expect(() => ruledRows([listing, 'Withdrawn within §26: row 4 as two halves (6 / 6), in the listing above and in the names below.'], 12)).toThrow(/no replacement sentence/);
+  });
+
+  it('lays every row as §26 rules it, row 4 as Images spanning the row', () => {
+    expect(TWELVE).toBeDefined();
+    if (TWELVE === undefined) return;
+    const ruled = ruledRows(section26(), COLUMNS_AT[TWELVE]);
+    const built = builtRows(TWELVE);
+    expect(built.length, 'the same number of rows').toBe(ruled.length);
+    ruled.forEach((row, i) => expect(built[i], `row ${i + 1} of the listing (${REGION_ROWS[i]?.name})`).toEqual(row));
   });
 });
