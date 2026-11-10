@@ -1,60 +1,57 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { rowsAt, type RegionWidth } from '../../src/app/records/[id]/region-rows';
+import { rowsAt } from '../../src/app/records/[id]/region-rows';
 import { blocksOf, sentencesOf } from '../../scripts/export-diff.mjs';
 
 /**
- * **ASSERTIONS-spec 14: a figure the card states in prose against the figure the build derives (the coordinator,
- * 9 Nov).** §28's sentence "the lower region is six rows at 12 and 8 columns, eight at 4 and nine at one" carried
- * two figures forward that §34 (the market's own row at 8) and §53 (the images row unsplit at one) already
- * contradicted inside the same card, and neither side could see it: Design had no build to check against, and the
- * card's verification counts tags, sentences and quotes and never a number against another section. Two independent
- * records, the card's sentence and `rowsAt`, compared at the widths the sentence names.
+ * **ASSERTIONS-spec 14: a row count the card states is the count the build lays (the coordinator, 9 and 10 Nov).**
+ * §28's sentence "six rows at 12 and 8 columns, eight at 4 and nine at one" carried two figures forward that §34 and
+ * §53 contradicted inside the same card, and nothing joined a figure in prose to the figure the code derives. "Row
+ * counts left to the build" (10 Nov) withdrew it: §28 states no count. §26 does, in its listing: "The lower region runs
+ * as six rows: a wide section beside air (7 + 5), the tracklist full width (12), …".
  *
- * The sentence is found through the shared heading parser (§28 by `sectionId`), and its absence fails: a reworded
- * sentence breaks this loudly rather than reading as nothing to compare.
+ * **Scope: twelve columns, and no other width.** §26's spans are twelve-column spans, so its six is the count at twelve
+ * columns. Reading that listing as a count at every width and adding one is how six/six/eight/nine was produced; pinned
+ * at 8, 4 and one it would fail and read as the card being wrong when it is not.
+ *
+ * **Which sentence is in force is read from the withdrawal sentences, never taken as the last match or the largest
+ * number.** The card keeps superseded prose with its withdrawal after it, so §26 holds "runs as five rows" and "runs
+ * as six rows"; a stated count is withdrawn where a "Withdrawn within §26: the lower region as N rows" names it, and
+ * exactly one must remain. Found through the shared heading parser (§26 by `sectionId`).
  */
 const CARD = 'docs/design/Record Detail 8a - build target.dc.html';
 const WORDS: Record<string, number> = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10 };
-const STATED = /lower region is (\w+) rows at 12 and 8 columns, (\w+) at 4 and (\w+) at one/;
+const count = (word: string) => WORDS[word.toLowerCase()] ?? Number(word);
+const STATED = /^The lower region runs as (\w+) rows:/;
+const WITHDRAWN = /^Withdrawn within §26: the lower region as (\w+) rows\b/;
 
-function stated(): Record<RegionWidth, number> | null {
+function section26(): string[] {
   const html = readFileSync(CARD, 'utf8');
-  const sentences: string[] = blocksOf(html).filter((b) => b.sectionId === '28').flatMap((b) => sentencesOf(b.block));
-  /* The sentence in force: §28 also holds its withdrawn "five rows at 12 and 8" form, inside a withdrawal sentence. */
-  const inForce = sentences.filter((s) => STATED.test(s) && !/^Withdrawn within/.test(s));
-  if (inForce.length !== 1) return null;
-  const m = STATED.exec(inForce[0]);
-  if (m === null) return null;
-  const [twelveAndEight, four, one] = [m[1], m[2], m[3]].map((w) => WORDS[w.toLowerCase()] ?? Number(w));
-  return { 1440: twelveAndEight, 960: twelveAndEight, 480: four, 390: one };
+  return blocksOf(html).filter((b) => b.sectionId === '26').flatMap((b) => sentencesOf(b.block));
 }
 
-/*
-  The disagreement in force when this was written, declared so the commit path stays green while Design corrects the
-  sentence: the test fails if it changes in either direction, the sentence corrected or the build moved, and the entry
-  is then removed. Each names the ruling the build follows.
-*/
-const KNOWN: Partial<Record<RegionWidth, { card: number; build: number; why: string }>> = {
-  /* 9 Nov, reported to Design with "Tracklist row": the sentence's withdrawn counts plus one. */
-  960: { card: 6, build: 7, why: '§34: at eight columns the market takes its own row, so row 2 is two rows there' },
-  390: { card: 9, build: 8, why: '§53: the images row is one section and does not split at one column; the withdrawn eight was its pair with the About' },
-};
+/** §26's stated counts, each with whether a withdrawal sentence in §26 names it. */
+function statedCounts(sentences: string[]): { n: number; withdrawn: boolean }[] {
+  const withdrawn = new Set(sentences.map((s) => WITHDRAWN.exec(s)?.[1]).filter((w): w is string => w !== undefined).map(count));
+  return sentences.map((s) => STATED.exec(s)?.[1]).filter((w): w is string => w !== undefined).map(count).map((n) => ({ n, withdrawn: withdrawn.has(n) }));
+}
 
-describe('§28’s stated row counts against the rows the build lays', () => {
-  it('finds the sentence in force, once, in §28', () => {
-    expect(stated(), `${CARD}: §28 states the lower region's row counts in one sentence in force`).not.toBeNull();
+describe('§26’s stated row count against the rows the build lays, at twelve columns', () => {
+  it('finds §26’s listings, and exactly one of them in force once the withdrawal sentences are read', () => {
+    const stated = statedCounts(section26());
+    expect(stated.length, 'the precondition: §26 lists the lower region’s rows, superseded listings included').toBeGreaterThanOrEqual(1);
+    expect(stated.filter((s) => !s.withdrawn), `${CARD}: one listing in force in §26; found ${JSON.stringify(stated)}`).toHaveLength(1);
   });
 
-  it('agrees at every width the sentence names, or disagrees exactly as declared', () => {
-    const card = stated();
-    if (card === null) return;
-    const disagree: Partial<Record<RegionWidth, { card: number; build: number }>> = {};
-    for (const width of [1440, 960, 480, 390] as const) {
-      const build = rowsAt(width).length;
-      if (card[width] !== build) disagree[width] = { card: card[width], build };
-    }
-    const declared = Object.fromEntries(Object.entries(KNOWN).map(([w, k]) => [w, { card: k.card, build: k.build }]));
-    expect(disagree, 'the card and region-rows.ts disagree only where declared').toEqual(declared);
+  it('agrees with region-rows.ts at twelve columns, the width its spans are given at', () => {
+    const inForce = statedCounts(section26()).filter((s) => !s.withdrawn);
+    if (inForce.length !== 1) return;
+    expect(rowsAt(1440).length, 'the build at 1440 lays the rows §26 lists').toBe(inForce[0].n);
+  });
+
+  it('reads the withdrawal, not the order or the size: the superseded five is withdrawn and the six is not', () => {
+    const stated = statedCounts(section26());
+    expect(stated.find((s) => s.n === 5)?.withdrawn, 'five rows, withdrawn by its own sentence').toBe(true);
+    expect(stated.find((s) => s.n === 6)?.withdrawn, 'six rows, in force').toBe(false);
   });
 });
