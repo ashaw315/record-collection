@@ -29,6 +29,15 @@ export function sentencesOf(source) {
     .replace(/<(script|style)\b[\s\S]*?<\/\1>/gi, ' ')
     /* A block's end is a sentence's end even where its text has no full stop: headings, labels, table cells. */
     .replace(/<\/(p|div|h[1-6]|li|td|th|tr|blockquote|section)>/gi, ' ␞ ')
+    /*
+      A tag stripped to nothing glued what stood on either side of it (10 Nov: "…as §38 rules.Row 1" on the Record Detail
+      card, 48 glued sentences across the cards). Not a space for every tag: 509 sit between a word and a comma and 116
+      between a word and a stop, and a space there would break every quote the index matches. A line break is a space;
+      so is a tag between a stop or closing bracket and the next letter, or between an uppercase and a lowercase letter.
+    */
+    .replace(/<br\s*\/?>/gi, ' ')
+    .replace(/([.!?)\]”’])(?:<[^>]*>)+(?=[A-Za-z0-9§“(])/g, '$1 ')
+    .replace(/([A-Z])(?:<[^>]*>)+(?=[a-z])/g, '$1 ')
     .replace(/<[^>]*>/g, '')
     .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n)))
     .replace(/&([a-z]+);/gi, (whole, name) => ENTITIES[name.toLowerCase()] ?? whole)

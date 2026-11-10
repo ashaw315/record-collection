@@ -49,6 +49,33 @@ describe('sentencesOf, on Markdown', () => {
   });
 });
 
+/*
+  **Tags stripped to nothing glued sentences (the coordinator, 10 Nov).** A block's closing tag became a break, every
+  other tag became nothing, so a stop followed by a span, a caption after a parenthesis, or a <br> fused with what came
+  next: on the Record Detail card "…as §38 rules.Row 1, Pressing detail…" read as one sentence, and a withdrawal marker
+  placed after that list marked a sentence holding four live rows beside the dead one. Counted before fixing: 48 glued
+  sentences across 23 cards, 4 in the three build targets. The fix is not a space for every tag: 509 tags on the cards
+  sit between a word and a comma and 116 between a word and a stop ("is</em>."), and a space there would break every
+  quote the index matches. A space goes where a tag stands between a stop or closing bracket and the next letter,
+  between an uppercase and a lowercase letter, or is a line break.
+*/
+describe('sentencesOf, where tags were stripped to nothing', () => {
+  it('separates a sentence from a list or caption that follows it inside the next tag', () => {
+    expect(sentencesOf('<p><strong>Where the drawing disagrees, this list governs. Superseded in part by §38: a row missing a section regroups as §38 rules.</strong><span>Row 1, Pressing detail and its air: 7 + 5.</span></p>'))
+      .toEqual(['Where the drawing disagrees, this list governs.', 'Superseded in part by §38: a row missing a section regroups as §38 rules.', 'Row 1, Pressing detail and its air: 7 + 5.']);
+    expect(sentencesOf('<p>never a flat mark (§13)</p><span>EDGE BLEED · PAGE EDGE ONLY</span><span>drawn at r 1.</span>')).toEqual(['never a flat mark (§13)', 'EDGE BLEED · PAGE EDGE ONLY drawn at r 1.']);
+  });
+
+  it('reads a line break as a space', () => {
+    expect(sentencesOf('<div>Buddy Rich<br>Super Rich</div>')).toEqual(['Buddy Rich Super Rich']);
+    expect(sentencesOf('<p>0.62 L<br/>as stored</p>')).toEqual(['0.62 L as stored']);
+  });
+
+  it('adds no space at a tag before punctuation or inside a token, so a quoted sentence still matches', () => {
+    expect(sentencesOf('<p>What an artist <em>is</em>. Set at <strong>6</strong>, named. See §<b>26</b>.</p>')).toEqual(['What an artist is.', 'Set at 6, named.', 'See §26.']);
+  });
+});
+
 describe('diffProse', () => {
   const before = 'The sizes are taken once. The gatefold’s spread is never recomputed while the modal is open. The sleeve is centred. Focus returns to the cover.';
 
