@@ -55869,3 +55869,13 @@ record and never tracked it: "[ledger] FAILED: 1 record left behind …", the ru
 read "1 passed", which is why run-result reads the ledger line and not the count. run-result already tries FAILED
 before the clean-genres line; a test pins that for the record case, failing with the two checks swapped. Not chased:
 the two leftover tags (Q63); a fallen count is printed as a loss, not failed.
+
+**Gate 42862377882 on 1bd8cf96: unit red on a test defect outside its range; mobile green, the first CI run of the
+sidebar-113 fix.** ship.test.ts:111 asserted the printed line did not contain '111', the wrong run id, and the staged
+commit's sha came out …fdb711151…, so the substring matched inside a 40-hex id, about one run in a hundred. None of
+the covered changes touches ship.sh or its test, so the diff clears them and the gate was not re-run. The throw-test
+member again (match the token, never a substring the data can also contain): the assertion is now `gate run 111` as
+a token, the same claim; shown to fail against a ship.sh that takes the first run in the list. The same unit gives
+ship.sh its usage line on an empty call (bash 3.2's "unbound" on an empty array under set -u), test first, failing on
+the missing line. And a note against myself: checking that exit by `ship.sh | cut; echo $?` printed cut's 0, the
+concealment in run-result's header, caught because the test reads the status itself.

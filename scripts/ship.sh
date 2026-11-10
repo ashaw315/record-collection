@@ -29,6 +29,14 @@ while [ $# -gt 0 ]; do
   esac
 done
 
+# Called with nothing to commit, it said how (10 Nov): "${args[@]}" on an empty array is "unbound" under set -u in
+# bash 3.2, and the chain that called it read exit 0 through tail. This script is for the unit's last commit; a unit
+# already committed is pushed and gated by ci-gate.sh.
+if [ ${#args[@]} -eq 0 ]; then
+  echo 'usage: scripts/ship.sh -m "message" [--workers N] path [path...]   (the unit'"'"'s last commit, its push and its gate; a unit already committed is pushed and gated by scripts/ci-gate.sh)' >&2
+  exit 2
+fi
+
 "$here/commit-checked.sh" "${args[@]}"
 status=$?
 if [ $status -ne 0 ]; then

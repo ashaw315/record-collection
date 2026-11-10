@@ -108,7 +108,22 @@ describe('ship.sh: commit, push, dispatch, read, each on the previous status', (
     expect(r.status).toBe(0);
     const last = r.output.trim().split('\n').pop() ?? '';
     expect(last).toMatch(/^ship: gate run 222 on [0-9a-f]{40} \(queued\)$/);
-    expect(last).not.toContain('111');
+    /* The run id as a token, never a substring: on gate 42862377882 the staged sha was …fdb711151…, and '111' matched inside it (10 Nov). */
+    expect(last).not.toMatch(/gate run 111\b/);
+  });
+
+  /*
+    Called with nothing to commit, ship.sh died on `args[@]` under set -u (bash 3.2) instead of saying how it is used,
+    and the chain that called it read exit 0 through tail (10 Nov). A unit already committed is pushed and gated by
+    ci-gate.sh; this script is for the unit's last commit, and it says so.
+  */
+  it('called with no message and no path, prints its usage, commits nothing and exits non-zero', () => {
+    const s = stage({ commit: 0 });
+    const r = s.run([]);
+    expect(r.status).not.toBe(0);
+    expect(r.output).toMatch(/usage: .*ship\.sh -m/);
+    expect(r.output).not.toMatch(/unbound variable/);
+    expect(r.calls.some((c) => c.startsWith('commit-checked'))).toBe(false);
   });
 
   it('a dispatch that fails is the script’s status, after the push stood', () => {
