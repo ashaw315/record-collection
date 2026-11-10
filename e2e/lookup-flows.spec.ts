@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
 import { clearing } from '../src/app/figure-source';
-import { registerCleanup, trackArtist } from './cleanup';
+import { registerCleanup, trackArtist, trackSavedRecord } from './cleanup';
 import { seedDiscogsCache } from './seed';
 import { normalizeRelease } from '@/lib/discogs/normalize-release';
 import { login } from './sign-in';
@@ -272,6 +272,7 @@ test('flow 3: search, drill into a version, import it and save', async ({ page }
    * record id is what this assertion is about.
    */
   await expect(page).toHaveURL(/\/records\/[0-9a-f-]{36}(\?|$)/, { timeout: 15_000 });
+  await trackSavedRecord(page, new URL(page.url()).pathname.split('/').pop() ?? '');
   await expect(page.getByRole('heading', { name: TITLE })).toBeVisible();
 });
 

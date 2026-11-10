@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { registerCleanup, trackArtist } from './cleanup';
+import { registerCleanup, trackArtist, trackSavedRecord } from './cleanup';
 import { removeImagesFor, seedDiscogsCache, seedImage } from './seed';
 import { login } from './sign-in';
 
@@ -288,6 +288,7 @@ test('a cover that cannot be fetched does not fail the import', async ({ page })
 
   const response = await created;
   expect(response.status(), 'the record is created regardless').toBe(201);
+  await trackSavedRecord(page, ((await response.json()) as { id: string }).id);
   /**
    * **`unconfigured`, not `failed` — and this spec previously asserted the
    * wrong one.** Its own docblock above says this environment has no

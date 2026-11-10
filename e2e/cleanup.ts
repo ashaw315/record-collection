@@ -139,6 +139,20 @@ export function trackCreated(path: string, body: unknown): void {
   if (path === '/api/genres' && typeof id === 'string') trackGenre(id);
 }
 
+/**
+ * A record saved through the form or the Discogs import, tracked with the artist it landed under (10 Nov). The import
+ * makes its own artist from the release, so a spec that posted and tracked an artist of its own still left the saved
+ * record under Discogs' (Lena Raine, Discharge), and `trackArtist` leaves an artist standing while records remain under
+ * it: gate 42864398374's ledger named five such records on each shard, every spec passing. Reads the record back, so
+ * the artist tracked is the one the save chose, not the one the form showed.
+ */
+export async function trackSavedRecord(page: { request: { get(url: string): Promise<{ json(): Promise<unknown> }> } }, recordId: string): Promise<void> {
+  trackRecord(recordId);
+  const record = (await (await page.request.get(`/api/records/${recordId}`)).json()) as { artistId?: string; artist?: { id?: string } } | null;
+  const artistId = record?.artistId ?? record?.artist?.id;
+  if (typeof artistId === 'string') trackArtist(artistId);
+}
+
 export function trackArtist(artistId: string): void {
   trackedArtists.push(artistId);
 }

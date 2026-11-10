@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { registerCleanup, trackArtist, trackCreated } from './cleanup';
+import { registerCleanup, trackArtist, trackCreated, trackSavedRecord } from './cleanup';
 import { login } from './sign-in';
 import { HIT_FLOOR, HIT_PAST, POINTERS, pointerIs, reachingPastItself, readReach, underFloor } from './hit-area';
 
@@ -303,6 +303,7 @@ test('creates an artist inline and uses it without leaving the form', async ({ p
   await page.getByRole('button', { name: 'Add record' }).click();
 
   await expect(page).toHaveURL(/\/records\/[0-9a-f-]{36}$/, { timeout: 15_000 });
+  await trackSavedRecord(page, new URL(page.url()).pathname.split('/').pop() ?? '');
   await expect(page.getByRole('link', { name: artistName })).toBeVisible();
 });
 

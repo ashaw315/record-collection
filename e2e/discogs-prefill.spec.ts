@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { registerCleanup, trackArtist } from './cleanup';
+import { registerCleanup, trackArtist, trackSavedRecord } from './cleanup';
 import { seedDiscogsCache } from './seed';
 import { login } from './sign-in';
 
@@ -263,6 +263,7 @@ test('saves what the user confirmed, not what Discogs said', async ({ page }) =>
   await expect(page).toHaveURL(/\/records\/[0-9a-f-]{36}(\?|$)/, { timeout: 15_000 });
 
   const recordId = page.url().split('/').pop();
+  await trackSavedRecord(page, recordId ?? '');
   const record = await (await page.request.get(`/api/records/${recordId}`)).json();
 
   expect(record.pressing?.matrixRunout).toBe('CORRECTED A1/B1 VARIANT 3');
@@ -533,6 +534,7 @@ test('an imported record carries its Discogs genres onto the collection screen',
   await expect(page).toHaveURL(/\/records\/[0-9a-f-]{36}(\?|$)/, { timeout: 20_000 });
 
   const recordId = new URL(page.url()).pathname.split('/').pop() ?? '';
+  await trackSavedRecord(page, recordId);
   const record = await (await page.request.get(`/api/records/${recordId}`)).json();
   const names = (record.genres ?? []).map((genre: { name: string }) => genre.name).sort();
 

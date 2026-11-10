@@ -55879,3 +55879,16 @@ a token, the same claim; shown to fail against a ship.sh that takes the first ru
 ship.sh its usage line on an empty call (bash 3.2's "unbound" on an empty array under set -u), test first, failing on
 the missing line. And a note against myself: checking that exit by `ship.sh | cut; echo $?` printed cut's 0, the
 concealment in run-result's header, caught because the test reads the status itself.
+
+**The five leaked records, named by the ledger and closed (10 Nov).** The named ledger's first local mobile run listed
+them: Hear Nothing See Nothing Say Nothing ×3 under Discharge, Moonglow Bay Original Soundtrack under Lena Raine, and
+Inline Record under Inline Artist. The mechanism is one: the Discogs import makes its own artist from the release, so a
+spec that posted and tracked an artist of its own still left its saved record under Discogs' artist, and trackArtist
+leaves an artist standing while records remain under it (Discharge, created 17:45:36 by the first such save, outlived
+every cleanup). The form's inline-created artist is the same shape without Discogs. Enumerated before fixing: 22 saves
+through the form or the import across eleven specs, trackRecord in none; most safe because the record lands under the
+spec's own tracked artist; three of the "saves" are links named Add record. The five sites: discogs-prefill 256
+(Moonglow) and 531, images 249, lookup-flows 267, record-form's Inline test. One helper, `trackSavedRecord(page, id)`
+in cleanup.ts, reads the record back and tracks it and the artist the save chose. The guard is its test: the four specs
+on both projects left 5 records (first pass, two sites missed by a wrong needle: 4), then 0, 216 passed each time. CI's
+chromium five are read from gate 42868188966 when it reports. Tags still leak (0 → 2 mobile, 0 → 10 chromium), Q63.
