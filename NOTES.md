@@ -55718,10 +55718,14 @@ to a disjoint proxy before it can be ordered at all"); 19 and 20 withdrew it for
 reduced volume is again the rule for every interpenetrating object"). So the row describes the rule in force, settled
 by the section's definitions rather than two readers.
 
-**A family member, new: an item left open in the record supplied a cause for a failure it had nothing to do with.**
-Q10 and Q28 sat open four days after §43's ruling landed in "First paint is styled" (the coordinator's, by its own
-account). With Q10 open, record-band-43:33's failures read as "waiting on a Design ruling", and the red gate on 21958156
-arrived with that explanation already attached. Closed as ruled §43. **The guard, queue-2 in check-queue.mjs:** a row
+**A family member, new: a closed item left open in the record stood in front of the open item that actually owned
+the failure.** (Corrected 10 Nov: first filed as "an item left open supplied a cause for a failure it had nothing to
+do with", the wording the coordinator sent and then withdrew after Design showed the failure had an owner. That form
+says the failure was unowned, the opposite of what happened, and sends the next reader looking for the wrong thing.)
+Q10 and Q28 sat open four days after §43's ruling landed in "First paint is styled". The failure's owner was the §43
+boundary remedy, ruled and then parked by Adam's 9 Nov redirect, which had no row: with Q10 open in front of it,
+record-band-43:33's failures read as "waiting on a Design ruling", and the red gate on 21958156 arrived with that
+explanation attached. Closed as ruled §43, and the owner given its row, Q60. **The guard, queue-2 in check-queue.mjs:** a row
 waiting on a Design ruling names it after "**Waits on:**" (a change file in double quotes, a withdrawal id in
 backticks), and the check resolves it against the landed list and WITHDRAWALS.md; an open row waiting on a ruling that
 has landed fails with the exit code, and a name nothing holds yet is reported. Tests first (four, failing on the
@@ -55746,3 +55750,58 @@ missing log as clean. Tests first (two, failing on the missing reading); the com
 order in force, and fails against the old line. The test moved to line 37 and the watch with it. Run on a build: the
 report-only project 1 of 1 at load 4.8, read through gate-report as not judged, 1 passed, 0 failed. Not re-dispatched
 to roll for a green, and not accepted by eye.
+
+## 10 Nov (later): §53's stale references swept; assertion 14's width derived; queue-2 says how much it checked; a mobile red at 1054
+
+**§53 swept, by enumeration (the coordinator, 10 Nov).** §26's in-force listing still read row 4 as "two halves
+(6 / 6)", a figure from before §53, found by accident one day after six/six/eight/nine came from the same cause. So
+every card sentence touching Images, IMAGES, About, ABOUT, "halves" or "6 / 6" (122), and every one naming the old host
+or a section count, was read against §53. Fourteen are stale and carry no marker: five on Images' span (§26 b2.s9 and
+b2.s12, §28 b5.s2, b17.s4, and b17.s8/s12, the last from 10 Nov's own change, reading §53 as "Images at one" when it
+says every width); five on the quarter-disc's old host "beside About this record" (§26 b3.s3, b8.s3, b12.s2, §29 b1.s5,
+§21 b7.s6, the last uncertain); three on the section count (§26 b2.s5 "a ninth section", b3.s4 "nine sections", and
+b2.s4 withdrawing "eight sections", which is right as the page stands: the build has eight); one supersession note
+keeping the removed row alive (§36 b1.s7). Raised to Design as a change: docs/findings/53-stale-references-sweep.md.
+Why the count pin passed on it: at 12, 8 and 4 a side-by-side pair and one section are both one row, so a count cannot
+see a span. Drawings, other cards and the handoff not swept, and said so in the file.
+
+**Assertion 14's width derived, not written down.** The card names a "1440 fork", so the pin sat on a boundary. The
+width is now the one `COLUMNS_AT` keys to twelve, and the test asserts `columnsFor` gives twelve there. With the fork
+moved past 1440 (`> 1440`) it failed, "expected 8 to be 12"; restored, 4 of 4. Its first run passed because the build
+was already consistent, so the mutation is the evidence that it can fail. The spec entry, committed alone (d8b86625),
+also records the extension to spans as owed after Design's row 4 fix, not before.
+
+**queue-2 prints its coverage, every run.** The fix the watch got: gate-report says NO LOG rather than reading a
+missing log as clean, and queue-2 now says NOTHING CHECKED rather than PASS when no open row names its ruling, with
+"N of M open rows name their ruling" beside every verdict. On QUEUE.md today: NOTHING CHECKED, 0 of 41 open rows. Exit
+unchanged (0). Tests first, four failing on the missing functions; against a version printing PASS when nothing was
+checked, one fails, by name.
+
+**The family member corrected** (above, in place): a closed item left open in the record stood in front of the open
+item that actually owned the failure. The owner, §43's boundary remedy, now has a row, Q60.
+
+**Four passes for the wrong reason this week, and the call on whether they are one member.** The coordinator's
+reading: all four matched text that survived the change they were meant to detect. Read against each:
+- the throw test, `toThrow(/heading/)` passing on "headingOf is not a function": text surviving, yes;
+- the watch file's `jumps the queue.*Q58` passing after the downgrade, because the line kept its record of the old
+  order: text surviving, yes, the same mechanism;
+- the discarded stream: a negative assertion against a channel that never carried output. Nothing survived; the
+  observation was empty. Already its own member ("a vacuous negative assertion");
+- `press('Enter')`: a staging that never produced the condition the test exists for, because Playwright waited out
+  the navigation. No text involved; the precondition was absent. Already recorded as a defect of the staging.
+So two mechanisms, not one: the first two are one member, now named **an assertion matching text the change leaves in
+place** (two instances, the throw test first); the other two stay where they are. What joins all four is the standing
+rule, not a mechanism: each passes against a version without the change, and running it against that version is the
+one check that catches all of them. The watch file's case was caught that way.
+
+**Gate 42824167411 on 60340188: red on mobile only, at 1054, a half pixel, with no app code changed.** Unit 5032
+passed (3 skipped), OK; chromium 1064 passed (1 skipped), OK; report-only, not judged, 1 passed and 0 failed (its first
+gate run, read through the new line); mobile 388 passed, 2 failed. Both failures are sidebar-113.spec.ts:270, table and
+grid, each failed on its retry too: four observations, all "a diagonal ends on the header's rule", `toBeLessThan(0.5)`,
+received exactly 0.5. Since 21958156, whose gate had mobile green, only e2e/record-band-43.spec.ts and
+playwright.config.ts changed, nothing under src. **A hypothesis, not verified:** the test builds the diagonal's start
+from `offsetLeft`/`offsetTop`, which are rounded to whole pixels, and the diagonal's length follows `--figure-height`,
+which follows the drawn record. A start ending in .5 would miss by exactly 0.5, and only for some records. What would
+settle it: the trace's values for the header bottom and the line's box, or a run with the fractional box
+(`getBoundingClientRect` of the offset parent plus the computed `top`). Not re-dispatched for a green, and not
+accepted.

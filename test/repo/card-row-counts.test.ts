@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { rowsAt } from '../../src/app/records/[id]/region-rows';
+import { COLUMNS_AT, WIDTHS, columnsFor, rowsAt } from '../../src/app/records/[id]/region-rows';
 import { blocksOf, sentencesOf } from '../../scripts/export-diff.mjs';
 
 /**
@@ -43,10 +43,24 @@ describe('§26’s stated row count against the rows the build lays, at twelve c
     expect(stated.filter((s) => !s.withdrawn), `${CARD}: one listing in force in §26; found ${JSON.stringify(stated)}`).toHaveLength(1);
   });
 
+  /*
+    The width is derived, not written down (the coordinator, 10 Nov). The card has a named "1440 fork" and speaks of
+    "the page above 1440", so 1440 sits on the boundary; whichever side the card means, the pin reads the build's own
+    column count and fails if the width it measures at is not twelve columns, so a moved fork is said, not quietly
+    measured on its other side.
+  */
+  const TWELVE = WIDTHS.find((w) => COLUMNS_AT[w] === 12);
+
+  it('measures at a width the build lays twelve columns at, by the build’s own column count', () => {
+    expect(TWELVE, 'region-rows keys one width to twelve columns').toBeDefined();
+    if (TWELVE === undefined) return;
+    expect(columnsFor(TWELVE), `the viewport ${TWELVE} is twelve columns, not the width before the fork`).toBe(12);
+  });
+
   it('agrees with region-rows.ts at twelve columns, the width its spans are given at', () => {
     const inForce = statedCounts(section26()).filter((s) => !s.withdrawn);
-    if (inForce.length !== 1) return;
-    expect(rowsAt(1440).length, 'the build at 1440 lays the rows §26 lists').toBe(inForce[0].n);
+    if (inForce.length !== 1 || TWELVE === undefined) return;
+    expect(rowsAt(TWELVE).length, `the build at ${TWELVE}, twelve columns, lays the rows §26 lists`).toBe(inForce[0].n);
   });
 
   it('reads the withdrawal, not the order or the size: the superseded five is withdrawn and the six is not', () => {

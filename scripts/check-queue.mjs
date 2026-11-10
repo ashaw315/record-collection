@@ -131,6 +131,26 @@ export function waitingOnLanded(items, { files, withdrawalIds }) {
   return { landed, unknown };
 }
 
+const WAITS_ON = /\*\*Waits on:\*\*\s*(?:"[^"]+"|`[^`]+`)/;
+
+/**
+ * How much queue-2 checked: open rows naming their ruling, of all open rows (the coordinator, 10 Nov). Most rulings have
+ * no title or id until Design sends them, so the check can apply to about no rows; this is printed beside the verdict
+ * every run, as gate-report says NO LOG rather than reading a missing log as clean.
+ */
+export function queue2Coverage(items) {
+  const open = items.filter((it) => it.status === 'open');
+  return { named: open.filter((it) => WAITS_ON.test(it.item)).length, open: open.length };
+}
+
+/** queue-2's verdict line with its coverage: NOTHING CHECKED when no open row names a ruling, never PASS. */
+export function queue2Line(waits, { named, open }) {
+  const verdict = waits.landed.length > 0 ? 'FAIL' : named === 0 ? 'NOTHING CHECKED' : 'PASS';
+  const n = waits.landed.length > 0 ? ` (${waits.landed.length})` : '';
+  const cover = named === 0 ? `0 of ${open} open rows name their ruling, so none was checked` : `${named} of ${open} open rows name their ruling, ${open - named} do not and were not checked`;
+  return `${verdict} queue-2 no open row waits on a ruling that has landed${n} — ${cover}`;
+}
+
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   const text = readFileSync(process.env.QUEUE_FILE ?? 'QUEUE.md', 'utf8');
   const items = parseQueue(text);
@@ -161,7 +181,7 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   const files = new Set(readFileSync('docs/design-landed.jsonl', 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l).file));
   const withdrawalIds = new Set([...readFileSync('docs/design/WITHDRAWALS.md', 'utf8').matchAll(/^- \*\*`([^`]+)`\*\*/gm)].map((m) => m[1]));
   const waits = waitingOnLanded(items, { files, withdrawalIds });
-  console.log(`${waits.landed.length === 0 ? 'PASS' : 'FAIL'} queue-2 no open row waits on a ruling that has landed${waits.landed.length === 0 ? '' : ` (${waits.landed.length})`}`);
+  console.log(queue2Line(waits, queue2Coverage(items)));
   for (const w of waits.landed) console.log(`  ${w}`);
   for (const w of waits.unknown) console.log(`  report only: ${w}`);
   console.log('The rest is a report, not a verdict: it cannot notice an item that was never written down, and a clean report is not proof the list is complete.');

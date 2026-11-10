@@ -3,7 +3,7 @@ import { readFileSync, unlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { consistency, parseQueue, restatements, waitingOnLanded } from '../../scripts/check-queue.mjs';
+import { consistency, parseQueue, queue2Coverage, queue2Line, restatements, waitingOnLanded } from '../../scripts/check-queue.mjs';
 
 /**
  * **`QUEUE.md` has no second record, and its check says so (the coordinator,
@@ -142,6 +142,31 @@ describe('waitingOnLanded', () => {
   });
 });
 
+/*
+  **queue-2 says how much it checked, every run (the coordinator, 10 Nov).** Most open rows carry no **Waits on:**
+  name, because most rulings have no title or id until Design sends them, so a correct check applied to about no rows
+  and read PASS. The watch's fix applied here: gate-report says NO LOG rather than reading a missing log as clean, and
+  this line says NOTHING CHECKED rather than PASS when no open row names its ruling. Not a failure and not clean.
+*/
+describe('queue-2’s coverage, beside its verdict', () => {
+  const table = (...rows: Array<[string, string]>) => parseQueue(`## Q\n\n| id | status | item | record |\n|---|---|---|---|\n${rows.map(([s, item], i) => `| Q${i + 1} | ${s} | ${item} | x |`).join('\n')}\n`);
+
+  it('counts the open rows that name their ruling and the open rows that do not; closed rows are not counted', () => {
+    const items = table(['open', 'A. **Waits on:** "Some file"'], ['open', 'B, unnamed'], ['open', 'C, unnamed'], ['ruled §43', 'D. **Waits on:** "First paint is styled"']);
+    expect(queue2Coverage(items)).toEqual({ named: 1, open: 3 });
+  });
+
+  it('prints NOTHING CHECKED, never PASS, when no open row names its ruling, with the count', () => {
+    const line = queue2Line({ landed: [], unknown: [] }, { named: 0, open: 46 });
+    expect(line).toBe('NOTHING CHECKED queue-2 no open row waits on a ruling that has landed — 0 of 46 open rows name their ruling, so none was checked');
+  });
+
+  it('prints PASS with the count when some are checked and none has landed, and FAIL with it when one has', () => {
+    expect(queue2Line({ landed: [], unknown: [] }, { named: 2, open: 46 })).toBe('PASS queue-2 no open row waits on a ruling that has landed — 2 of 46 open rows name their ruling, 44 do not and were not checked');
+    expect(queue2Line({ landed: ['x'], unknown: [] }, { named: 2, open: 46 })).toBe('FAIL queue-2 no open row waits on a ruling that has landed (1) — 2 of 46 open rows name their ruling, 44 do not and were not checked');
+  });
+});
+
 describe('the repo’s QUEUE.md', () => {
   const text = readFileSync('QUEUE.md', 'utf8');
 
@@ -190,6 +215,12 @@ describe('the check as a command', () => {
     expect(status).toBe(0);
     expect(out).toMatch(/consistency, report only/);
     expect(out).toMatch(/^PASS queue-1 restates no unbuilt handoff step/m);
+  });
+
+  it('prints queue-2’s coverage on the repo’s QUEUE.md, the open rows counted from the file', () => {
+    const { out } = run('QUEUE.md');
+    const open = parseQueue(readFileSync('QUEUE.md', 'utf8')).filter((i) => i.status === 'open').length;
+    expect(out).toMatch(new RegExp(`^(NOTHING CHECKED|PASS) queue-2 .* — \\d+ of ${open} open rows name their ruling`, 'm'));
   });
 
   it('exits 1 with FAIL queue-1 on a staged file that carries an unbuilt step’s head as an item, and still prints the report', () => {
