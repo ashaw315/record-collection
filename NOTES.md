@@ -55942,3 +55942,12 @@ caught by the runs: an anchor read with comment lines filtered out, and an inser
 that broke the JSX. **Step level:** TracklistSection, region-rows and Section tests 73 of 73; typecheck; lint at baseline;
 build; e2e record-detail.spec on chromium 34 passed, which shows the page renders with the new fetch and not that any e2e
 saw the section: the test database holds no release-text rows, so no e2e record has a tracklist until 173c's seed helper.
+
+**173b's Done moved the twins snapshot.** Step 173's line now reads "Done: built in part; the gate and the captures are
+173c", quoting the bullets the section discharges, with states "Code's work unbuilt", "capture or measurement owed" and
+"look provisional" (the count line's wording and the two track columns, §65 b1.s25). The twins reader calls a Done in part
+built, so the two snapshot tests that named 173 among the numbered-and-not-built steps (170, 171, 173, 174; "numbered and
+not built 4") moved to 170, 171 and 174; the rule they illustrated, that the unfinished block decides, keeps its own
+fixture test. The first close-out chain stopped on exactly those two, which is the intake reading the handoff's state as
+it should. Also against myself: a production-read probe was copied into scripts/ and removed while that chain's check was
+running, against the rule that nothing edits the tree during a check; the check had already passed by then, by its log.
