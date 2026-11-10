@@ -130,7 +130,7 @@ The wall at rest is line, ink and paper; colour arrives with the pull. Everythin
 | §T.1 | Why these views are designed, and why here | Why the views are designed and have their own target, the band they share with the shelf, the content inset on every screen, the sidebar above its fork with CLEAR FILTERS, and the page length. |
 | §T.2 | The vocabulary they take | The type the views take, and the hit-area floor. Their colour and corners are withdrawn to §T.6, which rules them for every screen. |
 | §T.3 | The heading, the count, search and filters | The count and heading, search, the filters as a disclosure in the band, and in the sidebar the options opening in place and pushing the page down, with its return. And the reason line on a record that matched by tracklist or credits. |
-| §T.4 | The table | The table's rows, alignment, the Record column's slack, the Genre column and its separator, sort and the Sort control kept at every width, the sticky header row, and hover. |
+| §T.4 | The table | The table's rows, alignment, the Record column's slack, the Genre column and its separator, sort and the Sort control kept at every width, the sticky header row, and hover. And the key a name is ordered by, its leading English article dropped. |
 | §T.5 | The grid | The grid’s covers, captions, spacing, column counts and Sort control. |
 | §T.6 | Ornament and colour, for every screen | Ornament, oxblood, the grey, corners and headings across every screen; the content measure; pending answers and reserved slots; the hit-area floor by pointer and how sets meet it; one focus ring for the app and Tab order; and each screen's pass: the want list, stats, manage with its Discogs import, the record form, look up, login, the dialog, the error and not-found pages. |
 | §P.1 | Where the feature is ruled, and where it is presented | Why the mood pick has its own target, why a view that can pull answers with the pull and every other view in place, and why the split is the pull and not the shelf, and what the target owns and points at. |
@@ -874,6 +874,23 @@ Its rows are in the governs table above, one per section; this section does not 
     3. **Hidden by its own top face.** Fail the step on any one.
   - **Weight:** 1px is one screen pixel. The hairline measure runs on footprints once they're visible. That is parked with the far-view thread, so report the pixels only.
   > The first option: an emptied seat draws its footprint — the seat’s own rectangle on the shelf’s top face, 12 × 150, one hairline at 0.72.
+
+- **Unnumbered, for Code to number — §T.4: the name sort key.**
+  - **Key** every artist and title order and grouping on your enumerated list by one shared function, not a copy per place.
+  - **Drop** a leading "The ", "A " or "An ", and compare the rest without regard to case.
+  - **Assert:**
+    - The Doors sorts among D;
+    - A Tribe Called Quest among T;
+    - The The among T;
+    - An Pierlé among P;
+    - A-ha among A;
+    - the title The Dark Side Of The Moon among D;
+    - "the doors" and "The Doors" compare equal;
+    - a non-English article such as "Die" is kept;
+    - every drawn name is unchanged.
+  - **Hold the articles as one list,** so Adam's answer on "A" and "An" changes one entry. If he looks under A, the A Tribe Called Quest and An Pierlé assertions move to A.
+  - **Report** any place on your list that orders a name in another target. That target gets a pointer here, not a copy.
+  > Wherever a record is put in order by its artist or its title, it is ordered by a key that drops a leading “The”, “A” or “An” followed by a space, and compares the rest without regard to case; the name drawn is never changed.
 
 No step: §G.7. It rules nothing. Hover and focus wait on Code's second pass, the breakpoint is settled and recorded in §G.8, and the eyebrow repetition is an observation, not a ruling.
 

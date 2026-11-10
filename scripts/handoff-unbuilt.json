@@ -53,5 +53,10 @@
     "head": "§W.13: ADD RECORD out of the rail",
     "status": "unbuilt",
     "evidence": "Ruled 8 Nov (\"ADD RECORD leaves the rail\"). The rail still draws Add record at its foot below a full-bleed rule (src/app/WallRail.tsx:270), checked 8 Nov."
+  },
+  {
+    "head": "§T.4: the name sort key",
+    "status": "unbuilt",
+    "evidence": "Arrived 10 Nov (\"Name sort key\", refs/drops/2026-11-10-04), answering Adam's \"the doors falls under T\". The build compares names as written; every place a name is ordered or grouped, and whether each order is SQL or JS, is enumerated before the fix (Q62), and \"A\" and \"An\" are with Adam. Not checked against the code beyond Adam's report, 10 Nov."
   }
 ]
