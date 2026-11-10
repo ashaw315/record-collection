@@ -246,7 +246,7 @@ describe('the verdict tells a half that did not finish from one that failed', ()
   watch is read, not judged.
 */
 describe('a watched test that fails prints the order it carries', () => {
-  const WATCHED = 'e2e/record-band-43.spec.ts:33';
+  const WATCHED = 'e2e/record-band-43.spec.ts:37';
   const BAND_RED = [`  ✘  618 [chromium] › ${WATCHED}:5 › §43: the record band paints packed (2.0m)`, '[projects] chromium 1065', '  1 failed', '  1063 passed (1.2h)', '', '1063 passed, 1 failed, 1 skipped, ledger clean, tree unchanged — NOT OK — 1 failed'];
   const watches = (lines: string): string => { const d = mkdtempSync(join(tmpdir(), 'gate-watch-')); const f = join(d, 'gate-watches.txt'); writeFileSync(f, lines); return f; };
 
@@ -266,9 +266,36 @@ describe('a watched test that fails prints the order it carries', () => {
     expect(clean.status, clean.output).toBe(0);
   });
 
-  it('reads the committed file by default, which watches record-band-43:33 with its order until 173 is finished', () => {
+  /*
+    The assertion parked with its watch (the coordinator, 10 Nov): record-band-43:33 runs in the report-only project,
+    out of the gating chromium shard, and its log is read for the watch beside the verdict and never judged. A green
+    gate then means green, and the failure is still on the record rather than waved through.
+  */
+  it('reads the report-only log for the watch and its counts, and never lets it decide the verdict', () => {
+    const file = watches(`${WATCHED}\treport only: QUEUE Q58\n`);
+    const dir = mkdtempSync(join(tmpdir(), 'gate-ro-'));
+    const ro = join(dir, 'f4c265e-e2e-report-only.log');
+    writeFileSync(ro, `${BAND_RED.map((l) => l.replace('[chromium]', '[report-only]')).join('\n')}\n`);
+    const result = report('f4c265e', logs('f4c265e', { unit: UNIT_OK, chromium: CHROMIUM_OK, mobile: MOBILE_OK }), { GATE_WATCHES: file, REPORT_ONLY_LOG: ro });
+    expect(result.output).toContain(`WATCH: ${WATCHED} failed in report-only — report only: QUEUE Q58`);
+    expect(result.output).toMatch(/^report-only, not judged: 1063 passed, 1 failed/m);
+    expect(result.status, 'the gating halves were clean, so the gate is green').toBe(0);
+  });
+
+  it('says the report-only log is missing rather than reading nothing as clean', () => {
+    const result = report('f4c265e', logs('f4c265e', { unit: UNIT_OK, chromium: CHROMIUM_OK, mobile: MOBILE_OK }), { REPORT_ONLY_LOG: join(tmpdir(), 'no-such-report-only.log') });
+    expect(result.output).toMatch(/^report-only, not judged: NO LOG/m);
+    expect(result.status).toBe(0);
+  });
+
+  /*
+    Until 10 Nov this asserted `jumps the queue.*Q58`, and after the 9 Nov downgrade it still passed on the line's
+    record of the old order ("was \"171 jumps the queue\""): a pass on the history, not the order. It now asserts the
+    order in force, report-only, and that the assertion runs in the report-only project.
+  */
+  it('reads the committed file by default, which watches record-band-43\'s packed-band test report-only, in the report-only project', () => {
     const committed = readFileSync(join(process.cwd(), 'scripts', 'gate-watches.txt'), 'utf8');
-    expect(committed).toMatch(new RegExp(`^${WATCHED.replace(/[.]/g, '\\.')}\\t.*jumps the queue.*Q58`, 'm'));
+    expect(committed).toMatch(new RegExp(`^${WATCHED.replace(/[.]/g, '\\.')}\\treport only: the assertion runs in the report-only project.*Q58`, 'm'));
     const result = report('007a455', logs('007a455', { unit: UNIT_OK, chromium: BAND_RED, mobile: MOBILE_OK }));
     expect(result.output).toContain(`WATCH: ${WATCHED} failed in chromium`);
   });

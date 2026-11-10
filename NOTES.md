@@ -55733,3 +55733,16 @@ exit 1 naming Q10; on the real file, both rows closed, it passes.
 
 **"About half the gates" withdrawn.** record-band-43:33 has failed at two gates (42548809533, 42719165095) and passed
 at two (42532355396, 42701756203): four observations, not a rate.
+
+**The assertion parked with its watch (the coordinator, 10 Nov).** Q58's 9 Nov downgrade reached the watch and not the
+assertion: record-band-43:33 still sat in the gating chromium shard, so its failures turned the gate red while the
+watch said report-only, and my report spoke of "the parked watch" as if the two were one object. Now the test is
+tagged `@report-only`; the chromium project excludes the tag and a `report-only` project runs only it, on the same
+device, after the gating projects, in gate.yml (a step that runs whatever the shard found and never fails the job, its
+log uploaded with the shard's) and in gate.sh; gate-report.sh reads REPORT_ONLY_LOG beside the verdict, printing
+"report-only, not judged: N passed, M failed", its ✘ lines and the WATCH line, and says NO LOG rather than reading a
+missing log as clean. Tests first (two, failing on the missing reading); the committed-file watch test, whose regex
+`jumps the queue.*Q58` had kept passing after the downgrade on the line's record of the old order, now asserts the
+order in force, and fails against the old line. The test moved to line 37 and the watch with it. Run on a build: the
+report-only project 1 of 1 at load 4.8, read through gate-report as not judged, 1 passed, 0 failed. Not re-dispatched
+to roll for a green, and not accepted by eye.

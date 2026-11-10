@@ -142,6 +142,16 @@ jobs:
           npx tsx scripts/run-tests.ts npx playwright test --project="$PROJECT" --output "test-results/$PROJECT" --workers=${{ inputs.workers }} --retries=1 > "$LOG" 2>&1 || true
           tail -5 "$LOG"
           tail -1 "$LOG" | grep -q -- '— OK'
+      # The report-only project (the coordinator, 10 Nov): parked tests, record-band-43:33 first, run after the gating
+      # shard on the same machine and recorded, never judged. It runs whatever the shard found, and never fails the job.
+      - name: Report-only tests, recorded and not judged
+        if: always() && matrix.project == 'chromium'
+        env:
+          E2E_SERVER: build
+        run: |
+          LOG="$RUNNER_TEMP/gate-logs/$(git rev-parse --short=7 HEAD)-e2e-report-only.log"
+          npx tsx scripts/run-tests.ts npx playwright test --project=report-only --output "test-results/report-only" --workers=${{ inputs.workers }} --retries=1 > "$LOG" 2>&1 || true
+          tail -5 "$LOG"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -176,4 +186,4 @@ jobs:
           # One directory: each job's artifact arrives in its own, and gate-report refuses logs from more than one. A missing log stays missing, and the report says so.
           mkdir -p logs
           cp artifacts/*/"$C"-*.log logs/ || true
-          bash scripts/gate-report.sh "$C" "logs/$C-unit.log" "chromium=logs/$C-e2e-chromium.log" "mobile=logs/$C-e2e-mobile.log"
+          REPORT_ONLY_LOG="logs/$C-e2e-report-only.log" bash scripts/gate-report.sh "$C" "logs/$C-unit.log" "chromium=logs/$C-e2e-chromium.log" "mobile=logs/$C-e2e-mobile.log"

@@ -30,7 +30,11 @@ const SETTLE_SPAN = 20;
 const SETTLE_TIMEOUT_MS = 5_000;
 const SETTLE_SOURCE = isSettled.toString();
 
-test('§43: the record band paints packed: its first-painted height is its settled height and no cell’s box changes, on every record, cold', async ({ browser, page }) => {
+/*
+  Report-only since 10 Nov (the coordinator; QUEUE Q58): out of the gating chromium shard, run by the `report-only`
+  project after it, its log read for the watch beside the verdict. Its assertion is unchanged.
+*/
+test('§43: the record band paints packed: its first-painted height is its settled height and no cell’s box changes, on every record, cold', { tag: '@report-only' }, async ({ browser, page }) => {
   test.setTimeout(900_000);
   await login(page);
   const rows = readSeventeen();

@@ -82,6 +82,26 @@ for PAIR in "$@"; do
   fi
 done
 
+# The report-only project (the coordinator, 10 Nov): tests parked out of the gating shards, record-band-43:33 first,
+# still run and recorded. Read for its counts and the watches, beside the verdict, and never judged: a green gate
+# means green, and the failure stays on the record. A missing log is said, not read as clean.
+if [ -n "${REPORT_ONLY_LOG:-}" ]; then
+  if [ -s "$REPORT_ONLY_LOG" ]; then
+    ro_passed="$(LC_ALL=C grep -hoE '^ +[0-9]+ passed' "$REPORT_ONLY_LOG" | tail -1 | tr -d ' ' | sed 's/passed//')"
+    ro_failed="$(LC_ALL=C grep -hoE '^ +[0-9]+ failed' "$REPORT_ONLY_LOG" | tail -1 | tr -d ' ' | sed 's/failed//')"
+    echo "report-only, not judged: ${ro_passed:-0} passed, ${ro_failed:-0} failed ($REPORT_ONLY_LOG)"
+    LC_ALL=C grep -h "^  ✘" "$REPORT_ONLY_LOG" | cut -c1-200
+    if [ -s "$WATCHES" ]; then
+      while IFS=$'\t' read -r test order; do
+        case "$test" in ''|'#'*) continue ;; esac
+        if LC_ALL=C grep -q "^  ✘.* › ${test}:" "$REPORT_ONLY_LOG"; then echo "WATCH: ${test} failed in report-only — ${order}"; fi
+      done < "$WATCHES"
+    fi
+  else
+    echo "report-only, not judged: NO LOG at $REPORT_ONLY_LOG"
+  fi
+fi
+
 if [ "$(printf '%s\n' "$dirs" | sed '/^$/d' | sort -u | wc -l)" -gt 1 ]; then
   echo "REFUSED: the logs are from more than one run, in more than one directory:"
   printf '%s\n' "$dirs" | sed '/^$/d' | sort -u | sed 's/^/  /'

@@ -201,6 +201,11 @@ for P in $PROJECTS; do
   # shellcheck disable=SC2086
   npx tsx scripts/run-tests.ts npx playwright test --project="$P" --output "test-results/$P" ${WORKERS:+--workers=$WORKERS} ${GATE_ONLY:-} > "$(e2e_log "$P")" 2>&1
 done
+# The report-only project (the coordinator, 10 Nov): parked tests, run after the gating projects and recorded, never
+# judged; gate-report reads the log for the watch beside the verdict. Not run when GATE_ONLY narrows the run.
+if [ -z "${GATE_ONLY:-}" ]; then
+  npx tsx scripts/run-tests.ts npx playwright test --project=report-only --output "test-results/report-only" ${WORKERS:+--workers=$WORKERS} > "$(e2e_log report-only)" 2>&1
+fi
 cp -R test-results "$LOGS/$COMMIT-test-results" 2>/dev/null
 
 report() {
@@ -212,7 +217,7 @@ report() {
   echo "            peaks,        $("$ROOT/scripts/memory-sample.sh" --peaks "$SAMPLES")"
   local halves=()
   for P in $PROJECTS; do halves+=("$P=$(e2e_log "$P")"); done
-  "$ROOT/scripts/gate-report.sh" "$COMMIT" "$UNIT" "${halves[@]}"
+  REPORT_ONLY_LOG="$(e2e_log report-only)" "$ROOT/scripts/gate-report.sh" "$COMMIT" "$UNIT" "${halves[@]}"
 }
 # The verdict's status, not tee's (scripts/gate-report.sh says what each means).
 report | tee -a "$REPORT"

@@ -163,7 +163,14 @@ export default defineConfig({
       is made to match that platform. The cost, kept here on purpose: these tests can no longer
       catch a text overflow that only a hinting browser on another platform would show.
     */
-    { name: 'chromium', use: { ...devices['Desktop Chrome'], launchOptions: { args: ['--font-render-hinting=none'] } } },
+    /*
+      **Report-only tests leave the gating shard and still run (the coordinator, 10 Nov).** A test tagged
+      `@report-only` is parked: record-band-43:33 (§43, Q58), whose watch was made report-only on 9 Nov while the
+      assertion itself still blocked the gate. The `report-only` project below runs exactly those, on the same device,
+      after the gating projects; the gate keeps its log and reads it for the watch, and never judges it.
+    */
+    { name: 'chromium', grepInvert: /@report-only/, use: { ...devices['Desktop Chrome'], launchOptions: { args: ['--font-render-hinting=none'] } } },
+    { name: 'report-only', grep: /@report-only/, use: { ...devices['Desktop Chrome'], launchOptions: { args: ['--font-render-hinting=none'] } } },
     /*
       **The capture project: a tool, not a suite.** `e2e/capture/` regenerates
       the screenshots in `docs/` that 7a's grid is judged against. Opted into by
