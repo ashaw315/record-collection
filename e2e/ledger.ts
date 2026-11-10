@@ -77,6 +77,16 @@ export function fixtureVocabulary(dir: string = join('test', 'fixtures', 'discog
   return names;
 }
 
+/**
+ * Records the end holds that the start did not (the coordinator, 10 Nov). Printed and passed, a leaked record stood as
+ * §T.6's source for every parallel spec on gate 42824167411; it fails the run now, as a leaked genre does. A count that
+ * fell is a loss, printed with the moved tables and not a leak.
+ */
+export function recordsLeft(moved: Array<{ table: string; start: number; end: number }>): number {
+  const records = moved.find((m) => m.table === 'records');
+  return records === undefined ? 0 : Math.max(0, records.end - records.start);
+}
+
 /** The genres left behind, split: the fixtures' own names, which stand, and everything else, which is a leak. */
 export function judgeGenres(left: string[], vocabulary: Set<string>): { fromFixtures: string[]; leaked: string[] } {
   return { fromFixtures: left.filter((name) => vocabulary.has(name)), leaked: left.filter((name) => !vocabulary.has(name)) };

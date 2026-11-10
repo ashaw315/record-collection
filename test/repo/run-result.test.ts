@@ -192,6 +192,19 @@ describe('an end-to-end run is judged by its ledger as well as its counts', () =
     expect(result.reason).toMatch(/ledger did not report/);
   });
 
+  /*
+    A leaked record (10 Nov) prints beside the clean-genres line, since the genres did hold; the FAILED line must
+    outrank it. Passed first time because FAILED is already tried first; shown to test that by swapping the two checks,
+    which fails it.
+  */
+  it('fails a run whose ledger left a record behind, even beside the line saying no genre was', () => {
+    const RECORD = '[ledger] records: 17 at the start, 19 at the end\n[ledger] genres: none left behind by a spec\n[ledger] FAILED: 2 records left behind: a spec seeded without tracking\n';
+    const result = readRunResult({ output: SETUP + COUNTS + RECORD, exitCode: 1, suite: 'end-to-end' });
+    expect(result.ok).toBe(false);
+    expect(result.ledger).toBe('failed');
+    expect(result.reason).toMatch(/2 records left behind/);
+  });
+
   it('asks nothing about a ledger of a run that is not end-to-end', () => {
     const result = readRunResult({ output: '      Tests  4056 passed (4056)\n', exitCode: 0 });
     expect(result.ok).toBe(true);

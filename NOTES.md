@@ -55848,3 +55848,24 @@ page-clock timing), Q2 ruled §W.13 (the work has its own files, 8 and 9 Nov), Q
 Q3 marked PARKED, as Q60 is. The header now says a row is closed in the turn its answer arrives, and a Blocked-on-Adam
 row carries the date it was put to him and his answer; the report-only check of those rows is owed. Adam's own words
 exist in Code's transcript only for Q5; Q2's and Q4's are the coordinator's relays, and the rows say so.
+
+## 10 Nov (afternoon): the intake went first by mechanism; the ledger fails on a leaked record; ship.sh's empty call
+
+**Order flipped by a test, not by choice.** landed-list.test fails every commit while a captured drop is not in the
+record, so the -04 intake (Name sort key, Marker grammar) went in before the landed-list fix (53593a03) and the mobile
+fix (1bd8cf96), against the approved order. Both then passed their checks, 894 each. One gate dispatched on 1bd8cf96
+(42862377882), covering 8be1d5ec, the re-keying, both intakes and both fixes.
+
+**ship.sh called with nothing to commit dies on `args[@]` (bash 3.2, set -u) instead of printing its usage,** and my
+chain reported exit 0 for it because `tail` was the pipeline's last command: the first concealment in run-result's own
+header, in my own hand, the day after reading it. The push and the dispatch then went through ci-gate.sh, each step on
+the status of the one before. ship.sh is for the unit's last commit; a unit already committed is pushed and gated by
+ci-gate.sh, which its header says. The usage defect is owed a test in ship.test.ts.
+
+**The ledger fails on leftover records, as on leftover genres (the coordinator, 10 Nov).** `recordsLeft(moved)` in
+e2e/ledger.ts, the teardown's FAILED line naming the count and why it matters (a leaked record is §T.6's source for
+every spec after it). Tests first, two failing on the missing function; staged with a throwaway spec that inserted one
+record and never tracked it: "[ledger] FAILED: 1 record left behind …", the run exiting 1 while Playwright's own line
+read "1 passed", which is why run-result reads the ledger line and not the count. run-result already tries FAILED
+before the clean-genres line; a test pins that for the record case, failing with the two checks swapped. Not chased:
+the two leftover tags (Q63); a fallen count is printed as a loss, not failed.

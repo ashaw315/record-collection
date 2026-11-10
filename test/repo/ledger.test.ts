@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { compareLedgers, fixtureVocabulary, judgeGenres } from '../../e2e/ledger';
+import { compareLedgers, fixtureVocabulary, judgeGenres, recordsLeft } from '../../e2e/ledger';
 
 /**
  * The run's ledger (`e2e/ledger.ts`): what the test database holds at the
@@ -42,5 +42,25 @@ describe('judgeGenres', () => {
 
   it('reads the vocabulary from the fixture files: a non-empty set of names', () => {
     expect(fixtureVocabulary().size).toBeGreaterThan(5);
+  });
+});
+
+/*
+  **Leftover records fail the run, as leftover genres do (the coordinator, 10 Nov).** On gate 42824167411 manage.spec's
+  merge test left its seeded record behind; the ledger printed "records: 17 at the start, 19 at the end", nobody read
+  it, and the record became §T.6's source for every parallel spec until the run ended, failing sidebar-113 twice. A
+  guard that fires into a log nobody reads is indistinguishable from no guard. Fails against a teardown that only
+  prints the moved tables.
+*/
+describe('recordsLeft', () => {
+  it('counts records the end holds that the start did not', () => {
+    expect(recordsLeft([{ table: 'records', start: 17, end: 19 }])).toBe(2);
+  });
+
+  it('is zero where the count held, fell, or only other tables moved', () => {
+    expect(recordsLeft([{ table: 'records', start: 17, end: 17 }])).toBe(0);
+    expect(recordsLeft([{ table: 'records', start: 17, end: 15 }])).toBe(0);
+    expect(recordsLeft([{ table: 'tags', start: 0, end: 2 }, { table: 'artists', start: 17, end: 22 }])).toBe(0);
+    expect(recordsLeft([])).toBe(0);
   });
 });
