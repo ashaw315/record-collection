@@ -1,6 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { CAP, FIGURE_FRACTION, FORK, RECORD_MINIMUM, SIDEBAR, contentColumn, gridColumns } from '../src/app/sidebar-layout';
 import { login } from './sign-in';
+import { lineGeometry } from './diagonal-geometry';
 
 /* The ruling's own figure, written here and not read from the source's constant: read from there, this passed against the old 20 as it does against 18 (run against the old build, 10 Oct). */
 const WORDMARK_INSET = 18;
@@ -206,8 +207,9 @@ const crosses = (s: { x1: number; y1: number; x2: number; y2: number }, b: { lef
   return false;
 };
 
-const drawing = (page: Page) =>
-  page.evaluate(() => {
+const drawing = async (page: Page) => {
+  const raw = await page.evaluate(() => {
+    /* Raw readings only; the ends are computed by lineGeometry (e2e/diagonal-geometry.ts), which has its own test. */
     const lines = Array.from(document.querySelectorAll<HTMLElement>('[data-diagonal]')).filter((d) => d.getClientRects().length > 0).map((d) => {
       const cs = getComputedStyle(d);
       const m = new DOMMatrixReadOnly(cs.transform);
@@ -217,10 +219,7 @@ const drawing = (page: Page) =>
         offsetTop read 57, and the end read exactly 0.5 off the header's rule where it was 0.0012 off (NOTES, 10 Nov).
       */
       const parent = (d.offsetParent as HTMLElement).getBoundingClientRect();
-      const x1 = parent.left + parseFloat(cs.left) + (d.offsetParent as HTMLElement).clientLeft;
-      const y1 = parent.top + parseFloat(cs.top) + (d.offsetParent as HTMLElement).clientTop;
-      const length = parseFloat(cs.width);
-      return { name: d.dataset.diagonal ?? '', angle: (Math.atan2(m.b, m.a) * 180) / Math.PI, weight: cs.borderTopWidth, x1, y1, x2: x1 + m.a * length, y2: y1 + m.b * length };
+      return { name: d.dataset.diagonal ?? '', parentLeft: parent.left, parentTop: parent.top, clientLeft: (d.offsetParent as HTMLElement).clientLeft, clientTop: (d.offsetParent as HTMLElement).clientTop, left: cs.left, top: cs.top, a: m.a, b: m.b, length: parseFloat(cs.width), weight: cs.borderTopWidth };
     });
     const texts: { what: string; left: number; right: number; top: number; bottom: number }[] = [];
     const push = (what: string, b: DOMRect) => { if (b.width > 0 && b.height > 0) texts.push({ what, left: b.left, right: b.right, top: b.top, bottom: b.bottom }); };
@@ -233,6 +232,8 @@ const drawing = (page: Page) =>
     for (const el of Array.from(document.querySelectorAll('main a, main button, main input, main select, main [data-collection-table] table, main [data-collection-grid]'))) push(`${el.tagName.toLowerCase()} ${(el.textContent ?? '').trim().slice(0, 14)}`, el.getBoundingClientRect());
     return { lines, texts };
   });
+  return { texts: raw.texts, lines: raw.lines.map(lineGeometry) };
+};
 
 for (const view of VIEWS) {
   test.describe(`§T.6, the ${view}: the head figure, the fragment and their diagonals`, () => {
