@@ -19,7 +19,8 @@ import type { getTestDb } from '../test/helpers/db';
  * table's difference is printed and not yet a failure; those are measured
  * and recorded, and each becomes a rule when its cleanup exists.
  */
-export type Ledger = { tables: Record<string, number>; genres: string[] };
+/** `records` is each record as "title · id": a leaked record is named, and one sharing a title with the seventeen is told apart (10 Nov). */
+export type Ledger = { tables: Record<string, number>; genres: string[]; records: string[] };
 
 type Db = ReturnType<typeof getTestDb>;
 
@@ -31,17 +32,20 @@ export async function readLedger(db: Db): Promise<Ledger> {
     tables[row.tablename] = (count.rows[0] as { n: number }).n;
   }
   const genres = await db.execute(sql`SELECT name FROM genres ORDER BY name`);
-  return { tables, genres: (genres.rows as Array<{ name: string }>).map((g) => g.name) };
+  const records = await db.execute(sql`SELECT title, id FROM records ORDER BY title, id`);
+  return { tables, genres: (genres.rows as Array<{ name: string }>).map((g) => g.name), records: (records.rows as Array<{ title: string; id: string }>).map((r) => `${r.title} · ${r.id}`) };
 }
 
-/** What the end holds that the start did not: the genres by name, and every table whose count moved. */
-export function compareLedgers(start: Ledger, end: Ledger): { genresLeft: string[]; moved: Array<{ table: string; start: number; end: number }> } {
+/** What the end holds that the start did not: the genres by name, the records by title and id, and every table whose count moved. */
+export function compareLedgers(start: Ledger, end: Ledger): { genresLeft: string[]; recordsLeft: string[]; moved: Array<{ table: string; start: number; end: number }> } {
   const had = new Set(start.genres);
   const genresLeft = end.genres.filter((name) => !had.has(name));
+  const hadRecords = new Set(start.records);
+  const recordsLeft = end.records.filter((r) => !hadRecords.has(r));
   const moved = Object.keys(end.tables)
     .filter((table) => (start.tables[table] ?? 0) !== end.tables[table])
     .map((table) => ({ table, start: start.tables[table] ?? 0, end: end.tables[table] }));
-  return { genresLeft, moved };
+  return { genresLeft, recordsLeft, moved };
 }
 
 /** The setup and the teardown run in one process; the environment carries the start between them. */
@@ -75,16 +79,6 @@ export function fixtureVocabulary(dir: string = join('test', 'fixtures', 'discog
     if (file.endsWith('.json')) walk(JSON.parse(readFileSync(join(dir, file), 'utf8')), '');
   }
   return names;
-}
-
-/**
- * Records the end holds that the start did not (the coordinator, 10 Nov). Printed and passed, a leaked record stood as
- * §T.6's source for every parallel spec on gate 42824167411; it fails the run now, as a leaked genre does. A count that
- * fell is a loss, printed with the moved tables and not a leak.
- */
-export function recordsLeft(moved: Array<{ table: string; start: number; end: number }>): number {
-  const records = moved.find((m) => m.table === 'records');
-  return records === undefined ? 0 : Math.max(0, records.end - records.start);
 }
 
 /** The genres left behind, split: the fixtures' own names, which stand, and everything else, which is a leak. */
