@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { eq, sql } from 'drizzle-orm';
 import { images } from '@/db/schema';
 import { getTestDb } from '../test/helpers/db';
+import { releaseText } from '../src/lib/discogs/release-text';
 
 /**
  * Bulk fixture creation for E2E specs, straight to the database.
@@ -82,6 +83,38 @@ export async function seedDiscogsCache(fixtureName: string): Promise<number> {
 }
 
 /** Removes one cached release, so a spec cleans up after itself. */
+/**
+ * **173c (§65): a release's payload as the cache and the text store would hold it.** `seedDiscogsCache` writes only the
+ * cache, and the record page reads the tracklist from `discogs_release_text`, which the app fills when it caches a
+ * release (`storeReleaseText`, server-only, so not callable from here). The rows are derived by the same pure function
+ * the store uses, `releaseText`, so a seeded release reads exactly as an imported one. The payload may be a fixture's or
+ * built inline; its `id` is the release id given.
+ */
+export async function seedRelease(discogsReleaseId: number, payload: Record<string, unknown>): Promise<number> {
+  const db = getTestDb();
+  const withId = { ...payload, id: discogsReleaseId };
+  await db.execute(
+    sql`INSERT INTO discogs_cache (discogs_release_id, payload, fetched_at)
+        VALUES (${discogsReleaseId}, ${JSON.stringify(withId)}::jsonb, now())
+        ON CONFLICT (discogs_release_id)
+        DO UPDATE SET payload = excluded.payload, fetched_at = now()`,
+  );
+  await db.execute(sql`DELETE FROM discogs_release_text WHERE discogs_release_id = ${discogsReleaseId}`);
+  for (const row of releaseText(withId)) {
+    await db.execute(
+      sql`INSERT INTO discogs_release_text (discogs_release_id, kind, ordinal, text, detail)
+          VALUES (${discogsReleaseId}, ${row.kind}, ${row.ordinal}, ${row.text}, ${row.detail})`,
+    );
+  }
+  return discogsReleaseId;
+}
+
+/** A fixture by name through `seedRelease`, under a release id of the run's own. */
+export async function seedReleaseFixture(discogsReleaseId: number, fixtureName: string): Promise<number> {
+  const payload = JSON.parse(readFileSync(`test/fixtures/discogs/${fixtureName}.json`, 'utf8')) as Record<string, unknown>;
+  return seedRelease(discogsReleaseId, payload);
+}
+
 export async function removeDiscogsCache(discogsReleaseId: number): Promise<void> {
   const db = getTestDb();
 

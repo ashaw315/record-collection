@@ -63,6 +63,9 @@ const GOVERNED = [
   /* Step 167: both read the record page's "Manage →" for §63's arrow, by its own record. */
   'e2e/arrow-167.spec.ts',
   'e2e/capture/arrow-167.capture.ts',
+  /* 173c (10 Nov): the TRACKLIST section's assertions and its capture tool. */
+  'e2e/tracklist-173.spec.ts',
+  'e2e/capture/tracklist-173.capture.ts',
   'e2e/capture/about-lines.capture.ts',
   'e2e/capture/step29.capture.ts',
   'e2e/capture/real-captures.capture.ts',

@@ -40,7 +40,8 @@
     "window:measure:pull": "node --import tsx scripts/measure-window.mts pull",
     "window:measure:pan": "node --import tsx scripts/measure-window.mts pan",
     "window:measure:first-pull": "node --import tsx scripts/measure-window.mts first-pull",
-    "window:verdict": "node --import tsx scripts/window-verdict.mts"
+    "window:verdict": "node --import tsx scripts/window-verdict.mts",
+    "discogs:export-tracklist-records": "node --env-file=.env.local --conditions=react-server --import tsx scripts/export-tracklist-records.mts"
   },
   "dependencyNotes": {
     "sharp": "PINNED to the version Next 16 already installs, and declared DELIBERATELY rather than added. It was in the tree transitively (next -> sharp) and loadable, so nothing new is installed by this entry — what was missing was the declaration. Undeclared, a minor Next release dropping or moving it would break §10b's shelf with a module-not-found from a package nobody chose. It decodes cover art to compute a spine colour (src/lib/images/spine-colour.ts); §5.9 accepts jpeg/png/webp and two of the three real covers are PROGRESSIVE jpeg, so hand-rolling a decoder would mean three decoders and a silently wrong colour on the ones it got wrong. Do not remove it as 'a heavy native dependency for one colour computation' — it ships in the Vercel bundle either way."

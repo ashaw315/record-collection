@@ -55951,3 +55951,38 @@ not built 4") moved to 170, 171 and 174; the rule they illustrated, that the unf
 fixture test. The first close-out chain stopped on exactly those two, which is the intake reading the handoff's state as
 it should. Also against myself: a production-read probe was copied into scripts/ and removed while that chain's check was
 running, against the rule that nothing edits the tree during a check; the check had already passed by then, by its log.
+
+## 10 Nov (night): 173c, the TRACKLIST section's gate, assertions and captures
+
+**The seed helper.** `seedRelease(id, payload)` in e2e/seed.ts writes the cache row and the `discogs_release_text` rows
+through the same pure `releaseText` the store uses, since `storeReleaseText` is server-only and the record page reads
+the tracklist from that table; `seedReleaseFixture(id, name)` takes a fixture under a run-own id. Until this, no e2e
+record had a tracklist: 173b's covering run was 34 passed with the section never drawn, and said so.
+
+**The assertions (e2e/tracklist-173.spec.ts, 6 on chromium).** The count line both ways on two inline payloads: unshown
+companies with no credits draw "Credits · 1"; companies all shown, as the record's label and the pressing's plant, draw
+no fold and no line, the tracks alone. A record with no cached release draws no section. On release-gatefold-c (10
+tracks, credits of both kinds, 7 companies) at 1440, 960, 480 and 390: the section directly after Pressing detail's,
+every track by position and title, two track columns at 1440 and 960 and one at 480 and 390 from the computed grid, the
+fold closed on load behind the count line, and opened the release's credits before the tracks'. Control: the one-column
+stylesheet rule removed, 480 and 390 fail on "the tracks grid's columns, expected 1, received 2". Three fixture
+mistakes on the way, each found by the run: a pressing with only a catalogue number renders no Pressing detail section
+(the component fixture's lesson again; a weight makes it render); a label posted twice in one run answers 409 with the
+existing id, which the helper now takes; release-detailed holds release credits only, so its fold has no track block and
+the locator waited out the test.
+
+**The captures (docs/captures/tracklist-173/, 22 shots, README.md).** From the build at 1440 × 900 and 390 × 844, closed
+and opened, on the five records the step names, found through the model by `scripts/export-tracklist-records.mts`
+against production (read-only: OutKast — ATLiens, 126 credits; Pointer Sisters — Break Out, 38 release-credit lines;
+Carly Simon — No Secrets, 67 track-credit lines; Cindy Lee — Diamond Jubilee, 32 tracks; Pharoah Sanders — Jewels Of
+Thought, 2 tracks; 55 hold a release, 2 to 32 tracks, §65's range), seeded under their own titles, labels and plants, so
+the count lines match the production report line for line (127, 124, 99, 31, 20); and a seeded record with no cached
+release, no section. The per-record report (`discogs:tracklist-counts`, read-only) stands beside them: 55 with a section
+and a count line, 45 lowered by a suppressed company, none on companies alone, none without a line. The probe that
+first named the five became the export script; a scratchpad copy could not resolve the repo's modules, which is why it
+lives under scripts/. Looked at: ATLiens opened at 1440, Diamond Jubilee closed at 1440, Jewels Of Thought opened at
+390; the two columns, the hairline, the count line with §T.1's mark, the order opened, all as ruled. Provisional until
+judged (§65 b1.s25): the count line's wording and the two columns.
+**Caught by the check, then governed:** the spec and the capture tool typed 900, 8a's budget, as a viewport height, and
+specs-import-constants refused the commit, naming both as driving the record screen and ungoverned. Both now import
+NO_SCROLL_HEIGHT (which is 900, so the shots stand) and sit in the governed list; 104 of 104 there after.
