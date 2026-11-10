@@ -70,14 +70,27 @@ describe('the credits fold', () => {
     expect(html).toContain('A1 · Hear Nothing');
   });
 
-  it('opened, the release’s credits come first, one line to a role, then each track’s beneath its position and title, then the companies drawn', () => {
+  /*
+    §65 b2.s27 (10 Nov): "The companies the fold draws stand with the release's credits, after its last role and before the
+    first track's position and title, never after the last track." Until then this test pinned 173b's default, the
+    companies after the tracks' credits; it encoded the build, not a ruling, so the ruling moves it.
+  */
+  it('opened, the release’s credits come first, one line to a role, then the companies drawn with them, then each track’s beneath its position and title', () => {
     const html = render(<TracklistSection model={model} base={null} ladder={null} />);
     const inside = /<details[^>]*>([\s\S]*?)<\/details>/.exec(html)?.[1] ?? '';
-    const order = ['Written-By · Discharge', 'Producer · Mike Stone', 'A1 · Hear Nothing', 'Vocals · Cal', 'B2 · I Won’t Subscribe', 'Bass · Rainy', 'Drums · Garry', 'Pressed By · Orlake Records'].map((t) => inside.indexOf(t));
+    const order = ['Written-By · Discharge', 'Producer · Mike Stone', 'Pressed By · Orlake Records', 'A1 · Hear Nothing', 'Vocals · Cal', 'B2 · I Won’t Subscribe', 'Bass · Rainy', 'Drums · Garry'].map((t) => inside.indexOf(t));
     expect(order.every((i) => i > -1), 'every line the fold holds is drawn').toBe(true);
-    expect([...order].sort((a, b) => a - b)).toEqual(order);
+    expect([...order].sort((a, b) => a - b), 'release, companies, then the tracks (§65 b2.s27)').toEqual(order);
     expect(inside, 'a suppressed company is not drawn').not.toContain('Clay Records');
     expect(inside.match(/A1 · Hear Nothing/g)?.length, 'the track’s heading inside the fold, once').toBe(1);
+  });
+
+  it('with no release credits, the companies still stand before the first track’s heading, never after the last track', () => {
+    const html = render(<TracklistSection model={{ ...model, release: [], count: 5, countLine: 'Credits · 5' }} base={null} ladder={null} />);
+    const inside = /<details[^>]*>([\s\S]*?)<\/details>/.exec(html)?.[1] ?? '';
+    expect(inside).not.toContain('data-credits="release"');
+    expect(inside.indexOf('Pressed By · Orlake Records'), 'before the first track’s heading').toBeLessThan(inside.indexOf('A1 · Hear Nothing'));
+    expect(inside.indexOf('Pressed By · Orlake Records'), 'never after the last track').toBeLessThan(inside.indexOf('B2 · I Won’t Subscribe'));
   });
 });
 

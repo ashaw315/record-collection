@@ -9,12 +9,13 @@ import type { TracklistModel } from './tracklist';
  * below, by the region stylesheet's rule on `[data-tracks]`), and the credits folded beneath them behind one line that
  * counts them: closed whenever the page loads, at every count, and absent where the fold would hold nothing, so the
  * section at rest is the tracklist and one line whatever the release holds. Opened, the release's credits first, one
- * line to a role, then each track's beneath its position and title, then the companies drawn; what is drawn and in what
+ * line to a role, then the companies drawn, then each track's beneath its position and title; what is drawn and in what
  * words is the model's (173a), and this only lays it out. A record with no cached release draws no section (§65, §38).
  *
  * One child in `shape="one"`: the fold must run under both track columns, and a third child of a `pair` would be dropped
- * by the split. The companies' place after the tracks' credits is chosen by default; §65 says they stand among the
- * credits and does not say where.
+ * by the split. The companies stand with the release's credits, "after its last role and before the first track's
+ * position and title, never after the last track" (§65 b2.s27, 10 Nov): a company is the release's, as its own credits
+ * are, and drawn after the last track's credits it read as that track's (the 173c captures, Jewels Of Thought).
  */
 export function TracklistSection({ model, base, ladder }: { model: TracklistModel | null; base: string | null; ladder: RecordLadder | null }) {
   if (model === null) return null;
@@ -44,6 +45,11 @@ export function TracklistSection({ model, base, ladder }: { model: TracklistMode
                 {model.release.map((entry) => <li key={entry} className={line}>{entry}</li>)}
               </ul>
             )}
+            {model.companies.length > 0 && (
+              <ul data-credits="companies" className="mt-2 list-none">
+                {model.companies.map((entry) => <li key={entry} className={line}>{entry}</li>)}
+              </ul>
+            )}
             {model.byTrack.map((t) => (
               <div key={t.track} data-credits="track" className="mt-2">
                 <div className={LABEL}>{t.track}</div>
@@ -52,11 +58,6 @@ export function TracklistSection({ model, base, ladder }: { model: TracklistMode
                 </ul>
               </div>
             ))}
-            {model.companies.length > 0 && (
-              <ul data-credits="companies" className="mt-2 list-none">
-                {model.companies.map((entry) => <li key={entry} className={line}>{entry}</li>)}
-              </ul>
-            )}
           </details>
         )}
       </div>

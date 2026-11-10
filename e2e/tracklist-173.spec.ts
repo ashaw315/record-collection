@@ -94,5 +94,41 @@ for (const [width, columns] of [[1440, 2], [960, 2], [480, 1], [390, 1]] as cons
     const releaseBottom = await releaseLines.last().evaluate((el) => el.getBoundingClientRect().bottom);
     const firstTrackTop = await details.locator('[data-credits="track"]').first().evaluate((el) => el.getBoundingClientRect().top);
     expect(firstTrackTop, 'the release’s credits stand before the tracks’').toBeGreaterThanOrEqual(releaseBottom);
+    /* The third element, placed: the fold holds three kinds and an order of two leaves the third anywhere (NOTES, 10 Nov). */
+    const companies = await details.locator('[data-credits="companies"]').evaluate((el) => { const r = el.getBoundingClientRect(); return { top: r.top, bottom: r.bottom }; });
+    expect(companies.top, 'the companies after the release’s last role (§65 b2.s27)').toBeGreaterThanOrEqual(releaseBottom);
+    expect(companies.bottom, 'and before the first track’s position and title (§65 b2.s27)').toBeLessThanOrEqual(firstTrackTop);
   });
 }
+
+/*
+  The step's own assertion, keyed to the card's sentence and not the change file's clause ("where Plaza Sound Studios now
+  follows Sun In Aquarius's credits" reads both ways): §65 b2.s27, "The companies the fold draws stand with the release's
+  credits, after its last role and before the first track's position and title, never after the last track." Jewels Of
+  Thought is seeded from the 173c export (docs/captures/tracklist-173/records.json) with the label and plant production
+  shows, so MPO is suppressed and Plaza Sound Studios is drawn, as in the captures that showed the defect.
+*/
+test('on Jewels Of Thought, Plaza Sound Studios stands after the release’s last role and before the first track’s heading, never after the last track', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: NO_SCROLL_HEIGHT });
+  const exported = JSON.parse(readFileSync('docs/captures/tracklist-173/records.json', 'utf8')) as { records: { title: string; label: string | null; plant: string | null; payload: Record<string, unknown> }[] };
+  const jewels = exported.records.find((r) => r.title === 'Jewels Of Thought');
+  if (jewels === undefined) throw new Error('the 173c export no longer holds Jewels Of Thought');
+  const release = releaseId();
+  await seedRelease(release, jewels.payload);
+  const id = await recordHolding(page, `${Date.now().toString(36)}-j`, release, { label: jewels.label ?? undefined, plant: jewels.plant ?? undefined });
+  await page.goto(`/records/${id}`);
+  const details = page.locator('[data-section="tracklist"] details');
+  await details.locator('summary').click();
+  await expect(details).toHaveAttribute('open', /.*/);
+  const box = (locator: ReturnType<Page['locator']>) => locator.evaluate((el) => { const r = el.getBoundingClientRect(); return { top: r.top, bottom: r.bottom }; });
+  const plaza = details.locator('[data-credits="companies"] li').filter({ hasText: 'Plaza Sound Studios' });
+  await expect(plaza, 'the precondition: the company is drawn, since the page shows no Plaza Sound Studios').toHaveCount(1);
+  await expect(details.locator('[data-credits="companies"] li').filter({ hasText: 'MPO' }), 'the plant is shown, so it is suppressed').toHaveCount(0);
+  const plazaBox = await box(plaza);
+  const lastRole = await box(details.locator('[data-credits="release"] li').last());
+  const firstTrack = await box(details.locator('[data-credits="track"]').first());
+  const lastTrack = await box(details.locator('[data-credits="track"]').filter({ hasText: 'Sun In Aquarius' }));
+  expect(plazaBox.top, 'after the release’s last role (§65 b2.s27)').toBeGreaterThanOrEqual(lastRole.bottom);
+  expect(plazaBox.bottom, 'before the first track’s position and title (§65 b2.s27)').toBeLessThanOrEqual(firstTrack.top);
+  expect(plazaBox.bottom, 'never after the last track, Sun In Aquarius (§65 b2.s27)').toBeLessThanOrEqual(lastTrack.top);
+});

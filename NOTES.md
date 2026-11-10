@@ -55986,3 +55986,47 @@ judged (§65 b1.s25): the count line's wording and the two columns.
 **Caught by the check, then governed:** the spec and the capture tool typed 900, 8a's budget, as a viewport height, and
 specs-import-constants refused the commit, naming both as driving the record screen and ungoverned. Both now import
 NO_SCROLL_HEIGHT (which is 900, so the shots stand) and sit in the governed list; 104 of 104 there after.
+
+## 10 Nov (late): the companies moved to the release's credits; an order of two in a list of three
+
+**The defect the captures showed.** Design read the 173c captures and ruled where the companies stand (§65 b2.s27, "Companies
+with the release", taken in at 53b5f76e): "The companies the fold draws stand with the release's credits, after its last role
+and before the first track's position and title, never after the last track." 173b had put them after the last track's
+credits, chosen by default and said so; on Jewels Of Thought opened, Plaza Sound Studios read as a credit of Sun In
+Aquarius, "with a gap and no heading to say otherwise". The fix moves one block in TracklistSection; the component test
+that asserted the old order was a test written from the build, not a ruling (CLAUDE.md §2), so the ruling moved it, said
+in the test. The e2e asserts the third element placed at four widths, and on Jewels Of Thought seeded from the 173c export
+with the label and plant production shows, Plaza drawn and MPO suppressed as in the captures. Both red first against the
+unfixed build (the component at index 1471 after the last track; e2e Plaza at 967.5 against the first track's 753.5),
+green after; the spec 7 of 7 on chromium.
+
+**Keyed to the card, not the change file.** The change file's "Assert it on Jewels Of Thought, where Plaza Sound Studios
+now follows Sun In Aquarius's credits" reads both ways: "now" as the defect or as the fix, which are opposite assertions.
+The card's sentence settles it and the assertions quote it, by id.
+
+**The lesson, the coordinator's (10 Nov), general:** an assertion on the order of two things in a list of three leaves the
+third unplaced, and the gap does not show as a missing assertion, because the order it does assert is correct. 173c's
+"the release's credits before the tracks'" covered two of the fold's three kinds; the companies were the one position
+nothing constrained, and the defect sat exactly there. When a list holds n kinds, the assertion names every kind's place,
+or says which it leaves free.
+
+**Closed by a different instrument, not re-measured.** Design noted the captures are cropped to the section and cannot show
+it in its own row after Pressing detail. The spec already asserts that from the built page at 1440, 960, 480 and 390
+("directly after Pressing detail", the section index one past pressing-detail's); the README now says so.
+
+**Refused by the check, then kept as ruled:** the first commit regenerated the 173c folder in place, and
+captures-unchanged refused it, "committed captures were rewritten", twelve files. Right: those shots are the evidence
+Design judged and found the defect in, so they stand, and the tool now writes a folder of the run's own
+(docs/captures/tracklist-173d, CAPTURE_INTO) from the 173c export, which stays where it is.
+
+**The two figures Design asked for, measured by the capture tool and written into its README** (from the build at
+1440 × 900, the longest opened line as its text's own box, against §T.6's measure of 736, SCREEN.measure imported):
+ATLiens 1301.4 (the 13-name Written-By line), Break Out 1036.6 (the Synthesizer line), Jewels Of Thought 740.3 over;
+No Secrets 431.4 and Diamond Jubilee 329.8 within; at 390 every line within (321.9 the longest). The open mark: the
+summary's svg is 12 × 12 with a 1px across stroke closed and opened, and the down stroke's display is `inline` closed and
+`none` opened, so the opened mark is §T.1's − at its ruled size, the same DisclosureMark the filters draw.
+
+**Seen, not chased: the seeded releases stay in the test database.** The capture's ledger reads discogs_cache 0 at the start
+and 10 at the end, discogs_release_text 0 to 962: seedRelease writes rows no cleanup deletes, from 173c's spec and capture
+alike, under ids of the run's own in the 900,000,000s. The ledger reports the tables and fails on records and genres only.
+A queue row (Q67), the same family as the leaked tags (Q63).
