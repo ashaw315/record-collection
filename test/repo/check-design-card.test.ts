@@ -60,11 +60,11 @@ describe('withdrawal sentences', () => {
 <p>An example reads “Withdrawn by §9: nothing”, which is the form and not a declaration.</p>
 <p>Withdrawn in part by §7: the fragment sits 24 below.</p>
 </body></html>`;
-    expect(withdrawalReport(html)).toEqual({ count: 2, duplicates: ['Withdrawn in part by §7: the fragment sits 24 below.'], byForm: { within: 0, by: 0, inPartBy: 2, inWholeBy: 0, supersededBy: 0, supersededInPartBy: 0 } });
+    expect(withdrawalReport(html)).toEqual({ count: 2, duplicates: ['Withdrawn in part by §7: the fragment sits 24 below.'], byForm: { 'Withdrawn in part by §N:': 2 } });
   });
 
   it('reports none where none is declared', () => {
-    expect(withdrawalReport('<!DOCTYPE html><html><body><p>Prose only.</p></body></html>')).toEqual({ count: 0, duplicates: [], byForm: { within: 0, by: 0, inPartBy: 0, inWholeBy: 0, supersededBy: 0, supersededInPartBy: 0 } });
+    expect(withdrawalReport('<!DOCTYPE html><html><body><p>Prose only.</p></body></html>')).toEqual({ count: 0, duplicates: [], byForm: {} });
   });
 
   /*
@@ -78,7 +78,8 @@ describe('withdrawal sentences', () => {
 <p>An example reads “Withdrawn in whole by §9: nothing”, the form and not a declaration.</p>
 </body></html>`;
     const report = withdrawalReport(html);
-    expect(report.byForm).toEqual({ within: 1, by: 1, inPartBy: 1, inWholeBy: 0, supersededBy: 2, supersededInPartBy: 1 });
+    /* By opener, normalised to the grammar (10 Nov): a form the card does not use is not a row, and every marker is in one. */
+    expect(report.byForm).toEqual({ 'Withdrawn within §N:': 1, 'Withdrawn by §N:': 1, 'Withdrawn in part by §N:': 1, 'Superseded by §N:': 2, 'Superseded in part by §N:': 1 });
     expect((Object.values(report.byForm) as number[]).reduce((a, b) => a + b, 0)).toBe(report.count);
     expect(report.count).toBe(6);
   });
@@ -88,7 +89,7 @@ describe('withdrawal sentences', () => {
     const card = join(dir, 'card.dc.html');
     writeFileSync(card, '<!DOCTYPE html><html><body><p>Withdrawn within §3: a. Superseded by §6: d.</p></body></html>');
     const out = spawnSync('node', ['scripts/check-design-card.mjs', card], { encoding: 'utf8' });
-    expect(out.stdout).toMatch(/^withdrawal sentences: 2 declared \(within 1, by 0, in part by 0, in whole by 0, superseded by 1, superseded in part by 0\); none twice$/m);
+    expect(out.stdout).toMatch(/^withdrawal sentences: 2 declared \(Superseded by §N 1, Withdrawn within §N 1\); none twice$/m);
     rmSync(dir, { recursive: true, force: true });
   });
 });

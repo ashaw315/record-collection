@@ -22,7 +22,8 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { basename, relative } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { withdrawalSentencesIn } from './withdrawals.mjs';
+import { collapseText, withdrawalSentencesIn } from './withdrawals.mjs';
+import { markersIn } from './marker-grammar.mjs';
 
 const ENTITIES = { nbsp: ' ', amp: '&', lt: '<', gt: '>', quot: '"', rsquo: '’', lsquo: '‘', rdquo: '”', ldquo: '“', mdash: '—', ndash: '–', hellip: '…', times: '×', sect: '§' };
 
@@ -57,17 +58,6 @@ export function documentShape(html) {
   return { doctype: /^﻿?\s*<!doctype\s+html/i.test(html), closingHtml: /<\/html>\s*$/i.test(html) };
 }
 
-/** The declared forms (withdrawals.mjs PHRASING), each as the opening of a declared sentence; the order is the printed order. */
-const FORMS = [
-  ['within', /^Withdrawn within §/],
-  ['by', /^Withdrawn by §/],
-  ['inPartBy', /^Withdrawn in part by §/],
-  ['inWholeBy', /^Withdrawn in whole by §/],
-  ['supersededBy', /^Superseded by §/],
-  ['supersededInPartBy', /^Superseded in part by §/],
-];
-const FORM_LABELS = { within: 'within', by: 'by', inPartBy: 'in part by', inWholeBy: 'in whole by', supersededBy: 'superseded by', supersededInPartBy: 'superseded in part by' };
-
 /**
  * The declared withdrawal sentences (withdrawals.mjs, which leaves a quoted
  * example out), those standing more than once, and the count by form from the
@@ -76,19 +66,19 @@ const FORM_LABELS = { within: 'within', by: 'by', inPartBy: 'in part by', inWhol
  * and nothing in either could say which was wrong.
  */
 export function withdrawalReport(html) {
-  const sentences = withdrawalSentencesIn(plainText(html));
+  const plain = plainText(html);
+  const sentences = withdrawalSentencesIn(plain);
   const seen = new Map();
-  const byForm = Object.fromEntries(FORMS.map(([name]) => [name, 0]));
-  for (const s of sentences) {
-    seen.set(s, (seen.get(s) ?? 0) + 1);
-    const form = FORMS.find(([, re]) => re.test(s));
-    if (form !== undefined) byForm[form[0]] += 1;
-  }
+  for (const s of sentences) seen.set(s, (seen.get(s) ?? 0) + 1);
+  /* By opener, normalised to Design's grammar (10 Nov): every form the card uses, counted from the same markers, so the openers sum to the count. */
+  const byForm = {};
+  for (const m of markersIn(collapseText(plain))) byForm[m.normalised] = (byForm[m.normalised] ?? 0) + 1;
   return { count: sentences.length, duplicates: [...seen].filter(([, n]) => n > 1).map(([s]) => s), byForm };
 }
 
+/** The openers, most frequent first, as "opener N"; by the grammar every marker on the card is in one of them. */
 export function byFormLine(byForm) {
-  return FORMS.map(([name]) => `${FORM_LABELS[name]} ${byForm[name]}`).join(', ');
+  return Object.entries(byForm).sort((x, y) => y[1] - x[1] || x[0].localeCompare(y[0])).map(([opener, n]) => `${opener.replace(/:$/, '')} ${n}`).join(', ');
 }
 
 /**

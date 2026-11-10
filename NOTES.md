@@ -55892,3 +55892,28 @@ spec's own tracked artist; three of the "saves" are links named Add record. The 
 in cleanup.ts, reads the record back and tracks it and the artist the save chose. The guard is its test: the four specs
 on both projects left 5 records (first pass, two sites missed by a wrong needle: 4), then 0, 216 passed each time. CI's
 chromium five are read from gate 42868188966 when it reports. Tags still leak (0 → 2 mobile, 0 → 10 chromium), Q63.
+
+## 10 Nov (evening): the marker grammar built; one opener outside it; the diagonal reading tested; the five leaks closed
+
+**The marker grammar (scripts/marker-grammar.mjs), to Design's bullet.** `parseMarker` reads verb, optional "in part" or
+"in whole", optional "within" or "by" with references joined by "," or "and", optional qualifier, the colon; Narrowed as
+Withdrawn in part; a marker-shaped opener outside it throws by name. `markersIn` finds every opener where the verb is
+followed by a colon before any sentence stop, wherever it sits, quoted examples left out. On the Record Detail card:
+107 markers, 20 distinct openers, 29 partial plus one Narrowed, matching the coordinator's table except two offsetting
+rows: their ninth mid-sentence marker is the quoted example “Withdrawn within §33: …”, which this reader and
+withdrawalSentencesIn both leave out as an example of the form, so 8 here; and one "Superseded in part by §G.8:", a
+lettered reference, is counted here and absent from their table. **The old reader's 104 against the grammar's 107:** it
+missed the four reference-less markers and Narrowed, and counted two §20 sentences the grammar calls prose, "Withdrawn
+by §20 — the drawing is width-bound…" (an em dash where the colon would be) and "Superseded by §20 on the first term
+and on the curve's shape, which are separate withdrawals." (no colon): for Design, as markers missing their colon or
+prose that reads as one. **Across every card, 286 marker-shaped openers and one outside the grammar:** the Wall's
+"Withdrawn above §W.26's fork by §W.29:", a qualifier before "by" where the grammar puts it after the references.
+Design's to settle (amend the grammar or the sentence); until then check-design-card refuses the Wall card by name, and
+assertion 9 keeps its old reader, since under the grammar the index stops on that opener (seen: RUN STOPPED, 4 ABSENT).
+Chosen by default: the card verifier on the grammar now, the index after the ruling. The report's breakdown is by
+normalised opener (its two format tests updated to the new line), so a form the card does not use is not a row.
+
+**Earlier today, recorded in their commits:** sidebar-113's diagonal reading tested at the level of the defect
+(79661118: lineGeometry fed the gate's 56.501156, the rounded start missing by 0.5, a rounding version failing it; a
+proxy test named as one, whose first form wanted a call the spec does not make); the five leaked records closed by one
+helper after the named ledger listed them (624e55eb), CI's five on both shards the same five.
