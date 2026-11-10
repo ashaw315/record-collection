@@ -145,6 +145,10 @@ Twelve are built and numbered 0 to 9, 11 and 12. Assertion 8 has two parts, so t
 
    **The defect that motivated it (2 Nov):** §W.8 said "the test sets the preference and asserts" for weeks over a test nobody had written; once written, `e2e/wall-reduced-motion.spec.ts` found two defects. The target read as covered and the suite had nothing to report.
 
+14. **A row count the card states is the count the build lays.** §28's sentence in force giving the lower region's rows ("six rows at 12 and 8 columns, eight at 4 and nine at one"), found in §28 by the shared heading parser, is compared with `rowsAt` in `src/app/records/[id]/region-rows.ts` at 1440, 960, 480 and 390. Run as `test/repo/card-row-counts.test.ts`, in the intake's document suite, because the index runs as plain Node and the row model is TypeScript. The sentence absent, or present twice in force, fails. A disagreement fails unless declared in the test with the ruling the build follows, and a declared one that stops holding fails too, so a corrected sentence removes its declaration.
+   Fail: the test's own message, naming each width as `{ card, build }`.
+   **The defect that motivated it (9 Nov, the coordinator):** "Tracklist row" gave §28 a new sentence carrying two figures forward, six at 8 and nine at one, that §34 (the market's own row at 8) and §53 (the images row unsplit at one) already contradicted inside the same card, and neither side could see it: Design had no build to check against, and the card verification counts tags, bold sentences, withdrawal sentences and quote matches and had never checked a number in a card against another section of it. A figure stated in prose beside a figure derived in code, with nothing joining them. Declared on its first run: 960 (card 6, build 7) and 390 (card 9, build 8), for Design.
+
 ## Assertion 10 — NOT BUILT
 
 **NOT BUILT. The script does not run it, so the no-count rule does not reach it and the suite does not run it.** It was planned as assertion 9; the number went to the reverse check, which was built first, so this is 10. It moves into the numbered list above in the round the quoting pass over the build steps lands.
