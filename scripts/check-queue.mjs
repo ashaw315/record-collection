@@ -18,7 +18,7 @@
  * copy: the unbuilt handoff steps are printed from `scripts/handoff-unbuilt.json`,
  * the list the twins test keeps exact.
  *
- * **Assertion queue-1, the one numbered line, with the exit code: `QUEUE.md`
+ * **Assertion queue-1, one of the two numbered lines (queue-2 below), with the exit code: `QUEUE.md`
  * restates no unbuilt handoff step** (ruled by the coordinator, 5 Nov; its
  * name carries the script, because check-index's assertion 1 is "§65 rows=0"
  * and a refusal's message has to name one check). A
@@ -108,6 +108,29 @@ export function restatements(items, heads) {
   return findings;
 }
 
+/**
+ * **Assertion queue-2: no open row waits on a ruling that has landed** (the coordinator, 10 Nov). A row waiting on a
+ * Design ruling names it after "**Waits on:**", a change file's title in double quotes or a withdrawal id in
+ * backticks, and this resolves the name against the two records that exist for it: the landed list
+ * (docs/design-landed.jsonl) and WITHDRAWALS.md's ids. The queue has no second record of its own; for this subset of
+ * rows one exists. The motivating defect: Q10 and Q28 sat open four days after §43's ruling landed in "First paint is
+ * styled", and with Q10 open, record-band-43:33's failures read as waiting on Design, so a stale row gave a live
+ * failure a false cause. A name nothing holds is reported, not failed: the ruling may not be sent yet.
+ */
+export function waitingOnLanded(items, { files, withdrawalIds }) {
+  const landed = [];
+  const unknown = [];
+  for (const it of items) {
+    if (it.status !== 'open') continue;
+    for (const m of it.item.matchAll(/\*\*Waits on:\*\*\s*(?:"([^"]+)"|`([^`]+)`)/g)) {
+      const [name, shown] = m[1] !== undefined ? [m[1], `"${m[1]}"`] : [m[2], `\`${m[2]}\``];
+      const held = m[1] !== undefined ? files.has(name) : withdrawalIds.has(name);
+      (held ? landed : unknown).push(`${it.id} waits on ${shown}, which ${held ? 'has landed' : 'nothing holds yet'} (line ${it.line})`);
+    }
+  }
+  return { landed, unknown };
+}
+
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   const text = readFileSync(process.env.QUEUE_FILE ?? 'QUEUE.md', 'utf8');
   const items = parseQueue(text);
@@ -135,6 +158,12 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   /* `queue-1`, not `1`: assertion 1 is check-index's "§65 rows=0", and a refusal's message has to name one check (the coordinator, 5 Nov). */
   console.log(`${copies.length === 0 ? 'PASS' : 'FAIL'} queue-1 restates no unbuilt handoff step${copies.length === 0 ? '' : ` (${copies.length})`}`);
   for (const c of copies) console.log(`  ${c}`);
+  const files = new Set(readFileSync('docs/design-landed.jsonl', 'utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l).file));
+  const withdrawalIds = new Set([...readFileSync('docs/design/WITHDRAWALS.md', 'utf8').matchAll(/^- \*\*`([^`]+)`\*\*/gm)].map((m) => m[1]));
+  const waits = waitingOnLanded(items, { files, withdrawalIds });
+  console.log(`${waits.landed.length === 0 ? 'PASS' : 'FAIL'} queue-2 no open row waits on a ruling that has landed${waits.landed.length === 0 ? '' : ` (${waits.landed.length})`}`);
+  for (const w of waits.landed) console.log(`  ${w}`);
+  for (const w of waits.unknown) console.log(`  report only: ${w}`);
   console.log('The rest is a report, not a verdict: it cannot notice an item that was never written down, and a clean report is not proof the list is complete.');
-  process.exit(copies.length === 0 ? 0 : 1);
+  process.exit(copies.length === 0 && waits.landed.length === 0 ? 0 : 1);
 }

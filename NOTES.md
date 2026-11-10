@@ -55700,3 +55700,36 @@ find the thing by what it is, not where it falls.
 **Assertion 14 (ASSERTIONS-spec): a row count the card states is the count the build lays**, in
 test/repo/card-row-counts.test.ts; declared disagreements 960 (card 6, build 7, §34) and 390 (card 9, build 8, §53),
 seen failing undeclared and with a wrong declaration.
+
+## 10 Nov: §28's counts withdrawn and assertion 14 moved to §26; §W.23 read; Q10 and Q28 closed; queue-2
+
+**Assertion 14 on §26, at twelve columns only.** "Row counts left to the build" withdrew §28's six/six/eight/nine; the
+test failed loudly on the withdrawn sentence, as written, and now pins §26's listing in force ("runs as six rows")
+against rowsAt(1440). Twelve columns only, because §26's spans are twelve-column spans: reading them as a count at
+every width and adding one is how six/six/eight/nine was made. The listing in force is read from §26's withdrawal
+sentences ("Withdrawn within §26: the lower region as five rows"), not the last match or the largest number; a version
+that ignores them fails twice. An observation, not asserted: §26's in-force listing names row 4 "two halves (6 / 6)",
+while §53 made the images row one section of twelve, which the build follows.
+
+**§W.23: the disjoint proxy and the reduced volume are one thing, by the section's own sentences.** Sentence 18
+defines the reduced volume ("where two objects share bounds, the sorted extent is the part that does not
+interpenetrate"); sentence 25 names that reduction a disjoint proxy ("an object that interpenetrates has to be reduced
+to a disjoint proxy before it can be ordered at all"); 19 and 20 withdrew it for the cut and 22 reinstated it ("The
+reduced volume is again the rule for every interpenetrating object"). So the row describes the rule in force, settled
+by the section's definitions rather than two readers.
+
+**A family member, new: an item left open in the record supplied a cause for a failure it had nothing to do with.**
+Q10 and Q28 sat open four days after §43's ruling landed in "First paint is styled" (the coordinator's, by its own
+account). With Q10 open, record-band-43:33's failures read as "waiting on a Design ruling", and the red gate on 21958156
+arrived with that explanation already attached. Closed as ruled §43. **The guard, queue-2 in check-queue.mjs:** a row
+waiting on a Design ruling names it after "**Waits on:**" (a change file in double quotes, a withdrawal id in
+backticks), and the check resolves it against the landed list and WITHDRAWALS.md; an open row waiting on a ruling that
+has landed fails with the exit code, and a name nothing holds yet is reported. Tests first (four, failing on the
+missing function); staged on a copy of QUEUE.md with Q10 open and waiting on "First paint is styled", it failed with
+exit 1 naming Q10; on the real file, both rows closed, it passes.
+
+**Against 171 (in Q58's row too):** gate 42719165095, The Hurdy Gurdy Man @1300 first paint 73 against a settled
+320.9 (the partial-band shape), and @960 on the retry its note cell 157 then 225 (the partial-cell shape).
+
+**"About half the gates" withdrawn.** record-band-43:33 has failed at two gates (42548809533, 42719165095) and passed
+at two (42532355396, 42701756203): four observations, not a rate.

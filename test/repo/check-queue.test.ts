@@ -3,7 +3,7 @@ import { readFileSync, unlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { consistency, parseQueue, restatements } from '../../scripts/check-queue.mjs';
+import { consistency, parseQueue, restatements, waitingOnLanded } from '../../scripts/check-queue.mjs';
 
 /**
  * **`QUEUE.md` has no second record, and its check says so (the coordinator,
@@ -109,6 +109,36 @@ describe('restatements', () => {
   it('leaves a bare section reference alone: a row that names §65 without its words is a reference, not a copy', () => {
     const items = parseQueue('## Q\n\n| id | status | item | record |\n|---|---|---|---|\n| Q22 | open | The vibe search, after §65 lands | nothing yet |\n');
     expect(restatements(items, heads)).toEqual([]);
+  });
+});
+
+/*
+  queue-2 (the coordinator, 10 Nov): a row waiting on a Design ruling names the ruling, and the check resolves the name
+  against the second records that exist for it, the landed list and WITHDRAWALS.md. Q10 and Q28 sat open four days after
+  §43's ruling landed in "First paint is styled", and with Q10 open record-band-43:33's failures read as waiting on
+  Design: a stale open row gave a live failure a false cause. A row waiting on a ruling that has landed now fails.
+*/
+describe('waitingOnLanded', () => {
+  const landed = { files: new Set(['First paint is styled']), withdrawalIds: new Set(['65/place-by-25']) };
+  const rows = (item: string, status = 'open') => parseQueue(`## Q\n\n| id | status | item | record |\n|---|---|---|---|\n| Q10 | ${status} | ${item} | §43 |\n`);
+
+  it('fails an open row waiting on a change file that has landed, naming it', () => {
+    expect(waitingOnLanded(rows('Which frame first paint is. **Waits on:** "First paint is styled"'), landed)).toEqual({ landed: ['Q10 waits on "First paint is styled", which has landed (line 5)'], unknown: [] });
+  });
+
+  it('fails an open row waiting on a withdrawal id that WITHDRAWALS.md holds', () => {
+    expect(waitingOnLanded(rows('The placement. **Waits on:** `65/place-by-25`'), landed).landed).toEqual(['Q10 waits on `65/place-by-25`, which has landed (line 5)']);
+  });
+
+  it('passes a row waiting on a ruling not yet landed, and reports a name that resolves to nothing', () => {
+    const r = waitingOnLanded(rows('A ruling to come. **Waits on:** "A file not sent yet"'), landed);
+    expect(r.landed).toEqual([]);
+    expect(r.unknown).toEqual(['Q10 waits on "A file not sent yet", which nothing holds yet (line 5)']);
+  });
+
+  it('leaves a closed row and a row that names no ruling alone', () => {
+    expect(waitingOnLanded(rows('Closed. **Waits on:** "First paint is styled"', 'ruled §43'), landed)).toEqual({ landed: [], unknown: [] });
+    expect(waitingOnLanded(rows('Waits on Design, unnamed'), landed)).toEqual({ landed: [], unknown: [] });
   });
 });
 
