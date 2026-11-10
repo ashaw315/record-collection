@@ -133,6 +133,42 @@ export function waitingOnLanded(items, { files, withdrawalIds }) {
 
 const WAITS_ON = /\*\*Waits on:\*\*\s*(?:"[^"]+"|`[^`]+`)/;
 
+const MONTHS = { jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11 };
+const PUT_TO = /\*\*Put to Adam:\*\*\s*(\d{1,2} [A-Z][a-z]{2}(?: \d{4})?)/;
+const ANSWER = /\*\*Answer:\*\*/;
+
+/**
+ * Rows blocked on Adam, with how long each has waited (the coordinator, 10 Nov). queue-2 resolves rows waiting on
+ * Design; nothing covered rows waiting on Adam, where both of the day's stale rows were (Q10 open four days after its
+ * ruling; Q2, Q4 and Q5 relayed as waiting after he had decided them). A row under "Blocked on Adam" carries
+ * "**Put to Adam:** 6 Nov" and, when it comes, "**Answer:** …". Reported, never refused: the open rows there with no
+ * answer recorded, and the days waited from the date, or that no date is recorded. A date without a year is this year's.
+ */
+export function blockedOnAdam(items, today) {
+  const out = [];
+  for (const it of items) {
+    if (it.section !== 'Blocked on Adam' || it.status !== 'open') continue;
+    const answered = ANSWER.test(it.item);
+    if (answered) continue;
+    const m = PUT_TO.exec(it.item);
+    let days = null;
+    if (m !== null) {
+      const [d, mon, y] = m[1].split(' ');
+      const put = new Date(Number(y ?? today.getFullYear()), MONTHS[mon.toLowerCase()], Number(d), 12);
+      days = Math.floor((today - put) / 86_400_000);
+    }
+    out.push({ id: it.id, putTo: m === null ? null : m[1], days, answered, line: it.line });
+  }
+  return out;
+}
+
+/** The report-only line: each row with its wait, or that no date was recorded; the count of open rows under the heading beside it. */
+export function blockedOnAdamLine(rows, open) {
+  if (rows.length === 0) return `report only: ${open} open rows blocked on Adam`;
+  const each = rows.map((r) => `${r.id} (${r.putTo === null ? 'no date recorded' : `put to him ${r.putTo}, ${r.days} day${r.days === 1 ? '' : 's'}`})`);
+  return `report only: ${open} open rows blocked on Adam, ${rows.length} with no answer recorded: ${each.join(', ')}`;
+}
+
 /**
  * How much queue-2 checked: open rows naming their ruling, of all open rows (the coordinator, 10 Nov). Most rulings have
  * no title or id until Design sends them, so the check can apply to about no rows; this is printed beside the verdict
@@ -182,6 +218,8 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   const withdrawalIds = new Set([...readFileSync('docs/design/WITHDRAWALS.md', 'utf8').matchAll(/^- \*\*`([^`]+)`\*\*/gm)].map((m) => m[1]));
   const waits = waitingOnLanded(items, { files, withdrawalIds });
   console.log(queue2Line(waits, queue2Coverage(items)));
+  const blocked = items.filter((it) => it.section === 'Blocked on Adam' && it.status === 'open').length;
+  console.log(blockedOnAdamLine(blockedOnAdam(items, new Date()), blocked));
   for (const w of waits.landed) console.log(`  ${w}`);
   for (const w of waits.unknown) console.log(`  report only: ${w}`);
   console.log('The rest is a report, not a verdict: it cannot notice an item that was never written down, and a clean report is not proof the list is complete.');

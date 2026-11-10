@@ -6,8 +6,9 @@ file is read through at the top of each session. **A row is closed in the turn
 its answer arrives** (the coordinator, 10 Nov): Q10 sat open four days after its
 ruling landed and gave a red gate a false cause, and Q2, Q4 and Q5 sat open after
 Adam decided them and sent him back to captures he had judged. A row under
-Blocked on Adam carries the date it was put to him and, when it comes, the words
-of his answer. Content compiled by the coordinator from the whole conversation
+Blocked on Adam carries the date it was put to him, `**Put to Adam:** 6 Nov`, and,
+when it comes, the words of his answer after `**Answer:**`; the check reports every
+open row there without one and the days it has waited. Content compiled by the coordinator from the whole conversation
 record as of 5 Nov 2026; the format and the check are Code's.
 
 **What the check can and cannot do.** `node scripts/check-queue.mjs` reports,

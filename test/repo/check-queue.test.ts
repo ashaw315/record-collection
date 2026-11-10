@@ -3,7 +3,7 @@ import { readFileSync, unlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { consistency, parseQueue, queue2Coverage, queue2Line, restatements, waitingOnLanded } from '../../scripts/check-queue.mjs';
+import { blockedOnAdam, blockedOnAdamLine, consistency, parseQueue, queue2Coverage, queue2Line, restatements, waitingOnLanded } from '../../scripts/check-queue.mjs';
 
 /**
  * **`QUEUE.md` has no second record, and its check says so (the coordinator,
@@ -167,6 +167,40 @@ describe('queue-2’s coverage, beside its verdict', () => {
   });
 });
 
+/*
+  **Rows blocked on Adam are reported with how long they have waited (the coordinator, 10 Nov).** queue-2 resolves rows
+  waiting on Design; nothing covered rows waiting on Adam, where both of the day's stale rows were: Q10 open four days
+  after its ruling, and Q2, Q4 and Q5 relayed to him as waiting after he had decided them. A row under "Blocked on Adam"
+  carries the date it was put to him, "**Put to Adam:** 6 Nov", and his answer when it comes, "**Answer:** …". The check
+  reports, never refuses: every open row there with no answer recorded, and the days it has waited, so a row that has
+  sat eleven days is re-read instead of re-relayed.
+*/
+describe('blockedOnAdam', () => {
+  const file = (rows: string, heading = 'Blocked on Adam') => parseQueue(`## ${heading}\n\n| id | status | item | record |\n|---|---|---|---|\n${rows}\n\n## Code's queue\n\n| id | status | item | record |\n|---|---|---|---|\n| Q90 | open | Elsewhere. **Put to Adam:** 1 Nov | x |\n`);
+  const today = new Date('2026-11-10T12:00:00-05:00');
+
+  it('lists only the open rows under the Blocked on Adam heading', () => {
+    const items = file('| Q1 | open | Store the notes. **Put to Adam:** 6 Nov | x |\n| Q2 | ruled §W.13 | Closed. **Put to Adam:** 6 Nov | x |');
+    expect(blockedOnAdam(items, today).map((r) => r.id)).toEqual(['Q1']);
+  });
+
+  it('reads the date it was put to him and counts the days waited', () => {
+    const [row] = blockedOnAdam(file('| Q1 | open | Store the notes. **Put to Adam:** 6 Nov | x |'), today);
+    expect(row).toEqual({ id: 'Q1', putTo: '6 Nov', days: 4, answered: false, line: 5 });
+  });
+
+  it('does not list a row whose answer is recorded, and says when no date is', () => {
+    const rows = blockedOnAdam(file('| Q5 | open | The look. **Put to Adam:** 6 Nov **Answer:** "sounds god" | x |\n| Q47 | open | Three notes, no date | x |'), today);
+    expect(rows).toEqual([{ id: 'Q47', putTo: null, days: null, answered: false, line: 6 }]);
+  });
+
+  it('prints a report-only line naming each row and its wait, and says so when none waits', () => {
+    expect(blockedOnAdamLine([{ id: 'Q1', putTo: '6 Nov', days: 4, answered: false, line: 5 }, { id: 'Q47', putTo: null, days: null, answered: false, line: 6 }], 3))
+      .toBe('report only: 3 open rows blocked on Adam, 2 with no answer recorded: Q1 (put to him 6 Nov, 4 days), Q47 (no date recorded)');
+    expect(blockedOnAdamLine([], 0)).toBe('report only: 0 open rows blocked on Adam');
+  });
+});
+
 describe('the repo’s QUEUE.md', () => {
   const text = readFileSync('QUEUE.md', 'utf8');
 
@@ -215,6 +249,10 @@ describe('the check as a command', () => {
     expect(status).toBe(0);
     expect(out).toMatch(/consistency, report only/);
     expect(out).toMatch(/^PASS queue-1 restates no unbuilt handoff step/m);
+  });
+
+  it('prints the blocked-on-Adam line on the repo’s QUEUE.md', () => {
+    expect(run('QUEUE.md').out).toMatch(/^report only: \d+ open rows blocked on Adam/m);
   });
 
   it('prints queue-2’s coverage on the repo’s QUEUE.md, the open rows counted from the file', () => {
