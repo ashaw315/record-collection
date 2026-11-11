@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Input } from '@/components/ui/input';
 import { HIT } from '@/app/hit-area';
 import { CONTROL_BOX, CONTROL_LABEL, LABEL, LABEL_TYPE } from '@/app/records/[id]/grid-type';
@@ -66,7 +66,16 @@ type Props = {
   onUpdate: (id: string, values: Record<string, string>) => void;
   onDelete: (row: Row) => void;
   genres?: ListGenres;
+  /**
+   * Step 174 (§T.6): the one guard for every exit the page owns. While the open form has changes this hands the parent a
+   * function that asks on the row's one line and runs the exit only on DISCARD CHANGES; with nothing changed it hands
+   * null, and the parent's exits run at once. The parent consults it before a change of section and a link in the app.
+   */
+  onGuard?: (guard: ExitGuard | null) => void;
 };
+
+/** Asks before an exit and performs it on DISCARD CHANGES, after the row's history entry is gone. */
+export type ExitGuard = (perform: () => void) => void;
 
 const NEW = 'new';
 /** Genres indent 12 a level, "capped at three levels". */
@@ -91,19 +100,33 @@ function draftOf(row: Row, field: FieldSpec): string {
 const FIELD_LABEL = `block pb-1 ${LABEL}`;
 const FIELD = 'h-9 w-full';
 
-export function ResourceList({ resource, rows, busyId, rowError, createError, onCreate, onUpdate, onDelete, genres }: Props) {
+export function ResourceList({ resource, rows, busyId, rowError, createError, onCreate, onUpdate, onDelete, genres, onGuard }: Props) {
   const [openId, setOpenId] = useState<string | null>(null);
   const [draft, setDraft] = useState<Record<string, string>>({});
   const [parent, setParent] = useState('');
   /* The form as it was opened, to tell a change from none: a field put back is not a change. */
   const [opened, setOpened] = useState<{ draft: Record<string, string>; parent: string }>({ draft: {}, parent: '' });
-  /* What was pressed while the open form had changes, held until DISCARD CHANGES or KEEP EDITING. */
-  const [asked, setAsked] = useState<{ id: string; row?: Row } | null>(null);
+  /* What was asked for while the open form had changes, held until DISCARD CHANGES performs it or KEEP EDITING drops it. */
+  const [asked, setAsked] = useState<{ perform: () => void } | null>(null);
   /* A genre is its name here; its description is not edited on this screen in the table either. */
   const fields = genres === undefined ? formFields(resource) : resource.fields.filter((field) => field.name === 'name');
   const second = tableFields(resource).filter((field) => field.name !== 'name');
 
   const changed = openId !== null && (parent !== opened.parent || fields.some((field) => (draft[field.name] ?? '') !== (opened.draft[field.name] ?? '')));
+
+  /*
+    **Step 174 (§T.6): "opening a row adds one entry to the history, so Back closes the row and asks as a close does."**
+    `pushed` says the row's entry is on the stack. A close by any means pops it (`history.back()`), and `popping` marks
+    that pop as ours so its popstate closes nothing twice; `afterPop` is what an exit does once the entry is gone, so a
+    link is followed only after the pop lands and the two history operations never race (the coordinator's third
+    escalation case). A Back the reader pressed has popped the entry already: with nothing changed the row closes and
+    `pushed` is cleared without a second pop; with changes the entry is pushed back and the line asks.
+  */
+  const pushed = useRef(false);
+  const popping = useRef(false);
+  const afterPop = useRef<(() => void) | null>(null);
+  const changedNow = useRef(changed);
+  changedNow.current = changed;
 
   function go(id: string, row?: Row) {
     setAsked(null);
@@ -121,11 +144,85 @@ export function ResourceList({ resource, rows, busyId, rowError, createError, on
 
   function open(id: string, row?: Row) {
     if (changed) {
-      setAsked({ id, row });
+      setAsked({ perform: () => go(id, row) });
       return;
     }
     go(id, row);
   }
+
+  /** Close the open row and, once its history entry is gone, do what the exit asked for. */
+  function leave(perform: () => void) {
+    setAsked(null);
+    if (pushed.current) afterPop.current = perform;
+    setOpenId(null);
+    if (!pushed.current) perform();
+  }
+
+  useEffect(() => {
+    if (openId !== null && !pushed.current) {
+      window.history.pushState({ manageRow: openId }, '', window.location.href);
+      pushed.current = true;
+    } else if (openId === null && pushed.current) {
+      pushed.current = false;
+      popping.current = true;
+      window.history.back();
+    }
+  }, [openId]);
+
+  useEffect(() => {
+    function onPop() {
+      if (popping.current) {
+        popping.current = false;
+        const after = afterPop.current;
+        afterPop.current = null;
+        after?.();
+        return;
+      }
+      if (!pushed.current) return;
+      /* Another entry above ours popped (the app menu's, which closes by its own entry at the same URL): ours still stands. */
+      if ((window.history.state as { manageRow?: string } | null)?.manageRow !== undefined) return;
+      if (changedNow.current) {
+        /* Back over a change: the entry comes back, and the line asks as a close does. */
+        window.history.pushState({ manageRow: openId }, '', window.location.href);
+        setAsked({ perform: () => leave(() => {}) });
+        return;
+      }
+      pushed.current = false;
+      setAsked(null);
+      setOpenId(null);
+    }
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, [openId]);
+
+  /* Unmounted with its entry on the stack (a section changed with an unchanged row open): the entry goes with it. */
+  useEffect(
+    () => () => {
+      if (pushed.current) {
+        pushed.current = false;
+        window.history.back();
+      }
+    },
+    [],
+  );
+
+  /* The browser's own exits: the unload prompt while the open form has changes, and not otherwise. */
+  useEffect(() => {
+    if (!changed) return;
+    const prompt = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+    };
+    window.addEventListener('beforeunload', prompt);
+    return () => window.removeEventListener('beforeunload', prompt);
+  }, [changed]);
+
+  /* The guard the parent's exits consult: present while the open form has changes, gone with the list. Read through a ref so a parent's re-render does not drop it. */
+  const guardSink = useRef(onGuard);
+  guardSink.current = onGuard;
+  useEffect(() => {
+    guardSink.current?.(changed ? (perform) => setAsked({ perform: () => leave(perform) }) : null);
+  }, [changed]);
+  useEffect(() => () => guardSink.current?.(null), []);
 
   function form(row: Row | undefined, lineup: { control: ReactNode; status: ReactNode | null } | null = null) {
     const name = row === undefined ? '' : String(row.name ?? '');
@@ -242,7 +339,7 @@ export function ResourceList({ resource, rows, busyId, rowError, createError, on
         {asked !== null && (
           /* One line, and the two answers only: each says what it does. Text controls, 44 to a finger by the row's height and their own width. */
           <div data-manage-confirm="" role="group" aria-label="Unsaved changes" className="flex items-center gap-4">
-            <button type="button" onClick={() => go(asked.id, asked.row)} className={`${LABEL_TYPE} flex items-center whitespace-nowrap pointer-coarse:min-h-[44px] pointer-coarse:min-w-[44px]`}>
+            <button type="button" onClick={() => asked.perform()} className={`${LABEL_TYPE} flex items-center whitespace-nowrap pointer-coarse:min-h-[44px] pointer-coarse:min-w-[44px]`}>
               Discard changes
             </button>
             <button type="button" autoFocus onClick={() => setAsked(null)} className={`${LABEL_TYPE} flex items-center whitespace-nowrap pointer-coarse:min-h-[44px] pointer-coarse:min-w-[44px]`}>

@@ -136,8 +136,12 @@ const trackedGenreNames: string[] = [];
 /** For a spec's own `post` helper: tracks what a reference-data POST created, from its path and its body. */
 export function trackCreated(path: string, body: unknown): void {
   const id = (body as { id?: unknown } | null)?.id;
-  if (path === '/api/genres' && typeof id === 'string') trackGenre(id);
+  if (typeof id !== 'string') return;
+  if (path === '/api/genres') trackGenre(id);
+  /* Step 174 (11 Nov): a spec's labels, stores and tags registered at the seed, so a test that fails before its own `remove` leaves none behind. */
+  if (path === '/api/labels' || path === '/api/stores' || path === '/api/tags') trackedReferences.push({ table: path.slice('/api/'.length), id });
 }
+const trackedReferences: Array<{ table: string; id: string }> = [];
 
 /**
  * A record saved through the form or the Discogs import, tracked with the artist it landed under (10 Nov). The import
@@ -262,6 +266,17 @@ export function registerCleanup(): void {
           sql`DELETE FROM artists WHERE id = ${artistId}::uuid
                 AND NOT EXISTS (SELECT 1 FROM records WHERE artist_id = ${artistId}::uuid)`,
         );
+      } catch {
+        // Swallowed deliberately — see above.
+      }
+    }
+
+    /* Labels, stores and tags after the records that could reference them; one still in use is left (§7.4) and the ledger counts it. */
+    for (const { table, id } of trackedReferences.splice(0)) {
+      try {
+        if (table === 'labels') await db.execute(sql`DELETE FROM labels WHERE id = ${id}::uuid AND NOT EXISTS (SELECT 1 FROM records WHERE label_id = ${id}::uuid)`);
+        if (table === 'stores') await db.execute(sql`DELETE FROM record_stores WHERE id = ${id}::uuid AND NOT EXISTS (SELECT 1 FROM records WHERE store_id = ${id}::uuid)`);
+        if (table === 'tags') await db.execute(sql`DELETE FROM tags WHERE id = ${id}::uuid AND NOT EXISTS (SELECT 1 FROM record_tags WHERE tag_id = ${id}::uuid)`);
       } catch {
         // Swallowed deliberately — see above.
       }

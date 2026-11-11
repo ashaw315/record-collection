@@ -1,5 +1,5 @@
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
-import { registerCleanup, trackArtist, trackGenre, trackGenreNamed } from './cleanup';
+import { registerCleanup, trackArtist, trackCreated, trackGenre, trackGenreNamed } from './cleanup';
 import { seedMatchCandidate } from './seed';
 import { login } from './sign-in';
 import { HIT_FLOOR, POINTERS, expectDialogControls, expectFloor } from './hit-area';
@@ -882,7 +882,10 @@ async function seedManage(page: Page) {
   const post = async (path: string, data: unknown) => {
     const response = await page.request.post(path, { data, failOnStatusCode: false });
     expect(response.status(), `${path} ${JSON.stringify(data)}`).toBe(201);
-    return ((await response.json()) as { id: string }).id;
+    const body = (await response.json()) as { id: string };
+    /* Registered at the seed (step 174, the coordinator): a test that fails before `remove` leaves no label, store or tag behind. */
+    trackCreated(path, body);
+    return body.id;
   };
   const names = { artist: `A Band With A Name As Long As Any ${tag}`, label: `A Label With A Long Name ${tag}`, store: `A Shop With A Long Name ${tag}`, tag: `a-tag-with-a-long-name-${tag}`, genres: [0, 1, 2, 3, 4].map((depth) => `Depth ${depth} genre with a long name ${tag}`) };
   const artist = await post('/api/artists', { name: names.artist, formedYear: 1977, originCountry: 'UK' });
@@ -1121,4 +1124,178 @@ for (const pointer of POINTERS) test.describe(`manage’s open row with changes,
       await remove();
     });
   }
+});
+
+/*
+  **Step 174, §T.6: every exit the page owns asks (Design, 7 Nov; confirmed by the coordinator, 11 Nov).** "Every exit
+  the page owns asks first with the same line, and Back is one of them: opening a row adds one entry to the history, so
+  Back closes the row and asks as a close does." Below 640 with an open form that has changes, the line asks before
+  changing section, following a link in the app, and Back; opening a row adds one history entry and closing it by any
+  means removes it, so Back with nothing open goes to the previous screen; the browser's own exits get the unload prompt.
+  Each test fails against the build before 174: a section change or a link left the screen without asking, Back left
+  the screen with a row open, and nothing bound the unload prompt. Everything seeded is registered at the seed, and the
+  rows `remove` deletes are deleted in a `finally`, so a failing test leaves nothing behind (the coordinator, 11 Nov).
+*/
+test.describe('174: every exit the page owns asks, at 390 under a coarse pointer', () => {
+  test.use({ hasTouch: true });
+  const WIDTH = 390;
+
+  /** From the collection to manage, so Back has a screen to go to; the store row opened with a change typed. */
+  async function openChangedStore(page: Page, storeName: string) {
+    await page.setViewportSize({ width: WIDTH, height: 844 });
+    await page.goto('/');
+    await page.goto('/manage');
+    await section(page, 'Stores');
+    const list = page.locator(`${LIST}:visible`);
+    const row = list.locator('[data-manage-row]').filter({ hasText: storeName });
+    const form = row.locator('[data-manage-form]');
+    await row.locator('[data-manage-open]').click();
+    await expect(form).toBeVisible();
+    const city = form.getByLabel(`${storeName} city`, { exact: true });
+    await city.fill('York');
+    return { row, form, city, confirm: form.locator(CONFIRM) };
+  }
+
+  /** A link in the app, the way a reader reaches one at 390: the header's links are in its menu below 584 (§G.8). */
+  async function followWantList(page: Page) {
+    await page.getByRole('button', { name: 'Menu' }).click();
+    await page.getByRole('link', { name: 'Want list', exact: true }).click();
+  }
+
+  test('a changed row asks before changing section, following a link in the app, and Back, on the one line, and each answer does what it says', async ({ page }) => {
+    const { names, remove } = await seedManage(page);
+    try {
+      const { form, city, confirm } = await openChangedStore(page, names.store);
+
+      /* Changing section asks; the section has not changed. Fails against a nav button that switches at once. */
+      await page.getByRole('navigation', { name: 'Resource' }).getByRole('button', { name: 'Tags', exact: true }).click();
+      await expect(confirm, 'changing section asks').toBeVisible();
+      await expect(page.getByRole('region', { name: 'Stores' }), 'and the section has not changed').toBeVisible();
+      await expect(page.getByRole('region', { name: 'Tags' })).toHaveCount(0);
+      await confirm.getByRole('button', { name: 'Keep editing' }).click();
+      await expect(confirm).toHaveCount(0);
+      await expect(city).toHaveValue('York');
+
+      /* A link in the app asks; the page has not moved. Fails against a link that navigates at once. */
+      await followWantList(page);
+      await expect(confirm, 'a link in the app asks').toBeVisible();
+      await expect(page).toHaveURL(/\/manage$/);
+      await confirm.getByRole('button', { name: 'Keep editing' }).click();
+      await expect(confirm).toHaveCount(0);
+      await expect(city).toHaveValue('York');
+
+      /* Back asks as a close does; the row stays open with what was typed. Fails against a Back that leaves the screen. */
+      await page.goBack();
+      await expect(confirm, 'Back asks').toBeVisible();
+      await expect(page).toHaveURL(/\/manage$/);
+      await confirm.getByRole('button', { name: 'Keep editing' }).click();
+      await expect(confirm).toHaveCount(0);
+      await expect(city, 'what was typed is still there after Back was refused').toHaveValue('York');
+
+      /* The same line, the same two answers, 44 to a finger. */
+      await page.getByRole('navigation', { name: 'Resource' }).getByRole('button', { name: 'Tags', exact: true }).click();
+      await expect(confirm).toBeVisible();
+      expect(await confirm.locator('button').allTextContents().then((all) => all.map((text) => text.trim().toUpperCase()))).toEqual(['DISCARD CHANGES', 'KEEP EDITING']);
+      const reach = await expectFloor(page, 'coarse', 'the exit confirmation at 390', CONFIRM);
+      expect(reach.filter((r) => r.wide < HIT_FLOOR).map((r) => `${r.name}: ${r.wide}`), 'each 44 across to a finger').toEqual([]);
+
+      /* DISCARD CHANGES on a section change: the section changes, the row is closed, nothing saved. */
+      await confirm.getByRole('button', { name: 'Discard changes' }).click();
+      await expect(page.getByRole('region', { name: 'Tags' }), 'the section asked for is shown').toBeVisible();
+      await expect(form).toHaveCount(0);
+
+      /* Back with nothing open leaves the screen: the row's entry went with the row. Fails against an entry left behind. */
+      await page.goBack();
+      await expect(page, 'Back with nothing open goes to the previous screen').toHaveURL(/\/$/);
+    } finally {
+      await remove();
+    }
+  });
+
+  test('DISCARD CHANGES on a link in the app leaves in one gesture, and the row’s history entry goes with it', async ({ page }) => {
+    const { names, remove } = await seedManage(page);
+    try {
+      const { confirm } = await openChangedStore(page, names.store);
+      await followWantList(page);
+      await expect(confirm).toBeVisible();
+      await confirm.getByRole('button', { name: 'Discard changes' }).click();
+      await expect(page, 'the link followed').toHaveURL(/\/want-list$/);
+      /* The stack reads collection, manage, want list: one Back is manage with nothing open, and another is the collection. */
+      await page.goBack();
+      await expect(page).toHaveURL(/\/manage$/);
+      await expect(page.locator('[data-manage-form]')).toHaveCount(0);
+      await page.goBack();
+      await expect(page, 'the row’s entry was removed before the link was followed').toHaveURL(/\/$/);
+    } finally {
+      await remove();
+    }
+  });
+
+  test('opening a row adds one history entry and closing it by any means removes it: Back closes an unchanged row, and a row closed by hand leaves Back one step', async ({ page }) => {
+    const { names, remove } = await seedManage(page);
+    try {
+      await page.setViewportSize({ width: WIDTH, height: 844 });
+      const list = page.locator(`${LIST}:visible`);
+      const row = () => list.locator('[data-manage-row]').filter({ hasText: names.store });
+      const form = () => row().locator('[data-manage-form]');
+
+      /* Back closes an unchanged row and asks nothing; a second Back leaves. Fails against a Back that leaves with the row open. */
+      await page.goto('/');
+      await page.goto('/manage');
+      await section(page, 'Stores');
+      await row().locator('[data-manage-open]').click();
+      await expect(form()).toBeVisible();
+      await page.goBack();
+      await expect(form(), 'Back closed the row').toHaveCount(0);
+      await expect(page.locator(CONFIRM)).toHaveCount(0);
+      await expect(page).toHaveURL(/\/manage$/);
+      await page.goBack();
+      await expect(page).toHaveURL(/\/$/);
+
+      /* Closed by the row pressed again, then by Escape: each removes the entry, so one Back leaves. Fails against an entry left behind. */
+      for (const close of ['press', 'escape'] as const) {
+        await page.goto('/manage');
+        await section(page, 'Stores');
+        await row().locator('[data-manage-open]').click();
+        await expect(form()).toBeVisible();
+        if (close === 'press') await row().locator('[data-manage-open]').click();
+        else await form().getByLabel(`${names.store} city`, { exact: true }).press('Escape');
+        await expect(form(), `${close} closed the row`).toHaveCount(0);
+        await page.goBack();
+        await expect(page, `after a ${close} close, one Back leaves the screen`).toHaveURL(/\/$/);
+      }
+    } finally {
+      await remove();
+    }
+  });
+
+  test('the browser’s own exits prompt while a row has changes, and not otherwise', async ({ page, context }) => {
+    const { names, remove } = await seedManage(page);
+    try {
+      /* Changed: closing the page runs the unload prompt. Fails against a page with nothing bound to beforeunload. */
+      const changed = await context.newPage();
+      await openChangedStore(changed, names.store);
+      const prompt = changed.waitForEvent('dialog', { timeout: 5_000 });
+      await changed.close({ runBeforeUnload: true });
+      const dialog = await prompt;
+      expect(dialog.type(), 'the browser asked before unloading').toBe('beforeunload');
+      await dialog.accept();
+
+      /* Unchanged: no prompt, the page closes. */
+      const quiet = await context.newPage();
+      await quiet.setViewportSize({ width: WIDTH, height: 844 });
+      await quiet.goto('/manage');
+      await section(quiet, 'Stores');
+      await quiet.locator(`${LIST}:visible [data-manage-row]`).filter({ hasText: names.store }).locator('[data-manage-open]').click();
+      let asked = false;
+      quiet.on('dialog', (d) => { asked = true; void d.dismiss(); });
+      await quiet.close({ runBeforeUnload: true });
+      /* No dialog within the window a prompt would take; WebKit then leaves the page open to be closed plainly, Chromium closes it. */
+      await quiet.waitForEvent('dialog', { timeout: 1_500 }).catch(() => undefined);
+      expect(asked, 'nothing changed, nothing asked').toBe(false);
+      if (!quiet.isClosed()) await quiet.close();
+    } finally {
+      await remove();
+    }
+  });
 });

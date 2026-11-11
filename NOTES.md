@@ -56295,6 +56295,44 @@ unbuilt" and names what is left: the options come from the database and are keye
 an inline add is what takes the database's order instead; the next unit after this intake. The arrival check accepted the
 drop: §T.4 changed and the file's governs section names it.
 
+## 11 Nov (fourth): step 174, every exit the page owns asks
+
+**One guard, one line.** The row's ask (step 137) was the row's own: pressing another row, + NEW or Escape over a change
+asked, and a change of section, a link in the app or Back left the screen with the change lost. Now the open row's list
+hands a guard up while its form has changes (`onGuard`, `ResourceList`), the section buttons consult it, and a
+document-level capture listener in `ManageClient` catches a left click on an in-app link before Next's Link follows it
+(`exit-guard.ts`, pure, decides which clicks are exits the page owns; 3 unit tests, red on the absent module). DISCARD
+CHANGES performs the exit; KEEP EDITING drops it. Opening a row pushes one history entry (`{ manageRow }`), and closing
+by any means pops it; a Back the reader pressed has popped it already, so with nothing changed the row closes and with a
+change the entry is pushed back and the line asks. An exit that leaves the page waits for the pop to land before it
+navigates (`afterPop`), so the link case the coordinator named as where the stack usually goes wrong does not race. The
+unload prompt is bound while the form has changes. Built test-first: four Playwright tests at 390 under a coarse pointer,
+red on the unfixed build for the right reasons (no ask on a section change, Back leaving with the row open, no prompt
+bound), green after; the guard's unit test red on the absent module.
+
+**Two things the tests found.** Below 584 the app's links are in the header's menu, a fixed panel that closes by its own
+history entry at the same URL (§G.8), so a link exit from the menu would ask on a line the panel covers: the guard closes
+the menu by that entry before asking, and the row's popstate listener ignores a pop that leaves its own entry on top
+(`history.state.manageRow` still there). And WebKit, after `close({ runBeforeUnload: true })` with no handler bound,
+leaves the page open rather than closing it, so the negative half of the unload test waits out the window a prompt would
+take and then closes plainly; Chromium closes at once. The positive half passed on both: WebKit's emulation does prompt.
+
+**The escalation list, observed, two for Design.** Forward after a close by hand lands on the row's old entry with the
+row closed (the entry holds no row state), a dead step; after a reload with a row open the entry survives and the row
+does not, so one Back stays on manage and a second leaves. Both are report-only tests in
+`e2e/manage-174-report.spec.ts`, each asserting the build as it is, named as the observation. Two rows in succession
+keep one entry; the link with a row open is handled. Not approximated: fixing either means putting the open row into the
+URL or the entry's state, which rules something no sentence rules. The phones' own behaviour on reload and on Back is
+owed to Adam's hands. Captures from the build (`docs/captures/manage-exits-174`): three byte-identical stills, which is
+the ruling seen, the same line for every exit; the spec says which exit was pressed.
+
+**Registration.** `trackCreated` now registers labels, stores and tags, deleted after the records that could reference
+them; `seedManage` registers every row it posts, so a test that fails before its `remove` leaves nothing (the coordinator,
+11 Nov; a cleanup change, so the unit's ship is a gate). Step level: the four tests and the two observations, manage.spec
+and nav-menu-76 on chromium and mobile (87 of 88, the WebKit close, then 2 of 2 after the fix), exit-guard unit test,
+typecheck, lint at baseline, the build inside the capture. Timings unreadable: load 16 to 25 during the covering run, a
+Playwright run on two projects beside the dev server.
+
 **The docs/design change-file sweep (owed since 9 Nov), run at 8140fa8e.** 86 change files on disk against 87 names in
 the landed record, and the two reconcile: every change file on disk is in the record (two apparent misses were the
 sweep's own stripping of "for Code to add/insert", under which the record names them in full); the four "FOR CODE - …"

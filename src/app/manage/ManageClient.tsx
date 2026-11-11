@@ -1,8 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useTransition, type ReactNode } from 'react';
+import { useCallback, useEffect, useState, useTransition, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
+import { inAppExit } from './exit-guard';
+import type { ExitGuard } from './ResourceList';
 import { CONTROL_BOX } from '@/app/records/[id]/grid-type';
 import {
   Dialog,
@@ -50,7 +52,7 @@ type Pending = { row: Row; resource: ResourceSpec } | null;
  * stale-response race a shared instance would have when a slow earlier fetch
  * lands after a faster later one.
  */
-function ResourcePanel({ resource, rows }: { resource: ResourceSpec; rows: Row[] }) {
+function ResourcePanel({ resource, rows, onGuard }: { resource: ResourceSpec; rows: Row[]; onGuard: (guard: ExitGuard | null) => void }) {
   const activeKey = resource.key;
   const router = useRouter();
   const [refreshing, startRefresh] = useTransition();
@@ -282,6 +284,7 @@ function ResourcePanel({ resource, rows }: { resource: ResourceSpec; rows: Row[]
             onCreate={(values) => void create(values)}
             onUpdate={(id, values) => void update(id, values)}
             onDelete={(row) => setPendingDelete({ row, resource })}
+            onGuard={onGuard}
             genres={
               resource.hierarchical === true
                 ? {
@@ -436,6 +439,36 @@ export function ManageClient({
 }) {
   const [activeKey, setActiveKey] = useState(RESOURCES[0].key);
   const resource = RESOURCES.find((entry) => entry.key === activeKey) as ResourceSpec;
+  const router = useRouter();
+
+  /*
+    **Step 174 (§T.6): "Every exit the page owns asks first with the same line."** The open row's list hands up a guard
+    while its form has changes (ResourceList), and the exits this screen owns consult it: a change of section here, and
+    a link in the app anywhere on the page, caught at the document before Next's Link follows it. One guard, one line.
+  */
+  const [guard, setGuard] = useState<ExitGuard | null>(null);
+  const onGuard = useCallback((next: ExitGuard | null) => setGuard(() => next), []);
+  const exit = (perform: () => void) => (guard === null ? perform() : guard(perform));
+  useEffect(() => {
+    if (guard === null) return;
+    const onClick = (event: MouseEvent) => {
+      const anchor = (event.target as Element | null)?.closest?.('a[href]');
+      if (!(anchor instanceof HTMLAnchorElement)) return;
+      const href = inAppExit({ href: anchor.href, target: anchor.target, download: anchor.hasAttribute('download') }, event, window.location);
+      if (href === null) return;
+      event.preventDefault();
+      event.stopPropagation();
+      /*
+        Below 584 the app's links are in the header's menu, a fixed panel over the page that closes by its own history
+        entry at the same URL (AppHeader). The line that asks is on the row beneath it, so the menu closes first, the
+        way it closes itself; the row's entry stays, and the row's listener leaves a pop that is not its own alone.
+      */
+      if ((window.history.state as { appMenu?: boolean } | null)?.appMenu === true) window.history.back();
+      guard(() => router.push(href));
+    };
+    document.addEventListener('click', onClick, true);
+    return () => document.removeEventListener('click', onClick, true);
+  }, [guard, router]);
 
   return (
     <div data-screen-frame="" className={`${MANAGE_FRAME} py-6`}>
@@ -467,7 +500,7 @@ export function ManageClient({
                 <button
                   type="button"
                   aria-current={entry.key === activeKey ? 'page' : undefined}
-                  onClick={() => setActiveKey(entry.key)}
+                  onClick={() => exit(() => setActiveKey(entry.key))}
                   className={cn(
                     `${HIT_ALONE} flex w-full items-center py-2 text-left whitespace-nowrap ${LABEL_TYPE} pointer-coarse:min-h-[44px] pointer-coarse:py-0`,
                     entry.key === activeKey
@@ -491,6 +524,7 @@ export function ManageClient({
             key={resource.key}
             resource={resource}
             rows={rowsByResource[resource.key] ?? []}
+            onGuard={onGuard}
           />
         </div>
       </div>
