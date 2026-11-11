@@ -56336,7 +56336,11 @@ twins' tree record moved 174 out of "numbered and not built" with the build, as 
 
 **Step 176's gate was not a verdict.** Gate 43036756952 failed on both e2e halves in `playwright install --with-deps`:
 the runners could not resolve security.ubuntu.com (756 "Temporary failure resolving" lines on the mobile half), no test
-ran, unit green. Not re-dispatched by hand; 174's gate covers everything since Q67's green one.
+ran, unit green. Not re-dispatched by hand; 174's gate covers everything since Q67's green one. **174's gate
+(43059742020) failed the same way:** both e2e halves in `playwright install --with-deps`, 52 unresolved-mirror lines
+on the chromium half, no test run, unit 5098 passed; the runner image is ubuntu-26.04 built 2026-10-28. One gate
+re-dispatched through `scripts/ci-gate.sh HEAD 4` on 65a0eba1, the sanctioned path for an already-committed unit, after
+reading both logs; if it fails the same way that is two failed attempts and it stops there for the coordinator.
 
 **Q70, the one-time report, run.** `scripts/markers-naming-several.mjs` reads every marker on the four cards and lists
 those whose clause after the colon, before any explaining clause, is a coordinated list (a comma with an "and" after it,
@@ -56345,6 +56349,23 @@ naming two. A first reading, any comma with any "and" in the whole quote, gave 1
 the fit check rejects…"), so the clause was cut at the explaining connectors. More than the handful the coordinator
 expected, because "A, and B" is common and is two targets; listed on purpose, Design judges. The file for Adam to
 forward: "Markers naming several targets — for Design, 2026-11-11 at 4ce89829.md" in Downloads.
+
+**The gate re-dispatched on 65a0eba1 (43063378288) is green on all four halves,** read from the artifacts: chromium
+1075 passed 1 skipped, mobile 394 passed 4 skipped, report-only 3, unit 5098 passed 3 skipped, every half ledger clean
+and tree unchanged. It covers everything since Q67's green gate. The diagnosis of the two failed gates preceded the
+dispatch: 176's logs were read before 174's gate ran, and 174's step list and chromium log before `ci-gate.sh`.
+
+**Q67's tail, measured per spec (the coordinator, 11 Nov).** The manage spec's registration took labels from 84 to 16
+on chromium and 44 to 6 on mobile, stores from 31 to 2, tags from 10 to 2; pressings stayed at 94 and 28, since nothing
+registers a pressing. `scripts/leak-per-spec.sh` runs each label- or pressing-creating spec alone on chromium and reads
+the ledger's deltas (40 specs, 35 minutes at load 9 to 10; the sum reproduces the gate within a row: labels 16,
+pressings 95, stores 2, tags 2). Labels are seven specs, three of them 10 of the 16: plain-back-90 (4), tracklist-173
+(3), collection-widths (3), then stats-names-144 (2), discogs-prefill (2), record-band-41 (1), lookup-flows (1). So the
+labels half is a week's conversion, not a project. Pressings are twenty-one specs, extended-grid (20), want-list (16),
+frame-planes (13), tracklist-173 (8), layout-sweep (6), record-form (5) and fifteen more, the project shape, but by one
+mechanism: a record posted with pressing fields finds-or-creates its pressing, and the cleanup deletes the record and
+leaves the pressing, which §4 makes shared. Deleting a tracked record's pressing when nothing references it after, one
+change in cleanup.ts, would retire that half without touching the specs; proposed on Q67's row, not built.
 
 **The docs/design change-file sweep (owed since 9 Nov), run at 8140fa8e.** 86 change files on disk against 87 names in
 the landed record, and the two reconcile: every change file on disk is in the record (two apparent misses were the
