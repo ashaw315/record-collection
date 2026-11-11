@@ -56365,7 +56365,45 @@ labels half is a week's conversion, not a project. Pressings are twenty-one spec
 frame-planes (13), tracklist-173 (8), layout-sweep (6), record-form (5) and fifteen more, the project shape, but by one
 mechanism: a record posted with pressing fields finds-or-creates its pressing, and the cleanup deletes the record and
 leaves the pressing, which §4 makes shared. Deleting a tracked record's pressing when nothing references it after, one
-change in cleanup.ts, would retire that half without touching the specs; proposed on Q67's row, not built.
+change in cleanup.ts, would retire that half without touching the specs; proposed on Q67's row, not built. The
+coordinator split the row the same day: labels are shared by name and need the declared list; pressings are not shared
+and need deleting with their record, a cascade, the smaller work and the larger result. Order: Q22's first unit, the
+pressing cascade, the labels tail.
+
+## 11 Nov (fifth): Q22's first unit, the embedding store and run
+
+**Built to Adam's provider answer and the coordinator's three rules on the key.** OpenAI's text-embedding-3-small, one
+provider for the stored vectors and the query. No package: `src/lib/openai/embeddings.ts` posts to the embeddings
+endpoint over fetch, twenty lines against a dependency (§5), with `fetchImpl` as the seam so nothing is ever live under
+test; the vectors are taken by index, not by the wire's order. The key is `OPENAI_API_KEY`, read from the environment
+and never asked for, in the env schema as optional. **Two places Adam must set it:** his own shell for `npm run
+abouts:embed`, and Vercel's project environment for the query at request time; missing the second fails only in
+production. **Absent, both refuse by name:** `requireOpenAiKey` throws "OPENAI_API_KEY is not set: set it in the shell
+that runs the embedding script, and in Vercel's project environment for the query at request time", before any call or
+any read; the script run with the variable emptied printed exactly that and nothing else. Never an empty result or a
+zero vector.
+
+**The store, as approved.** `record_embeddings` (migration 0034): one row per record, the vector as JSON with its
+dimension, the model, and the SHA-256 of the ABOUT text it was made from, cascading with the record. Cosine will be
+computed in code over 55 rows; no pgvector, no index, deliberately. **The run** (`scripts/embed-abouts.mts`) reads every
+record with an ABOUT and its stored hash, embeds only those whose vector is missing or whose hash differs, `--record
+<id>` for one (Q47's three regenerated notes cost three calls), `--dry-run` for the plan; batches of 32, so the
+collection is two requests. Test-first: the pure plan (hash, changed-only, the narrowing, an unknown id refused), the
+client (request shape, bearer key, order by index, the named refusal before any request, a failed answer's status and
+message, a short answer refused), and the store on the test database (the join, one row per record on re-store, the
+cascade): 12, red on the absent modules, green after. Step level: those three files, typecheck, lint at baseline, the
+migrations test (which copies `git ls-files` and needs the new files intent-added, as the commit path does; 4 of 4 that
+way), `db:test:reset` from an empty database (35 of 35 applied). The dry run against production refuses on the
+missing table, loudly, until the migration deploys with this push; the collection is then embedded by Adam's run,
+never by Code, since that is a production write. Fifteen paths, one unit (the store and its run), said rather than
+asked. Next: the ranking, where the eighth shared quantity joins `twice-intersect.mjs`.
+
+**Q70, as the coordinator read it.** 75 of 289 means naming several targets is this card style's ordinary practice, so
+the signature over-fires about twenty-five times and the 75 do not go to Design; the file stays. The test derived from
+the harm, pairs of live bold sentences in one section with near-identical first five or six words, is placed after the
+pressing cascade and the labels tail. §38's entry in the 75 was the reader's own artifact: `markers-naming-several.mjs`
+wants whitespace after a full stop and the card's plain text has none at "rules.Row 1"; `sentencesOf`'s glue fix landed
+at 874d60f4 and is not involved.
 
 **The docs/design change-file sweep (owed since 9 Nov), run at 8140fa8e.** 86 change files on disk against 87 names in
 the landed record, and the two reconcile: every change file on disk is in the record (two apparent misses were the

@@ -239,6 +239,13 @@
       "when": 1793807671371,
       "tag": "0033_tiny_miss_america",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1794424495060,
+      "tag": "0034_absurd_proudstar",
+      "breakpoints": true
     }
   ]
 }

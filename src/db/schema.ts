@@ -1038,3 +1038,20 @@ export const recordMoods = pgTable(
   },
   (t) => [check('record_moods_one_to_four', sql`cardinality(${t.moods}) BETWEEN 1 AND 4`)],
 );
+
+/**
+ * **Q22: one embedding per record, for the ask field's ranking by nearness of ABOUT (the coordinator, 11 Nov).**
+ * The vector is kept with the hash of the ABOUT text it was made from and the model that made it, so the embedding
+ * run re-embeds only a changed ABOUT and the query refuses a vector from another model. Stored as JSON, cosine computed
+ * in code over a collection of 55 rows: no pgvector and no index, deliberately. Goes with its record.
+ */
+export const recordEmbeddings = pgTable('record_embeddings', {
+  recordId: uuid('record_id')
+    .primaryKey()
+    .references(() => records.id, { onDelete: 'cascade' }),
+  aboutHash: text('about_hash').notNull(),
+  model: text('model').notNull(),
+  dims: integer('dims').notNull(),
+  vector: jsonb('vector').$type<number[]>().notNull(),
+  embeddedAt: timestamp('embedded_at', { withTimezone: true }).notNull().defaultNow(),
+});
