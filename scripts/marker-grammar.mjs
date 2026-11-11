@@ -6,7 +6,8 @@
  *
  *   1. a verb, "Withdrawn" or "Superseded" ("Narrowed" is read as "Withdrawn in part");
  *   2. optionally "in part" or "in whole";
- *   3. optionally "within" or "by", followed by one or more section references joined by "," or "and";
+ *   3. optionally a short qualifier saying what is withdrawn (the `subject`), then optionally "within" or "by",
+ *      followed by one or more section references joined by "," or "and";
  *   4. optionally a qualifier saying what the marker covers, or, with no reference, what superseded it;
  *   5. the colon.
  *
@@ -14,6 +15,11 @@
  * and ends in a full stop is prose. A marker-shaped opener that doesn't parse throws, naming itself: on 10 Nov a check
  * reading two forms missed 44 of 107 markers on one card, a five-form list would have refused fourteen, and requiring a
  * sentence start would have missed nine. Enumerate and fail on the remainder; never widen a pattern and hope.
+ *
+ * The subject slot is Q65's (Design, "Grammar Q65 and Q66", 10 Nov): "Withdrawn above §W.26's fork by §W.29:" stands
+ * as written, since the qualifier says what is withdrawn and belongs to the verb, and moved after the reference it
+ * would read as §W.29 being above the fork. The subject may hold a reference of its own; the trailing qualifier may not.
+ * Neither qualifier may open with step 2's words (steps 3 and 4 since 11 Nov; the parse below).
  */
 const REF = '§[A-Za-z0-9.]+';
 const REFS = new RegExp(`^\\s+(within|by)\\s+(${REF}(?:(?:,\\s*|\\s+and\\s+)${REF})*)`);
@@ -32,13 +38,29 @@ export function parseMarker(opener) {
   const fail = () => { throw new Error(`a marker-shaped opener that does not parse by the grammar: ${text}`); };
   const sc = SCOPE.exec(rest);
   if (sc !== null) { if (narrowed) fail(); scope = sc[1]; rest = rest.slice(sc[0].length); }
-  let how = null; let refs = [];
-  const hw = REFS.exec(rest);
+  let how = null; let refs = []; let subject = '';
+  /* The references directly after the scope, or after a subject: the first "within" or "by" that a reference follows. */
+  let hw = REFS.exec(rest);
+  if (hw === null) {
+    const lead = new RegExp(`^(\\s+\\S[\\s\\S]*?)(?=\\s+(?:within|by)\\s+${REF})`).exec(rest);
+    if (lead !== null) {
+      subject = lead[1].trim();
+      /*
+        Step 2's words cannot open the subject: "in parts" and a second "in whole" are mis-formed scopes, not subjects.
+        The qualifier slot had made a typo in a scope word a qualifier instead of a parse failure; the negative test
+        caught it, and Design wrote the constraint into steps 3 and 4 of the rule ("Under A- the meantime pair- Phase 0",
+        11 Nov), so the parser and the bullet agree.
+      */
+      if (/^in (part|whole)/.test(subject)) fail();
+      rest = rest.slice(lead[1].length);
+      hw = REFS.exec(rest);
+    }
+  }
   if (hw !== null) { how = hw[1]; refs = hw[2].split(/,\s*|\s+and\s+/); rest = rest.slice(hw[0].length); }
   const qualifier = rest.replace(/^ +/, '').trim();
   if (/§/.test(qualifier)) fail();
   if (how === null && (qualifier === '' || /^(by|within)$/.test(qualifier))) fail();
-  return { verb, scope, how, refs, qualifier, narrowed };
+  return { verb, scope, how, refs, subject, qualifier, narrowed };
 }
 
 /** The opener with every section reference read as §N, so openers are grouped by their form. */

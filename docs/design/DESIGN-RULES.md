@@ -29,8 +29,9 @@
 - A withdrawal or supersession marker begins at its verb and ends its opening at the first colon. It may follow a full stop, a section heading, a colon, a parenthesis or a quote. A marker withdrawing a section's whole subject stands directly after the heading. The grammar, in order:
   1. a verb, "Withdrawn" or "Superseded";
   2. optionally "in part" or "in whole";
-  3. optionally "within" or "by", followed by one or more section references joined by "," or "and";
-  4. optionally a short qualifier saying what the marker covers, such as "on the air's side only";
+  3. optionally a short qualifier saying what is withdrawn, which may not begin with "in part" or "in whole", then optionally "within" or "by", followed by one or more section references joined by "," or "and";
+  4. optionally a short qualifier saying what the marker covers, such as "on the air's side only", which may not begin with "in part" or "in whole";
   5. the colon.
 
   The colon is what makes a marker a marker: "(withdrawn by §20)" with no colon is a reference to a withdrawal, not one. A marker with no section reference names in its qualifier what superseded it, or what it was withdrawn with, as "Superseded on the real collection:" and "Withdrawn with the frame:" do. "Narrowed" is read as "Withdrawn in part". An instrument that reads markers parses this grammar wherever either verb is followed by a colon within the opening, and fails loudly on one that doesn't parse. The reason: on 10 Nov a check reading two forms missed 44 markers. A five-form list would have failed fourteen times, and requiring a sentence start would have missed nine, all four "Withdrawn in part" among them.
+- A change file's governs section names every section whose text the cards it travels with changed, and says whether each row is updated or stands. A reworded noun or a changed comma changes a section's text. Saying no entry is owed says nothing about the row. The reason: on 10 and 11 Nov two drops were held for rows not named, §17 and §19 for punctuation and §P.3 and §P.5 for rewording.

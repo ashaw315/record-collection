@@ -56030,3 +56030,148 @@ summary's svg is 12 × 12 with a 1px across stroke closed and opened, and the do
 and 10 at the end, discogs_release_text 0 to 962: seedRelease writes rows no cleanup deletes, from 173c's spec and capture
 alike, under ids of the run's own in the 900,000,000s. The ledger reports the tables and fails on records and genres only.
 A queue row (Q67), the same family as the leaked tags (Q63).
+
+## 10 Nov (late, second): an assertion written from the build asserts the build; the ledger fails on a release left
+
+**The more important half of 173d, the coordinator's (10 Nov), a NOTES member in its own right.** The component test
+that pinned the companies after the last track (`TracklistSection.test.tsx`, the opened-order test) was written from the
+build, so it asserted the defect. The companies' position failed twice over: nothing asserted where they went, and
+something asserted that they went where the build happened to put them. The second is worse, because it reads as
+coverage. For the family: **an assertion written from the build asserts the build, so a defect in the build reads back as
+the rule.** Distinct from the order-of-two-in-three member above, and they pair: a position with no assertion, and a
+position whose assertion came from the thing it was meant to check. CLAUDE.md §2 already names the shape (the WallStage
+far-view test, 26 Oct); this is its second sighting, in a test eleven days old. A sweep of which other assertions were
+written from the build rather than from a target sentence is a row (Q68), not this week's work.
+
+**Q67 closed for releases: the ledger fails on a release left, by id.** The coordinator's reading: leftover records fail,
+and releases, labels and pressings reported without failing is the same arrangement that let a leaked record become
+every parallel spec's source record and cost a red gate four observations deep. The ledger now reads `discogs_cache`'s
+ids at the start and the end, and a release left under an id no fixture carries fails the run by id; a fixture cached
+under its own id (`seedDiscogsCache`, 381756 and the rest) stands, as the fixtures' genres stand by name, because the two
+workers share that row and an afterAll that removed it took it from under a sibling (`lookup-flows`). The cleanup is at
+the write: `seedRelease` and `seedDiscogsCacheAs` track the id themselves, and the afterEach deletes the text rows and the
+cache row. The guard was staged, not read: with the ledger built and no cleanup yet, the tracklist spec alone, 7 passed,
+ended "[ledger] FAILED: 7 releases left behind: 921075938, …", the run red with every test green, which is the shape
+wanted. With the cleanup, tracklist, want-list and images together, 60 passed on chromium (load 6.6 at the start, 40 at
+the end, four workers and the dev server), `discogs_cache` 0 to 1 and that one named as standing, `discogs_release_text`
+unmoved. At gate 42913956669, before this, the chromium half read discogs_cache 0 to 20 and discogs_release_text 0 to
+298, the mobile half 0 to 13, all passing.
+
+**Labels and pressings are not closed, and a leftover one is not safe.** The same gate read labels 1 to 84 and pressings
+1 to 94 on chromium, 1 to 44 and 1 to 28 on mobile; `record_stores` 0 to 31, `formats` 7 to 13, `tags` 0 to 10 (Q63). A
+leftover label reaches every list of labels the app draws (the form's choices, the filters, Manage), and a leftover
+pressing is found-or-created by catalogue number and holds a release id, so a later spec posting the same number reads
+back a row it did not make: weaker than a leaked record, which is §T.6's source for every spec, but the same family.
+Twenty-six specs post labels or pressings and no helper deletes either; plainly named rows (A&M Records, Impulse!) are
+shared between workers by name, the problem the genres' fixture vocabulary answers, so a rule for which stand is owed
+before a cleanup can be written. That is the thirteen-spec conversion's shape, a project and not a unit; Q67 carries it,
+the coordinator's to place.
+
+## 10 Nov (late, third): the drop of 20:33 held at its governs rows and prepared; the parser's subject slot
+
+**Held by mechanism, confirmed by the coordinator.** Design's drop (refs/drops/2026-11-10-06: "Ask field", "Credit line
+measure", "Grammar Q65 and Q66", the "Companies with the release" resend, Mood Pick and Record Detail changed) was refused
+by drop-ref: §17 and §19 of Record Detail changed, punctuation only, and no change file edits their governs rows or says
+they stand. The Grammar file says "two sentences change punctuation, and nothing changes ruling", which is about the
+sentences, not the rows, and the coordinator's ruling is that "punctuation only" is Design's to say about the row, not
+Code's to infer. The intake waits for that line. Meanwhile the commit check refuses every commit, by design: the landed
+record did not list the three new change files and the tree's cards disagreed with WITHDRAWALS on two quotes, so Q67's
+unit sat complete and uncommitted. The intake went first by mechanism again, this time with the mechanism holding both.
+
+**Prepared, so the intake is one command when the line lands.** Every relayed edit applied as Design wrote it, extracted
+from the change files by a script that asserts each anchor once rather than retyped: the §65 step's companies bullet
+reworded to the resend (the coordinator's action: the handoff's "now" read either way, and the resend says which is the
+defect), the "Set each opened credit line to 736" bullet after it, §65's Provisionals sentence, the §P ask-field step
+before "No step: §G.7.", three provisionals, four §P governs rows, the two §20 quote lines, the thirteen mood-pick entries
+(derive-withdrawals: 297 entries), DESIGN-RULES step 3. The two blocks quoting the §65 clause (172, 173) quote it as it
+now stands; step 173 reads Done in part again, the credit lines' measure open, its states gaining "Code's work unbuilt".
+The ask-field step is listed as unbuilt with the coordinator's hold written into its status: 59 live sentences in the card
+still speak of moods, eight of them rules that contradict the new ones, so the control's states, strings and inert
+condition wait for Design's fix; the embeddings, the ranking, the pool, the re-ask and the title case may start. Intake
+command on the prepared tree: index 14 of 14, test/repo 930 passed, INTAKE OK; not committed.
+
+**Q65 (a) is Code's work, not only a rule edit.** The grammar's step 3 gains a qualifier before the reference, and the
+parser implemented the old step 3, so "Withdrawn above §W.26's fork by §W.29:" still threw and the Wall card still failed
+to read. Test first: the opener parses to how "by", refs §W.29 and a `subject` of "above §W.26's fork", a subject may hold
+a reference where the trailing qualifier may not, and the Wall card reads whole; red on the parser as it stood, green
+after. One catch the negative test found: with any leading phrase allowed, "Withdrawn in parts by §3:" and "Superseded
+in part in whole by §3:" parsed, the mis-formed scope read as a subject, so step 2's words cannot open the subject. The
+Record Detail counts moved from 107 to 109 markers, 8 to 9 mid-sentence, 20 to 21 openers, and the diff of HEAD's card
+against the drop's names exactly §17's and §19's sentences as the two added, none gone (Q66, as Design wrote them).
+
+**Three answers of Adam's and the coordinator's, recorded in the queue.** The sort key: under A, only "The" dropped, "A"
+and "An" out of the list, A Tribe Called Quest and An Pierlé among A (Q62). The weak match: "maybe suggest something to
+buy/filll the gap, but also a record to play in the meantime", so Q59 is no longer independent of Q22, Design ruling it,
+nothing built. Labels and pressings (Q67): not a project and not a unit; a row stands only if a fixture declares it, the
+ledger reports the counts beside the verdict until the declaration list covers all 26 specs, then flips to failing, the
+flip condition on the row; the conversion as specs are touched.
+
+**Per-worker databases, asked again on the ~280 rows a gate: no change.** The obstacle was never the leak's size. The app
+under test is one process reading one DATABASE_URL, so per-worker databases mean per-worker servers or a request-routed
+driver in production code (the 2 Nov reasoning stands); and the leaks are within a worker as much as across them, a run's
+rows accumulating under one server, which separate databases do not retire. Four cleanups and a declaration list stay the
+cheaper answer.
+
+## 11 Nov: §17 and §19 closed on the file; the same drop held again at §P.3 and §P.5
+
+**The line arrived in the file, and the hold moved.** Design's newest "Grammar Q65 and Q66" (07:28, refs/drops/2026-11-11-01)
+carries Change 3, "§17 and §19: unchanged. The rewrites change punctuation only, and neither row quotes or names the
+sentences", and drop-ref accepts it: neither row is named in the refusal now. The same drop brought the Mood Pick card
+again with "Ask field- the rest of the moods" (twelve entries, the ASK description, the unanswerable line, the slot's
+message), and a stray `Table and Grid - build target.dc (1).html` byte-identical to the card beside it (sha256 69926d1e…,
+the file the coordinator verified unchanged), left where it arrived since the ref is a record of what came. The check
+refuses this drop too: §P.3 and §P.5 of the Mood Pick card changed, and the file's Change 4 names only §P.2 and §P.6.
+The changes are three sentences reworded from moods to the ask field, which the file lists under "Reworded as prose, with
+no entry" without saying the rows stand: §P.3 "A mood pressed meanwhile is honoured, because it moves nothing" to "Typing
+in the ask field meanwhile is honoured…"; §P.5 "In the rail they take §W's one pitch with the moods, so SURPRISE ME on a
+44 line is a defect" losing "with the moods", and "at rest the whole control is in view, the moods, ASK, SURPRISE ME and
+the slot" reading "the ask field, ASK, SURPRISE ME and the slot". Whether a noun's change leaves a governs row standing is
+the same question as punctuation's, and the same answer: Design's to say, so the intake waits for one line naming §P.3
+and §P.5.
+
+**Nothing among the uncommitted files commits independently, and the risk is recorded rather than assumed.** The
+landed-list guard (test/repo, run by every commit) requires the record to list every change file in this working copy's
+drop refs, and the new ref holds the rest-of-the-moods file, so every commit is refused until that file lands: Q67's
+unit, the parser, NOTES alone. The exposure the coordinator named (17 files overnight on one line; now 18 with the record)
+is held against a stray command or a crash by a stash object recorded as `refs/hold/2026-11-11-uncommitted` (582fd9aa):
+not a commit on any branch, nothing the commit path or a push carries, restored with `git stash apply 582fd9aa`. It is
+refreshed when the tree changes and deleted when the intake lands.
+
+**Prepared, as before, so the intake is three commands when the line lands.** The rest-of-the-moods Changes 1 to 3
+applied from the file by a script asserting each anchor once: the twelve entries after `P.6/nothing-tagged`
+(derive-withdrawals: 309 entries), the ASK bullet's description, the Unanswerable bullet after the count line, the
+provisionals line. One choice by default there: "4 not tagged yet." occurs twice on that line, in the Proposed list and
+in the history of when the strings first drew, and the first was replaced, the history left as "None showing." beside
+it already is. Intake command on the prepared tree: landed record 1 appended, index 14 of 14, test/repo 930 passed,
+INTAKE OK; not committed. The ask field stays unbuilt: the coordinator is raising the card's live Phase 0 sentence ("the
+place the moods and ASK will take") with Design, and no mood slot is built meanwhile.
+
+**Two notes from the coordinator's reading (11 Nov).** The provisionals-line choice is approved and goes into the Done
+block as a default choice, so it reads as decided rather than overlooked. And the parser's "step 2's words cannot open
+the subject" is a constraint of Code's that Design's written bullet does not yet carry: the qualifier slot made a typo
+in a scope word a qualifier instead of a parse failure, so the parser is stricter than the rule and a marker written from
+the rule could be refused. Design is asked to add the clause; the parser's note says so meanwhile, so the gap is
+recorded rather than discovered.
+
+## 11 Nov (second): the chain of three drops taken in one intake
+
+**Three refs, one intake.** refs/drops/2026-11-11-01 (07:30: the Grammar file's governs section, the rest of the moods,
+the Mood Pick card) was held at §P.3 and §P.5; refs/drops/2026-11-11-02 (08:19) brought the rest-of-the-moods file resent
+with a line for those two rows, "Under A- the meantime pair- Phase 0", the Table and Grid card ruling the key drops only a
+leading "The", and the Mood Pick card with Phase 0's place for the moods withdrawn, the far answer ruled a pair, and
+Adam's quote restored to what he typed ("buy/filll the gap"; the card the coordinator named by hash, 6348ae09, is the one
+the ref holds; the tidied copy, 35bf7733, never reached the tree). The check accepted it: every changed section's row
+named, §P.2, §P.6 and §T.4, which is Design's new governs-section rule (DESIGN-RULES, appended by this drop) on its first
+outing. The Table and Grid card arrived under the name `Table and Grid - build target.dc (1).html`, beside the old card
+under the tracked name; it was put under the tracked name before the capture, because the governs check reads modified
+cards and a card added under another name would have had no section checked, and the (1) copy removed. Design's step 3
+and 4 edits to the grammar carry the parser's constraint into the rule, so the parser's note that the constraint was
+Code's alone is overtaken by the same intake and is removed with it.
+
+**Applied as written, each anchor asserted once.** Four entries (derive: 313), the §T.4 step's assertions (A Tribe Called
+Quest and An Pierlé among A, Theatre Of Hate among T placed after An Pierlé by default, the "Hold the articles" bullet
+deleted, the quote to "The" alone), the ask-field step's far answer in place of the loose-fit line, the §P.2 provisional,
+the §P.2 governs row, Q59 rejoined to §P.2 in the queue (Design's "Q59's row" is Code's queue row, so Code wrote it), the
+ask field's unbuilt entry no longer held. One gap left for Design, not edited: the §T.4 step's "Drop" bullet still reads
+'a leading "The ", "A " or "An "', which Change 2 did not touch, so the step's bullet and its quote disagree until Design
+sends the line; the build goes to the quote, which is the card's ruling.
