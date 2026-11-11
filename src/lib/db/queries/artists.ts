@@ -2,6 +2,7 @@ import 'server-only';
 import { and, asc, count, eq, ne, sql } from 'drizzle-orm';
 import { isForeignKeyViolation } from '@/lib/api/errors';
 import { countReferences } from './referrers';
+import { nameSortKey } from '@/lib/db/name-sort';
 import { orderFor } from '@/lib/db/order';
 import { getDb } from '@/db/client';
 import { artists, records, wantList } from '@/db/schema';
@@ -45,8 +46,9 @@ const columns = {
   updatedAt: artists.updatedAt,
 };
 
+/* §T.4: the name order is by the name sort key, the fragment every artist and title order shares. */
 const sortColumns = {
-  name: artists.name,
+  name: nameSortKey(artists.name),
   formedYear: artists.formedYear,
   createdAt: artists.createdAt,
 } as const;
@@ -79,7 +81,7 @@ export async function listArtists(options: {
 }): Promise<{ rows: Artist[]; total: number; totalAll: number }> {
   const db = getDb();
 
-  const sortColumn = options.sort === undefined ? artists.name : sortColumns[options.sort.field];
+  const sortColumn = options.sort === undefined ? sortColumns.name : sortColumns[options.sort.field];
   const direction = options.sort?.direction ?? 'asc';
   const where = options.collectedOnly === true ? isCollected : undefined;
 

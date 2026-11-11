@@ -3,6 +3,7 @@ import { and, asc, desc, eq, exists, gte, ilike, inArray, lte, or, sql } from 'd
 import type { AnyPgColumn } from 'drizzle-orm/pg-core';
 import { isForeignKeyViolation } from '@/lib/api/errors';
 import { escapeLikePattern } from '@/lib/api/like';
+import { nameSortKey } from '@/lib/db/name-sort';
 import type { RecordFilters, RecordSortField } from '@/lib/records/fields';
 import { countReferences } from './referrers';
 // §7.1's hierarchy, shared with ./want-list and ./shelf — see that module for
@@ -418,10 +419,11 @@ export function buildWhere(filters: RecordFilters) {
  */
 export function sortExpression(field: RecordSortField) {
   switch (field) {
+    /* §T.4: an artist or title order is by the name sort key, one fragment, so the table, the sheet and the shelf agree. */
     case 'artist':
-      return sql`(SELECT ${artists.name} FROM ${artists} WHERE ${artists.id} = ${records.artistId})`;
+      return nameSortKey(sql`(SELECT ${artists.name} FROM ${artists} WHERE ${artists.id} = ${records.artistId})`);
     case 'title':
-      return records.title;
+      return nameSortKey(records.title);
     case 'purchaseDate':
       return records.purchaseDate;
     case 'purchasePrice':
@@ -596,9 +598,9 @@ export async function listRecords(options: {
     // it does not reverse with the key.
     .orderBy(
       sql`${ordered} NULLS LAST`,
-      asc(artists.name),
+      asc(nameSortKey(artists.name)),
       sql`${records.releaseYear} ASC NULLS LAST`,
-      asc(records.title),
+      asc(nameSortKey(records.title)),
       asc(records.id),
     )
     .limit(options.limit)
@@ -1101,5 +1103,5 @@ export async function listRecordsForSheet(): Promise<
   return db
     .select({ id: records.id, title: records.title, spineColour: records.spineColour })
     .from(records)
-    .orderBy(records.title);
+    .orderBy(nameSortKey(records.title));
 }

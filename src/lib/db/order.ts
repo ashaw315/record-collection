@@ -22,7 +22,7 @@ import type { SortDirection } from '@/lib/api/query-params';
  * so the behavior does not depend on which one is asked for.
  */
 export function orderFor(
-  column: Column,
+  column: Column | SQL,
   direction: SortDirection,
   tiebreaker: Column,
 ): SQL[] {

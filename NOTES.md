@@ -56175,3 +56175,40 @@ the §P.2 governs row, Q59 rejoined to §P.2 in the queue (Design's "Q59's row" 
 ask field's unbuilt entry no longer held. One gap left for Design, not edited: the §T.4 step's "Drop" bullet still reads
 'a leading "The ", "A " or "An "', which Change 2 did not touch, so the step's bullet and its quote disagree until Design
 sends the line; the build goes to the quote, which is the card's ruling.
+
+## 11 Nov (third): the name sort key, step 176
+
+**One fragment, one list, database assertions.** `nameSortKey` (src/lib/db/name-sort.ts) is one Drizzle SQL fragment,
+`lower(regexp_replace(name, '^(The) ', '', 'i'))`, the article list `ARTICLES` holding "The" alone by Adam's answer and
+the card's ruling of 11 Nov; it is used in ORDER BY only, so no drawn name changes. No expression index, deliberately:
+a few hundred rows, every list page-bounded, no measured problem. The assertions are database ones, not unit ones
+(test/integration/name-sort.test.ts, 12): the key's own value for each of the step's names through a SELECT of the
+fragment, then each keyed order on ten seeded artists. Collation: the test database sorts a space before a hyphen and
+upper case before lower, so the three A names are asserted as the set that opens the list and the total order only
+where adjacent pairs differ by letter; production's collation may order the three A names otherwise, and nothing in the
+ruling says which way. Red against the unkeyed build, six site assertions failing (The Doors among T, the Dark Side
+title among T, "the cramps" last), green after. One decorative assertion caught on the way: the influences test's first
+names sorted the same with or without the key, so it was rewritten on names whose order flips (The Birthday Party,
+Buzzcocks, Zounds), the §2 rule about a test that cannot fail. A-ha among A is kept and named dormant in the test, as
+the coordinator read it: with "A" out of the list nothing strips it either way, and Theatre Of Hate guards the space.
+
+**The enumeration (Q62's owed list), SQL unless said.** Keyed: listRecords' artist and title orders (sortExpression,
+which the shelf's SORT also takes) and its artist-then-title tie-break; listRecordsForSheet's titles; shelfRecords'
+artist and title within a genre run (raw SQL, the fragment interpolated); listArtists' name order, the Manage list,
+through orderFor widened to take a fragment; listInfluencesFor's two name orders. Left unkeyed, and why: recordsToTag's
+title order and the suggestions query's artist tie-break order an LLM run's input for determinism, not a reader's list;
+collection-summary's and about-grounding's orders are prompt text; RecordForm's option lists sort in JS by
+localeCompare after an add, and a JS copy of the key would be the second implementation the step forbids, so they stand
+and are reported; labels, stores and tags facets order by count then name, and the ruling names artist and title only;
+the want list orders by priority; there are no letter headers. The sort-name question (Q37's shape): Discogs' payloads
+carry no sort name; MusicBrainz's artist payloads carry `sort-name` (the fixtures hold "Discharge" and "Black Flag"
+among them) and nothing in src reads it, so it is carried and discarded; the key makes its own, and whether MusicBrainz's
+should be kept is a question for the queue, not this unit. No other target carries a name rule of its own: the Wall card has no
+sentence on the order of records within a shelf run, which was the build's (shelf.test, "how a shelf is actually filed"),
+so §T.4 is the only rule that reaches it and there is nothing for a pointer to point from; Design's to note.
+
+**The tie-break tests moved with the ruling.** records-list.test.ts asserted The Doors' five after John Lennon's one,
+the artist compared as the raw string, which was the build's comparison before any target ruled one; the claim (artist,
+then year with the undated last, then title) is unchanged and the expected arrays follow the key. Said here as §2 asks.
+The unit touches ten files: one key, its one widening of `orderFor`, four query files it fans out to, two tests, two
+docs; one judgement, so it proceeds under the 8 Nov rule and is said rather than asked.

@@ -2,6 +2,7 @@ import 'server-only';
 import { and, asc, eq } from 'drizzle-orm';
 import { getDb } from '@/db/client';
 import { artistInfluences, artists } from '@/db/schema';
+import { nameSortKey } from '@/lib/db/name-sort';
 
 /**
  * The query layer for `artist_influences` (SPEC.md §5.5, §4.3).
@@ -73,7 +74,7 @@ export async function listInfluencesFor(
     .from(artistInfluences)
     .innerJoin(artists, eq(artists.id, artistInfluences.sourceArtistId))
     .where(eq(artistInfluences.targetArtistId, artistId))
-    .orderBy(asc(artists.name), asc(artists.id));
+    .orderBy(asc(nameSortKey(artists.name)), asc(artists.id));
 
   // Edges pointing AWAY: the other artist is the target.
   const influenced = await db
@@ -86,7 +87,7 @@ export async function listInfluencesFor(
     .from(artistInfluences)
     .innerJoin(artists, eq(artists.id, artistInfluences.targetArtistId))
     .where(eq(artistInfluences.sourceArtistId, artistId))
-    .orderBy(asc(artists.name), asc(artists.id));
+    .orderBy(asc(nameSortKey(artists.name)), asc(artists.id));
 
   return { influencedBy, influenced };
 }

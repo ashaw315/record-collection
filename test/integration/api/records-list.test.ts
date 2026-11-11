@@ -736,8 +736,13 @@ describe('GET /api/records — sorting', () => {
     }
     const order = async (sort: string) =>
       (await (await listRecords(request(`/api/records?sort=${sort}&pageSize=50`))).json()).data.map((r: { title: string }) => r.title);
-    /* Artist, then year with the undated last, then title: what every tie below resolves to. */
-    const BY_TIE_BREAK = ['Mind Games', 'The Doors', 'The Soft Parade', 'Absolutely Live', 'Morrison Hotel', 'An American Prayer'];
+    /*
+      Artist, then year with the undated last, then title: what every tie below resolves to. The artist compares by
+      §T.4's name sort key (11 Nov), so The Doors is "doors" and stands before John Lennon; until then the key was the
+      raw string and Mind Games led, which was the build's comparison, not a ruling (no target ruled how a name compares
+      before §T.4). The claim, artist then year then title, is unchanged.
+    */
+    const BY_TIE_BREAK = ['The Doors', 'The Soft Parade', 'Absolutely Live', 'Morrison Hotel', 'An American Prayer', 'Mind Games'];
 
     it('orders a genre tie by artist, then year with the undated last, then title, so one artist’s records stand together', async () => {
       await tied();
@@ -751,7 +756,7 @@ describe('GET /api/records — sorting', () => {
       expect(await order('purchaseDate:asc'), 'no record has a date bought: all six tie').toEqual(BY_TIE_BREAK);
       expect(await order('purchasePrice:desc'), 'nor a price').toEqual(BY_TIE_BREAK);
       expect(await order('releaseYear:asc'), 'Mind Games and The Soft Parade tie on 1969, Absolutely Live and Morrison Hotel on 1970').toEqual([
-        'The Doors', 'Mind Games', 'The Soft Parade', 'Absolutely Live', 'Morrison Hotel', 'An American Prayer',
+        'The Doors', 'The Soft Parade', 'Mind Games', 'Absolutely Live', 'Morrison Hotel', 'An American Prayer',
       ]);
     });
 

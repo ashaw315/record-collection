@@ -2,6 +2,7 @@ import 'server-only';
 import { sectionIndices } from '@/app/wall/section-index';
 import { sql } from 'drizzle-orm';
 import { getDb } from '@/db/client';
+import { nameSortKey } from '@/lib/db/name-sort';
 import { buildWhere, sortExpression, type RecordFilters } from './records';
 import type { RecordSortField } from '@/lib/records/fields';
 
@@ -285,9 +286,9 @@ export async function shelfRecords(
       ${chosen === undefined ? sql`` : chosen}
       (s.root_name IS NULL),
       s.root_name,
-      a.name,
+      ${nameSortKey(sql.raw('a.name'))},
       records.release_year NULLS LAST,
-      records.title,
+      ${nameSortKey(sql.raw('records.title'))},
       records.id
   `);
 
