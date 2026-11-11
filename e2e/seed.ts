@@ -3,6 +3,7 @@ import { eq, sql } from 'drizzle-orm';
 import { images } from '@/db/schema';
 import { getTestDb } from '../test/helpers/db';
 import { releaseText } from '../src/lib/discogs/release-text';
+import { trackSeededRelease } from './cleanup';
 
 /**
  * Bulk fixture creation for E2E specs, straight to the database.
@@ -88,10 +89,12 @@ export async function seedDiscogsCache(fixtureName: string): Promise<number> {
  * cache, and the record page reads the tracklist from `discogs_release_text`, which the app fills when it caches a
  * release (`storeReleaseText`, server-only, so not callable from here). The rows are derived by the same pure function
  * the store uses, `releaseText`, so a seeded release reads exactly as an imported one. The payload may be a fixture's or
- * built inline; its `id` is the release id given.
+ * built inline; its `id` is the release id given, one of the run's own, so the rows are tracked here and deleted when
+ * the test ends (`trackSeededRelease`, Q67): the ledger fails on a release left under an id no fixture carries.
  */
 export async function seedRelease(discogsReleaseId: number, payload: Record<string, unknown>): Promise<number> {
   const db = getTestDb();
+  trackSeededRelease(discogsReleaseId);
   const withId = { ...payload, id: discogsReleaseId };
   await db.execute(
     sql`INSERT INTO discogs_cache (discogs_release_id, payload, fetched_at)
@@ -185,7 +188,9 @@ export async function removeImagesFor(recordId: string): Promise<void> {
  * pressing for a given id and the other reads back a row it did not seed.
  *
  * Passing an id per run gives each project its own, without inventing a payload
- * — the cached body is still real captured data.
+ * — the cached body is still real captured data. The id is the run's own, so
+ * the row is tracked and deleted when the test ends (Q67); `seedDiscogsCache`,
+ * under the fixture's own id, is not, since both workers share that row.
  */
 export async function seedDiscogsCacheAs(
   discogsReleaseId: number,
@@ -196,6 +201,7 @@ export async function seedDiscogsCacheAs(
   ) as Record<string, unknown>;
 
   const db = getTestDb();
+  trackSeededRelease(discogsReleaseId);
 
   await db.execute(
     sql`INSERT INTO discogs_cache (discogs_release_id, payload, fetched_at)

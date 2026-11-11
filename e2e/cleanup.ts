@@ -160,6 +160,20 @@ export function trackArtist(artistId: string): void {
 const trackedArtists: string[] = [];
 
 /**
+ * **A release seeded under an id of the run's own is tracked where it is seeded, and deleted when the test ends** (Q67,
+ * 10 Nov). `seedRelease` and `seedDiscogsCacheAs` call this themselves, so no spec has to remember: before it, the 173c
+ * spec and capture left discogs_cache 0 to 20 and discogs_release_text 0 to 298 on a gate's chromium half, reported and
+ * not failed, the arrangement that let a leaked record stand for four gates. The cache row and the text rows go
+ * together, both keyed by the Discogs id; a pressing holding the id is a reference row and stays (§7.4), its specs'
+ * business. A fixture cached under its own id (`seedDiscogsCache`) is NOT tracked: two workers share that row by id and
+ * an afterAll that removed it took it from under a sibling (`lookup-flows`), so the ledger lets those ids stand instead.
+ */
+export function trackSeededRelease(discogsReleaseId: number): void {
+  trackedReleases.push(discogsReleaseId);
+}
+const trackedReleases: number[] = [];
+
+/**
  * **The seventeen are nobody's to clean up.** They are seeded once per run by
  * global setup (`seventeen.ts`) and read by several specs at once; the artist
  * MGMT that owns them is found-or-created, so a spec that tracks MGMT would
@@ -193,6 +207,15 @@ export function registerCleanup(): void {
         await db.execute(sql`DELETE FROM records WHERE id = ${recordId}::uuid`);
       } catch {
         // Swallowed deliberately — see above.
+      }
+    }
+
+    for (const releaseId of trackedReleases.splice(0)) {
+      try {
+        await db.execute(sql`DELETE FROM discogs_release_text WHERE discogs_release_id = ${releaseId}`);
+        await db.execute(sql`DELETE FROM discogs_cache WHERE discogs_release_id = ${releaseId}`);
+      } catch {
+        /* A failed cleanup must not turn a passing test red; the ledger names the release left. */
       }
     }
 

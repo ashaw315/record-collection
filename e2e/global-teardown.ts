@@ -1,6 +1,6 @@
 import { config } from 'dotenv';
 import { closeTestDb, getTestDb, releaseTestDatabase } from '../test/helpers/db';
-import { compareLedgers, fixtureVocabulary, judgeGenres, loadStart, readLedger } from './ledger';
+import { compareLedgers, fixtureReleaseIds, fixtureVocabulary, judgeGenres, judgeReleases, loadStart, readLedger } from './ledger';
 
 /**
  * Releases the database hold `global-setup.ts` took (A47).
@@ -24,13 +24,17 @@ export default async function globalTeardown(): Promise<void> {
   const start = loadStart();
   if (start === null) process.stdout.write('[ledger] no start was recorded; nothing compared\n');
   else {
-    const { genresLeft, recordsLeft, moved } = compareLedgers(start, await readLedger(getTestDb()));
+    const { genresLeft, recordsLeft, releasesLeft, moved } = compareLedgers(start, await readLedger(getTestDb()));
     for (const m of moved) process.stdout.write(`[ledger] ${m.table}: ${m.start} at the start, ${m.end} at the end\n`);
     if (moved.length === 0) process.stdout.write('[ledger] every table holds what it held at the start\n');
     const { fromFixtures, leaked } = judgeGenres(genresLeft, fixtureVocabulary());
     if (fromFixtures.length > 0) process.stdout.write(`[ledger] genres the app made from Discogs fixtures, which stand: ${fromFixtures.join(', ')}\n`);
     /* Named, so the run says which spec seeded without tracking (10 Nov); a leaked record is §T.6's source for every spec after it. */
     if (recordsLeft.length > 0) failure = `[ledger] FAILED: ${recordsLeft.length} record${recordsLeft.length === 1 ? '' : 's'} left behind: ${recordsLeft.join('; ')}`;
+    /* Releases by id (Q67): a fixture's own id stands, shared between the workers as the fixtures' genres are; a run's own id left is a seed no test tracked. */
+    const releases = judgeReleases(releasesLeft, fixtureReleaseIds());
+    if (releases.fromFixtures.length > 0) process.stdout.write(`[ledger] releases cached from Discogs fixtures under their own ids, which stand: ${releases.fromFixtures.join(', ')}\n`);
+    if (releases.leaked.length > 0) failure = `${failure === null ? '' : `${failure}\n`}[ledger] FAILED: ${releases.leaked.length} release${releases.leaked.length === 1 ? '' : 's'} left behind: ${releases.leaked.join(', ')}`;
     if (leaked.length > 0) failure = `${failure === null ? '' : `${failure}\n`}[ledger] FAILED: ${leaked.length} genres left behind: ${leaked.join(', ')}`;
     else process.stdout.write('[ledger] genres: none left behind by a spec\n');
   }

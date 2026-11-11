@@ -19,8 +19,12 @@ import type { getTestDb } from '../test/helpers/db';
  * table's difference is printed and not yet a failure; those are measured
  * and recorded, and each becomes a rule when its cleanup exists.
  */
-/** `records` is each record as "title · id": a leaked record is named, and one sharing a title with the seventeen is told apart (10 Nov). */
-export type Ledger = { tables: Record<string, number>; genres: string[]; records: string[] };
+/**
+ * `records` is each record as "title · id": a leaked record is named, and one sharing a title with the seventeen is told
+ * apart (10 Nov). `releases` is each cached release's Discogs id (Q67, 10 Nov): a spec seeds a release under an id of the
+ * run's own, and the id names what was left where a count could not.
+ */
+export type Ledger = { tables: Record<string, number>; genres: string[]; records: string[]; releases: number[] };
 
 type Db = ReturnType<typeof getTestDb>;
 
@@ -33,19 +37,27 @@ export async function readLedger(db: Db): Promise<Ledger> {
   }
   const genres = await db.execute(sql`SELECT name FROM genres ORDER BY name`);
   const records = await db.execute(sql`SELECT title, id FROM records ORDER BY title, id`);
-  return { tables, genres: (genres.rows as Array<{ name: string }>).map((g) => g.name), records: (records.rows as Array<{ title: string; id: string }>).map((r) => `${r.title} · ${r.id}`) };
+  const releases = await db.execute(sql`SELECT discogs_release_id FROM discogs_cache ORDER BY 1`);
+  return {
+    tables,
+    genres: (genres.rows as Array<{ name: string }>).map((g) => g.name),
+    records: (records.rows as Array<{ title: string; id: string }>).map((r) => `${r.title} · ${r.id}`),
+    releases: (releases.rows as Array<{ discogs_release_id: number }>).map((r) => r.discogs_release_id),
+  };
 }
 
-/** What the end holds that the start did not: the genres by name, the records by title and id, and every table whose count moved. */
-export function compareLedgers(start: Ledger, end: Ledger): { genresLeft: string[]; recordsLeft: string[]; moved: Array<{ table: string; start: number; end: number }> } {
+/** What the end holds that the start did not: the genres by name, the records by title and id, the releases by id, and every table whose count moved. */
+export function compareLedgers(start: Ledger, end: Ledger): { genresLeft: string[]; recordsLeft: string[]; releasesLeft: number[]; moved: Array<{ table: string; start: number; end: number }> } {
   const had = new Set(start.genres);
   const genresLeft = end.genres.filter((name) => !had.has(name));
   const hadRecords = new Set(start.records);
   const recordsLeft = end.records.filter((r) => !hadRecords.has(r));
+  const hadReleases = new Set(start.releases);
+  const releasesLeft = end.releases.filter((id) => !hadReleases.has(id));
   const moved = Object.keys(end.tables)
     .filter((table) => (start.tables[table] ?? 0) !== end.tables[table])
     .map((table) => ({ table, start: start.tables[table] ?? 0, end: end.tables[table] }));
-  return { genresLeft, recordsLeft, moved };
+  return { genresLeft, recordsLeft, releasesLeft, moved };
 }
 
 /** The setup and the teardown run in one process; the environment carries the start between them. */
@@ -84,4 +96,26 @@ export function fixtureVocabulary(dir: string = join('test', 'fixtures', 'discog
 /** The genres left behind, split: the fixtures' own names, which stand, and everything else, which is a leak. */
 export function judgeGenres(left: string[], vocabulary: Set<string>): { fromFixtures: string[]; leaked: string[] } {
   return { fromFixtures: left.filter((name) => vocabulary.has(name)), leaked: left.filter((name) => !vocabulary.has(name)) };
+}
+
+/**
+ * Every release id a Discogs fixture carries as its own (Q67, 10 Nov). `seedDiscogsCache` caches a fixture under that
+ * id, an upsert two workers share: `lookup-flows` seeds 381756 in a beforeAll because an afterAll that removed it took
+ * the row from under a sibling worker's test. So a fixture's own id stands, as a fixture's genre does, bounded by the
+ * fixtures; a release under an id of the run's own (900,000,000 upward, `seedRelease`, `seedDiscogsCacheAs`) is a leak.
+ * Read from the files, so a new fixture's id is covered.
+ */
+export function fixtureReleaseIds(dir: string = join('test', 'fixtures', 'discogs')): Set<number> {
+  const ids = new Set<number>();
+  for (const file of readdirSync(dir)) {
+    if (!file.endsWith('.json')) continue;
+    const { id } = JSON.parse(readFileSync(join(dir, file), 'utf8')) as { id?: unknown };
+    if (typeof id === 'number') ids.add(id);
+  }
+  return ids;
+}
+
+/** The releases left behind, split: the fixtures' own ids, which stand, and everything else, which is a leak. */
+export function judgeReleases(left: number[], fixtures: Set<number>): { fromFixtures: number[]; leaked: number[] } {
+  return { fromFixtures: left.filter((id) => fixtures.has(id)), leaked: left.filter((id) => !fixtures.has(id)) };
 }
