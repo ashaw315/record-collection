@@ -54770,7 +54770,9 @@ on stderr of a run that committed, so through `run()` that assertion could not f
 captures both streams whatever the status; against the unfixed line it fails on the error itself.
 No other assertion in commit-checked.test.ts asserts on what a run did not print, so the shape
 occurred once. Step level: commit-checked.test.ts 30 passed; typecheck; lint. A gate follows: the
-commit path.
+commit path. *Second instance, 11 Nov:* a ship chain piped the intake command through `tail`, so the
+chain read tail's status and went on past "INTAKE NOT OK"; the plumbing threw the signal away, as the
+stream `run()` discarded did here. The commit check refused on its own (NOTES, 11 Nov, third).
 
 *Still proposed, awaiting the coordinator:* the record guard, commit-checked refusing a commit when
 `docs/design-landed.jsonl` differs from HEAD in the tree and is not named.
@@ -55346,7 +55348,8 @@ mid-check, and refused the Q4/Q5 commit on the index until taken in.
   Playwright has no per-shot hook in a config, so the fix is a shared fixture or helper imported into each tool:
   mechanical fan-out past the file limit.
 - **A check refused for my edit:** I wrote the hover tool while ship's check ran ("tree CHANGED", 865 passed, not a
-  result). The rule was already in memory.
+  result). The rule was already in memory. *Another instance, 11 Nov:* the unbuilt entry removed while a chain's check
+  I believed had stopped was still running; refused as "tree CHANGED" again (NOTES, 11 Nov, third).
 
 ## 8 Nov, evening: ADD RECORD's intake, captures committed, the far view's lines as rendered, 171's instrument
 
@@ -56212,3 +56215,93 @@ the artist compared as the raw string, which was the build's comparison before a
 then year with the undated last, then title) is unchanged and the expected arrays follow the key. Said here as §2 asks.
 The unit touches ten files: one key, its one widening of `orderFor`, four query files it fans out to, two tests, two
 docs; one judgement, so it proceeds under the 8 Nov rule and is said rather than asked.
+
+**Two lapses on the line's ship, both instances of members already held, recorded under them (the coordinator, 11 Nov).**
+The chain that added step 176's block, ran the intake command and shipped the line piped the intake command through
+`tail`, so the chain read tail's status and went on to the commit check after "INTAKE NOT OK" (the twins test: §T.4
+both discharged by the block and still in the unbuilt list): the plumbing threw the signal away, the same root as the
+vacuous negative assertion on a stream `run()` discarded (7 Nov, 11:00), where it is now an instance. The check refused
+on its own, on the same test and on "tree CHANGED": I had removed the unbuilt entry while the check I believed had
+stopped was still running, the working-tree member from the other side (there the check read a tree that had moved;
+here the tree moved under the check), an instance under 8 Nov's. The guard held despite the plumbing being wrong, which
+is the only reason this is a note and not a bad commit. The refusal's log was read with `--read`, the entry removed, the
+chain re-run, and the line shipped at 8140fa8e. The chain shape to keep: no `| tail` on a command whose status the chain
+depends on, or `set -o pipefail`; and a chain's log is read to its end before the tree is touched.
+
+**The five refused governs rows, for Design (owed since 10 Nov's backwards sweep).** The shipped arrival check, run over
+every drop ref, refused five times across four sections; each refusal reads "§X changed in the Wall card, and no change
+file in the drop edited its governs row or said it stands". The five, with what the section's sentences did, and the
+rows as they read at HEAD (8140fa8e) for Design to judge which remain stale:
+- **§W.8, refs/drops/2026-10-28-09 (captured 28 Oct 20:08; change file in the drop: "Import 159 and hold step", which
+  did not name the row).** Fourteen sentences added: a press on a spine before the wall hydrates is held and applied as
+  a pull; only the last press held; later input cancels the hold; a bound after which the held press navigates; the
+  bound provisional; the far view's run held the same way; the test's shape.
+- **§W.8, refs/drops/2026-10-28-11 (captured 28 Oct 20:11; no change file in the drop).** Four of those sentences
+  reworded and seven added: a press on a second spine replaces the first; one bound set by a reader's tolerance for a
+  dead press, not by hydration, covering a failed script too; the cost on a slow connection; Adam judges both.
+- **§W.18, refs/drops/2026-11-01-01 (captured 1 Nov 08:21; no change file in the drop).** Seventeen sentences added:
+  the pulled record ordered as one object withdrawn; while it crosses the row's front plane it is drawn as two parts
+  sorted on their own, the cut not drawn; Code's measurement (2 of 22, 23 of 43, 60 of 80 seats failing); the test.
+- **§W.22, refs/drops/2026-11-01-01 (the same capture).** Three sentences removed (the record's own drop a fact of
+  §W.21's gesture; the pan's duration and curve provisional) and nine added: pan-first withdrawn, Adam judged the pan
+  overlapped by use; a 1150ms pan inside a 1600ms pull; the put back and a re-roll Code's to report; the curve provisional.
+- **§W.22, refs/drops/2026-11-01-02 (captured 1 Nov 09:57; change file in the drop: "Cut withdrawn", which did not name
+  the row).** Four sentences removed and seven added: Code's fit dip = 0.673 × pan + 64.6; the third-shelf 5px cannot
+  stand beside it; the overlapped pan brings back a top-shelf dip of about 250px, a cost Adam accepted.
+The rows today. §W.8: "Spines as anchors and why not a list, the paint-order/reading-order check, the no-cover field's
+value and its type fit, and why capacity is withdrawn. Its fork is withdrawn with its premise; the narrow-viewport
+question is deferred there. The arrows, and why their slide holds the record's depth, are ruled here; where they sit is
+§W.9's. And a press on a spine before the wall hydrates, held, acknowledged past a delay and applied as a pull, with a
+bound judged by tolerance; the far view's run withdrawn from it. And a pull whose cover has not arrived, and when the
+wall fetches its covers." §W.18: "The three clearances and which bind: the sweep and the separating plane are
+requirements and are met; zero silhouette overlap is withdrawn, because overlap is what depth looks like. Why the sort
+and the travel are both needed. And the coincidence rule: a margin within rounding of its bound is not a margin. And
+the pulled record ordered as one object throughout its travel (a cut at the row's front ruled and withdrawn)." §W.22:
+"The interim drift withdrawn — the record's transforms stay as §W.21 rules them and the drawing region pans to frame
+the landing with the pull, overlapped as Adam judged it, resolving to zero when the landing is already in frame
+(pan-first withdrawn). Why a drift negates §W.21's shared fixed point rather than weakening it; why no page room is
+needed (§W.13's bands unchanged); §W.19's composition is a statement about the framed view. Also: a ruling whose terms
+are all in one coordinate system cannot discharge an obligation in another." Each row has been touched since its
+refusal (the held press, the cut, the overlapped pan each appear), so what remains stale, if anything, is Design's call;
+the one observation Code can make is that §W.22's row says nothing of the dip fit, which the second refusal added.
+
+**The catalogue-number-without-weight count (Code's, from 173c; the coordinator, 11 Nov), read from production with
+`scripts/count-pressing-detail.mts`, a committed tool.** 55 records, every one with a pressing row and a catalogue
+number; 52 with a catalogue number and no weight; 5 of those draw no Pressing detail section, having no plant, colour or
+reissue either; 50 draw it. Whether a target rules the section's presence: yes. §9.1 drops a section with nothing to
+show, and §26's "row 1 is absent on one record, which §9.1 already rules" cites that rule for the one record of the
+seventeen-record census, not a count of its own. What the section shows is the pressing facts the identity grid does not
+already carry (plant, weight, colour, reissue; RecordDetail.tsx), because the grid's pressing line draws the label,
+catalogue number, country and year (§1's band), so a record with only a catalogue number has it on the page already and
+nothing left for the section. Five of 55 is the census figure at this collection's size, not a mechanism removing a
+section with data to show. Closed; nothing owed to Design.
+
+**The record form's option sort (the coordinator's question before 174).** The options come from the database:
+`loadReferenceData` calls `listArtists` and the other list queries, so the form's initial lists arrive in the shared
+key's order since 176. The one JS sort is after an inline add (`RecordForm.tsx`, the `setOptions` after a reference is
+created from the form), which re-sorts the whole group by `localeCompare` on the raw name, so after an add the artist
+list reads The Doors under T until the page is next loaded. The third option exists without a second key: after the add,
+re-read the group from its list route (one request, the key's order) or insert the new option without re-sorting the
+rest. Which, and whether §T.4's letter reaches a list of artists, is Design's; nothing built.
+
+**Design ruled it the same hour ("Names lists keyed too", refs/drops/2026-11-11-03), and step 176 reopened.** §T.4
+now says the key orders every list a reader scans by an artist's name or a title, records or names alone, and a list
+keyed in the browser takes its order from the database's key, not a copy; no entry owed, since the reach was already
+"every place a name is ordered or grouped". The step gains a bullet (the form's artist options ordered by the database's
+key, fetched ordered or with the key beside each name; if they don't come from the database, report it) and an assertion
+(the form's artist list puts The Doors among D), and its "Drop" bullet reads one article. A Done block over a step that
+grew is what Q53's states field exists to catch (the coordinator), so 176's line reads Done in part with "Code's work
+unbuilt" and names what is left: the options come from the database and are keyed on load; the JavaScript re-sort after
+an inline add is what takes the database's order instead; the next unit after this intake. The arrival check accepted the
+drop: §T.4 changed and the file's governs section names it.
+
+**The docs/design change-file sweep (owed since 9 Nov), run at 8140fa8e.** 86 change files on disk against 87 names in
+the landed record, and the two reconcile: every change file on disk is in the record (two apparent misses were the
+sweep's own stripping of "for Code to add/insert", under which the record names them in full); the four "FOR CODE - …"
+notes of 27 Oct on disk are notes, not change files, by the record's own pattern and by the 27 Oct rule that a note is
+not a ruling, so they are rightly absent; of the seven record names with no file on disk, one is held in its drop ref
+(Record cut at the row front- pan overlapped, refs/drops/2026-11-01-01; Adam deletes relayed files, which is not a loss),
+four carry `ref: null` with their own account (Arrow closed, offered and never written, superseded by Two rules and the
+arrow; Press before hydration, superseded by the hold files; Host change and two-author list and Two rules and the arrow,
+applied by hand from outside docs/design, their landing commits named), and two are the add/insert files above. Nothing
+to chase; the sweep is a script in the scratchpad and should become a committed tool if it is asked for again.
