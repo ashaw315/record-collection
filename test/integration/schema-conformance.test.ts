@@ -118,6 +118,12 @@ describe('§4 conformance — cascade directions', () => {
       'price_history.pressing_id -> pressings: NO ACTION',
       'price_history.record_id -> records: CASCADE',
       'price_history.want_list_id -> want_list: CASCADE',
+      /*
+        Q22 (11 Nov). CASCADE because a vector is a fact ABOUT a record's ABOUT:
+        the record gone, the vector describes nothing, and a stale one left
+        behind would rank a record that no longer exists.
+      */
+      'record_embeddings.record_id -> records: CASCADE',
       'record_genres.genre_id -> genres: NO ACTION',
       'record_genres.record_id -> records: CASCADE',
       /*
@@ -310,6 +316,10 @@ describe('§4 conformance — NOT NULL where the spec requires it', () => {
       // §4.3's MusicBrainz cache, same reasoning again — three columns, and
       // `fetched_at` is what freshness is measured from.
       'musicbrainz_cache',
+      // Q22's embedding store (11 Nov), a cache of a derived value by the same
+      // reasoning: `embedded_at` is its timestamp, and the ABOUT's hash is what
+      // staleness is measured from, so `updated_at` would be a second answer.
+      'record_embeddings',
       // §4.2's `discogs_import_runs` (step 159) is a write-once event log, not
       // a cache: a row is written once at the end of a run and never updated,
       // so `created_at` would always equal `finished_at` and `updated_at`

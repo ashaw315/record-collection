@@ -56405,6 +56405,33 @@ pressing cascade and the labels tail. §38's entry in the 75 was the reader's ow
 wants whitespace after a full stop and the card's plain text has none at "rules.Row 1"; `sentencesOf`'s glue fix landed
 at 874d60f4 and is not involved.
 
+## 11 Nov (sixth): Q67's pressing half, the cascade; Q22's gate read
+
+**Pressings go with their record, and the ledger fails on one left (the coordinator's split, 11 Nov).** The ledger reads
+each pressing as "catalogue number · id" and `compareLedgers` names the ones the end holds that the start did not;
+nothing stands, since a pressing is found-or-created with a record and not shared by name. Test first: the ledger's
+unit test red on the missing field, green after; then the staging, the extended-grid spec alone with the ledger change
+only, which read "FAILED: 20 pressings left behind" with all 21 tests green, the guard firing on exactly what the
+per-spec loop had measured. **The cascade** (e2e/cleanup.ts): before the hook deletes a tracked record, an artist's
+records, or their want-list rows, it notes their pressing ids (`records.pressing_id`, `want_list.target_pressing_id`),
+and after the deletions it deletes those that nothing references, a record, a want-list target or a price row;
+`trackCreated` registers a pressing a spec posts on its own, into the same set. extended-grid alone then read "every
+table holds what it held at the start", as did want-list (16 before, its targets) and record-form. A full chromium run
+with the cascade left one pressing of the 94, with no catalogue number and a hand-read matrix, unreferenced: the record
+it was made for had been moved to a second pressing by the form's save, so the cleanup's note of the record's final
+pressing could not reach it; registering the spec's own post did, and Q71 holds the product question that leak exposed
+(a duplicate pressing on an edit that leaves the pressing alone, suspected). The whole mobile project read clean. Step
+level: ledger unit tests, extended-grid, want-list and record-form alone, the whole chromium suite once (1075 passed,
+45 minutes at load 10 to 13, the one pressing), the whole mobile project (394 passed), typecheck, lint at baseline. A
+cleanup change: the ship is a gate, and its ledger is the verdict on the pressing half.
+
+**Q22's gate (43086929448) read before this ship:** both e2e halves green with their ledgers clean, unit 5108 passed and
+2 failed, both in schema-conformance on the new table: it was missing from the cascade-directions list (now listed in
+its alphabetical place with the reasoning beside its siblings, a vector being a fact about a record's ABOUT) and from the
+tables exempt from the two timestamp columns (now exempt with the caches, since `embedded_at` is its timestamp and the
+ABOUT's hash is what staleness is measured from). Two tests the commit check does not run, found by the gate as a gate
+is for; 14 of 14 now.
+
 **The docs/design change-file sweep (owed since 9 Nov), run at 8140fa8e.** 86 change files on disk against 87 names in
 the landed record, and the two reconcile: every change file on disk is in the record (two apparent misses were the
 sweep's own stripping of "for Code to add/insert", under which the record names them in full); the four "FOR CODE - …"

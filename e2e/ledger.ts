@@ -24,7 +24,12 @@ import type { getTestDb } from '../test/helpers/db';
  * apart (10 Nov). `releases` is each cached release's Discogs id (Q67, 10 Nov): a spec seeds a release under an id of the
  * run's own, and the id names what was left where a count could not.
  */
-export type Ledger = { tables: Record<string, number>; genres: string[]; records: string[]; releases: number[] };
+/**
+ * `pressings` is each pressing as "catalogue number · id" (Q67's pressing half, 11 Nov): a pressing is found-or-created
+ * with a record and not shared by name, so every one the end holds that the start did not is a leak, with nothing to
+ * stand.
+ */
+export type Ledger = { tables: Record<string, number>; genres: string[]; records: string[]; releases: number[]; pressings: string[] };
 
 type Db = ReturnType<typeof getTestDb>;
 
@@ -38,26 +43,30 @@ export async function readLedger(db: Db): Promise<Ledger> {
   const genres = await db.execute(sql`SELECT name FROM genres ORDER BY name`);
   const records = await db.execute(sql`SELECT title, id FROM records ORDER BY title, id`);
   const releases = await db.execute(sql`SELECT discogs_release_id FROM discogs_cache ORDER BY 1`);
+  const pressings = await db.execute(sql`SELECT coalesce(catalog_number, '') AS catalog, id FROM pressings ORDER BY 2`);
   return {
     tables,
     genres: (genres.rows as Array<{ name: string }>).map((g) => g.name),
     records: (records.rows as Array<{ title: string; id: string }>).map((r) => `${r.title} · ${r.id}`),
     releases: (releases.rows as Array<{ discogs_release_id: number }>).map((r) => r.discogs_release_id),
+    pressings: (pressings.rows as Array<{ catalog: string; id: string }>).map((p) => `${p.catalog} · ${p.id}`),
   };
 }
 
 /** What the end holds that the start did not: the genres by name, the records by title and id, the releases by id, and every table whose count moved. */
-export function compareLedgers(start: Ledger, end: Ledger): { genresLeft: string[]; recordsLeft: string[]; releasesLeft: number[]; moved: Array<{ table: string; start: number; end: number }> } {
+export function compareLedgers(start: Ledger, end: Ledger): { genresLeft: string[]; recordsLeft: string[]; releasesLeft: number[]; pressingsLeft: string[]; moved: Array<{ table: string; start: number; end: number }> } {
   const had = new Set(start.genres);
   const genresLeft = end.genres.filter((name) => !had.has(name));
   const hadRecords = new Set(start.records);
   const recordsLeft = end.records.filter((r) => !hadRecords.has(r));
   const hadReleases = new Set(start.releases);
   const releasesLeft = end.releases.filter((id) => !hadReleases.has(id));
+  const hadPressings = new Set(start.pressings);
+  const pressingsLeft = end.pressings.filter((p) => !hadPressings.has(p));
   const moved = Object.keys(end.tables)
     .filter((table) => (start.tables[table] ?? 0) !== end.tables[table])
     .map((table) => ({ table, start: start.tables[table] ?? 0, end: end.tables[table] }));
-  return { genresLeft, recordsLeft, releasesLeft, moved };
+  return { genresLeft, recordsLeft, releasesLeft, pressingsLeft, moved };
 }
 
 /** The setup and the teardown run in one process; the environment carries the start between them. */

@@ -140,8 +140,11 @@ export function trackCreated(path: string, body: unknown): void {
   if (path === '/api/genres') trackGenre(id);
   /* Step 174 (11 Nov): a spec's labels, stores and tags registered at the seed, so a test that fails before its own `remove` leaves none behind. */
   if (path === '/api/labels' || path === '/api/stores' || path === '/api/tags') trackedReferences.push({ table: path.slice('/api/'.length), id });
+  /* A pressing posted on its own (11 Nov): deleted with the records' pressings once nothing references it; the form's save may have moved the record to another. */
+  if (path === '/api/pressings') trackedPressings.push(id);
 }
 const trackedReferences: Array<{ table: string; id: string }> = [];
+const trackedPressings: string[] = [];
 
 /**
  * A record saved through the form or the Discogs import, tracked with the artist it landed under (10 Nov). The import
@@ -205,8 +208,22 @@ export function registerCleanup(): void {
     */
     const db = getTestDb();
 
+    /*
+      Q67's pressing half (the coordinator, 11 Nov): a pressing is found-or-created with a record and left when the
+      record goes, 94 a run on chromium. Not shared by name, so it goes with its record: the pressings of every record
+      this hook deletes are noted first, and those nothing references afterwards (a record, a want-list target, a price
+      row) are deleted last. The ledger fails the run on any pressing left.
+    */
+    const pressingsOfDeleted = new Set<string>();
+    const notePressings = async (query: ReturnType<typeof sql>) => {
+      const rows = (await db.execute<{ pressing_id: string | null }>(query)).rows;
+      for (const row of rows) if (row.pressing_id !== null) pressingsOfDeleted.add(row.pressing_id);
+    };
+
     for (const recordId of trackedRecords.splice(0)) {
       try {
+        await notePressings(sql`SELECT pressing_id FROM records WHERE id = ${recordId}::uuid`);
+        await notePressings(sql`SELECT target_pressing_id AS pressing_id FROM want_list WHERE acquired_record_id = ${recordId}::uuid`);
         await db.execute(sql`DELETE FROM want_list WHERE acquired_record_id = ${recordId}::uuid`);
         await db.execute(sql`DELETE FROM records WHERE id = ${recordId}::uuid`);
       } catch {
@@ -239,6 +256,14 @@ export function registerCleanup(): void {
           behind per run: a want-list entry pinned both. Found by measuring, not
           by reading — the count fell from 145 to 1, and the 1 was the tell.
         */
+        await notePressings(
+          sql`SELECT target_pressing_id AS pressing_id FROM want_list
+               WHERE artist_id = ${artistId}::uuid
+                  OR acquired_record_id IN (
+                       SELECT id FROM records WHERE artist_id = ${artistId}::uuid
+                         AND NOT (id = ANY(${PROTECTED_RECORDS}::uuid[]))
+                     )`,
+        );
         await db.execute(
           sql`DELETE FROM want_list
                WHERE artist_id = ${artistId}::uuid
@@ -252,6 +277,15 @@ export function registerCleanup(): void {
           the run (the seventeen) or to whichever spec created them, and that
           spec tracks them by id.
         */
+        await notePressings(
+          sql`SELECT pressing_id FROM records WHERE artist_id = ${artistId}::uuid
+                AND NOT (id = ANY(${PROTECTED_RECORDS}::uuid[]))
+                AND NOT EXISTS (
+                  SELECT 1 FROM records p
+                   WHERE p.artist_id = ${artistId}::uuid
+                     AND p.id = ANY(${PROTECTED_RECORDS}::uuid[])
+                )`,
+        );
         await db.execute(
           sql`DELETE FROM records WHERE artist_id = ${artistId}::uuid
                 AND NOT (id = ANY(${PROTECTED_RECORDS}::uuid[]))
@@ -265,6 +299,23 @@ export function registerCleanup(): void {
         await db.execute(
           sql`DELETE FROM artists WHERE id = ${artistId}::uuid
                 AND NOT EXISTS (SELECT 1 FROM records WHERE artist_id = ${artistId}::uuid)`,
+        );
+      } catch {
+        // Swallowed deliberately — see above.
+      }
+    }
+
+    /* The deleted records' pressings and the ones a spec posted on its own, once nothing references them: a record kept, a want-list target or a price row leaves one, and the ledger names it. */
+    for (const id of trackedPressings.splice(0)) pressingsOfDeleted.add(id);
+    if (pressingsOfDeleted.size > 0) {
+      const idList = `{${[...pressingsOfDeleted].join(',')}}`;
+      try {
+        await db.execute(
+          sql`DELETE FROM pressings p
+               WHERE p.id = ANY(${idList}::uuid[])
+                 AND NOT EXISTS (SELECT 1 FROM records r WHERE r.pressing_id = p.id)
+                 AND NOT EXISTS (SELECT 1 FROM want_list w WHERE w.target_pressing_id = p.id)
+                 AND NOT EXISTS (SELECT 1 FROM price_history h WHERE h.pressing_id = p.id)`,
         );
       } catch {
         // Swallowed deliberately — see above.

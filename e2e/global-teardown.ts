@@ -24,7 +24,7 @@ export default async function globalTeardown(): Promise<void> {
   const start = loadStart();
   if (start === null) process.stdout.write('[ledger] no start was recorded; nothing compared\n');
   else {
-    const { genresLeft, recordsLeft, releasesLeft, moved } = compareLedgers(start, await readLedger(getTestDb()));
+    const { genresLeft, recordsLeft, releasesLeft, pressingsLeft, moved } = compareLedgers(start, await readLedger(getTestDb()));
     for (const m of moved) process.stdout.write(`[ledger] ${m.table}: ${m.start} at the start, ${m.end} at the end\n`);
     if (moved.length === 0) process.stdout.write('[ledger] every table holds what it held at the start\n');
     const { fromFixtures, leaked } = judgeGenres(genresLeft, fixtureVocabulary());
@@ -35,6 +35,8 @@ export default async function globalTeardown(): Promise<void> {
     const releases = judgeReleases(releasesLeft, fixtureReleaseIds());
     if (releases.fromFixtures.length > 0) process.stdout.write(`[ledger] releases cached from Discogs fixtures under their own ids, which stand: ${releases.fromFixtures.join(', ')}\n`);
     if (releases.leaked.length > 0) failure = `${failure === null ? '' : `${failure}\n`}[ledger] FAILED: ${releases.leaked.length} release${releases.leaked.length === 1 ? '' : 's'} left behind: ${releases.leaked.join(', ')}`;
+    /* Pressings by id (Q67's pressing half, 11 Nov): found-or-created with a record and not shared, so nothing stands; the cleanup deletes a tracked record's pressing when nothing references it after. */
+    if (pressingsLeft.length > 0) failure = `${failure === null ? '' : `${failure}\n`}[ledger] FAILED: ${pressingsLeft.length} pressing${pressingsLeft.length === 1 ? '' : 's'} left behind: ${pressingsLeft.join('; ')}`;
     if (leaked.length > 0) failure = `${failure === null ? '' : `${failure}\n`}[ledger] FAILED: ${leaked.length} genres left behind: ${leaked.join(', ')}`;
     else process.stdout.write('[ledger] genres: none left behind by a spec\n');
   }

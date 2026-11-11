@@ -13,20 +13,20 @@ import { compareLedgers, fixtureReleaseIds, fixtureVocabulary, judgeGenres, judg
  * and they are bounded by the fixtures, not by the length of the run.
  */
 describe('compareLedgers', () => {
-  const start = { tables: { genres: 2, labels: 1, tags: 0 }, genres: ['Pop', 'Rock'], records: [], releases: [] };
+  const start = { tables: { genres: 2, labels: 1, tags: 0 }, genres: ['Pop', 'Rock'], records: [], releases: [], pressings: [] };
 
   it('reports nothing where the end holds what the start held', () => {
-    expect(compareLedgers(start, { tables: { genres: 2, labels: 1, tags: 0 }, genres: ['Rock', 'Pop'], records: [], releases: [] })).toEqual({ genresLeft: [], recordsLeft: [], releasesLeft: [], moved: [] });
+    expect(compareLedgers(start, { tables: { genres: 2, labels: 1, tags: 0 }, genres: ['Rock', 'Pop'], records: [], releases: [], pressings: [] })).toEqual({ genresLeft: [], recordsLeft: [], releasesLeft: [], pressingsLeft: [], moved: [] });
   });
 
   /* Fails against a comparison by count: one genre gone and another left is the same count. */
   it('names a genre left behind even where the count is unchanged', () => {
-    const { genresLeft } = compareLedgers(start, { tables: { genres: 2, labels: 1, tags: 0 }, genres: ['Pop', 'UK82-abc'], records: [], releases: [] });
+    const { genresLeft } = compareLedgers(start, { tables: { genres: 2, labels: 1, tags: 0 }, genres: ['Pop', 'UK82-abc'], records: [], releases: [], pressings: [] });
     expect(genresLeft).toEqual(['UK82-abc']);
   });
 
   it('lists every table whose count moved, with both figures', () => {
-    const { moved } = compareLedgers(start, { tables: { genres: 2, labels: 5, tags: 0, stores: 3 }, genres: ['Pop', 'Rock'], records: [], releases: [] });
+    const { moved } = compareLedgers(start, { tables: { genres: 2, labels: 5, tags: 0, stores: 3 }, genres: ['Pop', 'Rock'], records: [], releases: [], pressings: [] });
     expect(moved).toEqual([{ table: 'labels', start: 1, end: 5 }, { table: 'stores', start: 0, end: 3 }]);
   });
 });
@@ -53,17 +53,17 @@ describe('judgeGenres', () => {
   each record's title and id, and the line names what was left. Fails against a ledger that holds only counts.
 */
 describe('compareLedgers names the records left behind', () => {
-  const start = { tables: { records: 17 }, genres: [], records: ['Loss Of Life · r1', 'The Doors · r2'], releases: [] };
+  const start = { tables: { records: 17 }, genres: [], records: ['Loss Of Life · r1', 'The Doors · r2'], releases: [], pressings: [] };
 
   it('names each record the end holds that the start did not, by title and id', () => {
-    const end = { tables: { records: 19 }, genres: [], records: ['Loss Of Life · r1', 'The Doors · r2', 'Hear Nothing 123-merge · r9', 'Footprint 7 · r8'], releases: [] };
+    const end = { tables: { records: 19 }, genres: [], records: ['Loss Of Life · r1', 'The Doors · r2', 'Hear Nothing 123-merge · r9', 'Footprint 7 · r8'], releases: [], pressings: [] };
     expect(compareLedgers(start, end).recordsLeft).toEqual(['Hear Nothing 123-merge · r9', 'Footprint 7 · r8']);
   });
 
   it('names none where the records held or fell, and a record of the same title as one of the seventeen is told apart by its id', () => {
     expect(compareLedgers(start, { ...start, tables: { records: 17 } }).recordsLeft).toEqual([]);
-    expect(compareLedgers(start, { tables: { records: 16 }, genres: [], records: ['Loss Of Life · r1'], releases: [] }).recordsLeft).toEqual([]);
-    expect(compareLedgers(start, { tables: { records: 18 }, genres: [], records: [...start.records, 'The Doors · r7'], releases: [] }).recordsLeft).toEqual(['The Doors · r7']);
+    expect(compareLedgers(start, { tables: { records: 16 }, genres: [], records: ['Loss Of Life · r1'], releases: [], pressings: [] }).recordsLeft).toEqual([]);
+    expect(compareLedgers(start, { tables: { records: 18 }, genres: [], records: [...start.records, 'The Doors · r7'], releases: [], pressings: [] }).recordsLeft).toEqual(['The Doors · r7']);
   });
 });
 
@@ -77,10 +77,10 @@ describe('compareLedgers names the records left behind', () => {
   against one that lets every id stand, or none.
 */
 describe('compareLedgers names the releases left behind, and judgeReleases lets a fixture’s own id stand', () => {
-  const start = { tables: { discogs_cache: 1 }, genres: [], records: [], releases: [381756] };
+  const start = { tables: { discogs_cache: 1 }, genres: [], records: [], releases: [381756], pressings: [] };
 
   it('names each release id the end holds that the start did not', () => {
-    const end = { tables: { discogs_cache: 3 }, genres: [], records: [], releases: [381756, 912345678, 6758287] };
+    const end = { tables: { discogs_cache: 3 }, genres: [], records: [], releases: [381756, 912345678, 6758287], pressings: [] };
     expect(compareLedgers(start, end).releasesLeft).toEqual([912345678, 6758287]);
     expect(compareLedgers(start, { ...start }).releasesLeft).toEqual([]);
   });
@@ -95,5 +95,22 @@ describe('compareLedgers names the releases left behind, and judgeReleases lets 
 
   it('lets a fixture’s own id stand and fails on any other', () => {
     expect(judgeReleases([381756, 912345678, 6758287, 945000001], fixtureReleaseIds())).toEqual({ fromFixtures: [381756, 6758287], leaked: [912345678, 945000001] });
+  });
+});
+
+/*
+  **Leftover pressings fail the run by id, as records, genres and releases do (Q67's pressing half; the coordinator,
+  11 Nov).** A pressing is found-or-created with a record and is not shared by name, so there is no "which rows stand"
+  question: every pressing the end holds that the start did not is a leak, named by catalogue number and id. Fails
+  against a compareLedgers without the field, or one keyed on the count rather than the ids.
+*/
+describe('compareLedgers names the pressings left behind', () => {
+  const start = { tables: { pressings: 1 }, genres: [], records: [], releases: [], pressings: ['NBLP 7119 · p1'] };
+
+  it('names each pressing the end holds that the start did not, by catalogue number and id', () => {
+    const end = { tables: { pressings: 3 }, genres: [], records: [], releases: [], pressings: ['NBLP 7119 · p1', 'CLAY 1 · p9', ' · p8'] };
+    expect(compareLedgers(start, end).pressingsLeft).toEqual(['CLAY 1 · p9', ' · p8']);
+    expect(compareLedgers(start, { ...start }).pressingsLeft).toEqual([]);
+    expect(compareLedgers(start, { ...start, tables: { pressings: 0 }, pressings: [] }).pressingsLeft).toEqual([]);
   });
 });
