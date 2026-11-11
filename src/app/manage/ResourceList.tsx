@@ -7,6 +7,7 @@ import { CONTROL_BOX, CONTROL_LABEL, LABEL, LABEL_TYPE } from '@/app/records/[id
 import { seededMessage } from '@/lib/api/messages';
 import { LineupAction } from './LineupAction';
 import { formFields, tableFields, type FieldSpec, type ResourceSpec } from './resources';
+import { landing, rowEntry } from './row-entry';
 import type { Row } from './ResourceTable';
 
 /**
@@ -121,6 +122,11 @@ export function ResourceList({ resource, rows, busyId, rowError, createError, on
     link is followed only after the pop lands and the two history operations never race (the coordinator's third
     escalation case). A Back the reader pressed has popped the entry already: with nothing changed the row closes and
     `pushed` is cleared without a second pop; with changes the entry is pushed back and the line asks.
+
+    **Step 177 (§T.6): "the row’s entry names the row it opened, and landing on it opens that row with its saved
+    values."** The entry carries the row's id and section (`rowEntry`); a pop that lands on one with nothing pushed, or a
+    load that starts on one, opens the row from the list's rows (`landing`), never from a draft. A row gone from the list
+    replaces the entry and stays closed; another section's row is the screen's to reach first (ManageClient).
   */
   const pushed = useRef(false);
   const popping = useRef(false);
@@ -158,9 +164,30 @@ export function ResourceList({ resource, rows, busyId, rowError, createError, on
     if (!pushed.current) perform();
   }
 
+  /** Landed on an entry (a pop with nothing pushed, or the load): open the row it names, or replace an entry whose row is gone. */
+  const landed = useRef<string | null>(null);
+  function land() {
+    if (pushed.current) return;
+    const where = landing(window.history.state, resource.key, rows);
+    if (where.kind === 'open') {
+      /* The entry landed on is the row's: when the row opens, the effect below claims it instead of pushing another. */
+      landed.current = where.id;
+      go(where.id, rows.find((row) => row.id === where.id));
+    } else if (where.kind === 'replace') {
+      window.history.replaceState(null, '', window.location.href);
+    }
+  }
+  const landRef = useRef(land);
+  landRef.current = land;
+  useEffect(() => {
+    landRef.current();
+  }, []);
+
   useEffect(() => {
     if (openId !== null && !pushed.current) {
-      window.history.pushState({ manageRow: openId }, '', window.location.href);
+      /* A row opened by a landing is on the stack already; an opening by hand pushes its entry. */
+      if (landed.current !== openId) window.history.pushState(rowEntry(openId, resource.key), '', window.location.href);
+      landed.current = null;
       pushed.current = true;
     } else if (openId === null && pushed.current) {
       pushed.current = false;
@@ -178,12 +205,16 @@ export function ResourceList({ resource, rows, busyId, rowError, createError, on
         after?.();
         return;
       }
-      if (!pushed.current) return;
+      if (!pushed.current) {
+        /* Nothing of ours on the stack: a Forward onto a row's entry, which opens the row (step 177). */
+        landRef.current();
+        return;
+      }
       /* Another entry above ours popped (the app menu's, which closes by its own entry at the same URL): ours still stands. */
       if ((window.history.state as { manageRow?: string } | null)?.manageRow !== undefined) return;
-      if (changedNow.current) {
+      if (changedNow.current && openId !== null) {
         /* Back over a change: the entry comes back, and the line asks as a close does. */
-        window.history.pushState({ manageRow: openId }, '', window.location.href);
+        window.history.pushState(rowEntry(openId, resource.key), '', window.location.href);
         setAsked({ perform: () => leave(() => {}) });
         return;
       }

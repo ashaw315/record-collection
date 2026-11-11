@@ -56454,7 +56454,11 @@ workflow file issue", while gate.yml is unchanged since 60340188 and ran four ti
 55fd8518 through `scripts/ci-gate.sh`, read before dispatched; a second startup failure stops there for the
 coordinator. This unit's own ship dispatches a gate on its commit, which covers the pressings commit too. **The second
 dispatch (43098192480) failed at startup the same way,** so no third by hand; the labels ship's gate (43098848973) on
-550fbe84 started, its jobs queued, and covers both commits.
+550fbe84 started, its jobs queued, and covers both commits. **It is green on all four halves, read from the artifacts:**
+chromium 1075 passed 1 skipped, mobile 394 passed 4 skipped, report-only 3, unit 5114 passed 3 skipped, every half
+ledger clean and tree unchanged. The ledgers say what the two halves of Q67 did at gate scale: no pressings line at all
+on either e2e half, so the count at the end is the count at the start where it read 1 to 94 and 1 to 28 the day before;
+labels 1 to 3 on both, the two left standing as fixtures' (Clay Records, Yetee Records). Q67 is closed by the gate.
 
 ## 11 Nov (eighth): Q22's second unit, the ranking and the ask route
 
@@ -56486,3 +56490,52 @@ four carry `ref: null` with their own account (Arrow closed, offered and never w
 arrow; Press before hydration, superseded by the hold files; Host change and two-author list and Two rules and the arrow,
 applied by hand from outside docs/design, their landing commits named), and two are the add/insert files above. Nothing
 to chase; the sweep is a script in the scratchpad and should become a committed tool if it is asked for again.
+
+## 11 Nov (ninth): the ranking's gate, the "Row entry reopens" intake, and 177
+
+**The ranking unit's gate (43100972262, on 074f0dd6) was green on all four halves, read from the artifacts:** chromium
+1075 passed, 1 skipped, ledger clean, tree unchanged; mobile 394 passed, 4 skipped, ledger clean; report-only 3 passed;
+unit 5126 passed, 3 skipped. The ledgers read as the labels gate's did: no pressings line on either half, labels 1 to 3
+with the two standing as fixtures' (Clay Records, Yetee Records). The unit half carries the ranking's and the route's
+fourteen new tests.
+
+**The coordinator's Q67 question, answered:** the labels flip is already built (550fbe84) with the fixtures' fifteen names
+as the declared set rather than the two-name pair the coordinator proposed, because which fixture labels stand depends on
+which specs ran (the seven-spec run left A&M Records too), so a static pair would fail a partial run on a fixture's own
+name; recorded on Q67's row with the re-measure lesson the coordinator asked for.
+
+**Design's "Row entry reopens" taken in (refs/drops/2026-11-11-07; 23ccaab8).** drop-ref accepted it with §T.6's
+governs row addressed in the file; the withdrawals derived unchanged (315). **apply-code-region refused once on "934
+passed, 1 failed" in the document suite without naming the test;** test/repo alone read 922 passed, the wall unit file
+alone 13, the two together 935 of 935, and the re-run read INTAKE OK. The failure is unexplained, and it could not be
+explained because the intake's judge keeps only the vitest summary and discards the run's output, so the test's name is
+gone with it. A gap in the instrument, not fixed here: `apply-code-region.mjs` and `commit-checked.sh` should keep the
+run's output beside the verdict (commit-checked keeps a log under `.git/commit-checked/`; apply-code-region keeps nothing).
+The first commit attempt was refused before any check because the change file itself is gitignored (its ref holds it),
+and the refusal log was read before the second.
+
+**The coordinator's three questions on 174, answered before building.** (1) Design's ruling is an addition to the
+built mechanism, not a rework: push on open and pop on close stay, and the entry gains what it is for; the pop by
+`history.back()` leaving the entry in the forward list is what makes Forward land on it. The two report-only tests
+become the ruled assertions by inverting their claims, a claim change ruled by Design and applied as such. (2) The
+in-app link is not a race: DISCARD on a link stores the navigation and runs it inside the popstate handler when the
+close's pop lands (`leave`, `onPop`), one ordering by construction; nothing there changed. (3) The link case is not named
+by the ruling and follows from "a close pops", which Design kept; nothing new was built for it.
+
+**177 built, §T.6: the row's entry reopens it.** `row-entry.ts` names the entry (row id and section) and reads a landing
+for the list it lands on; the list lands on its load and on a pop with nothing of its own pushed; the screen follows an
+entry naming another section on its load and on each pop, never on a change of section (the old entry's pop is
+asynchronous, and following the stale state bounced the section back, caught by the Forward-after-section test).
+**One defect found by a probe and fixed at its cause:** after a reload the page stood two entries back, on the
+collection. A probe tracing every `history.back()` to its caller (`page.addInitScript` wrapping `history.back`, deleted
+once read; the reload assertion is the test it drove) showed both pops from the list's open/close effect at mount: the
+landing had set the entry flag before the row's state landed, so the effect in the same commit, with the row still
+closed, read the flag as a close and popped, twice under the dev server's Strict Mode double effects. The flag is now
+claimed when the row opens (`landed`), and a microtask guard written against the Strict Mode symptom before the cause
+was found was reverted. **The tall-form report** is in the step's line: no form is taller than the window at 844; the
+asking line is in view because its first button takes focus (step 137) and the browser scrolls it in by 315; unscrolled
+it would stand 275px below the fold at 844 and 452px at 667. Step level: the history spec and manage.spec.ts on chromium,
+mobile and report-only (87 passed, 3.5 minutes at load 9 to 12), `row-entry.test.ts` (6), typecheck, lint at baseline (0
+errors; a ref assigned during render was refused by the React compiler's rule and replaced by a functional set), the
+build. A seed stamp from the clock alone collided across the projects' workers once (409 on the artist), and the stamp
+gained a random tail.

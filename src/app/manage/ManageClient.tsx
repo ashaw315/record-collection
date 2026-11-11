@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState, useTransition, type ReactNode } from 
 import { useRouter } from 'next/navigation';
 import { inAppExit } from './exit-guard';
 import type { ExitGuard } from './ResourceList';
+import { landing } from './row-entry';
 import { CONTROL_BOX } from '@/app/records/[id]/grid-type';
 import {
   Dialog,
@@ -440,6 +441,28 @@ export function ManageClient({
   const [activeKey, setActiveKey] = useState(RESOURCES[0].key);
   const resource = RESOURCES.find((entry) => entry.key === activeKey) as ResourceSpec;
   const router = useRouter();
+
+  /*
+    **Step 177 (§T.6): "landing on it opens that row with its saved values."** A row's entry names its section; landed on
+    from another section (Forward after a section change, or a load), the screen changes section first, and that section's
+    list opens the row (ResourceList's own landing). An entry of the current section is the list's alone.
+  */
+  useEffect(() => {
+    const follow = () => {
+      setActiveKey((current) => {
+        const where = landing(window.history.state, current, []);
+        return where.kind === 'elsewhere' && RESOURCES.some((entry) => entry.key === where.section) ? where.section : current;
+      });
+    };
+    /*
+      Once on the load and on each pop, never on a change of section: a section change with an unchanged row open pops
+      the row's entry asynchronously, so for a moment the state still names the old section's row, and following it then
+      would bounce the section straight back.
+    */
+    follow();
+    window.addEventListener('popstate', follow);
+    return () => window.removeEventListener('popstate', follow);
+  }, []);
 
   /*
     **Step 174 (§T.6): "Every exit the page owns asks first with the same line."** The open row's list hands up a guard
