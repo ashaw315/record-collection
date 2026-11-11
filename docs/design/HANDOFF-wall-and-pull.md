@@ -913,6 +913,14 @@ Its rows are in the governs table above, one per section; this section does not 
   - **Capture** every host at 1440 × 900 and 390, with a phrase, a title, and an empty field.
   > The reader writes what they want in the ask field, a phrase for a feeling or an occasion, and a separate ASK asks.
 
+- **Unnumbered, for Code to number — §T.6: the row's entry reopens it.**
+  - **Store the open row's id** in its history entry's state.
+  - **On Forward to that entry, or a load that lands on it, open that row** with its saved values. Never restore unsaved edits.
+  - **If the row no longer exists,** replace the entry and stay closed.
+  - **Turn the two report-only tests in `e2e/manage-174-report.spec.ts` into assertions:** Forward after a close reopens the row; after a reload with a row open, the row is open, and one Back closes it.
+  - **Report:** whether, on a form taller than the window, the asking line is in view when an exit at the top is pressed. If it isn't, report how far below the fold it falls. Don't scroll to it until I rule.
+  > The row’s entry names the row it opened, and landing on it opens that row with its saved values: by Forward after a close, and after a reload with the row open.
+
 No step: §G.7. It rules nothing. Hover and focus wait on Code's second pass, the breakpoint is settled and recorded in §G.8, and the eyebrow repetition is an observation, not a ruling.
 
 No step: §P.1. It rules where the feature is ruled and which view presents an answer; what that means for the build is in the steps for §P.3 and §P.4.
