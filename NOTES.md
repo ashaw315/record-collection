@@ -56331,7 +56331,20 @@ them; `seedManage` registers every row it posts, so a test that fails before its
 11 Nov; a cleanup change, so the unit's ship is a gate). Step level: the four tests and the two observations, manage.spec
 and nav-menu-76 on chromium and mobile (87 of 88, the WebKit close, then 2 of 2 after the fix), exit-guard unit test,
 typecheck, lint at baseline, the build inside the capture. Timings unreadable: load 16 to 25 during the covering run, a
-Playwright run on two projects beside the dev server.
+Playwright run on two projects beside the dev server. Shipped at 261af1c2 and its line 4ce89829 (gate 43059742020); the
+twins' tree record moved 174 out of "numbered and not built" with the build, as it did for 173.
+
+**Step 176's gate was not a verdict.** Gate 43036756952 failed on both e2e halves in `playwright install --with-deps`:
+the runners could not resolve security.ubuntu.com (756 "Temporary failure resolving" lines on the mobile half), no test
+ran, unit green. Not re-dispatched by hand; 174's gate covers everything since Q67's green one.
+
+**Q70, the one-time report, run.** `scripts/markers-naming-several.mjs` reads every marker on the four cards and lists
+those whose clause after the colon, before any explaining clause, is a coordinated list (a comma with an "and" after it,
+or two "and"s): 75 of 289, 38 naming three or more targets (the shape of the three known cases, all among them) and 37
+naming two. A first reading, any comma with any "and" in the whole quote, gave 124, most of them explanation ("…, so
+the fit check rejects…"), so the clause was cut at the explaining connectors. More than the handful the coordinator
+expected, because "A, and B" is common and is two targets; listed on purpose, Design judges. The file for Adam to
+forward: "Markers naming several targets — for Design, 2026-11-11 at 4ce89829.md" in Downloads.
 
 **The docs/design change-file sweep (owed since 9 Nov), run at 8140fa8e.** 86 change files on disk against 87 names in
 the landed record, and the two reconcile: every change file on disk is in the record (two apparent misses were the
