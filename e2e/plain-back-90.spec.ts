@@ -4,7 +4,7 @@ import { expect, test, type Page } from '@playwright/test';
 import sharp from 'sharp';
 import { sql } from 'drizzle-orm';
 import { getTestDb } from '../test/helpers/db';
-import { registerCleanup, trackArtist } from './cleanup';
+import { registerCleanup, trackArtist, trackCreated } from './cleanup';
 import { seedImage } from './seed';
 import { GRID_FORK, NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
 import { sleeveSquare } from '../src/app/records/[id]/sleeve-modal';
@@ -36,7 +36,7 @@ const rgbOf = (hex: string): Rgb => [1, 3, 5].map((i) => parseInt(hex.slice(i, i
 
 async function seed(page: Page, colour: string | null): Promise<{ id: string; label: string; catalogue: string }> {
   const s = `${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
-  const post = async (path: string, data: unknown) => { const r = await page.request.post(path, { data }); expect([200, 201], `${path}`).toContain(r.status()); return (await r.json()) as { id: string }; };
+  const post = async (path: string, data: unknown) => { const r = await page.request.post(path, { data }); expect([200, 201], `${path}`).toContain(r.status()); const j = (await r.json()) as { id: string }; trackCreated(path, j); return j; };
   const artist = await post('/api/artists', { name: `Plain90-${s}` });
   trackArtist(artist.id);
   const label = `Label90 ${s}`;

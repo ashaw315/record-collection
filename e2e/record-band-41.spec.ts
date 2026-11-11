@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { registerCleanup, trackArtist } from './cleanup';
+import { registerCleanup, trackArtist, trackCreated } from './cleanup';
 import { getTestDb } from '../test/helpers/db';
 import { seedImage } from './seed';
 import { sql } from 'drizzle-orm';
@@ -9,7 +9,7 @@ import { login } from './sign-in';
 
 registerCleanup();
 
-async function post(page: Page, path: string, data: unknown) { const j = await (await page.request.post(path, { data })).json(); return { id: (j.id ?? j.error?.existingId) as string }; }
+async function post(page: Page, path: string, data: unknown) { const j = await (await page.request.post(path, { data })).json(); trackCreated(path, j); return { id: (j.id ?? j.error?.existingId) as string }; }
 
 /** A record whose five frame cells all carry content: pressing, matrix, year, a market figure and an About. */
 async function seedFrame(page: Page): Promise<string> {

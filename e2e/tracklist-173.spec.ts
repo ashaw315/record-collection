@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
 import { releaseText } from '../src/lib/discogs/release-text';
 import { NO_SCROLL_HEIGHT } from '../src/app/records/[id]/band-geometry';
-import { registerCleanup, trackArtist, trackSavedRecord } from './cleanup';
+import { registerCleanup, trackArtist, trackCreated, trackSavedRecord } from './cleanup';
 import { seedRelease, seedReleaseFixture } from './seed';
 import { login } from './sign-in';
 
@@ -19,7 +19,7 @@ registerCleanup();
 test.beforeEach(async ({ page }) => login(page));
 
 /* A reference row posted twice in one run answers 409 with the existing id, which is the id wanted. */
-const post = async (page: Page, path: string, data: unknown): Promise<{ id: string }> => { const j = (await (await page.request.post(path, { data })).json()) as { id?: string; error?: { existingId?: string } }; return { id: j.id ?? j.error?.existingId ?? '' }; };
+const post = async (page: Page, path: string, data: unknown): Promise<{ id: string }> => { const j = (await (await page.request.post(path, { data })).json()) as { id?: string; error?: { existingId?: string } }; trackCreated(path, j); return { id: j.id ?? j.error?.existingId ?? '' }; };
 const releaseId = () => 900_000_000 + Math.floor(Math.random() * 90_000_000);
 
 /** A record on a pressing holding the release, under its own artist; the label and plant are what the page shows. */

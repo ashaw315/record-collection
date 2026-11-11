@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { compareLedgers, fixtureReleaseIds, fixtureVocabulary, judgeGenres, judgeReleases } from '../../e2e/ledger';
+import { compareLedgers, fixtureLabelNames, fixtureReleaseIds, fixtureVocabulary, judgeGenres, judgeLabels, judgeReleases } from '../../e2e/ledger';
 
 /**
  * The run's ledger (`e2e/ledger.ts`): what the test database holds at the
@@ -13,20 +13,20 @@ import { compareLedgers, fixtureReleaseIds, fixtureVocabulary, judgeGenres, judg
  * and they are bounded by the fixtures, not by the length of the run.
  */
 describe('compareLedgers', () => {
-  const start = { tables: { genres: 2, labels: 1, tags: 0 }, genres: ['Pop', 'Rock'], records: [], releases: [], pressings: [] };
+  const start = { tables: { genres: 2, labels: 1, tags: 0 }, genres: ['Pop', 'Rock'], records: [], releases: [], pressings: [], labels: [] };
 
   it('reports nothing where the end holds what the start held', () => {
-    expect(compareLedgers(start, { tables: { genres: 2, labels: 1, tags: 0 }, genres: ['Rock', 'Pop'], records: [], releases: [], pressings: [] })).toEqual({ genresLeft: [], recordsLeft: [], releasesLeft: [], pressingsLeft: [], moved: [] });
+    expect(compareLedgers(start, { tables: { genres: 2, labels: 1, tags: 0 }, genres: ['Rock', 'Pop'], records: [], releases: [], pressings: [], labels: [] })).toEqual({ genresLeft: [], recordsLeft: [], releasesLeft: [], pressingsLeft: [], labelsLeft: [], moved: [] });
   });
 
   /* Fails against a comparison by count: one genre gone and another left is the same count. */
   it('names a genre left behind even where the count is unchanged', () => {
-    const { genresLeft } = compareLedgers(start, { tables: { genres: 2, labels: 1, tags: 0 }, genres: ['Pop', 'UK82-abc'], records: [], releases: [], pressings: [] });
+    const { genresLeft } = compareLedgers(start, { tables: { genres: 2, labels: 1, tags: 0 }, genres: ['Pop', 'UK82-abc'], records: [], releases: [], pressings: [], labels: [] });
     expect(genresLeft).toEqual(['UK82-abc']);
   });
 
   it('lists every table whose count moved, with both figures', () => {
-    const { moved } = compareLedgers(start, { tables: { genres: 2, labels: 5, tags: 0, stores: 3 }, genres: ['Pop', 'Rock'], records: [], releases: [], pressings: [] });
+    const { moved } = compareLedgers(start, { tables: { genres: 2, labels: 5, tags: 0, stores: 3 }, genres: ['Pop', 'Rock'], records: [], releases: [], pressings: [], labels: [] });
     expect(moved).toEqual([{ table: 'labels', start: 1, end: 5 }, { table: 'stores', start: 0, end: 3 }]);
   });
 });
@@ -53,17 +53,17 @@ describe('judgeGenres', () => {
   each record's title and id, and the line names what was left. Fails against a ledger that holds only counts.
 */
 describe('compareLedgers names the records left behind', () => {
-  const start = { tables: { records: 17 }, genres: [], records: ['Loss Of Life · r1', 'The Doors · r2'], releases: [], pressings: [] };
+  const start = { tables: { records: 17 }, genres: [], records: ['Loss Of Life · r1', 'The Doors · r2'], releases: [], pressings: [], labels: [] };
 
   it('names each record the end holds that the start did not, by title and id', () => {
-    const end = { tables: { records: 19 }, genres: [], records: ['Loss Of Life · r1', 'The Doors · r2', 'Hear Nothing 123-merge · r9', 'Footprint 7 · r8'], releases: [], pressings: [] };
+    const end = { tables: { records: 19 }, genres: [], records: ['Loss Of Life · r1', 'The Doors · r2', 'Hear Nothing 123-merge · r9', 'Footprint 7 · r8'], releases: [], pressings: [], labels: [] };
     expect(compareLedgers(start, end).recordsLeft).toEqual(['Hear Nothing 123-merge · r9', 'Footprint 7 · r8']);
   });
 
   it('names none where the records held or fell, and a record of the same title as one of the seventeen is told apart by its id', () => {
     expect(compareLedgers(start, { ...start, tables: { records: 17 } }).recordsLeft).toEqual([]);
-    expect(compareLedgers(start, { tables: { records: 16 }, genres: [], records: ['Loss Of Life · r1'], releases: [], pressings: [] }).recordsLeft).toEqual([]);
-    expect(compareLedgers(start, { tables: { records: 18 }, genres: [], records: [...start.records, 'The Doors · r7'], releases: [], pressings: [] }).recordsLeft).toEqual(['The Doors · r7']);
+    expect(compareLedgers(start, { tables: { records: 16 }, genres: [], records: ['Loss Of Life · r1'], releases: [], pressings: [], labels: [] }).recordsLeft).toEqual([]);
+    expect(compareLedgers(start, { tables: { records: 18 }, genres: [], records: [...start.records, 'The Doors · r7'], releases: [], pressings: [], labels: [] }).recordsLeft).toEqual(['The Doors · r7']);
   });
 });
 
@@ -77,10 +77,10 @@ describe('compareLedgers names the records left behind', () => {
   against one that lets every id stand, or none.
 */
 describe('compareLedgers names the releases left behind, and judgeReleases lets a fixture’s own id stand', () => {
-  const start = { tables: { discogs_cache: 1 }, genres: [], records: [], releases: [381756], pressings: [] };
+  const start = { tables: { discogs_cache: 1 }, genres: [], records: [], releases: [381756], pressings: [], labels: [] };
 
   it('names each release id the end holds that the start did not', () => {
-    const end = { tables: { discogs_cache: 3 }, genres: [], records: [], releases: [381756, 912345678, 6758287], pressings: [] };
+    const end = { tables: { discogs_cache: 3 }, genres: [], records: [], releases: [381756, 912345678, 6758287], pressings: [], labels: [] };
     expect(compareLedgers(start, end).releasesLeft).toEqual([912345678, 6758287]);
     expect(compareLedgers(start, { ...start }).releasesLeft).toEqual([]);
   });
@@ -105,12 +105,41 @@ describe('compareLedgers names the releases left behind, and judgeReleases lets 
   against a compareLedgers without the field, or one keyed on the count rather than the ids.
 */
 describe('compareLedgers names the pressings left behind', () => {
-  const start = { tables: { pressings: 1 }, genres: [], records: [], releases: [], pressings: ['NBLP 7119 · p1'] };
+  const start = { tables: { pressings: 1 }, genres: [], records: [], releases: [], pressings: ['NBLP 7119 · p1'], labels: [] };
 
   it('names each pressing the end holds that the start did not, by catalogue number and id', () => {
-    const end = { tables: { pressings: 3 }, genres: [], records: [], releases: [], pressings: ['NBLP 7119 · p1', 'CLAY 1 · p9', ' · p8'] };
+    const end = { tables: { pressings: 3 }, genres: [], records: [], releases: [], pressings: ['NBLP 7119 · p1', 'CLAY 1 · p9', ' · p8'], labels: [] };
     expect(compareLedgers(start, end).pressingsLeft).toEqual(['CLAY 1 · p9', ' · p8']);
     expect(compareLedgers(start, { ...start }).pressingsLeft).toEqual([]);
-    expect(compareLedgers(start, { ...start, tables: { pressings: 0 }, pressings: [] }).pressingsLeft).toEqual([]);
+    expect(compareLedgers(start, { ...start, tables: { pressings: 0 }, pressings: [], labels: [] }).pressingsLeft).toEqual([]);
+  });
+});
+
+/*
+  **Leftover labels: a fixture's own name stands, every other name fails the run (Q67's labels half; the coordinator,
+  11 Nov).** Labels are shared by name: the app finds or creates "A&M Records" from a Discogs fixture for whichever
+  worker reaches it first, so a fixture's label stands as its genre does, read from the files; a label a spec posted
+  under a name of its own and did not register is a leak, named. Fails against a compareLedgers without the field, a
+  fixture reader that misses the nested `labels[].name`, or a judge that lets any name stand.
+*/
+describe('compareLedgers names the labels left behind, and judgeLabels lets a fixture’s own name stand', () => {
+  const start = { tables: { labels: 1 }, genres: [], records: [], releases: [], pressings: [], labels: ['Impulse!'] };
+
+  it('names each label the end holds that the start did not', () => {
+    const end = { ...start, tables: { labels: 3 }, labels: ['Impulse!', 'Chrysalis-abc', 'A&M Records'] };
+    expect(compareLedgers(start, end).labelsLeft).toEqual(['Chrysalis-abc', 'A&M Records']);
+    expect(compareLedgers(start, { ...start }).labelsLeft).toEqual([]);
+  });
+
+  it('reads the fixtures’ label names from the files: Impulse! and Mom + Pop among them, a spec’s own name not', () => {
+    const names = fixtureLabelNames();
+    expect(names.has('Impulse!')).toBe(true);
+    expect(names.has('Mom + Pop')).toBe(true);
+    expect(names.has('Chrysalis-abc')).toBe(false);
+    expect(names.size).toBeGreaterThan(5);
+  });
+
+  it('lets a fixture’s own name stand and fails on any other', () => {
+    expect(judgeLabels(['A&M Records', 'Chrysalis-abc', 'Impulse!'], new Set(['A&M Records', 'Impulse!']))).toEqual({ fromFixtures: ['A&M Records', 'Impulse!'], leaked: ['Chrysalis-abc'] });
   });
 });

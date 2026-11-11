@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import sharp from 'sharp';
-import { registerCleanup, trackArtist } from './cleanup';
+import { registerCleanup, trackArtist, trackCreated } from './cleanup';
 import { login } from './sign-in';
 
 /* The record and its artist removed after the test (e2e/cleanup.ts); the label and the store stay, as stats.spec's do. */
@@ -76,7 +76,10 @@ const GENRE = '[data-testid^="genre-row-"] a[href]';
 async function post(page: Page, path: string, data: unknown) {
   const response = await page.request.post(path, { data, failOnStatusCode: false });
   expect(response.status(), `${path} ${JSON.stringify(data)}`).toBe(201);
-  return response.json() as Promise<{ id: string }>;
+  const body = (await response.json()) as { id: string };
+  /* Registered at the seed (Q67's labels half, 11 Nov): the label and store this posts are deleted with the run's rows. */
+  trackCreated(path, body);
+  return body;
 }
 /* Longer than the widest column this runs at: at 1280 the genre column held a hundred characters uncut. */
 const LONG = 'A genre name long enough to be cut by the ellipsis at every width this runs at, and then some more, '.repeat(4);

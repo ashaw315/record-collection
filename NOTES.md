@@ -56432,6 +56432,28 @@ tables exempt from the two timestamp columns (now exempt with the caches, since 
 ABOUT's hash is what staleness is measured from). Two tests the commit check does not run, found by the gate as a gate
 is for; 14 of 14 now.
 
+## 11 Nov (seventh): Q67's labels half, the declared set and the flip
+
+**Labels are shared by name, so a fixture's label stands and every other name left fails (the coordinator's split).**
+The ledger reads each label by name and names the ones the end holds that the start did not; `fixtureLabelNames` reads
+every `labels[].name` the Discogs fixtures carry (15 names: Impulse!, Mom + Pop, A&M Records, Clay Records among them),
+as `fixtureVocabulary` reads their genres, and `judgeLabels` lets those stand and fails the rest, the flip the row
+promised, dated to this unit rather than to a list of twenty-six specs. Test first: four cases red on the missing
+field, the fixture reader and the judge; green after. **Staged** on plain-back-90 alone with the ledger change only:
+"FAILED: 4 labels left behind: Label90 …" with its 4 tests green. The seven specs the per-spec loop named were five
+that post labels through their own helpers without registering them and two whose labels the app makes from fixtures.
+The five helpers now call `trackCreated` (plain-back-90, tracklist-173, collection-widths, stats-names-144,
+record-band-41; one line each, the stores and pressings they post registered by the same line), and the cleanup
+deletes a registered label once no record references it. The seven run together on chromium: 91 passed, labels 1 to
+4 with the three left standing as fixtures' (A&M Records, Clay Records, Yetee Records), nothing failed. Step level:
+the ledger unit tests (14), plain-back-90 alone before and the seven after, typecheck, lint at baseline. A cleanup and
+ledger change: the ship is a gate, and its ledger is the verdict on both halves of Q67 together.
+
+**The pressings ship's gate (43097677716) did not start:** GitHub reports a startup failure with no jobs, "likely a
+workflow file issue", while gate.yml is unchanged since 60340188 and ran four times today. One gate re-dispatched on
+55fd8518 through `scripts/ci-gate.sh`, read before dispatched; a second startup failure stops there for the
+coordinator. This unit's own ship dispatches a gate on its commit, which covers the pressings commit too.
+
 **The docs/design change-file sweep (owed since 9 Nov), run at 8140fa8e.** 86 change files on disk against 87 names in
 the landed record, and the two reconcile: every change file on disk is in the record (two apparent misses were the
 sweep's own stripping of "for Code to add/insert", under which the record names them in full); the four "FOR CODE - …"

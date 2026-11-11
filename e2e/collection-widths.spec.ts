@@ -1,5 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
-import { registerCleanup, trackArtist } from './cleanup';
+import { registerCleanup, trackArtist, trackCreated } from './cleanup';
 import { login } from './sign-in';
 
 /* Records and artists removed after each test — see e2e/cleanup.ts. */
@@ -59,7 +59,10 @@ async function seed(page: Page): Promise<Fixture> {
   const post = async (path: string, data: unknown) => {
     const response = await page.request.post(path, { data, failOnStatusCode: false });
     expect(response.status(), `${path} ${JSON.stringify(data)}`).toBe(201);
-    return response.json();
+    const body = (await response.json()) as { id: string };
+    /* Registered at the seed (Q67's labels half, 11 Nov): the label this posts is deleted with the run's rows. */
+    trackCreated(path, body);
+    return body;
   };
 
   const artist = await post('/api/artists', { name: `WidthTest-${suffix}` });

@@ -29,7 +29,11 @@ import type { getTestDb } from '../test/helpers/db';
  * with a record and not shared by name, so every one the end holds that the start did not is a leak, with nothing to
  * stand.
  */
-export type Ledger = { tables: Record<string, number>; genres: string[]; records: string[]; releases: number[]; pressings: string[] };
+/**
+ * `labels` is each label by name (Q67's labels half, 11 Nov): shared by name, so a Discogs fixture's label stands as its
+ * genre does, and a name a spec posted and did not register is a leak.
+ */
+export type Ledger = { tables: Record<string, number>; genres: string[]; records: string[]; releases: number[]; pressings: string[]; labels: string[] };
 
 type Db = ReturnType<typeof getTestDb>;
 
@@ -44,17 +48,19 @@ export async function readLedger(db: Db): Promise<Ledger> {
   const records = await db.execute(sql`SELECT title, id FROM records ORDER BY title, id`);
   const releases = await db.execute(sql`SELECT discogs_release_id FROM discogs_cache ORDER BY 1`);
   const pressings = await db.execute(sql`SELECT coalesce(catalog_number, '') AS catalog, id FROM pressings ORDER BY 2`);
+  const labels = await db.execute(sql`SELECT name FROM labels ORDER BY name`);
   return {
     tables,
     genres: (genres.rows as Array<{ name: string }>).map((g) => g.name),
     records: (records.rows as Array<{ title: string; id: string }>).map((r) => `${r.title} · ${r.id}`),
     releases: (releases.rows as Array<{ discogs_release_id: number }>).map((r) => r.discogs_release_id),
     pressings: (pressings.rows as Array<{ catalog: string; id: string }>).map((p) => `${p.catalog} · ${p.id}`),
+    labels: (labels.rows as Array<{ name: string }>).map((l) => l.name),
   };
 }
 
 /** What the end holds that the start did not: the genres by name, the records by title and id, the releases by id, and every table whose count moved. */
-export function compareLedgers(start: Ledger, end: Ledger): { genresLeft: string[]; recordsLeft: string[]; releasesLeft: number[]; pressingsLeft: string[]; moved: Array<{ table: string; start: number; end: number }> } {
+export function compareLedgers(start: Ledger, end: Ledger): { genresLeft: string[]; recordsLeft: string[]; releasesLeft: number[]; pressingsLeft: string[]; labelsLeft: string[]; moved: Array<{ table: string; start: number; end: number }> } {
   const had = new Set(start.genres);
   const genresLeft = end.genres.filter((name) => !had.has(name));
   const hadRecords = new Set(start.records);
@@ -63,10 +69,12 @@ export function compareLedgers(start: Ledger, end: Ledger): { genresLeft: string
   const releasesLeft = end.releases.filter((id) => !hadReleases.has(id));
   const hadPressings = new Set(start.pressings);
   const pressingsLeft = end.pressings.filter((p) => !hadPressings.has(p));
+  const hadLabels = new Set(start.labels);
+  const labelsLeft = end.labels.filter((name) => !hadLabels.has(name));
   const moved = Object.keys(end.tables)
     .filter((table) => (start.tables[table] ?? 0) !== end.tables[table])
     .map((table) => ({ table, start: start.tables[table] ?? 0, end: end.tables[table] }));
-  return { genresLeft, recordsLeft, releasesLeft, pressingsLeft, moved };
+  return { genresLeft, recordsLeft, releasesLeft, pressingsLeft, labelsLeft, moved };
 }
 
 /** The setup and the teardown run in one process; the environment carries the start between them. */
@@ -127,4 +135,31 @@ export function fixtureReleaseIds(dir: string = join('test', 'fixtures', 'discog
 /** The releases left behind, split: the fixtures' own ids, which stand, and everything else, which is a leak. */
 export function judgeReleases(left: number[], fixtures: Set<number>): { fromFixtures: number[]; leaked: number[] } {
   return { fromFixtures: left.filter((id) => fixtures.has(id)), leaked: left.filter((id) => !fixtures.has(id)) };
+}
+
+/**
+ * Every label name a Discogs fixture carries (Q67's labels half, 11 Nov). The app finds or creates a label by its plain
+ * name when a test saves a record prefilled from a fixture, so two workers share it and neither owns it: it stands, as
+ * a fixture's genre does, bounded by the fixtures. Read from the files' `labels[].name`, wherever it sits.
+ */
+export function fixtureLabelNames(dir: string = join('test', 'fixtures', 'discogs')): Set<string> {
+  const names = new Set<string>();
+  const walk = (value: unknown, key: string): void => {
+    if (Array.isArray(value)) {
+      for (const item of value) walk(item, key);
+    } else if (value !== null && typeof value === 'object') {
+      const name = (value as { name?: unknown }).name;
+      if (key === 'labels' && typeof name === 'string') names.add(name);
+      for (const [k, v] of Object.entries(value)) walk(v, k);
+    }
+  };
+  for (const file of readdirSync(dir)) {
+    if (file.endsWith('.json')) walk(JSON.parse(readFileSync(join(dir, file), 'utf8')), '');
+  }
+  return names;
+}
+
+/** The labels left behind, split: the fixtures' own names, which stand, and everything else, which is a leak. */
+export function judgeLabels(left: string[], fixtures: Set<string>): { fromFixtures: string[]; leaked: string[] } {
+  return { fromFixtures: left.filter((name) => fixtures.has(name)), leaked: left.filter((name) => !fixtures.has(name)) };
 }
