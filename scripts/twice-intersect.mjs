@@ -35,6 +35,8 @@ export const QUANTITIES = {
   5: 'listRecords under a filter: order and total',
   6: 'the Manage lists and the want list',
   7: 'the ownership check',
+  /* Q22 (11 Nov): the ask ranks the whole pool by nearness, a collection-wide read by construction (the coordinator, 7 Nov). */
+  8: 'the ask’s ranking over the pool (§P.2)',
 };
 
 /* A read that measures: geometry, scroll, a count or a list's length, text, or an instrument the page writes. Not a font load, a focus, a style. */

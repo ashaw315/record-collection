@@ -56452,7 +56452,29 @@ ledger change: the ship is a gate, and its ledger is the verdict on both halves 
 **The pressings ship's gate (43097677716) did not start:** GitHub reports a startup failure with no jobs, "likely a
 workflow file issue", while gate.yml is unchanged since 60340188 and ran four times today. One gate re-dispatched on
 55fd8518 through `scripts/ci-gate.sh`, read before dispatched; a second startup failure stops there for the
-coordinator. This unit's own ship dispatches a gate on its commit, which covers the pressings commit too.
+coordinator. This unit's own ship dispatches a gate on its commit, which covers the pressings commit too. **The second
+dispatch (43098192480) failed at startup the same way,** so no third by hand; the labels ship's gate (43098848973) on
+550fbe84 started, its jobs queued, and covers both commits.
+
+## 11 Nov (eighth): Q22's second unit, the ranking and the ask route
+
+**`POST /api/ask` ranks the pool by nearness (§P.2 as it stands).** The pure part, `src/lib/ask/rank.ts`: cosine (0
+against a zero vector, never NaN) and `rankByNearness`, nearest first, the number asked for, the last answer's records
+left out while enough remain and the pool ranked whole otherwise, the record asked from never answering itself. The
+reads, `src/lib/db/queries/ask.ts`: the stored vectors of the pool's records from the query's model, and the record a
+phrase names by title through §T.4's one SQL key, never a JavaScript copy (Design, 11 Nov). The route: Zod at the
+boundary, unknown keys refused, `take` three to five; a title asks from its own vector with no request; otherwise the
+phrase is embedded with the same model and the pool ranked; a pool with no ABOUT answers `unanswerable: true`, never an
+empty list in disguise. **Two rules on the absent key met here:** the coordinator's (a refusal that names the variable)
+and errors.ts's (an error body reaches a browser and never names an environment variable). The route does both in
+their places: the server log names `OPENAI_API_KEY` and says Vercel's project environment is where it goes, and the
+answer is a 503 in the reader's terms, "The ask is not configured on this deployment", before any request. Test first:
+the ranking's unit test (8) and the route's integration test (6: happy, title, re-ask, unanswerable, validation naming
+the field, not configured with the log and the body both asserted), red on the absent modules, green after; not found
+does not apply to a ranking over a pool, and unauthenticated is the middleware's, held as every route's is. The eighth
+shared quantity is in `twice-intersect.mjs` (its test green). Step level: those three files, typecheck, lint at
+baseline, the build with `/api/ask` in it. Next: the control, the ask field in each host's place for the moods, its
+states, strings and inert condition as the card now rules them, with the captures.
 
 **The docs/design change-file sweep (owed since 9 Nov), run at 8140fa8e.** 86 change files on disk against 87 names in
 the landed record, and the two reconcile: every change file on disk is in the record (two apparent misses were the
