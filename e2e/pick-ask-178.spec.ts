@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
 import { sql } from 'drizzle-orm';
 import { registerCleanup, trackArtist } from './cleanup';
@@ -315,6 +316,58 @@ test('182, report: the count column’s free height on the far view at 1440 × 9
       const fiveTall = 3 * 160 + 2 * 18 + 3 * 44;
       testInfo.annotations.push({ type: `count column at 1440 × ${height}`, description: `${m.columnWidth.toFixed(0)} wide; its last line ends at ${m.lastLineBottom.toFixed(1)}, so ${free.toFixed(1)} is free beneath it and the 24 to the window's foot (the column's box ends at ${m.columnBottom.toFixed(1)}; the page ${m.page} tall in a ${m.window} window); five cells at 160 two across and three down, with their captions, need about ${fiveTall}, so they ${fiveTall <= free ? 'fit' : `run past by ${(fiveTall - free).toFixed(0)}`} without scrolling` });
     }
+  } finally {
+    await removeRecordsFor(artistId);
+  }
+});
+
+/*
+  The stack of five cells as a range, not a number (the coordinator, 12 Nov): §P.4 caps no title's lines, so the stack
+  runs from five un-wrapped captions to the tallest five the real collection produces. The 55 records' titles and
+  artists, read from production by scripts/export-captions.mts, are rendered here one by one in a real cell's caption at
+  §T.5's 160, in the app's own type, and measured; then the stack is computed for both ends at the gap built (18) and
+  the gap §P.4 names (24). Reported, never asserted: Design rules the column host on the figure.
+*/
+test('182, report: the stack of five cells from the collection’s own captions at 160, un-wrapped and the tallest five, at the 18 built and the 24 ruled', { tag: '@report-only' }, async ({ page }, testInfo) => {
+  const { artistId } = await fixture(page, ['J1', 'J2', 'J3', 'J4', 'J5']);
+  try {
+    const exported = JSON.parse(readFileSync('docs/measurements/ask-captions/records.json', 'utf8')) as { readOn: string; records: Array<{ title: string; artist: string }> };
+    await openGrid(page, artistId, 1440);
+    await askFor(page, 'late night jazz');
+    await expect.poll(() => drawn(page), { timeout: 15_000 }).toHaveLength(5);
+    const heights = await page.evaluate((records) => {
+      const cell = Array.from(document.querySelectorAll<HTMLElement>('[data-pick-answer]')).find((el) => el.getClientRects().length > 0);
+      const title = cell?.querySelector<HTMLElement>('[data-grid-title]');
+      const artist = cell?.querySelector<HTMLElement>('[data-grid-artist]');
+      const cover = cell?.querySelector<HTMLElement>('a, img');
+      if (!cell || !title || !artist) return null;
+      const coverHeight = cover ? cover.getBoundingClientRect().height : 160;
+      const captionTop = title.getBoundingClientRect().top;
+      const out = records.map((r) => {
+        title.textContent = r.title;
+        artist.textContent = r.artist;
+        const bottom = Math.max(title.getBoundingClientRect().bottom, artist.getBoundingClientRect().bottom);
+        return { title: r.title, caption: bottom - captionTop, cell: cell.getBoundingClientRect().height };
+      });
+      return { coverHeight, width: cell.getBoundingClientRect().width, out };
+    }, exported.records);
+    if (heights === null) throw new Error('no answer cell to measure in');
+    const cells = heights.out.map((h) => ({ title: h.title, cell: h.cell })).sort((a, b) => a.cell - b.cell);
+    const shortest = cells[0]?.cell ?? 0;
+    const tallestFive = cells.slice(-5);
+    const stack = (cellHeights: number[], gap: number) => {
+      /* Two across and three down: the rows are the tallest of each pair, three rows and two gaps. */
+      const rows = [cellHeights.slice(0, 2), cellHeights.slice(2, 4), cellHeights.slice(4, 5)].map((row) => Math.max(...row));
+      return rows.reduce((a, b) => a + b, 0) + 2 * gap;
+    };
+    const unwrapped = Array(5).fill(shortest) as number[];
+    const worst = tallestFive.map((c) => c.cell).sort((a, b) => b - a);
+    for (const gap of [18, 24]) {
+      testInfo.annotations.push({ type: `stack at a gap of ${gap}`, description: `five un-wrapped captions (a cell of ${shortest.toFixed(1)}): ${stack(unwrapped, gap).toFixed(1)}; the tallest five of the ${exported.records.length} (cells ${worst.map((w) => w.toFixed(1)).join(', ')}): ${stack(worst, gap).toFixed(1)}; the cell is ${heights.width.toFixed(0)} wide, the cover ${heights.coverHeight.toFixed(1)} tall` });
+    }
+    testInfo.annotations.push({ type: 'tallest captions', description: tallestFive.map((c) => `"${c.title}" ${c.cell.toFixed(1)}`).reverse().join('; ') + `; captions read on ${exported.readOn}` });
+    const wrapped = cells.filter((c) => c.cell > shortest + 1).length;
+    testInfo.annotations.push({ type: 'wrapping', description: `${wrapped} of ${cells.length} captions take more than one line for the title or the artist at 160` });
   } finally {
     await removeRecordsFor(artistId);
   }

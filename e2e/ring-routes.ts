@@ -14,7 +14,8 @@ export type RingRoute = { name: string; path: string; before?: (page: Page) => P
  * and the caller's own context for login).
  */
 export async function ringRoutes(page: Page): Promise<RingRoute[]> {
-  const suffix = `r144${Date.now().toString(36)}`;
+  /* A random tail beside the clock: the three widths run in parallel workers, and two drew the same stamp in one millisecond, so the second's artist was a 409 (gate 43285827737, 12 Nov, flaky). */
+  const suffix = `r144${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
   const post = async (path: string, data: unknown) => {
     const response = await page.request.post(path, { data });
     expect(response.status(), path).toBe(201);

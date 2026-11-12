@@ -56815,3 +56815,26 @@ tests, captures-unchanged and the six export-handoff cases that read the committ
 never rewritten; the folder was restored from HEAD and the recapture goes to `docs/captures/pick-ask-182/`, a folder
 of its own, the tool changed to write there. The intake's judge still discards the failing tests' names, so the
 suite was run again by hand to read them.
+
+**181 and 182 shipped as a62651fe; its gate (43285827737) failed on the chromium half's verdict with one flake,** read
+from the artifacts: chromium 1084 passed, 1 flaky, 1 skipped, ledger clean, "GREEN WITH FLAKES, not OK"; mobile 394
+passed, 4 skipped; report-only 2 passed; unit 5168 passed, 3 skipped. The flake: ring-144's §M.6 ring walk at 1280
+failed its seeding POST with 409 on the artist and passed on the retry. `e2e/ring-routes.ts` named its artist by a
+clock stamp alone, and the three widths run in parallel workers, so two drew one stamp in a millisecond: the seed
+collision class the ask spec and its capture tool met yesterday, nothing the diff touches. The helper's stamp gains a
+random tail, and the fix ships with its own gate rather than a re-dispatch by hand. **Its first ship was refused,
+"tree CHANGED", by me:** I wrote `scripts/export-captions.mts` and its JSON while the check ran, the no-edits rule's
+own case (a running commit-checked owns the tree), having named the risk earlier in the day and done it anyway; read,
+recorded, re-shipped with the captions' measurement in the same unit.
+
+**The stack of five cells as a range (the coordinator, 12 Nov: the first figure, 648 at 900, used the 18 built and
+five un-wrapped captions, the best case alone, and §P.4 caps no title's lines).** `scripts/export-captions.mts` reads
+the 55 titles and artists from production into `docs/measurements/ask-captions/records.json`, and a report-only case
+in the ask spec renders each in a real answer cell's caption at 160, in the app's type, and measures the cell: 204.0
+un-wrapped; the tallest five 259.5, 243.0, 223.5, 223.5, 223.5; ten of 55 wrap. Two across and three down, the rows
+being the taller of each pair: 648.0 to 742.5 at the 18 the build draws, 660.0 to 754.5 at the 24 §P.4 names. Against
+692.5 free at 1440 × 900: the un-wrapped five fit at either gap, the tallest five run past by 50.0 and 62.0; against
+560.5 at 768 nothing fits. The gap the first figure measured with was 18, the build's; whether §P.4's 24 reaches the
+ask's covers is Design's to say, and the build still draws 18. **On the count line's reword:** the two-line reading
+that prompted "N have no About." was the measurer's artifact, as recorded above; the coordinator has told Design the
+premise collapsed, and nothing changes here until Design says.
