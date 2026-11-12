@@ -80,7 +80,7 @@ here; see above.
 | Q23 | parked | Want-list tagging (Phase 4): never designed | mood-search-scope doc |
 | Q24 | parked | lookup-flows:1743: an unread flake | the known-flaky table |
 | Q25 | dropped §P.2 | Mood tagging's retry and run-record: the moods are retired by §P.2, so the feature this served does not exist | SPEC §5.10; §P.2 |
-| Q26 | open | sharp's cold-start cost, optional from the Vercel work: dropped by the coordinator 11 Nov, nothing having asked for it in two weeks; the status names the commit recording the drop in the next commit | NOTES |
+| Q26 | dropped a326b46a | sharp's cold-start cost, optional from the Vercel work: dropped by the coordinator 11 Nov, nothing having asked for it in two weeks | NOTES, 11 Nov (tenth) |
 | Q38 | parked | roving-148:83 at four workers: a 30s timeout on openShelf, one appearance, load-shaped; read the trace before building anything | NOTES, 5 Nov |
 | Q39 | done 09044cf | The gate against a build, not `next dev`, in two units | NOTES, 6 Nov; the runs table |
 | Q42 | parked | lineup-146:36, not a flake: exact equality on a fraction; ruled 6 Nov to express the claim (a count of lines from the computed line-height) and not pin the measurement, across the ten sites the sweep found | NOTES, 6 Nov |
@@ -93,7 +93,7 @@ here; see above.
 | Q49 | done 0641b53d | commit-checked's carry check handed a `-` path token to basename as an option; fixed with `--` | NOTES, 7 Nov |
 | Q50 | parked | The 65 candidate twice-sweep sites in 36 specs, by quantity: fix by quantity, one pattern at a time, each site's page read for itself; not started by ruling (7 Nov) | NOTES, 7 Nov; docs/measurements/twice |
 | Q51 | parked | Negative assertions that may read a stream the helper discards: 986 counted, the sharpest eight listed first to read; not before §65 | NOTES, 7 Nov |
-| Q52 | open | check-queue's queue-1 reading the numbered-and-not-built heads too: dropped by the coordinator 11 Nov, more instrument for a problem that has bitten once; the status names the commit recording the drop in the next commit | NOTES |
+| Q52 | dropped a326b46a | check-queue's queue-1 reading the numbered-and-not-built heads too: dropped by the coordinator 11 Nov, more instrument for a problem that has bitten once | NOTES, 11 Nov (tenth) |
 | Q53 | done eca45944 | The handoff's Done blocks declare their state in a field required by the twins test | NOTES, 7 Nov |
 | Q54 | parked | The hand-application guard in commit-checked, a whole-file drop passing only where its files match the newest drop ref's copies; the record half done at 007a4551 | NOTES, 7 Nov |
 | Q55 | open | Code's debt: three components carry their own copy of the §9.3 box string (ErrorBody, ShelfEmpty, CollectionList); fold them into the one constant | NOTES, 7 Nov |
@@ -138,7 +138,7 @@ Nov, when Adam ruled on all four.
 | id | status | item | record lives in |
 |---|---|---|---|
 | Q33 | open | Format text ("Gatefold", on 39 records): ruled in by Adam 11 Nov; waits on Design's placement on the record page, which the coordinator is asking, since §26's lower region has six rows already; one build with Q35 and Q36 | the coordinator, 11 Nov; §26 |
-| Q34 | open | Community rating and have/want counts: ruled out by Adam 11 Nov, not shown; the status names the commit recording the ruling in the next commit | the coordinator, 11 Nov |
+| Q34 | dropped a326b46a | Community rating and have/want counts: ruled out by Adam 11 Nov, not shown | the coordinator, 11 Nov; NOTES, 11 Nov (tenth) |
 | Q35 | open | Barcode: ruled in by Adam 11 Nov; waits on Design's placement, with Q33 and Q36 | the coordinator, 11 Nov; §26 |
 | Q36 | open | The full release date rather than the year alone: ruled in by Adam 11 Nov; waits on Design's placement, with Q33 and Q35 | the coordinator, 11 Nov; §26 |
 
