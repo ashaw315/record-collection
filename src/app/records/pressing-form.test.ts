@@ -2,8 +2,46 @@ import { describe, expect, it } from 'vitest';
 import {
   buildPressingBody,
   hasAnyPressingDetail,
+  samePressing,
   type PressingFormValues,
 } from './pressing-form';
+
+/**
+ * **Q71 (11 Nov): an edit that leaves the pressing untouched must not make a second pressing.** The form re-posted
+ * the section's fields on every save, and a pressing whose §4 match key is empty (a matrix alone, the white-label
+ * case the route creates anew on purpose) came back as a new row the record was moved to, orphaning the first. The
+ * form's rule is now: when the section reads as it was loaded, the record keeps the pressing it had. `samePressing`
+ * is that reading; each case fails against a comparison that ignores the field it changes, or one that treats
+ * whitespace as a change.
+ */
+describe('samePressing: the section as it was loaded', () => {
+  const loaded: PressingFormValues = {
+    discogsReleaseId: null,
+    catalogNumber: '',
+    matrixRunout: 'HANDREAD-1',
+    countryPressed: '',
+    yearPressed: '',
+    pressingPlant: '',
+    vinylWeightGrams: '',
+    colorVariant: '',
+    isReissue: false,
+  };
+
+  it('is the same when nothing was typed', () => {
+    expect(samePressing(loaded, { ...loaded })).toBe(true);
+  });
+
+  it('is the same when only surrounding whitespace differs: a field put back is not a change', () => {
+    expect(samePressing(loaded, { ...loaded, matrixRunout: '  HANDREAD-1 ' })).toBe(true);
+  });
+
+  it('differs on any of the eight fields: the matrix, a number, the reissue tick, the Discogs id', () => {
+    expect(samePressing(loaded, { ...loaded, matrixRunout: 'HANDREAD-2' })).toBe(false);
+    expect(samePressing(loaded, { ...loaded, yearPressed: '1982' })).toBe(false);
+    expect(samePressing(loaded, { ...loaded, isReissue: true })).toBe(false);
+    expect(samePressing(loaded, { ...loaded, discogsReleaseId: 12 })).toBe(false);
+  });
+});
 
 /**
  * The pressing section of the record form (SPEC.md §10).

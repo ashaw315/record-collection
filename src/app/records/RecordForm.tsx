@@ -12,7 +12,7 @@ import { parseApiError, fallbackMessage } from '@/lib/api/messages';
 import { CONDITION_GRADES } from '@/lib/records/fields';
 import { conditionLabel } from './record-detail-format';
 import { buildCreateBody, buildPatchBody, type FormValues } from './record-form';
-import { buildPressingBody, type PressingFormValues } from './pressing-form';
+import { buildPressingBody, samePressing, type PressingFormValues } from './pressing-form';
 import { discogsIdToSubmit } from './pressing-identity';
 import { buildImportBody, saveDestination } from './save-destination';
 import { InlineCreate } from './InlineCreate';
@@ -347,6 +347,15 @@ export function RecordForm({
      * `initialPressing` is the untouched prefill; `pressing` is what the user
      * is looking at now.
      */
+    /*
+      Q71 (11 Nov): on an edit whose pressing section reads as it was loaded, the record keeps the pressing it had.
+      Re-posting the untouched fields found the shared row where §4's match key held, but a pressing known by its
+      matrix alone has an empty key, which the route creates anew on purpose, so every such save made a second
+      pressing and moved the record to it, orphaning the first.
+    */
+    if (recordId !== undefined && initialPressingId !== undefined && samePressing(initialPressing, pressing)) {
+      return initialPressingId;
+    }
     const body = buildPressingBody({
       ...pressing,
       discogsReleaseId: discogsIdToSubmit(

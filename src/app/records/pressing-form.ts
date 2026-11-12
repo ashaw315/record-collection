@@ -103,6 +103,17 @@ export function buildPressingBody(
   return body;
 }
 
+/**
+ * Whether the section reads as it was loaded (Q71, 11 Nov). The form used to re-post the section on every save, and a
+ * pressing whose §4 match key is empty (a matrix alone: the white-label case the route creates anew on purpose) came
+ * back as a new row the record was then moved to, orphaning the first. When nothing in the section changed, the record
+ * keeps the pressing it had. Text is compared trimmed, as `buildPressingBody` sends it: a field put back is not a change.
+ */
+export function samePressing(a: PressingFormValues, b: PressingFormValues): boolean {
+  if (a.isReissue !== b.isReissue || a.discogsReleaseId !== b.discogsReleaseId) return false;
+  return [...TEXT_FIELDS, ...NUMERIC_FIELDS].every((field) => a[field].trim() === b[field].trim());
+}
+
 /** An untouched pressing section. */
 export const BLANK_PRESSING: PressingFormValues = {
   discogsReleaseId: null,

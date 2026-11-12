@@ -540,6 +540,14 @@ test('a matrix value survives an edit that does not touch it', async ({ page }) 
   await expect(page).toHaveURL(new RegExp(`/records/${record.id}$`), { timeout: 15_000 });
   await expect(page.getByRole('heading', { name: `Retitled ${suffix}` })).toBeVisible();
   await expect(page.getByText(matrix)).toBeVisible();
+
+  /*
+   * Q71 (11 Nov): the matrix survived, but on the pressing the record was MOVED to. A matrix-only pressing has an
+   * empty §4 match key, so the form's re-post of untouched fields came back as a new row and the first was orphaned.
+   * The record keeps the pressing it was made on. Fails against the form before the fix, which re-posts on every save.
+   */
+  const after = (await (await page.request.get(`/api/records/${record.id}`)).json()) as { pressingId: string | null };
+  expect(after.pressingId, 'an edit that leaves the pressing untouched keeps the record on the pressing it had').toBe(pressing.id);
 });
 
 test('a rejected pressing field is reported against that field', async ({ page }) => {

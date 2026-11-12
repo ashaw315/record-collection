@@ -56589,3 +56589,44 @@ not by a section, and a dropped row names the commit that records the drop, whic
 the decision stated until the next commit names it. Q67 and Q70 now name their commits (550fbe84, 65a0eba1), closing
 the check's two "done names no commit" lines. The restatement of Q22's control could not be written to Downloads from
 this session (the folder refuses the sandbox's writes), so it travels in the report.
+
+## 11 Nov (eleventh): the §66 intake, Q71 verified and fixed, and §66's report-first figures
+
+**The cleanup's gate (43134921275 on 79b4d853) green on all four halves,** read from the artifacts: chromium 1081
+passed, 1 skipped; mobile 394 passed, 4 skipped; report-only 1 passed; unit 5133 passed, 3 skipped; ledgers clean,
+trees unchanged.
+
+**Design's "Three release fields" taken in (refs/drops/2026-11-11-09; e179bc7a)** with the Record Detail 8a card's new
+§66, and the resend of "Row entry reopens" (-08). The change file arrived in the repository's root and was moved into
+docs/design before the ref. The first intake run refused on index assertion 1 (every heading has exactly one row) with
+five tests downstream of it, because the §66 governs row had not been applied yet: the relayed edits were applied after
+the first run rather than before it, the order the intake wants, read and corrected. The restatement of Q22's control
+is a committed file now (`docs/reports/Q22-control-restatement-2026-11-11.md`) and a copy is in Downloads: the folder
+takes `cp` and refuses `ls`, so the earlier "refuses writes" reading was wrong, and only the listing is refused.
+
+**Q71 verified and fixed.** The mechanism, by reading and then by test: the form's `resolvePressingId` posted the
+section's fields on every save; the route matches a pressing by its Discogs id or the (catalogue number, country,
+pressed year) tuple and creates anew when the tuple is empty, on purpose, so two white labels never collapse; a
+pressing known by its matrix alone has an empty tuple, so an edit that changed only the title came back with a second
+pressing and the record was moved to it. The spec's "a matrix value survives an edit that does not touch it" gained the
+assertion that the record's pressing id is unchanged after the save and read red ("Expected c31ce0cf…, Received
+82d80008…"), the defect seen. The fix is the form's: when the section reads as it was loaded (`samePressing`, the
+eight fields trimmed, three unit cases red on the missing export), the record keeps the pressing it had and nothing is
+posted. Green after: pressing-form.test.ts (16), record-form.spec.ts on chromium and mobile (50 passed, 2.0 minutes at
+load 7 to 12), typecheck, lint at baseline, the build. **On production, counted and not touched
+(`scripts/count-orphan-pressings.mts`):** 65 pressings; 10 referenced by no record, want-list row or price row; 3 of
+those with a matrix, none sharing it with a referenced pressing; 0 of the ten with an empty match key, and 0
+referenced pressings with an empty key. So the mechanism has not fired on the real collection, and the ten orphans
+came by other paths (a record deleted or detached); whether they are removed is Adam's to rule, and Q71's row waits on
+that word.
+
+**§66's report-first figures, from production (`scripts/report-release-dates.mts`), with the fields read from the
+code.** RELEASE YEAR draws `records.release_year`, the album's year from its Discogs master (§4.2); the PRESSING line's
+end draws `pressings.year_pressed`, the release's own year, read at import from the release's `year` or the first
+digits of its `released`. No column holds a full date: it exists only as the cached release payload's `released`,
+keyed by the pressing's Discogs id, so **the stored date dates the pressed year, the PRESSING line's end, and never
+RELEASE YEAR.** Of the 55 records: 55 have a RELEASE YEAR; 52 a pressed year, equal to RELEASE YEAR on 42 and
+different on 10; 55 have a cached release; on 52 the released field's first four digits equal the pressed year, and
+on 0 they equal RELEASE YEAR without equalling the pressed year. **The split: 25 records carry a day, 27 a year only, 3
+no released field, and none a month only.** The capture of "one whose date is a month only" therefore needs a seeded
+record; no real one exists today.
