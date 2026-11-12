@@ -56539,3 +56539,19 @@ mobile and report-only (87 passed, 3.5 minutes at load 9 to 12), `row-entry.test
 errors; a ref assigned during render was refused by the React compiler's rule and replaced by a functional set), the
 build. A seed stamp from the clock alone collided across the projects' workers once (409 on the artist), and the stamp
 gained a random tail.
+
+**The reload defect is the press-during-zoom family at another layer (the coordinator, 11 Nov):** a state read before
+it landed, there the control remounting in the frame between the cell drawing and the address changing, here the entry
+flag read by an effect in the commit before the row's state arrived, with Strict Mode's double invocation doubling the
+pop. Same shape, same cure: order the reads on what has landed, not on what was asked for.
+
+**Two assertions after 177's ship (the coordinator, 11 Nov), both staged red for real.** (1) *The link exit's wait is an
+ordering, not an end state:* `e2e/manage-174-report.spec.ts` records every `history.back`, `pushState` and popstate
+from the page's first script and asserts, after DISCARD, back then pop then the navigation's push. Staged with `leave`
+performing the exit at once instead of in the popstate handler, the log read `["back", "pop"]` and no push ever came:
+the pop landed on the navigation and the page stayed on manage, which is the race in its losing form, and the test
+names it. (2) *The asking line is in view when an exit at the top of the tallest form is pressed:* the former report-only
+measurement asserts the line's box within the window at 844 and 667 and reports its figures beside the assertion.
+Staged with the confirm's `autoFocus` removed, the line stood 275px below the fold at 844 ("Received: 275"), so the
+dependency on step 137's focus is tied to a test that fails if focus handling moves. Both green after the reverts (the
+history spec on chromium and mobile, 6 passed); the source is at HEAD, by `git diff`.

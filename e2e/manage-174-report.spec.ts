@@ -11,7 +11,8 @@ import { login } from './sign-in';
  * each fails against the build before 177, which ignored a landing. Unsaved edits are never restored; a row that no
  * longer exists replaces its entry and stays closed; an entry from another section re-enters that section first.
  *
- * The tall-form report stays report-only, as the step asks: the asking line is not scrolled to until Design rules.
+ * The tall-form finding is an assertion with its figures reported beside it (the coordinator, 11 Nov); nothing here
+ * scrolls to the line, as the step asks, and the link exit's wait is asserted as an ordering.
  */
 registerCleanup();
 test.use({ hasTouch: true, viewport: { width: 390, height: 844 } });
@@ -123,7 +124,60 @@ test('a row that no longer exists: Forward replaces its entry and stays closed',
   expect(state?.manageRow, 'the entry no longer names the row').toBeUndefined();
 });
 
-test('174, report: where the asking line falls when an exit at the top is pressed on the tallest form', { tag: '@report-only' }, async ({ page }, testInfo) => {
+/**
+ * **The link exit's wait, asserted as an ordering and not an end state (the coordinator, 11 Nov).** 174's line says "a
+ * link followed on DISCARD waits for the pop to land before it navigates, so the two history operations never race";
+ * the one-gesture test asserts only where the stack ends up, which a navigation that stopped waiting would also reach
+ * most of the time. This records every history operation from the page's first script and asserts the order after
+ * DISCARD: the close's back, its popstate, and only then the navigation's push. Fails against a `leave` that performs
+ * the exit at once instead of in the popstate handler (ResourceList.tsx, `leave` and `onPop`): staged, the push came
+ * before the pop.
+ */
+test('DISCARD CHANGES on a link navigates only after the close’s pop has landed: back, then popstate, then the push', async ({ page }) => {
+  await page.addInitScript(() => {
+    const log: string[] = [];
+    (window as unknown as { __history177: string[] }).__history177 = log;
+    const back = window.history.back.bind(window.history);
+    window.history.back = () => {
+      log.push('back');
+      back();
+    };
+    const push = window.history.pushState.bind(window.history);
+    window.history.pushState = (data: unknown, unused: string, url?: string | URL | null) => {
+      log.push(`push ${url === undefined || url === null ? '' : String(url)}`);
+      push(data, unused, url);
+    };
+    window.addEventListener('popstate', () => log.push('pop'));
+  });
+  await login(page);
+  const store = await seedStore(page, stamp());
+  const row = await openStore(page, store.name);
+  const form = row.locator('[data-manage-form]');
+  await form.getByLabel(`${store.name} city`, { exact: true }).fill('York');
+  await page.getByRole('button', { name: 'Menu' }).click();
+  await page.getByRole('link', { name: 'Want list', exact: true }).click();
+  const confirm = form.locator(CONFIRM);
+  await expect(confirm).toBeVisible();
+  /* From DISCARD on: nothing before it is the exit's. */
+  await page.evaluate(() => { (window as unknown as { __history177: string[] }).__history177.length = 0; });
+  await confirm.getByRole('button', { name: 'Discard changes' }).click();
+  /* The order is read once the navigation's push is recorded, before the end state is asked for: a race is visible here even when it happens to land. */
+  const recorded = () => page.evaluate(() => (window as unknown as { __history177: string[] }).__history177);
+  await expect.poll(recorded, { message: 'the navigation’s push is recorded after DISCARD (staged without the wait, it never came: the pop landed on the navigation and the page stayed on manage)' }).toEqual(expect.arrayContaining([expect.stringMatching(/^push .*\/want-list/)]));
+  const order = await recorded();
+  const push = order.findIndex((entry) => entry.startsWith('push ') && entry.includes('/want-list'));
+  expect(order.slice(0, push + 1), 'the close’s back, its pop, then the push, in that order').toEqual(['back', 'pop', order[push]]);
+  await expect(page).toHaveURL(/\/want-list$/);
+});
+
+/**
+ * **The asking line's visibility on the tallest form, asserted (the coordinator, 11 Nov).** The line is in view when an
+ * exit at the top is pressed because its first button takes focus (step 137) and the browser scrolls a focused control
+ * into view; nothing tied the two until this. Fails against a line that no longer takes focus (ResourceList.tsx, the
+ * confirm's `autoFocus`): staged, the line stood 275px below the fold at 844 and 452px at 667. The figures are reported
+ * beside the assertion, for Design's ruling on whether this is the scroll it wants; nothing here scrolls to the line.
+ */
+test('the asking line is in view when an exit at the top of the tallest form is pressed, by the focus it takes', async ({ page }, testInfo) => {
   await login(page);
   const store = await seedStore(page, stamp());
   const lines: string[] = [];
@@ -149,6 +203,8 @@ test('174, report: where the asking line falls when an exit at the top is presse
     const unscrolledTop = Math.round(lineBox.y + scrollY);
     const unscrolledBelow = Math.max(0, Math.round(unscrolledTop + lineBox.height - height));
     lines.push(`[174-tall] window 390 × ${height}: form ${Math.round(formBox.height)} tall from ${Math.round(formBox.y + scrollY)} unscrolled; the page scrolled ${scrollY} by the focus the line takes, so the line (${Math.round(lineBox.height)} tall) is at ${Math.round(lineBox.y)} and ${belowFold === 0 ? 'in view' : `${belowFold}px below the fold`}; unscrolled it would stand at ${unscrolledTop}, ${unscrolledBelow === 0 ? 'in view' : `${unscrolledBelow}px below the fold`}`);
+    expect(lineBox.y, `at ${height} the line’s top is within the window`).toBeGreaterThanOrEqual(0);
+    expect(belowFold, `at ${height} the line is wholly in view (${lines[lines.length - 1]})`).toBe(0);
     await confirm.getByRole('button', { name: 'Keep editing' }).click();
     await form.getByLabel(`${store.name} city`, { exact: true }).fill('Leeds');
     await row.locator('[data-manage-open]').click();
