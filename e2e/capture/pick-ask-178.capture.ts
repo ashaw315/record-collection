@@ -19,7 +19,8 @@ import { nearViewMinWidth } from '../../src/app/wall/view-fork';
  * collection. A capture is a figure with a picture attached, and these describe a seeded case (the coordinator, 12
  * Nov, on §55's lesson). Written to `docs/captures/pick-ask-178/`. Run with CAPTURE=1 --project=capture.
  */
-const OUT = join('docs', 'captures', 'pick-ask-178');
+/* A committed capture is never rewritten: 178's stills stay in pick-ask-178, and the recapture at 182 (the label, the count line, the gap, the hairline, the pointer off ASK) is a folder of its own. */
+const OUT = join('docs', 'captures', 'pick-ask-182');
 registerCleanup();
 
 const ABOUTS: Record<string, string> = {
@@ -69,6 +70,8 @@ async function states(page: Page, open: () => Promise<void>, name: string, width
       await settle();
     }
     await page.evaluate(() => document.fonts.ready);
+    /* The pointer off the control before the picture: left on ASK after the click, it drew ASK's hover underline into every capture (Design's defect 3, 12 Nov). */
+    await page.mouse.move(0, 0);
     await page.screenshot({ path: join(OUT, `seeded-${name}-${width}-${state}.png`), fullPage: state !== 'empty' });
   }
 }
@@ -129,7 +132,7 @@ test.describe('narrow, a coarse pointer', () => {
     }
     writeFileSync(
       join(OUT, 'README.md'),
-      `# pick-ask-178 · the ask field in every host (§P.2, §P.4, §P.5, §P.6; step 178), captured ${new Date().toISOString().slice(0, 10)}
+      `# pick-ask-182 · the ask field in every host, recaptured at step 182 (§P.2, §P.4, §P.5, §P.6; steps 178 to 182), captured ${new Date().toISOString().slice(0, 10)}
 
 **Every record in these captures is seeded, and no figure here describes the collection.** The test environment has no
 provider key, so the vectors are the test environment's stub model (a bag of words, \`src/lib/openai/stub-embedding.ts\`),
@@ -150,9 +153,11 @@ own title asked, which asks from that record and leaves it out. Where the answer
 | the table's band (a wrapped row) | 390 × 844, a coarse pointer | seeded-table-390-{empty,phrase,title}.png |
 | the grid's band (a wrapped row) | 390 × 844, a coarse pointer | seeded-grid-390-{empty,phrase,title}.png |
 
-Three answers on the shelf and five elsewhere; a wrapped row where the control draws as a band and a column where it
-draws as a column (the two proposals, accepted by the coordinator, 12 Nov). §P.4's "provisional until built and captured
-in every host" returns on these.
+The answer's count is keyed to its form (§P.2, 12 Nov): one where it is a pull, the shelf's, and five where it is cells,
+the far view's band included; a wrapped row where the control draws as a band and a column where it draws as a column.
+Recaptured at step 182 with the field labelled WHAT TO PLAY, the count line "N have no About.", ASK and SURPRISE ME 18
+apart in the sidebar, the closing hairline under the answer at 390, and the pointer moved off the control before each
+picture, so ASK is in ink and not underlined. §P.4's "provisional until built and captured in every host" returns on these.
 `,
     );
   });

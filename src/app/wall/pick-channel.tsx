@@ -43,6 +43,14 @@ export type PickChannel = {
   viewChanged: () => void;
   /** The control hears view changes while mounted; the returned function stops it. */
   hearViews: (hear: () => void) => () => void;
+  /**
+   * Whether an answer here would be a pull (§P.2, 12 Nov: the count is keyed to the answer's form, one as a pull and
+   * five as cells, never to the view's name). The wall says: true on the near view, false on the far view, null while
+   * no view is settled or no wall listens, which the control reads as cells.
+   */
+  pulls: () => boolean | null;
+  /** The wall answers the question while mounted; the returned function stops it. */
+  answerPulls: (answer: () => boolean | null) => () => void;
 };
 
 const Channel = createContext<PickChannel | null>(null);
@@ -53,8 +61,16 @@ export function PickChannelProvider({ children }: { children: ReactNode }) {
     let hear: ((id: string) => void) | null = null;
     let hearView: (() => void) | null = null;
     let hearCell: ((record: PickRecord | null) => void) | null = null;
+    let pulls: (() => boolean | null) | null = null;
     return {
       ask: (named) => answer?.(named) ?? { did: 'ignore', host: null },
+      pulls: () => pulls?.() ?? null,
+      answerPulls: (next) => {
+        pulls = next;
+        return () => {
+          if (pulls === next) pulls = null;
+        };
+      },
       answerAsks: (next) => {
         answer = next;
         return () => {

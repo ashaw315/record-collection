@@ -122,8 +122,8 @@ export function PickControl({ ruled = false, pool, answers = 'cell', withoutAbou
         body: JSON.stringify({
           phrase,
           pool: pool.map((record) => record.id),
-          /* §P.2 (12 Nov): an answer is what is shown, one on the shelf (the pull; a re-roll pulls the next nearest) and five elsewhere. */
-          take: answers === 'wall' ? 1 : 5,
+          /* §P.2 (12 Nov): an answer is what is shown; the count is keyed to its form, one where it is a pull (a re-roll pulls the next nearest) and five where it is cells, never to the view's name: the wall says which, and the far view cannot pull. */
+          take: answers === 'wall' && channel?.pulls() === true ? 1 : 5,
           ...(lastAnswer.length > 0 ? { exclude: [...lastAnswer] } : {}),
         }),
       });
@@ -168,8 +168,9 @@ export function PickControl({ ruled = false, pool, answers = 'cell', withoutAbou
       {ruled && <hr data-pick-rule="" className={`mb-[18px] border-t ${HAIRLINE}`} />}
       {/* §P.5: the ask field, "as §9.3's field, separate from SEARCH": its own label and field, part of no form. */}
       <div data-ask-host="" className="relative w-full">
+        {/* §P.5 (Design, 12 Nov; step 182): "The ask field’s label says what goes in it, never ASK, which is the button’s name." WHAT TO PLAY, Proposed. */}
         <label htmlFor={fieldId} className={`block ${LABEL}`}>
-          Ask
+          What to play
         </label>
         <input
           id={fieldId}
@@ -193,7 +194,8 @@ export function PickControl({ ruled = false, pool, answers = 'cell', withoutAbou
       */}
       {withoutAbout > 0 ? (
         <p data-without-about="" className="relative mt-[18px]">
-          <span className="text-prose">{withoutAbout} without an About yet.</span>
+          {/* "N have no About.", Proposed (Design, 12 Nov; step 182): the first wording took two lines at the rail's width. */}
+          <span className="text-prose">{withoutAbout} have no About.</span>
         </p>
       ) : null}
       {/*
@@ -217,7 +219,8 @@ export function PickControl({ ruled = false, pool, answers = 'cell', withoutAbou
           </div>
         </>
       ) : (
-        <>
+        /* §P.5 (Design's defect 2, 12 Nov): the sidebar separates ASK and SURPRISE ME by the band host's 18, where they read "ASKSURPRISE ME" before. */
+        <div data-pick-buttons="" className="flex flex-wrap items-center gap-x-[18px]">
           <button type="button" className={buttonClass(askInert)} aria-disabled={askInert} aria-describedby={askInert ? reasonId : undefined} onClick={() => void ask()}>
             Ask
           </button>
@@ -225,7 +228,7 @@ export function PickControl({ ruled = false, pool, answers = 'cell', withoutAbou
           <button type="button" className={buttonClass(false)} onClick={surprise}>
             Surprise me
           </button>
-        </>
+        </div>
       )}
       {/* §P.6's message, "as proposed there" (§P.4). */}
       <p role="status" data-pick-slot="" className="min-h-[1lh] text-prose">
@@ -238,13 +241,17 @@ export function PickControl({ ruled = false, pool, answers = 'cell', withoutAbou
         proposal, the coordinator, 12 Nov.
       */}
       {drawn.length > 0 && host === 'here' && (
-        <ul data-pick-answers="" className="relative mt-[24px] flex flex-col gap-[18px]">
-          {drawn.map((record, index) => (
-            <li key={record.id} data-pick-answer="" data-rank={index + 1} className="w-[160px]">
-              <GridCell id={record.id} title={record.title} artist={record.artist} cover={record.cover} />
-            </li>
-          ))}
-        </ul>
+        <>
+          <ul data-pick-answers="" className="relative mt-[24px] flex flex-col gap-[18px]">
+            {drawn.map((record, index) => (
+              <li key={record.id} data-pick-answer="" data-rank={index + 1} className="w-[160px]">
+                <GridCell id={record.id} title={record.title} artist={record.artist} cover={record.cover} />
+              </li>
+            ))}
+          </ul>
+          {/* §P.4 (12 Nov): "where the answer stands above the list, as at 390, it ends with the hairline that closes the control"; the sidebar's stylesheet draws it below the fork and not above, where the list stands beside the control. */}
+          {!inRail && <hr data-pick-close-rule="" className={`mt-[24px] hidden border-t ${HAIRLINE}`} />}
+        </>
       )}
     </div>
   );

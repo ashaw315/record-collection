@@ -32,15 +32,16 @@ describe('the control’s parts and order (§P.5)', () => {
     expect(html).not.toContain('Choose a mood first');
   });
 
-  /* §P.5: "The field isn't the search field": a text field of its own, under a §9.3 label, not a search form. */
-  it('draws the field as §9.3’s field with a label of its own, separate from SEARCH', () => {
+  /* §P.5: "The field isn't the search field": a text field of its own, under a §9.3 label, not a search form. "The ask field’s label says what goes in it, never ASK, which is the button’s name": WHAT TO PLAY, Proposed (Design, 12 Nov; step 182). */
+  it('draws the field as §9.3’s field with a label of its own, WHAT TO PLAY, separate from SEARCH', () => {
     const f = field(html);
     expect(f).toContain('type="text"');
     expect(f).not.toContain('name="q"');
     const id = /\sid="([^"]+)"/.exec(f)?.[1];
     expect(id, 'the field has an id its label points at').toBeDefined();
-    const label = new RegExp(`<label[^>]*for="${id}"[^>]*>`).exec(html)?.[0] ?? '';
-    for (const cls of LABEL.split(' ')) expect(label, cls).toContain(cls);
+    const label = new RegExp(`<label[^>]*for="${id}"[^>]*>([^<]*)<`).exec(html);
+    expect(label?.[1], 'the label says what goes in it, never ASK').toBe('What to play');
+    for (const cls of LABEL.split(' ')) expect(label?.[0] ?? '', cls).toContain(cls);
     expect(html).not.toMatch(/<form[^>]*role="search"/);
   });
 
@@ -100,10 +101,11 @@ describe('the pitch by host (§P.5)', () => {
   yet." is Proposed (the Provisionals line).
 */
 describe('the count line (§P.6)', () => {
-  it('draws "N without an About yet." beneath the field and above ASK while any record has none, and not otherwise', () => {
+  /* Reworded by Design ("Ask field captures read", 12 Nov; step 182): "N have no About.", since the first wording took two lines at the rail's width. */
+  it('draws "N have no About." beneath the field and above ASK while any record has none, and not otherwise', () => {
     const withLine = renderToStaticMarkup(<PickControl pool={POOL} withoutAbout={4} />);
     const line = /<p[^>]*data-without-about=""[^>]*>(?:<span[^>]*>)?([^<]*)/.exec(withLine);
-    expect(line?.[1]).toBe('4 without an About yet.');
+    expect(line?.[1]).toBe('4 have no About.');
     expect(withLine.indexOf('data-without-about'), 'beneath the field').toBeGreaterThan(withLine.indexOf('data-ask-field'));
     expect(withLine.indexOf('data-without-about'), 'above ASK').toBeLessThan(askAt(withLine));
     expect(renderToStaticMarkup(<PickControl pool={POOL} withoutAbout={0} />)).not.toContain('data-without-about');

@@ -8,6 +8,7 @@ import { getTestDb } from '../test/helpers/db';
 import { aboutHash } from '../src/lib/embeddings/plan';
 import { EMBEDDING_MODEL } from '../src/lib/openai/embeddings';
 import { stubEmbedding } from '../src/lib/openai/stub-embedding';
+import { nearViewMinWidth } from '../src/app/wall/view-fork';
 
 /**
  * **Step 178, Q22's control (§P.2, §P.4, §P.5, §P.6; Design's "Ask field" and "the rest of the moods", 10 and 11
@@ -145,7 +146,7 @@ test('a pool with no ABOUT is unanswerable: no cover, and the slot says so; the 
   try {
     await openGrid(page, artistId);
     const line = control(page).locator('[data-without-about]');
-    await expect(line).toHaveText(/^\d+ without an About yet\.$/);
+    await expect(line).toHaveText(/^\d+ have no About\.$/);
     expect(Number((await line.textContent())?.split(' ')[0]), 'at least the seeded record without one').toBeGreaterThanOrEqual(1);
     await askFor(page, 'late night jazz');
     await expect(slot(page)).toHaveText('No About yet.', { timeout: 15_000 });
@@ -181,6 +182,139 @@ test('a navigation clears the field and the answer', async ({ page }) => {
     await expect(field(page)).toHaveValue('');
     expect(await drawn(page), 'the table starts with no answer').toEqual([]);
     await expect(ask(page)).toHaveAttribute('aria-disabled', 'true');
+  } finally {
+    await removeRecordsFor(artistId);
+  }
+});
+
+/*
+  Step 182 (§P.2, §P.4, §P.5, §P.6; Design's "Ask field captures read", 12 Nov): the answer's count is keyed to its
+  form, one where it is a pull and five where it is cells, never to the view's name, so the far view's band host draws
+  five; ASK and SURPRISE ME have a gap between them in the sidebar; at 390 the answer ends with the control's closing
+  hairline before the list; the field's label and the count line each take one line at the rail's width. Each fails
+  against the build before 182: one cover in the far band (the shelf's one reached it), "ASKSURPRISE ME", five covers
+  running into the grid, and the old wordings on two lines.
+*/
+test('the far view’s band host answers with five cells, the count keyed to the answer’s form and not the view’s name', async ({ page }) => {
+  const { artistId } = await fixture(page);
+  try {
+    await page.setViewportSize({ width: nearViewMinWidth() - 1, height: 900 });
+    await page.goto(`/?artistId=${artistId}`);
+    await wallMeasured(page);
+    const asks: Array<{ take: number }> = [];
+    page.on('request', (request) => {
+      if (request.method() === 'POST' && request.url().endsWith('/api/ask')) asks.push(request.postDataJSON() as { take: number });
+    });
+    await askFor(page, 'late night jazz');
+    await expect.poll(() => drawn(page), { timeout: 15_000 }).toHaveLength(5);
+    expect(asks[0]?.take, 'asked for five, since the far view cannot pull').toBe(5);
+  } finally {
+    await removeRecordsFor(artistId);
+  }
+});
+
+test('ASK and SURPRISE ME stand apart in the sidebar at 1440 and in the band at 390', async ({ page }) => {
+  const { artistId } = await fixture(page, ['J1']);
+  try {
+    for (const width of [1440, 390]) {
+      await openGrid(page, artistId, width);
+      const gap = await page.evaluate(() => {
+        const control = Array.from(document.querySelectorAll<HTMLElement>('[data-pick-control]')).find((el) => el.getClientRects().length > 0);
+        const buttons = Array.from(control?.querySelectorAll('button') ?? []);
+        const askBox = buttons.find((b) => /^ask$/i.test(b.textContent ?? ''))?.getBoundingClientRect();
+        const surpriseBox = buttons.find((b) => /surprise me/i.test(b.textContent ?? ''))?.getBoundingClientRect();
+        return askBox && surpriseBox ? surpriseBox.left - askBox.right : null;
+      });
+      expect(gap, `at ${width}: the band host's 18 between ASK's right and SURPRISE ME's left`).toBeGreaterThanOrEqual(18);
+    }
+  } finally {
+    await removeRecordsFor(artistId);
+  }
+});
+
+test('at 390 the answer ends with the control’s closing hairline before the list, so five covers do not run into the grid', async ({ page }) => {
+  const { artistId } = await fixture(page);
+  try {
+    await openGrid(page, artistId, 390);
+    await askFor(page, 'late night jazz');
+    await expect.poll(() => drawn(page), { timeout: 15_000 }).toHaveLength(5);
+    type Rule = { drawn: true; answersBottom: number; ruleTop: number; listTop: number; ruleHeight: number } | { drawn: false; answers: boolean; hr: boolean; list: boolean };
+    const rule = await page.evaluate((): Rule => {
+      const visible = (el: Element) => (el as HTMLElement).getClientRects().length > 0;
+      const answers = Array.from(document.querySelectorAll<HTMLElement>('[data-pick-answers]')).find(visible);
+      const hr = Array.from(document.querySelectorAll<HTMLElement>('[data-pick-close-rule]')).find(visible);
+      const list = Array.from(document.querySelectorAll<HTMLElement>('[data-collection-content] a[href^="/records/"]')).find(visible);
+      if (!answers || !hr || !list) return { drawn: false, answers: !!answers, hr: !!hr, list: !!list };
+      return { drawn: true, answersBottom: answers.getBoundingClientRect().bottom, ruleTop: hr.getBoundingClientRect().top, listTop: list.getBoundingClientRect().top, ruleHeight: hr.getBoundingClientRect().height };
+    });
+    if (!rule.drawn) throw new Error(`not all drawn: ${JSON.stringify(rule)}`);
+    expect(rule.ruleTop, 'the hairline below the answer').toBeGreaterThanOrEqual(rule.answersBottom);
+    expect(rule.ruleTop, 'and above the list').toBeLessThanOrEqual(rule.listTop);
+    expect(rule.ruleHeight, 'a hairline').toBeLessThanOrEqual(1.5);
+  } finally {
+    await removeRecordsFor(artistId);
+  }
+});
+
+test('the field’s label and the count line each take one line at the rail’s width, and the count line at 320 and 1280', async ({ page }) => {
+  const { artistId } = await fixture(page, ['N']);
+  try {
+    const oneLine = async (selector: string, what: string, reportOnly = false) => {
+      const m = await page.evaluate((sel) => {
+        const el = Array.from(document.querySelectorAll<HTMLElement>(sel)).find((e) => e.getClientRects().length > 0);
+        if (!el) return null;
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        /* Lines, not rects: the count line is two text nodes (the number, the words), so a range gives two rects on one line; a line is a distinct top. */
+        const lines = new Set(Array.from(range.getClientRects()).map((r) => Math.round(r.top))).size;
+        return { lines, height: el.getBoundingClientRect().height, lineHeight: parseFloat(getComputedStyle(el).lineHeight), width: el.getBoundingClientRect().width, text: el.textContent ?? '' };
+      }, selector);
+      if (m === null) throw new Error(`${what} not drawn`);
+      test.info().annotations.push({ type: what, description: `"${m.text}": ${m.lines} line(s) in ${m.width.toFixed(1)} wide, the box ${m.height.toFixed(1)} tall against a line of ${m.lineHeight.toFixed(1)}` });
+      if (reportOnly) return;
+      expect(m.lines, `${what} "${m.text}": one line`).toBe(1);
+      expect(m.height / m.lineHeight, `${what}: the box holds one line`).toBeLessThan(2);
+    };
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(`/?artistId=${artistId}`);
+    await wallMeasured(page);
+    await oneLine('[data-pick-control] label', 'the label in the rail');
+    await oneLine('[data-without-about] span', 'the count line in the rail');
+    await openGrid(page, artistId, 320);
+    await oneLine('[data-without-about] span', 'the count line at 320');
+    await openGrid(page, artistId, 1280);
+    await oneLine('[data-without-about] span', 'the count line at 1280');
+  } finally {
+    await removeRecordsFor(artistId);
+  }
+});
+
+/* Design's open question (12 Nov): the count column's free height at 1440 × 900 and 768, and whether five cells at 160, two across and three down, fit beneath the count without the page scrolling. Reported, not asserted: Design rules once it has the figure. */
+test('182, report: the count column’s free height on the far view at 1440 × 900 and 768', { tag: '@report-only' }, async ({ page }, testInfo) => {
+  const { artistId } = await fixture(page);
+  try {
+    for (const height of [900, 768]) {
+      await page.setViewportSize({ width: 1440, height });
+      await page.goto(`/?artistId=${artistId}`);
+      await wallMeasured(page);
+      await page.getByTestId('wall-zoom-out').click();
+      await page.locator('[data-wall="overview"]').waitFor({ timeout: 30_000 });
+      await page.getByTestId('wall-count-far').waitFor({ timeout: 30_000 });
+      const m = await page.evaluate(() => {
+        const count = document.querySelector<HTMLElement>('[data-testid="wall-count-far"]');
+        const column = count?.parentElement ?? null;
+        if (!count || !column) return null;
+        const lines = Array.from(column.children).filter((el) => !el.hasAttribute('data-pick-answer'));
+        const last = lines[lines.length - 1];
+        const lastLine: number = last === undefined ? count.getBoundingClientRect().bottom : last.getBoundingClientRect().bottom;
+        const columnBox = column.getBoundingClientRect();
+        return { columnWidth: columnBox.width, lastLineBottom: lastLine, columnBottom: columnBox.bottom, window: window.innerHeight, page: document.documentElement.scrollHeight };
+      });
+      if (m === null) throw new Error('no count column');
+      const free = m.window - m.lastLineBottom - 24;
+      const fiveTall = 3 * 160 + 2 * 18 + 3 * 44;
+      testInfo.annotations.push({ type: `count column at 1440 × ${height}`, description: `${m.columnWidth.toFixed(0)} wide; its last line ends at ${m.lastLineBottom.toFixed(1)}, so ${free.toFixed(1)} is free beneath it and the 24 to the window's foot (the column's box ends at ${m.columnBottom.toFixed(1)}; the page ${m.page} tall in a ${m.window} window); five cells at 160 two across and three down, with their captions, need about ${fiveTall}, so they ${fiveTall <= free ? 'fit' : `run past by ${(fiveTall - free).toFixed(0)}`} without scrolling` });
+    }
   } finally {
     await removeRecordsFor(artistId);
   }

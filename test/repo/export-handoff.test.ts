@@ -129,7 +129,13 @@ describe('the script', () => {
     HEAD, measures table and pictures, beside the handoff under the same name. Fails against the export
     of the two files alone: no folder is written, and an unknown folder is not refused.
   */
-  it('writes a step’s captures folder as committed, named the same way, and refuses a folder HEAD does not hold', () => {
+  /*
+    Thirty seconds, not the five-second default: this case runs the script twice, each a node process loading tsx and
+    the repository's modules, and read 6.0s under commit-checked's own load and 12.8s in a loaded run on 12 Nov, so the
+    default budget refused a ship on timing and not on a result (the 5-second class, CLAUDE.md §9). Alone it reads under
+    five; the budget is for the work it does, not the machine it happens to run on.
+  */
+  it('writes a step’s captures folder as committed, named the same way, and refuses a folder HEAD does not hold', { timeout: 30_000 }, () => {
     const out = mkdtempSync(join(tmpdir(), 'export-captures-'));
     try {
       const sha = execFileSync('git', ['rev-parse', '--short', 'HEAD'], { encoding: 'utf8' }).trim();

@@ -497,6 +497,11 @@ if (offset !== null) offset.style.transform = '';
       return { did: answer.kind, host: null };
     });
   }, [channel, far, viewport, begin]);
+  /* §P.2 (12 Nov): the control asks for one where its answer is a pull and five where it is cells, so the wall says which it would be before the ask is made. */
+  useEffect(() => {
+    if (channel === null) return;
+    return channel.answerPulls(() => (far === null ? null : !far));
+  }, [channel, far]);
   /* §P.4's column host: the cell the control serves, drawn by the wall in the count column (`P.4/column-cell-drawing-pays`). */
   const [pickCell, setPickCell] = useState<PickRecord | null>(null);
   useEffect(() => channel?.hearCells(setPickCell), [channel]);

@@ -11,7 +11,8 @@ import { askSlotMessage, SLOT_MESSAGES } from './slot';
 describe('askSlotMessage', () => {
   it('says the slot’s own words when asking is not set up, never the route’s', () => {
     const message = askSlotMessage({ ok: false, status: 503, code: 'NOT_CONFIGURED', routeMessage: 'The ask is not configured on this deployment' });
-    expect(message).toBe("Asking isn't set up yet.");
+    /* Reworded by Design ("Markers split and slot reworded", 12 Nov; step 181): the first wording took two lines at the rail's width. */
+    expect(message).toBe('Not set up yet.');
     expect(message).toBe(SLOT_MESSAGES.notConfigured);
   });
 

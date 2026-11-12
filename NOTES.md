@@ -56765,3 +56765,53 @@ lines at the rail's width (pick-control-156's fit test, the step's own assertion
 one; it fits at 320 and 1280. The wording is Design's and the fit rule is Design's, so the rail's figure is reported
 and not asserted, and nothing was reworded. The run also caught a test defect of mine: the shelf's request body was
 compared whole to `{ take: 1 }` when it carries the phrase and the pool too; `toMatchObject` now.
+
+**180's gate (43262140382 on b6d794c2) green on all four halves,** read from the artifacts: chromium 1081 passed, 1
+skipped (16:45 to 17:05 UTC); mobile 394 passed, 4 skipped; report-only 1 passed; unit 5168 passed, 3 skipped;
+ledgers clean with labels 1 to 3 standing as fixtures', no pressings line; trees unchanged. The watch on the run
+expired at thirty minutes before the verdict job finished, so the completion was read by hand; a longer watch next time.
+
+## 12 Nov (fourth): Adam's two runs confirmed end to end; "Markers split and slot reworded" and "Ask field captures read" taken in; steps 181 and 182
+
+**Adam's two runs, confirmed on production and not by reading the scripts (the coordinator's ask; a read-only script,
+`scripts/confirm-ask-and-barcode.mts`).** `record_embeddings` holds 53 rows under one model, text-embedding-3-small,
+for the 53 records with an ABOUT. A title ask over them, which needs no key, ranks plausibly: Peter, Paul & Mary's
+best-of nearest to Dylan's Greatest Hits Volume II (0.642) and Nashville Skyline; Pharoah Sanders nearest Traffic
+(0.540), Smerz and Darkside; Buddy Rich nearest Luther Vandross (0.624); Pavement nearest Dylan, Cindy Lee and
+Mandy, Indiana. Whether those read as sensible is Adam's; the nearness figures are the collection's. Barcode rows: 57
+over 44 releases. A release cached 11 August (Never Too Much, "0 7464-37451-1") and one cached 25 August (Psychic,
+two codes) each find their record typed as given and typed as digits. So both scripts' "nothing to change" was true:
+the embedding run had embedded on its first pass and the backfill had written the rows, and the up-to-date tests told
+the truth.
+
+**The drops** (refs/drops/2026-11-12-03 and -04; the second file was revised on disk between the two refs, with Change
+0's two entries, the §P.2 governs replacement and the "count keyed to the form" bullet, and the card with it; the
+coordinator's hash d52dbd01). Applied in the order the files ask: the two entries replacing `P.2/one-last-served-tier`,
+`P.3/tier-one-record`'s Build clause, the not-configured Provisionals reword, Change 0's two entries after
+`P.2/tier-fallback`, the §P.2 and §P.4 governs edits, the two Provisionals lines, and the two steps, numbered 181 and
+182 and built. The index reads 14 of 14 at 323 entries.
+
+**What the far band actually drew, for `P.2/shelf-one-elsewhere-five`'s hedge:** three at 178, one from 180 to 182
+(the shelf's one reached the far view, because the control keyed the count to its host and not to the answer's form),
+five now. It followed neither sentence until 182; the entry's "believed to follow it for the far view's band, which
+draws three" was a hedge on a count that matched nothing, as the coordinator read it.
+
+**181 and 182 in brief** (the lines carry the rest): "Not set up yet." fits one line at the rail; the count is keyed to
+the form through the pick channel (`pulls`), so the far view draws five cells in both hosts and nothing is asserted on
+the word "shelf"; WHAT TO PLAY and "N have no About." each take one line at the rail (99.3 wide for the count line),
+and the first two-line reading of the count line was the measurer's, not the wording's: the line is two text nodes,
+the number and the words, so a range gives two rects on one line, and the measurer counts distinct tops now; ASK and
+SURPRISE ME stand 18 apart in the sidebar; the underline on ASK in every capture was the capture helper's pointer,
+left on ASK after the click, drawing its hover underline (both label classes carry `hover:underline` and nothing
+else underlines ASK), so the tool moves the pointer off before each picture; at 390 the answer ends with the control's
+closing hairline before the list. 177's correction still waits on the Table and Grid card the coordinator describes
+(6819d53f), which is not the card in the tree (78e4e879).
+
+**The released card arrived while the intake command ran** (13:07; sha256 f137d24f, 49,663 bytes, the coordinator's
+figures), with the change file's Build note corrected to "followed neither; the far view's band draws three, which no
+version of the sentence gives", applied; ref 2026-11-12-05. **A lapse, caught by the suite:** the recapture at 182
+wrote into `docs/captures/pick-ask-178/`, the folder committed at e31d94d3, and the intake command refused on seven
+tests, captures-unchanged and the six export-handoff cases that read the committed captures. A committed capture is
+never rewritten; the folder was restored from HEAD and the recapture goes to `docs/captures/pick-ask-182/`, a folder
+of its own, the tool changed to write there. The intake's judge still discards the failing tests' names, so the
+suite was run again by hand to read them.

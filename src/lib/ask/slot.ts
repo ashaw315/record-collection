@@ -7,7 +7,8 @@
 export const SLOT_MESSAGES = {
   only: 'The only one.',
   unanswerable: 'No About yet.',
-  notConfigured: "Asking isn't set up yet.",
+  /* Reworded by Design (12 Nov; step 181): the first wording, "Asking isn't set up yet.", took two lines at the rail's width. */
+  notConfigured: 'Not set up yet.',
   failed: 'Not answered.',
 } as const;
 
