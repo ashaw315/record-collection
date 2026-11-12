@@ -131,6 +131,30 @@ test('an ask while a record moves is ignored, coming out and going back', async 
 });
 
 /*
+  Step 182's gate (43293058654, 12 Nov) flaked here, and the flake was a regression: from step 180 the control
+  recorded SURPRISE ME's draw as the last answer before the wall answered, so a press the wall ignored while a record
+  moved still took a record out of the next draw, and with a pool of three the next press landed on the record
+  already out half the time and nothing moved. The last answer is what was shown, never what was drawn and ignored.
+  With a pool of two the broken build fails every time: the ignored press draws the other record and excludes it, so
+  the next press can only draw the one already out.
+*/
+test('an ask ignored while a record moves leaves the last answer alone, so the next press pulls the other record', async ({ page }) => {
+  const { artistId } = await poolOf(page, 2);
+  await openNear(page, artistId);
+  await press(page);
+  await page.locator('[data-pulled]').waitFor({ timeout: 30_000 });
+  await press(page);
+  const first = await settledOut(page);
+  await page.waitForTimeout(2_500);
+  expect(await outs(page), 'the press while the first came out did nothing').toEqual([first]);
+  await press(page);
+  const second = await settledOut(page);
+  expect(second, 'the next press pulls the other record, the ignored draw having excluded nothing').not.toBe(first);
+  await page.waitForTimeout(2_500);
+  expect(await outs(page)).toEqual([first, second]);
+});
+
+/*
   A pool of two and a draw left to chance would pass half the time with the
   served rule broken. So the draw is pinned at each end of the pool in turn:
   with the rule broken, one of the two lands on the served record.

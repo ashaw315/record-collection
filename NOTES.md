@@ -56838,3 +56838,24 @@ being the taller of each pair: 648.0 to 742.5 at the 18 the build draws, 660.0 t
 ask's covers is Design's to say, and the build still draws 18. **On the count line's reword:** the two-line reading
 that prompted "N have no About." was the measurer's artifact, as recorded above; the coordinator has told Design the
 premise collapsed, and nothing changes here until Design says.
+
+## 12 Nov (fifth): the gate on d9a3d410 found a regression from 180, read as a flake
+
+**The gate on d9a3d410 (43293058654) failed on the chromium half's verdict with one flake,** read from the artifacts:
+chromium 1084 passed, 1 flaky, 1 skipped, ledger clean, "GREEN WITH FLAKES, not OK"; mobile, report-only and unit
+green. The flake: `pick-pull-156.spec.ts:115`, "an ask while a record moves is ignored", with the frame count stuck
+at 2 after the third press, nothing moving, and passing on the retry. **Not load and not a seed: a regression from
+step 180.** Since 180 `surprise` and `ask` set the last answer BEFORE `show`, so a draw the wall ignored (a record
+moving) still took its record out of the next draw. With a pool of three: press one pulls A; the press while A comes
+out draws B or C, is ignored, and records B as the last answer; the next press draws from {A, C} and lands on A, the
+record already out, half the time, and nothing moves. The spec's pool of three made it a coin toss, which is what a
+flake looks like from the ledger. The trace, read first: the frames show A out and landed and no return phase.
+
+**Fixed test first:** a new case in the same spec with a pool of TWO, where the broken build fails every time (the
+ignored draw can only be the other record, so the next press can only draw the one out), run red against HEAD:
+`Expected: not "255229f3-…"`, 1 failed. The fix: the last answer is set only by what is shown, the cells when they
+draw (in `show`'s cannot-pull branch) and the pulled record when the wall tells of it (`hearPulls`), never before
+`show`. The pre-show `setLastAnswer` calls in `surprise` and `ask` are gone. The re-ask's exclusion on the shelf
+still equals the record out (pick-ask-178 asserts it from the request's body). **Step level:** pick-pull-156 and
+pick-ask-178 on chromium and mobile, 19 passed, no retries, load 9 with nothing else running; typecheck; lint at
+baseline (6 warnings, 0 errors). The control changed: the ship is a gate.

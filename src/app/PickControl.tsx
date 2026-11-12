@@ -109,6 +109,8 @@ export function PickControl({ ruled = false, pool, answers = 'cell', withoutAbou
     }
     setHost(answer.host ?? 'here');
     setDrawn(records);
+    /* The last answer is what was shown: the cells here, and on a pull the record the wall tells of when it comes out (`hearPulls`). A draw the wall ignored or let stay changes nothing (pick-pull-156, 12 Nov). */
+    setLastAnswer(records.map((record) => record.id));
   };
 
   /** ASK: the phrase or a title to the route, the pool as ids, the last answer left out. */
@@ -141,7 +143,6 @@ export function PickControl({ ruled = false, pool, answers = 'cell', withoutAbou
         setDrawn([]);
         return;
       }
-      setLastAnswer(ids);
       setMessage('');
       show(ids);
     } finally {
@@ -156,7 +157,6 @@ export function PickControl({ ruled = false, pool, answers = 'cell', withoutAbou
     if (id === null) return;
     setMessage('');
     if (drawn.length === 1 && drawn[0]?.id === id) setMessage(MESSAGES.only);
-    setLastAnswer([id]);
     show([id]);
   };
 
