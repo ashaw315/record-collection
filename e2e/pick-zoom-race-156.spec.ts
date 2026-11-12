@@ -3,6 +3,7 @@ import { registerCleanup, trackArtist } from './cleanup';
 import { removeRecordsFor, seedRecords } from './seed';
 import { login } from './sign-in';
 import { wallMeasured } from './wall-measured';
+import { nearViewMinWidth } from '../src/app/wall/view-fork';
 
 /**
  * Step 156, a race found by the gate on 7553762 (27 Oct), and Design's ruling
@@ -156,6 +157,42 @@ test('a record the pick pulled on the near view stays last-served when the reade
       const served = (await cellTitle(page)) ?? '';
       expect(served.length, 'the precondition: a titled cell').toBeGreaterThan(0);
       expect(served, `draw ${draw}: the far view served the record pulled on the near view`).not.toBe(pulledTitle);
+    }
+  } finally {
+    await removeRecordsFor(artistId);
+  }
+});
+
+/*
+  §P.2's other direction across the fork: "or resizes across a fork... In both directions the record stays last-served."
+  A resize changes no address, so the control is the same instance and the wall tells it the view changed, as on a
+  zoom; the two zoom cases above left this one un-asserted until the coordinator asked (12 Nov) what asserts it, after
+  the last answer began to be set only from what is shown (937d3aff). Staged red by clearing the last answer where the
+  view ends: draw 0.999 served the pulled record again.
+*/
+test('a record the pick pulled on the near view stays last-served when the window narrows across the fork: the far view’s ask serves the other', async ({ page }) => {
+  test.setTimeout(180_000);
+  const artistId = await twoRecords(page);
+  try {
+    for (const draw of DRAWS) {
+      await page.setViewportSize({ width: 1440, height: 900 });
+      await page.goto(`/?artistId=${artistId}`);
+      await wallMeasured(page);
+      await press(page);
+      await expect.poll(() => page.locator('[data-wall-container]').getAttribute('data-phase'), { timeout: 30_000 }).toBe('landed');
+      const pulled = await page.locator('[data-pulled]').getAttribute('data-pulled');
+      const listed = (await (await page.request.get(`/api/records?artistId=${artistId}&pageSize=100`)).json()) as { data: Array<{ id: string; title: string }> };
+      const pulledTitle = listed.data.find((row) => row.id === pulled)?.title ?? null;
+      expect(pulledTitle, 'the precondition: the pulled record is one of the two').not.toBeNull();
+      await page.setViewportSize({ width: nearViewMinWidth() - 1, height: 900 });
+      await expect(page, 'the precondition: a resize is not a navigation').not.toHaveURL(/[?&]wall=far/);
+      await page.locator('[data-wall="overview"]').filter({ visible: true }).waitFor({ timeout: 30_000 });
+      await pin(page, draw);
+      await press(page);
+      await expect.poll(() => cellTitle(page), { timeout: 10_000 }).not.toBeNull();
+      const served = (await cellTitle(page)) ?? '';
+      expect(served.length, 'the precondition: a titled cell').toBeGreaterThan(0);
+      expect(served, `draw ${draw}: the far view served the record pulled before the window narrowed`).not.toBe(pulledTitle);
     }
   } finally {
     await removeRecordsFor(artistId);

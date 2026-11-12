@@ -56859,3 +56859,21 @@ draw (in `show`'s cannot-pull branch) and the pulled record when the wall tells 
 still equals the record out (pick-ask-178 asserts it from the request's body). **Step level:** pick-pull-156 and
 pick-ask-178 on chromium and mobile, 19 passed, no retries, load 9 with nothing else running; typecheck; lint at
 baseline (6 warnings, 0 errors). The control changed: the ship is a gate.
+
+**Shipped as 937d3aff; its gate (43299027890) is GREEN on all four halves, read from the artifacts:** chromium 1086
+passed, 1 skipped, ledger clean, OK (17.6m); mobile 394 passed, 4 skipped, ledger clean, OK (10.0m); report-only 3
+passed, ledger clean, OK; unit 5168 passed, 3 skipped, OK. No flakes. The chromium count rose by two over
+43293058654's 1084: the new pool-of-two case, and the retried case now passing first time.
+
+**The coordinator's question (12 Nov): under "only what is shown", does §P.2's fork case still keep the record
+last-served, and does anything assert it?** Yes, and now in both directions. The last answer is cleared by nothing:
+the view-change signal ends the drawn cells and the slot's message, never the last answer, and a pulled record is
+recorded when the wall tells of it coming out, before any zoom or resize. Asserted before today: the zoom out after a
+near-view pull, and the far answer across zoom in and out again (`pick-zoom-race-156`, both pinned at each end of a
+pool of two, green in 43299027890). **Not asserted until now: the resize across the fork**, which changes no address
+and so is the one path the zoom cases did not reach. A new case narrows the window to the fork's width less one after
+a near-view pull and asks: red with the last answer cleared on the view change (staged, then reverted: "draw 0.999:
+the far view served the record pulled before the window narrowed"), green on the build. **The 50 to 65ms cell does
+not arise:** that was the remount measured before 5181f9e5 (27 Oct); since then the shelf's control is keyed on the
+address without `wall`, so a zoom does not remount it, and the first zoom-race case asserts a press as the zoom lands
+keeps its cell drawn in the same control. A record consumed there is one the reader keeps seeing.
