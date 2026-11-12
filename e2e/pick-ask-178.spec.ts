@@ -223,16 +223,35 @@ test('the covers stand in a column in the sidebar and in a wrapped row in the ba
   }
 });
 
-test('on the near view the ask’s answer is the pull of the first answer, and no cover is drawn', async ({ page }) => {
+/*
+  §P.2 (step 180, "Ask field reconciled", 12 Nov): "An answer is the records the reader is shown: on the shelf one, the
+  pull, and elsewhere five." The shelf asks for one, and a re-roll pulls the next nearest: the re-ask leaves out only
+  what was shown, so no record the reader never saw is lost from the next ask. Fails against the shelf asking for three
+  (step 178's first build), which the request's body shows.
+*/
+test('on the near view the ask asks for one and pulls it, no cover is drawn, and a re-ask leaves out only the record shown and pulls the next nearest', async ({ page }) => {
   const { artistId, keyOf } = await fixture(page);
   try {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto(`/?artistId=${artistId}`);
     await wallMeasured(page);
+    const asks: Array<{ take: number; exclude?: string[] }> = [];
+    page.on('request', (request) => {
+      if (request.method() === 'POST' && request.url().endsWith('/api/ask')) asks.push(request.postDataJSON() as { take: number; exclude?: string[] });
+    });
     await askFor(page, 'late night jazz');
     await expect.poll(() => page.locator('[data-wall-container]').getAttribute('data-phase'), { timeout: 30_000 }).toBe('landed');
-    expect(keyOf(await page.locator('[data-pulled]').getAttribute('data-pulled')), 'the first of the three is a jazz record').toMatch(/^J/);
+    const first = await page.locator('[data-pulled]').getAttribute('data-pulled');
+    expect(keyOf(first), 'the nearest is a jazz record').toMatch(/^J/);
     expect(await drawn(page), 'no cover on the near view').toEqual([]);
+    expect(asks[0], 'the shelf asks for one, the pull').toMatchObject({ take: 1 });
+    expect(asks[0]?.exclude, 'and leaves nothing out of a first ask').toBeUndefined();
+    /* The re-ask: only the record shown is left out, and the next nearest is pulled. */
+    await ask(page).click();
+    await expect.poll(() => page.locator('[data-pulled]').getAttribute('data-pulled'), { timeout: 30_000 }).not.toBe(first);
+    expect(asks[1]?.exclude, 'the re-ask leaves out the one record shown and no record it did not show').toEqual([first]);
+    expect(asks[1]?.take).toBe(1);
+    expect(keyOf(await page.locator('[data-pulled]').getAttribute('data-pulled')), 'the next nearest is a jazz record too').toMatch(/^J/);
   } finally {
     await removeRecordsFor(artistId);
   }

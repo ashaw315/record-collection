@@ -26,7 +26,8 @@ const schema = z.strictObject({
   phrase: z.string().transform((s) => s.trim()).refine((s) => s.length > 0, { message: 'Write what you want first' }),
   pool: z.array(z.string().uuid()).max(5000),
   exclude: z.array(z.string().uuid()).max(5000).optional(),
-  take: z.number().int().min(3).max(5),
+  /* §P.2 (12 Nov): an answer is what is shown, one on the shelf and five elsewhere, so the floor is one. */
+  take: z.number().int().min(1).max(5),
 });
 
 export const POST = withErrorHandling('api.ask.POST', async (request: Request) => {

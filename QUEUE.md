@@ -76,7 +76,7 @@ here; see above.
 | Q19 | done b749d61 | The queue file and its check | this file |
 | Q20 | done 6b20ff1 | `scripts/check-design-card.mjs`, the card's report-only checks; 15 tests in the document suite | the script |
 | Q21 | open | inferReissue is wrong on 2 records | NOTES |
-| Q22 | open | The vibe search (Code): the embedding store and run (4d255a6e), the ranking with `POST /api/ask` (074f0dd6) and the control (step 178, 12 Nov: the field in each host, three answers on the shelf and five elsewhere, a column in the sidebar and a row in the bands, captured) are built; what remains is Adam's embedding run on production (no vectors stored as of 12 Nov, so every ask answers unanswerable until it runs), the distance report that follows it (`scripts/report-ask-distances.mts`), and the far answer's pair once a buying source is ruled (Q59) | NOTES, 7 Nov, 11 Nov (fifth, eighth, ninth) and 12 Nov; §P.2 to §P.6; the handoff's step 178 |
+| Q22 | open | The vibe search (Code): the embedding store and run (4d255a6e), the ranking with `POST /api/ask` (074f0dd6), the control (step 178, 12 Nov: the field in each host, a column in the sidebar and a row in the bands, captured) and its correction to the card (step 180: one on the shelf, five elsewhere, the slot's own words when asking is not set up) are built; what remains is Adam's embedding run on production (no vectors stored as of 12 Nov, so every ask answers unanswerable until it runs), the distance report that follows it (`scripts/report-ask-distances.mts`), and the far answer's pair once a buying source is ruled (Q59) | NOTES, 7 Nov, 11 Nov (fifth, eighth, ninth) and 12 Nov; §P.2 to §P.6; the handoff's step 178 |
 | Q23 | parked | Want-list tagging (Phase 4): never designed | mood-search-scope doc |
 | Q24 | parked | lookup-flows:1743: an unread flake | the known-flaky table |
 | Q25 | dropped §P.2 | Mood tagging's retry and run-record: the moods are retired by §P.2, so the feature this served does not exist | SPEC §5.10; §P.2 |
@@ -137,10 +137,10 @@ Nov, when Adam ruled on all four.
 
 | id | status | item | record lives in |
 |---|---|---|---|
-| Q33 | open | Format text ("Gatefold", on 39 records): ruled in by Adam 11 Nov, placed by Design's §66 the same day (a Pressing detail row after Colour), built at step 179 on 12 Nov; closes with the next commit naming the build's | §66; the handoff's step 179 |
+| Q33 | done 41a6d214 | Format text ("Gatefold", on 39 records): ruled in by Adam 11 Nov, placed by Design's §66 the same day (a Pressing detail row after Colour), built at step 179 on 12 Nov | §66; the handoff's step 179 |
 | Q34 | dropped a326b46a | Community rating and have/want counts: ruled out by Adam 11 Nov, not shown | the coordinator, 11 Nov; NOTES, 11 Nov (tenth) |
-| Q35 | open | Barcode: ruled in by Adam 11 Nov, placed by §66 (Pressing detail's last row, and reached by search through the record's current pressing), built at step 179; closes with the next commit naming the build's; the barcode rows for releases cached before it are Adam's backfill run | §66; the handoff's step 179 |
-| Q36 | open | The full release date rather than the year alone: ruled in by Adam 11 Nov, placed by §66 (in place of the pressed year at the PRESSING line's end), built at step 179; closes with the next commit naming the build's | §66; the handoff's step 179 |
+| Q35 | done 41a6d214 | Barcode: ruled in by Adam 11 Nov, placed by §66 (Pressing detail's last row, and reached by search through the record's current pressing), built at step 179; the barcode rows for releases cached before it come from Adam's backfill run (`npm run discogs:backfill-text`) | §66; the handoff's step 179 |
+| Q36 | done 41a6d214 | The full release date rather than the year alone: ruled in by Adam 11 Nov, placed by §66 (in place of the pressed year at the PRESSING line's end), built at step 179 | §66; the handoff's step 179 |
 
 ## Answered 11 Nov
 

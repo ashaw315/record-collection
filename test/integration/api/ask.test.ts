@@ -106,11 +106,22 @@ describe('POST /api/ask', () => {
     expect(bodies, 'nothing to rank, nothing embedded').toEqual([]);
   });
 
-  it('rejects an empty phrase, an unknown key, a take outside three to five, and a pool that is not ids, as a 400 naming the field', async () => {
+  /* Step 180 (§P.2, "Ask field reconciled", 12 Nov): an answer is what is shown, one on the shelf, so a take of one is the shelf's. Fails against the floor of three the first unit set. */
+  it('answers a take of one, the shelf’s: the nearest record alone', async () => {
+    const { rain, drive, sunday, silent } = await seedFour();
+    phraseEmbeds([1, 0]);
+    const response = await ask(request({ phrase: 'rain on the roof', pool: [rain, drive, sunday, silent], take: 1 }));
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.answers.map((a: { recordId: string }) => a.recordId)).toEqual([rain]);
+  });
+
+  it('rejects an empty phrase, an unknown key, a take outside one to five, and a pool that is not ids, as a 400 naming the field', async () => {
     const { rain } = await seedFour();
     for (const [body, field] of [
       [{ phrase: '   ', pool: [rain], take: 3 }, 'phrase'],
       [{ phrase: 'x', pool: [rain], take: 6 }, 'take'],
+      [{ phrase: 'x', pool: [rain], take: 0 }, 'take'],
       [{ phrase: 'x', pool: ['not-a-uuid'], take: 3 }, 'pool'],
       [{ phrase: 'x', pool: [rain], take: 3, extra: 1 }, 'extra'],
     ] as const) {

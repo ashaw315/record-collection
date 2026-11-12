@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useId, useState } from 'react';
-import { pickFrom } from '@/lib/moods/pick';
+import { askSlotMessage, SLOT_MESSAGES } from '@/lib/ask/slot';
+import { drawSurprise } from '@/lib/ask/surprise';
 import { GridCell } from './GridCell';
 import { usePickChannel, type CellHost, type PickRecord } from './wall/pick-channel';
 import { CONTROL_LABEL, HAIRLINE, INK, LABEL, LABEL_TYPE } from './records/[id]/grid-type';
@@ -15,16 +16,8 @@ const LABEL_COLOUR = 'text-[oklch(0.44_0.008_70)]';
 /* §9.3's field, as the rail's SEARCH draws it (WallRail): a hairline underneath, the type's ink, 44 to the floor. */
 const FIELD = `mt-[6px] block w-full border-b bg-transparent px-0 h-[44px] font-sans text-[16px] leading-[1.9] ${HAIRLINE} ${INK}`;
 
-/**
- * §P.6's slot messages, Proposed: "written to fit the slot", rewritten rather than cut. The slot is the rail's width
- * inside its insets, one line, so the unanswerable ask says "No About yet." where "None of these records has an About
- * yet." took two lines there (pick-control-156's fit, 12 Nov).
- */
-const MESSAGES = {
-  only: 'The only one.',
-  unanswerable: 'No About yet.',
-  failed: 'Not answered.',
-};
+/* §P.6's slot messages live in `src/lib/ask/slot.ts`, written to fit the slot at the rail's width (one line). */
+const MESSAGES = SLOT_MESSAGES;
 
 type AskAnswer = { answers: Array<{ recordId: string; nearness: number }>; from: 'phrase' | 'title'; askedFrom: string | null; unanswerable: boolean };
 
@@ -68,19 +61,22 @@ export function PickControl({ ruled = false, pool, answers = 'cell', withoutAbou
   const [asking, setAsking] = useState(false);
   /* The slot's message: cleared by the next answer, and with the view. */
   const [message, setMessage] = useState('');
-  /* §P.2's last answer, left out of the next ask while enough remain; the route applies the rule. */
+  /*
+    §P.2's last answer: the records the reader was shown, left out of the next ask while enough remain (the route
+    applies the rule), and of SURPRISE ME's draw with the whole pool as the fallback. One form for both since "Ask
+    field reconciled" (12 Nov) withdrew the singular last-served record and its tier: nothing singular survives from
+    the moods build. On the shelf a record pulled by its spine or the arrows was shown, so it is the last answer too.
+  */
   const [lastAnswer, setLastAnswer] = useState<readonly string[]>([]);
   /* §P.4: the covers in rank order, where the host draws them. */
   const [drawn, setDrawn] = useState<readonly PickRecord[]>([]);
-  /* SURPRISE ME's last-served record (§P.2 as it was): every answer sets it, and on the shelf so does a record pulled by its spine or the arrows. */
-  const [last, setLast] = useState<string | null>(null);
   /* §P.4: where the far view's cell stands, from the wall's answer: beneath the control, or in the count column, which the wall draws. */
   const [host, setHost] = useState<CellHost>('here');
   const channel = usePickChannel();
   useEffect(
     () =>
       channel?.hearPulls((id) => {
-        setLast(id);
+        setLastAnswer([id]);
       }),
     [channel],
   );
@@ -111,7 +107,6 @@ export function PickControl({ ruled = false, pool, answers = 'cell', withoutAbou
       if (answer.did === 'stay') setMessage(MESSAGES.only);
       return;
     }
-    setLast(first.id);
     setHost(answer.host ?? 'here');
     setDrawn(records);
   };
@@ -127,23 +122,25 @@ export function PickControl({ ruled = false, pool, answers = 'cell', withoutAbou
         body: JSON.stringify({
           phrase,
           pool: pool.map((record) => record.id),
-          take: answers === 'wall' ? 3 : 5,
+          /* §P.2 (12 Nov): an answer is what is shown, one on the shelf (the pull; a re-roll pulls the next nearest) and five elsewhere. */
+          take: answers === 'wall' ? 1 : 5,
           ...(lastAnswer.length > 0 ? { exclude: [...lastAnswer] } : {}),
         }),
       });
-      const body = (await response.json().catch(() => null)) as (AskAnswer & { error?: { message?: string } }) | null;
+      const body = (await response.json().catch(() => null)) as (AskAnswer & { error?: { message?: string; code?: string } }) | null;
       if (!response.ok || body === null) {
-        /* An error body reaches the reader in its own terms (errors.ts): the route's sentence is the slot's. */
-        setMessage(body?.error?.message ?? MESSAGES.failed);
-        setDrawn([]);
-        return;
-      }
-      if (body.unanswerable || body.answers.length === 0) {
-        setMessage(MESSAGES.unanswerable);
+        /* §P.6 (12 Nov): the slot says so in its own words, never the route's; ASK stays live. */
+        setMessage(askSlotMessage({ ok: false, status: response.status, code: body?.error?.code, routeMessage: body?.error?.message }));
         setDrawn([]);
         return;
       }
       const ids = body.answers.map((a) => a.recordId);
+      const slot = askSlotMessage({ ok: true, status: response.status, unanswerable: body.unanswerable, answered: ids.length });
+      if (slot !== '') {
+        setMessage(slot);
+        setDrawn([]);
+        return;
+      }
       setLastAnswer(ids);
       setMessage('');
       show(ids);
@@ -152,13 +149,14 @@ export function PickControl({ ruled = false, pool, answers = 'cell', withoutAbou
     }
   };
 
-  /* §P.2: "SURPRISE ME draws from the whole pool, with an ABOUT or not, ignoring the ask field and leaving its text". */
+  /* §P.2: "SURPRISE ME draws from the whole pool, with an ABOUT or not, ignoring the ask field and leaving its text", the last answer's records left out while another remains. */
   const surprise = () => {
-    const id = pickFrom(pool.map((record) => record.id), last, Math.random);
+    const id = drawSurprise(pool.map((record) => record.id), lastAnswer, Math.random);
     /* §P.6: "An ask the pool cannot answer draws nothing." */
     if (id === null) return;
     setMessage('');
     if (drawn.length === 1 && drawn[0]?.id === id) setMessage(MESSAGES.only);
+    setLastAnswer([id]);
     show([id]);
   };
 

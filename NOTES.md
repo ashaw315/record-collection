@@ -56733,3 +56733,35 @@ and not by section, so "the §P.2 block ends there" has no block to be true of a
 pick block, at its head. Its Change 2 (a Provisionals wording) names text that is not in the tree, because "Q22
 control answered", which this file assumes applied, has not arrived; "Asking line in view" has not either. Two of
 today's four files are in docs/design.
+
+**179's gate (43232016926 on 41a6d214) green on all four halves,** read from the artifacts: chromium 1081 passed, 1
+skipped; mobile 394 passed, 4 skipped; report-only 1 passed; unit 5162 passed, 3 skipped; ledgers clean with labels 1
+to 3 standing as fixtures', no pressings line; trees unchanged. Q33, Q35 and Q36 close on it.
+
+## 12 Nov (third): "Ask field reconciled" and "Tier swept" taken in, step 180, and the card that never came
+
+**The drop** (refs/drops/2026-11-12-02): "Ask field reconciled" supersedes "Q22 control answered" and "Tier swept",
+neither of which had landed on its own; "Tier swept" arrived in the same placing and is recorded as superseded. The
+three WITHDRAWALS entries, the Provisionals wording "Answer is what is shown" could not place, the new §P.6
+Provisionals line and the §P.6 governs clause are applied; the index reads 14 of 14 at 320 entries. The coordinator
+settled the two divergences before the step ran (one on the shelf; the slot's own words), so the step's "waits on the
+settlement" was already met.
+
+**"Tier swept"'s dropped bullet, checked as the coordinator asked.** The build DID hold a singular last-served value:
+`PickControl`'s `last`, set by every pull and fed to the moods build's `pickFrom` for SURPRISE ME. So the entry
+`P.2/one-last-served-tier`'s "did not follow it" was true of the ask (plural since 178) and false of SURPRISE ME; the
+step was owed, and 180 built it: one form for both, the records the last answer named held out while enough remain,
+the whole pool as the fallback (`drawSurprise`), a spine pull counting as the last answer. Nothing in the control is
+keyed on a tier; `topTier` left it at 178, and `src/lib/moods` stays only as unused code for a later removal.
+
+**The Table and Grid card in the tree is not the "Asking line in view" card.** The coordinator's sha256 for that card
+begins 6819d53f; the tree's begins 78e4e879, unchanged since 23ccaab8 (11 Nov), and its §T.6 carries no sentence on
+where focus goes when the line asks or on bringing the line into view (one KEEP EDITING mention, on what the line is
+and which exits ask). So 177 cannot be corrected from the card held, and both the file and its card are owed; 177's
+line stands as it is. The captures of 178 are copied to Downloads/pick-ask-178 for Design's ruling on the field's label.
+
+**180's step level found one thing for Design:** the ruled not-configured wording, "Asking isn't set up yet.", takes two
+lines at the rail's width (pick-control-156's fit test, the step's own assertion), where the other two messages take
+one; it fits at 320 and 1280. The wording is Design's and the fit rule is Design's, so the rail's figure is reported
+and not asserted, and nothing was reworded. The run also caught a test defect of mine: the shelf's request body was
+compared whole to `{ take: 1 }` when it carries the phrase and the pool too; `toMatchObject` now.
