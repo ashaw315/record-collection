@@ -23,8 +23,8 @@ import { DEFAULT_PAGE_SIZE, type Offset } from '@/lib/api/query-params';
 import { CONTENT_INSET } from './screen-frame';
 import { EmptyFigure } from './EmptyFigure';
 import { PickControl, type PickRecord } from './PickControl';
-import { carriedMoods, moodSetsFor, untaggedCount } from '@/lib/db/queries/record-moods';
-import { MOODS } from '@/lib/moods/moods';
+import { moodSetsFor } from '@/lib/db/queries/record-moods';
+import { countWithoutAbout } from '@/lib/db/queries/ask';
 
 /**
  * SPEC.md §10 `/`: the collection.
@@ -156,12 +156,11 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
   const pool = await poolOf(listPool.map((row) => ({ id: row.id, title: row.title, artist: row.artist.name })));
   const shelfPool = shelf === null ? [] : await poolOf(shelf.filter((record) => record.matches).map((record) => ({ id: record.id, title: record.title, artist: record.artistName })));
   /*
-    §P.6: a mood is inert when no tagged record carries it, and the untagged line counts the records not yet tagged,
-    both "counted over the whole collection, not over what a filter leaves, so a filter never changes the control".
-    Read when the page loads, never in answer to a press.
+    §P.6 (11 Nov): the line beneath the field counts the records with no ABOUT, "counted over the whole collection,
+    not over what a filter leaves, so a filter never changes the control". Read when the page loads, never in answer
+    to a press.
   */
-  const [carried, untagged] = await Promise.all([carriedMoods(), untaggedCount()]);
-  const inert = MOODS.filter((m) => !carried.has(m));
+  const withoutAbout = await countWithoutAbout();
   /* §P.2: "a navigation clears them". The address is the page, so a control keyed on it starts empty on every one. */
   const pickKey = toQueryString(params);
   /*
@@ -212,7 +211,7 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
                 ? collectionCountLabel({ matched: shelf.filter((record) => record.matches).length, total: collectionTotal, filtered: true })
                 : null
             }
-            rail={<WallRail params={params} genres={facets.genres} pick={<PickControl key={shelfPickKey} pool={shelfPool} answers="wall" inert={inert} untagged={untagged} />} />}
+            rail={<WallRail params={params} genres={facets.genres} pick={<PickControl key={shelfPickKey} pool={shelfPool} answers="wall" withoutAbout={withoutAbout} />} />}
           />
         </div>
       ) : null}
@@ -249,7 +248,7 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
 
               <CollectionFilters params={gridParams} undatedCount={records.undatedCount} options={facets} />
               {/* Target §P.5: "beneath the last filter line, after a hairline: in the sidebar above the sidebar fork, and in the band below it." */}
-              <PickControl key={pickKey} ruled pool={pool} inert={inert} untagged={untagged} />
+              <PickControl key={pickKey} ruled pool={pool} withoutAbout={withoutAbout} />
             </div>
             {/*
               §T.6: "The second figure is a fragment of the same construction

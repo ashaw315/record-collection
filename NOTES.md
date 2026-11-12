@@ -56630,3 +56630,54 @@ different on 10; 55 have a cached release; on 52 the released field's first four
 on 0 they equal RELEASE YEAR without equalling the pressed year. **The split: 25 records carry a day, 27 a year only, 3
 no released field, and none a month only.** The capture of "one whose date is a month only" therefore needs a seeded
 record; no real one exists today.
+
+**Q71's gate (43139019317 on eb996c30) green on all four halves,** read from the artifacts: chromium 1081 passed, 1
+skipped; mobile 394 passed, 4 skipped; report-only 1 passed; unit 5136 passed, 3 skipped (the three samePressing
+cases among them); ledgers clean with labels 1 to 3 standing as Clay Records and Yetee Records, no pressings line;
+trees unchanged.
+
+## 12 Nov: step 178, Q22's control
+
+**Built on the coordinator's go (12 Nov; both proposals accepted: three on the shelf and five elsewhere, a column in
+the sidebar and a wrapped row in the bands).** The restatement reached the coordinator as a committed file after the
+message form failed four times. The unit's shape is in the handoff's 178 line; what the line does not say:
+
+**The test environment's model, and the 401 it found.** The phrase path embeds at request time and the suites hold no
+key by design, so `embedTexts` takes `OPENAI_BASE_URL` and the e2e server names a stub route of its own, open with the
+probes, answering a hashed bag of words the specs seed the stored vectors with. The spec's first run failed every
+phrase ask with "OpenAI embeddings 401: Unauthorized": the server's own call to its stub carried no session and the
+middleware's session boundary answered it. The route is public exactly where the probes are open (test first in
+`routes.test.ts`: public with E2E_PROBES=1 off production, a session route without it and on production), in the shape
+`/scene` once had and for the reason it was never in PUBLIC_PATHS. **Then the same 401 under the capture's build:** the
+first fix read `process.env.NODE_ENV`, the literal a build inlines as "production" into every bundle whatever `next
+start` is given, the lesson probes.ts already carries from Q39 (5 Nov). The route mode reads the env OBJECT now
+(`routeAuthMode(path, source = process.env)`), which a build cannot inline, and the test passes explicit sources so no
+stubbed literal can make it pass; the dev server's run could not have found this, since under `next dev` the literal
+is "development". Second instance of the class in the project; the first was the probe pages themselves.
+
+**The staged control:** the e2e spec was written after the control's code, since the component and unit tests were
+the first red; to show it fails against the build before the step, HEAD's PickControl was swapped in and the spec run
+against it: 8 of 8 failed for want of a field. Restored, 8 of 8 passed on chromium (31.5s at load 4 to 6).
+
+**The sidebar column (the coordinator's question, answered in the build's report):** at 1280 × 900, five cells at 160
+with their captions stand 1272 tall in the 337 sidebar; the controls end at 2064 and the sidebar and the page at 2425
+in a 900 window. So the column runs past the window by 1164 and never past its host, which runs with the page as §P.5
+rules since `P.5/control-must-fit` was withdrawn; nothing was cut or scrolled to. §P.4's "provisional until built and
+captured in every host" returns on the captures.
+
+**Production holds no vectors.** `scripts/report-ask-distances.mts` read 0 of 55 records with a stored vector on 12
+Nov, so Adam's embedding run (`npm run abouts:embed`, his shell, his key) has not happened, the ask on production
+answers unanswerable for every pool until it does, and the far answer's distance figure follows the run.
+
+**Chosen by default, reported:** the field's label reads ASK as SEARCH's reads SEARCH, so the control reads ASK twice,
+the field's label and the button; the not-configured slot shows the route's sentence; the unanswerable message and the
+count line's wording are Proposed. **The slot's width wrote the message:** "None of these records has an About yet."
+took three lines at the rail's width, caught by pick-control-156's fit test (§P.6: a message is written to fit the
+slot, never cut), so it reads "No About yet.". **The band's order:** the first covering run on the far view's band
+drew the covers above the slot (pick-answer-156, four windows), because the band lays the control out as a wrapped
+row ordered by rule and the new list had no order; it takes the old answer's place, last, 24 below the slot. Every seeded capture carries `seeded-` in its name and a README that says no figure
+describes the collection (the coordinator, 12 Nov, on §55's lesson). **Seen in the captures, for Design:** on the
+table's and the grid's sidebar ASK and SURPRISE ME abut with nothing between them ("ASKSURPRISE ME"), as they did
+before this step (the far view's band and the rail space them by their rules; the sidebar never had one); and in the
+shelf's rail the count line "12 without an About yet." takes two lines at the rail's width where "4 not tagged yet."
+took one. Neither changed here; both are in the stills.

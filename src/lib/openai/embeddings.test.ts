@@ -12,6 +12,13 @@ const ok = (vectors: number[][]) =>
 
 afterEach(() => vi.unstubAllEnvs());
 
+/* Adam's provider answer, pinned: the specs seed stored vectors under this name, so a renamed model would strand them (spec-constants-pinned). */
+describe('EMBEDDING_MODEL', () => {
+  it('is text-embedding-3-small', () => {
+    expect(EMBEDDING_MODEL).toBe('text-embedding-3-small');
+  });
+});
+
 describe('requireOpenAiKey', () => {
   it('refuses by name when OPENAI_API_KEY is unset or empty, and returns it when set', () => {
     vi.stubEnv('OPENAI_API_KEY', '');
@@ -37,6 +44,25 @@ describe('embedTexts', () => {
     const headers = new Headers(calls[0].init.headers);
     expect(headers.get('authorization')).toBe('Bearer sk-test');
     expect(JSON.parse(String(calls[0].init.body))).toEqual({ model: 'text-embedding-3-small', input: ['first', 'second'] });
+  });
+
+  /*
+    Q22's control (12 Nov): the suites have no key by design, so the e2e server points the client at a stub by
+    OPENAI_BASE_URL; unset, the endpoint is OpenAI's. Fails against a client whose endpoint is a constant.
+  */
+  it('posts to OPENAI_BASE_URL’s embeddings path when it is set, and to OpenAI’s when it is not', async () => {
+    vi.stubEnv('OPENAI_API_KEY', 'sk-test');
+    vi.stubEnv('OPENAI_BASE_URL', 'http://localhost:3100/api/e2e-openai');
+    const urls: string[] = [];
+    const fetchImpl = (async (url: string | URL | Request) => {
+      urls.push(String(url));
+      return ok([[1]]);
+    }) as typeof fetch;
+    await embedTexts(['x'], { fetchImpl });
+    expect(urls).toEqual(['http://localhost:3100/api/e2e-openai/v1/embeddings']);
+    vi.stubEnv('OPENAI_BASE_URL', '');
+    await embedTexts(['x'], { fetchImpl });
+    expect(urls[1]).toBe('https://api.openai.com/v1/embeddings');
   });
 
   it('refuses before any request when the key is absent', async () => {

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { routeAuthMode, MIDDLEWARE_MATCHER, middlewareRuns } from './routes';
 
 /**
@@ -15,6 +15,24 @@ describe('routeAuthMode', () => {
 
     it('treats POST /api/auth/login as public', () => {
       expect(routeAuthMode('/api/auth/login')).toBe('public');
+    });
+
+    /*
+      Q22's control (12 Nov): the e2e server's embeddings stub is called by the server itself, with no session, so it
+      is public exactly where the probes are open (E2E_PROBES=1 off production) and a session route everywhere else,
+      production above all. Fails against a routes list that never names it (a 401 to the server's own call, which is
+      how the first run of the ask spec read), and against one that opens it without the gate.
+    */
+    it('treats the e2e embeddings stub as public only where the probes are open, read from the env object and never the inlined literal', () => {
+      const stub = '/api/e2e-openai/v1/embeddings';
+      expect(routeAuthMode(stub, { E2E_PROBES: '1', NODE_ENV: 'test' })).toBe('public');
+      expect(routeAuthMode(stub, { E2E_PROBES: '', NODE_ENV: 'test' })).toBe('session');
+      expect(routeAuthMode(stub, { E2E_PROBES: '1', NODE_ENV: 'production' })).toBe('session');
+      expect(routeAuthMode(stub, {})).toBe('session');
+      /* The default source is the runtime env, which a stubbed variable reaches. */
+      vi.stubEnv('E2E_PROBES', '1');
+      expect(routeAuthMode(stub)).toBe('public');
+      vi.unstubAllEnvs();
     });
   });
 

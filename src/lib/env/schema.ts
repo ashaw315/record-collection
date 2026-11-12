@@ -169,6 +169,8 @@ export const envSchema = z.object({
   ANTHROPIC_API_KEY: z.string().min(1).optional(),
   /* Q22: OpenAI's embeddings for the ask field. Adam sets it in his shell for the embedding script and in Vercel's project environment for the query; absent, both refuse by name (src/lib/openai/embeddings.ts). */
   OPENAI_API_KEY: z.string().min(1).optional(),
+  /* Q22's control (12 Nov): the e2e server names its own embeddings stub here; unset, the client posts to OpenAI. */
+  OPENAI_BASE_URL: z.string().url().optional(),
   BLOB_READ_WRITE_TOKEN: z.string().min(1).optional(),
 
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),

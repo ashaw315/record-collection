@@ -46,11 +46,12 @@ export function bandRules(scope: string): string {
   ${scope}[data-rail-rule] { display: none; }
   ${rail} > [data-pick-host] { order: 1; flex: 1 1 100%; margin-top: 0; }
   ${rail} [data-pick-band-rule] { display: block; margin-bottom: 18px; }
-  ${rail} [data-moods] { flex-direction: row; flex-wrap: wrap; }
   ${rail} [data-pick-control] { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 18px; }
   ${rail} [data-pick-control] > div { margin-top: 0; }
   ${rail} [data-pick-control] > p { flex: 1 1 100%; margin-top: 0; }
-  ${rail} [data-pick-control] > [data-untagged] { order: 1; }
+  /* Step 178: the field's host takes the row's whole width, the count line the next row, the slot after ASK and SURPRISE ME, and the covers last as a wrapped row 24 below the slot. */
+  ${rail} [data-pick-control] > [data-ask-host] { flex: 1 1 100%; margin-top: 0; }
+  ${rail} [data-pick-control] > [data-without-about] { order: 1; }
   ${rail} [data-pick-control] > [data-pick-slot] { order: 2; }
-  ${rail} [data-pick-control] > [data-pick-answer] { order: 3; margin-top: 24px; }`;
+  ${rail} [data-pick-control] > [data-pick-answers] { order: 3; flex: 1 1 100%; flex-direction: row; flex-wrap: wrap; margin-top: 24px; }`;
 }

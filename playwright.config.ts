@@ -312,7 +312,12 @@ export default defineConfig({
       own process env for the server it starts, whichever command above, so every run through this
       config carries it, the capture project and both gates included, and nothing on Vercel ever does.
     */
-    env: { E2E_PROBES: '1' },
+    /*
+      Q22's control (12 Nov): the ask's phrase path embeds at request time, and the suites hold no provider key by
+      design, so the server is pointed at its own stub route, open with the probes, with a key that is a placeholder.
+      Nothing under test is ever live; the stub model is `stubEmbedding`, which the specs seed with.
+    */
+    env: { E2E_PROBES: '1', OPENAI_API_KEY: 'sk-e2e-placeholder', OPENAI_BASE_URL: `http://localhost:${PORT}/api/e2e-openai` },
     url: baseURL,
     // A stale dev server would carry the developer's own env, not these values,
     // and the login tests would fail confusingly.

@@ -21,6 +21,19 @@ export async function embeddingsFor(recordIds: readonly string[], model: string)
   return rows.map((row) => ({ recordId: row.recordId, vector: row.vector as number[] }));
 }
 
+/**
+ * §P.6's count line (Q22's control): how many records have no ABOUT, over the whole collection and never the pool,
+ * so a filter never changes the line; null and empty are both "without".
+ */
+export async function countWithoutAbout(): Promise<number> {
+  const db = getDb();
+  const [row] = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(records)
+    .where(sql`nullif(${records.snippet}, '') IS NULL`);
+  return row?.n ?? 0;
+}
+
 /** The record in the pool whose title the phrase names by the name sort key, or null; the first by id where two share a title. */
 export async function recordByTitleKey(phrase: string, recordIds: readonly string[]): Promise<string | null> {
   if (recordIds.length === 0) return null;

@@ -1,0 +1,239 @@
+import { expect, test, type Page } from '@playwright/test';
+import { sql } from 'drizzle-orm';
+import { registerCleanup, trackArtist } from './cleanup';
+import { removeRecordsFor, seedRecords } from './seed';
+import { login } from './sign-in';
+import { wallMeasured } from './wall-measured';
+import { getTestDb } from '../test/helpers/db';
+import { aboutHash } from '../src/lib/embeddings/plan';
+import { EMBEDDING_MODEL } from '../src/lib/openai/embeddings';
+import { stubEmbedding } from '../src/lib/openai/stub-embedding';
+
+/**
+ * **Step 178, Q22's control (§P.2, §P.4, §P.5, §P.6; Design's "Ask field" and "the rest of the moods", 10 and 11
+ * Nov).** "The reader writes what they want in the ask field, a phrase for a feeling or an occasion, and a separate
+ * ASK asks." The ask ranks the pool by nearness of each ABOUT's stored vector to the phrase's and answers with the
+ * nearest three to five; a re-ask leaves out the last answer's records while enough remain; a title asks from that
+ * record and leaves it out; a pool with no ABOUT is unanswerable, and the slot says so. On the table, the grid and
+ * the far view the covers draw in rank order beneath the control; on the shelf the first answer is pulled.
+ *
+ * Each test seeds its own artist, writes the records' ABOUTs and their stored vectors straight into the database
+ * (the embedding script's job in production), with the test environment's stub model (`stubEmbedding`, a bag of
+ * words), which the e2e server also answers the phrase with (`OPENAI_BASE_URL`), so which records are nearest is
+ * known by construction. Each test fails against the control before this step, which drew the moods and no field.
+ */
+registerCleanup();
+test.beforeEach(async ({ page }) => login(page));
+
+/** Ten records with an ABOUT: five about jazz at night, five about punk, and one with none. */
+const ABOUTS: Record<string, string | null> = {
+  J1: 'A late night jazz record, warm and slow.',
+  J2: 'Jazz for a late night, horns low.',
+  J3: 'Late night jazz, a quartet at ease.',
+  J4: 'Night jazz from a small club, late.',
+  J5: 'A jazz record for late at night.',
+  P1: 'Loud fast hardcore punk from the first wave.',
+  P2: 'Punk, loud and fast, pressed thin.',
+  P3: 'Fast loud punk singles.',
+  P4: 'Hardcore punk, fast and loud.',
+  P5: 'Loud punk, fast songs.',
+  N: null,
+};
+
+type Fixture = { artistId: string; byKey: Map<string, string>; keyOf: (id: string | null) => string | null; titleOf: (key: string) => string };
+
+async function fixture(page: Page, keys: readonly string[] = Object.keys(ABOUTS)): Promise<Fixture> {
+  const suffix = `pa178${Date.now().toString(36)}${Math.floor(Math.random() * 1e4)}`;
+  const artist = (await (await page.request.post('/api/artists', { data: { name: `Ask-${suffix}` } })).json()) as { id: string };
+  trackArtist(artist.id);
+  for (const key of keys) await seedRecords(artist.id, `Ask ${key}`, suffix, 1);
+  const listed = (await (await page.request.get(`/api/records?artistId=${artist.id}&pageSize=100`)).json()) as { data: Array<{ id: string; title: string }> };
+  const byKey = new Map(listed.data.map((row) => [row.title.split(' ')[1], row.id]));
+  const titles = new Map(listed.data.map((row) => [row.title.split(' ')[1], row.title]));
+  const db = getTestDb();
+  for (const key of keys) {
+    const id = byKey.get(key);
+    const about = ABOUTS[key];
+    if (id === undefined) throw new Error(`no record ${key}`);
+    if (about === null) continue;
+    await db.execute(sql`UPDATE records SET snippet = ${about} WHERE id = ${id}::uuid`);
+    const vector = stubEmbedding(about);
+    await db.execute(sql`INSERT INTO record_embeddings (record_id, about_hash, model, dims, vector, embedded_at) VALUES (${id}::uuid, ${aboutHash(about)}, ${EMBEDDING_MODEL}, ${vector.length}, ${JSON.stringify(vector)}::jsonb, now())`);
+  }
+  const ids = new Map([...byKey.entries()].map(([k, v]) => [v, k]));
+  return { artistId: artist.id, byKey, keyOf: (id) => (id === null ? null : (ids.get(id) ?? null)), titleOf: (key) => titles.get(key) ?? '' };
+}
+
+async function openGrid(page: Page, artistId: string, width = 1440) {
+  await page.setViewportSize({ width, height: 900 });
+  await page.goto(`/?view=grid&artistId=${artistId}`);
+  await page.locator('[data-collection-filters][data-hydrated="true"]').first().waitFor({ timeout: 30_000 });
+}
+const control = (page: Page) => page.locator('[data-pick-control]').filter({ visible: true });
+const field = (page: Page) => control(page).locator('[data-ask-field]');
+const ask = (page: Page) => control(page).getByRole('button', { name: /^ask$/i });
+const surprise = (page: Page) => control(page).getByRole('button', { name: /surprise me/i });
+const slot = (page: Page) => control(page).locator('[data-pick-slot]');
+/** The drawn answers' record ids, in rank order. */
+const drawn = (page: Page) =>
+  page.evaluate(() => {
+    const visible = (el: Element) => (el as HTMLElement).getClientRects().length > 0;
+    return Array.from(document.querySelectorAll('[data-pick-answer]')).filter(visible).sort((a, b) => Number(a.getAttribute('data-rank')) - Number(b.getAttribute('data-rank'))).map((el) => el.querySelector('a[href^="/records/"]')?.getAttribute('href')?.replace('/records/', '') ?? '');
+  });
+const askFor = async (page: Page, phrase: string) => {
+  await field(page).fill(phrase);
+  await ask(page).click();
+};
+
+test('ASK is inert on an empty field, in the label colour, a Tab stop named unavailable with its reason; it takes ink once there is text', async ({ page }) => {
+  const { artistId } = await fixture(page, ['J1']);
+  try {
+    await openGrid(page, artistId);
+    await expect(control(page).locator('[data-mood]'), 'the moods retire').toHaveCount(0);
+    await expect(ask(page)).toHaveAttribute('aria-disabled', 'true');
+    expect(await ask(page).evaluate((el) => (el as HTMLElement).tabIndex), 'still a Tab stop').toBeGreaterThanOrEqual(0);
+    await expect(ask(page)).toHaveAccessibleDescription('write what you want first');
+    const inert = await ask(page).evaluate((el) => getComputedStyle(el).color);
+    await field(page).fill('late night jazz');
+    await expect(ask(page)).not.toHaveAttribute('aria-disabled', 'true');
+    expect(await ask(page).evaluate((el) => getComputedStyle(el).color), 'ink once there is text').not.toBe(inert);
+    /* Nothing asked yet: the field alone draws no answer. */
+    expect(await drawn(page)).toEqual([]);
+  } finally {
+    await removeRecordsFor(artistId);
+  }
+});
+
+test('an ask on the grid draws the nearest five covers in rank order beneath the control, a record with no ABOUT never among them; a re-ask leaves the last answer out while enough remain', async ({ page }) => {
+  const { artistId, keyOf } = await fixture(page);
+  try {
+    await openGrid(page, artistId);
+    const before = page.url();
+    await askFor(page, 'late night jazz');
+    await expect.poll(() => drawn(page), { timeout: 15_000 }).toHaveLength(5);
+    const first = (await drawn(page)).map(keyOf);
+    expect(new Set(first), 'the five jazz records, nearest by the words they share').toEqual(new Set(['J1', 'J2', 'J3', 'J4', 'J5']));
+    expect(page.url(), 'nothing goes to the address').toBe(before);
+    /* The re-ask: the five jazz records are left out, and the five punk records are exactly enough to answer. */
+    await ask(page).click();
+    await expect.poll(async () => new Set((await drawn(page)).map(keyOf)), { timeout: 15_000 }).toEqual(new Set(['P1', 'P2', 'P3', 'P4', 'P5']));
+    /* A third ask: only one record would be left of the ten, fewer than five, so the pool is ranked whole again. */
+    await ask(page).click();
+    await expect.poll(async () => new Set((await drawn(page)).map(keyOf)), { timeout: 15_000 }).toEqual(new Set(['J1', 'J2', 'J3', 'J4', 'J5']));
+    expect((await drawn(page)).map(keyOf), 'N, with no ABOUT, is never an answer').not.toContain('N');
+  } finally {
+    await removeRecordsFor(artistId);
+  }
+});
+
+test('a record’s title asks from that record and leaves it out of its own answers', async ({ page }) => {
+  const { artistId, keyOf, titleOf } = await fixture(page);
+  try {
+    await openGrid(page, artistId);
+    await askFor(page, titleOf('J1'));
+    await expect.poll(() => drawn(page), { timeout: 15_000 }).toHaveLength(5);
+    const keys = (await drawn(page)).map(keyOf);
+    expect(keys, 'never itself').not.toContain('J1');
+    expect(keys.slice(0, 4), 'its nearest are the other jazz records').toEqual(expect.arrayContaining(['J2', 'J3', 'J4', 'J5']));
+  } finally {
+    await removeRecordsFor(artistId);
+  }
+});
+
+test('a pool with no ABOUT is unanswerable: no cover, and the slot says so; the count line counts the collection, not the pool', async ({ page }) => {
+  const { artistId } = await fixture(page, ['N']);
+  try {
+    await openGrid(page, artistId);
+    const line = control(page).locator('[data-without-about]');
+    await expect(line).toHaveText(/^\d+ without an About yet\.$/);
+    expect(Number((await line.textContent())?.split(' ')[0]), 'at least the seeded record without one').toBeGreaterThanOrEqual(1);
+    await askFor(page, 'late night jazz');
+    await expect(slot(page)).toHaveText('No About yet.', { timeout: 15_000 });
+    expect(await drawn(page)).toEqual([]);
+  } finally {
+    await removeRecordsFor(artistId);
+  }
+});
+
+test('SURPRISE ME ignores the field and leaves its text, drawing one record from the whole pool, ABOUT or not', async ({ page }) => {
+  const { artistId, keyOf } = await fixture(page, ['N']);
+  try {
+    await openGrid(page, artistId);
+    await field(page).fill('late night jazz');
+    await surprise(page).click();
+    await expect.poll(() => drawn(page), { timeout: 15_000 }).toHaveLength(1);
+    expect((await drawn(page)).map(keyOf)).toEqual(['N']);
+    await expect(field(page), 'the field keeps its text').toHaveValue('late night jazz');
+  } finally {
+    await removeRecordsFor(artistId);
+  }
+});
+
+test('a navigation clears the field and the answer', async ({ page }) => {
+  const { artistId } = await fixture(page, ['J1', 'J2', 'J3']);
+  try {
+    await openGrid(page, artistId);
+    await askFor(page, 'late night jazz');
+    await expect.poll(() => drawn(page), { timeout: 15_000 }).toHaveLength(3);
+    await page.locator('[data-collection-band]').filter({ visible: true }).getByRole('link', { name: /^table$/i }).click();
+    await expect(page).toHaveURL(/view=table/);
+    await page.locator('[data-collection-filters][data-hydrated="true"]').first().waitFor({ timeout: 30_000 });
+    await expect(field(page)).toHaveValue('');
+    expect(await drawn(page), 'the table starts with no answer').toEqual([]);
+    await expect(ask(page)).toHaveAttribute('aria-disabled', 'true');
+  } finally {
+    await removeRecordsFor(artistId);
+  }
+});
+
+/* §P.4, the second proposal (the coordinator, 12 Nov): a column where the control draws as a column, a wrapped row where it draws as a band. */
+test('the covers stand in a column in the sidebar and in a wrapped row in the band, and the column’s height against the sidebar is reported', async ({ page }, testInfo) => {
+  const { artistId } = await fixture(page);
+  try {
+    await openGrid(page, artistId, 1280);
+    await askFor(page, 'late night jazz');
+    await expect.poll(() => drawn(page), { timeout: 15_000 }).toHaveLength(5);
+    const column = await page.evaluate(() => {
+      const list = Array.from(document.querySelectorAll<HTMLElement>('[data-pick-answers]')).find((el) => el.getClientRects().length > 0);
+      const sidebar = document.querySelector<HTMLElement>('[data-collection-sidebar]');
+      const controls = document.querySelector<HTMLElement>('[data-collection-controls]');
+      if (list === undefined || sidebar === null || controls === null) return null;
+      const tops = Array.from(list.children).map((li) => Math.round(li.getBoundingClientRect().top));
+      return { direction: getComputedStyle(list).flexDirection, rows: new Set(tops).size, height: list.getBoundingClientRect().height, sidebarWidth: sidebar.getBoundingClientRect().width, controlsBottom: controls.getBoundingClientRect().bottom, sidebarBottom: sidebar.getBoundingClientRect().bottom, page: document.documentElement.scrollHeight, window: window.innerHeight };
+    });
+    if (column === null) throw new Error('the sidebar’s answers are not drawn');
+    expect(column.direction, 'a column in the sidebar').toBe('column');
+    expect(column.rows, 'five cells on five rows').toBe(5);
+    testInfo.annotations.push({ type: 'sidebar column', description: `five cells ${column.height.toFixed(1)} tall in a ${column.sidebarWidth.toFixed(0)} sidebar; the controls end at ${column.controlsBottom.toFixed(1)} and the sidebar at ${column.sidebarBottom.toFixed(1)} in a ${column.window} window; the page ${column.page} tall` });
+    await openGrid(page, artistId, 390);
+    await askFor(page, 'late night jazz');
+    await expect.poll(() => drawn(page), { timeout: 15_000 }).toHaveLength(5);
+    const band = await page.evaluate(() => {
+      const list = Array.from(document.querySelectorAll<HTMLElement>('[data-pick-answers]')).find((el) => el.getClientRects().length > 0);
+      if (list === undefined) return null;
+      const tops = Array.from(list.children).map((li) => Math.round(li.getBoundingClientRect().top));
+      return { direction: getComputedStyle(list).flexDirection, wrap: getComputedStyle(list).flexWrap, rows: new Set(tops).size };
+    });
+    if (band === null) throw new Error('the band’s answers are not drawn');
+    expect(band.direction, 'a row in the band').toBe('row');
+    expect(band.wrap).toBe('wrap');
+    expect(band.rows, 'wrapped: fewer rows than cells at 390').toBeLessThan(5);
+  } finally {
+    await removeRecordsFor(artistId);
+  }
+});
+
+test('on the near view the ask’s answer is the pull of the first answer, and no cover is drawn', async ({ page }) => {
+  const { artistId, keyOf } = await fixture(page);
+  try {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(`/?artistId=${artistId}`);
+    await wallMeasured(page);
+    await askFor(page, 'late night jazz');
+    await expect.poll(() => page.locator('[data-wall-container]').getAttribute('data-phase'), { timeout: 30_000 }).toBe('landed');
+    expect(keyOf(await page.locator('[data-pulled]').getAttribute('data-pulled')), 'the first of the three is a jazz record').toMatch(/^J/);
+    expect(await drawn(page), 'no cover on the near view').toEqual([]);
+  } finally {
+    await removeRecordsFor(artistId);
+  }
+});

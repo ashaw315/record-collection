@@ -1,167 +1,112 @@
 import { describe, expect, it } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { PickControl } from './PickControl';
-import { CONTROL_LABEL, LABEL_TYPE } from './records/[id]/grid-type';
-import { MOODS } from '@/lib/moods/moods';
+import { CONTROL_LABEL, LABEL, LABEL_TYPE } from './records/[id]/grid-type';
 
 /** §P.5's "label colour": the LABEL class's ink, as a class token. */
 const LABEL_COLOUR = 'text-[oklch(0.44_0.008_70)]';
 
 /**
- * Target §P.5, Phase 0 (step 156): "The control is the eight moods, then ASK
- * and SURPRISE ME, then the reserved slot." The moods and ASK are not built
- * yet, so the control is SURPRISE ME and the slot. This is the permanent
- * control, not §P.6's nothing-tagged form, so nothing here reads the tags.
+ * **Q22's control, step 178 (§P.2, §P.4, §P.5, §P.6; Design's "Ask field", "the rest of the moods" and "Under A- the
+ * meantime pair- Phase 0", 10 and 11 Nov).** "The control is the ask field, then ASK and SURPRISE ME, then the slot."
+ * The moods retire. "ASK is inert while the field is empty; it stays a Tab stop, named unavailable, and takes ink once
+ * the field holds text." The line beneath counts the records with no ABOUT, absent when every record has one. These
+ * are the first render's facts, read from the markup; what an ask does is the e2e's. Each case fails against the
+ * control before this step: the moods drawn, ASK's reason "Choose a mood first.", the untagged line's words.
  */
-/* Step 156 unit 3b gave the control its pool (§P.2); these assertions are of the first render and read none of it. */
-const POOL = [{ id: '00000000-0000-4000-8000-000000000001', title: 'Gaucho', artist: 'Steely Dan', cover: null, moods: ['smooth'] }];
+const POOL = [{ id: '00000000-0000-4000-8000-000000000001', title: 'Gaucho', artist: 'Steely Dan', cover: null, moods: [] }];
 const html = renderToStaticMarkup(<PickControl pool={POOL} />);
+const rail = renderToStaticMarkup(<PickControl pool={POOL} answers="wall" />);
 
-describe('the pick control (§P.5)', () => {
-  it('is SURPRISE ME as a §9.3 label, a button that submits nothing', () => {
-    const button = /<button[^>]*>Surprise me<\/button>/.exec(html)?.[0] ?? '';
-    expect(button).toContain('type="button"');
-    for (const cls of CONTROL_LABEL.split(' ')) expect(button, cls).toContain(cls);
+const field = (h: string) => /<input[^>]*data-ask-field=""[^>]*>/.exec(h)?.[0] ?? '';
+const ask = (h: string) => /<button[^>]*>Ask<\/button>/.exec(h)?.[0] ?? '';
+/* The ASK button's place, not the field's label, which reads Ask as SEARCH's reads Search. */
+const askAt = (h: string) => h.search(/<button[^>]*>Ask<\/button>/);
+
+describe('the control’s parts and order (§P.5)', () => {
+  it('is the ask field, then ASK, then SURPRISE ME, then the slot, and no moods', () => {
+    const positions = [html.indexOf('data-ask-field'), askAt(html), html.indexOf('>Surprise me<'), html.indexOf('data-pick-slot')];
+    expect(positions.every((p) => p >= 0), `all four found: ${positions.join(', ')}`).toBe(true);
+    expect([...positions].sort((a, b) => a - b)).toEqual(positions);
+    expect(html).not.toContain('data-mood');
+    expect(html).not.toContain('Choose a mood first');
+  });
+
+  /* §P.5: "The field isn't the search field": a text field of its own, under a §9.3 label, not a search form. */
+  it('draws the field as §9.3’s field with a label of its own, separate from SEARCH', () => {
+    const f = field(html);
+    expect(f).toContain('type="text"');
+    expect(f).not.toContain('name="q"');
+    const id = /\sid="([^"]+)"/.exec(f)?.[1];
+    expect(id, 'the field has an id its label points at').toBeDefined();
+    const label = new RegExp(`<label[^>]*for="${id}"[^>]*>`).exec(html)?.[0] ?? '';
+    for (const cls of LABEL.split(' ')) expect(label, cls).toContain(cls);
+    expect(html).not.toMatch(/<form[^>]*role="search"/);
   });
 
   /* §T.6's reserved slot: there before anything is asked, so an answer's message moves nothing beneath it. */
-  it('follows SURPRISE ME with an empty status slot that reserves one line', () => {
+  it('follows SURPRISE ME with an empty status slot that reserves one line, and clips nothing', () => {
     const slot = /<p[^>]*data-pick-slot=""[^>]*><\/p>/.exec(html)?.[0] ?? '';
     expect(slot).toContain('role="status"');
     expect(slot).toContain('min-h-[1lh]');
-    expect(html.indexOf('Surprise me')).toBeLessThan(html.indexOf('data-pick-slot'));
-  });
-
-  /* §P.6: "The slot's messages are written to fit it", rewritten rather than cut, so nothing clamps them. */
-  it('does not clip the slot, since a message that does not fit is rewritten rather than cut', () => {
-    const slot = /<p[^>]*data-pick-slot=""[^>]*>/.exec(html)?.[0] ?? '';
     expect(slot).not.toMatch(/line-clamp|truncate|overflow-hidden/);
   });
 
-  /* §P.4: the answer is drawn when the reader asks, never before. Fails against a control that draws its pool's first record on arrival. */
+  /* §P.4: the covers are drawn when the reader asks, never before. */
   it('draws no answer before anything is asked, in either host', () => {
     expect(html).not.toContain('data-pick-answer');
-    expect(renderToStaticMarkup(<PickControl pool={POOL} answers="wall" />)).not.toContain('data-pick-answer');
+    expect(rail).not.toContain('data-pick-answer');
   });
 });
 
-/*
-  Step 157 (§P.5): "The control is the eight moods, then ASK and SURPRISE ME,
-  then the reserved slot, in that order in every host. The moods are one list
-  in code, so the control draws whatever that list holds, in its order." "A
-  mood is set in the label type, in the label colour when clear and in ink
-  when selected, with no bar, underline or box." "ASK is inert while no mood
-  is selected." ASK and SURPRISE ME are §9.3 labels.
-*/
-describe('the moods and ASK (§P.5, step 157)', () => {
-  const moodButtons = [...html.matchAll(/<button[^>]*data-mood="([^"]*)"[^>]*>/g)];
-
-  it('draws the eight moods from code’s list, in its order, each a toggle that is clear on arrival', () => {
-    expect(moodButtons.map((m) => m[1])).toEqual([...MOODS]);
-    for (const [tag] of moodButtons) {
-      expect(tag).toContain('type="button"');
-      expect(tag).toContain('aria-pressed="false"');
-    }
-  });
-
-  it('sets a clear mood in the label type and the label colour, with no bar, underline or box', () => {
-    for (const [tag] of moodButtons) {
-      for (const cls of LABEL_TYPE.split(' ')) expect(tag, cls).toContain(cls);
-      expect(tag).toContain(LABEL_COLOUR);
-      expect(tag).not.toMatch(/underline|border|data-set-bar/);
-    }
-  });
-
-  it('puts the moods first, then ASK, then SURPRISE ME, then the slot', () => {
-    const positions = [html.indexOf('data-mood='), html.indexOf('>Ask<'), html.indexOf('>Surprise me<'), html.indexOf('data-pick-slot')];
-    expect(positions.every((p) => p >= 0), `all four found: ${positions.join(', ')}`).toBe(true);
-    expect([...positions].sort((a, b) => a - b)).toEqual(positions);
-  });
-
-  /* The first version asserted `disabled`, a mechanism §P.6's "ASK stays a Tab stop while it is inert" forbids: `disabled` leaves the tab order. Changed with the ruling, not to pass code. */
-  it('draws ASK as a §9.3 label, inert while no mood is selected and still a Tab stop: aria-disabled, never disabled', () => {
-    const ask = /<button[^>]*>Ask<\/button>/.exec(html)?.[0] ?? '';
-    expect(ask).toContain('type="button"');
-    expect(ask, 'named unavailable').toContain('aria-disabled="true"');
-    expect(ask, 'and in the tab order').not.toMatch(/\sdisabled(=""|\s|>)/);
-    for (const cls of CONTROL_LABEL.split(' ')) expect(ask, cls).toContain(cls);
-  });
-});
-
-/*
-  §P.5 (27 Oct): "In the rail the moods take the rail's own label pitch, as §W
-  sets it for SHELF, TABLE and GRID, and not §T.6's 44… On the table and the
-  grid the control stands with the filters, and there it takes their 44." The
-  rail's pitch is a mechanism, not a figure: a column of labels at their
-  type's line, 18 apart (WallRail's view list). §P.6: "ASK while inert is
-  named as unavailable in the same way, with the reason as its description:
-  choose a mood first."
-*/
-describe('the moods’ pitch by host, and ASK’s reason (§P.5, §P.6)', () => {
-  const rail = renderToStaticMarkup(<PickControl pool={POOL} answers="wall" />);
-  const moodTags = (h: string) => [...h.matchAll(/<button[^>]*data-mood="[^"]*"[^>]*>/g)].map((m) => m[0]);
-  const list = (h: string) => /<ul[^>]*data-moods=""[^>]*>/.exec(h)?.[0] ?? '';
-
-  it('in the rail, a mood stands at its type’s line in a column 18 apart, with no 44', () => {
-    expect(list(rail)).toContain('gap-[18px]');
-    expect(list(rail)).toContain('flex-col');
-    for (const tag of moodTags(rail)) expect(tag).not.toContain('h-[44px]');
-  });
-
-  it('on the table and the grid, a mood takes the filters’ 44', () => {
-    for (const tag of moodTags(html)) expect(tag).toContain('h-[44px]');
-    expect(list(html)).not.toContain('flex-col');
-  });
-
-  it('names an inert ASK unavailable with its reason as its description, and an ASK with a mood selected with none', () => {
-    const ask = /<button[^>]*>Ask<\/button>/.exec(html)?.[0] ?? '';
-    const id = /aria-describedby="([^"]+)"/.exec(ask)?.[1];
+describe('ASK inert on an empty field (§P.6)', () => {
+  it('is a §9.3 label, aria-disabled and never disabled, in the label colour, with "write what you want first" as its description', () => {
+    const a = ask(html);
+    expect(a).toContain('type="button"');
+    expect(a, 'named unavailable').toContain('aria-disabled="true"');
+    expect(a, 'and in the tab order').not.toMatch(/\sdisabled(=""|\s|>)/);
+    expect(a, 'in the label colour while inert').toContain(LABEL_COLOUR);
+    for (const cls of CONTROL_LABEL.split(' ')) expect(a, cls).toContain(cls);
+    const id = /aria-describedby="([^"]+)"/.exec(a)?.[1];
     expect(id, 'the inert ASK points at its reason').toBeDefined();
-    expect(new RegExp(`<[^>]*id="${id}"[^>]*>Choose a mood first\\.<`).test(html), 'the reason, as text the control carries').toBe(true);
+    expect(new RegExp(`<[^>]*id="${id}"[^>]*>write what you want first<`).test(html), 'the reason, as text the control carries').toBe(true);
   });
-});
 
-/* §P.5 (27 Oct): "In the rail they take §W's one pitch with the moods, so SURPRISE ME on a 44 line is a defect." The 44 is the filters' on the table and the grid, where the control stands with them. */
-describe('ASK and SURPRISE ME on the rail’s pitch (§P.5)', () => {
-  const rail = renderToStaticMarkup(<PickControl pool={POOL} answers="wall" />);
-  it('in the rail, neither ASK nor SURPRISE ME carries a 44 line', () => {
-    for (const name of ['Ask', 'Surprise me']) {
-      const tag = new RegExp(`<button[^>]*>${name}<\\/button>`).exec(rail)?.[0] ?? '';
-      expect(tag, `${name} found`).not.toBe('');
-      expect(tag, `${name} in the rail`).not.toContain('h-[44px]');
-    }
-  });
-  it('on the table and the grid, both keep the §9.3 label’s 44', () => {
-    for (const name of ['Ask', 'Surprise me']) expect(new RegExp(`<button[^>]*>${name}<\\/button>`).exec(html)?.[0] ?? '', name).toContain('h-[44px]');
+  it('keeps SURPRISE ME in ink, since it can always act', () => {
+    const surprise = /<button[^>]*>Surprise me<\/button>/.exec(html)?.[0] ?? '';
+    expect(surprise).not.toContain(LABEL_COLOUR);
+    expect(surprise).not.toContain('aria-disabled');
   });
 });
 
 /*
-  Step 157c, §P.6: "A mood is inert when no tagged record carries it. It stays
-  drawn at its size in the label colour, cannot be selected, and is named as
-  unavailable to assistive technology." It stays a Tab stop. "While any record
-  is untagged, a line beneath the moods gives how many are not yet tagged…
-  With every record tagged the line is absent." Both are facts about the
-  whole collection, handed to the control by the page.
+  §P.5 (27 Oct, reworded 11 Nov): in the rail the control's lines take the rail's one pitch, not §T.6's 44; on the
+  table and the grid the control stands with the filters and takes their 44.
 */
-describe('the states (§P.6, step 157c)', () => {
-  const withStates = renderToStaticMarkup(<PickControl pool={POOL} inert={['zone out']} untagged={4} />);
-  const tagOf = (h: string, mood: string) => new RegExp(`<button[^>]*data-mood="${mood}"[^>]*>`).exec(h)?.[0] ?? '';
-
-  it('draws an inert mood in the label colour, unavailable and not pressed, still in the tab order', () => {
-    const inert = tagOf(withStates, 'zone out');
-    expect(inert).toContain('aria-disabled="true"');
-    expect(inert).toContain('aria-pressed="false"');
-    expect(inert).toContain(LABEL_COLOUR);
-    expect(inert, 'a Tab stop: never disabled').not.toMatch(/\sdisabled(=""|\s|>)/);
-    expect(tagOf(withStates, 'sleepy'), 'a carried mood is not').not.toContain('aria-disabled');
+describe('the pitch by host (§P.5)', () => {
+  it('in the rail, ASK and SURPRISE ME carry no 44 line; on the table and the grid they keep the label’s 44', () => {
+    for (const name of ['Ask', 'Surprise me']) {
+      const inRail = new RegExp(`<button[^>]*>${name}<\\/button>`).exec(rail)?.[0] ?? '';
+      expect(inRail, `${name} in the rail`).not.toContain('h-[44px]');
+      for (const cls of LABEL_TYPE.split(' ')) expect(inRail, cls).toContain(cls);
+      expect(new RegExp(`<button[^>]*>${name}<\\/button>`).exec(html)?.[0] ?? '', `${name} on the table`).toContain('h-[44px]');
+    }
   });
+});
 
-  it('draws the untagged line beneath the moods while any record is untagged, and not with every record tagged', () => {
-    const line = /<p[^>]*data-untagged=""[^>]*>(?:<span[^>]*>)?([^<]*)/.exec(withStates);
-    expect(line?.[1]).toBe('4 not tagged yet.');
-    expect(withStates.indexOf('data-untagged'), 'beneath the moods').toBeGreaterThan(withStates.lastIndexOf('data-mood='));
-    expect(withStates.indexOf('data-untagged'), 'above ASK').toBeLessThan(withStates.indexOf('>Ask<'));
-    expect(renderToStaticMarkup(<PickControl pool={POOL} inert={[]} untagged={0} />)).not.toContain('data-untagged');
+/*
+  §P.6 (11 Nov): "the line counting records with no ABOUT, absent when every record has one", a fact about the whole
+  collection handed to the control by the page, and drawn on load so it moves nothing; its wording "4 without an About
+  yet." is Proposed (the Provisionals line).
+*/
+describe('the count line (§P.6)', () => {
+  it('draws "N without an About yet." beneath the field and above ASK while any record has none, and not otherwise', () => {
+    const withLine = renderToStaticMarkup(<PickControl pool={POOL} withoutAbout={4} />);
+    const line = /<p[^>]*data-without-about=""[^>]*>(?:<span[^>]*>)?([^<]*)/.exec(withLine);
+    expect(line?.[1]).toBe('4 without an About yet.');
+    expect(withLine.indexOf('data-without-about'), 'beneath the field').toBeGreaterThan(withLine.indexOf('data-ask-field'));
+    expect(withLine.indexOf('data-without-about'), 'above ASK').toBeLessThan(askAt(withLine));
+    expect(renderToStaticMarkup(<PickControl pool={POOL} withoutAbout={0} />)).not.toContain('data-without-about');
+    expect(html, 'absent by default').not.toContain('data-without-about');
   });
 });

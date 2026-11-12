@@ -260,7 +260,8 @@ test.describe('§P.5: on the far view, where the rail draws as a band, the contr
   320 and 1280." Set into the drawn slot and measured: a message fits when the
   slot keeps its reserved height and nothing runs past its width.
 */
-const MESSAGES = ['The only one.', 'None showing.'];
+/* Step 178 (§P.6, 11 Nov): the unanswerable ask's message takes "None showing."'s place; its wording is Proposed. */
+const MESSAGES = ['The only one.', 'No About yet.'];
 const HOSTS = [
   { name: 'the rail, at 1440', width: 1440, query: '' },
   { name: 'the band, at 320', width: 320, query: '?view=grid' },
@@ -325,7 +326,8 @@ test.describe('§P.5: the control’s fit in the rail as a column, measured', ()
         const rail = Array.from(document.querySelectorAll<HTMLElement>('[data-testid="wall-rail"]')).filter(drawn).find((el) => el.closest('[data-collection-band]') === null) ?? null;
         const control = Array.from(document.querySelectorAll<HTMLElement>('[data-pick-control]')).filter(drawn).find((el) => rail?.contains(el)) ?? null;
         const box = (el: Element | null) => (el === null ? null : (({ top, bottom, left, right, width: w, height: h }) => ({ top, bottom, left, right, width: w, height: h }))(el.getBoundingClientRect()));
-        const moods = control === null ? [] : Array.from(control.querySelectorAll<HTMLElement>('[data-mood]')).map((b) => ({ mood: b.dataset.mood ?? '', ...box(b)! }));
+        /* Step 178: the ask field stands where the moods stood; its host is the label and the field as one block. */
+        const fieldHost = box(control?.querySelector('[data-ask-host]') ?? null);
         const views = rail === null ? null : Array.from(rail.querySelectorAll('a')).filter((a) => /^(Shelf|Table|Grid)$/.test((a.textContent ?? '').trim())).pop() ?? null;
         const add = rail === null ? null : Array.from(rail.querySelectorAll('a')).find((a) => /add record/i.test(a.textContent ?? '')) ?? null;
         const railStyle = rail === null ? null : getComputedStyle(rail);
@@ -334,8 +336,7 @@ test.describe('§P.5: the control’s fit in the rail as a column, measured', ()
           rail: box(rail),
           railInset: railStyle === null ? null : { left: parseFloat(railStyle.paddingLeft), right: parseFloat(railStyle.paddingRight) },
           control: box(control),
-          moods,
-          rows: new Set(moods.map((b) => Math.round(b.top))).size,
+          fieldHost,
           lastView: box(views),
           add: box(add),
           scrollHeight: document.documentElement.scrollHeight,
@@ -348,13 +349,14 @@ test.describe('§P.5: the control’s fit in the rail as a column, measured', ()
               controls sit at different offsets inside their blocks, so measuring them would read half-leadings as pitch.
             */
             viewNames: (() => { const tops = Array.from(rail?.querySelectorAll('[data-view-name]') ?? []).map((li) => li.getBoundingClientRect().top); return tops.length < 2 ? null : (tops[1] - tops[0]); })(),
-            moods: (() => { const tops = Array.from(control?.querySelectorAll('[data-moods] > li') ?? []).map((li) => li.getBoundingClientRect().top); return tops.length < 2 ? null : tops[1] - tops[0]; })(),
-            /* §P.6's untagged line, beneath the moods, on the rail's pitch too (157c); absent with every record tagged. */
-            line: (() => { const l = control?.querySelector('[data-untagged]'); const lis = Array.from(control?.querySelectorAll('[data-moods] > li') ?? []); const last = lis[lis.length - 1]; return l && last ? l.getBoundingClientRect().top - last.getBoundingClientRect().top : null; })(),
-            /* ASK's block against the block above it, the untagged line where drawn, else the last mood's item: §P.5's "in the rail they take §W's one pitch with the moods". */
-            ask: (() => { const a = control?.querySelector('button[aria-disabled]:not([data-mood])')?.parentElement ?? null; const lis = Array.from(control?.querySelectorAll('[data-moods] > li') ?? []); const above = control?.querySelector('[data-untagged]') ?? lis[lis.length - 1] ?? null; return a && above ? a.getBoundingClientRect().top - above.getBoundingClientRect().top : null; })(),
-            surpriseFromAsk: (() => { const bs = Array.from(control?.querySelectorAll('button:not([data-mood])') ?? []).map((b) => b.parentElement ?? b); return bs.length < 2 ? null : bs[1].getBoundingClientRect().top - bs[0].getBoundingClientRect().top; })(),
-            surprise: box(control?.querySelector('button:not([data-mood])') ?? null)?.height ?? null,
+            /* A view name's own block, so the rail's gap between blocks is the pitch less the line, measured and not a figure. */
+            viewLine: box(rail?.querySelector('[data-view-name]') ?? null)?.height ?? null,
+            /* §P.6's count line beneath the field (178), the gap from the field's foot to its top; absent with every record carrying an ABOUT. */
+            line: (() => { const l = control?.querySelector('[data-without-about]'); const host = control?.querySelector('[data-ask-host]') ?? null; return l && host ? l.getBoundingClientRect().top - host.getBoundingClientRect().bottom : null; })(),
+            /* ASK's block from the foot of the block above it, the count line where drawn, else the field's host: the rail's lines are 18 apart, as the pitch less a line. */
+            ask: (() => { const a = control?.querySelector('button[aria-disabled]')?.parentElement ?? null; const above = control?.querySelector('[data-without-about]') ?? control?.querySelector('[data-ask-host]') ?? null; return a && above ? a.getBoundingClientRect().top - above.getBoundingClientRect().bottom : null; })(),
+            surpriseFromAsk: (() => { const bs = Array.from(control?.querySelectorAll('button') ?? []).map((b) => b.parentElement ?? b); return bs.length < 2 ? null : bs[1].getBoundingClientRect().top - bs[0].getBoundingClientRect().top; })(),
+            surprise: box(control?.querySelector('button') ?? null)?.height ?? null,
             add: box(add)?.height ?? null,
           },
         };
@@ -370,7 +372,7 @@ test.describe('§P.5: the control’s fit in the rail as a column, measured', ()
       });
       if (m.rail === null || m.control === null || m.add === null || m.lastView === null || m.railInset === null) throw new Error('the rail, its control, its last view name or ADD RECORD was not found');
       const inner = m.rail.width - m.railInset.left - m.railInset.right;
-      const widest = m.moods.reduce((w, b) => Math.max(w, b.width), 0);
+      const widest = m.fieldHost?.width ?? 0;
       /*
         The fit, measured where it shows: ADD RECORD keeps the rail's foot, so the rail overflows the window by
         ADD RECORD's foot past it, and the control's free height is its own height less that overflow. The rail's
@@ -380,18 +382,22 @@ test.describe('§P.5: the control’s fit in the rail as a column, measured', ()
       const free = m.control.height - Math.max(0, over);
       test.info().annotations.push({
         type: `fit at ${width}×${height}`,
-        description: `rail ${m.rail.width} wide, ${inner.toFixed(1)} inside its insets; the widest mood ${widest.toFixed(1)}; the moods in ${m.rows} rows at a ${m.pitches.moods?.toFixed(1) ?? '?'} pitch (the view names' ${m.pitches.viewNames?.toFixed(1) ?? '?'}; the untagged line ${m.pitches.line?.toFixed(1) ?? 'absent'} after the last mood, ASK ${m.pitches.ask?.toFixed(1) ?? '?'} after the line above; SURPRISE ME ${m.pitches.surprise?.toFixed(1) ?? '?'} tall; ADD RECORD ${m.pitches.add?.toFixed(1) ?? '?'}); the control ${m.control.height.toFixed(1)} tall, from ${m.control.top.toFixed(1)} (the last view name's foot ${m.lastView.bottom.toFixed(1)}); ADD RECORD at ${m.add.top.toFixed(1)} to ${m.add.bottom.toFixed(1)} in a ${m.window.height} window, ${over > 0 ? `OVER by ${over.toFixed(1)}: the control may be ${free.toFixed(1)} tall here` : `in view with ${(-over).toFixed(1)} to spare`}; the page ${m.scrollHeight} tall`,
+        description: `rail ${m.rail.width} wide, ${inner.toFixed(1)} inside its insets; the ask field's host ${widest.toFixed(1)} wide and ${(m.fieldHost?.height ?? 0).toFixed(1)} tall (the view names' pitch ${m.pitches.viewNames?.toFixed(1) ?? '?'}; the count line ${m.pitches.line?.toFixed(1) ?? 'absent'} below the field's foot, ASK ${m.pitches.ask?.toFixed(1) ?? '?'} below the block above; SURPRISE ME ${m.pitches.surprise?.toFixed(1) ?? '?'} tall, ${m.pitches.surpriseFromAsk?.toFixed(1) ?? '?'} after ASK; ADD RECORD ${m.pitches.add?.toFixed(1) ?? '?'}); the control ${m.control.height.toFixed(1)} tall, from ${m.control.top.toFixed(1)} (the last view name's foot ${m.lastView.bottom.toFixed(1)}); ADD RECORD at ${m.add.top.toFixed(1)} to ${m.add.bottom.toFixed(1)} in a ${m.window.height} window, ${over > 0 ? `OVER by ${over.toFixed(1)}: the control may be ${free.toFixed(1)} tall here` : `in view with ${(-over).toFixed(1)} to spare`}; the page ${m.scrollHeight} tall`,
       });
       test.info().annotations.push({
         type: `past the foot at ${width}×${height}`,
         description: over > 0 ? `the rail's overflow-y is ${m.railOverflow}; the page scrolls to ${reach.scrolledTo} and ADD RECORD's foot is then at ${reach.addBottomAfterScroll?.toFixed(1)} (${reach.inView ? 'in view: the page scrolls, nothing clips' : 'still out of view: clipped or unreachable'})` : 'nothing past the foot',
       });
-      expect.soft(widest, 'every mood fits the rail’s width inside its insets').toBeLessThanOrEqual(inner + 0.5);
-      /* §P.5 (27 Oct): "the rail's own label pitch, as §W sets it for SHELF, TABLE and GRID": the moods' pitch is the view names', measured, not a figure. */
-      expect.soft(m.pitches.moods, `the moods take the view names’ pitch (${m.pitches.viewNames?.toFixed(1)})`).toBeCloseTo(m.pitches.viewNames ?? NaN, 0);
-      if (m.pitches.line !== null) expect.soft(m.pitches.line, `the untagged line takes the rail’s pitch after the last mood (${m.pitches.viewNames?.toFixed(1)})`).toBeCloseTo(m.pitches.viewNames ?? NaN, 0);
-      expect.soft(m.pitches.ask, `ASK takes the rail’s one pitch after the line above it (${m.pitches.viewNames?.toFixed(1)})`).toBeCloseTo(m.pitches.viewNames ?? NaN, 0);
-      expect.soft(m.pitches.surpriseFromAsk, `SURPRISE ME takes it after ASK (${m.pitches.viewNames?.toFixed(1)})`).toBeCloseTo(m.pitches.viewNames ?? NaN, 0);
+      expect.soft(widest, 'the ask field fits the rail’s width inside its insets').toBeLessThanOrEqual(inner + 0.5);
+      /*
+        §P.5 (27 Oct, reworded 11 Nov): "the rail's one pitch", the view names', measured, not a figure. The field is a
+        taller block than a line, so the rail's lines beneath it are read from the foot of the block above: the pitch
+        less a line is the gap between blocks, and SURPRISE ME after ASK is the pitch itself, block to block.
+      */
+      const gap = m.pitches.viewNames === null || m.pitches.viewLine === null ? NaN : m.pitches.viewNames - m.pitches.viewLine;
+      if (m.pitches.line !== null) expect.soft(m.pitches.line, `the count line stands the rail’s gap below the field (${gap.toFixed(1)})`).toBeCloseTo(gap, 0);
+      expect.soft(m.pitches.ask, `ASK stands the rail’s gap below the block above it (${gap.toFixed(1)})`).toBeCloseTo(gap, 0);
+      expect.soft(m.pitches.surpriseFromAsk, `SURPRISE ME takes the pitch after ASK (${m.pitches.viewNames?.toFixed(1)})`).toBeCloseTo(m.pitches.viewNames ?? NaN, 0);
       /* The fit is withdrawn (`P.5/control-must-fit`); what is ruled is the reach: past the foot the rail runs with the page and ADD RECORD is reached by scrolling. */
       if (over > 0) expect.soft(reach.inView, 'ADD RECORD reached by scrolling to the end').toBe(true);
     });

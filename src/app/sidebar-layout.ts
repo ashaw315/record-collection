@@ -136,7 +136,10 @@ export function sidebarRules(figure: FigureShape | null): string {
   return `
   [data-collection-lines] { max-width: ${BAND_MEASURE}px; }
   [data-collection-head], [data-sidebar-fragment], [data-diagonal], [data-sort-chevron], [data-undated-figure] { display: none; }
+  /* §P.4 (step 178): the ask's covers as a wrapped row where the control draws as a band, below the fork; a column in the sidebar above it. */
+  [data-collection-sidebar] [data-pick-answers] { flex-direction: row; flex-wrap: wrap; }
   @media (min-width: ${FORK}px) {
+    [data-collection-sidebar] [data-pick-answers] { flex-direction: column; flex-wrap: nowrap; }
     [data-collection-views] { display: grid; grid-template-columns: ${SIDEBAR.width + SIDEBAR.rule}px minmax(0, 1fr); max-width: ${CAP}px; min-height: calc(100vh - var(--app-nav-height, 0px)); container: collection / inline-size; }
     [data-collection-sidebar] { box-sizing: border-box; min-width: 0; padding: 0 ${SIDEBAR.inset}px; border-right: ${SIDEBAR.rule}px solid ${INK}; }
     [data-collection-content] { min-width: 0; padding: 0 ${SIDEBAR.gap}px 24px; }

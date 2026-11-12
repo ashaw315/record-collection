@@ -3,7 +3,6 @@ import { registerCleanup } from './cleanup';
 import { login } from './sign-in';
 import { errorScreen, ringRoutes, settled } from './ring-routes';
 import { drawnRing, expectedRing, walkTab, type Stop } from './ring-walk';
-import { MOODS } from '../src/lib/moods/moods';
 import { clickSpine } from './wall-ready';
 
 registerCleanup();
@@ -99,7 +98,6 @@ test('the rail’s hidden Apply is not a Tab stop: Tab from the search field lan
   drawn moods would check the control against itself and miss a missing one.
 */
 type Expected = readonly [tag: string, name: RegExp];
-const exact = (text: string) => new RegExp(`^${text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i');
 const HEADER: Expected[] = [['a', /^Record Collection$/], ['a', /^Collection$/], ['a', /^Want list$/], ['a', /^Look up$/], ['a', /^Stats$/], ['a', /^Manage$/]];
 /* §W.13's rail: the search field, the genre and sort selects, the three views, then §P.5's control in its order, then ADD RECORD at the foot. */
 const RAIL: Expected[] = [
@@ -109,7 +107,8 @@ const RAIL: Expected[] = [
   ['a', /^Shelf$/],
   ['a', /^Table$/],
   ['a', /^Grid$/],
-  ...MOODS.map((m): Expected => ['button', exact(m)]),
+  /* Step 178 (§P.5, 11 Nov): the ask field takes the moods' place; ASK stays a stop while inert (§P.6). */
+  ['input', /^rail-ask$/],
   ['button', /^Ask$/],
   ['button', /^Surprise me$/],
   ['a', /^Add record$/],

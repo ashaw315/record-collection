@@ -8,7 +8,15 @@
  * under test.
  */
 export const EMBEDDING_MODEL = 'text-embedding-3-small';
-const ENDPOINT = 'https://api.openai.com/v1/embeddings';
+
+/**
+ * OpenAI's host unless `OPENAI_BASE_URL` names another: the e2e server names its own stub route (Q22's control, 12
+ * Nov; step 140's shape), since the suites hold no key by design and nothing under test is ever live.
+ */
+function endpoint(): string {
+  const base = process.env.OPENAI_BASE_URL;
+  return `${base === undefined || base === '' ? 'https://api.openai.com' : base.replace(/\/$/, '')}/v1/embeddings`;
+}
 
 export function requireOpenAiKey(): string {
   const key = process.env.OPENAI_API_KEY;
@@ -25,7 +33,7 @@ export async function embedTexts(texts: string[], options: { fetchImpl?: typeof 
   if (texts.length === 0) return [];
   const key = requireOpenAiKey();
   const fetchImpl = options.fetchImpl ?? fetch;
-  const response = await fetchImpl(ENDPOINT, {
+  const response = await fetchImpl(endpoint(), {
     method: 'POST',
     headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json' },
     body: JSON.stringify({ model: EMBEDDING_MODEL, input: texts }),

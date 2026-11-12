@@ -53,6 +53,14 @@ const PUBLIC_PATHS = new Set(['/login', '/api/auth/login']);
 /* No dev-only public routes remain: /scene retired with the lit wall (8a §11). */
 const DEV_ONLY_PUBLIC_PATHS = new Set<string>();
 
+/**
+ * **The e2e server's embeddings stub, public only where the probes are open (Q22's control, 12 Nov).** The server
+ * calls it itself, from the ask route, with no session to carry, so behind the session boundary it answered its own
+ * call 401. Open exactly as the probe pages are (`E2E_PROBES=1` off production; the route answers not-found besides),
+ * and a session route everywhere else. Deliberately not in PUBLIC_PATHS, for the reason /scene was not.
+ */
+const PROBE_PUBLIC_PATHS = new Set(['/api/e2e-openai/v1/embeddings']);
+
 const CRON_PATHS = new Set(['/api/discogs/refresh-prices']);
 
 function normalize(pathname: string): string {
@@ -67,11 +75,19 @@ function normalize(pathname: string): string {
  * middleware and authenticates by CRON_SECRET bearer token, because exempting
  * it wholesale would leave it reachable by anyone.
  */
-export function routeAuthMode(pathname: string): AuthMode {
+export function routeAuthMode(pathname: string, source: Record<string, string | undefined> = process.env): AuthMode {
   const path = normalize(pathname);
 
   if (PUBLIC_PATHS.has(path)) return 'public';
   if (DEV_ONLY_PUBLIC_PATHS.has(path) && process.env.NODE_ENV !== 'production') {
+    return 'public';
+  }
+  /*
+    Read from the env OBJECT, never the `process.env.NODE_ENV` literal: a build inlines the literal as "production"
+    into every bundle whatever `next start` is given, which is how the probe pages were found closed under the first
+    build-served run (probes.ts, Q39) and how the stub answered 401 under the capture's build (12 Nov).
+  */
+  if (PROBE_PUBLIC_PATHS.has(path) && source.E2E_PROBES === '1' && source.NODE_ENV !== 'production') {
     return 'public';
   }
   if (CRON_PATHS.has(path)) return 'cron';

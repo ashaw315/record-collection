@@ -60,9 +60,15 @@ describe('the e2e server, chosen by E2E_SERVER', () => {
   spec then 404s under that server) and against one that sets it to anything but "1".
 */
 describe('the e2e server opens the probe pages', () => {
-  it('carries E2E_PROBES=1 in the webServer env under either command, so the eight probe pages and the error probe are served', () => {
-    expect(webServer({}).env).toEqual({ E2E_PROBES: '1' });
-    expect(webServer({ E2E_SERVER: 'build' }).env).toEqual({ E2E_PROBES: '1' });
+  /*
+    Step 178 (12 Nov): the ask's phrase path embeds at request time, so the same env names the server's own
+    embeddings stub (`/api/e2e-openai`, open with the probes) and a placeholder key: nothing under test is live, and a
+    deploy never sees either. Fails against a config that points the client at OpenAI's host under test.
+  */
+  const env = { E2E_PROBES: '1', OPENAI_API_KEY: 'sk-e2e-placeholder', OPENAI_BASE_URL: 'http://localhost:3100/api/e2e-openai' };
+  it('carries E2E_PROBES=1, the stub’s base URL and a placeholder key in the webServer env under either command', () => {
+    expect(webServer({}).env).toEqual(env);
+    expect(webServer({ E2E_SERVER: 'build' }).env).toEqual(env);
   });
 });
 
