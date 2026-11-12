@@ -41,7 +41,15 @@ import { spawnSync } from 'node:child_process';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-export const STATUSES = ['open', 'done', 'dropped', 'ruled'];
+/* `parked` (the coordinator, 11 Nov): real, and nobody works it. Counted apart from open, so the open count and the blocked-on-Adam line read what is actually waiting. */
+export const STATUSES = ['open', 'done', 'dropped', 'ruled', 'parked'];
+
+/** The first line of the report: the items, the sections, and the count under each status, parked apart from open. */
+export function summaryLine(items) {
+  const sections = [...new Set(items.map((i) => i.section))];
+  const count = (s) => items.filter((i) => i.status === s).length;
+  return `QUEUE.md: ${items.length} items in ${sections.length} sections; ${STATUSES.map((s) => `${s} ${count(s)}`).join(', ')}`;
+}
 
 /** Every `| Qn | status [ref] | item | record |` row of every table, with the `##` heading it sits under and its 1-based line. */
 export function parseQueue(text) {
@@ -202,9 +210,7 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
     .join('\n');
   const resolves = (sha) => spawnSync('git', ['cat-file', '-e', `${sha}^{commit}`], { stdio: 'ignore' }).status === 0;
 
-  const sections = [...new Set(items.map((i) => i.section))];
-  const count = (s) => items.filter((i) => i.status === s).length;
-  console.log(`QUEUE.md: ${items.length} items in ${sections.length} sections; open ${count('open')}, done ${count('done')}, dropped ${count('dropped')}, ruled ${count('ruled')}`);
+  console.log(summaryLine(items));
   console.log(`unbuilt handoff steps, ${unbuilt.length}, derived from scripts/handoff-unbuilt.json (held by test/repo/handoff-twins.test.ts), not items here:`);
   for (const u of unbuilt) console.log(`  ${u.head} — ${u.status}`);
   const found = consistency(items, { resolves, targetsText });

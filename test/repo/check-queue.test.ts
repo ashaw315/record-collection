@@ -3,7 +3,7 @@ import { readFileSync, unlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { blockedOnAdam, blockedOnAdamLine, consistency, parseQueue, queue2Coverage, queue2Line, restatements, waitingOnLanded } from '../../scripts/check-queue.mjs';
+import { blockedOnAdam, blockedOnAdamLine, consistency, parseQueue, queue2Coverage, queue2Line, restatements, summaryLine, waitingOnLanded } from '../../scripts/check-queue.mjs';
 
 /**
  * **`QUEUE.md` has no second record, and its check says so (the coordinator,
@@ -70,9 +70,23 @@ describe('consistency', () => {
     expect(consistency(items, { resolves, targetsText })).toContainEqual('duplicate id Q1 at lines 7 and 8');
   });
 
-  it('reports a status outside open, done, dropped and ruled', () => {
+  it('reports a status outside open, done, dropped, ruled and parked', () => {
     const items = parseQueue(FIXTURE.replace('| Q2 | open |', '| Q2 | maybe |'));
-    expect(consistency(items, { resolves, targetsText })).toContainEqual('Q2: status "maybe" is not one of open, done, dropped, ruled (line 8)');
+    expect(consistency(items, { resolves, targetsText })).toContainEqual('Q2: status "maybe" is not one of open, done, dropped, ruled, parked (line 8)');
+  });
+
+  /*
+    **`parked` is a status (the coordinator, 11 Nov): real, and nobody works it.** Before it, Q3 and Q60 wrote PARKED
+    inside an open row, so the counts and the blocked-on-Adam line read them as open. Fails against STATUSES without it
+    (the row is reported as unknown), and against a summary that folds parked rows into open.
+  */
+  it('accepts parked as a status, names no commit or section for it, and counts it apart from open', () => {
+    const items = parseQueue(FIXTURE.replace('| Q2 | open |', '| Q2 | parked |'));
+    expect(consistency(items, { resolves, targetsText })).toEqual([]);
+    expect(items[1]).toMatchObject({ id: 'Q2', status: 'parked', ref: null });
+    expect(summaryLine(items)).toBe('QUEUE.md: 5 items in 2 sections; open 2, done 1, dropped 0, ruled 1, parked 1');
+    expect(blockedOnAdam(items, new Date(2026, 10, 11, 12)).map((r) => r.id), 'a parked row under Blocked on Adam is not waiting on him').toEqual(['Q1']);
+    expect(queue2Coverage(items).open, 'nor counted among the open rows queue-2 covers').toBe(2);
   });
 
   it('reports a done or dropped item naming no commit, and one naming a commit git cannot resolve', () => {

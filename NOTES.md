@@ -56555,3 +56555,37 @@ measurement asserts the line's box within the window at 844 and 667 and reports 
 Staged with the confirm's `autoFocus` removed, the line stood 275px below the fold at 844 ("Received: 275"), so the
 dependency on step 137's focus is tied to a test that fails if focus handling moves. Both green after the reverts (the
 history spec on chromium and mobile, 6 passed); the source is at HEAD, by `git diff`.
+
+**Both ships' gates green on all four halves, read from the artifacts.** 177 (34f0d822, gate 43123754443): chromium
+1079 passed, 1 skipped; mobile 394 passed, 4 skipped; report-only 2 passed; unit 5132 passed, 3 skipped; every ledger
+clean, every tree unchanged. The assertions (dc05e5e6, gate 43125053695): chromium 1081 passed, 1 skipped (18.0
+minutes); mobile 394 passed, 4 skipped; report-only 1 passed, the tall-form test now an assertion on chromium and
+mobile; unit 5132 passed, 3 skipped. Labels 1 to 3 on both e2e halves with Clay Records and Yetee Records standing, no
+pressings line.
+
+## 11 Nov (tenth): the queue cleanup (the coordinator's batch, 11 Nov; Adam's ask for a readable file)
+
+**Every row cut to one line: its statement, its owner where the section does not say, its status and its pointer.**
+QUEUE.md went from 10,301 words to 3,066; the history each row restated inline stays in NOTES, where every row's
+pointer already sent the reader, and the file as it stood before the cut is named in its header (dc05e5e6), so nothing
+is lost, only stopped from being kept twice. The file's own rule against a second hand-maintained copy applied to its
+rows, which the coordinator pointed out it had been breaking in most of them.
+
+**Ten rows closed, answered and never closed:** Q65 and Q66 done at 8ad5496b (Design's "Grammar Q65 and Q66",
+taken in); Q1 done at 4ece9b6a (the commit that recorded 43 of 43 stored); Q6 done at 41bbc928 (the 6 Nov drop's
+intake, whose three unnumbered steps carry the work); Q8 dropped as §W.8's duplicate of Q64; Q25 dropped by §P.2 (the
+moods retired); Q29 done at 8ad5496b (the surface filed and both holds lifted); Q41 done at fbec00df and Q43 at
+b59c852d (each row said nothing was owed); Q30 stays open on one question to Design, closing on its answer. **Four
+decided by the coordinator:** Q52 and Q26 dropped, Q48 closed as ruled and watched (9211955a, the commit recording the
+7 Nov ruling), Q58 ruled §43 (report-only with its watch, decided not pending). **Adam's five rulings:** Q34 ruled out
+(community rating and have/want counts are not shown); Q33, Q35 and Q36 ruled in (gatefold text, barcode, the full
+date), one build once Design places them, which the coordinator is asking; Q37 becomes work (store formed-year,
+origin and members and use them in the grounding). Q31 and Q32 stay open and the coordinator's. **`parked` is a status
+now** (`scripts/check-queue.mjs`, test first: an unknown status before, counted apart from open after), applied to Q3,
+Q9, Q23, Q24, Q27, Q38, Q42, Q50, Q51, Q54, Q56, Q60, Q63, Q68 and Q69, Q27 keeping its 6.4 GB of 7.5 visible. The
+check reads: 65 items, open 21, done 22, dropped 2, ruled 5, parked 15, consistency nothing to report, Q47 the one
+row blocked on Adam (five days). **Three rows flip in a second commit:** Q26, Q52 and Q34 are dropped by decision and
+not by a section, and a dropped row names the commit that records the drop, which is this one, so each reads open with
+the decision stated until the next commit names it. Q67 and Q70 now name their commits (550fbe84, 65a0eba1), closing
+the check's two "done names no commit" lines. The restatement of Q22's control could not be written to Downloads from
+this session (the folder refuses the sandbox's writes), so it travels in the report.
