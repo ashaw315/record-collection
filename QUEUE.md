@@ -137,10 +137,10 @@ Nov, when Adam ruled on all four.
 
 | id | status | item | record lives in |
 |---|---|---|---|
-| Q33 | open | Format text ("Gatefold", on 39 records): ruled in by Adam 11 Nov; waits on Design's placement on the record page, which the coordinator is asking, since §26's lower region has six rows already; one build with Q35 and Q36 | the coordinator, 11 Nov; §26 |
+| Q33 | open | Format text ("Gatefold", on 39 records): ruled in by Adam 11 Nov, placed by Design's §66 the same day (a Pressing detail row after Colour), built at step 179 on 12 Nov; closes with the next commit naming the build's | §66; the handoff's step 179 |
 | Q34 | dropped a326b46a | Community rating and have/want counts: ruled out by Adam 11 Nov, not shown | the coordinator, 11 Nov; NOTES, 11 Nov (tenth) |
-| Q35 | open | Barcode: ruled in by Adam 11 Nov; waits on Design's placement, with Q33 and Q36 | the coordinator, 11 Nov; §26 |
-| Q36 | open | The full release date rather than the year alone: ruled in by Adam 11 Nov; waits on Design's placement, with Q33 and Q35 | the coordinator, 11 Nov; §26 |
+| Q35 | open | Barcode: ruled in by Adam 11 Nov, placed by §66 (Pressing detail's last row, and reached by search through the record's current pressing), built at step 179; closes with the next commit naming the build's; the barcode rows for releases cached before it are Adam's backfill run | §66; the handoff's step 179 |
+| Q36 | open | The full release date rather than the year alone: ruled in by Adam 11 Nov, placed by §66 (in place of the pressed year at the PRESSING line's end), built at step 179; closes with the next commit naming the build's | §66; the handoff's step 179 |
 
 ## Answered 11 Nov
 

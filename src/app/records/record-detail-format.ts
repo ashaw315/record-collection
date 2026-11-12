@@ -42,7 +42,14 @@ export function vinylWeight(grams: number | null): string | undefined {
  * rather than an empty one — a found-or-created pressing row can legitimately
  * carry almost nothing (§4).
  */
-export function pressingFacts(pressing: PressingFields): PressingFact[] {
+/**
+ * §66 (Design, 11 Nov; step 179): the two fields the cached release holds and the pressing's columns do not. "Format
+ * after Colour and Barcode last, each drawn only where the record has one": the format text describes the object, as
+ * weight and colour do, so it stands beside them; the barcode identifies the pressing, so it is last and in the figures.
+ */
+export type ReleaseFacts = { formatText: string | null; barcode: string | null };
+
+export function pressingFacts(pressing: PressingFields, release: ReleaseFacts = { formatText: null, barcode: null }): PressingFact[] {
   const facts: PressingFact[] = [];
 
   const push = (label: string, value: string | null | undefined, mono = false) => {
@@ -65,6 +72,8 @@ export function pressingFacts(pressing: PressingFields): PressingFact[] {
   push('Country', pressing.countryPressed);
   push('Weight', vinylWeight(pressing.vinylWeightGrams));
   push('Colour', pressing.colorVariant);
+  /* §66: the format text as Discogs gives it, after Colour. */
+  push('Format', release.formatText);
 
   /**
    * `is_reissue` is a boolean, so false is a real answer rather than an absent
@@ -72,6 +81,8 @@ export function pressingFacts(pressing: PressingFields): PressingFact[] {
    * "Reissue" on a reissue is what a collector is looking for.
    */
   if (pressing.isReissue) facts.push({ label: 'Reissue', value: 'Yes' });
+  /* §66: the barcode last, "the one row that identifies rather than describes", in the figures as the catalogue number is. */
+  push('Barcode', release.barcode, true);
 
   return facts;
 }

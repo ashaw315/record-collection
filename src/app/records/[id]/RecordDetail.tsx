@@ -6,7 +6,7 @@ import { TracklistSection } from './TracklistSection';
 import type { TracklistModel } from './tracklist';
 import { CHIP_HEIGHT, SECTION_RULE } from './extended-grid';
 import { formatPrice } from '../../collection-format';
-import { pressingFacts } from '../record-detail-format';
+import { pressingFacts, type ReleaseFacts } from '../record-detail-format';
 import { priceTypeMeaning, type PriceType } from './price-line';
 import type { HydratedRecord } from '@/lib/db/queries/records';
 
@@ -57,8 +57,11 @@ export function RecordDetail({
   base,
   ladder,
   tracklist,
+  release = { formatText: null, barcode: null },
 }: {
   record: HydratedRecord;
+  /** §66 (179): the format text and the barcode from the cached release, two rows of Pressing detail where the record has them. */
+  release?: ReleaseFacts;
   /** The record's ladder, for §25's figures and §26's flats. */
   ladder: RecordLadder | null;
   /** §5.5's base step, for §9.3's rail bar. Null when the record has no cover. */
@@ -77,6 +80,7 @@ export function RecordDetail({
       colorVariant: null,
       isReissue: false,
     },
+    release,
   );
 
   /**

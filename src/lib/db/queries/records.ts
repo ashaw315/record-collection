@@ -1,5 +1,6 @@
 import 'server-only';
 import { and, asc, desc, eq, exists, gte, ilike, inArray, lte, or, sql } from 'drizzle-orm';
+import { barcodeDigits } from '@/lib/discogs/release-fields';
 import type { AnyPgColumn } from 'drizzle-orm/pg-core';
 import { isForeignKeyViolation } from '@/lib/api/errors';
 import { escapeLikePattern } from '@/lib/api/like';
@@ -402,6 +403,23 @@ export function buildWhere(filters: RecordFilters) {
               ),
             ),
         ),
+        /*
+          §66 (step 179): the barcode, "compared by its digits alone", so a typed code matches with or without its
+          spaces and dashes and so does the stored one; the whole code, by equality, never a part by likeness. Through
+          the record's current pressing, as every branch here is: an orphaned pressing belongs to no record and has no
+          page, so it can never be a hit (Design, 12 Nov).
+        */
+        ...(barcodeDigits(q) === ''
+          ? []
+          : [
+              exists(
+                getDb()
+                  .select({ one: sql`1` })
+                  .from(pressings)
+                  .innerJoin(discogsReleaseText, eq(discogsReleaseText.discogsReleaseId, pressings.discogsReleaseId))
+                  .where(and(eq(pressings.id, records.pressingId), eq(discogsReleaseText.kind, 'barcode'), eq(discogsReleaseText.text, barcodeDigits(q)))),
+              ),
+            ]),
       ),
     );
   }

@@ -94,6 +94,38 @@ describe('pressingFacts', () => {
   });
 });
 
+/*
+  §66 (Design, 11 Nov; step 179): "The format text and the barcode are two rows of Pressing detail, Format after Colour
+  and Barcode last, each drawn only where the record has one." The barcode "set in the figures the section already
+  uses", mono as the catalogue number is. Fails against facts that place Format elsewhere, draw Barcode before the
+  reissue, draw a row for an absent value, or set the barcode in the text face.
+*/
+describe('pressingFacts with the release’s three fields (§66)', () => {
+  const pressing = { catalogNumber: 'CLAY LP 3', matrixRunout: null, pressingPlant: 'Orlake', yearPressed: 1982, countryPressed: 'UK', vinylWeightGrams: 180, colorVariant: 'Black', isReissue: true };
+
+  it('draws Format after Colour and Barcode last, the barcode in mono', () => {
+    const labels = pressingFacts(pressing, { formatText: 'Gatefold', barcode: '8 43563 19772 1' }).map((fact) => fact.label);
+    expect(labels.indexOf('Format')).toBe(labels.indexOf('Colour') + 1);
+    expect(labels[labels.length - 1]).toBe('Barcode');
+    expect(labels.indexOf('Barcode')).toBeGreaterThan(labels.indexOf('Reissue'));
+    const barcode = pressingFacts(pressing, { formatText: 'Gatefold', barcode: '8 43563 19772 1' }).find((fact) => fact.label === 'Barcode');
+    expect(barcode).toEqual({ label: 'Barcode', value: '8 43563 19772 1', mono: true });
+    expect(pressingFacts(pressing, { formatText: 'Gatefold', barcode: null }).find((fact) => fact.label === 'Format')).toEqual({ label: 'Format', value: 'Gatefold' });
+  });
+
+  it('draws no row for either where the record has no value, and none at all without a release', () => {
+    const none = pressingFacts(pressing, { formatText: null, barcode: null }).map((fact) => fact.label);
+    expect(none).not.toContain('Format');
+    expect(none).not.toContain('Barcode');
+    expect(pressingFacts(pressing).map((fact) => fact.label)).toEqual(none);
+  });
+
+  it('draws the section’s only rows from the release where the pressing itself carries nothing', () => {
+    const bare = { catalogNumber: null, matrixRunout: null, pressingPlant: null, yearPressed: null, countryPressed: null, vinylWeightGrams: null, colorVariant: null, isReissue: false };
+    expect(pressingFacts(bare, { formatText: 'Gatefold', barcode: '843563197721' }).map((fact) => fact.label)).toEqual(['Format', 'Barcode']);
+  });
+});
+
 describe('vinylWeight', () => {
   it('names the unit, because the number alone is ambiguous', () => {
     expect(vinylWeight(180)).toBe('180 g');

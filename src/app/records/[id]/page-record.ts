@@ -6,6 +6,7 @@
  * wrong. §4.2 makes almost everything nullable, so every combination below is a
  * real record rather than a defensive case.
  */
+import { formatReleaseDate, releasedYear } from '@/lib/discogs/release-fields';
 
 /**
  * `Label · Catalog · Country, Year`, with absent parts and their separators
@@ -20,8 +21,17 @@ export function pressingLine(record: {
   catalogNumber: string | null;
   countryPressed: string | null;
   yearPressed: number | null;
+  /**
+   * §66 (step 179): the cached release's `released`. The full date stands in place of the pressed year it dates, as
+   * much of it as is known, and never where the release dates another year or gives none; with no pressed year, a
+   * date the release gives stands alone.
+   */
+  released?: string | null;
 }): string {
-  const origin = [record.countryPressed, record.yearPressed]
+  const date = formatReleaseDate(record.released);
+  const dated = date !== null && (record.yearPressed === null || releasedYear(record.released) === record.yearPressed);
+  const when: string | number | null = dated ? date : record.yearPressed;
+  const origin = [record.countryPressed, when]
     .filter((part): part is string | number => part !== null)
     .join(', ');
 

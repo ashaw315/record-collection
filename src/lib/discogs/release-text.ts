@@ -24,7 +24,10 @@ import { meaningful } from './fields';
   not store"; Adam ruled they are not kept, as they compete with the ABOUT he curates. The kind was
   derived for a day and never stored anywhere but the test database; the backfill had not run.
 */
-export const RELEASE_TEXT_KINDS = ['track', 'credit', 'company'] as const;
+/* `barcode` (§66, step 179): the digits as the text and the value as given as the detail; matched by equality on the digits, never by likeness. */
+import { releaseBarcodes } from './release-fields';
+
+export const RELEASE_TEXT_KINDS = ['track', 'credit', 'company', 'barcode'] as const;
 export type ReleaseTextKind = (typeof RELEASE_TEXT_KINDS)[number];
 
 export type ReleaseTextRow = { kind: ReleaseTextKind; ordinal: number; text: string; detail: string | null };
@@ -58,5 +61,7 @@ export function releaseText(payload: unknown): ReleaseTextRow[] {
     }
   }
   for (const company of raw.companies ?? []) add('company', meaningful(company.name), meaningful(company.entity_type_name));
+  /* §66: each distinct barcode once, by its digits, so a printed and a scanned reading of one code are one row. */
+  for (const barcode of releaseBarcodes(payload)) add('barcode', barcode.digits, barcode.given);
   return rows;
 }

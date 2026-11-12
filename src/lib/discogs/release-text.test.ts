@@ -29,6 +29,35 @@ const PAYLOAD = {
   notes: 'Includes a lyric sheet.\n\nMatrix on the runout.',
 };
 
+/*
+  §66 (Design, 11 Nov; step 179): "Search reaches the barcode, compared by its digits alone", through a record's
+  current pressing. A barcode row's text is the digits and its detail the value as Discogs gives it; two identifiers
+  with the same digits (printed and scanned) are one row. Fails against a derivation that keeps the spaces in the
+  text, lists the same barcode twice, or takes a matrix identifier for one.
+*/
+describe('releaseText: the barcode (§66)', () => {
+  const withBarcodes = {
+    ...PAYLOAD,
+    identifiers: [
+      { type: 'Barcode', value: '8 43563 19772 1', description: 'Printed' },
+      { type: 'Barcode', value: '843563197721', description: 'Scanned' },
+      { type: 'Matrix / Runout', value: 'SBR373 A', description: 'Runout' },
+      { type: 'Barcode', value: '5 012345 678900', description: 'Sticker' },
+    ],
+  };
+
+  it('lists each distinct barcode once by its digits, with the value as given as the detail', () => {
+    expect(releaseText(withBarcodes).filter((row) => row.kind === 'barcode')).toEqual([
+      { kind: 'barcode', ordinal: 0, text: '843563197721', detail: '8 43563 19772 1' },
+      { kind: 'barcode', ordinal: 1, text: '5012345678900', detail: '5 012345 678900' },
+    ]);
+  });
+
+  it('lists none for a release with no barcode identifier', () => {
+    expect(releaseText(PAYLOAD).filter((row) => row.kind === 'barcode')).toEqual([]);
+  });
+});
+
 describe('releaseText: the searchable text of a cached release', () => {
   it('lists every track by title with its position as the detail', () => {
     const tracks = releaseText(PAYLOAD).filter((row) => row.kind === 'track');

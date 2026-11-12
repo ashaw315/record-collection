@@ -13,6 +13,8 @@ import { RecordJournal } from './RecordJournal';
 import { RecordDetail } from './RecordDetail';
 import { RecordPage8a } from './RecordPage8a';
 import { pressingLine } from './page-record';
+import { readCachedRelease } from '@/lib/discogs/cache';
+import { releaseFields } from '@/lib/discogs/release-fields';
 import { recordLadder } from '@/lib/colour/record-ladder';
 import { Section } from './Section';
 import { marketFigures } from './market-median';
@@ -76,6 +78,11 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
   */
   const releaseId = record.pressing?.discogsReleaseId ?? null;
   const tracklist = releaseId === null ? null : tracklistModel(await releaseTextFor(releaseId), [record.label?.name ?? null, record.pressing?.pressingPlant ?? null].filter((n): n is string => n !== null));
+  /*
+    §66 (179): the format text, the barcode and the full release date, which are not columns and live only in the
+    cached release's payload; a record with no cached release has none of the three, and nothing is fetched here.
+  */
+  const release = releaseFields(releaseId === null ? null : ((await readCachedRelease(releaseId))?.payload ?? null));
 
   /* §4's 40px figure, and it must be the number it claims to be. */
   const figures = marketFigures(prices.map((row) => row.price));
@@ -197,6 +204,8 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
                   catalogNumber: record.pressing?.catalogNumber ?? null,
                   countryPressed: record.pressing?.countryPressed ?? null,
                   yearPressed: record.pressing?.yearPressed ?? null,
+                  /* §66: the full date in place of the pressed year it dates. */
+                  released: release.released,
                 }),
                 formatLine: record.format?.name ?? null,
                 matrixRunout: record.pressing?.matrixRunout ?? null,
@@ -304,7 +313,7 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
               with it — which §26’s rows supersede.
             */}
             <ExtendedGrid ladder={ladder}>
-              <RecordDetail record={record} base={ladderBase} ladder={ladder} tracklist={tracklist} />
+              <RecordDetail record={record} base={ladderBase} ladder={ladder} tracklist={tracklist} release={{ formatText: release.formatText, barcode: release.barcode }} />
 
               {/*
                 **No measure wrapper: §9.1 replaced it.** The rail is what holds

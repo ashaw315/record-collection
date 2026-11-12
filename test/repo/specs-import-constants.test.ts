@@ -66,6 +66,9 @@ const GOVERNED = [
   /* 173c (10 Nov): the TRACKLIST section's assertions and its capture tool. */
   'e2e/tracklist-173.spec.ts',
   'e2e/capture/tracklist-173.capture.ts',
+  /* 179 (12 Nov): §66's three fields in Pressing detail and the PRESSING line, and their capture tool. */
+  'e2e/release-fields-179.spec.ts',
+  'e2e/capture/release-fields-179.capture.ts',
   'e2e/capture/about-lines.capture.ts',
   'e2e/capture/step29.capture.ts',
   'e2e/capture/real-captures.capture.ts',

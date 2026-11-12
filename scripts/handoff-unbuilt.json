@@ -53,10 +53,5 @@
     "head": "§W.13: ADD RECORD out of the rail",
     "status": "unbuilt",
     "evidence": "Ruled 8 Nov (\"ADD RECORD leaves the rail\"). The rail still draws Add record at its foot below a full-bleed rule (src/app/WallRail.tsx:270), checked 8 Nov."
-  },
-  {
-    "head": "§66: three fields from the release",
-    "status": "unbuilt",
-    "evidence": "Arrived 11 Nov (\"Three release fields\", refs/drops/2026-11-11-09): §66 on the Record Detail 8a card, new. Nothing draws a format text, a barcode or a full date (RecordPage8a.tsx draws releaseYear and yearPressed as years; the schema holds no barcode or format-text column, and the full date is only the cached release payload's `released`), and search reaches no barcode. The coordinator's sequence: the report-first bullet before the date, Q71 verified before the barcode's search half, both sides of the barcode comparison normalised. Checked 11 Nov."
   }
 ]

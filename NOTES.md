@@ -56681,3 +56681,55 @@ table's and the grid's sidebar ASK and SURPRISE ME abut with nothing between the
 before this step (the far view's band and the rail space them by their rules; the sidebar never had one); and in the
 shelf's rail the count line "12 without an About yet." takes two lines at the rail's width where "4 not tagged yet."
 took one. Neither changed here; both are in the stills.
+
+**178's gate (43150833394 on e31d94d3) green on all four halves,** read from the artifacts: chromium 1077 passed, 1
+skipped (pick-moods-157's ten retired, the ask spec's eight in); mobile 394 passed, 4 skipped; report-only 1 passed;
+unit 5142 passed, 3 skipped; ledgers clean with labels 1 to 3 standing as fixtures', no pressings line; trees
+unchanged. The ship's check refused twice before it ran clean: once before any check, the moods spec's deletion
+already staged from `git rm` (unstaged and named as a path instead), and once on the two pinned contracts above.
+
+## 12 Nov (second): step 179, §66's three fields from the release
+
+**Built while the two drops of 12 Nov ("Asking line in view" resent, "Q22 control answered") have not reached
+docs/design** (the coordinator: Adam is placing them; the last drops landed in the repository's root). The control's
+corrections they carry (one on the shelf with a re-roll pulling the next nearest, SEARCH's field copied, "Asking isn't
+set up yet.") wait on the card; the exclusion stays in its plural form as built (the set the last answer named, held
+out while enough remain) and nothing is asserted on the singular or on a "tier", as the coordinator asked.
+
+**The unit's shape is in the handoff's 179 line.** What it does not say: no schema change, by choice. The three fields
+live only in the cached release payload, keyed by the pressing's Discogs id, which the page already reads for the
+tracklist, so the record page reads them from there and search reaches the barcode through the release's text rows,
+the mechanism §65 built, with a `barcode` kind whose text is the digits. A column for each would have been a migration
+§4 does not specify and a second copy of what the cache holds. The cost is Adam's: `discogs:backfill-text` regenerates
+every cached release's rows and has to run on production for the barcodes of releases cached before this deploy,
+since `storeReleaseText` writes rows only where a release is cached anew. Until then search reaches the barcodes of
+releases cached since.
+
+**The date never invents a day, and never dates the wrong year:** `formatReleaseDate` says what `released` says and
+null for a shape it does not know; the PRESSING line takes the date only where its year equals the pressed year (or
+where there is no pressed year), so a release dated to another year leaves the pressed year as it was. In production
+the two never disagree (the report-first figures: 52 of 52 equal), so the branch is a guard, asserted but idle.
+
+**Test first and green:** release-fields (6), the barcode rows (2), the line's date (3), the two rows (3), the search
+(3: typed with spaces, dashes and none; a part of the code reaches nothing; the tracklist still reached), the e2e spec
+(4) on seeded releases; typecheck, lint at baseline. The e2e spec was written after the page's wiring, the unit and
+integration tests being the first red; its four cases each name the page or the route before the step. **The covering
+run** (the fourteen specs that touch Pressing detail or seed releases, chromium and mobile): 416 passed, 2 failed on
+mobile in discogs-prefill at load 16 to 23, both a 5-second wait for the prefill's inline-create box; alone on both
+projects at load 10, 4 of 4, so the load and not the diff, which touches nothing the prefill box reads. **The capture's
+first run was flaky** on its 390 half: the two windows' tests run in parallel workers and drew the same seeded release
+id from the clock in one millisecond, so the second worker's pressing POST found the first's row (200, not 201); the
+retry passed and the ids are random now, in the tool and in the spec.
+
+**179's first ship refused on eight tests, three families, read from the log:** the index's assertion 7 on the tree,
+because the Mood Pick card had arrived in docs/design at 08:02 with two new withdrawal sentences and its change file
+("Answer is what is shown", refs/drops/2026-11-12-01) had not been applied, a half-arrived drop the check reads whole;
+the coarse-captures rule, since the capture tool took a full-page shot in a file that turns touch on (Chromium drops
+the touch emulation while it draws one; `wholePage` is the helper, now used); and the record-screen enumeration, since
+the new spec drives `/records/[id]` and was not in GOVERNED, which also means it may not type 900, 8a's budget, so
+both files import NO_SCROLL_HEIGHT. **The drop taken in with 179:** the two entries are placed before the mood pick
+block's first `P.3/` entry as the file asks; that entry is the block's first, since the file orders entries by arrival
+and not by section, so "the §P.2 block ends there" has no block to be true of and the entries land inside the mood
+pick block, at its head. Its Change 2 (a Provisionals wording) names text that is not in the tree, because "Q22
+control answered", which this file assumes applied, has not arrived; "Asking line in view" has not either. Two of
+today's four files are in docs/design.
