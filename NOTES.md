@@ -56914,3 +56914,26 @@ that skipped the close's pop. **A flake found on the way:** the deleted-row test
 landing's replace, 1 in 8 on chromium with the source untouched; polled, 16 of 16. Step level: the history spec and
 manage.spec.ts on chromium, mobile and report-only, 92 passed at load 9 to 13; typecheck; lint at baseline; the
 build. A screen's behaviour changed: the ship is a gate.
+
+**Shipped as e5ac4fcd; its gate (43351172456) is GREEN on all four halves, read from the artifacts:** chromium 1091
+passed, 1 skipped, ledger clean, OK (four more than 5c2c8766's 1087: five new tests in the history spec, one replacing
+the tall-form test); mobile 394 passed, 4 skipped, OK; report-only 3 passed, OK; unit 5168 passed, 3 skipped, OK. No
+flakes.
+
+### 13 Nov — "Count line restored" and "Five in the column" taken in (card 04548440)
+
+**A fourth consumed step, the lapse of 12 Nov (sixth) once more.** "Count line restored" anchors on the count-line
+bullet of Design's unnumbered "§P.4, §P.5 and §P.6: what the ask field's captures found", and the bullet was not in the
+tree: a62651fe applied that step and replaced it with 182's Done line in the same commit, so it never stood there, and
+182's block named an `origin` saying the file carried no unnumbered step, which was wrong. The e5ac4fcd sweep restored
+the three steps 177 to 179 consumed and missed this one, because it looked for steps removed between commits and this
+one was never added. Restored verbatim from its change file under 182's Done line, Change 1 applied to the restored
+bullet (the change file says to apply it to the Done line's owed work if the step was numbered; restoring the step is
+how the twins carry owed work, so it went to the step, and the report says so). 182's block discharges it now, as one
+part, with "Code's work unbuilt" until the count line is built. **The check that would have caught it:** every change
+file landed that holds an "Unnumbered, for Code to number" line should find that head in the handoff; nothing compares
+the landed list with the heads. Proposed for the twins test, not built.
+
+**Design's held-cell step stands unbuilt with its claim withdrawn.** `P.4/held-wholly-in-view` withdraws the cell held
+at the window's top; the unnumbered "§P.4: the cell held in the count column" step still asks Code to hold it and is
+in `handoff-unbuilt.json`. Code doesn't edit Design's step; asked whether it is retired.
