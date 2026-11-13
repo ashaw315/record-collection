@@ -57035,3 +57035,30 @@ reader cannot reach it. Reported, not asserted; nothing built for windows below 
 
 **Q72 written** (Adam, 13 Nov): a record added gets its ABOUT and embedding, stored in one transaction so they cannot
 diverge; placed after Q37.
+
+## 13 Nov (eighth): Q45 closed by reconciliation; the title path held with the key absent; the count line's place; the field's overflow captured
+
+**Gates.** a1f5252b (43488144449) and bf0356a1 (43491166968), read from the downloaded logs: unit 5183 passed, 3
+skipped; chromium 1091 passed, 1 skipped, ledger clean; mobile 394 passed, 4 skipped; report-only 4 and 5 passed; no
+flaky line; the verdict job success on both.
+
+**Q45 closed at 1012260.** Its row closed on a gate with none of the seven `settled()` sites in the runs table; gate
+42314309767 was that gate on 6 Nov, and sweep-twice ran that evening. No gate since has failed or flaked at the seven or
+at the eleven call sites counted later: the flakes since are region-remount-q48:82, record-band-43:33 and ring-144's
+seed. Step 170's precondition is met. The order (the coordinator): 184 and 185, then 170, then Q37, then Q72.
+
+**The title path with the key absent (§P.6: "the title path, which needs no provider, still answers").** The route
+resolves a title by §T.4's key before it checks the key, so a title asks from the record's stored vector with no
+request and no key. Nothing held it in the state production is in: the title test ran with the key set. A test now asks
+a title with the key empty and expects 200 from the title; staged with the key check moved before the title, it failed
+(and the 503 test with it, its log line absent from the control); restored, 8 passed. The limit: a title whose record
+has no stored vector (no ABOUT) is not a title ask, falls to the phrase path, and 503s, "Not set up yet."
+
+**The count line is drawn between the field and ASK** (PickControl.tsx: the field, the count line, ASK, SURPRISE ME,
+the slot). The card puts it beneath the control, whose order ends with the slot (§P.5, §P.6), so it belongs after
+SURPRISE ME; the card does not say whether it is the slot's own content or a line of its own beneath the slot. Put to
+Design by the coordinator; built in 184 once ruled.
+
+**The ask field's overflow captured** (`docs/captures/ask-overflow/`, for Design, nothing built): a 365.3-wide phrase
+in a 112 field shows 31% in the rail as a column; the sidebar's 300 shows 82%; the 390 band's 354 shows 97%; only the
+far view's band holds it all. So the overflow is not the rail column's alone.

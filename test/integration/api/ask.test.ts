@@ -146,4 +146,17 @@ describe('POST /api/ask', () => {
     expect(bodies).toEqual([]);
     expect(logged.mock.calls.map((c) => c.join(' ')).join('\n')).toMatch(/OPENAI_API_KEY is not set/);
   });
+
+  /* §P.6: "the title path, which needs no provider, still answers." Production's state on 13 Nov, the key absent in Vercel. Fails against a key check placed before the title is resolved. */
+  it('answers a title ask with the key absent, from the record’s stored vector, with no request', async () => {
+    const { rain, drive, sunday } = await seedFour();
+    vi.stubEnv('OPENAI_API_KEY', '');
+    const bodies = phraseEmbeds([0, 1]);
+    const response = await ask(request({ phrase: 'the drive', pool: [rain, drive, sunday], take: 3 }));
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body).toMatchObject({ from: 'title', askedFrom: drive, unanswerable: false });
+    expect(body.answers.map((a: { recordId: string }) => a.recordId)).toEqual([rain, sunday]);
+    expect(bodies).toEqual([]);
+  });
 });

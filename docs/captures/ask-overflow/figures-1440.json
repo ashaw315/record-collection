@@ -1,0 +1,82 @@
+[
+  {
+    "host": "the shelf’s rail, a column",
+    "window": "1440 × 900",
+    "file": "shelf-1440-typing.png",
+    "contentBox": 112,
+    "phraseWidth": 365.3,
+    "inView": "31%"
+  },
+  {
+    "host": "the shelf’s rail, a column",
+    "window": "1440 × 900",
+    "file": "shelf-1440-left.png",
+    "contentBox": 112,
+    "phraseWidth": 365.3,
+    "inView": "31%"
+  },
+  {
+    "host": "the far view’s rail, a column",
+    "window": "1440 × 900",
+    "file": "far-view-1440-typing.png",
+    "contentBox": 112,
+    "phraseWidth": 365.3,
+    "inView": "31%"
+  },
+  {
+    "host": "the far view’s rail, a column",
+    "window": "1440 × 900",
+    "file": "far-view-1440-left.png",
+    "contentBox": 112,
+    "phraseWidth": 365.3,
+    "inView": "31%"
+  },
+  {
+    "host": "the far view’s rail, a band",
+    "window": "1273 × 900",
+    "file": "far-band-1273-typing.png",
+    "contentBox": 1237,
+    "phraseWidth": 365.3,
+    "inView": "100%"
+  },
+  {
+    "host": "the far view’s rail, a band",
+    "window": "1273 × 900",
+    "file": "far-band-1273-left.png",
+    "contentBox": 1237,
+    "phraseWidth": 365.3,
+    "inView": "100%"
+  },
+  {
+    "host": "the table’s sidebar",
+    "window": "1440 × 900",
+    "file": "table-1440-typing.png",
+    "contentBox": 300,
+    "phraseWidth": 365.3,
+    "inView": "82%"
+  },
+  {
+    "host": "the table’s sidebar",
+    "window": "1440 × 900",
+    "file": "table-1440-left.png",
+    "contentBox": 300,
+    "phraseWidth": 365.3,
+    "inView": "82%"
+  },
+  {
+    "host": "the grid’s sidebar",
+    "window": "1440 × 900",
+    "file": "grid-1440-typing.png",
+    "contentBox": 300,
+    "phraseWidth": 365.3,
+    "inView": "82%"
+  },
+  {
+    "host": "the grid’s sidebar",
+    "window": "1440 × 900",
+    "file": "grid-1440-left.png",
+    "contentBox": 300,
+    "phraseWidth": 365.3,
+    "inView": "82%"
+  }
+]
