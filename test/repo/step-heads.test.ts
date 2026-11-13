@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { absent, GONE, headsNamed, RECORD, staleGone } from '../../scripts/step-heads.mjs';
+import { absent, check, GONE, headsNamed, RECORD, staleGone } from '../../scripts/step-heads.mjs';
 
 /**
  * **A step a change file names is a step the handoff holds (the coordinator, 13 Nov).** Six of Design's unnumbered
@@ -48,6 +48,38 @@ describe('absent names a recorded head the handoff does not hold', () => {
     const gone: Gone[] = [{ head: '§P.6: the not-configured message, reworded', by: 'X', how: 'deleted', line: 'Delete the step' }];
     expect(absent(record, `${DONE}\n`, gone)).toEqual([]);
     expect(staleGone(`${DONE}\n\n${STEP}\n`, gone)).toEqual(['§P.6: the not-configured message, reworded']);
+  });
+});
+
+/*
+ * The intake runs check() wherever it runs, and CI's checkout has no drop refs (refs/drops is local): on 13 Nov the gate
+ * on 7e1e37cf crashed in code-region's intake test at `git ls-tree refs/drops/2026-10-26-02`. Absent refs are absent,
+ * not broken: the committed record stands and is held to the handoff by the test below. A landed ref missing where
+ * other refs exist is broken, and fails by name.
+ */
+describe('check() where the drop refs are absent, or one is missing', () => {
+  it('leaves the committed record as it is and says the refs are absent, where there are no drop refs', () => {
+    const before = readFileSync(RECORD, 'utf8');
+    const git = (...args: string[]) => {
+      if (args[0] === 'for-each-ref') return '';
+      throw new Error(`fatal: Not a valid object name (${args.join(' ')})`);
+    };
+    const result = check(git);
+    expect(readFileSync(RECORD, 'utf8')).toBe(before);
+    expect(result.ok).toBe(true);
+    expect(result.lines.join('\n')).toMatch(/no drop refs in this checkout: the committed record stands/);
+  });
+
+  it('fails naming the file whose ref is missing, where other refs exist, and writes nothing', () => {
+    const before = readFileSync(RECORD, 'utf8');
+    const git = (...args: string[]) => {
+      if (args[0] === 'for-each-ref') return 'refs/drops/2026-11-13-03\n';
+      throw new Error(`fatal: Not a valid object name (${args.join(' ')})`);
+    };
+    const result = check(git);
+    expect(readFileSync(RECORD, 'utf8')).toBe(before);
+    expect(result.ok).toBe(false);
+    expect(result.lines.join('\n')).toMatch(/MISSING REF {2}refs\/drops\/2026-10-26-02/);
   });
 });
 

@@ -56982,3 +56982,13 @@ count-line bullet. **Change 3 conflates widest with largest** ("the count of all
 widest two-digit N is 44 (102.4 of 112.0); the coordinator rules 184 asserts one line at every N up to the record
 count. **Step 170** (§W.8, the bound at a candidate) is parked as Q64 behind Q22, its precondition Q45 open in QUEUE;
 da23ad52 records a gate green with none of Q45's seven sites, which may meet Q45's close condition: to reconcile.
+
+### 13 Nov (fourth) — the gate on 7e1e37cf: the step-heads check crashed where the drop refs are absent
+
+Gate 43470529524: commit-id, e2e chromium and e2e mobile green; unit 2 failed, 5175 passed, 3 skipped, verdict
+failure. Both failures were code-region's intake tests, crashing at `git ls-tree refs/drops/2026-10-26-02` in
+`step-heads.mjs`: CI's checkout has no drop refs, which I knew and did not apply to the intake's own call, and the
+same path would have rewritten the record empty. Fixed test first: with no refs at all `check()` says so and leaves
+the committed record standing (the suite's test holds it to the handoff); with a landed ref missing where others
+exist it fails naming the ref and its files, writing nothing. Both red with CI's own error, then green. Staged as CI
+runs it: a fresh clone (0 drop refs) failed code-region's same 2 tests on HEAD's code and passed 25 of 25 with the fix.

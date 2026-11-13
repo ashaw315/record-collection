@@ -91,6 +91,16 @@ export function goneUnfounded(gone, git) {
 
 /** Records the heads and judges them; the lines the intake prints, and whether it may proceed. */
 export function check(git, write = true) {
+  /*
+    CI's checkout carries no drop refs (they are local), and the intake runs there in code-region's tests: absent refs
+    leave the committed record standing, held to the handoff by step-heads.test.ts, and nothing is rewritten. A landed
+    file's ref missing where other refs exist is broken, not absent: it fails by name, before anything is written.
+  */
+  const refs = new Set(git('for-each-ref', '--format=%(refname)', 'refs/drops').split('\n').filter(Boolean));
+  if (refs.size === 0) return { ok: true, lines: ['step heads: no drop refs in this checkout: the committed record stands, held to the handoff by test/repo/step-heads.test.ts'] };
+  const landed = readFileSync(LANDED, 'utf8').trim().split('\n').map((l) => JSON.parse(l)).filter((x) => x.file && x.ref);
+  const missingRefs = [...new Set(landed.map((x) => x.ref).filter((r) => !refs.has(r)))];
+  if (missingRefs.length > 0) return { ok: false, lines: [`step heads: ${missingRefs.length} landed ref(s) missing from this checkout's ${refs.size}; nothing recorded`, ...missingRefs.map((r) => `  MISSING REF  ${r}  (${landed.filter((x) => x.ref === r).map((x) => x.file).join(', ')})`)] };
   const { record, unread } = fromRefs(git);
   const text = `${JSON.stringify(record, null, 2)}\n`;
   if (write && (!existsSync(RECORD) || readFileSync(RECORD, 'utf8') !== text)) writeFileSync(RECORD, text);
