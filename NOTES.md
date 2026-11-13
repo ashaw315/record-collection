@@ -57008,3 +57008,12 @@ not.** Staged in a clone with the drop refs: a prose-only change file named with
 intake (suite narrowed to run-result, since no suite test reads names): landed record 0 appended, step heads blind to
 it, INTAKE OK, exit 0. The 13 Nov case failed only because that file deleted a step. The fix proposed: fail the intake
 on a file new in the drop that matches no name kind.
+
+### 13 Nov (sixth) — a misnamed change file fails the intake on its name alone
+
+`scripts/drop-names.mjs`: the intake lists the names the newest drop ref holds and the one before did not, and fails on
+a Markdown file among them that is no change file (" - for Code to <verb>"), FOR CODE note or standing document,
+printing MISNAMED. The landed-list matcher is not widened. Tests first (red on the missing module; the first case fails
+any matcher that passes every name). Staged in a clone with the drop refs: a misnamed file beside a named one, INTAKE
+NOT OK, exit 1, the named one recorded. On today's real refs: -02 (the 13 Nov arrival) misnamed, -03 (the rename) and
+-04 clean. Committed and pushed while f13fbc6f's gate ran; its own gate dispatched after.

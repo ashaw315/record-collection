@@ -138,8 +138,14 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   const { check: checkHeads, gitIn } = await import('./step-heads.mjs');
   const heads = checkHeads(gitIn);
   process.stdout.write(`${heads.lines.join('\n')}\n`);
+  /* A misnamed change file is never recorded as landed, so its name fails the intake here (scripts/drop-names.mjs, 13 Nov). */
+  const { misnamed, newestAdded } = await import('./drop-names.mjs');
+  const drop = newestAdded(gitIn);
+  const wrong = misnamed(drop.added);
+  process.stdout.write(`drop names: ${drop.ref === null ? 'no drop refs in this checkout' : `${drop.added.length} new in ${drop.ref}, ${wrong.length} misnamed`}\n`);
+  for (const name of wrong) process.stdout.write(`  MISNAMED  ${name}: a change file's name ends " - for Code to <verb>"; the landed list cannot record it\n`);
   const checks = intake(spawned);
-  const ok = result.unanchored.length === 0 && heads.ok && checks.ok;
+  const ok = result.unanchored.length === 0 && heads.ok && wrong.length === 0 && checks.ok;
   process.stdout.write(`${checks.lines.join('\n')}\n${ok ? 'INTAKE OK' : 'INTAKE NOT OK: do not commit this drop until what failed above is read'}\n`);
   process.exit(ok ? 0 : 1);
 }
