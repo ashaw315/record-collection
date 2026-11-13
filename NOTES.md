@@ -56963,3 +56963,22 @@ never below 5s (`test/helpers/spawn-budget.ts`); commit-checked's pipe test, 14.
 same rule. `test/repo/spawn-budget.test.ts` fails a spawning file without the call (a source check), red first
 listing all 32. `vi.setConfig` staged: a 6s test passed under it and timed out at 5000ms without. **Not staged: the
 suite under load 30 with the new budgets**; the at-rest run is 949 passed.
+
+### 13 Nov (third) — "P4 watch and P6 count line 13 Nov" taken in (card 1e067964), renamed by hand
+
+**The change file arrived as "P4 watch and P6 count line 13 Nov.md", without the " - for Code to apply" suffix**,
+so the landed list (which reads the name only, `scripts/landed-list.mjs`) did not see it, and the step-heads check
+called its excuse for the deleted held-cell step UNFOUNDED: INTAKE NOT OK, the rule making the case visible as it
+should. On the coordinator's word Code renamed it once by hand to "P4 watch and P6 count line 13 Nov - for Code to
+apply.md" (content unchanged, sha256 9853747c…), recorded at refs/drops/2026-11-13-03; the matcher is not widened and
+the header is still not evidence. Design follows the suffix by habit and has not been told it is load-bearing.
+
+**Applied, each anchor asserted once:** WITHDRAWALS gains `P.4/one-cell-in-column` after P.4/held-wholly-in-view's
+quote (325 entries); the five-cells step gains its Report bullet before Capture; the captures step's count line reads
+"N have no About." asserted at the widest N; Change 4 deletes "§P.4: the cell held in the count column" (never
+numbered), its unbuilt entry removed and its removal excused in `handoff-steps-gone.json` by this file's line;
+DESIGN-RULES gains "No two change files share a name."; both governs rows stand. 182's block carries the new
+count-line bullet. **Change 3 conflates widest with largest** ("the count of all records, two digits at 55"): the
+widest two-digit N is 44 (102.4 of 112.0); the coordinator rules 184 asserts one line at every N up to the record
+count. **Step 170** (§W.8, the bound at a candidate) is parked as Q64 behind Q22, its precondition Q45 open in QUEUE;
+da23ad52 records a gate green with none of Q45's seven sites, which may meet Q45's close condition: to reconcile.

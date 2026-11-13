@@ -402,5 +402,19 @@
         "how": "inserts"
       }
     ]
+  },
+  {
+    "file": "P4 watch and P6 count line 13 Nov",
+    "ref": "refs/drops/2026-11-13-03",
+    "heads": [
+      {
+        "head": "§P.4: five cells in the column host",
+        "how": "anchors"
+      },
+      {
+        "head": "§P.4, §P.5 and §P.6: what the ask field's captures found",
+        "how": "anchors"
+      }
+    ]
   }
 ]

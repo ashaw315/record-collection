@@ -45,11 +45,6 @@
     "evidence": "Ruled 8 Nov (\"ASK lit and the cell held\"), queued after 173 and 174 by the change file. PickControl draws ASK with CONTROL_LABEL, in ink, whatever its state (src/app/PickControl.tsx:205), checked 8 Nov."
   },
   {
-    "head": "§P.4: the cell held in the count column",
-    "status": "unbuilt",
-    "evidence": "Ruled 8 Nov (\"ASK lit and the cell held\"), queued after 173 and 174. The coordinator asks that the report of the smallest visible column height become an assertion failing when the column's visible height falls below the cell's, naming both (8 Nov), pending Design. Not checked against the code beyond that, 8 Nov. Its claim is withdrawn 13 Nov (`P.4/held-wholly-in-view`, \"Five in the column\"); the step stands as Design wrote it, and whether it is retired is Design's, asked 13 Nov."
-  },
-  {
     "head": "§W.13: ADD RECORD out of the rail",
     "status": "unbuilt",
     "evidence": "Ruled 8 Nov (\"ADD RECORD leaves the rail\"). The rail still draws Add record at its foot below a full-bleed rule (src/app/WallRail.tsx:270), checked 8 Nov."

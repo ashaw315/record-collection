@@ -853,13 +853,6 @@ Its rows are in the governs table above, one per section; this section does not 
   - **Assert** both states by computed colour, in every host.
   - **Capture** at 1440 × 900, column host, with no mood selected and with one selected.
   > ASK while inert is set in the label colour, as an inert mood is, and takes ink when a mood is selected; SURPRISE ME, which can always act, is always in ink.
-- **Unnumbered, for Code to number — §P.4: the cell held in the count column.**
-  - **Hold the cell** at the window's top inside the count column when the page has scrolled past its place, and never past the column's foot. The page doesn't move.
-  - **Assert** at 1440 × 768 and 1440 × 640, scrolled to SURPRISE ME and pressed: the cell is wholly in the window, and the scroll position is unchanged by the press.
-  - **Report** the smallest visible column height met, against the cell's.
-  - **Capture** both.
-  > Where the page has scrolled past the cell’s place, the cell holds at the window’s top inside the count column, and never past the column’s foot, so an answer asked from the foot of the rail stands in view without the page moving.
-
 - **Unnumbered, for Code to number — §W.13: ADD RECORD out of the rail.**
   - **Move:** where the rail is a column, take ADD RECORD and its rule out of the rail. Place it at the top right of the content beside the rail, as the table and the grid do, and propose its line and inset.
   - **The band host:** unchanged.
@@ -966,7 +959,7 @@ Its rows are in the governs table above, one per section; this section does not 
 
 - **Unnumbered, for Code to number — §P.4, §P.5 and §P.6: what the ask field's captures found.**
   - **Label the field** WHAT TO PLAY (Proposed). Assert it on one line at the rail's width.
-  - **Count line:** keep "N without an About yet." (Proposed), and assert one line at the rail's width, 320 and 1280, reading lines by line box, not by rect.
+  - **Count line:** "N have no About." (Proposed). Assert one line at the rail's width, 320 and 1280, by line box, at the widest N the collection can produce: the count of all records, two digits at 55.
   - **At 390,** end the answer with the control's closing hairline before the list.
   - **Key the answer's count to its form:** one where it's a pull, five where it's cells, never to the view's name.
   - **Fix the three defects above.** Report the count column's free height.
@@ -977,6 +970,7 @@ Its rows are in the governs table above, one per section; this section does not 
   - **Draw** the answer in the count column as five cells, two across, the nearest first, 24 between them, 24 below the count's last line.
   - **When the answer appears,** put its first row wholly inside the window wherever the page is scrolled. Let the rest run below, whole. Cut no cell and shrink none.
   - **Assert** at 1440 × 900 and 1440 × 768: the gap is 24, the first row is wholly in view, and every cell is reachable by scrolling. Do this with five un-wrapped captions and with the tallest five from `records.json`.
+  - **Report** the window height below which the first row doesn't fit beneath the count. Measure it; don't take Design's 494.
   - **Capture** the tallest five at both heights, scrolled to the rail's foot and pressed there, labelled by host and width, for Adam.
   > In the column host the answer is five cells, two across, the nearest first, with §T.5’s 24 between them.
 
