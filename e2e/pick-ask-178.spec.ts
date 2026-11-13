@@ -369,6 +369,119 @@ test('182, report: the count column’s free height on the far view at 1440 × 9
 });
 
 /*
+  §P.4's watch (Design, "P4 watch and P6 count line 13 Nov"; the five-cells step's Report bullet): the window height
+  below which the first row of the column host's answer does not fit beneath the count, measured and not taken from
+  Design's arithmetic of about 494, and what the build does today in a window that short (the coordinator, 13 Nov).
+  Swept down the heights at 1440 on the far view: the count's last line, the far region's clip edge, and the room
+  beneath the count at the ruled 24, against the tallest cell the collection's own captions make in the drawn answer
+  cell. Then, below the threshold, an ask pressed from the rail's foot: where today's one cell stands, what the region
+  clips, and whether scrolling reaches it. Reported, never asserted: Design rules the case on the figure.
+*/
+test('185, report: the column host\'s first-row threshold, swept down the heights, and what the build does below it', { tag: '@report-only' }, async ({ page }, testInfo) => {
+  const { artistId } = await fixture(page, ['J1', 'J2', 'J3', 'J4', 'J5']);
+  try {
+    const exported = JSON.parse(readFileSync('docs/measurements/ask-captions/records.json', 'utf8')) as { records: Array<{ title: string; artist: string }> };
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(`/?artistId=${artistId}`);
+    await wallMeasured(page);
+    await page.getByTestId('wall-zoom-out').click();
+    await page.locator('[data-wall="overview"]').waitFor({ timeout: 30_000 });
+    await page.getByTestId('wall-count-far').waitFor({ timeout: 30_000 });
+    await askFor(page, 'late night jazz');
+    await expect.poll(() => drawn(page), { timeout: 15_000 }).not.toHaveLength(0);
+    const drawnCount = (await drawn(page)).length;
+
+    /* The tallest cell the collection makes, measured in the drawn cell itself with each record's caption written in. */
+    const cell = await page.evaluate((records) => {
+      const el = Array.from(document.querySelectorAll<HTMLElement>('[data-pick-answer]')).find((e) => e.getClientRects().length > 0);
+      if (!el) return null;
+      const title = el.querySelector<HTMLElement>('[data-grid-title]');
+      const artist = el.querySelector<HTMLElement>('[data-grid-artist]');
+      const width = el.getBoundingClientRect().width;
+      if (!title || !artist) return { width, tallest: el.getBoundingClientRect().height, of: 'the drawn caption only (no title and artist elements found)' };
+      const [t0, a0] = [title.textContent, artist.textContent];
+      let tallest = 0;
+      let of = '';
+      for (const r of records) {
+        title.textContent = r.title;
+        artist.textContent = r.artist;
+        const h = el.getBoundingClientRect().height;
+        if (h > tallest) { tallest = h; of = r.title; }
+      }
+      title.textContent = t0;
+      artist.textContent = a0;
+      return { width, tallest, of: `"${of}"` };
+    }, exported.records);
+    if (cell === null) throw new Error('no drawn answer cell on the far view at 1440');
+
+    const measureAt = () => page.evaluate(() => {
+      const count = document.querySelector<HTMLElement>('[data-testid="wall-count-far"]');
+      const column = count?.parentElement ?? null;
+      if (!count || !column) return null;
+      const lines = Array.from(column.children).filter((el) => !el.hasAttribute('data-pick-answer'));
+      const last = lines[lines.length - 1] ?? count;
+      let clip: HTMLElement | null = column;
+      while (clip && getComputedStyle(clip).overflowY === 'visible') clip = clip.parentElement;
+      const y = window.scrollY;
+      return { lastLine: last.getBoundingClientRect().bottom + y, clipBottom: clip ? clip.getBoundingClientRect().bottom + y : Number.NaN, clipOverflow: clip ? getComputedStyle(clip).overflowY : 'none', window: window.innerHeight, page: document.documentElement.scrollHeight };
+    });
+
+    const rows: string[] = [];
+    let threshold: number | null = null;
+    for (let height = 900; height >= 360; height -= 10) {
+      await page.setViewportSize({ width: 1440, height });
+      const m = await measureAt();
+      if (m === null) { rows.push(`${height}: no count column`); continue; }
+      const room = m.clipBottom - (m.lastLine + 24);
+      if (room < cell.tallest && threshold === null) threshold = height;
+      if (height % 50 === 0 || (threshold === height)) rows.push(`${height}: last line ${m.lastLine.toFixed(1)}, clip ${m.clipBottom.toFixed(1)} (${m.clipOverflow}), room ${room.toFixed(1)}`);
+    }
+    /* The first height at which the row did not fit, refined to the pixel above it. */
+    let exact: number | null = null;
+    if (threshold !== null) {
+      for (let height = threshold + 10; height >= threshold; height -= 1) {
+        await page.setViewportSize({ width: 1440, height });
+        const m = await measureAt();
+        if (m !== null && m.clipBottom - (m.lastLine + 24) < cell.tallest) { exact = height + 1; break; }
+      }
+    }
+    testInfo.annotations.push({ type: 'tallest cell', description: `${cell.tallest.toFixed(1)} tall at ${cell.width.toFixed(0)} wide, ${cell.of}, of ${exported.records.length} captions; the answer drew ${drawnCount} cell(s) today` });
+    testInfo.annotations.push({ type: 'sweep at 1440 (every 50, and the first that fails)', description: rows.join('; ') });
+    testInfo.annotations.push({ type: 'threshold', description: exact === null ? 'the tallest first row fits at every height swept down to 360' : `the tallest first row fits beneath the count, at the ruled 24, in a window of ${exact} or taller, and not at ${exact - 1}` });
+
+    /* Below it: today's build, an ask pressed from the rail's foot. */
+    const below = exact === null ? 400 : Math.max(360, exact - 60);
+    await page.setViewportSize({ width: 1440, height: below });
+    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+    await field(page).fill('jazz late night');
+    await ask(page).click();
+    await expect.poll(() => drawn(page), { timeout: 15_000 }).not.toHaveLength(0);
+    const today = await page.evaluate(() => {
+      const el = Array.from(document.querySelectorAll<HTMLElement>('[data-pick-answer]')).find((e) => e.getClientRects().length > 0);
+      const count = document.querySelector<HTMLElement>('[data-testid="wall-count-far"]');
+      let clip: HTMLElement | null = count?.parentElement ?? null;
+      while (clip && getComputedStyle(clip).overflowY === 'visible') clip = clip.parentElement;
+      if (!el || !clip) return null;
+      const r = el.getBoundingClientRect();
+      const c = clip.getBoundingClientRect();
+      const before = window.scrollY;
+      window.scrollTo(0, 0);
+      const atTop = el.getBoundingClientRect();
+      window.scrollTo(0, before);
+      return { top: r.top, bottom: r.bottom, clipTop: c.top, clipBottom: c.bottom, window: window.innerHeight, scrollY: before, page: document.documentElement.scrollHeight, topAtTop: atTop.top, bottomAtTop: atTop.bottom };
+    });
+    if (today === null) throw new Error('no drawn cell below the threshold');
+    const shown = Math.max(0, Math.min(today.bottom, today.clipBottom, today.window) - Math.max(today.top, today.clipTop, 0));
+    testInfo.annotations.push({
+      type: `today, at 1440 × ${below}, asked from the rail's foot`,
+      description: `the page scrolled to ${today.scrollY} of ${today.page} in a ${today.window} window; the cell stands ${today.top.toFixed(1)} to ${today.bottom.toFixed(1)}, the far region clips at ${today.clipTop.toFixed(1)} to ${today.clipBottom.toFixed(1)}, so ${shown.toFixed(1)} of its ${(today.bottom - today.top).toFixed(1)} is visible; scrolled to the page's top it stands ${today.topAtTop.toFixed(1)} to ${today.bottomAtTop.toFixed(1)}`,
+    });
+  } finally {
+    await removeRecordsFor(artistId);
+  }
+});
+
+/*
   The stack of five cells as a range, not a number (the coordinator, 12 Nov): §P.4 caps no title's lines, so the stack
   runs from five un-wrapped captions to the tallest five the real collection produces. The 55 records' titles and
   artists, read from production by scripts/export-captions.mts, are rendered here one by one in a real cell's caption at

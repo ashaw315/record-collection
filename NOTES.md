@@ -57017,3 +57017,21 @@ printing MISNAMED. The landed-list matcher is not widened. Tests first (red on t
 any matcher that passes every name). Staged in a clone with the drop refs: a misnamed file beside a named one, INTAKE
 NOT OK, exit 1, the named one recorded. On today's real refs: -02 (the 13 Nov arrival) misnamed, -03 (the rename) and
 -04 clean. Committed and pushed while f13fbc6f's gate ran; its own gate dispatched after.
+
+### 13 Nov (seventh) — §P.4's watch measured: the first-row threshold, and what the build does below it
+
+Report-only, "185, report" in e2e/pick-ask-178.spec.ts, at 1440 on the far view, load 2 to 3. **The tallest cell** the
+55 captions make in the drawn answer cell is 259.5 tall at 160 wide ("Glenn Miller Plays Selections From…"), the same
+figure as 182's grid measurement. **The sweep, 900 down to 360:** the count's last line ends at 183.5 at every height;
+the far region (overflow hidden) clips at the window's foot; the room beneath the count at the ruled 24 is the window
+less 207.5. **The threshold: the tallest first row fits in a window of 467 or taller, and not at 466** (measured to the
+pixel, the row's foot at the region's clip edge, no margin below it). Design's 494 is 27 higher.
+
+**Today's build at 1440 × 407, asked from the rail's foot:** the answer is one cell, 240.0 tall with its own caption.
+The page is 779 tall and stays scrolled to 372, the foot, since the press does not scroll; the cell stands at the top
+of the count column, above the window, so 35.0 of its 240.0 is visible. Scrolled to the page's top, its foot is at
+460.4 against the region's clip at 407, so 53.4 of it is never visible at any scroll: overflow hidden cuts it, and the
+reader cannot reach it. Reported, not asserted; nothing built for windows below it (the coordinator).
+
+**Q72 written** (Adam, 13 Nov): a record added gets its ABOUT and embedding, stored in one transaction so they cannot
+diverge; placed after Q37.
