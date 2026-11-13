@@ -1,0 +1,71 @@
+[
+  {
+    "view": "near",
+    "field": {
+      "left": 18,
+      "right": 130,
+      "top": 520,
+      "bottom": 564
+    },
+    "rail": {
+      "left": 0,
+      "right": 148,
+      "top": 53,
+      "bottom": 779
+    },
+    "column": {
+      "left": 148,
+      "right": 568,
+      "top": 53,
+      "bottom": 900
+    },
+    "cells": [],
+    "widened": {
+      "left": 18,
+      "right": 568,
+      "top": 520,
+      "bottom": 564
+    },
+    "covered": 0,
+    "drawnFoot": 485.5,
+    "gapToField": 34.5
+  },
+  {
+    "view": "far",
+    "field": {
+      "left": 18,
+      "right": 130,
+      "top": 520,
+      "bottom": 564
+    },
+    "rail": {
+      "left": 0,
+      "right": 148,
+      "top": 53,
+      "bottom": 779
+    },
+    "column": {
+      "left": 182,
+      "right": 602,
+      "top": 87,
+      "bottom": 866
+    },
+    "cells": [
+      {
+        "left": 182,
+        "right": 342,
+        "top": 220.40625,
+        "bottom": 460.40625
+      }
+    ],
+    "widened": {
+      "left": 18,
+      "right": 602,
+      "top": 520,
+      "bottom": 564
+    },
+    "covered": 0,
+    "drawnFoot": 460.40625,
+    "gapToField": 59.59375
+  }
+]

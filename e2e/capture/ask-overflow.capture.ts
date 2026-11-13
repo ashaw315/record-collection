@@ -1,6 +1,11 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { test, type Page } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
+import { sql } from 'drizzle-orm';
+import { getTestDb } from '../../test/helpers/db';
+import { aboutHash } from '../../src/lib/embeddings/plan';
+import { EMBEDDING_MODEL } from '../../src/lib/openai/embeddings';
+import { stubEmbedding } from '../../src/lib/openai/stub-embedding';
 import { registerCleanup, trackArtist } from '../cleanup';
 import { removeRecordsFor, seedRecords } from '../seed';
 import { login } from '../sign-in';
@@ -19,7 +24,7 @@ import { nearViewMinWidth } from '../../src/app/wall/view-fork';
 const OUT = join('docs', 'captures', 'ask-overflow');
 registerCleanup();
 
-/** A phrase of the kind Adam typed, which Code was not shown: an ordinary sentence of what to play, 52 characters. */
+/** A phrase of the kind Adam typed, which Code was not shown: an ordinary sentence of what to play, 50 characters. */
 const PHRASE = 'something slow and warm for a rainy sunday morning';
 
 const control = (page: Page) => page.locator('[data-pick-control]').filter({ visible: true });
@@ -119,5 +124,99 @@ test.describe('narrow, a coarse pointer', () => {
       await removeRecordsFor(artistId);
     }
     writeFileSync(join(OUT, 'figures-390.json'), `${JSON.stringify(rows, null, 2)}\n`);
+  });
+});
+
+/*
+  The rail as a column on both views WITH an answer showing (the coordinator, 13 Nov, correcting the first brief):
+  Design's lean widens the field into the column beside the rail, assuming that column empty, while §P.4 puts the far
+  view's answer there. No widened field is built: the pictures are today's build, the figures say what a field widened
+  to the column's right edge would cover, and a separate `-outline` picture marks that box dashed, labelled as not a
+  design. Written to its own folder, since a committed capture is never rewritten.
+*/
+const ANSWER_OUT = join('docs', 'captures', 'ask-overflow-answer');
+const ABOUTS = ['A slow warm record for a rainy sunday morning.', 'Something warm and slow, a sunday record.', 'Rainy morning music, slow and warm.', 'A sunday morning record, warm strings.', 'Slow songs for rain.'];
+
+test.describe('the rail as a column with an answer showing', () => {
+  test.use({ viewport: { width: 1440, height: 900 } });
+  test('the near view and the far view at 1440 × 900, the phrase asked', async ({ page }) => {
+    test.skip(process.env.CAPTURE !== '1', 'A capture tool: run with CAPTURE=1');
+    test.setTimeout(240_000);
+    mkdirSync(ANSWER_OUT, { recursive: true });
+    await login(page);
+    const suffix = `overflowans${Date.now().toString(36)}`;
+    const artist = (await (await page.request.post('/api/artists', { data: { name: `Overflow-${suffix}` } })).json()) as { id: string };
+    trackArtist(artist.id);
+    await seedRecords(artist.id, 'Answer', suffix, ABOUTS.length);
+    const listed = (await (await page.request.get(`/api/records?artistId=${artist.id}&pageSize=100`)).json()) as { data: Array<{ id: string }> };
+    const db = getTestDb();
+    for (const [i, row] of listed.data.entries()) {
+      const about = ABOUTS[i % ABOUTS.length];
+      const vector = stubEmbedding(about);
+      await db.execute(sql`UPDATE records SET snippet = ${about} WHERE id = ${row.id}::uuid`);
+      await db.execute(sql`INSERT INTO record_embeddings (record_id, about_hash, model, dims, vector, embedded_at) VALUES (${row.id}::uuid, ${aboutHash(about)}, ${EMBEDDING_MODEL}, ${vector.length}, ${JSON.stringify(vector)}::jsonb, now())`);
+    }
+    const figures: Record<string, unknown>[] = [];
+    try {
+      for (const view of ['near', 'far'] as const) {
+        await page.goto(`/?artistId=${artist.id}`);
+        await wallMeasured(page);
+        if (view === 'far') {
+          await page.getByTestId('wall-zoom-out').click();
+          await page.locator('[data-wall="overview"]').waitFor({ timeout: 30_000 });
+        }
+        await field(page).fill(PHRASE);
+        await control(page).getByRole('button', { name: /^ask$/i }).click();
+        if (view === 'near') {
+          await expect.poll(() => page.locator('[data-wall-container]').getAttribute('data-phase'), { timeout: 30_000 }).toBe('landed');
+        } else {
+          await page.locator('[data-pick-answer]').filter({ visible: true }).first().waitFor({ timeout: 15_000 });
+        }
+        await page.evaluate(() => document.fonts.ready);
+        await page.mouse.move(0, 0);
+        await page.evaluate(() => window.scrollTo(0, 0));
+        const m = await page.evaluate((testId) => {
+          const box = (el: Element) => { const r = el.getBoundingClientRect(); return { left: r.left, right: r.right, top: r.top, bottom: r.bottom }; };
+          const input = Array.from(document.querySelectorAll<HTMLElement>('[data-pick-control] [data-ask-field]')).find((e) => e.getClientRects().length > 0) ?? null;
+          const rail = input?.closest('aside, nav, [data-rail]') ?? null;
+          const count = Array.from(document.querySelectorAll<HTMLElement>(`[data-testid="${testId}"]`)).find((e) => e.getClientRects().length > 0) ?? null;
+          /* The column is the widest ancestor of the count that still lies between the rail and the window's right edge: the count's own parent is only its text's width. */
+          const railRight = rail === null ? 0 : rail.getBoundingClientRect().right;
+          let column: HTMLElement | null = count;
+          while (column?.parentElement) {
+            const r = column.parentElement.getBoundingClientRect();
+            if (r.left < railRight - 1 || r.right > window.innerWidth - 1) break;
+            column = column.parentElement;
+          }
+          const cells = Array.from(document.querySelectorAll<HTMLElement>('[data-pick-answer]')).filter((e) => e.getClientRects().length > 0).map(box);
+          if (!input || !column) return null;
+          const f = box(input);
+          const c = box(column);
+          /* The box a field widened to the column's right edge would take: the field's own top and foot, from its left edge. */
+          const widened = { left: f.left, right: c.right, top: f.top, bottom: f.bottom };
+          const covered = cells.filter((x) => x.left < widened.right && x.right > widened.left && x.top < widened.bottom && x.bottom > widened.top);
+          /* What the column draws, whatever it is (the near view's pulled record is a panel there, not a cell): the foot of its lowest drawn leaf, the full-height rules left out. */
+          const drawnFoot = Math.max(...Array.from(column.querySelectorAll<HTMLElement>('*')).filter((e) => e.children.length === 0 && e.getClientRects().length > 0 && e.getBoundingClientRect().height > 0 && e.getBoundingClientRect().height < (c.bottom - c.top) / 2).map((e) => e.getBoundingClientRect().bottom));
+          return { field: f, rail: rail === null ? null : box(rail), column: c, cells, widened, covered: covered.length, drawnFoot, gapToField: f.top - drawnFoot };
+        }, view === 'far' ? 'wall-count-far' : 'wall-count');
+        if (m === null) throw new Error(`${view}: no field or no count column`);
+        figures.push({ view, ...m });
+        await page.screenshot({ path: join(ANSWER_OUT, `${view}-1440-answer.png`) });
+        await page.evaluate((w) => {
+          const d = document.createElement('div');
+          d.setAttribute('data-capture-outline', '');
+          Object.assign(d.style, { position: 'fixed', left: `${w.left}px`, top: `${w.top}px`, width: `${w.right - w.left}px`, height: `${w.bottom - w.top}px`, outline: '2px dashed #d0021b', zIndex: '9999', pointerEvents: 'none' });
+          const label = document.createElement('span');
+          label.textContent = 'a field widened to the column (not built, not a design)';
+          Object.assign(label.style, { position: 'absolute', left: '0', top: 'calc(100% + 4px)', font: '11px monospace', color: '#d0021b', whiteSpace: 'nowrap' });
+          d.appendChild(label);
+          document.body.appendChild(d);
+        }, m.widened);
+        await page.screenshot({ path: join(ANSWER_OUT, `${view}-1440-answer-outline.png`) });
+      }
+    } finally {
+      await removeRecordsFor(artist.id);
+    }
+    writeFileSync(join(ANSWER_OUT, 'figures.json'), `${JSON.stringify(figures, null, 2)}\n`);
   });
 });

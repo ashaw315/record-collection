@@ -57062,3 +57062,15 @@ Design by the coordinator; built in 184 once ruled.
 **The ask field's overflow captured** (`docs/captures/ask-overflow/`, for Design, nothing built): a 365.3-wide phrase
 in a 112 field shows 31% in the rail as a column; the sidebar's 300 shows 82%; the 390 band's 354 shows 97%; only the
 far view's band holds it all. So the overflow is not the rail column's alone.
+
+## 13 Nov (ninth): "Change file name rule" in; the field's overflow captured with an answer showing
+
+**"Change file name rule"** taken in at 41f9408e (refs/drops/2026-11-13-07, no card): both DESIGN-RULES anchors found
+once, both texts verbatim. It supersedes "Change file suffix" by name, which Code held and drops unapplied.
+
+**The rail as a column with an answer showing** (`docs/captures/ask-overflow-answer/`, the coordinator's correction):
+both views have a column beside the rail with the count in it (near 148 to 568, far to 602). With an answer, the near
+view's column holds the pulled record's panel, its foot at 485.5, and the far view's holds today's one cell, its foot at
+460.4. The field is 520.0 to 564.0, so a field widened to the column's edge clears both today, by 34.5 and 59.6. But
+§P.4's five cells, two across, would put the second row at 484.4 to at least 724.4, across the field: arithmetic on the
+ruling, since 185 is unbuilt. The widened box is drawn dashed in a separate `-outline` picture, labelled not built.
