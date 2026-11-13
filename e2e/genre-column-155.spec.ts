@@ -122,10 +122,10 @@ test('a single word wider than the 80 of content breaks within itself, and the c
     const td = tr.querySelectorAll('td')[1] as HTMLElement;
     const name = td.querySelector('[data-genre]') as HTMLElement;
     const lines = name.getClientRects().length;
-    return { cell: td.getBoundingClientRect().width, right: name.getBoundingClientRect().right, cellRight: td.getBoundingClientRect().right, lines, scroll: td.scrollWidth, client: td.clientWidth };
+    return { cell: td.getBoundingClientRect().width, lines, scroll: td.scrollWidth, client: td.clientWidth };
   });
   expect(m.cell, 'the column stays 96').toBe(96);
   expect(m.lines, 'the word set on more than one line').toBeGreaterThan(1);
-  expect(m.right, 'and inside the cell').toBeLessThanOrEqual(m.cellRight);
+  /* "Inside the cell" is held in whole pixels only. A fractional right edge against the cell's edge claimed nothing more: with the wrap removed both failed together on both projects (the edge 176 and 180 past, the scroll 272 and 276 against 96), and the cell has no right padding, so a broken line meets its edge exactly and WebKit's rounding put it 0.006 past (gate 43510829070, the Q42 shape). */
   expect(m.scroll, 'nothing overflows the cell').toBeLessThanOrEqual(m.client);
 });

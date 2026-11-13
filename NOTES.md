@@ -57074,3 +57074,14 @@ view's column holds the pulled record's panel, its foot at 485.5, and the far vi
 460.4. The field is 520.0 to 564.0, so a field widened to the column's edge clears both today, by 34.5 and 59.6. But
 §P.4's five cells, two across, would put the second row at 484.4 to at least 724.4, across the field: arithmetic on the
 ruling, since 185 is unbuilt. The widened box is drawn dashed in a separate `-outline` picture, labelled not built.
+
+## 13 Nov (tenth): genre-column-155's fractional edge deleted; a capture owed before Adam judges §P.5's fold
+
+**genre-column-155:129 deleted, not loosened (the coordinator, 13 Nov, Q42's ruling).** It flaked on gate 43510829070's
+mobile half, the word's edge 0.006 past the cell's. Staged with the cell's `[overflow-wrap:anywhere]` removed and the four
+checks soft, the edge line and the scroll line failed together on both projects (edge 176 and 180 past, scroll 272 and
+276 against 96), so the edge claimed nothing the whole-pixel scroll line does not. The scroll line stays.
+
+**Owed when Design rules the field wraps and grows downward:** §P.5's provisional on the control's own fold at 640 is
+for Adam to judge from a capture with ADD RECORD moved. A field four lines tall adds about 90 to the control, so that
+capture is redone with the field at its tallest before he judges it (the coordinator, 13 Nov).
