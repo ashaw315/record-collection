@@ -109,6 +109,20 @@ export function ResourceList({ resource, rows, busyId, rowError, createError, on
   const [opened, setOpened] = useState<{ draft: Record<string, string>; parent: string }>({ draft: {}, parent: '' });
   /* What was asked for while the open form had changes, held until DISCARD CHANGES performs it or KEEP EDITING drops it. */
   const [asked, setAsked] = useState<{ perform: () => void } | null>(null);
+  /*
+    §T.6 (Table and Grid card, 12 Nov): "When the line asks, the page scrolls the least that brings it into view,
+    because the exit waits on it." Ruled, not inherited from focus: it holds where focus does not move, and under
+    reduced motion it jumps. "When the line appears, focus moves to KEEP EDITING", without a scroll of its own: the
+    browser's scroll for a focused control overshot the least by 40 at 390 × 667.
+  */
+  const askingLine = useRef<HTMLDivElement>(null);
+  const keepEditing = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    if (asked === null) return;
+    keepEditing.current?.focus({ preventScroll: true });
+    const jump = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    askingLine.current?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: jump ? 'instant' : 'smooth' });
+  }, [asked]);
   /* A genre is its name here; its description is not edited on this screen in the table either. */
   const fields = genres === undefined ? formFields(resource) : resource.fields.filter((field) => field.name === 'name');
   const second = tableFields(resource).filter((field) => field.name !== 'name');
@@ -369,11 +383,11 @@ export function ResourceList({ resource, rows, busyId, rowError, createError, on
 
         {asked !== null && (
           /* One line, and the two answers only: each says what it does. Text controls, 44 to a finger by the row's height and their own width. */
-          <div data-manage-confirm="" role="group" aria-label="Unsaved changes" className="flex items-center gap-4">
+          <div ref={askingLine} data-manage-confirm="" role="group" aria-label="Unsaved changes" className="flex items-center gap-4">
             <button type="button" onClick={() => asked.perform()} className={`${LABEL_TYPE} flex items-center whitespace-nowrap pointer-coarse:min-h-[44px] pointer-coarse:min-w-[44px]`}>
               Discard changes
             </button>
-            <button type="button" autoFocus onClick={() => setAsked(null)} className={`${LABEL_TYPE} flex items-center whitespace-nowrap pointer-coarse:min-h-[44px] pointer-coarse:min-w-[44px]`}>
+            <button ref={keepEditing} type="button" onClick={() => setAsked(null)} className={`${LABEL_TYPE} flex items-center whitespace-nowrap pointer-coarse:min-h-[44px] pointer-coarse:min-w-[44px]`}>
               Keep editing
             </button>
           </div>

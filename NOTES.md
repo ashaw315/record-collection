@@ -56877,3 +56877,40 @@ the far view served the record pulled before the window narrowed"), green on the
 not arise:** that was the remount measured before 5181f9e5 (27 Oct); since then the shelf's control is keyed on the
 address without `wall`, so a zoom does not remount it, and the first zoom-race case asserts a press as the zoom lands
 keeps its cell drawn in the same control. A record consumed there is one the reader keeps seeing.
+
+**Shipped as 5c2c8766; its gate (43320362119) is GREEN on all four halves, read from the artifacts:** chromium 1087
+passed, 1 skipped, ledger clean, OK (one more than 937d3aff's 1086: the resize case); mobile 394 passed, 4 skipped,
+OK; report-only 3 passed, OK; unit 5168 passed, 3 skipped, OK. No flakes.
+
+**What the resize case asserts (the coordinator asked for it in one line):** after a near-view pull and the window
+narrowed across the fork, the far view's next ask serves the OTHER of two records, with the draw pinned at each end,
+so the pulled record was kept last-served across the host change; it went red when the last answer was cleared on the
+view change. It asserts retention, not only that the answer ended.
+
+## 12 Nov (sixth): "Asking line in view" taken in, three consumed steps restored, step 183
+
+**The drop:** the Table and Grid card at 6819d53f (156,602 bytes, the coordinator's hash) and "Asking line in view",
+taken in at refs/drops/2026-11-12-06. **Its anchors were not in the tree, and the cause was mine.** Step 177
+(34f0d822) replaced Design's unnumbered §T.6 step with its Done line instead of standing beside it, and 178
+(e31d94d3) and 179 (41a6d214) did the same to "§P: the ask field" and "§66: three fields from the release": Design's
+text removed from Design's file, against the one-author rule, and each step's unbuilt entry removed with it, so the
+twins test, which keeps discharged, listed and present in step, read nothing wrong. The Done lines 177 to 182 were
+also written into the handoff by hand rather than as code-region blocks, so none carried a `discharges` quote or a
+state. **Restored:** each step verbatim from the commit before its removal, directly under its Done line; then the
+change file's Changes 1 and 1b applied to the §T.6 step, each anchor asserted once; and blocks 177 to 183 written,
+177 to 179 discharging their steps (177 and 183 the two parts of §T.6, both quoting it as it now stands), 180 to 182
+naming their origin, since their drops carried no unnumbered step. 177's head no longer says an assertion is owed:
+183 carries it. **The gap this shows in the instrument:** a Done that consumes its own step and its unbuilt entry in
+one commit passes every check, since a step that is absent is neither discharged, listed nor moved. Not fixed here;
+a check that an unnumbered step once in the handoff is still there, or withdrawn by Design, is the shape.
+
+**Step 183:** the line brought into view the least, with or without focus, jumping under reduced motion; focus to
+KEEP EDITING without the browser's own scroll, which overshot by 40 at 390 × 667. **Focus was already on KEEP
+EDITING** (`autoFocus` since 5fd4fdc, 12 Oct): 177's report said "the line's first button", which was wrong, and the
+coordinator's and Design's "focus was on DISCARD CHANGES" came from that report. The focus assertion passed on its
+first run, which is that defect found. Step 137's Done line rules only that Escape answers KEEP EDITING, so the
+no-entry position stands. The link exit's assertion passed first (the built mechanism) and was staged red by an exit
+that skipped the close's pop. **A flake found on the way:** the deleted-row test read `history.state` once before the
+landing's replace, 1 in 8 on chromium with the source untouched; polled, 16 of 16. Step level: the history spec and
+manage.spec.ts on chromium, mobile and report-only, 92 passed at load 9 to 13; typecheck; lint at baseline; the
+build. A screen's behaviour changed: the ship is a gate.
