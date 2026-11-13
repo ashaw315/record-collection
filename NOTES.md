@@ -56992,3 +56992,19 @@ same path would have rewritten the record empty. Fixed test first: with no refs 
 the committed record standing (the suite's test holds it to the handoff); with a landed ref missing where others
 exist it fails naming the ref and its files, writing nothing. Both red with CI's own error, then green. Staged as CI
 runs it: a fresh clone (0 drop refs) failed code-region's same 2 tests on HEAD's code and passed 25 of 25 with the fix.
+
+### 13 Nov (fifth) — "P2 paragraph split" and "P4 pointer named" taken in (card 8eb9d02e); "Change file suffix" held
+
+Drops arrived three times during ship checks (6405584f at 12:54, 32919c54 at 13:01, 8eb9d02e at 13:03), each
+refusing the ship "tree CHANGED"; each card was set aside to the scratchpad and the fix shipped against HEAD's card
+(f13fbc6f). The released card is 8eb9d02e (52,413 bytes); 32919c54 was a draft Design withdrew. refs/drops/2026-11-13-04
+against -03: exactly the two §P.4 pointers reworded, the paragraph split invisible at sentence level. **Position
+keys:** check-index reads paragraphs at two sites (:401 and assertion 12's call and its spared sentence, :683), by
+neighbour, not by position; its whole output is identical on 1e067964 and 8eb9d02e.
+
+**"Change file suffix" held out of this drop** (set aside, not in the ref): its clause says a misnamed file "lands
+unrecorded", and the coordinator asked first whether a misnamed file fails the intake on its name alone. **It does
+not.** Staged in a clone with the drop refs: a prose-only change file named without the suffix, drop-ref then the
+intake (suite narrowed to run-result, since no suite test reads names): landed record 0 appended, step heads blind to
+it, INTAKE OK, exit 0. The 13 Nov case failed only because that file deleted a step. The fix proposed: fail the intake
+on a file new in the drop that matches no name kind.
