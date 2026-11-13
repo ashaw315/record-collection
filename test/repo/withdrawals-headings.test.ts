@@ -1,6 +1,9 @@
 import { execFileSync } from 'node:child_process';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { misplacedEntries } from '../../scripts/withdrawals.mjs';
+import { underLoad } from '../helpers/spawn-budget';
+
+vi.setConfig({ testTimeout: underLoad(21) });
 
 /**
  * **An entry sits under its own target's heading** (the coordinator, 13 Oct).

@@ -1,9 +1,12 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { parseBullets, shippedComment } from '../../scripts/withdrawals.mjs';
+import { underLoad } from '../helpers/spawn-budget';
+
+vi.setConfig({ testTimeout: underLoad(186) });
 
 /**
  * `scripts/build-clause.mjs`: Code's half of WITHDRAWALS.md, the Build clause

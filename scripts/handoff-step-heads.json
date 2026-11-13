@@ -1,0 +1,406 @@
+[
+  {
+    "file": "Import 159 and hold step",
+    "ref": "refs/drops/2026-10-28-09",
+    "heads": [
+      {
+        "head": "§W.8: a press before the wall has hydrated",
+        "how": "inserts"
+      }
+    ]
+  },
+  {
+    "file": "Hold bound",
+    "ref": "refs/drops/2026-10-28-10",
+    "heads": [
+      {
+        "head": "§W.8: a press before the wall has hydrated",
+        "how": "inserts"
+      }
+    ]
+  },
+  {
+    "file": "Hold step v2",
+    "ref": "refs/drops/2026-10-28-12",
+    "heads": [
+      {
+        "head": "§W.8: a press before the wall has hydrated",
+        "how": "inserts"
+      }
+    ]
+  },
+  {
+    "file": "Hold- consolidated on 5abc1f1",
+    "ref": "refs/drops/2026-10-29-03",
+    "heads": [
+      {
+        "head": "§W.8: a press while the page is still loading",
+        "how": "inserts"
+      },
+      {
+        "head": "§T.6: the import's failure slot holds one line",
+        "how": "inserts"
+      }
+    ]
+  },
+  {
+    "file": "Hold restored- covers on pull",
+    "ref": "refs/drops/2026-10-30-03",
+    "heads": [
+      {
+        "head": "§W.8: a pull before its cover arrives, and when the wall fetches covers",
+        "how": "inserts"
+      }
+    ]
+  },
+  {
+    "file": "Pan before pull",
+    "ref": "refs/drops/2026-10-30-03",
+    "heads": [
+      {
+        "head": "§W.22: the pan before the pull",
+        "how": "inserts"
+      }
+    ]
+  },
+  {
+    "file": "Steps for 62 63 64",
+    "ref": "refs/drops/2026-11-03-02",
+    "heads": [
+      {
+        "head": "§62: the covers group",
+        "how": "inserts"
+      },
+      {
+        "head": "§63: the arrow",
+        "how": "inserts"
+      },
+      {
+        "head": "§64: the two years on the record form",
+        "how": "inserts"
+      }
+    ]
+  },
+  {
+    "file": "Covers named and the arrow cut",
+    "ref": "refs/drops/2026-11-04-01",
+    "heads": [
+      {
+        "head": "§63: the arrow",
+        "how": "anchors"
+      }
+    ]
+  },
+  {
+    "file": "View names keep W line",
+    "ref": "refs/drops/2026-11-04-02",
+    "heads": [
+      {
+        "head": "§T.6: the view names' overlay by pointer",
+        "how": "inserts"
+      }
+    ]
+  },
+  {
+    "file": "Search reaches and says why",
+    "ref": "refs/drops/2026-11-04-03",
+    "heads": [
+      {
+        "head": "§W.24: what search reaches",
+        "how": "inserts"
+      },
+      {
+        "head": "§T.3: why a record matched",
+        "how": "inserts"
+      }
+    ]
+  },
+  {
+    "file": "Search reaches notes and companies",
+    "ref": "refs/drops/2026-11-04-04",
+    "heads": [
+      {
+        "head": "§W.24: what search reaches",
+        "how": "anchors"
+      }
+    ]
+  },
+  {
+    "file": "Tracklist and credits",
+    "ref": "refs/drops/2026-11-05-01",
+    "heads": [
+      {
+        "head": "§65: the tracklist and the credits",
+        "how": "inserts"
+      }
+    ]
+  },
+  {
+    "file": "Rules not snapshots",
+    "ref": "refs/drops/2026-11-06-01",
+    "heads": [
+      {
+        "head": "§55: assert the field's rule, not its records",
+        "how": "inserts"
+      },
+      {
+        "head": "§60: the disc at 390",
+        "how": "inserts"
+      },
+      {
+        "head": "§W.8: the bound at a candidate",
+        "how": "inserts"
+      }
+    ]
+  },
+  {
+    "file": "First paint is styled",
+    "ref": "refs/drops/2026-11-06-03",
+    "heads": [
+      {
+        "head": "§43: which frame is first paint",
+        "how": "inserts"
+      }
+    ]
+  },
+  {
+    "file": "Record cut at the row front- pan overlapped",
+    "ref": "refs/drops/2026-11-01-01",
+    "heads": [
+      {
+        "head": "§W.18: the record cut at the row's front",
+        "how": "inserts"
+      },
+      {
+        "head": "§W.22: the pan overlapped",
+        "how": "inserts"
+      }
+    ]
+  },
+  {
+    "file": "Audit answers",
+    "ref": "refs/drops/2026-11-07-02",
+    "heads": [
+      {
+        "head": "§T.6: every exit the page owns asks",
+        "how": "inserts"
+      },
+      {
+        "head": "§W.24: the view in the address",
+        "how": "inserts"
+      }
+    ]
+  },
+  {
+    "file": "ASK lit and the cell held",
+    "ref": "refs/drops/2026-11-08-01",
+    "heads": [
+      {
+        "head": "§P.6: inert ASK in the label colour",
+        "how": "inserts"
+      },
+      {
+        "head": "§P.4: the cell held in the count column",
+        "how": "inserts"
+      }
+    ]
+  },
+  {
+    "file": "ADD RECORD leaves the rail",
+    "ref": "refs/drops/2026-11-08-03",
+    "heads": [
+      {
+        "head": "§W.13: ADD RECORD out of the rail",
+        "how": "inserts"
+      }
+    ]
+  },
+  {
+    "file": "Footprints and 62 closed",
+    "ref": "refs/drops/2026-11-09-01",
+    "heads": [
+      {
+        "head": "§W.34: the footprint drawn on its face",
+        "how": "inserts"
+      }
+    ]
+  },
+  {
+    "file": "Tracklist row",
+    "ref": "refs/drops/2026-11-09-02",
+    "heads": [
+      {
+        "head": "§65: the tracklist and the credits",
+        "how": "anchors"
+      }
+    ]
+  },
+  {
+    "file": "Tracklist row step",
+    "ref": "refs/drops/2026-11-09-03",
+    "heads": [
+      {
+        "head": "§65: the tracklist and the credits",
+        "how": "anchors"
+      }
+    ]
+  },
+  {
+    "file": "Name sort key",
+    "ref": "refs/drops/2026-11-10-04",
+    "heads": [
+      {
+        "head": "§T.4: the name sort key",
+        "how": "inserts"
+      }
+    ]
+  },
+  {
+    "file": "Companies with the release",
+    "ref": "refs/drops/2026-11-10-05",
+    "heads": [
+      {
+        "head": "§65: the tracklist and the credits",
+        "how": "anchors"
+      }
+    ]
+  },
+  {
+    "file": "Ask field",
+    "ref": "refs/drops/2026-11-10-06",
+    "heads": [
+      {
+        "head": "§P: the ask field",
+        "how": "inserts"
+      }
+    ]
+  },
+  {
+    "file": "Ask field- the rest of the moods",
+    "ref": "refs/drops/2026-11-11-01",
+    "heads": [
+      {
+        "head": "§P: the ask field",
+        "how": "anchors"
+      }
+    ]
+  },
+  {
+    "file": "Under A- the meantime pair- Phase 0",
+    "ref": "refs/drops/2026-11-11-02",
+    "heads": [
+      {
+        "head": "§T.4: the name sort key",
+        "how": "anchors"
+      },
+      {
+        "head": "§P: the ask field",
+        "how": "anchors"
+      }
+    ]
+  },
+  {
+    "file": "Names lists keyed too",
+    "ref": "refs/drops/2026-11-11-03",
+    "heads": [
+      {
+        "head": "§T.4: the name sort key",
+        "how": "anchors"
+      }
+    ]
+  },
+  {
+    "file": "Row entry reopens",
+    "ref": "refs/drops/2026-11-11-07",
+    "heads": [
+      {
+        "head": "§T.6: the row's entry reopens it",
+        "how": "inserts"
+      }
+    ]
+  },
+  {
+    "file": "Three release fields",
+    "ref": "refs/drops/2026-11-11-09",
+    "heads": [
+      {
+        "head": "§66: three fields from the release",
+        "how": "inserts"
+      }
+    ]
+  },
+  {
+    "file": "Ask field reconciled",
+    "ref": "refs/drops/2026-11-12-02",
+    "heads": [
+      {
+        "head": "§P.2 and §P.6: the shelf's one, and the slot's own words",
+        "how": "inserts"
+      }
+    ]
+  },
+  {
+    "file": "Tier swept",
+    "ref": "refs/drops/2026-11-12-02",
+    "heads": [
+      {
+        "head": "§P: the ask field",
+        "how": "anchors"
+      }
+    ]
+  },
+  {
+    "file": "Ask field captures read",
+    "ref": "refs/drops/2026-11-12-03",
+    "heads": [
+      {
+        "head": "§P.4, §P.5 and §P.6: what the ask field's captures found",
+        "how": "inserts"
+      }
+    ]
+  },
+  {
+    "file": "Markers split and slot reworded",
+    "ref": "refs/drops/2026-11-12-03",
+    "heads": [
+      {
+        "head": "§P.6: the not-configured message, reworded",
+        "how": "inserts"
+      }
+    ]
+  },
+  {
+    "file": "Asking line in view",
+    "ref": "refs/drops/2026-11-12-06",
+    "heads": [
+      {
+        "head": "§T.6: the row's entry reopens it",
+        "how": "anchors"
+      },
+      {
+        "head": "§T.6: the row's entry reopens it",
+        "how": "anchors"
+      }
+    ]
+  },
+  {
+    "file": "Count line restored",
+    "ref": "refs/drops/2026-11-13-01",
+    "heads": [
+      {
+        "head": "§P.4, §P.5 and §P.6: what the ask field's captures found",
+        "how": "anchors"
+      }
+    ]
+  },
+  {
+    "file": "Five in the column",
+    "ref": "refs/drops/2026-11-13-01",
+    "heads": [
+      {
+        "head": "§P.4: five cells in the column host",
+        "how": "inserts"
+      }
+    ]
+  }
+]

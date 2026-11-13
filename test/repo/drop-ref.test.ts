@@ -2,9 +2,12 @@ import { execFileSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { changedSections, nextRefName, rowAddressed, unattributedChanges } from '../../scripts/drop-ref.mjs';
 import { headingOf } from '../../scripts/export-diff.mjs';
+import { underLoad } from '../helpers/spawn-budget';
+
+vi.setConfig({ testTimeout: underLoad(1_206) });
 
 /**
  * **A copy of each drop as it arrived, and a word that a new one has (25 Oct).**

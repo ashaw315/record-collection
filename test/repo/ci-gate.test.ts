@@ -2,7 +2,10 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { chmodSync, existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import { underLoad } from '../helpers/spawn-budget';
+
+vi.setConfig({ testTimeout: underLoad(861) });
 
 /**
  * **The gate on GitHub is dispatched with a commit's full id, derived in one

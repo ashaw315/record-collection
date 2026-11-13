@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { readRules, renderIndex, SHAPES } from '../../scripts/notes-index';
 
 /**
@@ -100,6 +100,9 @@ import { spawnSync } from 'node:child_process';
 import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { underLoad } from '../helpers/spawn-budget';
+
+vi.setConfig({ testTimeout: underLoad(939) });
 
 const STALE = [
   '# Notes',

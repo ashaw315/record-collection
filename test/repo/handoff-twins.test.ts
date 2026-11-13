@@ -1,7 +1,10 @@
 import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { discharged, numberedNotBuilt, standing, stateErrors, STATES, stepsOf } from '../../scripts/handoff-twins.mjs';
+import { underLoad } from '../helpers/spawn-budget';
+
+vi.setConfig({ testTimeout: underLoad(92) });
 
 /**
  * **Every unnumbered step in the handoff is discharged by a numbered one, or

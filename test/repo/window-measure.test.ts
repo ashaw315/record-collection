@@ -1,7 +1,10 @@
 import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { CANDIDATES_MS, COVER_BLOCK, PAN_CELLS, PULL_SEATS, frameStats, panPlan, pullPlan, DELAYS_MS, PRESS_LATE_MS, RUN_A, RUN_B, RUN_CAUSE, RUN_FIRST_PULL, cellName, firstPullBroken, firstPullSentence, firstPullsOfLog, closePlan, conditionMade, coverSummary, coverSizes, heldWaits, loadsOfLog, pressOutcome, pressesOfLog, projection, runPlan, schedule, verdict, windowOf, type Load, type Window } from '../../scripts/window-measure';
+import { underLoad } from '../helpers/spawn-budget';
+
+vi.setConfig({ testTimeout: underLoad(1_024) });
 
 /**
  * **The production measurement's judgement, restated before a load is taken

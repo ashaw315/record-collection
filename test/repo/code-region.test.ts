@@ -2,9 +2,12 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { applyRegion, intake, judgeIndex, judgeSuite, readRegion, regionHistory } from '../../scripts/apply-code-region.mjs';
 import { DOCUMENT_SUITE } from '../../scripts/document-suite.mjs';
+import { underLoad } from '../helpers/spawn-budget';
+
+vi.setConfig({ testTimeout: underLoad(11_077) });
 
 /**
  * **A Design export cannot remove what Code wrote into the handoff (8 Oct).**

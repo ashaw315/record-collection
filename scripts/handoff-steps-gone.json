@@ -1,0 +1,20 @@
+[
+  {
+    "head": "§W.8: a press before the wall has hydrated",
+    "by": "Hold- consolidated on 5abc1f1",
+    "how": "superseded: the file replaces the files that inserted the step, and inserts the hold as one step of its own",
+    "line": "So this file replaces all of these"
+  },
+  {
+    "head": "§W.8: a press while the page is still loading",
+    "by": "Hold restored- covers on pull",
+    "how": "renamed to \"§W.8: a press before the wall hydrates\"",
+    "line": "- Replace \"§W.8: a press while the page is still loading.\" with \"§W.8: a press before the wall hydrates.\""
+  },
+  {
+    "head": "§W.18: the record cut at the row's front",
+    "by": "Cut withdrawn",
+    "how": "deleted: its quote is withdrawn (W.18/cut), so no step is owed",
+    "line": "Delete the step that begins \"- **Unnumbered, for Code to number — §W.18: the record cut at the row's front.**\", through its quote line."
+  }
+]

@@ -856,17 +856,33 @@
   },
   {
     "id": "step-180",
-    "before": "No step: §G.7",
-    "why": "Written by hand at b6d794c2; made a block on 12 Nov.",
+    "before": "- **Unnumbered, for Code to number — §P.2 and §P.6: the shelf's one, and the slot's own words.**",
+    "why": "Code's number for Design's unnumbered §P.2 and §P.6 step \"the shelf's one, and the slot's own words\" (\"Ask field reconciled\", 12 Nov); written by hand in the commit that applied the step, which replaced the step with this line so that it never stood in the tree, and the block named an origin instead; made a discharging block with the step restored on 13 Nov, found by the step-heads check.",
     "text": "180. **Done: built.** **§P.2 and §P.6 — the shelf's one, and the slot's own words: Code's number for that unnumbered step; settled by the coordinator, 12 Nov, before it ran (one on the shelf; the slot in its own words), so it waited on nothing.** The shelf asks for one, the pull, and a re-roll pulls the next nearest: the route's floor goes from three to one (`POST /api/ask`, take one to five, test first), the control asks for one on the shelf and five elsewhere, and the re-ask leaves out only what was shown, asserted from the request's own body (`e2e/pick-ask-178.spec.ts`: the first ask carries `take: 1` and no exclusion, the re-ask excludes the one record pulled and nothing it did not show, and pulls the next nearest, a different jazz record). The slot's own words (`src/lib/ask/slot.ts`, every wording Proposed): \"Asking isn't set up yet.\" where the route answers 503 or NOT_CONFIGURED, never the route's sentence; ASK stays live, since nothing disables it, and the title path answers as before, since the route reads a title before it reaches for the key; the wording fits one line at 320 and 1280 and is asserted there, **and takes two lines at the rail's width** (148 wide, 112 inside its insets: the slot 39.0 tall against a 19.5 line, nothing past the width), where \"The only one.\" and \"No About yet.\" take one: the step's own assertion caught it, the wording is Design's and §P.6's \"written to fit the slot\" is Design's rule, so the rail's figure is reported by pick-control-156 and not asserted, and it goes back to Design with the figure rather than being reworded here. **The singular last-served value is gone,** which answers the coordinator's check on \"Tier swept\"'s dropped bullet: the control held one (`last`, fed to the moods build's `pickFrom` for SURPRISE ME and set by every pull), so the entry's \"did not follow it\" was true of the ask and false of SURPRISE ME; now one form serves both, the records the last answer named held out while enough remain and the whole pool as the fallback (`drawSurprise`, test first), a spine pull being the last answer too, and nothing keyed on a tier anywhere in the control. Step level: the route's test (7), the slot's (2) and the draw's (3), the control's component test, the three pick specs on chromium and mobile, typecheck, lint at baseline. The not-configured state cannot be reached from the build under test, where the key is a placeholder and the stub answers, so its words are asserted at the slot and in the fit, not end to end.",
-    "origin": "Design's \"Ask field reconciled\" (12 Nov), prose edits to §P.2 and §P.6 carrying no unnumbered step, settled by the coordinator before it ran"
+    "discharges": [
+      {
+        "head": "§P.2 and §P.6: the shelf's one, and the slot's own words",
+        "clause": "- **Unnumbered, for Code to number — §P.2 and §P.6: the shelf's one, and the slot's own words.** It waits on the coordinator's settlement above.\n  - **On the shelf:** ask for one, and let a re-roll pull the next nearest.\n  - **Not configured:** the slot reads \"Asking isn't set up yet.\" (Proposed), never the route's sentence. ASK stays live, and the title path still answers.\n  - **Assert** that a shelf re-ask never leaves out a record it didn't show, and that a not-configured ask shows the slot's wording at the rail's width, 320 and 1280.\n  > An answer is the records the reader is shown: on the shelf one, the pull, and elsewhere five."
+      }
+    ],
+    "states": [
+      "built, nothing owed"
+    ]
   },
   {
     "id": "step-181",
-    "before": "No step: §G.7",
-    "why": "Written by hand at a62651fe; made a block on 12 Nov.",
+    "before": "- **Unnumbered, for Code to number — §P.6: the not-configured message, reworded.**",
+    "why": "Code's number for Design's unnumbered §P.6 step \"the not-configured message, reworded\" (\"Markers split and slot reworded\", 12 Nov); written by hand in the commit that applied the step, which replaced the step with this line so that it never stood in the tree, and the block named an origin instead; made a discharging block with the step restored on 13 Nov, found by the step-heads check.",
     "text": "181. **Done: built.** **§P.6 — the not-configured message, reworded: Code's number for that unnumbered step.** The slot reads \"Not set up yet.\" (Proposed) where 180 read \"Asking isn't set up yet.\" (`src/lib/ask/slot.ts`, test first), and it takes one line at the rail's width, 320 and 1280, asserted in pick-control-156's fit as the other two messages are (the rail's width is the same at 1274 and 1440, so the fit is read at 1440 beside them); the rail's exception 180 wrote for the first wording is gone.",
-    "origin": "Design's \"Markers split and slot reworded\" (12 Nov), a §P.6 rewording carrying no unnumbered step"
+    "discharges": [
+      {
+        "head": "§P.6: the not-configured message, reworded",
+        "clause": "- **Unnumbered, for Code to number — §P.6: the not-configured message, reworded.** Draw \"Not set up yet.\" where step 180 draws \"Asking isn't set up yet.\". Assert one line at the rail's width (1274), 320 and 1280. If it still takes two at the rail, report it and don't reword.\n  > Where asking cannot reach its provider, ASK stays live and the slot says so in its own words, not the route’s."
+      }
+    ],
+    "states": [
+      "built, nothing owed"
+    ]
   },
   {
     "id": "step-182",

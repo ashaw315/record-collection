@@ -1,6 +1,9 @@
 import { execFileSync } from 'node:child_process';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { addedBySection, diffProse, entriesNotCrossed, sentencesOf, stepsOf } from '../../scripts/export-diff.mjs';
+import { underLoad } from '../helpers/spawn-budget';
+
+vi.setConfig({ testTimeout: underLoad(681) });
 
 /**
  * **What an export took away (8 Oct).** Design's exports replace the

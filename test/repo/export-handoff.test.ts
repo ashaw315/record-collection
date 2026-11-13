@@ -2,8 +2,11 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { exportText, fileName } from '../../scripts/export-handoff.mjs';
+import { underLoad } from '../helpers/spawn-budget';
+
+vi.setConfig({ testTimeout: underLoad(5_079) });
 
 /**
  * **Design reads the current handoff; it never sends one back whole (the

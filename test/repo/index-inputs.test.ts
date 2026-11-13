@@ -2,9 +2,12 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { cpSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { sections } from '../../scripts/design-target-parser.mjs';
 import { parseBullets } from '../../scripts/withdrawals.mjs';
+import { underLoad } from '../helpers/spawn-budget';
+
+vi.setConfig({ testTimeout: underLoad(2_922) });
 
 const REPO_ROOT = join(import.meta.dirname, '..', '..');
 const DESIGN = join(REPO_ROOT, 'docs', 'design');

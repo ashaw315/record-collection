@@ -2,8 +2,11 @@ import { spawnSync } from 'node:child_process';
 import { readFileSync, unlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { blockedOnAdam, blockedOnAdamLine, consistency, parseQueue, queue2Coverage, queue2Line, restatements, summaryLine, waitingOnLanded } from '../../scripts/check-queue.mjs';
+import { underLoad } from '../helpers/spawn-budget';
+
+vi.setConfig({ testTimeout: underLoad(748) });
 
 /**
  * **`QUEUE.md` has no second record, and its check says so (the coordinator,

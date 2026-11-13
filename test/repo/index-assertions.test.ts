@@ -1,6 +1,9 @@
 import { execFileSync } from 'node:child_process';
 import { join } from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import { underLoad } from '../helpers/spawn-budget';
+
+vi.setConfig({ testTimeout: underLoad(1_778) });
 
 const REPO_ROOT = join(import.meta.dirname, '..', '..');
 

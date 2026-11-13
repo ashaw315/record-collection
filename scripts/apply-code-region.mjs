@@ -129,8 +129,17 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   if (landed.text !== null && landed.text !== existing) writeFileSync(target, landed.text);
   process.stdout.write(`landed record (${target}): ${landed.appended.length} appended${landed.appended.length > 0 ? ` (${landed.appended.join(', ')}); name ${target} in this intake's commit` : ''}\n`);
   process.stdout.write(`code region: ${result.restored.length} restored (${result.restored.join(', ') || 'none'}), ${result.replaced.length} replaced (${result.replaced.join(', ') || 'none'}), ${result.present.length} already present, ${result.unanchored.length} with no anchor${result.unanchored.length > 0 ? ` (${result.unanchored.join(', ')})` : ''}\n`);
+  /*
+    The step heads (the coordinator, 13 Nov): the heads each landed change file names, recorded from the refs into the
+    committed record before the suite runs, so the suite's step-heads test reads this drop's heads; and the checks only
+    the refs can make, each removal's line found in the Design file it names. Six of Design's steps were consumed by
+    Code's commits before this existed (scripts/step-heads.mjs).
+  */
+  const { check: checkHeads, gitIn } = await import('./step-heads.mjs');
+  const heads = checkHeads(gitIn);
+  process.stdout.write(`${heads.lines.join('\n')}\n`);
   const checks = intake(spawned);
-  const ok = result.unanchored.length === 0 && checks.ok;
+  const ok = result.unanchored.length === 0 && heads.ok && checks.ok;
   process.stdout.write(`${checks.lines.join('\n')}\n${ok ? 'INTAKE OK' : 'INTAKE NOT OK: do not commit this drop until what failed above is read'}\n`);
   process.exit(ok ? 0 : 1);
 }

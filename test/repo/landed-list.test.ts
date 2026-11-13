@@ -1,7 +1,10 @@
 import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { RECORD, fromGit, landedFromRecord, landedList, landedText, parseRecord, recordUpdate } from '../../scripts/landed-list.mjs';
+import { underLoad } from '../helpers/spawn-budget';
+
+vi.setConfig({ testTimeout: underLoad(1_639) });
 
 /**
  * **The export bundle lists every change file Code has applied, with the

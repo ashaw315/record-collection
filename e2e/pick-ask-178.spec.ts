@@ -290,6 +290,53 @@ test('the field’s label and the count line each take one line at the rail’s 
   }
 });
 
+/*
+  The count line's width at the widest N, not the N on screen (the coordinator, 13 Nov): a wording that fits at 4 and
+  not at 13 is the same defect again. The real line in the rail at 1440, its number set to every N from 1 to 999 in
+  turn, each wording measured held to one line (its width) and free (its lines, by line box: the paragraph's height
+  over its height held to one line). Reported for Design's choice between "N have no About." and a new wording.
+*/
+test('184, report: the count line’s width and lines in the rail at every N from 1 to 999, both wordings', { tag: '@report-only' }, async ({ page }, testInfo) => {
+  const { artistId } = await fixture(page, ['N']);
+  try {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(`/?artistId=${artistId}`);
+    await wallMeasured(page);
+    const rows = await page.evaluate((wordings) => {
+      const p = Array.from(document.querySelectorAll<HTMLElement>('[data-without-about]')).find((e) => e.getClientRects().length > 0);
+      const span = p?.querySelector('span');
+      if (!p || !span) return null;
+      const out: { wording: string; rail: number; widest: { n: number; width: number }[]; twoLineFrom: number | null }[] = [];
+      for (const wording of wordings) {
+        const widest: { n: number; width: number }[] = [];
+        let twoLineFrom: number | null = null;
+        for (const digits of [1, 2, 3]) {
+          let best = { n: 0, width: 0 };
+          for (let n = 10 ** (digits - 1); n < 10 ** digits; n += 1) {
+            span.textContent = wording.replace('N', String(n));
+            const height = p.getBoundingClientRect().height;
+            p.style.whiteSpace = 'nowrap';
+            const one = p.getBoundingClientRect().height;
+            const width = span.getBoundingClientRect().width;
+            p.style.whiteSpace = '';
+            if (width > best.width) best = { n, width };
+            if (twoLineFrom === null && Math.round(height / one) > 1) twoLineFrom = n;
+          }
+          widest.push(best);
+        }
+        out.push({ wording, rail: p.getBoundingClientRect().width, widest, twoLineFrom });
+      }
+      return out;
+    }, ['N have no About.', 'N without an About yet.']);
+    if (rows === null) throw new Error('no count line');
+    for (const r of rows) {
+      testInfo.annotations.push({ type: `"${r.wording}" in the rail, ${r.rail.toFixed(1)} wide`, description: `${r.widest.map((w, i) => `widest at ${i + 1} digit${i ? 's' : ''}: N=${w.n}, ${w.width.toFixed(1)}`).join('; ')}; ${r.twoLineFrom === null ? 'one line at every N to 999' : `two lines from N=${r.twoLineFrom}`}` });
+    }
+  } finally {
+    await removeRecordsFor(artistId);
+  }
+});
+
 /* Design's open question (12 Nov): the count column's free height at 1440 × 900 and 768, and whether five cells at 160, two across and three down, fit beneath the count without the page scrolling. Reported, not asserted: Design rules once it has the figure. */
 test('182, report: the count column’s free height on the far view at 1440 × 900 and 768', { tag: '@report-only' }, async ({ page }, testInfo) => {
   const { artistId } = await fixture(page);

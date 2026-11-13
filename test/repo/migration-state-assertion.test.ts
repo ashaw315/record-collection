@@ -2,11 +2,14 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { Client } from 'pg';
 import { assertLocalTestDatabase } from '../helpers/db';
 import { readJournal, readLedger } from '@/lib/db/migration-state-io';
 import { compareMigrationState } from '@/lib/db/migration-state';
+import { underLoad } from '../helpers/spawn-budget';
+
+vi.setConfig({ testTimeout: underLoad(568) });
 
 const REPO_ROOT = join(import.meta.dirname, '..', '..');
 

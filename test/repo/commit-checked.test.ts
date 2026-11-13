@@ -2,8 +2,11 @@ import { execFileSync, spawnSync } from 'node:child_process';
 import { chmodSync, copyFileSync, existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { DOCUMENT_SUITE } from '../../scripts/document-suite.mjs';
+import { underLoad } from '../helpers/spawn-budget';
+
+vi.setConfig({ testTimeout: underLoad(14_702) });
 
 /**
  * **A check whose result does not stop the commit is not a check.**
@@ -312,7 +315,7 @@ describe('the export follows a commit that touches the shared documents', () => 
     expect(result.status, result.output).toBe(0);
     expect(git('diff-tree', '--no-commit-id', '--name-only', '-r', 'HEAD').length, 'more than a pipe holds').toBeGreaterThan(65_536);
     expect(existsSync(join(dir, 'exported-at')), 'the export ran').toBe(true);
-  }, 60_000);
+  }, underLoad(14_702));
 
   it('does not export after a commit that touches neither', () => {
     const { dir } = repo();

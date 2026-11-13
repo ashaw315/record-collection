@@ -2,8 +2,11 @@ import { spawnSync } from 'node:child_process';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterAll, describe, expect, it } from 'vitest';
+import { afterAll, describe, expect, it, vi } from 'vitest';
 import { boldDiff, boldSentences, documentShape, quotesOf, strongBalance, unmatchedQuotes, withdrawalReport } from '../../scripts/check-design-card.mjs';
+import { underLoad } from '../helpers/spawn-budget';
+
+vi.setConfig({ testTimeout: underLoad(1_517) });
 
 /**
  * **The checks run by hand on every Design card, written ad hoc three times

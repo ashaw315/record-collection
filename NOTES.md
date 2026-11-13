@@ -56937,3 +56937,29 @@ the landed list with the heads. Proposed for the twins test, not built.
 **Design's held-cell step stands unbuilt with its claim withdrawn.** `P.4/held-wholly-in-view` withdraws the cell held
 at the window's top; the unnumbered "§P.4: the cell held in the count column" step still asks Code to hold it and is
 in `handoff-unbuilt.json`. Code doesn't edit Design's step; asked whether it is retired.
+
+### 13 Nov (second) — the step-heads check, six consumed steps, and budgets for a loaded machine
+
+**Six consumed steps, not four.** `scripts/step-heads.mjs` records, from the drop refs, every head a landed change
+file inserts ("Unnumbered, for Code to number — X.") or anchors on ("In the step headed …") into the committed
+`scripts/handoff-step-heads.json` (47 heads, 36 files), and `test/repo/step-heads.test.ts` holds that record to the
+handoff on every commit and in CI, where the refs are absent. Staged red on real commits: at b8953041 it named 180's
+and 181's steps, applied and replaced in the commits that took them like 182's; at e5ac4fcd it named 180, 181 and
+182. Both restored verbatim under their Done lines, their blocks discharging them, built, nothing owed. **The excuse
+file** `scripts/handoff-steps-gone.json` names the Design file that removed a head and quotes its line; the intake
+checks the line against that file at its ref, and an excuse for a head the handoff holds fails the test, so the list
+can't become a blanket suppression. Three heads are excused: W.8's two hold steps (superseded, then renamed, by
+Design) and W.18's cut ("Cut withdrawn"). The intake runs the record and the ref checks before its suite.
+
+**The count line at the widest N** (report-only, "184, report" in e2e/pick-ask-178.spec.ts, the rail 112.0 wide at
+1440): "N have no About." 94.7 / 102.4 / 110.1 at N = 4, 44, 444, one line to 999; "N without an About yet." 129.8 /
+137.6 / 145.3, two lines from N = 1. 182's 99.3 was the N on screen. Design has ruled "N have no About.".
+
+**Budgets for a loaded machine (the coordinator, 13 Nov).** The suite failed 13 script-spawning tests at load 14.5,
+each at vitest's 5s default, and a run at load 35 printed no summary. A budget set at rest on a working laptop is the
+defect, not the load. Every document-suite file that imports `node:child_process` (32) now declares
+`vi.setConfig({ testTimeout: underLoad(ms) })`, ten times its slowest test at rest (measured at load 3 to 5, 13 Nov),
+never below 5s (`test/helpers/spawn-budget.ts`); commit-checked's pipe test, 14.7s at rest, from 60s to 148s by the
+same rule. `test/repo/spawn-budget.test.ts` fails a spawning file without the call (a source check), red first
+listing all 32. `vi.setConfig` staged: a 6s test passed under it and timed out at 5000ms without. **Not staged: the
+suite under load 30 with the new budgets**; the at-rest run is 949 passed.

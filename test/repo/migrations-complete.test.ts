@@ -2,9 +2,12 @@ import { execFileSync } from 'node:child_process';
 import { cpSync, mkdtempSync, rmSync, existsSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterAll, describe, expect, it } from 'vitest';
+import { afterAll, describe, expect, it, vi } from 'vitest';
 import { Client } from 'pg';
 import { assertLocalTestDatabase } from '../helpers/db';
+import { underLoad } from '../helpers/spawn-budget';
+
+vi.setConfig({ testTimeout: underLoad(2_430) });
 
 const REPO_ROOT = join(import.meta.dirname, '..', '..');
 
