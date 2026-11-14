@@ -49,9 +49,14 @@ export function bandRules(scope: string): string {
   ${rail} [data-pick-control] { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 18px; }
   ${rail} [data-pick-control] > div { margin-top: 0; }
   ${rail} [data-pick-control] > p { flex: 1 1 100%; margin-top: 0; }
-  /* Step 178: the field's host takes the row's whole width, the count line the next row, the slot after ASK and SURPRISE ME, and the covers last as a wrapped row 24 below the slot. */
+  /*
+    Step 178: the field's host takes the row's whole width, the slot comes after ASK and SURPRISE ME, and the covers
+    form a wrapped row 24 below the slot. "Ask field wraps and count line" (13 Nov): the count line stands beneath the
+    slot. Step 178's order 1 put it above the slot, which read right only while the slot was empty. It now follows the
+    covers, as in the sidebar, while Design rules which of the two stands next to the slot.
+  */
   ${rail} [data-pick-control] > [data-ask-host] { flex: 1 1 100%; margin-top: 0; }
-  ${rail} [data-pick-control] > [data-without-about] { order: 1; }
-  ${rail} [data-pick-control] > [data-pick-slot] { order: 2; }
-  ${rail} [data-pick-control] > [data-pick-answers] { order: 3; flex: 1 1 100%; flex-direction: row; flex-wrap: wrap; margin-top: 24px; }`;
+  ${rail} [data-pick-control] > [data-pick-slot] { order: 1; }
+  ${rail} [data-pick-control] > [data-pick-answers] { order: 2; flex: 1 1 100%; flex-direction: row; flex-wrap: wrap; margin-top: 24px; }
+  ${rail} [data-pick-control] > [data-without-about] { order: 3; }`;
 }

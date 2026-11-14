@@ -107,8 +107,8 @@ const RAIL: Expected[] = [
   ['a', /^Shelf$/],
   ['a', /^Table$/],
   ['a', /^Grid$/],
-  /* Step 178 (§P.5, 11 Nov): the ask field takes the moods' place; ASK stays a stop while inert (§P.6). */
-  ['input', /^rail-ask$/],
+  /* Step 178 (§P.5, 11 Nov): the ask field takes the moods' place; ASK stays a stop while inert (§P.6). A textarea since "Ask field wraps and count line" (13 Nov; `P.5/width-only`): the field holds its phrase's lines. */
+  ['textarea', /^rail-ask$/],
   ['button', /^Ask$/],
   ['button', /^Surprise me$/],
   ['a', /^Add record$/],

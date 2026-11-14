@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { askSlotMessage, SLOT_MESSAGES } from '@/lib/ask/slot';
 import { drawSurprise } from '@/lib/ask/surprise';
 import { GridCell } from './GridCell';
@@ -13,8 +13,18 @@ export type { PickRecord };
 const RAIL_LABEL = `${LABEL_TYPE} decoration-1 underline-offset-[3px] hover:underline`;
 /** §P.5's "label colour": an inert ASK is set in it, as an inert mood was. */
 const LABEL_COLOUR = 'text-[oklch(0.44_0.008_70)]';
-/* §9.3's field, as the rail's SEARCH draws it (WallRail): a hairline underneath, the type's ink, 44 to the floor. */
-const FIELD = `mt-[6px] block w-full border-b bg-transparent px-0 h-[44px] font-sans text-[16px] leading-[1.9] ${HAIRLINE} ${INK}`;
+/*
+  §9.3's field, as the rail's SEARCH draws it (WallRail): a hairline underneath, the type's ink, 44 to the floor. A
+  textarea since "Ask field wraps and count line" (13 Nov): its one line of 30.4 (16 at 1.9) sits centred in the 44 as
+  the input's did, by 6.8 above and below, and each further line adds 30.4. No resize handle and no cap.
+*/
+const FIELD = `mt-[6px] block w-full resize-none overflow-hidden border-b bg-transparent px-0 py-[6.8px] min-h-[44px] font-sans text-[16px] leading-[1.9] ${HAIRLINE} ${INK}`;
+
+/** The field's height is its phrase's lines (§P.5): set from its own scroll height, the border added back under border-box. */
+function fitToPhrase(el: HTMLTextAreaElement) {
+  el.style.height = 'auto';
+  el.style.height = `${el.scrollHeight + (el.offsetHeight - el.clientHeight)}px`;
+}
 
 /* §P.6's slot messages live in `src/lib/ask/slot.ts`, written to fit the slot at the rail's width (one line). */
 const MESSAGES = SLOT_MESSAGES;
@@ -55,6 +65,28 @@ export function PickControl({ ruled = false, pool, answers = 'cell', withoutAbou
 }) {
   const [phrase, setPhrase] = useState('');
   const askInert = phrase.trim() === '';
+  /*
+    §P.5: "one line at rest when empty, and its phrase’s lines when not." Fitted as the phrase changes, which only the
+    reader's writing does (§P.4: "ASK moves under a reader writing, never between two presses"), and as the host's
+    width changes, which rewraps the same phrase. CSS's field-sizing would do this alone, but the mobile project runs
+    WebKit, so the fit is the script's.
+  */
+  const fieldRef = useRef<HTMLTextAreaElement>(null);
+  useLayoutEffect(() => {
+    if (fieldRef.current !== null) fitToPhrase(fieldRef.current);
+  }, [phrase]);
+  useEffect(() => {
+    const el = fieldRef.current;
+    if (el === null || typeof ResizeObserver === 'undefined') return;
+    let width = el.clientWidth;
+    const observer = new ResizeObserver(() => {
+      if (el.clientWidth === width) return;
+      width = el.clientWidth;
+      fitToPhrase(el);
+    });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
   const reasonId = useId();
   /* A stable id, as the rail's search field has (`rail-search`): the Tab walk names an input by it. One control stands in the shelf's rail and one in the sidebar, so the two never share a document's id. */
   const fieldId = answers === 'wall' ? 'rail-ask' : 'sidebar-ask';
@@ -172,13 +204,15 @@ export function PickControl({ ruled = false, pool, answers = 'cell', withoutAbou
         <label htmlFor={fieldId} className={`block ${LABEL}`}>
           What to play
         </label>
-        <input
+        <textarea
+          ref={fieldRef}
           id={fieldId}
           data-ask-field=""
-          type="text"
+          rows={1}
           autoComplete="off"
           value={phrase}
-          onChange={(event) => setPhrase(event.target.value)}
+          /* A phrase is one line of thought, wrapped: a pasted line break reads as a space, and Enter asks below. */
+          onChange={(event) => setPhrase(event.target.value.replace(/\r?\n/g, ' '))}
           onKeyDown={(event) => {
             if (event.key === 'Enter') {
               event.preventDefault();
@@ -188,16 +222,6 @@ export function PickControl({ ruled = false, pool, answers = 'cell', withoutAbou
           className={FIELD}
         />
       </div>
-      {/*
-        §P.6 (11 Nov): "the line counting records with no ABOUT, absent when every record has one." Drawn on load,
-        never in answer to a press, so it moves nothing. 18 above, as the rail's lines are.
-      */}
-      {withoutAbout > 0 ? (
-        <p data-without-about="" className="relative mt-[18px]">
-          {/* "N have no About.", Proposed (Design, 12 Nov; step 182): the first wording took two lines at the rail's width. */}
-          <span className="text-prose">{withoutAbout} have no About.</span>
-        </p>
-      ) : null}
       {/*
         §P.5: ASK and SURPRISE ME are §9.3 labels. §P.6: "ASK is inert while the field is empty; it stays a Tab stop,
         named unavailable, and takes ink once the field holds text." `disabled` would leave the tab order;
@@ -241,18 +265,29 @@ export function PickControl({ ruled = false, pool, answers = 'cell', withoutAbou
         proposal, the coordinator, 12 Nov.
       */}
       {drawn.length > 0 && host === 'here' && (
-        <>
-          <ul data-pick-answers="" className="relative mt-[24px] flex flex-col gap-[18px]">
-            {drawn.map((record, index) => (
-              <li key={record.id} data-pick-answer="" data-rank={index + 1} className="w-[160px]">
-                <GridCell id={record.id} title={record.title} artist={record.artist} cover={record.cover} />
-              </li>
-            ))}
-          </ul>
-          {/* §P.4 (12 Nov): "where the answer stands above the list, as at 390, it ends with the hairline that closes the control"; the sidebar's stylesheet draws it below the fork and not above, where the list stands beside the control. */}
-          {!inRail && <hr data-pick-close-rule="" className={`mt-[24px] hidden border-t ${HAIRLINE}`} />}
-        </>
+        <ul data-pick-answers="" className="relative mt-[24px] flex flex-col gap-[18px]">
+          {drawn.map((record, index) => (
+            <li key={record.id} data-pick-answer="" data-rank={index + 1} className="w-[160px]">
+              <GridCell id={record.id} title={record.title} artist={record.artist} cover={record.cover} />
+            </li>
+          ))}
+        </ul>
       )}
+      {/*
+        §P.6 (11 Nov): "the line counting records with no ABOUT, absent when every record has one." Drawn on load,
+        never in answer to a press, so it moves nothing. 18 above, as the rail's lines are. "The count line stands
+        beneath the slot" ("Ask field wraps and count line", 13 Nov; it stood between the field and ASK). Where covers
+        draw here, the line follows them: §P.4 draws the covers "24 below the slot", and which of the two stands next
+        to the slot is Design's open question (13 Nov), so the covers' place is left as it was ruled.
+      */}
+      {withoutAbout > 0 ? (
+        <p data-without-about="" className="relative mt-[18px]">
+          {/* "N have no About.", Proposed (Design, 12 Nov; step 182): the first wording took two lines at the rail's width. */}
+          <span className="text-prose">{withoutAbout} have no About.</span>
+        </p>
+      ) : null}
+      {/* §P.4 (12 Nov): "where the answer stands above the list, as at 390, it ends with the hairline that closes the control"; the sidebar's stylesheet draws it below the fork and not above, where the list stands beside the control. */}
+      {drawn.length > 0 && host === 'here' && !inRail && <hr data-pick-close-rule="" className={`mt-[24px] hidden border-t ${HAIRLINE}`} />}
     </div>
   );
 }

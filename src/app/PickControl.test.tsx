@@ -18,7 +18,7 @@ const POOL = [{ id: '00000000-0000-4000-8000-000000000001', title: 'Gaucho', art
 const html = renderToStaticMarkup(<PickControl pool={POOL} />);
 const rail = renderToStaticMarkup(<PickControl pool={POOL} answers="wall" />);
 
-const field = (h: string) => /<input[^>]*data-ask-field=""[^>]*>/.exec(h)?.[0] ?? '';
+const field = (h: string) => /<(?:input|textarea)[^>]*data-ask-field=""[^>]*>/.exec(h)?.[0] ?? '';
 const ask = (h: string) => /<button[^>]*>Ask<\/button>/.exec(h)?.[0] ?? '';
 /* The ASK button's place, not the field's label, which reads Ask as SEARCH's reads Search. */
 const askAt = (h: string) => h.search(/<button[^>]*>Ask<\/button>/);
@@ -35,7 +35,6 @@ describe('the control’s parts and order (§P.5)', () => {
   /* §P.5: "The field isn't the search field": a text field of its own, under a §9.3 label, not a search form. "The ask field’s label says what goes in it, never ASK, which is the button’s name": WHAT TO PLAY, Proposed (Design, 12 Nov; step 182). */
   it('draws the field as §9.3’s field with a label of its own, WHAT TO PLAY, separate from SEARCH', () => {
     const f = field(html);
-    expect(f).toContain('type="text"');
     expect(f).not.toContain('name="q"');
     const id = /\sid="([^"]+)"/.exec(f)?.[1];
     expect(id, 'the field has an id its label points at').toBeDefined();
@@ -43,6 +42,19 @@ describe('the control’s parts and order (§P.5)', () => {
     expect(label?.[1], 'the label says what goes in it, never ASK').toBe('What to play');
     for (const cls of LABEL.split(' ')) expect(label?.[0] ?? '', cls).toContain(cls);
     expect(html).not.toMatch(/<form[^>]*role="search"/);
+  });
+
+  /*
+    §P.5 (Design's "Ask field wraps and count line", 13 Nov): "The ask field takes the host’s width and as many lines as
+    the phrase needs", "one line at rest when empty". An <input> holds one line and scrolls (P.5/width-only withdrawn),
+    so the field is a textarea at one row. Fails against the input it was.
+  */
+  it('is a field that can hold lines: a textarea resting at one row, with no cap on its rows', () => {
+    const f = field(html);
+    expect(f, 'a textarea').toMatch(/^<textarea/);
+    expect(f, 'one row at rest').toContain('rows="1"');
+    expect(f, 'no cap').not.toMatch(/max-h-|maxlength|line-clamp|overflow-x/);
+    expect(field(rail), 'the rail’s too').toMatch(/^<textarea[^>]*rows="1"/);
   });
 
   /* §T.6's reserved slot: there before anything is asked, so an answer's message moves nothing beneath it. */
@@ -102,12 +114,14 @@ describe('the pitch by host (§P.5)', () => {
 */
 describe('the count line (§P.6)', () => {
   /* Reworded by Design ("Ask field captures read", 12 Nov; step 182): "N have no About.", since the first wording took two lines at the rail's width. */
-  it('draws "N have no About." beneath the field and above ASK while any record has none, and not otherwise', () => {
+  /* "The count line stands beneath the slot" (13 Nov; `P.6/slots-count-line`): it was drawn between the field and ASK, the defect the ask-overflow specimen showed in the rail and the sidebar. Fails against that order. */
+  it('draws "N have no About." beneath the slot, in either host, while any record has none, and not otherwise', () => {
     const withLine = renderToStaticMarkup(<PickControl pool={POOL} withoutAbout={4} />);
     const line = /<p[^>]*data-without-about=""[^>]*>(?:<span[^>]*>)?([^<]*)/.exec(withLine);
     expect(line?.[1]).toBe('4 have no About.');
-    expect(withLine.indexOf('data-without-about'), 'beneath the field').toBeGreaterThan(withLine.indexOf('data-ask-field'));
-    expect(withLine.indexOf('data-without-about'), 'above ASK').toBeLessThan(askAt(withLine));
+    expect(withLine.indexOf('data-without-about'), 'beneath the slot').toBeGreaterThan(withLine.indexOf('data-pick-slot'));
+    const railLine = renderToStaticMarkup(<PickControl pool={POOL} answers="wall" withoutAbout={4} />);
+    expect(railLine.indexOf('data-without-about'), 'beneath the slot in the rail').toBeGreaterThan(railLine.indexOf('data-pick-slot'));
     expect(renderToStaticMarkup(<PickControl pool={POOL} withoutAbout={0} />)).not.toContain('data-without-about');
     expect(html, 'absent by default').not.toContain('data-without-about');
   });

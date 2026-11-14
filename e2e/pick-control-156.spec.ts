@@ -356,10 +356,10 @@ test.describe('§P.5: the control’s fit in the rail as a column, measured', ()
             viewNames: (() => { const tops = Array.from(rail?.querySelectorAll('[data-view-name]') ?? []).map((li) => li.getBoundingClientRect().top); return tops.length < 2 ? null : (tops[1] - tops[0]); })(),
             /* A view name's own block, so the rail's gap between blocks is the pitch less the line, measured and not a figure. */
             viewLine: box(rail?.querySelector('[data-view-name]') ?? null)?.height ?? null,
-            /* §P.6's count line beneath the field (178), the gap from the field's foot to its top; absent with every record carrying an ABOUT. */
-            line: (() => { const l = control?.querySelector('[data-without-about]'); const host = control?.querySelector('[data-ask-host]') ?? null; return l && host ? l.getBoundingClientRect().top - host.getBoundingClientRect().bottom : null; })(),
-            /* ASK's block from the foot of the block above it, the count line where drawn, else the field's host: the rail's lines are 18 apart, as the pitch less a line. */
-            ask: (() => { const a = control?.querySelector('button[aria-disabled]')?.parentElement ?? null; const above = control?.querySelector('[data-without-about]') ?? control?.querySelector('[data-ask-host]') ?? null; return a && above ? a.getBoundingClientRect().top - above.getBoundingClientRect().bottom : null; })(),
+            /* §P.6's count line beneath the slot ("Ask field wraps and count line", 13 Nov; `P.6/slots-count-line`: it stood beneath the field), the gap from the slot's foot to its top; absent with every record carrying an ABOUT. */
+            line: (() => { const l = control?.querySelector('[data-without-about]'); const slot = control?.querySelector('[data-pick-slot]') ?? null; return l && slot ? l.getBoundingClientRect().top - slot.getBoundingClientRect().bottom : null; })(),
+            /* ASK's block from the foot of the field's host, the block above it since the count line moved beneath the slot: the rail's lines are 18 apart, as the pitch less a line. */
+            ask: (() => { const a = control?.querySelector('button[aria-disabled]')?.parentElement ?? null; const above = control?.querySelector('[data-ask-host]') ?? null; return a && above ? a.getBoundingClientRect().top - above.getBoundingClientRect().bottom : null; })(),
             surpriseFromAsk: (() => { const bs = Array.from(control?.querySelectorAll('button') ?? []).map((b) => b.parentElement ?? b); return bs.length < 2 ? null : bs[1].getBoundingClientRect().top - bs[0].getBoundingClientRect().top; })(),
             surprise: box(control?.querySelector('button') ?? null)?.height ?? null,
             add: box(add)?.height ?? null,
@@ -387,7 +387,7 @@ test.describe('§P.5: the control’s fit in the rail as a column, measured', ()
       const free = m.control.height - Math.max(0, over);
       test.info().annotations.push({
         type: `fit at ${width}×${height}`,
-        description: `rail ${m.rail.width} wide, ${inner.toFixed(1)} inside its insets; the ask field's host ${widest.toFixed(1)} wide and ${(m.fieldHost?.height ?? 0).toFixed(1)} tall (the view names' pitch ${m.pitches.viewNames?.toFixed(1) ?? '?'}; the count line ${m.pitches.line?.toFixed(1) ?? 'absent'} below the field's foot, ASK ${m.pitches.ask?.toFixed(1) ?? '?'} below the block above; SURPRISE ME ${m.pitches.surprise?.toFixed(1) ?? '?'} tall, ${m.pitches.surpriseFromAsk?.toFixed(1) ?? '?'} after ASK; ADD RECORD ${m.pitches.add?.toFixed(1) ?? '?'}); the control ${m.control.height.toFixed(1)} tall, from ${m.control.top.toFixed(1)} (the last view name's foot ${m.lastView.bottom.toFixed(1)}); ADD RECORD at ${m.add.top.toFixed(1)} to ${m.add.bottom.toFixed(1)} in a ${m.window.height} window, ${over > 0 ? `OVER by ${over.toFixed(1)}: the control may be ${free.toFixed(1)} tall here` : `in view with ${(-over).toFixed(1)} to spare`}; the page ${m.scrollHeight} tall`,
+        description: `rail ${m.rail.width} wide, ${inner.toFixed(1)} inside its insets; the ask field's host ${widest.toFixed(1)} wide and ${(m.fieldHost?.height ?? 0).toFixed(1)} tall (the view names' pitch ${m.pitches.viewNames?.toFixed(1) ?? '?'}; the count line ${m.pitches.line?.toFixed(1) ?? 'absent'} below the slot's foot, ASK ${m.pitches.ask?.toFixed(1) ?? '?'} below the block above; SURPRISE ME ${m.pitches.surprise?.toFixed(1) ?? '?'} tall, ${m.pitches.surpriseFromAsk?.toFixed(1) ?? '?'} after ASK; ADD RECORD ${m.pitches.add?.toFixed(1) ?? '?'}); the control ${m.control.height.toFixed(1)} tall, from ${m.control.top.toFixed(1)} (the last view name's foot ${m.lastView.bottom.toFixed(1)}); ADD RECORD at ${m.add.top.toFixed(1)} to ${m.add.bottom.toFixed(1)} in a ${m.window.height} window, ${over > 0 ? `OVER by ${over.toFixed(1)}: the control may be ${free.toFixed(1)} tall here` : `in view with ${(-over).toFixed(1)} to spare`}; the page ${m.scrollHeight} tall`,
       });
       test.info().annotations.push({
         type: `past the foot at ${width}×${height}`,
@@ -400,7 +400,7 @@ test.describe('§P.5: the control’s fit in the rail as a column, measured', ()
         less a line is the gap between blocks, and SURPRISE ME after ASK is the pitch itself, block to block.
       */
       const gap = m.pitches.viewNames === null || m.pitches.viewLine === null ? NaN : m.pitches.viewNames - m.pitches.viewLine;
-      if (m.pitches.line !== null) expect.soft(m.pitches.line, `the count line stands the rail’s gap below the field (${gap.toFixed(1)})`).toBeCloseTo(gap, 0);
+      if (m.pitches.line !== null) expect.soft(m.pitches.line, `the count line stands the rail’s gap below the slot (${gap.toFixed(1)})`).toBeCloseTo(gap, 0);
       expect.soft(m.pitches.ask, `ASK stands the rail’s gap below the block above it (${gap.toFixed(1)})`).toBeCloseTo(gap, 0);
       expect.soft(m.pitches.surpriseFromAsk, `SURPRISE ME takes the pitch after ASK (${m.pitches.viewNames?.toFixed(1)})`).toBeCloseTo(m.pitches.viewNames ?? NaN, 0);
       /* The fit is withdrawn (`P.5/control-must-fit`); what is ruled is the reach: past the foot the rail runs with the page and ADD RECORD is reached by scrolling. */

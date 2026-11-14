@@ -291,47 +291,46 @@ test('the field’s label and the count line each take one line at the rail’s 
 });
 
 /*
-  The count line's width at the widest N, not the N on screen (the coordinator, 13 Nov): a wording that fits at 4 and
-  not at 13 is the same defect again. The real line in the rail at 1440, its number set to every N from 1 to 999 in
-  turn, each wording measured held to one line (its width) and free (its lines, by line box: the paragraph's height
-  over its height held to one line). Reported for Design's choice between "N have no About." and a new wording.
+  184: the count line at every N it can read, not the N on screen (the coordinator, 13 Nov: "one line at every N up to
+  the record count, at the rail's width, 320 and 1280, by line box"). The report this replaces measured both wordings
+  from 1 to 999 and told Design what it needed; this is the check it becomes. The real line in each host, its number
+  set to every N from 1 to the larger of the collection's count and 99 in turn: the test database holds fewer records
+  than Adam's 55, so the sweep covers every two-digit N, and a collection past 99 widens it to three digits by itself.
+  Lines by line box, as the step-182 case reads them: distinct tops, and the box's height under two lines. Fails
+  against the first wording, "N without an About yet.", which took two lines in the rail.
 */
-test('184, report: the count line’s width and lines in the rail at every N from 1 to 999, both wordings', { tag: '@report-only' }, async ({ page }, testInfo) => {
+test('184: the count line takes one line at every N up to the record count, at the rail’s width, 320 and 1280', async ({ page }) => {
   const { artistId } = await fixture(page, ['N']);
   try {
+    const total = ((await (await page.request.get('/api/records?pageSize=1')).json()) as { meta: { total: number } }).meta.total;
+    const upTo = Math.max(total, 99);
+    const sweep = async (where: string) => {
+      const twoLines = await page.evaluate((top) => {
+        const p = Array.from(document.querySelectorAll<HTMLElement>('[data-without-about]')).find((e) => e.getClientRects().length > 0);
+        const span = p?.querySelector('span');
+        if (!p || !span) return 'not drawn';
+        const words = (span.textContent ?? '').replace(/^\d+/, '');
+        const lineHeight = parseFloat(getComputedStyle(span).lineHeight);
+        const failing: string[] = [];
+        for (let n = 1; n <= top; n += 1) {
+          span.textContent = `${n}${words}`;
+          const range = document.createRange();
+          range.selectNodeContents(span);
+          const lines = new Set(Array.from(range.getClientRects()).map((r) => Math.round(r.top))).size;
+          if (lines !== 1 || p.getBoundingClientRect().height / lineHeight >= 2) failing.push(`${n}: ${lines} lines`);
+        }
+        return failing.join('; ');
+      }, upTo);
+      expect(twoLines, `the count line ${where}, N from 1 to ${upTo}: every N on one line`).toBe('');
+    };
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto(`/?artistId=${artistId}`);
     await wallMeasured(page);
-    const rows = await page.evaluate((wordings) => {
-      const p = Array.from(document.querySelectorAll<HTMLElement>('[data-without-about]')).find((e) => e.getClientRects().length > 0);
-      const span = p?.querySelector('span');
-      if (!p || !span) return null;
-      const out: { wording: string; rail: number; widest: { n: number; width: number }[]; twoLineFrom: number | null }[] = [];
-      for (const wording of wordings) {
-        const widest: { n: number; width: number }[] = [];
-        let twoLineFrom: number | null = null;
-        for (const digits of [1, 2, 3]) {
-          let best = { n: 0, width: 0 };
-          for (let n = 10 ** (digits - 1); n < 10 ** digits; n += 1) {
-            span.textContent = wording.replace('N', String(n));
-            const height = p.getBoundingClientRect().height;
-            p.style.whiteSpace = 'nowrap';
-            const one = p.getBoundingClientRect().height;
-            const width = span.getBoundingClientRect().width;
-            p.style.whiteSpace = '';
-            if (width > best.width) best = { n, width };
-            if (twoLineFrom === null && Math.round(height / one) > 1) twoLineFrom = n;
-          }
-          widest.push(best);
-        }
-        out.push({ wording, rail: p.getBoundingClientRect().width, widest, twoLineFrom });
-      }
-      return out;
-    }, ['N have no About.', 'N without an About yet.']);
-    if (rows === null) throw new Error('no count line');
-    for (const r of rows) {
-      testInfo.annotations.push({ type: `"${r.wording}" in the rail, ${r.rail.toFixed(1)} wide`, description: `${r.widest.map((w, i) => `widest at ${i + 1} digit${i ? 's' : ''}: N=${w.n}, ${w.width.toFixed(1)}`).join('; ')}; ${r.twoLineFrom === null ? 'one line at every N to 999' : `two lines from N=${r.twoLineFrom}`}` });
-    }
+    await sweep('in the rail');
+    await openGrid(page, artistId, 320);
+    await sweep('at 320');
+    await openGrid(page, artistId, 1280);
+    await sweep('at 1280');
   } finally {
     await removeRecordsFor(artistId);
   }
