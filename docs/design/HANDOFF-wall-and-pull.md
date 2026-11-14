@@ -994,6 +994,7 @@ Its rows are in the governs table above, one per section; this section does not 
   - **Pick** by giving the model the phrase and every eligible record. It returns up to five, or one stand-in with a flag that nothing fits, or a flag that the run has named everything that fits. Each answer comes with a one-sentence reason.
   - **Leave out** the run's named records, as §P.2 rules, by passing them to the model as excluded.
   - **Draw the reason** where the card says. Draw the stand-in as one record with its reason, and draw the run's end as a message in the slot with no record.
+  - **Draw what the model returns,** one to five, and never pad. Assert an answer of three drawn as three in every host.
   - **Hold** the ranking path unbuilt-over rather than deleting it. The far and tie sentences rule it if a distance filter returns.
   - **Report** when this is built, so the ranking sentence's withdrawal can be filed against the build that replaces it.
   - **Capture** the shelf, the table and the grid at 1440 × 900 with an answer and its reason, a nothing-fits answer, and the run's end, for Adam.

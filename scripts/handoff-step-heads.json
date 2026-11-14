@@ -470,5 +470,15 @@
         "how": "anchors"
       }
     ]
+  },
+  {
+    "file": "Five as a cap",
+    "ref": "refs/drops/2026-11-14-01",
+    "heads": [
+      {
+        "head": "§P.2: the model pick, minimum",
+        "how": "anchors"
+      }
+    ]
   }
 ]
