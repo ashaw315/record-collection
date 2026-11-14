@@ -204,6 +204,50 @@ function governs(from, to) {
   return { lines, unaddressed };
 }
 
+/** A change file's name without its " - for Code to <verb>" ending, as the landed lists name files. */
+const changeFileName = (path) => /([^/]+) - for Code to [a-z]+(?:\.md)?$/.exec(path)?.[1] ?? null;
+
+/**
+ * The files a change file's landed list says Design has offered: the quoted names on its "Offered" lines, never "this
+ * file", and nothing from the list's other lines (superseded, held) or from outside the list (the coordinator, 14 Nov).
+ */
+export function offeredNames(text) {
+  const at = text.search(/^## Landed list/m);
+  if (at < 0) return [];
+  const list = text.slice(at).split('\n').slice(1);
+  const end = list.findIndex((l) => /^## /.test(l));
+  return (end < 0 ? list : list.slice(0, end))
+    .filter((l) => /^- \*\*Offered/.test(l))
+    .flatMap((l) => [...l.matchAll(/["“]([^"”]+)["”]/g)].map((m) => m[1].trim()))
+    /* Design's file names start with a capital; a quoted word in the line's prose ("now", 10 Nov) is not a file. */
+    .filter((name) => /^[A-Z0-9]/.test(name));
+}
+
+/** Each name offered by a newly arrived change file's landed list that no drop ref and no disk holds, with the file that named it. */
+export function offeredMissing(added, known) {
+  const missing = [];
+  for (const { name, text } of added) for (const offered of offeredNames(text)) if (!known.has(offered) && !missing.some((m) => m.name === offered)) missing.push({ name: offered, by: name });
+  return missing;
+}
+
+/*
+  At the drop, not an export later: "Answer below the count line" was offered and never reached the disk, and nothing
+  said so for a day. Read only from the new change files' lists, so the caveat is printed with every result.
+*/
+function landedLists(from, to, refs) {
+  const added = git(['diff', '--name-status', '--no-renames', from, to, '--', DIR]).split('\n').filter((l) => l.startsWith('A\t')).map((l) => l.slice(2))
+    .filter((path) => changeFileName(path) !== null)
+    .map((path) => ({ name: changeFileName(path), text: git(['cat-file', 'blob', `${to}:${path}`]) }));
+  if (added.length === 0) return [];
+  const known = new Set(refs.flatMap((ref) => git(['ls-tree', '-r', '--name-only', ref, '--', DIR]).split('\n')).map(changeFileName).filter((n) => n !== null));
+  const named = new Set(added.flatMap((a) => offeredNames(a.text)));
+  const missing = offeredMissing(added, known);
+  const lines = missing.map((m) => `  offered, not on disk or in any ref: "${m.name}" (named by ${m.by}\u2019s landed list)`);
+  if (missing.length === 0) lines.push(`  landed lists: ${named.size} offered file${named.size === 1 ? '' : 's'} named by the new change files, all on disk or in a ref`);
+  lines.push('  (this reads only as complete as Design\u2019s landed lists: a file no list names is not looked for, so a clean line is not proof nothing is missing)');
+  return lines;
+}
+
 function main() {
   const existing = git(['for-each-ref', '--format=%(refname)', PREFIX]).split('\n').filter(Boolean).sort();
   const previous = existing.at(-1);
@@ -229,6 +273,8 @@ function main() {
   }
   const lines = report(previous, name);
   process.stdout.write(`${captured} It differs from ${previous}, captured at ${capturedAt(previous)}, in ${lines.filter((l) => /^ {2}\S/.test(l)).length} file(s):\n${lines.join('\n')}\n`);
+  const offered = landedLists(previous, name, [...existing, name]);
+  if (offered.length > 0) process.stdout.write(`${offered.join('\n')}\n`);
   const rows = governs(previous, name);
   if (rows.lines.length > 0) process.stdout.write(`${rows.lines.join('\n')}\n`);
   if (rows.unaddressed > 0) {

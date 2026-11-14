@@ -57126,3 +57126,23 @@ and the mechanism is being replaced (the model pick, §P.2, 13 Nov), so it is no
 SEARCH's line by AddRecord's own construction; next after the rail in the document, so ring-144's walk reaches it
 straight after SURPRISE ME, unchanged. The fold capture (`docs/captures/fold-640/`): the field at four lines, the
 control 497.5 to 801.5, SURPRISE ME 98.5 past the fold at 640 and 117 of scroll to it; in view at 900.
+
+## 14 Nov: the landed-list check at the drop; the tracklists' side markers
+
+**drop-ref reads the new change files' landed lists (the coordinator, 14 Nov, check (a)).** A drop ref already records
+every file in docs/design as it stood, but a file offered to the coordinator that never reaches the disk is in no ref
+and was noticed only an export later ("Answer below the count line", 13 Nov). drop-ref now reads the "Offered" lines of
+each newly arrived change file and prints any named file that no ref and no disk holds, with the file that named it,
+and always prints that the check is only as complete as Design's lists. Run over every change file on disk against the
+98 refs it names five: "Answer below the count line" (the case it was built for), "Change file suffix" (held by Code
+outside the folder), "Five in the column- second half" (Design's own line says not arrived, superseded), "Q22 control
+answered" (in no ref; how it reached Code, if it did, is not recorded), and "now", a quoted word in prose, now excluded
+since Design's names start with a capital. Historical files are not reread; the check runs on new arrivals. Check (b),
+the card chain, is not built: a missing middle card is the normal shape of a two-file chain, so it would fire when
+nothing is wrong.
+
+**Side markers (`scripts/report-track-sides.mts`, read-only):** 54 of 55 tracklists carry lettered sides on every
+track; none uses plain numbering. The 55th, Carpenters, has one row with no position: "Bacharach-David Medley", a
+heading between B3 and B5, so by order it is side B. Single-track sides: Jewels Of Thought (A 1, B 1), Bitches Brew (A 1,
+B 1, C 2, D 2), Great Gershwin (A 1, B 2), A Love Trilogy (A 1, B 4), Psychic (A 1, B 3, C 1, D 3), The Collective (C 1,
+D 1). Diamond Jubilee has six sides, 5 6 5 5 6 5, so the change of side nearest the middle falls after C at 16 and 16.

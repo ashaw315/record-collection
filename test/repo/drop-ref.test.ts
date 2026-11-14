@@ -3,7 +3,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
-import { changedSections, nextRefName, rowAddressed, unattributedChanges } from '../../scripts/drop-ref.mjs';
+import { changedSections, nextRefName, offeredMissing, offeredNames, rowAddressed, unattributedChanges } from '../../scripts/drop-ref.mjs';
 import { headingOf } from '../../scripts/export-diff.mjs';
 import { underLoad } from '../helpers/spawn-budget';
 
@@ -409,5 +409,48 @@ describe('drop-ref: a change belongs to the section it stands in, under a captio
     const lead = (para: string) => `<p style="text-transform:uppercase">A card’s opening caption</p>\n<p>${para}</p>\n<p style="text-transform:uppercase">W.1 · First</p>\n<p>One.</p>\n`;
     expect(unattributedChanges(lead('Was.'), lead('Is now.'))).toEqual(['A card’s opening caption']);
     expect(changedSections(lead('Was.'), lead('Is now.'))).toEqual([]);
+  });
+});
+
+/*
+  The landed lists (the coordinator, 14 Nov): "Answer below the count line" was offered to the coordinator and never
+  reached docs/design, and nothing said so until an export a day later, by which time it had been superseded twice.
+  Each change file ends with Design's landed list, whose "Offered" lines name the files Design has sent and not seen in
+  an export. Read at the drop, a named file that no ref and no disk holds is printed then. The check is only as complete
+  as Design's lists, which the output says every time.
+*/
+describe('the landed lists: an offered file that has not arrived', () => {
+  const landed = (offered: string) => `# New - for Code to apply\n\n## Landed list, against abc123\n\n- **Superseded here:** "Gone Before".\n- **Offered 13 Nov, not yet in an export:** ${offered}\n- **In Code's list and not in mine:** none.\n`;
+
+  it('reads the names on the Offered lines, not "this file", and not the other lines’ names', () => {
+    expect(offeredNames(landed('"Five as a cap" (13 Nov), “Phrase in view by height”, and this file.'))).toEqual(['Five as a cap', 'Phrase in view by height']);
+    expect(offeredNames('# A file with no landed list\n\nOffered "Not In A List".\n')).toEqual([]);
+    /* Real data, "Credit line measure" (10 Nov): a quoted word in the line's prose is not a file. Design's file names start with a capital. */
+    expect(offeredNames(landed('this file, and the "Companies with the release" resend, whose step wording still reads "now" at line 792.'))).toEqual(['Companies with the release']);
+  });
+
+  it('names each offered file that no ref and no disk holds, with the file whose list named it', () => {
+    const added = [{ name: 'New', text: landed('"Arrived", "Lost one", and this file.') }];
+    expect(offeredMissing(added, new Set(['New', 'Arrived']))).toEqual([{ name: 'Lost one', by: 'New' }]);
+    expect(offeredMissing(added, new Set(['New', 'Arrived', 'Lost one']))).toEqual([]);
+  });
+
+  it('prints the missing file at the drop, and the caveat whether or not one is missing', () => {
+    const r = repo();
+    try {
+      r.write('Arrived - for Code to apply.md', '# Arrived - for Code to apply\n\nProse.\n');
+      r.run();
+      r.write('New - for Code to apply.md', landed('"Arrived", "Lost one", and this file.'));
+      const out = r.run();
+      expect(out).toContain('offered, not on disk or in any ref: "Lost one" (named by New’s landed list)');
+      expect(out).toMatch(/only as complete as Design’s landed lists/);
+      r.write('Later - for Code to apply.md', landed('"Arrived", and this file.').replace('# New', '# Later'));
+      const clean = r.run();
+      expect(clean).not.toContain('not on disk or in any ref:');
+      expect(clean).toContain('landed lists: 1 offered file named by the new change files, all on disk or in a ref');
+      expect(clean).toMatch(/only as complete as Design’s landed lists/);
+    } finally {
+      r.done();
+    }
   });
 });
