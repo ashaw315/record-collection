@@ -9,7 +9,8 @@ import type { PickAnswer } from './reroll';
  * wall's pull. Each side registers its own half while mounted.
  */
 /** A record the pick can serve, with what §T.5's cell draws. */
-export type PickRecord = { id: string; title: string; artist: string; cover: string | null; moods: readonly string[] };
+/* No moods since 14 Nov: the moods are retired (§P.2; Adam, 14 Nov) and nothing read the set the page loaded for each record. */
+export type PickRecord = { id: string; title: string; artist: string; cover: string | null };
 
 /**
  * Where the far view's cell stands (§P.4): `here`, beneath the control, in

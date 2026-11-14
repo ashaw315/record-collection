@@ -23,7 +23,6 @@ import { DEFAULT_PAGE_SIZE, type Offset } from '@/lib/api/query-params';
 import { CONTENT_INSET } from './screen-frame';
 import { EmptyFigure } from './EmptyFigure';
 import { PickControl, type PickRecord } from './PickControl';
-import { moodSetsFor } from '@/lib/db/queries/record-moods';
 import { countWithoutAbout } from '@/lib/db/queries/ask';
 
 /**
@@ -147,11 +146,11 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
   const listPool = records.total <= records.rows.length
     ? records.rows
     : (await listRecords({ limit: records.total, offset: 0 as Offset, sort: params.sort, filters: params.filters })).rows;
-  /* Step 157, §P.2: each record carries its stored set, so the ask can score it; an untagged record carries none and is reached only by SURPRISE ME (§P.6). */
+  /* Each record carries what the answer's cell draws. The mood set it carried until 14 Nov fed nothing once the moods retired (§P.2; Adam, 14 Nov), so it is no longer read. */
   const poolOf = async (rows: ReadonlyArray<{ id: string; title: string; artist: string }>): Promise<PickRecord[]> => {
     const ids = rows.map((row) => row.id);
-    const [urls, sets] = await Promise.all([newestCoverUrls(ids), moodSetsFor(ids)]);
-    return rows.map((row) => ({ ...row, cover: urls.get(row.id) ?? null, moods: sets.get(row.id) ?? [] }));
+    const urls = await newestCoverUrls(ids);
+    return rows.map((row) => ({ ...row, cover: urls.get(row.id) ?? null }));
   };
   const pool = await poolOf(listPool.map((row) => ({ id: row.id, title: row.title, artist: row.artist.name })));
   const shelfPool = shelf === null ? [] : await poolOf(shelf.filter((record) => record.matches).map((record) => ({ id: record.id, title: record.title, artist: record.artistName })));

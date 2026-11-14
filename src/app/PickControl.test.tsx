@@ -14,7 +14,7 @@ const LABEL_COLOUR = 'text-[oklch(0.44_0.008_70)]';
  * are the first render's facts, read from the markup; what an ask does is the e2e's. Each case fails against the
  * control before this step: the moods drawn, ASK's reason "Choose a mood first.", the untagged line's words.
  */
-const POOL = [{ id: '00000000-0000-4000-8000-000000000001', title: 'Gaucho', artist: 'Steely Dan', cover: null, moods: [] }];
+const POOL = [{ id: '00000000-0000-4000-8000-000000000001', title: 'Gaucho', artist: 'Steely Dan', cover: null }];
 const html = renderToStaticMarkup(<PickControl pool={POOL} />);
 const rail = renderToStaticMarkup(<PickControl pool={POOL} answers="wall" />);
 
