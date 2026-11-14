@@ -61,15 +61,21 @@ describe('POST /api/discogs/import-collection', () => {
     expect((await db.execute(`SELECT count(*)::int AS n FROM discogs_import_runs`)).rows[0], 'the run is kept').toEqual({ n: 1 });
   });
 
-  /* The route tags what it imported through the app's tagger; the test's tagger is a fake, since the real one refuses a live call by name. */
-  it('tags the imported records through the app’s tagger after the run', async () => {
+  /*
+    The moods are retired (§P.2 withdrew them; Adam, 14 Nov: "get rid of them, I feel like they don't offer
+    reliability"), so an import tags nothing. The route tagged every imported record through the mood tagger and wrote
+    record_moods until 14 Nov; that case held it and changes with the retirement. record_moods and its rows stay: dropping
+    them is Adam's separate yes. Fails against the route passing its tagger to the run.
+  */
+  it('tags nothing: no call to the mood tagger and no record_moods row, the moods being retired', async () => {
     spyClient();
-    let n = 0;
-    const sets = [['sunny'], ['sleepy', 'dancing'], ['smooth', 'zone out', 'loud and dirty']];
-    vi.spyOn(taggerModule, 'getMoodTagger').mockReturnValue({ model: 'fake-route-tagger', async tag() { n += 1; return { ok: true, payload: { moods: sets[n % 3] } }; } });
+    let calls = 0;
+    vi.spyOn(taggerModule, 'getMoodTagger').mockReturnValue({ model: 'fake-route-tagger', async tag() { calls += 1; return { ok: true, payload: { moods: ['sunny'] } }; } });
     const res = await post();
     expect(res.status).toBe(200);
-    expect((await db.execute(`SELECT count(DISTINCT record_id)::int AS n FROM record_moods`)).rows[0]).toEqual({ n: 9 });
+    expect((await db.execute(`SELECT count(*)::int AS n FROM records`)).rows[0], 'the import itself still runs').toEqual({ n: 9 });
+    expect(calls, 'the tagger is never asked').toBe(0);
+    expect((await db.execute(`SELECT count(*)::int AS n FROM record_moods`)).rows[0], 'nothing written to record_moods').toEqual({ n: 0 });
   });
 
   it('takes an empty object as its body and nothing else: an unknown key is a validation failure', async () => {
