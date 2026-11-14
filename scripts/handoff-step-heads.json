@@ -480,5 +480,39 @@
         "how": "anchors"
       }
     ]
+  },
+  {
+    "file": "Phrase in view by height",
+    "ref": "refs/drops/2026-11-14-02",
+    "heads": [
+      {
+        "head": "§P.5: the ask field wraps",
+        "how": "anchors"
+      },
+      {
+        "head": "§P.2: the model pick, minimum",
+        "how": "anchors"
+      }
+    ]
+  },
+  {
+    "file": "Requirement unmet",
+    "ref": "refs/drops/2026-11-14-02",
+    "heads": [
+      {
+        "head": "§P.2: the model pick, minimum",
+        "how": "anchors"
+      }
+    ]
+  },
+  {
+    "file": "Tracks break at a side",
+    "ref": "refs/drops/2026-11-14-02",
+    "heads": [
+      {
+        "head": "§65: the tracklist and the credits",
+        "how": "anchors"
+      }
+    ]
   }
 ]

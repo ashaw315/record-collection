@@ -978,7 +978,7 @@ Its rows are in the governs table above, one per section; this section does not 
   - **Make the field wrap and grow** to as many lines as its phrase needs, in every host, with no line cap. When empty it rests at one line.
   - **Move the count line beneath the slot** in every host, the far view's band included: band-rules.ts draws it before the slot there too. Assert its order against the slot in every host.
   - **Draw the answer 24 below the count line** where the line is drawn, and 24 below the slot where it isn't. Assert the order slot, count line, covers in the sidebar and the far view's band, with an answer and a non-empty slot. In the far band, fix band-rules.ts's order as well.
-  - **Assert** in every host of the ask-overflow specimen, with its phrase: the whole phrase is in view, by line box, focused and unfocused. Also assert that ASK's position doesn't change across two presses without an edit.
+  - **Assert** in every host of the ask-overflow specimen, with its phrase: the whole phrase is in view, by line box, focused and unfocused. Also assert that ASK's position doesn't change across two presses without an edit. Where the window is shorter than the control at full field height (the fold-640 captures), assert the caret's line in view while focused, not the whole phrase at rest.
   - **For 184:** "Not set up yet." is the slot's, and the count line is drawn beneath it, both at once.
   - **Capture** the rail as a column at 1440 × 900 and × 640, with the field at its tallest for that phrase and ADD RECORD moved. This is the capture §P.5's open fold provisional is judged from, so it replaces the one-line capture.
   > The ask field takes the host’s width and as many lines as the phrase needs, so the whole phrase stays in view as it is typed and after.
@@ -991,13 +991,13 @@ Its rows are in the governs table above, one per section; this section does not 
   > Asks with the same phrase make a run, and each ask in a run leaves out every record the run has named while enough others remain to make an answer; a run ends when the phrase changes.
 
 - **Unnumbered, for Code to number — §P.2: the model pick, minimum.**
-  - **Pick** by giving the model the phrase and every eligible record. It returns up to five, or one stand-in with a flag that nothing fits, or a flag that the run has named everything that fits. Each answer comes with a one-sentence reason.
+  - **Pick** by giving the model the phrase and every eligible record. It returns up to five, or one stand-in with a flag that nothing fits, or a flag that the run has named everything that fits. Each answer comes with a one-sentence reason. When the phrase states a requirement that no fitting record meets, return the closest in feel as the stand-in, flagged as a requirement unmet, not as nothing fits. Its reason names the requirement and what the record has instead.
   - **Leave out** the run's named records, as §P.2 rules, by passing them to the model as excluded.
   - **Draw the reason** where the card says. Draw the stand-in as one record with its reason, and draw the run's end as a message in the slot with no record.
   - **Draw what the model returns,** one to five, and never pad. Assert an answer of three drawn as three in every host.
   - **Hold** the ranking path unbuilt-over rather than deleting it. The far and tie sentences rule it if a distance filter returns.
   - **Report** when this is built, so the ranking sentence's withdrawal can be filed against the build that replaces it.
-  - **Capture** the shelf, the table and the grid at 1440 × 900 with an answer and its reason, a nothing-fits answer, and the run's end, for Adam.
+  - **Capture** at 390 × 844 first, the host Adam asks from, then the shelf, the table and the grid at 1440 × 900, with an answer and its reason, a nothing-fits answer, and the run's end, for Adam. Include a phrase with a requirement nothing meets, for example no vocals where everything close has them.
   > Every answer of the ask carries its reason: one sentence, in the reader’s terms of sound and occasion, saying why this record answers the phrase.
 
 No step: §G.7. It rules nothing. Hover and focus wait on Code's second pass, the breakpoint is settled and recorded in §G.8, and the eyebrow repetition is an observation, not a ruling.
@@ -1061,7 +1061,7 @@ The provisionals in force, for the note in Maintaining this file that a provisio
 - **§65 · the tracklist section.** "How it reads at 32 tracks, whether the tracks take two columns where the span is wide, and how the credits read opened, are all provisional until built and captured at 1440 × 900 and at 390, on the longest and the shortest tracklist in the collection." Returns from the tracklist step. Open. And what the count line says when the fold holds companies alone. 173c returned the captures. The fold, the two track columns from 960, the grouped credits, the companies' place and the open mark pass. The credit lines' 736 measure returns from its re-capture. The count line's wording ('Credits · n', which counts companies too) is for Adam.
 - **§60 · the disc at the reference's size.** "How it reads at that size is provisional until captured and judged." Returns from the disc step. Open.
 - **§P.4 · the held cell.** How the held cell reads at 1440 × 768 and 640. Returns from the held-cell step, for Adam. Open.
-- **§P.5 · the control's own fold at 640.** ASK and SURPRISE ME fall below the fold at 640, with the control ending at 919 by step 157. Returns from the ADD RECORD step's captures, for Adam. Open, with no answer pre-committed. Judged with the ask field at its tallest for a phrase of occasion, by the ask-field wrap step.
+- **§P.5 · the control's own fold at 640.** ASK and SURPRISE ME fall below the fold at 640, with the control ending at 919 by step 157. Returns from the ADD RECORD step's captures, for Adam. Closed: accepted. Adam never uses a short desktop window, and the column host is fine-pointer only by §W.24, so he never meets this fold. The height condition above keeps §P.5 true at it anyway. Judged with the ask field at its tallest for a phrase of occasion, by the ask-field wrap step.
 - **§W.13 · where ADD RECORD stands.** "Where it stands exactly, on which line and how far in, is provisional until built and captured at 1274 × 640 and 1440 × 900." Returns from the same step. Open.
 - **§P.2 · the ask's answers.** How the five read in each host, and the shelf's one, and how the slot names a record read from its title. Returns from the ask-field step. Open.
 - **§P.4 · the covers.** Row or column per host, and their cost to the far view's drawing, against the held cell. Returns from the ask-field step. Open.
@@ -1070,7 +1070,7 @@ The provisionals in force, for the note in Maintaining this file that a provisio
 - **§P.6 · the not-configured message.** "Not set up yet.", marked Proposed. Returns from the step above. Open.
 - **§P.5 · the ask field's label.** WHAT TO PLAY, Proposed. Returns from the captures step. Open.
 - **§P.4 · the column host's five.** "How the run past the window reads is provisional until captured at 1440 × 900 and × 768, on the tallest five, for Adam to judge." Returns from the five-cells step. Open.
-- **§P.5 · the field at four lines in the rail.** How the wrapped field reads in the rail as a column. Returns from the wrap step's capture, for Adam. Open.
+- **§P.5 · the field at four lines in the rail.** How the wrapped field reads in the rail as a column. Returns from the wrap step's capture, for Adam. Open. The fold-640 captures are fit to judge from. The 497.5 above the control is fixed furniture, and the drawing region is the window's height by construction, so the three seeded records don't change any figure in them.
 - **§P.2 · the model pick's words.** The reason's length and fit in each host, the nothing-fits wording, and the run's-end wording. Returns from the model-pick step's capture, for Adam. Open.
 
 ## Findings for screens without a pass
