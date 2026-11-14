@@ -58,5 +58,15 @@
     "head": "§P.5: the ask field wraps",
     "status": "unbuilt",
     "evidence": "Ruled 13 Nov (\"Ask field wraps and count line\", the card at 556aa522). The field is a one-line <input> that scrolls (src/app/PickControl.tsx:175), and the count line is drawn before ASK and the slot (PickControl.tsx:196, the slot at :234); checked 13 Nov."
+  },
+  {
+    "head": "§P.2: a run leaves out its history",
+    "status": "unbuilt",
+    "evidence": "Ruled 13 Nov (\"Run history and matched text\", the card at 09c1c31c). The control holds only the last answer (src/app/PickControl.tsx:102) and sends it as the exclusion (:161), and nothing clears it when the phrase changes: the grid carried A's five into B's answer (measured in the build 13 Nov, the run-history step's test to be); checked 13 Nov."
+  },
+  {
+    "head": "§P.2: the model pick, minimum",
+    "status": "unbuilt",
+    "evidence": "Ruled 13 Nov (\"Model pick minimum\", the card at 580798d3). The route ranks the pool by cosine nearness of stored vectors (src/app/api/ask/route.ts:63) and draws no reason; checked 13 Nov."
   }
 ]

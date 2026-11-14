@@ -446,5 +446,29 @@
         "how": "anchors"
       }
     ]
+  },
+  {
+    "file": "Model pick minimum",
+    "ref": "refs/drops/2026-11-13-12",
+    "heads": [
+      {
+        "head": "§P.2: the model pick, minimum",
+        "how": "inserts"
+      }
+    ]
+  },
+  {
+    "file": "Run history and matched text",
+    "ref": "refs/drops/2026-11-13-12",
+    "heads": [
+      {
+        "head": "§P.2: a run leaves out its history",
+        "how": "inserts"
+      },
+      {
+        "head": "§P.5: the ask field wraps",
+        "how": "anchors"
+      }
+    ]
   }
 ]

@@ -135,7 +135,7 @@ The wall at rest is line, ink and paper; colour arrives with the pull. Everythin
 | §T.5 | The grid | The grid’s covers, captions, spacing, column counts and Sort control. |
 | §T.6 | Ornament and colour, for every screen | Ornament, oxblood, the grey, corners and headings across every screen; the content measure; pending answers and reserved slots; the hit-area floor by pointer and how sets meet it; one focus ring for the app and Tab order; and each screen's pass: the want list, stats, manage with its Discogs import, the record form, look up, login, the dialog, the error and not-found pages. |
 | §P.1 | Where the feature is ruled, and where it is presented | Why the mood pick has its own target, why a view that can pull answers with the pull and every other view in place, and why the split is the pull and not the shelf, and what the target owns and points at. |
-| §P.2 | What an ask does | The toggles and ASK, the lean and why it only never empties, the one last-served record and what counts as served, the pool under a filter and why paging does not narrow it, why it is not a filter, why a zoom is not a navigation, an answer ending when its host changes, and SURPRISE ME. And the ask field's phrase or title, the pool ranked by ABOUT, an answer being what is shown (one as a pull, five as cells), and the re-ask leaving out the last answer and the far answer's pair (the moods, the lean, one last-served and the loose fit as open withdrawn). |
+| §P.2 | What an ask does | The toggles and ASK, the lean and why it only never empties, the run's named records and what counts as served, the pool under a filter and why paging does not narrow it, why it is not a filter, why a zoom is not a navigation, an answer ending when its host changes, and SURPRISE ME. And the ask field's phrase or title, the pool ranked by ABOUT, an answer being what is shown (one as a pull, five as cells), and the re-ask leaving out the last answer and the far answer's pair (the moods, the lean, one last-served and the loose fit as open withdrawn). And the model pick's reason, its nothing-fits answer and its run's end. |
 | §P.3 | A second ask on the shelf | The first answer as §W's pull, the re-roll as a put back then a pull and the §W.8 sentence that gives its reason, the order between them left to Adam's use, an ask mid-motion, the record already out, and the unexplained put back. |
 | §P.4 | The answer on the table and the grid | The answer as one grid cell, beneath the control in the band host and in the count column in the column host, its width and its distance below what precedes it, what moves when its height changes and what does not, and the slot's message where the answer is the record already shown. And the cell held in view in the count column when the page has scrolled past it. And the covers in rank order (one cover withdrawn). And what separates the answer from the list below it. And the column host's five cells, the first row in view and the rest below (held wholly in view withdrawn). |
 | §P.5 | The control | Its order, its place in the rail as a column and as a band, the sidebar and the band below the filters, how a mood is marked and why not as a filter, ASK and SURPRISE ME as labels, the moods' pitch in the rail, and the rail running with the page past the window's foot. And ADD RECORD out of the rail, the control ending it. And the ask field in the moods' place (the moods withdrawn). And the ask field wrapping to its phrase (width-only withdrawn). |
@@ -977,10 +977,27 @@ Its rows are in the governs table above, one per section; this section does not 
 - **Unnumbered, for Code to number — §P.5: the ask field wraps.**
   - **Make the field wrap and grow** to as many lines as its phrase needs, in every host, with no line cap. When empty it rests at one line.
   - **Move the count line beneath the slot** in every host, the far view's band included: band-rules.ts draws it before the slot there too. Assert its order against the slot in every host.
+  - **Draw the answer 24 below the count line** where the line is drawn, and 24 below the slot where it isn't. Assert the order slot, count line, covers in the sidebar and the far view's band, with an answer and a non-empty slot. In the far band, fix band-rules.ts's order as well.
   - **Assert** in every host of the ask-overflow specimen, with its phrase: the whole phrase is in view, by line box, focused and unfocused. Also assert that ASK's position doesn't change across two presses without an edit.
   - **For 184:** "Not set up yet." is the slot's, and the count line is drawn beneath it, both at once.
   - **Capture** the rail as a column at 1440 × 900 and × 640, with the field at its tallest for that phrase and ADD RECORD moved. This is the capture §P.5's open fold provisional is judged from, so it replaces the one-line capture.
   > The ask field takes the host’s width and as many lines as the phrase needs, so the whole phrase stays in view as it is typed and after.
+
+- **Unnumbered, for Code to number — §P.2: a run leaves out its history.**
+  - **Hold one set per run:** every record the run has named, by ASK, by SURPRISE ME, or by a spine or arrow pull. Clear it when the phrase changes, on a navigation, and when the run starts again.
+  - **Leave out the whole set** from each ask in the run, while enough others remain.
+  - **Assert,** on a seeded pool of at least six records with ABOUTs, that five presses on the shelf with one phrase name five different records in ranking order, and a sixth press on a pool of five starts again at the nearest. Assert the same in the table, five covers to an answer, across two presses.
+  - **Report** whether a zoom keeps the set, as §P.2 rules for the run's named records.
+  > Asks with the same phrase make a run, and each ask in a run leaves out every record the run has named while enough others remain to make an answer; a run ends when the phrase changes.
+
+- **Unnumbered, for Code to number — §P.2: the model pick, minimum.**
+  - **Pick** by giving the model the phrase and every eligible record. It returns up to five, or one stand-in with a flag that nothing fits, or a flag that the run has named everything that fits. Each answer comes with a one-sentence reason.
+  - **Leave out** the run's named records, as §P.2 rules, by passing them to the model as excluded.
+  - **Draw the reason** where the card says. Draw the stand-in as one record with its reason, and draw the run's end as a message in the slot with no record.
+  - **Hold** the ranking path unbuilt-over rather than deleting it. The far and tie sentences rule it if a distance filter returns.
+  - **Report** when this is built, so the ranking sentence's withdrawal can be filed against the build that replaces it.
+  - **Capture** the shelf, the table and the grid at 1440 × 900 with an answer and its reason, a nothing-fits answer, and the run's end, for Adam.
+  > Every answer of the ask carries its reason: one sentence, in the reader’s terms of sound and occasion, saying why this record answers the phrase.
 
 No step: §G.7. It rules nothing. Hover and focus wait on Code's second pass, the breakpoint is settled and recorded in §G.8, and the eyebrow repetition is an observation, not a ruling.
 
@@ -1053,6 +1070,7 @@ The provisionals in force, for the note in Maintaining this file that a provisio
 - **§P.5 · the ask field's label.** WHAT TO PLAY, Proposed. Returns from the captures step. Open.
 - **§P.4 · the column host's five.** "How the run past the window reads is provisional until captured at 1440 × 900 and × 768, on the tallest five, for Adam to judge." Returns from the five-cells step. Open.
 - **§P.5 · the field at four lines in the rail.** How the wrapped field reads in the rail as a column. Returns from the wrap step's capture, for Adam. Open.
+- **§P.2 · the model pick's words.** The reason's length and fit in each host, the nothing-fits wording, and the run's-end wording. Returns from the model-pick step's capture, for Adam. Open.
 
 ## Findings for screens without a pass
 
