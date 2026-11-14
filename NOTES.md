@@ -57146,3 +57146,19 @@ track; none uses plain numbering. The 55th, Carpenters, has one row with no posi
 heading between B3 and B5, so by order it is side B. Single-track sides: Jewels Of Thought (A 1, B 1), Bitches Brew (A 1,
 B 1, C 2, D 2), Great Gershwin (A 1, B 2), A Love Trilogy (A 1, B 4), Psychic (A 1, B 3, C 1, D 3), The Collective (C 1,
 D 1). Diamond Jubilee has six sides, 5 6 5 5 6 5, so the change of side nearest the middle falls after C at 16 and 16.
+
+**"Tracks break at a side" taken in (14 Nov), for the build of §65's side break.** Carry into it:
+- **Six records change, not the two Design named.** Jewels Of Thought, Bitches Brew, Great Gershwin, A Love Trilogy
+  and The Collective go to one column; Psychic stays at two, four and four. Assert Bitches Brew at one column beside
+  the two named.
+- **The tie nothing rules.** Bitches Brew is A 1, B 1, C 2, D 2: its side changes nearest the middle are after B (two
+  and four) and after C (four and two), equidistant, and "nearest the middle" says neither. At the threshold of four
+  both fail and it is one column, so the tie never arises; below three it is live. If the threshold is lowered, the tie
+  is ruled before the build changes.
+- **A positionless row is the side above it** (Carpenters' "Bacharach-David Medley" between B3 and B5): a data reading
+  nothing rules, reported, not silent.
+
+**"Landed" means two things (the coordinator, 14 Nov).** Code's landed record lists every change file in the refs,
+so it means arrived; Design's landed list means applied. "Tracks break at a side" stood in the record at 6699a419
+with nothing applied, and Design read it as landed. Where a file is in the refs and not applied, say "arrived,
+nothing applied" with the record, in the same breath.
