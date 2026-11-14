@@ -1055,3 +1055,27 @@ export const recordEmbeddings = pgTable('record_embeddings', {
   vector: jsonb('vector').$type<number[]>().notNull(),
   embeddedAt: timestamp('embedded_at', { withTimezone: true }).notNull().defaultNow(),
 });
+
+/**
+ * **§4.6 (A78, 14 Nov): the text the ask's model pick reads for each record**, in sound and occasion. Generated and
+ * edited apart: a regeneration writes `generated` and its provenance and never `edited`, and the pick reads `edited`
+ * where it is set and `generated` otherwise, never both. A blank is NULL, so "unknown" has one form. Goes with its
+ * record, as §4.5's tag set does.
+ */
+export const recordMatchedText = pgTable(
+  'record_matched_text',
+  {
+    recordId: uuid('record_id')
+      .primaryKey()
+      .references(() => records.id, { onDelete: 'cascade' }),
+    generated: text('generated'),
+    generatedModel: text('generated_model'),
+    generatedAt: timestamp('generated_at', { withTimezone: true }),
+    edited: text('edited'),
+    editedAt: timestamp('edited_at', { withTimezone: true }),
+  },
+  (t) => [
+    check('record_matched_text_generated_not_blank', sql`${t.generated} IS NULL OR btrim(${t.generated}) <> ''`),
+    check('record_matched_text_edited_not_blank', sql`${t.edited} IS NULL OR btrim(${t.edited}) <> ''`),
+  ],
+);

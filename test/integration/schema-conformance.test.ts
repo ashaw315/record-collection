@@ -126,6 +126,8 @@ describe('§4 conformance — cascade directions', () => {
       'record_embeddings.record_id -> records: CASCADE',
       'record_genres.genre_id -> genres: NO ACTION',
       'record_genres.record_id -> records: CASCADE',
+      /* §4.6 (A78). CASCADE, §4.5's exception: the matched text is an attribute of its record. */
+      'record_matched_text.record_id -> records: CASCADE',
       /*
         §4.5 (A76). CASCADE, the stated exception to "reference rows in use are
         never cascade-deleted": a tag set is an attribute of its record, not a
@@ -366,6 +368,8 @@ describe('§4 conformance — NOT NULL where the spec requires it', () => {
         `updated_at` would be a second and third answer to the same question.
       */
       'record_moods',
+      /* §4.6 (A78) specifies exactly six columns; `generated_at` and `edited_at` are the times, one for each text. */
+      'record_matched_text',
       'record_genres',
       'want_list_genres',
       'artist_genres',
@@ -468,5 +472,33 @@ describe('§4.2 — the Discogs master id is stored (A60)', () => {
     `);
 
     expect(columns.rows[0]?.is_nullable).toBe('YES');
+  });
+});
+
+/*
+  §4.6 (A78, 14 Nov): the text the ask's model pick reads, generated and edited apart, so a regeneration never writes
+  Adam's text; unknown has one form, NULL. Fails against a schema without the table.
+*/
+describe('§4.6 conformance — record_matched_text', () => {
+  it('has exactly the six columns §4.6 names, every one but the key nullable', async () => {
+    const cols = (await db.execute<{ column_name: string; is_nullable: string; data_type: string }>(sql`
+      SELECT column_name, is_nullable, data_type FROM information_schema.columns WHERE table_name = 'record_matched_text' ORDER BY column_name`)).rows;
+    expect(cols.map((c) => c.column_name)).toEqual(['edited', 'edited_at', 'generated', 'generated_at', 'generated_model', 'record_id']);
+    expect(cols.filter((c) => c.is_nullable === 'NO').map((c) => c.column_name)).toEqual(['record_id']);
+  });
+
+  it('refuses a blank generated or edited text, and takes NULL', async () => {
+    const [artist] = (await db.execute<{ id: string }>(sql`INSERT INTO artists (name) VALUES ('Matched') RETURNING id`)).rows;
+    const [record] = (await db.execute<{ id: string }>(sql`INSERT INTO records (artist_id, title) VALUES (${artist.id}, 'Matched') RETURNING id`)).rows;
+    try {
+      await db.execute(sql`INSERT INTO record_matched_text (record_id) VALUES (${record.id})`);
+      await expect(db.execute(sql`UPDATE record_matched_text SET generated = '   ' WHERE record_id = ${record.id}`), 'a blank generated text').rejects.toThrow();
+      await expect(db.execute(sql`UPDATE record_matched_text SET edited = '' WHERE record_id = ${record.id}`), 'an empty edit').rejects.toThrow();
+      await db.execute(sql`UPDATE record_matched_text SET generated = 'Solo piano, slow and sparse.' WHERE record_id = ${record.id}`);
+    } finally {
+      /* The record's delete cascades to its matched text (§4.6); the artist is then unreferenced. */
+      await db.execute(sql`DELETE FROM records WHERE id = ${record.id}`);
+      await db.execute(sql`DELETE FROM artists WHERE id = ${artist.id}`);
+    }
   });
 });

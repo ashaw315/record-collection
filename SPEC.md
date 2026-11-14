@@ -458,6 +458,70 @@ what it guards against is the same record twice in one sitting, so it lives
 in the client, session-scoped. Override, provenance and the served record
 are all per record or per session; nothing here is per mood.
 
+### 4.6 Matched text (A78, 2026-11-14)
+
+**`record_matched_text`**: the text the ask's model pick reads for each record
+(§P.2, "the text each record is matched by"), in sound and occasion: what is
+playing, how fast, how dense, how loud, and how it changes across a side or
+between sides. Not the ABOUT: `records.snippet` stays as the record's story,
+and is not what the pick reads. A side table, as §4.5's is, so the field can
+be regenerated, edited and one day retired without touching `records`.
+
+| Column | Type | Notes |
+|---|---|---|
+| record_id | UUID PRIMARY KEY REFERENCES records(id) ON DELETE CASCADE | one row per record |
+| generated | TEXT | nullable. The model's text. NULL where it is not known; never empty, never filler |
+| generated_model | TEXT | nullable. The model id that wrote `generated` |
+| generated_at | TIMESTAMPTZ | nullable. When `generated` was written |
+| edited | TEXT | nullable. Adam's text. No regeneration writes it, ever |
+| edited_at | TIMESTAMPTZ | nullable. Set with `edited` |
+
+CHECK that `generated` and `edited` are each NULL or hold something other
+than whitespace: a blank is NULL, so "unknown" has one form. The cascade is
+§4.5's exception, for the same reason: the text is an attribute of its
+record.
+
+**The edit replaces the generated text whole, at selection** (the
+coordinator, 14 Nov). The pick reads `edited` where it is set and
+`generated` otherwise, never both. Handed both, a model blends or hedges
+between a correction and what it corrected, and a reason could cite a
+claim from the generated text that Adam has removed. The edit box opens
+with the generated text in it, so what Adam saves is a whole description.
+A regeneration writes `generated`, `generated_model` and `generated_at` and
+nothing else, so an edit outlives it; the two timestamps say when an edit is
+older than the text it corrected, and nothing acts on that yet.
+
+**No row, or a row with both texts NULL, means the record has no matched
+text**, and the pick does not see it. Unknown stays blank: a field filled
+with plausible language is how the ABOUTs came to rank by their wording
+rather than their records (§P.2, 13 Nov).
+
+**Nothing about an ask is stored here or anywhere** (§P.2). The pick's
+answers are held by the page for the run and no longer; there is no cache
+of recommendations, so an edit has none to invalidate.
+
+### 4.7 Embeddings, held (A79, 2026-11-14)
+
+**`record_embeddings`**: one vector per record's ABOUT, keyed by the hash of
+the text it was made from, built for §P.2's ranking (Q22, November). Written
+into this section on 14 Nov, after the table had shipped without it; it is
+here so the schema and this document name the same tables.
+
+| Column | Type | Notes |
+|---|---|---|
+| record_id | UUID PRIMARY KEY REFERENCES records(id) ON DELETE CASCADE | one row per record |
+| about_hash | TEXT NOT NULL | the hash of the ABOUT the vector was made from; a different hash is a stale vector |
+| model | TEXT NOT NULL | the embedding model |
+| dims | INTEGER NOT NULL | the vector's length |
+| vector | JSONB NOT NULL | the vector, as numbers |
+| embedded_at | TIMESTAMPTZ NOT NULL DEFAULT now() | when it was written |
+
+**Held, not retired.** The model pick replaces the ranking as what the ask
+does, and the ranking path is held unbuilt-over rather than deleted (§P.2's
+model-pick step). §P.2's far and tie sentences rule it if a distance filter
+returns. A table nothing reads today is not a table to drop: dropping it is
+a decision, taken with the ranking path, not a tidy-up.
+
 ---
 
 ## 5. API contract
