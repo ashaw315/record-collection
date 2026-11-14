@@ -436,5 +436,15 @@
         "how": "inserts"
       }
     ]
+  },
+  {
+    "file": "Wrap step bullet corrected",
+    "ref": "refs/drops/2026-11-13-11",
+    "heads": [
+      {
+        "head": "§P.5: the ask field wraps",
+        "how": "anchors"
+      }
+    ]
   }
 ]

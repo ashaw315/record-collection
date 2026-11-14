@@ -976,7 +976,7 @@ Its rows are in the governs table above, one per section; this section does not 
 
 - **Unnumbered, for Code to number — §P.5: the ask field wraps.**
   - **Make the field wrap and grow** to as many lines as its phrase needs, in every host, with no line cap. When empty it rests at one line.
-  - **Move the count line beneath the slot** in the rail and the sidebar, as the far view's band draws it. Assert its order against the slot in every host.
+  - **Move the count line beneath the slot** in every host, the far view's band included: band-rules.ts draws it before the slot there too. Assert its order against the slot in every host.
   - **Assert** in every host of the ask-overflow specimen, with its phrase: the whole phrase is in view, by line box, focused and unfocused. Also assert that ASK's position doesn't change across two presses without an edit.
   - **For 184:** "Not set up yet." is the slot's, and the count line is drawn beneath it, both at once.
   - **Capture** the rail as a column at 1440 × 900 and × 640, with the field at its tallest for that phrase and ADD RECORD moved. This is the capture §P.5's open fold provisional is judged from, so it replaces the one-line capture.
