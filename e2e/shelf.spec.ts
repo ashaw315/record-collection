@@ -266,21 +266,21 @@ test('the shelf view has no header band: the wall starts under the nav, and the 
     const rail = document.querySelector('[data-shelf-offered] [data-testid="wall-rail"]') as HTMLElement;
     const style = getComputedStyle(rail);
     const lines = Array.from(rail.querySelectorAll<HTMLElement>('label[for="rail-search"], #rail-search, ul[aria-label="View"] a, [data-rail-rule]')).map((el) => ({ what: el.getAttribute('for') ?? el.id ?? el.textContent ?? '', left: el.getBoundingClientRect().left, right: el.getBoundingClientRect().right }));
-    return { left: rail.getBoundingClientRect().left, right: rail.getBoundingClientRect().right, padding: [style.paddingLeft, style.paddingRight], wordmark: (document.querySelector('[data-wordmark]') as HTMLElement).getBoundingClientRect().left, label: (rail.querySelector('label[for="rail-search"]') as HTMLElement).getBoundingClientRect().left, field: (rail.querySelector('#rail-search') as HTMLElement).getBoundingClientRect(), rule: rail.querySelector('[data-rail-rule]')?.getBoundingClientRect() ?? null, lines };
+    return { left: rail.getBoundingClientRect().left, right: rail.getBoundingClientRect().right, padding: [style.paddingLeft, style.paddingRight], wordmark: (document.querySelector('[data-wordmark]') as HTMLElement).getBoundingClientRect().left, label: (rail.querySelector('label[for="rail-search"]') as HTMLElement).getBoundingClientRect().left, field: (rail.querySelector('#rail-search') as HTMLElement).getBoundingClientRect(), rule: (() => { const r = rail.querySelector<HTMLElement>('[data-rail-rule]'); return r !== null && r.getClientRects().length > 0 ? r.getBoundingClientRect() : null; })(), lines };
   });
   expect(inside.wordmark, 'the precondition: the wordmark is at 18').toBeCloseTo(18, 1);
   expect(inside.label, 'the rail’s first line, SEARCH, under the wordmark').toBeCloseTo(18, 1);
   expect(inside.padding, '18 a side').toEqual(['18px', '18px']);
   expect([inside.left, inside.right], 'the rail’s box, and its right edge where it was').toEqual([0, 148]);
   expect([inside.field.left, inside.field.right], 'the field runs the rail’s width inside the two 18s').toEqual([18, 130]);
-  if (inside.rule !== null) expect([inside.rule.left, inside.rule.right], 'the full-bleed rule still runs the rail’s whole width').toEqual([0, 148]);
+  /* §W.13 (8 Nov): where the rail is a column the full-bleed rule left it with ADD RECORD (`W.13/add-record-foot`); read as drawn, since a rule hidden by the stylesheet still has a box of zeros. */
+  expect(inside.rule, 'no full-bleed rule in the rail as a column').toBeNull();
   expect(geometry.rail.left).toBeLessThan(geometry.facts.left);
   expect(geometry.facts.width, '420px').toBeCloseTo(420, 0);
   expect(geometry.region.left, 'the drawing stays rightmost').toBeGreaterThan(geometry.facts.left);
-  /* The rail's order: search, the views, add record. */
-  /* The rail's order: the one form (search, genre, sort), the views, add record. */
-  const order = await rail.evaluate((el) => Array.from(el.querySelectorAll('form, a')).map((n) => (n.tagName === 'FORM' ? n.getAttribute('role') : n.textContent?.trim())));
-  expect(order).toEqual(['search', 'Shelf', 'Table', 'Grid', 'Add record']);
+  /* The rail's order, as drawn: the one form (search, genre, sort), then the views. Add record ended it until §W.13 (8 Nov) moved it to the content's top right where the rail is a column. */
+  const order = await rail.evaluate((el) => Array.from(el.querySelectorAll<HTMLElement>('form, a')).filter((n) => n.getClientRects().length > 0).map((n) => (n.tagName === 'FORM' ? n.getAttribute('role') : n.textContent?.trim())));
+  expect(order).toEqual(['search', 'Shelf', 'Table', 'Grid']);
   /* SEARCH first and SORT last; GENRE between them when the collection has genre facets (the §W.24 test seeds one and asserts all three). */
   const fields = await rail.evaluate((el) => Array.from(el.querySelectorAll('form label')).map((n) => n.textContent?.trim()));
   expect(fields[0]).toBe('Search');

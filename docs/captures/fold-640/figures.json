@@ -1,0 +1,179 @@
+[
+  {
+    "window": "1274 × 640",
+    "atRest": {
+      "scrollY": 0,
+      "field": {
+        "top": 520,
+        "bottom": 656,
+        "left": 18,
+        "right": 130
+      },
+      "fieldLines": 3.9934210526315788,
+      "surprise": {
+        "top": 722,
+        "bottom": 738.5,
+        "left": 18,
+        "right": 102.703125
+      },
+      "control": {
+        "top": 497.5,
+        "bottom": 801.5,
+        "left": 18,
+        "right": 130
+      },
+      "addRecord": {
+        "top": 109.5,
+        "bottom": 153.5,
+        "left": 1108,
+        "right": 1240
+      }
+    },
+    "scrolled": {
+      "scrollY": 117,
+      "field": {
+        "top": 403,
+        "bottom": 539,
+        "left": 18,
+        "right": 130
+      },
+      "fieldLines": 3.9934210526315788,
+      "surprise": {
+        "top": 605,
+        "bottom": 621.5,
+        "left": 18,
+        "right": 102.703125
+      },
+      "control": {
+        "top": 380.5,
+        "bottom": 684.5,
+        "left": 18,
+        "right": 130
+      },
+      "addRecord": {
+        "top": -7.5,
+        "bottom": 36.5,
+        "left": 1108,
+        "right": 1240
+      }
+    }
+  },
+  {
+    "window": "1440 × 640",
+    "atRest": {
+      "scrollY": 0,
+      "field": {
+        "top": 520,
+        "bottom": 656,
+        "left": 18,
+        "right": 130
+      },
+      "fieldLines": 3.9934210526315788,
+      "surprise": {
+        "top": 722,
+        "bottom": 738.5,
+        "left": 18,
+        "right": 102.703125
+      },
+      "control": {
+        "top": 497.5,
+        "bottom": 801.5,
+        "left": 18,
+        "right": 130
+      },
+      "addRecord": {
+        "top": 109.5,
+        "bottom": 153.5,
+        "left": 1274,
+        "right": 1406
+      }
+    },
+    "scrolled": {
+      "scrollY": 117,
+      "field": {
+        "top": 403,
+        "bottom": 539,
+        "left": 18,
+        "right": 130
+      },
+      "fieldLines": 3.9934210526315788,
+      "surprise": {
+        "top": 605,
+        "bottom": 621.5,
+        "left": 18,
+        "right": 102.703125
+      },
+      "control": {
+        "top": 380.5,
+        "bottom": 684.5,
+        "left": 18,
+        "right": 130
+      },
+      "addRecord": {
+        "top": -7.5,
+        "bottom": 36.5,
+        "left": 1274,
+        "right": 1406
+      }
+    }
+  },
+  {
+    "window": "1440 × 900",
+    "atRest": {
+      "scrollY": 0,
+      "field": {
+        "top": 520,
+        "bottom": 656,
+        "left": 18,
+        "right": 130
+      },
+      "fieldLines": 3.9934210526315788,
+      "surprise": {
+        "top": 722,
+        "bottom": 738.5,
+        "left": 18,
+        "right": 102.703125
+      },
+      "control": {
+        "top": 497.5,
+        "bottom": 801.5,
+        "left": 18,
+        "right": 130
+      },
+      "addRecord": {
+        "top": 109.5,
+        "bottom": 153.5,
+        "left": 1274,
+        "right": 1406
+      }
+    },
+    "scrolled": {
+      "scrollY": 0,
+      "field": {
+        "top": 520,
+        "bottom": 656,
+        "left": 18,
+        "right": 130
+      },
+      "fieldLines": 3.9934210526315788,
+      "surprise": {
+        "top": 722,
+        "bottom": 738.5,
+        "left": 18,
+        "right": 102.703125
+      },
+      "control": {
+        "top": 497.5,
+        "bottom": 801.5,
+        "left": 18,
+        "right": 130
+      },
+      "addRecord": {
+        "top": 109.5,
+        "bottom": 153.5,
+        "left": 1274,
+        "right": 1406
+      }
+    }
+  }
+]

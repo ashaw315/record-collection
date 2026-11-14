@@ -350,7 +350,7 @@ test.describe('§P.4: on the far view, the same cell beneath the control in the 
     pushed ADD RECORD out of view; the assertion that the cell was in the control pinned that withdrawn placement.
   */
   for (const [width, height] of [[1440, 900], [1440, 768], [1920, 900]] as const) {
-    test(`at ${width}×${height}, zoomed out to the far view: the cell in the count column beneath the count, the drawing unchanged, ADD RECORD at the rail’s foot, nothing pulled`, async ({ page }) => {
+    test(`at ${width}×${height}, zoomed out to the far view: the cell in the count column beneath the count, the drawing unchanged, ADD RECORD out of the rail and in view, nothing pulled`, async ({ page }) => {
       const { artistId, suffix } = await artistWith(page, [{ prefix: 'Pick', count: 2 }]);
       try {
         await open(page, width, `?artistId=${artistId}`, height);
@@ -379,10 +379,11 @@ test.describe('§P.4: on the far view, the same cell beneath the control in the 
         /* To a tenth of a pixel: the layout's floats differ in their seventh decimal between reads of an unchanged drawing. */
         expect.soft(after.top, 'the drawing does not change: its top').toBeCloseTo(before.top, 1);
         expect.soft(after.height, 'the drawing does not change: its height').toBeCloseTo(before.height, 1);
-        const add = await page.locator('[data-testid="wall-rail"]').filter({ visible: true }).getByRole('link', { name: /add record/i }).boundingBox();
-        expect.soft(add, 'ADD RECORD is drawn').not.toBeNull();
-        /* "In view" was the fit, withdrawn (`P.5/control-must-fit`); ADD RECORD keeps the foot, below the control, and the page scrolls to it. */
-        expect.soft(add?.y ?? -Infinity, 'ADD RECORD keeps the rail’s foot, below the control').toBeGreaterThanOrEqual(a.button?.bottom ?? Infinity);
+        /* §W.13 ("ADD RECORD leaves the rail", 8 Nov; `W.13/add-record-foot` and `P.5/add-record-scroll` withdrew the foot this case held): where the rail is a column, ADD RECORD stands at the content's top right, in view at every height. */
+        const add = await page.locator('[data-wall-add-record] a').filter({ visible: true }).boundingBox();
+        expect.soft(add, 'ADD RECORD is drawn, out of the rail').not.toBeNull();
+        expect.soft((add?.y ?? Infinity) + (add?.height ?? 0), 'and in view').toBeLessThanOrEqual(height);
+        expect.soft(await page.locator('[data-testid="wall-rail"]').filter({ visible: true }).getByRole('link', { name: /add record/i }).count(), 'none left in the rail').toBe(0);
         expect(await page.locator('[data-pulled]').count(), 'the far view cannot pull').toBe(0);
         test.info().annotations.push({ type: 'column host', description: `cell ${a.cell.height.toFixed(1)} tall at (${a.cell.left.toFixed(1)}, ${a.cell.top.toFixed(1)}), ${(a.cell.top - a.countFigure.bottom).toFixed(1)} below the count; drawing ${before.height.toFixed(1)} tall before and ${after.height.toFixed(1)} after` });
       } finally {

@@ -70,6 +70,8 @@ const reading = (page: Page) =>
       lastView: box(views[views.length - 1] ?? null),
       railRule: box(rail?.querySelector('[data-rail-rule]') ?? null),
       add: box(rail?.querySelector('a[href="/records/new"]') ?? null),
+      /* §W.13 (8 Nov): where the rail is a column, ADD RECORD stands at the content's top right, out of the rail. */
+      wallAdd: box(Array.from(document.querySelectorAll('[data-wall-add-record] a[href="/records/new"]')).find(drawn) ?? null),
       filters: box(filters),
       viewport: { width: document.documentElement.clientWidth, height: window.innerHeight },
     };
@@ -77,15 +79,17 @@ const reading = (page: Page) =>
 
 test.describe('§P.5: on the shelf, in the rail', () => {
   for (const width of [RAIL_FROM, 1440]) {
-    test(`at ${width}: one control, beneath the view names and above the rule and ADD RECORD, inside the rail's inset`, async ({ page }) => {
+    test(`at ${width}: one control, beneath the view names, ending the rail, inside the rail's inset`, async ({ page }) => {
       await open(page, width, '');
       const r = await reading(page);
       expect(r.count, 'one control drawn').toBe(1);
       expect(r.inRail).toBe(true);
-      if (r.control === null || r.lastView === null || r.railRule === null || r.add === null || r.rail === null || r.button === null) throw new Error(`not drawn: ${JSON.stringify(r)}`);
+      if (r.control === null || r.lastView === null || r.rail === null || r.button === null) throw new Error(`not drawn: ${JSON.stringify(r)}`);
       expect(r.control.top, 'beneath the view names').toBeGreaterThan(r.lastView.bottom);
-      expect(r.control.bottom, 'above the rule').toBeLessThanOrEqual(r.railRule.top);
-      expect(r.add.top, 'ADD RECORD stays at the foot').toBeGreaterThan(r.control.bottom);
+      /* §P.5 (8 Nov): "the control ends the rail". The rule and ADD RECORD beneath it are withdrawn (`P.5/add-record-scroll`, `W.13/add-record-foot`); this case held them until §W.13 was built. */
+      expect(r.railRule, 'no rule after the control').toBeNull();
+      expect(r.add, 'no ADD RECORD after it in the rail').toBeNull();
+      expect(r.wallAdd, 'ADD RECORD drawn at the content’s top right instead').not.toBeNull();
       expect(r.rail.width).toBe(RAIL);
       expect(r.button.left).toBeGreaterThanOrEqual(r.rail.left + RAIL_INSET - 0.5);
       expect(r.button.right, 'within the rail’s right inset').toBeLessThanOrEqual(r.rail.right - RAIL_INSET + 0.5);
@@ -107,24 +111,27 @@ test.describe('§P.5: on the shelf, in the rail', () => {
     control does not fit at 900 tall, and §P.5 now rules: "Where the control and ADD RECORD run past the window's
     foot, the rail runs with the page, and ADD RECORD stays at its foot, reached by scrolling." These three asserted
     the fit; they change with the ruling, not to pass code, and now assert the reach.
+
+    §W.13 (8 Nov, built 13 Nov): ADD RECORD left the rail for the content's top right, "in view at every height"
+    (`W.13/add-record-foot`, `P.5/add-record-scroll`), so these three changed again with the ruling: what runs past the
+    foot now is the control, which ends the rail, and ADD RECORD is in view at rest.
   */
   for (const height of [900, 768, 640]) {
-    test(`at ${RAIL_FROM}×${height}: the rail runs with the page past the window's foot, and ADD RECORD at its foot is reached by scrolling`, async ({ page }) => {
+    test(`at ${RAIL_FROM}×${height}: the rail runs with the page past the window's foot, the control's foot reached by scrolling, and ADD RECORD in view at rest`, async ({ page }) => {
       await open(page, RAIL_FROM, '', height);
       const r = await reading(page);
       expect(r.inRail, 'the control is in the rail measured').toBe(true);
-      if (r.add === null) throw new Error('ADD RECORD not drawn');
-      const over = r.add.bottom - r.viewport.height;
-      test.info().annotations.push({ type: 'past the foot', description: over > 0 ? `${over.toFixed(1)} of scroll to ADD RECORD` : `none: ${(-over).toFixed(1)} to spare` });
+      if (r.wallAdd === null || r.control === null) throw new Error('ADD RECORD or the control not drawn');
+      expect(r.wallAdd.bottom, 'ADD RECORD in view at rest, at the content’s top right').toBeLessThanOrEqual(r.viewport.height);
+      const over = r.control.bottom - r.viewport.height;
+      test.info().annotations.push({ type: 'past the foot', description: over > 0 ? `${over.toFixed(1)} of scroll to the control's foot` : `none: ${(-over).toFixed(1)} to spare` });
       const reach = await page.evaluate(() => {
         window.scrollTo(0, document.documentElement.scrollHeight);
-        const add = Array.from(document.querySelectorAll<HTMLElement>('[data-testid="wall-rail"] a')).find((a) => /add record/i.test(a.textContent ?? '') && a.getClientRects().length > 0) ?? null;
-        const b = add?.getBoundingClientRect() ?? null;
-        return { scrolled: window.scrollY, inView: b !== null && b.top >= 0 && b.bottom <= window.innerHeight + 0.5 };
+        const control = Array.from(document.querySelectorAll<HTMLElement>('[data-testid="wall-rail"] [data-pick-control]')).find((c) => c.getClientRects().length > 0) ?? null;
+        const b = control?.getBoundingClientRect() ?? null;
+        return { inView: b !== null && b.bottom <= window.innerHeight + 0.5 };
       });
-      expect(reach.inView, 'ADD RECORD, at the rail’s foot, in view once the page is scrolled to its end').toBe(true);
-      /* The scroll lands on a whole pixel; the overflow is a half. */
-      expect(Math.abs(reach.scrolled - Math.max(0, over)), `the page scrolled by what ran past the foot (${over.toFixed(1)}), no more`).toBeLessThanOrEqual(1);
+      expect(reach.inView, 'the control’s foot in view once the page is scrolled to its end').toBe(true);
     });
   }
 });
@@ -400,7 +407,9 @@ test.describe('§P.5: the control’s fit in the rail as a column, measured', ()
         less a line is the gap between blocks, and SURPRISE ME after ASK is the pitch itself, block to block.
       */
       const gap = m.pitches.viewNames === null || m.pitches.viewLine === null ? NaN : m.pitches.viewNames - m.pitches.viewLine;
-      if (m.pitches.line !== null) expect.soft(m.pitches.line, `the count line stands the rail’s gap below the slot (${gap.toFixed(1)})`).toBeCloseTo(gap, 0);
+      /* The count line is drawn here: the test database always holds records with no ABOUT (the seventeen), so a line not drawn is a broken seed, not a case to skip. Its absence where every record has one is the component test's (PickControl.test.tsx, withoutAbout 0), which the server's whole-collection count cannot be staged to here without rewriting every spec's seed. */
+      expect(m.pitches.line, 'the count line is drawn, the seed holding records with no ABOUT').not.toBeNull();
+      expect.soft(m.pitches.line, `the count line stands the rail’s gap below the slot (${gap.toFixed(1)})`).toBeCloseTo(gap, 0);
       expect.soft(m.pitches.ask, `ASK stands the rail’s gap below the block above it (${gap.toFixed(1)})`).toBeCloseTo(gap, 0);
       expect.soft(m.pitches.surpriseFromAsk, `SURPRISE ME takes the pitch after ASK (${m.pitches.viewNames?.toFixed(1)})`).toBeCloseTo(m.pitches.viewNames ?? NaN, 0);
       /* The fit is withdrawn (`P.5/control-must-fit`); what is ruled is the reach: past the foot the rail runs with the page and ADD RECORD is reached by scrolling. */

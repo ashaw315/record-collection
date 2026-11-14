@@ -266,7 +266,8 @@ export function WallRail({
         className={`mt-[34px] border-t ${HAIRLINE}`}
         style={{ margin: "34px -18px 0" }}
       />
-      <Link href="/records/new" className={`mt-[18px] block ${LABEL_TYPE} ${INK}`}>
+      {/* §W.13 (8 Nov): drawn only where the rail is a band; where it is a column, Add record stands at the content's top right (WallComposition). */}
+      <Link data-rail-add="" href="/records/new" className={`mt-[18px] block ${LABEL_TYPE} ${INK}`}>
         Add record
       </Link>
     </nav>

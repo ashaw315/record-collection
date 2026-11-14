@@ -1,3 +1,4 @@
+import { AddRecord } from "../AddRecord";
 import { bandRules } from "./band-rules";
 import { WallLive } from "./WallLive";
 import { HOLD_SCRIPT } from "./hold-script";
@@ -60,7 +61,7 @@ export function WallComposition({
     <section
       data-composition=""
       data-testid="wall"
-      className={rail === null ? undefined : "grid grid-cols-[148px_1fr]"}
+      className={rail === null ? undefined : "relative grid grid-cols-[148px_1fr]"}
       /* §W.13: the wall starts directly under the app nav and takes the full height. */
       style={{
         background: DRAWN_PAPER,
@@ -150,6 +151,27 @@ ${bandRules('')}
             style={{ background: "oklch(0.72 0.004 80)" }}
           />
         </div>
+      )}
+      {/*
+        §W.13 ("ADD RECORD leaves the rail", 8 Nov): "Where the rail is a column, Add record stands at the top right of
+        the content beside the rail, as the table and the grid set it at their content column’s top right." The same
+        component, so its rule lands on SEARCH's line by the same construction; 34 in from the content's right, the
+        regions' own inset. Next after the rail in the document, so the Tab walk reaches it where it reached the rail's,
+        after SURPRISE ME. Raised over the drawing, which paints its own layers beneath. Below the fork the rail is a
+        band and keeps its own, unchanged; the fork is the stylesheet's, as the band's is.
+      */}
+      {rail === null ? null : (
+        <>
+          <style data-add-record-fork="">{`@media (min-width: ${nearViewMinWidth()}px) {
+  [data-composition] [data-rail-add], [data-composition] [data-rail-rule] { display: none; }
+}
+@media (max-width: ${nearViewMinWidth() - 1}px) {
+  [data-composition] > [data-wall-add-record] { display: none; }
+}`}</style>
+          <div data-wall-add-record="" className="absolute top-0 right-[34px] z-[1]">
+            <AddRecord />
+          </div>
+        </>
       )}
       {/*
         §W.8: a press before the wall has hydrated is held. The script runs as

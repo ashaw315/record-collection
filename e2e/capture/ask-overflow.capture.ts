@@ -220,3 +220,62 @@ test.describe('the rail as a column with an answer showing', () => {
     writeFileSync(join(ANSWER_OUT, 'figures.json'), `${JSON.stringify(figures, null, 2)}\n`);
   });
 });
+
+/**
+ * **The control's own fold at 640, judged with the field at its tallest (Design's "Ask field wraps and count line"
+ * and "ADD RECORD leaves the rail"; §P.5's open provisional, for Adam).** The rail as a column on the shelf, the
+ * specimen's phrase typed and left so the field holds its lines, ADD RECORD at the content's top right since §W.13
+ * was built. Each window at rest and scrolled until SURPRISE ME's foot meets the window's. Replaces the one-line
+ * capture the provisional named. From a build; written to `docs/captures/fold-640/`.
+ */
+const FOLD_OUT = join('docs', 'captures', 'fold-640');
+test.describe('the fold at 640, the field at its tallest', () => {
+  test('the shelf’s rail at 1274 × 640, 1440 × 640 and 1440 × 900, at rest and scrolled to SURPRISE ME', async ({ page }) => {
+    test.skip(process.env.CAPTURE !== '1', 'A capture tool: run with CAPTURE=1');
+    test.setTimeout(240_000);
+    mkdirSync(FOLD_OUT, { recursive: true });
+    await login(page);
+    const artistId = await seed(page);
+    const figures: unknown[] = [];
+    try {
+      for (const [width, height] of [[1274, 640], [1440, 640], [1440, 900]] as const) {
+        await page.setViewportSize({ width, height });
+        await page.goto(`/?artistId=${artistId}`);
+        await wallMeasured(page);
+        await field(page).click();
+        await field(page).pressSequentially(PHRASE);
+        await page.locator('body').click({ position: { x: 1, y: 1 } });
+        await page.mouse.move(0, 0);
+        await page.evaluate(() => document.fonts.ready);
+        const read = () => page.evaluate(() => {
+          const visible = (el: Element | null) => el !== null && (el as HTMLElement).getClientRects().length > 0;
+          const control = Array.from(document.querySelectorAll('[data-shelf-offered] [data-testid="wall-rail"] [data-pick-control]')).find(visible) ?? null;
+          const f = control?.querySelector<HTMLTextAreaElement>('[data-ask-field]') ?? null;
+          const surprise = Array.from(control?.querySelectorAll('button') ?? []).find((b) => /surprise me/i.test(b.textContent ?? '')) ?? null;
+          const add = Array.from(document.querySelectorAll('[data-wall-add-record] a')).find(visible) ?? null;
+          const box = (el: Element | null) => (el === null ? null : (({ top, bottom, left, right }) => ({ top, bottom, left, right }))(el.getBoundingClientRect()));
+          const s = f === null ? null : getComputedStyle(f);
+          return {
+            scrollY: window.scrollY,
+            field: box(f),
+            fieldLines: f === null || s === null ? null : (f.clientHeight - parseFloat(s.paddingTop) - parseFloat(s.paddingBottom)) / parseFloat(s.lineHeight),
+            surprise: box(surprise),
+            control: box(control),
+            addRecord: box(add),
+          };
+        });
+        const rest = await read();
+        await page.screenshot({ path: join(FOLD_OUT, `fold-${width}x${height}-at-rest.png`) });
+        /* Scrolled until SURPRISE ME's foot meets the window's, or not at all where it is already in view. */
+        const by = Math.max(0, Math.ceil((rest.surprise?.bottom ?? 0) - height + 18));
+        await page.evaluate((y) => window.scrollTo(0, y), by);
+        const scrolled = await read();
+        await page.screenshot({ path: join(FOLD_OUT, `fold-${width}x${height}-scrolled-to-surprise-me.png`) });
+        figures.push({ window: `${width} × ${height}`, atRest: rest, scrolled });
+      }
+    } finally {
+      await removeRecordsFor(artistId);
+    }
+    writeFileSync(join(FOLD_OUT, 'figures.json'), `${JSON.stringify(figures, null, 2)}\n`);
+  });
+});

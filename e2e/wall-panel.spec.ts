@@ -173,7 +173,8 @@ for (const pointer of ['fine'] as (typeof POINTERS)[number][]) test.describe(`th
     await expect(page.getByTestId('wall')).toBeAttached({ timeout: 30_000 });
     await page.evaluate(() => document.fonts.ready);
     const rail = await expectFloor(page, pointer, `the rail at ${width}`, '[data-shelf-offered] [data-testid="wall-rail"]', 'button.sr-only');
-    for (const name of ['Shelf', 'Table', 'Grid', 'Add record']) expect(rail.map((r) => r.name), 'the precondition: the rail’s links are read').toContain(name);
+    /* Add record left the rail where it is a column (§W.13, 8 Nov), so the rail's drawn links are the three views. */
+    for (const name of ['Shelf', 'Table', 'Grid']) expect(rail.map((r) => r.name), 'the precondition: the rail’s links are read').toContain(name);
     for (const name of ['Shelf', 'Table', 'Grid']) expect.soft(rail.find((r) => r.name === name)?.height, `at ${width}: ${name} is drawn 14 tall`).toBe(14);
     const pitch = await page.evaluate(() => { const tops = Array.from(document.querySelectorAll('[data-shelf-offered] [data-testid="wall-rail"] ul a')).map((a) => a.getBoundingClientRect().top); return [(tops[1] ?? 0) - (tops[0] ?? 0), (tops[2] ?? 0) - (tops[1] ?? 0)]; });
     expect.soft(pitch, `at ${width}: the view names are ${pointer === 'coarse' ? 44 : 42} apart`).toEqual(pointer === 'coarse' ? [44, 44] : [42, 42]);

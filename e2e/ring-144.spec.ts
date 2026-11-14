@@ -99,7 +99,7 @@ test('the rail’s hidden Apply is not a Tab stop: Tab from the search field lan
 */
 type Expected = readonly [tag: string, name: RegExp];
 const HEADER: Expected[] = [['a', /^Record Collection$/], ['a', /^Collection$/], ['a', /^Want list$/], ['a', /^Look up$/], ['a', /^Stats$/], ['a', /^Manage$/]];
-/* §W.13's rail: the search field, the genre and sort selects, the three views, then §P.5's control in its order, then ADD RECORD at the foot. */
+/* §W.13's rail: the search field, the genre and sort selects, the three views, then §P.5's control in its order, then ADD RECORD. Since §W.13 was built (13 Nov) ADD RECORD stands at the content's top right where the rail is a column, next after the rail in the document, so the walk still reaches it straight after SURPRISE ME. */
 const RAIL: Expected[] = [
   ['input', /^rail-search$/],
   ['select', /^Any/],
