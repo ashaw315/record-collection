@@ -138,7 +138,7 @@ The wall at rest is line, ink and paper; colour arrives with the pull. Everythin
 | §P.2 | What an ask does | The toggles and ASK, the lean and why it only never empties, the one last-served record and what counts as served, the pool under a filter and why paging does not narrow it, why it is not a filter, why a zoom is not a navigation, an answer ending when its host changes, and SURPRISE ME. And the ask field's phrase or title, the pool ranked by ABOUT, an answer being what is shown (one as a pull, five as cells), and the re-ask leaving out the last answer and the far answer's pair (the moods, the lean, one last-served and the loose fit as open withdrawn). |
 | §P.3 | A second ask on the shelf | The first answer as §W's pull, the re-roll as a put back then a pull and the §W.8 sentence that gives its reason, the order between them left to Adam's use, an ask mid-motion, the record already out, and the unexplained put back. |
 | §P.4 | The answer on the table and the grid | The answer as one grid cell, beneath the control in the band host and in the count column in the column host, its width and its distance below what precedes it, what moves when its height changes and what does not, and the slot's message where the answer is the record already shown. And the cell held in view in the count column when the page has scrolled past it. And the covers in rank order (one cover withdrawn). And what separates the answer from the list below it. And the column host's five cells, the first row in view and the rest below (held wholly in view withdrawn). |
-| §P.5 | The control | Its order, its place in the rail as a column and as a band, the sidebar and the band below the filters, how a mood is marked and why not as a filter, ASK and SURPRISE ME as labels, the moods' pitch in the rail, and the rail running with the page past the window's foot. And ADD RECORD out of the rail, the control ending it. And the ask field in the moods' place (the moods withdrawn). |
+| §P.5 | The control | Its order, its place in the rail as a column and as a band, the sidebar and the band below the filters, how a mood is marked and why not as a filter, ASK and SURPRISE ME as labels, the moods' pitch in the rail, and the rail running with the page past the window's foot. And ADD RECORD out of the rail, the control ending it. And the ask field in the moods' place (the moods withdrawn). And the ask field wrapping to its phrase (width-only withdrawn). |
 | §P.6 | The states | The inert mood and inert ASK, why both stay Tab stops and how each is named, the untagged line and why the difference is the collection's, SURPRISE ME alone with nothing tagged, the unanswerable ask, the slot's messages, and reduced motion. And inert ASK drawn in the label colour. And ASK inert on an empty field, and no ABOUT in place of untagged (the mood states withdrawn). And the slot when asking is not set up. |
 
 ## Structural sections — pointers
@@ -974,6 +974,14 @@ Its rows are in the governs table above, one per section; this section does not 
   - **Capture** the tallest five at both heights, scrolled to the rail's foot and pressed there, labelled by host and width, for Adam.
   > In the column host the answer is five cells, two across, the nearest first, with §T.5’s 24 between them.
 
+- **Unnumbered, for Code to number — §P.5: the ask field wraps.**
+  - **Make the field wrap and grow** to as many lines as its phrase needs, in every host, with no line cap. When empty it rests at one line.
+  - **Move the count line beneath the slot** in the rail and the sidebar, as the far view's band draws it. Assert its order against the slot in every host.
+  - **Assert** in every host of the ask-overflow specimen, with its phrase: the whole phrase is in view, by line box, focused and unfocused. Also assert that ASK's position doesn't change across two presses without an edit.
+  - **For 184:** "Not set up yet." is the slot's, and the count line is drawn beneath it, both at once.
+  - **Capture** the rail as a column at 1440 × 900 and × 640, with the field at its tallest for that phrase and ADD RECORD moved. This is the capture §P.5's open fold provisional is judged from, so it replaces the one-line capture.
+  > The ask field takes the host’s width and as many lines as the phrase needs, so the whole phrase stays in view as it is typed and after.
+
 No step: §G.7. It rules nothing. Hover and focus wait on Code's second pass, the breakpoint is settled and recorded in §G.8, and the eyebrow repetition is an observation, not a ruling.
 
 No step: §P.1. It rules where the feature is ruled and which view presents an answer; what that means for the build is in the steps for §P.3 and §P.4.
@@ -1035,7 +1043,7 @@ The provisionals in force, for the note in Maintaining this file that a provisio
 - **§65 · the tracklist section.** "How it reads at 32 tracks, whether the tracks take two columns where the span is wide, and how the credits read opened, are all provisional until built and captured at 1440 × 900 and at 390, on the longest and the shortest tracklist in the collection." Returns from the tracklist step. Open. And what the count line says when the fold holds companies alone. 173c returned the captures. The fold, the two track columns from 960, the grouped credits, the companies' place and the open mark pass. The credit lines' 736 measure returns from its re-capture. The count line's wording ('Credits · n', which counts companies too) is for Adam.
 - **§60 · the disc at the reference's size.** "How it reads at that size is provisional until captured and judged." Returns from the disc step. Open.
 - **§P.4 · the held cell.** How the held cell reads at 1440 × 768 and 640. Returns from the held-cell step, for Adam. Open.
-- **§P.5 · the control's own fold at 640.** ASK and SURPRISE ME fall below the fold at 640, with the control ending at 919 by step 157. Returns from the ADD RECORD step's captures, for Adam. Open, with no answer pre-committed.
+- **§P.5 · the control's own fold at 640.** ASK and SURPRISE ME fall below the fold at 640, with the control ending at 919 by step 157. Returns from the ADD RECORD step's captures, for Adam. Open, with no answer pre-committed. Judged with the ask field at its tallest for a phrase of occasion, by the ask-field wrap step.
 - **§W.13 · where ADD RECORD stands.** "Where it stands exactly, on which line and how far in, is provisional until built and captured at 1274 × 640 and 1440 × 900." Returns from the same step. Open.
 - **§P.2 · the ask's answers.** How the five read in each host, and the shelf's one, and how the slot names a record read from its title. Returns from the ask-field step. Open.
 - **§P.4 · the covers.** Row or column per host, and their cost to the far view's drawing, against the held cell. Returns from the ask-field step. Open.
@@ -1044,6 +1052,7 @@ The provisionals in force, for the note in Maintaining this file that a provisio
 - **§P.6 · the not-configured message.** "Not set up yet.", marked Proposed. Returns from the step above. Open.
 - **§P.5 · the ask field's label.** WHAT TO PLAY, Proposed. Returns from the captures step. Open.
 - **§P.4 · the column host's five.** "How the run past the window reads is provisional until captured at 1440 × 900 and × 768, on the tallest five, for Adam to judge." Returns from the five-cells step. Open.
+- **§P.5 · the field at four lines in the rail.** How the wrapped field reads in the rail as a column. Returns from the wrap step's capture, for Adam. Open.
 
 ## Findings for screens without a pass
 

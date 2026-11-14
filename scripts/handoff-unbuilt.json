@@ -53,5 +53,10 @@
     "head": "§P.4: five cells in the column host",
     "status": "unbuilt",
     "evidence": "Ruled 13 Nov (\"Five in the column\", the card at 04548440). The count column draws only the first of five (src/app/wall/WallStage.tsx:261), inside a far region the window tall with overflow hidden (WallStage.tsx:296); checked 13 Nov."
+  },
+  {
+    "head": "§P.5: the ask field wraps",
+    "status": "unbuilt",
+    "evidence": "Ruled 13 Nov (\"Ask field wraps and count line\", the card at 556aa522). The field is a one-line <input> that scrolls (src/app/PickControl.tsx:175), and the count line is drawn before ASK and the slot (PickControl.tsx:196, the slot at :234); checked 13 Nov."
   }
 ]

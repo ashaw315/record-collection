@@ -105,3 +105,5 @@
 {"file":"P4 watch pointer named","ref":"refs/drops/2026-11-13-05","captured":"2026-11-13T14:01:07-05:00"}
 {"file":"P4 paragraph split","ref":"refs/drops/2026-11-13-06","captured":"2026-11-13T16:04:23-05:00"}
 {"file":"Change file name rule","ref":"refs/drops/2026-11-13-07","captured":"2026-11-13T16:33:16-05:00"}
+{"file":"Ask field wraps","ref":"refs/drops/2026-11-13-08","captured":"2026-11-13T18:06:08-05:00","how":"offered 13 Nov twice under one name, with card 22e00146 (ref -08) and card 556aa522 (ref -09); never applied, dropped by its successor's header","supersededBy":["Ask field wraps and count line"]}
+{"file":"Ask field wraps and count line","ref":"refs/drops/2026-11-13-10","captured":"2026-11-13T18:47:52-05:00"}

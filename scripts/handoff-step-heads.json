@@ -416,5 +416,25 @@
         "how": "anchors"
       }
     ]
+  },
+  {
+    "file": "Ask field wraps",
+    "ref": "refs/drops/2026-11-13-08",
+    "heads": [
+      {
+        "head": "§P.5: the ask field wraps",
+        "how": "inserts"
+      }
+    ]
+  },
+  {
+    "file": "Ask field wraps and count line",
+    "ref": "refs/drops/2026-11-13-10",
+    "heads": [
+      {
+        "head": "§P.5: the ask field wraps",
+        "how": "inserts"
+      }
+    ]
   }
 ]
