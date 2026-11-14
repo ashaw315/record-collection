@@ -407,18 +407,19 @@ describe('updated_at trigger', () => {
   it('applies to every table, not just artists', async () => {
     const artistId = await insertArtist('Minor Threat');
     const recordId = await insertRecord(artistId, 'Out of Step');
-    const before = await db.execute<{ updated_at: Date }>(
-      sql`SELECT updated_at FROM records WHERE id = ${recordId}`,
-    );
+    /*
+      Compared in SQL at the column's own precision, microseconds. Read into JavaScript Dates, which keep milliseconds,
+      an insert and an update in the same millisecond read as equal although the trigger fired: gate 43643093027 on
+      14 Nov, 1794691920562 against itself, the first failure in three months.
+    */
+    const before = await db.execute<{ at: string }>(sql`SELECT updated_at::text AS at FROM records WHERE id = ${recordId}`);
 
     await db.execute(sql`UPDATE records SET notes = 'red vinyl' WHERE id = ${recordId}`);
 
-    const after = await db.execute<{ updated_at: Date }>(
-      sql`SELECT updated_at FROM records WHERE id = ${recordId}`,
+    const moved = await db.execute<{ moved: boolean }>(
+      sql`SELECT updated_at > ${before.rows[0].at}::timestamptz AS moved FROM records WHERE id = ${recordId}`,
     );
-    expect(new Date(after.rows[0].updated_at).getTime()).toBeGreaterThan(
-      new Date(before.rows[0].updated_at).getTime(),
-    );
+    expect(moved.rows[0].moved, 'updated_at later than before the update, to the microsecond').toBe(true);
   });
 });
 
