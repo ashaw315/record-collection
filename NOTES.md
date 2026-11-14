@@ -57085,3 +57085,44 @@ checks soft, the edge line and the scroll line failed together on both projects 
 **Owed when Design rules the field wraps and grows downward:** §P.5's provisional on the control's own fold at 640 is
 for Adam to judge from a capture with ADD RECORD moved. A field four lines tall adds about 90 to the control, so that
 capture is redone with the field at its tallest before he judges it (the coordinator, 13 Nov).
+
+## 13 Nov (eleventh): the ping-pong confirmed, the bunching measured centred, the carry-over found in the grid, Q47 closed
+
+**Adam's six production phrases, two records across five presses each, replayed** (`scripts/report-ask-presses.mts`,
+read-only, one embedding call, the route's own `rankByNearness` at the shelf's take of one, each press excluding the
+last answer as `PickControl` sends it): ranks 1 2 1 2 1 on all six. Four of Adam's six pairs match the replay's ranks 1
+and 2; in "something calm" and "cooking dinner, people over" his second record is rank 4. Design has ruled the fix (a run
+leaves out everything it has named; "Run leaves out its history"), not yet taken in.
+
+**The carry-over, tested in the build** (a spec held uncommitted until the run-history step, whose test it becomes): in
+the grid, B asked after A came back as five records other than B's own five, so the last answer outlives a change of
+the phrase. On the shelf, two runs (the second waiting for the pull to finish) pulled B's nearest after A, with A and B
+sharing it; not explained, and not reproduced.
+
+**The distance report on the real 53:** every pair min 0.238, median 0.462, max 0.756; each record's nearest other
+median 0.591. A phrase's rank 1 ran 0.257 to 0.395, rank 10 within 0.03 to 0.07 of it. **Mean-centred** (`--centred`):
+rank 1 to rank 10 widened to 0.05 to 0.14, but against a wider range, so the head is not consistently more spread;
+Astrid Sonne left every top ten (it was in four of six, not five as first reported), and Pharoah Sanders' Jewels Of
+Thought took its place in six of six, with Hot Tuna rank 1 for three unrelated phrases. Centring moves the hub; it does
+not remove it.
+
+**Q47 closed:** Adam stored the three 6 Nov drafts from `.abouts/drafts.json` and embedded them; 55 of 55 records carry
+an ABOUT and a current vector, so production draws no count line, and the test database (records with no ABOUT in its
+seed) is now the only place the drawn line is exercised. pick-control-156's count-line pitch asserted only while the
+line was drawn; it now requires it, staged undrawn it failed.
+
+**The hub discount (13 Nov, `--hub`):** each record's cosine less its mean cosine to the other 54 ABOUTs. Pharoah
+Sanders' Jewels Of Thought stayed in six of six top tens and Hot Tuna rank 1 for three phrases. Their mean to the others
+is 0.428 and 0.413, against a range of 0.402 to 0.523, so neither is close to everything and the discount lifts them.
+They are near where short occasion phrases land, which no record-to-record correction reaches.
+
+**The 55 closing sentences** (`scripts/report-about-closings.mts`, a text rule printed beside each): listener-facing
+17, of which 9 head some phrase; record-facing 38, of which 5. Four times the rate, not a rule: Carpenters (record-facing,
+"Melancholy in a warm room.") heads three, and eight listener-facing records head nothing. The exceptions share the
+phrase's words (melancholy, loud, late), so lexical overlap fits as well as grammar; six phrases cannot separate them,
+and the mechanism is being replaced (the model pick, §P.2, 13 Nov), so it is not chased.
+
+**§W.13 built (13 Nov):** ADD RECORD at the content's top right where the rail is a column, 34 in, its rule on
+SEARCH's line by AddRecord's own construction; next after the rail in the document, so ring-144's walk reaches it
+straight after SURPRISE ME, unchanged. The fold capture (`docs/captures/fold-640/`): the field at four lines, the
+control 497.5 to 801.5, SURPRISE ME 98.5 past the fold at 640 and 117 of scroll to it; in view at 900.
