@@ -160,6 +160,39 @@ describe('the committed record', () => {
     expect((text ?? '').startsWith(first)).toBe(true);
     expect(recordUpdate(text, refs, '2026-11-10')).toEqual({ text, appended: [] });
   });
+
+  /*
+    "Arrived" is not "applied" (the coordinator, 14 Nov). "Tracks break at a side" was in a ref and in this record at
+    6699a419 with nothing of it applied, and Design read the record's line as its landing. The intake now says, for each
+    file it appends, whether it applied it, and refuses to append one it was told nothing about: the state is in the
+    record for whoever reads it next, not in a sentence someone must remember to write beside it.
+  */
+  it('records each appended file as applied or held as the intake names it, and appends nothing while one is named neither', () => {
+    const first = recordUpdate(null, refs.slice(0, 3), '2026-11-07').text ?? '';
+    const undecided = recordUpdate(first, refs, '2026-11-09', [], { applied: [], held: [] });
+    expect(undecided).toEqual({ text: first, appended: [], undecided: ['First paint is styled'] });
+    const held = parseRecord(recordUpdate(first, refs, '2026-11-09', [], { applied: [], held: ['First paint is styled'] }).text ?? '');
+    expect(held.entries.at(-1)).toMatchObject({ file: 'First paint is styled', applied: false });
+    const applied = parseRecord(recordUpdate(first, refs, '2026-11-09', [], { applied: ['First paint is styled'], held: [] }).text ?? '');
+    expect(applied.entries.at(-1)).toMatchObject({ file: 'First paint is styled', applied: true });
+  });
+
+  it('turns a held line applied when a later intake names it applied, the line rewritten so its landing is that intake', () => {
+    const first = recordUpdate(null, refs.slice(0, 3), '2026-11-07').text ?? '';
+    const held = recordUpdate(first, refs, '2026-11-09', [], { applied: [], held: ['First paint is styled'] }).text ?? '';
+    const later = recordUpdate(held, refs, '2026-11-10', [], { applied: ['First paint is styled'], held: [] });
+    expect(later.appended).toEqual([]);
+    expect(parseRecord(later.text ?? '').entries.at(-1)).toMatchObject({ file: 'First paint is styled', applied: true });
+  });
+
+  it('reads a held line as arrived and not applied, never as the commit that adds its line', () => {
+    const first = recordUpdate(null, refs.slice(0, 3), '2026-11-07').text ?? '';
+    const held = parseRecord(recordUpdate(first, refs, '2026-11-09', [], { applied: [], held: ['First paint is styled'] }).text ?? '');
+    const list = landedFromRecord(held, () => ({ sha: 'addedit', date: '2026-11-09T10:00:00-05:00' }));
+    expect(list.at(-1)).toMatchObject({ file: 'First paint is styled', landed: null, applied: false });
+    expect(landedText(list, { sha: 'abc1234', date: '2026-11-09' }, { drops: refs.length, horizon: held.horizon })).toContain('- First paint is styled — arrived');
+    expect(landedText(list, { sha: 'abc1234', date: '2026-11-09' }, { drops: refs.length, horizon: held.horizon })).toMatch(/- First paint is styled — arrived [^\n]*; arrived, nothing applied\n/);
+  });
   it('with no record and no change file in any ref writes nothing', () => {
     expect(recordUpdate(null, refs.slice(0, 1), '2026-11-07')).toEqual({ text: null, appended: [] });
   });

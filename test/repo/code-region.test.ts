@@ -3,7 +3,7 @@ import { mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
-import { applyRegion, intake, judgeIndex, judgeSuite, readRegion, regionHistory } from '../../scripts/apply-code-region.mjs';
+import { applyRegion, decisionsFrom, intake, judgeIndex, judgeSuite, readRegion, regionHistory, undecidedLines } from '../../scripts/apply-code-region.mjs';
 import { DOCUMENT_SUITE } from '../../scripts/document-suite.mjs';
 import { underLoad } from '../helpers/spawn-budget';
 
@@ -256,4 +256,26 @@ describe('the intake runs the index and the document suite, and fails on either'
     expect(r.stdout).toMatch(/^INTAKE OK/m);
     expect(r.stderr, 'no module-type warning on every intake').not.toMatch(/MODULE_TYPELESS_PACKAGE_JSON/);
   }, 120_000);
+});
+
+/*
+  "Arrived" is not "applied" (the coordinator, 14 Nov): the intake is told, per change file it records, whether it was
+  applied, and a file it is told nothing about fails the intake rather than being recorded as if applied.
+*/
+describe('the intake’s word on each file it records', () => {
+  it('reads --applied and --held, each repeatable, and nothing else as a name', () => {
+    expect(decisionsFrom(['--applied', 'Requirement unmet', '--held', 'Tracks break at a side', '--applied', 'Phrase in view by height'])).toEqual({
+      applied: ['Requirement unmet', 'Phrase in view by height'],
+      held: ['Tracks break at a side'],
+    });
+    expect(decisionsFrom([])).toEqual({ applied: [], held: [] });
+    expect(() => decisionsFrom(['--held'])).toThrow(/--held needs a change file's name/);
+  });
+
+  it('names each undecided file and how to decide it, so the intake fails on it', () => {
+    const lines = undecidedLines(['Tracks break at a side']);
+    expect(lines.join('\n')).toContain('UNDECIDED  Tracks break at a side');
+    expect(lines.join('\n')).toMatch(/--applied "Tracks break at a side" or --held "Tracks break at a side"/);
+    expect(undecidedLines([])).toEqual([]);
+  });
 });

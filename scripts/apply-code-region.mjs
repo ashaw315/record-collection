@@ -109,6 +109,25 @@ const spawned = (command, args) => {
   return { code: r.status ?? 1, output: `${r.stdout ?? ''}${r.stderr ?? ''}` };
 };
 
+/** The intake's word on each change file it records (the coordinator, 14 Nov): `--applied "<name>"` and `--held "<name>"`, each repeatable. */
+export function decisionsFrom(argv) {
+  const out = { applied: [], held: [] };
+  for (let i = 0; i < argv.length; i += 1) {
+    const flag = argv[i];
+    if (flag !== '--applied' && flag !== '--held') continue;
+    const name = argv[i + 1];
+    if (name === undefined || name.startsWith('--')) throw new Error(`${flag} needs a change file's name`);
+    out[flag === '--applied' ? 'applied' : 'held'].push(name);
+    i += 1;
+  }
+  return out;
+}
+
+/** A change file the refs hold and the intake was told nothing about is not recorded, and fails the intake: "arrived" is not "applied". */
+export function undecidedLines(names) {
+  return names.map((n) => `  UNDECIDED  ${n}: in the refs and not in the landed record; run the intake with --applied "${n}" or --held "${n}", so the record says which`);
+}
+
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   const earlier = regionHistory((...args) => execFileSync('git', args, { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }));
   const result = applyRegion(readFileSync(HANDOFF, 'utf8'), readRegion(), earlier);
@@ -125,9 +144,11 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   const d = new Date();
   const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   const git = fromGit();
-  const landed = recordUpdate(existing, git.drops, today, git.commits);
+  const landed = recordUpdate(existing, git.drops, today, git.commits, decisionsFrom(process.argv.slice(2)));
+  const undecided = landed.undecided ?? [];
   if (landed.text !== null && landed.text !== existing) writeFileSync(target, landed.text);
   process.stdout.write(`landed record (${target}): ${landed.appended.length} appended${landed.appended.length > 0 ? ` (${landed.appended.join(', ')}); name ${target} in this intake's commit` : ''}\n`);
+  if (undecided.length > 0) process.stdout.write(`${undecidedLines(undecided).join('\n')}\n`);
   process.stdout.write(`code region: ${result.restored.length} restored (${result.restored.join(', ') || 'none'}), ${result.replaced.length} replaced (${result.replaced.join(', ') || 'none'}), ${result.present.length} already present, ${result.unanchored.length} with no anchor${result.unanchored.length > 0 ? ` (${result.unanchored.join(', ')})` : ''}\n`);
   /*
     The step heads (the coordinator, 13 Nov): the heads each landed change file names, recorded from the refs into the
@@ -145,7 +166,7 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   process.stdout.write(`drop names: ${drop.ref === null ? 'no drop refs in this checkout' : `${drop.added.length} new in ${drop.ref}, ${wrong.length} misnamed`}\n`);
   for (const name of wrong) process.stdout.write(`  MISNAMED  ${name}: a change file's name ends " - for Code to <verb>"; the landed list cannot record it\n`);
   const checks = intake(spawned);
-  const ok = result.unanchored.length === 0 && heads.ok && wrong.length === 0 && checks.ok;
+  const ok = result.unanchored.length === 0 && heads.ok && wrong.length === 0 && undecided.length === 0 && checks.ok;
   process.stdout.write(`${checks.lines.join('\n')}\n${ok ? 'INTAKE OK' : 'INTAKE NOT OK: do not commit this drop until what failed above is read'}\n`);
   process.exit(ok ? 0 : 1);
 }

@@ -79,6 +79,7 @@ export function landedText(list, { sha, date }, { drops, horizon = null } = { dr
   const arrival = (l) => (l.ref === null || l.ref === undefined ? `no drop ref (${l.how})` : `arrived ${l.ref} (${l.arrived})`);
   const landing = (l) =>
     Array.isArray(l.supersededBy) ? `not landed: superseded by ${l.supersededBy.join(' and ')}`
+    : l.applied === false ? 'arrived, nothing applied'
     : l.landed === null ? 'not yet landed'
     : `landed ${l.landed.sha} (${l.landed.date})${l.landed.inferred ? ', inferred' : ''}`;
   const lines = list.map((l) => `- ${l.file} — ${arrival(l)}; ${landing(l)}`);
@@ -94,11 +95,34 @@ export const RECORD = 'docs/design-landed.jsonl';
  * record says where it begins rather than letting its first entry pass for the beginning of the history.
  * @returns {{ text: string | null, appended: string[] }}
  */
-export function recordUpdate(existing, drops, today, commits = []) {
+/*
+  `decisions` (the coordinator, 14 Nov): the intake's word on each file it appends, { applied: [names], held: [names] }.
+  "Arrived" is not "applied": a file in the refs with nothing of it applied was read by Design as landed, because the
+  record's line was the only evidence. With decisions, every appended line says which, a file named neither is not
+  appended and is returned as undecided, and a held line named applied by a later intake is rewritten, so its landing
+  is the commit that applies it. Without them (the backfill, and calls before 14 Nov) nothing changes.
+*/
+/**
+ * @param {string | null} existing
+ * @param {Array<{ ref: string, date: string, files: string[] }>} drops
+ * @param {string} today
+ * @param {Array<{ sha: string, date: string, touchesDesign: boolean }>} [commits]
+ * @param {{ applied: string[], held: string[] } | null} [decisions]
+ */
+export function recordUpdate(existing, drops, today, commits = [], decisions = null) {
   /* The backfill's lines carry their landing from history, since the commit adding them is not when they landed; an intake's own line is dated by the commit that adds it. */
   const arrivals = landedList({ drops, commits: existing === null ? commits : [] });
   const listed = new Set(existing === null ? [] : parseRecord(existing).entries.map((e) => e.file));
   const fresh = arrivals.filter((a) => !listed.has(a.file));
+  if (decisions !== null) {
+    const undecided = fresh.filter((a) => !decisions.applied.includes(a.file) && !decisions.held.includes(a.file)).map((a) => a.file);
+    if (undecided.length > 0) return { text: existing, appended: [], undecided };
+    if (existing !== null) existing = existing.split('\n').map((line) => {
+      if (line.trim() === '') return line;
+      const entry = JSON.parse(line);
+      return entry.applied === false && decisions.applied.includes(entry.file) ? JSON.stringify({ ...entry, applied: true }) : line;
+    }).join('\n');
+  }
   if (existing === null && fresh.length === 0) return { text: null, appended: [] };
   if (fresh.length === 0) return { text: existing, appended: [] };
   let text = existing;
@@ -112,7 +136,7 @@ export function recordUpdate(existing, drops, today, commits = []) {
     text = `${JSON.stringify({ horizon, begins: begins.arrived, first: begins.ref, backfilledOn: today })}\n`;
   }
   for (const a of fresh) {
-    const entry = { file: a.file, ref: a.ref, captured: a.arrived };
+    const entry = { file: a.file, ref: a.ref, captured: a.arrived, ...(decisions === null ? {} : { applied: decisions.applied.includes(a.file) }) };
     if (a.landed !== null) entry.landed = { ...a.landed, by: 'backfill: the first design-touching commit after the capture' };
     text += `${JSON.stringify(entry)}\n`;
   }
@@ -130,8 +154,9 @@ export function parseRecord(text) {
 export function landedFromRecord(record, landingOf) {
   /* A superseded entry never landed: the commit adding its line is not a landing (Q54). */
   return record.entries.map((e) => ({
-    file: e.file, ref: e.ref, arrived: e.captured, how: e.how, supersededBy: e.supersededBy,
-    landed: Array.isArray(e.supersededBy) ? null : e.landed === undefined ? landingOf(e.line) : { sha: e.landed.sha, date: e.landed.date, ...(e.landed.inferred ? { inferred: true } : {}) },
+    file: e.file, ref: e.ref, arrived: e.captured, how: e.how, supersededBy: e.supersededBy, ...(e.applied === undefined ? {} : { applied: e.applied }),
+    /* A held entry (applied: false) arrived and was not applied: the commit adding its line is not a landing either. */
+    landed: Array.isArray(e.supersededBy) || e.applied === false ? null : e.landed === undefined ? landingOf(e.line) : { sha: e.landed.sha, date: e.landed.date, ...(e.landed.inferred ? { inferred: true } : {}) },
   }));
 }
 
