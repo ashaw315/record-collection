@@ -57225,3 +57225,10 @@ and nothing tells the page a description changed mid-walk; it comes with the edi
 it, and again with 2b's phrase-change clearing staged out, so it could not fail: deleted (the coordinator, 15 Nov), the
 grid's case pinning the one rule. Why the shelf did not carry the last answer across a phrase change before 2b was
 never explained, and nothing in the suite now claims it is.
+
+**Unit 4 built (15 Nov), not run:** `npm run matched:draft -- --sample <ids>` or `--all` drafts the matched text from
+each record's cached Discogs release (tracklist by side, credits, format) with the ABOUT as context only, to a review
+file in ~/Downloads with every sentence marked [supported] or [inferred] and what was not known listed; `--store
+<file>` stores Adam's marked ids into `generated`, never `edited`. Drafting spends Anthropic calls and storing writes
+production, so both are Adam's to run. Effort medium (the snippet's is low): drafting is offline and once per record.
+Storing ten leaves the ask ranking (the latch needs every record with an ABOUT); unit 5's script reads the ten.

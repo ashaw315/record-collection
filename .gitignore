@@ -157,3 +157,5 @@ font-probe-*.json
 
 # ABOUT drafts and fetched discographies, a machine-local workspace for scripts/write-abouts.mts
 .abouts/
+# The matched-text drafts (scripts/write-matched-text.mts), as .abouts/ holds the ABOUT drafts.
+.matched/
