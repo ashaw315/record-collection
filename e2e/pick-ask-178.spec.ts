@@ -293,44 +293,53 @@ test('the field’s label and the count line each take one line at the rail’s 
 
 /*
   184: the count line at every N it can read, not the N on screen (the coordinator, 13 Nov: "one line at every N up to
-  the record count, at the rail's width, 320 and 1280, by line box"). The report this replaces measured both wordings
-  from 1 to 999 and told Design what it needed; this is the check it becomes. The real line in each host, its number
-  set to every N from 1 to the larger of the collection's count and 99 in turn: the test database holds fewer records
-  than Adam's 55, so the sweep covers every two-digit N, and a collection past 99 widens it to three digits by itself.
-  Lines by line box, as the step-182 case reads them: distinct tops, and the box's height under two lines. Fails
-  against the first wording, "N without an About yet.", which took two lines in the rail.
+  the record count, at the rail's width, 320 and 1280, by line box"). The real line in each host, its number set to
+  1, 2, 3 … until a line breaks, and the first N that breaks reported (the coordinator, 14 Nov): the collection grows,
+  so a sweep stopping at 99 left an untested cliff at three digits, where a breaking N is headroom known for good. The
+  claim asserted is the step's, every N up to the record count on one line: the breaking N above the count. Lines by
+  line box, as the step-182 case reads them: distinct tops, and the box's height under two lines. Fails against the
+  first wording, "N without an About yet.", which took two lines in the rail at every N.
 */
-test('184: the count line takes one line at every N up to the record count, at the rail’s width, 320 and 1280', async ({ page }) => {
+test('184: the count line takes one line at every N up to the record count, at the rail’s width, 320 and 1280, and reports the N it breaks at', async ({ page }) => {
   const { artistId } = await fixture(page, ['N']);
   try {
     const total = ((await (await page.request.get('/api/records?pageSize=1')).json()) as { meta: { total: number } }).meta.total;
-    const upTo = Math.max(total, 99);
     const sweep = async (where: string) => {
-      const twoLines = await page.evaluate((top) => {
+      const m = await page.evaluate(() => {
         const p = Array.from(document.querySelectorAll<HTMLElement>('[data-without-about]')).find((e) => e.getClientRects().length > 0);
         const span = p?.querySelector('span');
-        if (!p || !span) return 'not drawn';
+        if (!p || !span) return null;
         const words = (span.textContent ?? '').replace(/^\d+/, '');
         const lineHeight = parseFloat(getComputedStyle(span).lineHeight);
-        const failing: string[] = [];
-        let widest = { n: 0, width: 0 };
-        for (let n = 1; n <= top; n += 1) {
-          span.textContent = `${n}${words}`;
-          /* "Report the widest N" ("Matched by role and count line", 14 Nov): its width held to one line. */
-          p.style.whiteSpace = 'nowrap';
-          const width = span.getBoundingClientRect().width;
-          p.style.whiteSpace = '';
-          if (width > widest.width) widest = { n, width };
+        const breaksAt = (text: string) => {
+          span.textContent = text;
           const range = document.createRange();
           range.selectNodeContents(span);
           const lines = new Set(Array.from(range.getClientRects()).map((r) => Math.round(r.top))).size;
-          if (lines !== 1 || p.getBoundingClientRect().height / lineHeight >= 2) failing.push(`${n}: ${lines} lines`);
+          return lines !== 1 || p.getBoundingClientRect().height / lineHeight >= 2;
+        };
+        /*
+          The widest number of d digits is the widest digit d times, so until that breaks no number of d digits can, and
+          the scan runs only through the first length that can break, from its smallest number up. To six digits: past
+          that the count is no collection one person keeps.
+        */
+        const widths = Array.from({ length: 10 }, (_, d) => {
+          span.textContent = String(d).repeat(6);
+          p.style.whiteSpace = 'nowrap';
+          const w = span.getBoundingClientRect().width;
+          p.style.whiteSpace = '';
+          return w;
+        });
+        const widestDigit = String(widths.indexOf(Math.max(...widths)));
+        for (let d = 1; d <= 6; d += 1) {
+          if (!breaksAt(`${widestDigit.repeat(d)}${words}`)) continue;
+          for (let n = 10 ** (d - 1); n < 10 ** d; n += 1) if (breaksAt(`${n}${words}`)) return { breaks: n, room: p.getBoundingClientRect().width };
         }
-        return { failing: failing.join('; '), widest, room: p.getBoundingClientRect().width };
-      }, upTo);
-      if (typeof twoLines === 'string') throw new Error(`the count line ${where}: ${twoLines}`);
-      test.info().annotations.push({ type: `the count line ${where}`, description: `widest N ${twoLines.widest.n}, ${twoLines.widest.width.toFixed(1)} of ${twoLines.room.toFixed(1)}` });
-      expect(twoLines.failing, `the count line ${where}, N from 1 to ${upTo}: every N on one line`).toBe('');
+        return { breaks: null, room: p.getBoundingClientRect().width };
+      });
+      if (m === null) throw new Error(`the count line ${where} is not drawn`);
+      test.info().annotations.push({ type: `the count line ${where}`, description: m.breaks === null ? `one line at every N to 999,999 in ${m.room.toFixed(1)}` : `breaks first at N ${m.breaks}, in ${m.room.toFixed(1)}` });
+      expect(m.breaks ?? Infinity, `the count line ${where}: one line at every N up to the record count, ${total}`).toBeGreaterThan(total);
     };
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto(`/?artistId=${artistId}`);
