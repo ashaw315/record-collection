@@ -57242,3 +57242,10 @@ real collection's captions at 1440 (step 182), and the column host is captured "
 is what takes a cell from 204.0 to 262.5, and five tall cells are what overflow the count column at 768. Seeded
 records carry captions at least as long as the real collection's longest, and each capture states the lengths used.
 **Order:** unit 5 before unit 3, deliberately: unit 5 says whether the picks are any good, unit 3 how they are drawn.
+
+**Unit 5 built (15 Nov), not run:** `npm run ask:diagnostic -- "<phrase>" …` asks pick.ts directly over the records
+with matched text, stating the pool ("among the N described records, not the collection's 55") on every phrase, each
+phrase at low and medium shown only as A and B in a per-phrase shuffled order, and writes a picks file with no reasons
+for Adam to mark y or n; `--reveal <marked file>` adds each pick's reason, each run's effort and time, and fits and
+times per effort. Reads production and spends calls, so Adam's. Against production today it refuses before any call:
+no record has matched text. The provider flip to Anthropic, promised for this run, is not built yet.

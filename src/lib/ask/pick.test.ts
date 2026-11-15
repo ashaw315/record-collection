@@ -139,6 +139,17 @@ describe('the call', () => {
     expect(fetchImpl).not.toHaveBeenCalled();
   });
 
+  /* The diagnostic runs one phrase at two efforts (the coordinator, 15 Nov), so a call can name its own over the setting. */
+  it('sends the effort a call names over the configured one', async () => {
+    vi.stubEnv('OPENAI_API_KEY', 'sk-test');
+    vi.stubEnv('ASK_PICK_EFFORT', 'low');
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify(reply({ verdict: 'nothing-fits', picks: [] })), { status: 200 }));
+    await askPick('calm', POOL, [], { fetchImpl, effort: 'medium' });
+    await askPick('calm', POOL, [], { fetchImpl });
+    const efforts = fetchImpl.mock.calls.map((c) => JSON.parse(String((c as unknown as [string, RequestInit])[1].body)).reasoning.effort);
+    expect(efforts).toEqual(['medium', 'low']);
+  });
+
   it('posts to the Responses endpoint with the configured model and reads the reply', async () => {
     vi.stubEnv('OPENAI_API_KEY', 'sk-test');
     vi.stubEnv('ASK_PICK_MODEL', 'gpt-configured');

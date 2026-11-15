@@ -132,9 +132,10 @@ function endpoint(): string {
 }
 
 /** One request, the reply read and checked. A missing key refuses by name before any request. */
-export async function askPick(phrase: string, pool: readonly PickRecordText[], named: readonly string[], options: { fetchImpl?: typeof fetch } = {}): Promise<PickResult> {
+export async function askPick(phrase: string, pool: readonly PickRecordText[], named: readonly string[], options: { fetchImpl?: typeof fetch; effort?: string } = {}): Promise<PickResult> {
   const key = requireOpenAiKey();
-  const config = { model: process.env[MODEL_VAR] || PICK_MODEL_DEFAULT, effort: process.env[EFFORT_VAR] || 'low' };
+  /* A call may name its effort over the setting: the diagnostic asks one phrase at two (the coordinator, 15 Nov). */
+  const config = { model: process.env[MODEL_VAR] || PICK_MODEL_DEFAULT, effort: options.effort ?? (process.env[EFFORT_VAR] || 'low') };
   const response = await (options.fetchImpl ?? fetch)(endpoint(), {
     method: 'POST',
     headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json' },
