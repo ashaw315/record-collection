@@ -57162,3 +57162,11 @@ D 1). Diamond Jubilee has six sides, 5 6 5 5 6 5, so the change of side nearest 
 so it means arrived; Design's landed list means applied. "Tracks break at a side" stood in the record at 6699a419
 with nothing applied, and Design read it as landed. Where a file is in the refs and not applied, say "arrived,
 nothing applied" with the record, in the same breath.
+
+**`pressing_assessments`: kept, retired; its §4 entry, when written, reads so (the coordinator, 14 Nov).** Three of the
+four tables the SPEC check listed are live (discogs_release_text, genre_parent_rejections, artist_derived_acts) and
+get §4 entries after step 3. This one is SPEC §12b's deliberate keep and stays. **The flaw in §12b's reasoning, for
+whoever revisits it:** it kept the route and client "so the trail is inspectable rather than archaeological", but no
+screen draws an assessment and nothing calls the route, so reading the four rows already means querying the database
+by hand. The rows carry the benefit; the kept code does not. Dropping the unused route and client while keeping the
+rows needs no migration, if they ever stand in a refactor's way.
