@@ -544,5 +544,15 @@
         "how": "anchors"
       }
     ]
+  },
+  {
+    "file": "Undescribed title named",
+    "ref": "refs/drops/2026-11-15-01",
+    "heads": [
+      {
+        "head": "§P.2: the model pick, minimum",
+        "how": "anchors"
+      }
+    ]
   }
 ]
