@@ -160,3 +160,90 @@ describe('POST /api/ask', () => {
     expect(bodies).toEqual([]);
   });
 });
+
+/*
+  Step 3, unit 2a (the coordinator, 14 Nov): the route ranks while no record anywhere has matched text, and asks the
+  model pick as soon as any record does. One collection-wide condition, never per record, so the pool is one kind of
+  text in either state; it flips when Adam stores his first batch, with no deploy. In the pick, a record with no
+  matched text is not eligible (§P.6's pattern repointed). The model's reply is stubbed at fetch: these test the route's
+  rule, not the model.
+*/
+describe('POST /api/ask, the pick once any record has matched text', () => {
+  const matched = (recordId: string, generated: string | null, edited: string | null = null) =>
+    db.execute(sql`INSERT INTO record_matched_text (record_id, generated, generated_model, generated_at, edited, edited_at)
+      VALUES (${recordId}, ${generated}, ${generated === null ? null : 'test-model'}, ${generated === null ? null : sql`now()`}, ${edited}, ${edited === null ? null : sql`now()`})`);
+
+  /* A Responses reply, as the structured-outputs guide shapes it; the request body is kept to read what was sent. */
+  function pickReplies(body: unknown) {
+    const sent: Array<{ url: string; body: { input: Array<{ role: string; content: string }> } }> = [];
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (url, init) => {
+      sent.push({ url: String(url), body: JSON.parse(String(init?.body)) });
+      return new Response(JSON.stringify({ status: 'completed', output: [{ type: 'message', content: [{ type: 'output_text', text: JSON.stringify(body) }] }] }), { status: 200 });
+    });
+    return sent;
+  }
+
+  it('ranks, as before, while no record has matched text', async () => {
+    const { rain, drive, sunday } = await seedFour();
+    phraseEmbeds([1, 0]);
+    const body = await (await ask(request({ phrase: 'rain', pool: [rain, drive, sunday], take: 3 }))).json();
+    expect(body.mode).toBe('ranking');
+    expect(body.answers.map((a: { recordId: string }) => a.recordId)).toEqual([rain, drive, sunday]);
+  });
+
+  it('asks the model once any has, sending only the records with matched text, the edit in place of the generated text, and the run’s named records', async () => {
+    const { rain, drive, sunday, silent } = await seedFour();
+    await matched(rain, 'Solo piano, slow and sparse.');
+    await matched(sunday, 'Strings at a crawl.', 'Strings and coffee, slow.');
+    const sent = pickReplies({ verdict: 'answer', picks: [{ id: sunday, reason: 'Slow strings for a morning.', claims: ['Strings and coffee'] }] });
+    const response = await ask(request({ phrase: 'something slow', pool: [rain, drive, sunday, silent], take: 5, exclude: [rain] }));
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body).toMatchObject({ mode: 'pick', verdict: 'answer', unanswerable: false });
+    expect(body.answers).toEqual([{ recordId: sunday, reason: 'Slow strings for a morning.', claims: ['Strings and coffee'] }]);
+    expect(sent).toHaveLength(1);
+    expect(sent[0].url).toMatch(/\/v1\/responses$/);
+    const user = sent[0].body.input.find((m) => m.role === 'user')?.content ?? '';
+    expect(user, 'the edit, not the generated text').toContain('Strings and coffee, slow.');
+    expect(user).not.toContain('Strings at a crawl.');
+    expect(user, 'a record with matched text').toContain('Solo piano, slow and sparse.');
+    expect(user, 'a record with none is not sent').not.toContain(drive);
+    expect(user).not.toContain(silent);
+    expect(user).toMatch(new RegExp(`already named[^\\n]*${rain}`, 'i'));
+  });
+
+  it('answers a stubbed stand-in as one record flagged with its verdict, and a stubbed run’s end as none', async () => {
+    const { rain, sunday } = await seedFour();
+    await matched(rain, 'Solo piano, slow and sparse.');
+    pickReplies({ verdict: 'nothing-fits', picks: [{ id: rain, reason: 'Not loud at all, but it is what there is.', claims: ['Solo piano'] }] });
+    expect(await (await ask(request({ phrase: 'loud', pool: [rain, sunday], take: 5 }))).json()).toMatchObject({ mode: 'pick', verdict: 'nothing-fits', answers: [{ recordId: rain }] });
+    vi.restoreAllMocks();
+    pickReplies({ verdict: 'run-exhausted', picks: [] });
+    expect(await (await ask(request({ phrase: 'loud', pool: [rain, sunday], take: 5, exclude: [rain] }))).json()).toMatchObject({ mode: 'pick', verdict: 'run-exhausted', answers: [] });
+  });
+
+  it('is unanswerable with no request where nothing in the pool has matched text, though some record elsewhere does', async () => {
+    const { rain, drive, sunday } = await seedFour();
+    await matched(rain, 'Solo piano, slow and sparse.');
+    const sent = pickReplies({ verdict: 'answer', picks: [] });
+    expect(await (await ask(request({ phrase: 'x', pool: [drive, sunday], take: 5 }))).json()).toMatchObject({ mode: 'pick', answers: [], unanswerable: true });
+    expect(sent).toEqual([]);
+  });
+
+  it('refuses with the 503 when the key is absent, and a failed pick with a 502 in the reader’s terms, the reason in the log', async () => {
+    const { rain } = await seedFour();
+    await matched(rain, 'Solo piano, slow and sparse.');
+    vi.stubEnv('OPENAI_API_KEY', '');
+    vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    expect((await ask(request({ phrase: 'x', pool: [rain], take: 5 }))).status).toBe(503);
+    vi.stubEnv('OPENAI_API_KEY', 'sk-test');
+    const logged = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({ status: 'completed', output: [{ type: 'message', content: [{ type: 'refusal', refusal: 'no' }] }] }), { status: 200 }));
+    const failed = await ask(request({ phrase: 'x', pool: [rain], take: 5 }));
+    expect(failed.status).toBe(502);
+    const json = await failed.json();
+    expect(json.error.code).toBe('PICK_FAILED');
+    expect(json.error.message).not.toMatch(/refus/);
+    expect(logged.mock.calls.map((c) => c.join(' ')).join('\n')).toMatch(/the model refused/);
+  });
+});

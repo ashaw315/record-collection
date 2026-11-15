@@ -885,6 +885,27 @@ the database credential never leaves Vercel.
 
 ---
 
+### 5.11 The ask (A80, 2026-11-14)
+| Method | Path | Notes |
+|---|---|---|
+| POST | `/api/ask` | Body `{ phrase, pool: string[], take: 1..5, exclude?: string[] }`, unknown keys rejected. `pool` is the page's: every match of its filters and search, as record ids (§P.2). `exclude` is the run's named records. Answers `{ mode, answers, from, askedFrom, unanswerable }`, and in the pick `verdict` too. |
+
+Written into this section on 14 Nov, after the route had shipped with Q22 (11 Nov) without it; it is here so this
+document names the endpoint the control calls.
+
+**Two modes, one collection-wide condition** (the coordinator, 14 Nov). While no record anywhere has matched text
+(§4.6), `mode` is `ranking`: the pool ranked by nearness of each ABOUT's stored vector (§4.7) to the phrase's, `take`
+of them, a title asking from its record. Once any record has matched text, `mode` is `pick`: the model is given the
+phrase and the pool's records that have matched text, the run's named records as excluded, and `answers` is what it
+returns, each `{ recordId, reason, claims }`, with `verdict` one of `answer`, `nothing-fits`, `requirement-unmet` or
+`run-exhausted` (§P.2). The condition is never per record, so the pool is one kind of text in either mode, and it flips
+when matched text is first stored, with no deploy.
+
+**Never an empty answer in place of a failure.** A pool with nothing to rank or pick from is `unanswerable: true`. An
+absent `OPENAI_API_KEY` is `503` `NOT_CONFIGURED` before any request, the variable named in the server log and never in
+the body. A pick that fails after the request (a refusal, a cut-off reply, no pick surviving the checks) is `502`
+`PICK_FAILED`, its reason in the server log. Nothing about an ask is stored (§P.2, §4.6).
+
 ## 6. Discogs integration
 
 - Auth: personal access token in `DISCOGS_TOKEN`, sent as `Authorization: Discogs token=...`.

@@ -3,7 +3,8 @@ import { z } from 'zod';
 import { invalidJson, notConfigured, validationError } from '@/lib/api/errors';
 import { withErrorHandling } from '@/lib/api/handler';
 import { rankByNearness } from '@/lib/ask/rank';
-import { embeddingsFor, recordByTitleKey } from '@/lib/db/queries/ask';
+import { askPick } from '@/lib/ask/pick';
+import { anyMatchedText, embeddingsFor, matchedTextsFor, recordByTitleKey } from '@/lib/db/queries/ask';
 import { logger } from '@/lib/logger';
 import { EMBEDDING_MODEL, embedTexts } from '@/lib/openai/embeddings';
 
@@ -41,9 +42,38 @@ export const POST = withErrorHandling('api.ask.POST', async (request: Request) =
   if (!parsed.success) return validationError(parsed.error);
   const { phrase, pool, exclude, take } = parsed.data;
 
+  /*
+    Step 3, unit 2a (the coordinator, 14 Nov): one collection-wide condition. While no record anywhere has matched
+    text the route ranks, as it always has; once any does it asks the model pick over the records in the pool that
+    have it. Never per record, so the pool is one kind of text in either state, and it flips when Adam stores his
+    first batch, with no deploy. `take` is the ranking's: the pick returns up to five and the page walks them.
+  */
+  if (await anyMatchedText()) {
+    const eligible = await matchedTextsFor(pool);
+    if (eligible.length === 0) return NextResponse.json({ mode: 'pick', verdict: null, answers: [], from: 'phrase', askedFrom: null, unanswerable: true });
+    if (!process.env.OPENAI_API_KEY) {
+      logger.error('api.ask', 'OPENAI_API_KEY is not set in this environment: the ask cannot ask the model pick; set it in Vercel’s project environment');
+      return notConfigured('The ask is not configured on this deployment');
+    }
+    const picked = await askPick(phrase, eligible, exclude ?? []);
+    if (!picked.ok) {
+      logger.error('api.ask', `the model pick failed: ${picked.reason}`);
+      return NextResponse.json({ error: { code: 'PICK_FAILED', message: 'The ask could not choose this time' } }, { status: 502 });
+    }
+    if (picked.dropped.length > 0) logger.info('api.ask', `the pick dropped ${picked.dropped.map((d) => `${d.id} (${d.why})`).join('; ')}`);
+    return NextResponse.json({
+      mode: 'pick',
+      verdict: picked.verdict,
+      answers: picked.picks.map((p) => ({ recordId: p.id, reason: p.reason, claims: p.claims })),
+      from: 'phrase',
+      askedFrom: null,
+      unanswerable: false,
+    });
+  }
+
   const candidates = await embeddingsFor(pool, EMBEDDING_MODEL);
   if (candidates.length === 0) {
-    return NextResponse.json({ answers: [], from: 'phrase', askedFrom: null, unanswerable: true });
+    return NextResponse.json({ mode: 'ranking', answers: [], from: 'phrase', askedFrom: null, unanswerable: true });
   }
 
   /* A title first: the record's own vector, and no request. */
@@ -61,5 +91,5 @@ export const POST = withErrorHandling('api.ask.POST', async (request: Request) =
   }
 
   const answers = rankByNearness(query, candidates, { take, exclude, askedFrom: own?.recordId });
-  return NextResponse.json({ answers, from: own === undefined ? 'phrase' : 'title', askedFrom: own?.recordId ?? null, unanswerable: false });
+  return NextResponse.json({ mode: 'ranking', answers, from: own === undefined ? 'phrase' : 'title', askedFrom: own?.recordId ?? null, unanswerable: false });
 });

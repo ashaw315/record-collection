@@ -1,7 +1,7 @@
 import 'server-only';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import { getDb } from '@/db/client';
-import { recordEmbeddings, records } from '@/db/schema';
+import { recordEmbeddings, recordMatchedText, records } from '@/db/schema';
 import { nameSortKey } from '@/lib/db/name-sort';
 
 /**
@@ -19,6 +19,33 @@ export async function embeddingsFor(recordIds: readonly string[], model: string)
     .from(recordEmbeddings)
     .where(and(inArray(recordEmbeddings.recordId, [...recordIds]), eq(recordEmbeddings.model, model)));
   return rows.map((row) => ({ recordId: row.recordId, vector: row.vector as number[] }));
+}
+
+/**
+ * **The collection-wide switch (the coordinator, 14 Nov):** whether any record anywhere has matched text, edited or
+ * generated (SPEC §4.6). While none does the ask ranks; once one does it asks the model pick, with no deploy between.
+ */
+export async function anyMatchedText(): Promise<boolean> {
+  const db = getDb();
+  const [row] = await db
+    .select({ n: sql<number>`count(*)::int` })
+    .from(recordMatchedText)
+    .where(sql`${recordMatchedText.edited} IS NOT NULL OR ${recordMatchedText.generated} IS NOT NULL`);
+  return (row?.n ?? 0) > 0;
+}
+
+/**
+ * The pick's eligible records in a pool: those with matched text, each read as its edit where Adam has written one
+ * and its generated text otherwise, never both (SPEC §4.6). A record with neither is not eligible (§P.6's pattern).
+ */
+export async function matchedTextsFor(recordIds: readonly string[]): Promise<Array<{ id: string; text: string }>> {
+  if (recordIds.length === 0) return [];
+  const db = getDb();
+  const rows = await db
+    .select({ id: recordMatchedText.recordId, text: sql<string | null>`coalesce(${recordMatchedText.edited}, ${recordMatchedText.generated})` })
+    .from(recordMatchedText)
+    .where(inArray(recordMatchedText.recordId, [...recordIds]));
+  return rows.filter((r): r is { id: string; text: string } => r.text !== null);
 }
 
 /**
