@@ -14,11 +14,10 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { performance } from 'node:perf_hooks';
-import { sql } from 'drizzle-orm';
-import { getDb } from '@/db/client';
 import { parseMarks, renderPicks, renderReveal, type DiagnosticRun, type Pool } from '@/lib/ask/diagnostic';
 import { askPick } from '@/lib/ask/pick';
 import { matchedTextsFor } from '@/lib/db/queries/ask';
+import { collectionTitles } from '@/lib/db/queries/matched-text';
 
 const args = process.argv.slice(2);
 const WORK = join(process.cwd(), '.matched');
@@ -39,8 +38,7 @@ if (args.includes('--reveal')) {
 
 const phrases = args.filter((a) => !a.startsWith('--'));
 if (phrases.length === 0) throw new Error('ask-diagnostic: give the phrases to ask, or --reveal <marked file>');
-const records = (await getDb().execute<{ id: string; title: string; artist: string }>(sql`
-  SELECT r.id, r.title, a.name AS artist FROM records r JOIN artists a ON a.id = r.artist_id`)).rows;
+const records = await collectionTitles();
 const described = await matchedTextsFor(records.map((r) => r.id));
 if (described.length === 0) throw new Error('ask-diagnostic: no record has matched text yet; store the drafts first (npm run matched:draft -- --store)');
 const pool: Pool = { described: described.length, collection: records.length };

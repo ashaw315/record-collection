@@ -1,6 +1,6 @@
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { sql } from 'drizzle-orm';
-import { storeGeneratedMatchedText } from '@/lib/db/queries/matched-text';
+import { collectionTitles, recordsToDraft, storeGeneratedMatchedText } from '@/lib/db/queries/matched-text';
 import { closeTestDb, getTestDb, truncateAll } from '../helpers/db';
 
 /**
@@ -42,5 +42,40 @@ describe('storeGeneratedMatchedText', () => {
     const id = await aRecord();
     await storeGeneratedMatchedText(id, '   ', 'model-a');
     expect(await row(id)).toMatchObject({ generated: null, generated_model: null, generated_at: null });
+  });
+});
+
+/*
+  The drafting script's selection, run against the database (the coordinator, 15 Nov). Its first real run failed here
+  before any model call: `= ANY((…))` is a row constructor, not an array (42809). Only the selection touches the
+  database before the store, and nothing ran it; these do.
+*/
+describe('recordsToDraft and collectionTitles', () => {
+  const three = async () => [await aRecord(), await aRecord(), await aRecord()];
+
+  it('selects by short id prefix, one or several', async () => {
+    const [a, b, c] = await three();
+    expect((await recordsToDraft({ prefixes: [a.slice(0, 8)] })).map((r) => r.id)).toEqual([a]);
+    expect((await recordsToDraft({ prefixes: [a.slice(0, 8), c.slice(0, 8)] })).map((r) => r.id).sort()).toEqual([a, c].sort());
+    expect(b).toBeDefined();
+  });
+
+  it('selects every record with no matched text for --all, leaving out one with a generated text or an edit', async () => {
+    const [a, b, c] = await three();
+    await storeGeneratedMatchedText(a, 'Described.', 'model-a');
+    await db.execute(sql`INSERT INTO record_matched_text (record_id, edited, edited_at) VALUES (${b}, 'Edited.', now())`);
+    expect((await recordsToDraft('all')).map((r) => r.id)).toEqual([c]);
+  });
+
+  it('carries what the prompt needs: artist, title, year, the ABOUT, and the cached payload or null', async () => {
+    const [a] = await three();
+    await db.execute(sql`UPDATE records SET snippet = 'An ABOUT.' WHERE id = ${a}`);
+    expect(await recordsToDraft({ prefixes: [a.slice(0, 8)] })).toEqual([{ id: a, artist: 'Store', title: 'Stored', year: null, about: 'An ABOUT.', payload: null }]);
+  });
+
+  it('reads every record’s id, title and artist for the diagnostic', async () => {
+    const [a, b, c] = await three();
+    expect((await collectionTitles()).map((r) => r.id).sort()).toEqual([a, b, c].sort());
+    expect((await collectionTitles())[0]).toMatchObject({ title: 'Stored', artist: 'Store' });
   });
 });

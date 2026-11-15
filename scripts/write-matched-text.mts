@@ -18,11 +18,10 @@
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
-import { sql } from 'drizzle-orm';
-import { getDb } from '@/db/client';
-import { storeGeneratedMatchedText } from '@/lib/db/queries/matched-text';
+import { recordsToDraft, storeGeneratedMatchedText } from '@/lib/db/queries/matched-text';
 import { groundingFromPayload } from '@/lib/llm/about-grounding';
 import { getMatchedTextClient } from '@/lib/llm/matched-text-client';
+import { chooseDraft, parseMarked } from '@/lib/matched-text/marks';
 import { renderReview, type ReviewDraft } from '@/lib/matched-text/review';
 
 const MODEL = 'claude-opus-5';
@@ -38,13 +37,14 @@ type Draft = ReviewDraft & { text: string | null };
 if (mode === 'store') {
   const file = args[args.indexOf('--store') + 1];
   if (file === undefined) throw new Error('write-matched-text: --store wants a file of ids, one per line');
-  const marks = readFileSync(file, 'utf8').split('\n').map((l) => l.trim()).filter((l) => /^[0-9a-f]{8}/.test(l)).map((l) => ({ prefix: l.slice(0, 8), effort: /\b(low|medium|high)\b/.exec(l)?.[1] }));
+  /* What is written to production is decided by the tested module: the ids Adam marked, each with its effort, and the draft each chooses. */
+  const marks = parseMarked(readFileSync(file, 'utf8'));
   const drafts: Draft[] = JSON.parse(readFileSync(join(WORK, 'drafts.json'), 'utf8'));
   const ids = marks.map((m) => m.prefix);
   let stored = 0;
-  for (const { prefix, effort } of marks) {
-    /* Where a record was drafted at two efforts, the mark names which; a mark naming none takes medium, the default. */
-    const d = drafts.find((x) => x.id.startsWith(prefix) && (x.effort === undefined || x.effort === (effort ?? 'medium')));
+  for (const mark of marks) {
+    const { prefix } = mark;
+    const d = chooseDraft(drafts, mark);
     if (d === undefined || d.text === null) { console.log(`${prefix}: no finished draft to store`); continue; }
     await storeGeneratedMatchedText(d.id, d.text, MODEL);
     stored += 1;
@@ -56,14 +56,8 @@ if (mode === 'store') {
 
 const prefixes = mode === 'sample' ? args.filter((a) => /^[0-9a-f]{8}/.test(a)) : [];
 if (mode === 'sample' && prefixes.length === 0) throw new Error('write-matched-text: give record id prefixes, or --all, or --store <file>');
-const rows = (await getDb().execute<{ id: string; artist: string; title: string; year: number | null; about: string | null; payload: unknown }>(sql`
-  SELECT r.id, a.name AS artist, r.title, r.release_year AS year, nullif(r.snippet, '') AS about, c.payload
-  FROM records r JOIN artists a ON a.id = r.artist_id
-  LEFT JOIN pressings p ON p.id = r.pressing_id
-  LEFT JOIN discogs_cache c ON c.discogs_release_id = p.discogs_release_id
-  LEFT JOIN record_matched_text m ON m.record_id = r.id
-  WHERE ${mode === 'all' ? sql`m.generated IS NULL AND m.edited IS NULL` : sql`left(r.id::text, 8) = ANY(${prefixes})`}
-  ORDER BY a.name, r.title`)).rows;
+/* The selection is the query module's, run against the test database there (the first real run failed in an untested query, 15 Nov). */
+const rows = await recordsToDraft(mode === 'all' ? 'all' : { prefixes });
 
 const client = getMatchedTextClient();
 const drafts: Draft[] = [];
