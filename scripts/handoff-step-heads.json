@@ -514,5 +514,25 @@
         "how": "anchors"
       }
     ]
+  },
+  {
+    "file": "Consolation and count reason",
+    "ref": "refs/drops/2026-11-14-03",
+    "heads": [
+      {
+        "head": "§P.2: the model pick, minimum",
+        "how": "anchors"
+      }
+    ]
+  },
+  {
+    "file": "Matched by role and count line",
+    "ref": "refs/drops/2026-11-14-03",
+    "heads": [
+      {
+        "head": "§P.2: the model pick, minimum",
+        "how": "anchors"
+      }
+    ]
   }
 ]

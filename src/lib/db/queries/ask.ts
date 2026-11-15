@@ -1,7 +1,7 @@
 import 'server-only';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import { getDb } from '@/db/client';
-import { recordEmbeddings, recordMatchedText, records } from '@/db/schema';
+import { appLatches, recordEmbeddings, recordMatchedText, records } from '@/db/schema';
 import { nameSortKey } from '@/lib/db/name-sort';
 
 /**
@@ -21,17 +21,29 @@ export async function embeddingsFor(recordIds: readonly string[], model: string)
   return rows.map((row) => ({ recordId: row.recordId, vector: row.vector as number[] }));
 }
 
+const PICK_LATCH = 'ask_pick';
+
 /**
- * **The collection-wide switch (the coordinator, 14 Nov):** whether any record anywhere has matched text, edited or
- * generated (SPEC §4.6). While none does the ask ranks; once one does it asks the model pick, with no deploy between.
+ * **The pick's one-way latch (the coordinator, 14 Nov, correcting "any").** The ask's model pick engages when every
+ * record that has an ABOUT also has matched text (SPEC §4.6), coverage complete, and from then on never returns to the
+ * ranking: one described record among 53 is not a pick over one record, and record 56 arriving without matched text
+ * joins §P.6's ineligible count rather than flipping the collection back. Thrown here, on the first ask that finds
+ * coverage complete, and held by its row (§4.8).
  */
-export async function anyMatchedText(): Promise<boolean> {
+export async function pickEngaged(): Promise<boolean> {
   const db = getDb();
+  const [held] = await db.select({ name: appLatches.name }).from(appLatches).where(eq(appLatches.name, PICK_LATCH));
+  if (held !== undefined) return true;
   const [row] = await db
-    .select({ n: sql<number>`count(*)::int` })
-    .from(recordMatchedText)
-    .where(sql`${recordMatchedText.edited} IS NOT NULL OR ${recordMatchedText.generated} IS NOT NULL`);
-  return (row?.n ?? 0) > 0;
+    .select({
+      described: sql<number>`count(*) FILTER (WHERE ${recordMatchedText.edited} IS NOT NULL OR ${recordMatchedText.generated} IS NOT NULL)::int`,
+      uncovered: sql<number>`count(*) FILTER (WHERE nullif(${records.snippet}, '') IS NOT NULL AND ${recordMatchedText.edited} IS NULL AND ${recordMatchedText.generated} IS NULL)::int`,
+    })
+    .from(records)
+    .leftJoin(recordMatchedText, eq(recordMatchedText.recordId, records.id));
+  if ((row?.described ?? 0) === 0 || (row?.uncovered ?? 1) > 0) return false;
+  await db.insert(appLatches).values({ name: PICK_LATCH }).onConflictDoNothing();
+  return true;
 }
 
 /**

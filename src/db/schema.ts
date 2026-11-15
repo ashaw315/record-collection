@@ -1079,3 +1079,13 @@ export const recordMatchedText = pgTable(
     check('record_matched_text_edited_not_blank', sql`${t.edited} IS NULL OR btrim(${t.edited}) <> ''`),
   ],
 );
+
+/**
+ * **§4.8 (A81, 14 Nov): one-way latches.** A row is a switch thrown once and never thrown back: its presence is the
+ * state, its time when it was thrown. The first is `ask_pick`: the ask's model pick engaged when every record with an
+ * ABOUT had matched text, never returning to the ranking after (the coordinator, 14 Nov).
+ */
+export const appLatches = pgTable('app_latches', {
+  name: text('name').primaryKey(),
+  setAt: timestamp('set_at', { withTimezone: true }).notNull().defaultNow(),
+});

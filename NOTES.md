@@ -57170,3 +57170,30 @@ whoever revisits it:** it kept the route and client "so the trail is inspectable
 screen draws an assessment and nothing calls the route, so reading the four rows already means querying the database
 by hand. The rows carry the benefit; the kept code does not. Dropping the unused route and client while keeping the
 rows needs no migration, if they ever stand in a refactor's way.
+
+## 14 Nov: the cutover latched, exhaustion the app's, claims whole sentences (a review, through the coordinator)
+
+**The cutover is a one-way latch, not "any".** One described record among 53 made the ask a pick over one record,
+worse than the ranking it replaced. The pick engages when every record with an ABOUT has matched text, and never
+returns (§4.8's `ask_pick`). Staged without its stored row, the "stays engaged" test failed.
+
+**A run's end is the app's.** The model's verdicts are answer, nothing-fits and requirement-unmet. The route turns
+nothing-fits into run-exhausted, with no record, once the run has shown something. A batch walked to its end is not
+exhaustion: the next press asks again with all of it excluded, and exhaustion is when that comes back empty.
+
+**Claims are whole stored sentences, at least one per pick.** A fragment can support the opposite ("Not slow;
+aggressive throughout" holds "slow").
+
+**For 2b, the control:** a record joins the run's named set when it is displayed, never when it is returned; an
+edit discards the remaining queue; a response for an earlier phrase, run or description revision is ignored on
+arrival; further submissions are disabled while a request is in flight (interim, pending Design, as §P.3 treats an ask
+while a record moves).
+
+**For unit 4's prompt:** each claim in the review file marked supported by the supplied material, inferred from the
+model's knowledge, or unknown, so Adam checks the inferred hardest; the ABOUT is context, never a source of musical
+claims. The CHECK stops empty strings, not plausible filler; honesty is the prompt's and Adam's review's.
+
+**Unit 5 is a script, not the route.** Under the latch the route ranks until coverage is complete, so the ten-record
+diagnostic calls pick.ts with the described records as an explicit pool, states the pool size ("among the 10 described
+records"), prints picks, takes Adam's marks, then reveals reasons, and runs the six phrases at low and at the next
+effort up, reporting quality and latency for each.

@@ -53,30 +53,32 @@ describe('the request', () => {
 
 describe('reading a stubbed reply (our rule, not the model’s obedience)', () => {
   it('draws a stubbed answer of three as three, never padding it toward five', () => {
-    const r = readPick(reply({ verdict: 'answer', picks: [pick('a1', ['Solo piano, slow and sparse']), pick('c3', ['short and unhurried']), pick('d4', ['Mostly quiet acoustic guitar and voice'])] }), POOL, []);
+    const r = readPick(reply({ verdict: 'answer', picks: [pick('a1', ['Solo piano, slow and sparse, recorded close in a quiet room.']), pick('c3', ['Warm country croon over pedal steel and brushed drums, short and unhurried.']), pick('d4', ['Mostly quiet acoustic guitar and voice, with two abrasive electric tracks on side one.'])] }), POOL, []);
     expect(r).toMatchObject({ ok: true, verdict: 'answer' });
     expect(r.ok && r.picks.map((p) => p.id)).toEqual(['a1', 'c3', 'd4']);
   });
 
   it('draws a stubbed nothing-fits answer as at most one stand-in, flagged, its reason kept', () => {
-    const r = readPick(reply({ verdict: 'nothing-fits', picks: [pick('e5', ['Big-band swing'], 'Not calm, but the closest thing to a room full of people.'), pick('f6', ['Long modal jazz sides'])] }), POOL, []);
+    const r = readPick(reply({ verdict: 'nothing-fits', picks: [pick('e5', ['Big-band swing at dance tempos, strings and reeds layered thick.'], 'Not calm, but the closest thing to a room full of people.'), pick('f6', ['Long modal jazz sides, a chant building to a storm and settling.'])] }), POOL, []);
     expect(r).toMatchObject({ ok: true, verdict: 'nothing-fits' });
     expect(r.ok && r.picks.map((p) => p.id)).toEqual(['e5']);
     expect(r.ok && r.dropped).toEqual([{ id: 'f6', why: 'a stand-in is one record' }]);
   });
 
   it('draws a stubbed requirement-unmet answer as one stand-in, flagged apart from nothing fits', () => {
-    const r = readPick(reply({ verdict: 'requirement-unmet', picks: [pick('a1', ['Solo piano'], 'Asked for no vocals: this has none, but the closest in feel has them.')] }), POOL, []);
+    const r = readPick(reply({ verdict: 'requirement-unmet', picks: [pick('a1', ['Solo piano, slow and sparse, recorded close in a quiet room.'], 'Asked for no vocals: this has none, but the closest in feel has them.')] }), POOL, []);
     expect(r).toMatchObject({ ok: true, verdict: 'requirement-unmet' });
     expect(r.ok && r.picks.length).toBe(1);
   });
 
-  it('draws a stubbed run’s end as no record', () => {
-    expect(readPick(reply({ verdict: 'run-exhausted', picks: [pick('a1', ['Solo piano'])] }), POOL, [])).toMatchObject({ ok: true, verdict: 'run-exhausted', picks: [] });
+  /* Exhaustion is the app's to determine from the run's history (the coordinator, 14 Nov), so it is no verdict the model can give. */
+  it('reads a run’s end from the model as no verdict at all, since the app decides it', () => {
+    expect(readPick(reply({ verdict: 'run-exhausted', picks: [] }), POOL, [])).toMatchObject({ ok: false, reason: 'the reply was not the pick’s JSON' });
+    expect(PICK_SCHEMA.properties.verdict.enum).toEqual(['answer', 'nothing-fits', 'requirement-unmet']);
   });
 
   it('keeps no more than five, in the order returned', () => {
-    const six = POOL.map((r) => pick(r.id, [r.text.split(',')[0]]));
+    const six = POOL.map((r) => pick(r.id, [/^.*?[.!?](?=\s|$)/.exec(r.text)?.[0] ?? '']));
     const r = readPick(reply({ verdict: 'answer', picks: six }), POOL, []);
     expect(r.ok && r.picks.map((p) => p.id)).toEqual(['a1', 'b2', 'c3', 'd4', 'e5']);
   });
@@ -84,20 +86,35 @@ describe('reading a stubbed reply (our rule, not the model’s obedience)', () =
 
 describe('what code checks that structured output cannot', () => {
   it('drops a pick whose id is not in the pool, is already named, or repeats, and never fills its place', () => {
-    const r = readPick(reply({ verdict: 'answer', picks: [pick('zz', ['anything']), pick('b2', ['Loud, fast hardcore punk']), pick('a1', ['Solo piano']), pick('a1', ['Solo piano'])] }), POOL, ['b2']);
+    const whole = 'Solo piano, slow and sparse, recorded close in a quiet room.';
+    const r = readPick(reply({ verdict: 'answer', picks: [pick('zz', ['anything']), pick('b2', ['Loud, fast hardcore punk, thin and trebly, every song under two minutes.']), pick('a1', [whole]), pick('a1', [whole])] }), POOL, ['b2']);
     expect(r.ok && r.picks.map((p) => p.id)).toEqual(['a1']);
     expect(r.ok && r.dropped.map((d) => d.why)).toEqual(['not in the pool', 'already named in this run', 'named twice']);
   });
 
-  it('drops a pick citing a claim its record’s text does not hold, matching case and spacing loosely', () => {
-    const r = readPick(reply({ verdict: 'answer', picks: [pick('a1', ['solo  PIANO, slow']), pick('c3', ['gentle and soothing'])] }), POOL, []);
+  /*
+    A claim is a whole stored sentence, never a fragment (the coordinator, 14 Nov): "Not slow; aggressive throughout"
+    holds the fragment "slow", so a fragment can support the opposite of what the record says. A whole sentence carries
+    its own qualification. Matched loosely on case and spacing, as before.
+  */
+  it('drops a pick citing a fragment, or a sentence its record’s text does not hold, and keeps a whole sentence matched loosely', () => {
+    const r = readPick(reply({ verdict: 'answer', picks: [pick('a1', ['solo  PIANO, slow and sparse, recorded close in a QUIET room.']), pick('c3', ['short and unhurried']), pick('e5', ['Gentle and soothing.'])] }), POOL, []);
     expect(r.ok && r.picks.map((p) => p.id)).toEqual(['a1']);
-    expect(r.ok && r.dropped).toEqual([{ id: 'c3', why: 'cites "gentle and soothing", which its text does not hold' }]);
+    expect(r.ok && r.dropped).toEqual([
+      { id: 'c3', why: 'cites "short and unhurried", which is not a whole sentence of its text' },
+      { id: 'e5', why: 'cites "Gentle and soothing.", which is not a whole sentence of its text' },
+    ]);
   });
 
-  /* Existence is the weak check (the coordinator, 13 Nov): a cherry-picked clause passes, so the reader is shown the record's stored text beside the reason. Pinned so nobody reads this check as more than it is. */
-  it('passes a claim that exists though the reason leans past it: existence is all code can check', () => {
-    const r = readPick(reply({ verdict: 'answer', picks: [pick('d4', ['Mostly quiet acoustic guitar'], 'Gentle all the way through.')] }), POOL, []);
+  it('drops a pick that cites nothing: every recommendation rests on at least one stored sentence', () => {
+    const r = readPick(reply({ verdict: 'answer', picks: [pick('a1', []), pick('c3', ['  ']), pick('e5', ['Big-band swing at dance tempos, strings and reeds layered thick.'])] }), POOL, []);
+    expect(r.ok && r.picks.map((p) => p.id)).toEqual(['e5']);
+    expect(r.ok && r.dropped.map((d) => d.why)).toEqual(['cites no stored sentence', 'cites no stored sentence']);
+  });
+
+  /* Still the weak check, made stricter by whole sentences: a sentence that exists passes though the reason leans past it, so the reader is shown the record's text beside the reason. Pinned so nobody reads this check as more than it is. */
+  it('passes a whole sentence that exists though the reason leans past it: existence is all code can check', () => {
+    const r = readPick(reply({ verdict: 'answer', picks: [pick('d4', ['Mostly quiet acoustic guitar and voice, with two abrasive electric tracks on side one.'], 'Gentle all the way through.')] }), POOL, []);
     expect(r.ok && r.picks.map((p) => p.id)).toEqual(['d4']);
   });
 
@@ -125,7 +142,7 @@ describe('the call', () => {
   it('posts to the Responses endpoint with the configured model and reads the reply', async () => {
     vi.stubEnv('OPENAI_API_KEY', 'sk-test');
     vi.stubEnv('ASK_PICK_MODEL', 'gpt-configured');
-    const fetchImpl = vi.fn(async () => new Response(JSON.stringify(reply({ verdict: 'answer', picks: [pick('a1', ['Solo piano'])] })), { status: 200 }));
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify(reply({ verdict: 'answer', picks: [pick('a1', ['Solo piano, slow and sparse, recorded close in a quiet room.'])] })), { status: 200 }));
     const r = await askPick('calm', POOL, [], { fetchImpl });
     const [url, init] = fetchImpl.mock.calls[0] as unknown as [string, RequestInit];
     expect(url).toMatch(/\/v1\/responses$/);

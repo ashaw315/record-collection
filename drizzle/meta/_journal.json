@@ -253,6 +253,13 @@
       "when": 1794692001062,
       "tag": "0035_red_punisher",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1794707909847,
+      "tag": "0036_lovely_kang",
+      "breakpoints": true
     }
   ]
 }

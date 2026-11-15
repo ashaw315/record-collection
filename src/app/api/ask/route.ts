@@ -4,7 +4,7 @@ import { invalidJson, notConfigured, validationError } from '@/lib/api/errors';
 import { withErrorHandling } from '@/lib/api/handler';
 import { rankByNearness } from '@/lib/ask/rank';
 import { askPick } from '@/lib/ask/pick';
-import { anyMatchedText, embeddingsFor, matchedTextsFor, recordByTitleKey } from '@/lib/db/queries/ask';
+import { embeddingsFor, matchedTextsFor, pickEngaged, recordByTitleKey } from '@/lib/db/queries/ask';
 import { logger } from '@/lib/logger';
 import { EMBEDDING_MODEL, embedTexts } from '@/lib/openai/embeddings';
 
@@ -43,12 +43,12 @@ export const POST = withErrorHandling('api.ask.POST', async (request: Request) =
   const { phrase, pool, exclude, take } = parsed.data;
 
   /*
-    Step 3, unit 2a (the coordinator, 14 Nov): one collection-wide condition. While no record anywhere has matched
-    text the route ranks, as it always has; once any does it asks the model pick over the records in the pool that
-    have it. Never per record, so the pool is one kind of text in either state, and it flips when Adam stores his
-    first batch, with no deploy. `take` is the ranking's: the pick returns up to five and the page walks them.
+    Step 3, unit 2a (the coordinator, 14 Nov): one collection-wide condition, a one-way latch. The route ranks until
+    every record with an ABOUT has matched text; then it asks the model pick over the pool's records that have it, and
+    never ranks again. Never per record, so the pool is one kind of text in either state. `take` is the ranking's: the
+    pick returns up to five and the page walks them.
   */
-  if (await anyMatchedText()) {
+  if (await pickEngaged()) {
     const eligible = await matchedTextsFor(pool);
     if (eligible.length === 0) return NextResponse.json({ mode: 'pick', verdict: null, answers: [], from: 'phrase', askedFrom: null, unanswerable: true });
     if (!process.env.OPENAI_API_KEY) {
@@ -61,6 +61,14 @@ export const POST = withErrorHandling('api.ask.POST', async (request: Request) =
       return NextResponse.json({ error: { code: 'PICK_FAILED', message: 'The ask could not choose this time' } }, { status: 502 });
     }
     if (picked.dropped.length > 0) logger.info('api.ask', `the pick dropped ${picked.dropped.map((d) => `${d.id} (${d.why})`).join('; ')}`);
+    /*
+      A run's end is the app's to say, from the run's shown records, never the model's (the coordinator, 14 Nov): the
+      model saying nothing fits is "nothing fits" while the run has shown nothing, and "no more for this run" once it
+      has shown some, with no record.
+    */
+    if (picked.verdict === 'nothing-fits' && (exclude?.length ?? 0) > 0) {
+      return NextResponse.json({ mode: 'pick', verdict: 'run-exhausted', answers: [], from: 'phrase', askedFrom: null, unanswerable: false });
+    }
     return NextResponse.json({
       mode: 'pick',
       verdict: picked.verdict,

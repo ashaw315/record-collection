@@ -477,7 +477,10 @@ be regenerated, edited and one day retired without touching `records`.
 | edited_at | TIMESTAMPTZ | nullable. Set with `edited` |
 
 CHECK that `generated` and `edited` are each NULL or hold something other
-than whitespace: a blank is NULL, so "unknown" has one form. The cascade is
+than whitespace: a blank is NULL, so "unknown" has one form. The CHECK stops
+an empty string and nothing more: plausible filler passes it. Whether the
+text is honest comes from the drafting prompt and Adam's review, not the
+database. The cascade is
 §4.5's exception, for the same reason: the text is an attribute of its
 record.
 
@@ -486,7 +489,9 @@ coordinator, 14 Nov). The pick reads `edited` where it is set and
 `generated` otherwise, never both. Handed both, a model blends or hedges
 between a correction and what it corrected, and a reason could cite a
 claim from the generated text that Adam has removed. The edit box opens
-with the generated text in it, so what Adam saves is a whole description.
+with the effective text in it, `edited` where it is set and `generated`
+otherwise, so what Adam saves is a whole description and a second edit
+starts from his first, never from the text he corrected.
 A regeneration writes `generated`, `generated_model` and `generated_at` and
 nothing else, so an edit outlives it; the two timestamps say when an edit is
 older than the text it corrected, and nothing acts on that yet.
@@ -521,6 +526,23 @@ does, and the ranking path is held unbuilt-over rather than deleted (§P.2's
 model-pick step). §P.2's far and tie sentences rule it if a distance filter
 returns. A table nothing reads today is not a table to drop: dropping it is
 a decision, taken with the ranking path, not a tidy-up.
+
+### 4.8 One-way latches (A81, 2026-11-14)
+
+**`app_latches`**: a switch thrown once and never thrown back. A row's
+presence is the state; nothing here is ever deleted or updated.
+
+| Column | Type | Notes |
+|---|---|---|
+| name | TEXT PRIMARY KEY | the latch |
+| set_at | TIMESTAMPTZ NOT NULL DEFAULT now() | when it was thrown |
+
+The first is `ask_pick`, written by the first ask that finds every record
+with an ABOUT holding matched text (§4.6, §5.11). From then on the ask is
+the model pick and never the ranking again, so a record added later without
+matched text is counted as ineligible (§P.6) rather than flipping the
+collection back. No `created_at` or `updated_at`: `set_at` is the one time,
+and a latch is never updated.
 
 ---
 
@@ -893,13 +915,19 @@ the database credential never leaves Vercel.
 Written into this section on 14 Nov, after the route had shipped with Q22 (11 Nov) without it; it is here so this
 document names the endpoint the control calls.
 
-**Two modes, one collection-wide condition** (the coordinator, 14 Nov). While no record anywhere has matched text
-(§4.6), `mode` is `ranking`: the pool ranked by nearness of each ABOUT's stored vector (§4.7) to the phrase's, `take`
-of them, a title asking from its record. Once any record has matched text, `mode` is `pick`: the model is given the
-phrase and the pool's records that have matched text, the run's named records as excluded, and `answers` is what it
-returns, each `{ recordId, reason, claims }`, with `verdict` one of `answer`, `nothing-fits`, `requirement-unmet` or
-`run-exhausted` (§P.2). The condition is never per record, so the pool is one kind of text in either mode, and it flips
-when matched text is first stored, with no deploy.
+`/api/want-list/:id/pressing-assessment` is specified in §12b, which kept the route when its feature retired; it is
+named here so this section points to it, and §12b is where it is ruled.
+
+**Two modes, one collection-wide latch** (the coordinator, 14 Nov). Until every record with an ABOUT has matched
+text (§4.6), `mode` is `ranking`: the pool ranked by nearness of each ABOUT's stored vector (§4.7) to the phrase's,
+`take` of them, a title asking from its record. The first ask to find coverage complete throws §4.8's `ask_pick` latch,
+and from then on `mode` is `pick` and never `ranking` again: the model is given the phrase and the pool's records that
+have matched text, the run's shown records as already named, and `answers` is what it returns, each `{ recordId,
+reason, claims }`, every claim a whole sentence of that record's text. `verdict` is `answer`, `nothing-fits` or
+`requirement-unmet` from the model, or `run-exhausted`, which only the app says: the model finding nothing suitable is
+`nothing-fits` while the run has shown nothing and `run-exhausted`, with no record, once it has shown some (§P.2). The
+latch is never per record, so the pool is one kind of text in either mode; one described record among many is still
+the ranking, not a pick over one.
 
 **Never an empty answer in place of a failure.** A pool with nothing to rank or pick from is `unanswerable: true`. An
 absent `OPENAI_API_KEY` is `503` `NOT_CONFIGURED` before any request, the variable named in the server log and never in

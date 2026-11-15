@@ -370,6 +370,8 @@ describe('§4 conformance — NOT NULL where the spec requires it', () => {
       'record_moods',
       /* §4.6 (A78) specifies exactly six columns; `generated_at` and `edited_at` are the times, one for each text. */
       'record_matched_text',
+      /* §4.8 (A81): a latch is written once and never updated; `set_at` is its one time. */
+      'app_latches',
       'record_genres',
       'want_list_genres',
       'artist_genres',

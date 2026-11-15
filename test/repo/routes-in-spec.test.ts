@@ -13,9 +13,7 @@ const API = 'src/app/api';
 
 /*
   The routes the check found on its first run, 14 Nov, with no §5 entry. Listed so it holds from today; the list may
-  only shrink, so writing an entry fails until its path is taken off. `/api/e2e-openai/v1/embeddings` is the e2e
-  server's stub of OpenAI (Q22's control, 12 Nov), and `/api/want-list/:id/pressing-assessment` is §12b's kept, retired
-  route, named there and not in §5.
+  only shrink, so writing an entry fails until its path is taken off.
 */
 const KNOWN_UNSPECIFIED = [
   '/api/artists/:id/lineup',
@@ -23,11 +21,16 @@ const KNOWN_UNSPECIFIED = [
   '/api/artists/match-candidates/:id',
   '/api/discogs/market/:id',
   '/api/discogs/master/:id/spread',
-  '/api/e2e-openai/v1/embeddings',
   '/api/genres/parent-suggestions',
   '/api/genres/parent-suggestions/rejections',
-  '/api/want-list/:id/pressing-assessment',
 ];
+
+/*
+  Test surface is not product surface (the coordinator, 14 Nov): a route under /api/e2e- is the e2e server's own stub
+  (OpenAI's, Q22's control), never specified in §5. Keyed on the path prefix, visible in the tree, and not on the route
+  reading E2E_PROBES, so adding that check to a route is no way to leave §5.
+*/
+const TEST_SURFACE = /^\/api\/e2e-/;
 
 /** Each route file's path as §5 writes one: `/api/records/:id/journal`. */
 export function routePaths(files: string[], root = API): string[] {
@@ -52,7 +55,7 @@ export function crudResources(section: string): string[] {
 
 export function unnamed(paths: string[], section: string): string[] {
   const crud = new Set(crudResources(section));
-  return paths.filter((p) => !section.includes(`\`${p}\``) && !(p.endsWith('/:id') && crud.has(p.slice(0, -'/:id'.length))));
+  return paths.filter((p) => !TEST_SURFACE.test(p) && !section.includes(`\`${p}\``) && !(p.endsWith('/:id') && crud.has(p.slice(0, -'/:id'.length))));
 }
 
 function routeFiles(dir: string): string[] {
@@ -67,7 +70,7 @@ describe('the routes against SPEC §5', () => {
     expect(routePaths(['src/app/api/records/[id]/journal/route.ts', 'src/app/api/ask/route.ts'])).toEqual(['/api/ask', '/api/records/:id/journal']);
     const five = '## 5. API contract\n### 5.4 Reference resources\n- `/api/genres`\n- `/api/tags`\n\nmore\n### 5.5 Next\n| GET | `/api/ask` |\n## 6. After';
     expect(crudResources(sectionFive(five))).toEqual(['/api/genres', '/api/tags']);
-    expect(unnamed(['/api/ask', '/api/genres/:id', '/api/tags/:id/extra', '/api/ghost'], sectionFive(five))).toEqual(['/api/tags/:id/extra', '/api/ghost']);
+    expect(unnamed(['/api/ask', '/api/genres/:id', '/api/tags/:id/extra', '/api/ghost', '/api/e2e-stub/v1/x'], sectionFive(five))).toEqual(['/api/tags/:id/extra', '/api/ghost']);
   });
 
   it('finds every route in src/app/api named in SPEC.md §5', () => {

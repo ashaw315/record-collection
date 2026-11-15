@@ -162,16 +162,23 @@ describe('POST /api/ask', () => {
 });
 
 /*
-  Step 3, unit 2a (the coordinator, 14 Nov): the route ranks while no record anywhere has matched text, and asks the
-  model pick as soon as any record does. One collection-wide condition, never per record, so the pool is one kind of
-  text in either state; it flips when Adam stores his first batch, with no deploy. In the pick, a record with no
-  matched text is not eligible (§P.6's pattern repointed). The model's reply is stubbed at fetch: these test the route's
+  Step 3, unit 2a, as corrected (the coordinator, 14 Nov). The pick engages when every record that has an ABOUT also
+  has matched text, coverage complete, and from then on it never returns to ranking: a one-way latch, so record 56
+  arriving without matched text joins §P.6's ineligible count rather than flipping the collection back. One record
+  described among 53 is not a pick over one record; it is still the ranking. Whether a run has run out is the app's to
+  say from the run's named records, never the model's. The model's reply is stubbed at fetch: these test the route's
   rule, not the model.
 */
-describe('POST /api/ask, the pick once any record has matched text', () => {
+describe('POST /api/ask, the pick once coverage is complete, latched', () => {
   const matched = (recordId: string, generated: string | null, edited: string | null = null) =>
     db.execute(sql`INSERT INTO record_matched_text (record_id, generated, generated_model, generated_at, edited, edited_at)
       VALUES (${recordId}, ${generated}, ${generated === null ? null : 'test-model'}, ${generated === null ? null : sql`now()`}, ${edited}, ${edited === null ? null : sql`now()`})`);
+  /* Every record with an ABOUT in seedFour (rain, drive, sunday; silent has none) given matched text. */
+  const coverAll = async (f: { rain: string; drive: string; sunday: string }) => {
+    await matched(f.rain, 'Rain on a tin roof. Slow and warm.');
+    await matched(f.drive, 'Neon and quiet. A late drive.');
+    await matched(f.sunday, 'Strings at a crawl.', 'Strings and coffee, slow.');
+  };
 
   /* A Responses reply, as the structured-outputs guide shapes it; the request body is kept to read what was sent. */
   function pickReplies(body: unknown) {
@@ -183,63 +190,71 @@ describe('POST /api/ask, the pick once any record has matched text', () => {
     return sent;
   }
 
-  it('ranks, as before, while no record has matched text', async () => {
+  it('ranks while any record with an ABOUT has no matched text: one described among several is still the ranking', async () => {
     const { rain, drive, sunday } = await seedFour();
+    await matched(rain, 'Rain on a tin roof. Slow and warm.');
     phraseEmbeds([1, 0]);
     const body = await (await ask(request({ phrase: 'rain', pool: [rain, drive, sunday], take: 3 }))).json();
     expect(body.mode).toBe('ranking');
     expect(body.answers.map((a: { recordId: string }) => a.recordId)).toEqual([rain, drive, sunday]);
   });
 
-  it('asks the model once any has, sending only the records with matched text, the edit in place of the generated text, and the run’s named records', async () => {
-    const { rain, drive, sunday, silent } = await seedFour();
-    await matched(rain, 'Solo piano, slow and sparse.');
-    await matched(sunday, 'Strings at a crawl.', 'Strings and coffee, slow.');
-    const sent = pickReplies({ verdict: 'answer', picks: [{ id: sunday, reason: 'Slow strings for a morning.', claims: ['Strings and coffee'] }] });
-    const response = await ask(request({ phrase: 'something slow', pool: [rain, drive, sunday, silent], take: 5, exclude: [rain] }));
+  it('engages the pick when every record with an ABOUT has matched text, and stays engaged when a new record arrives without', async () => {
+    const f = await seedFour();
+    await coverAll(f);
+    pickReplies({ verdict: 'answer', picks: [{ id: f.sunday, reason: 'Slow strings for a morning.', claims: ['Strings and coffee, slow.'] }] });
+    expect((await (await ask(request({ phrase: 'slow', pool: [f.rain, f.sunday], take: 5 }))).json()).mode).toBe('pick');
+    const late = await record('Fifth', 'A new record with an ABOUT and nothing written for the pick.');
+    vi.restoreAllMocks();
+    const sent = pickReplies({ verdict: 'answer', picks: [{ id: f.rain, reason: 'Rain and warmth.', claims: ['Slow and warm.'] }] });
+    const body = await (await ask(request({ phrase: 'slow', pool: [f.rain, late], take: 5 }))).json();
+    expect(body.mode, 'latched: one record without matched text does not flip it back').toBe('pick');
+    expect(sent[0].body.input.find((m) => m.role === 'user')?.content ?? '', 'and that record is not sent').not.toContain(late);
+  });
+
+  it('sends only the pool’s records with matched text, the edit in place of the generated text, and the run’s shown records as named', async () => {
+    const f = await seedFour();
+    await coverAll(f);
+    const sent = pickReplies({ verdict: 'answer', picks: [{ id: f.sunday, reason: 'Slow strings for a morning.', claims: ['Strings and coffee, slow.'] }] });
+    const response = await ask(request({ phrase: 'something slow', pool: [f.rain, f.sunday, f.silent], take: 5, exclude: [f.rain] }));
     expect(response.status).toBe(200);
-    const body = await response.json();
-    expect(body).toMatchObject({ mode: 'pick', verdict: 'answer', unanswerable: false });
-    expect(body.answers).toEqual([{ recordId: sunday, reason: 'Slow strings for a morning.', claims: ['Strings and coffee'] }]);
-    expect(sent).toHaveLength(1);
-    expect(sent[0].url).toMatch(/\/v1\/responses$/);
+    expect(await response.json()).toMatchObject({ mode: 'pick', verdict: 'answer', unanswerable: false, answers: [{ recordId: f.sunday, reason: 'Slow strings for a morning.', claims: ['Strings and coffee, slow.'] }] });
     const user = sent[0].body.input.find((m) => m.role === 'user')?.content ?? '';
     expect(user, 'the edit, not the generated text').toContain('Strings and coffee, slow.');
     expect(user).not.toContain('Strings at a crawl.');
-    expect(user, 'a record with matched text').toContain('Solo piano, slow and sparse.');
-    expect(user, 'a record with none is not sent').not.toContain(drive);
-    expect(user).not.toContain(silent);
-    expect(user).toMatch(new RegExp(`already named[^\\n]*${rain}`, 'i'));
+    expect(user, 'not in the pool, not sent').not.toContain(f.drive);
+    expect(user, 'no matched text, not sent').not.toContain(f.silent);
+    expect(user).toMatch(new RegExp(`already named[^\\n]*${f.rain}`, 'i'));
   });
 
-  it('answers a stubbed stand-in as one record flagged with its verdict, and a stubbed run’s end as none', async () => {
-    const { rain, sunday } = await seedFour();
-    await matched(rain, 'Solo piano, slow and sparse.');
-    pickReplies({ verdict: 'nothing-fits', picks: [{ id: rain, reason: 'Not loud at all, but it is what there is.', claims: ['Solo piano'] }] });
-    expect(await (await ask(request({ phrase: 'loud', pool: [rain, sunday], take: 5 }))).json()).toMatchObject({ mode: 'pick', verdict: 'nothing-fits', answers: [{ recordId: rain }] });
+  it('decides a run’s end itself: nothing suitable with nothing named is nothing fits, with something named it is no more for this run', async () => {
+    const f = await seedFour();
+    await coverAll(f);
+    pickReplies({ verdict: 'nothing-fits', picks: [{ id: f.rain, reason: 'Not loud at all, but it is what there is.', claims: ['Slow and warm.'] }] });
+    expect(await (await ask(request({ phrase: 'loud', pool: [f.rain, f.sunday], take: 5 }))).json()).toMatchObject({ mode: 'pick', verdict: 'nothing-fits', answers: [{ recordId: f.rain }] });
     vi.restoreAllMocks();
-    pickReplies({ verdict: 'run-exhausted', picks: [] });
-    expect(await (await ask(request({ phrase: 'loud', pool: [rain, sunday], take: 5, exclude: [rain] }))).json()).toMatchObject({ mode: 'pick', verdict: 'run-exhausted', answers: [] });
+    pickReplies({ verdict: 'nothing-fits', picks: [{ id: f.sunday, reason: 'Not loud.', claims: ['Strings and coffee, slow.'] }] });
+    expect(await (await ask(request({ phrase: 'loud', pool: [f.rain, f.sunday], take: 5, exclude: [f.rain] }))).json()).toMatchObject({ mode: 'pick', verdict: 'run-exhausted', answers: [] });
   });
 
-  it('is unanswerable with no request where nothing in the pool has matched text, though some record elsewhere does', async () => {
-    const { rain, drive, sunday } = await seedFour();
-    await matched(rain, 'Solo piano, slow and sparse.');
+  it('is unanswerable with no request where nothing in the pool has matched text', async () => {
+    const f = await seedFour();
+    await coverAll(f);
     const sent = pickReplies({ verdict: 'answer', picks: [] });
-    expect(await (await ask(request({ phrase: 'x', pool: [drive, sunday], take: 5 }))).json()).toMatchObject({ mode: 'pick', answers: [], unanswerable: true });
+    expect(await (await ask(request({ phrase: 'x', pool: [f.silent], take: 5 }))).json()).toMatchObject({ mode: 'pick', answers: [], unanswerable: true });
     expect(sent).toEqual([]);
   });
 
   it('refuses with the 503 when the key is absent, and a failed pick with a 502 in the reader’s terms, the reason in the log', async () => {
-    const { rain } = await seedFour();
-    await matched(rain, 'Solo piano, slow and sparse.');
+    const f = await seedFour();
+    await coverAll(f);
     vi.stubEnv('OPENAI_API_KEY', '');
     vi.spyOn(console, 'error').mockImplementation(() => undefined);
-    expect((await ask(request({ phrase: 'x', pool: [rain], take: 5 }))).status).toBe(503);
+    expect((await ask(request({ phrase: 'x', pool: [f.rain], take: 5 }))).status).toBe(503);
     vi.stubEnv('OPENAI_API_KEY', 'sk-test');
     const logged = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({ status: 'completed', output: [{ type: 'message', content: [{ type: 'refusal', refusal: 'no' }] }] }), { status: 200 }));
-    const failed = await ask(request({ phrase: 'x', pool: [rain], take: 5 }));
+    const failed = await ask(request({ phrase: 'x', pool: [f.rain], take: 5 }));
     expect(failed.status).toBe(502);
     const json = await failed.json();
     expect(json.error.code).toBe('PICK_FAILED');
