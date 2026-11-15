@@ -87,28 +87,12 @@ test('in the grid (five answers), B asked after A is answered as B asked fresh',
   }
 });
 
-test('on the shelf (one answer, pulled), B asked after A pulls what B asked fresh pulls', async ({ page }) => {
-  const artistId = await fixture(page);
-  const pulled = () => page.locator('[data-pulled]').getAttribute('data-pulled', { timeout: 30_000 });
-  try {
-    await page.setViewportSize({ width: 1440, height: 900 });
-    const open = async () => { await page.goto(`/?artistId=${artistId}`); await wallMeasured(page); };
-    await open();
-    await askFor(page, B);
-    const fresh = await pulled();
-    await open();
-    await askFor(page, A);
-    const afterA = await pulled();
-    /* The precondition: A and B share their nearest, so a carried-over last answer has something to leave out. Without it this case proves nothing. */
-    expect(afterA, 'A pulls what B asked fresh pulls').toBe(fresh);
-    /* The shelf's last answer is set when the wall reports the pull (`hearPulls`), so B waits for the pull to finish: the pulled record's panel. */
-    await page.getByRole('button', { name: /^put back$/i }).waitFor({ timeout: 30_000 });
-    await askFor(page, B);
-    await expect.poll(pulled, { message: `B fresh ${fresh}; A ${afterA}`, timeout: 30_000 }).toBe(fresh);
-  } finally {
-    await removeRecordsFor(artistId);
-  }
-});
+/*
+  The shelf's "B after A" case was deleted on 15 Nov (the coordinator): it passed against the control before 2b, which
+  carried the last answer across a phrase change, and passed again with 2b's clearing staged out, so it could not fail.
+  The clearing is one rule for every host (the control's ask), and the grid's case above pins it, failing when it is
+  removed. Why the shelf never showed the carry-over was not explained; it is recorded in NOTES, not guarded here.
+*/
 
 const pulled = (page: Page) => page.locator('[data-pulled]').getAttribute('data-pulled', { timeout: 30_000 });
 /* A press while the wall moves does nothing (§P.3), so each press waits for the last pull to land, as pick-ask-178's re-ask does. */

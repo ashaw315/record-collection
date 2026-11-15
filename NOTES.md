@@ -57222,5 +57222,6 @@ then. **An edit discarding the queue is not built:** no editor exists in the app
 and nothing tells the page a description changed mid-walk; it comes with the edit surface Design has not ruled.
 
 **For the run-history step's Done line:** the shelf's "B after A" case passed against the control before 2b and after
-it; why the shelf did not carry the last answer across a phrase change before 2b was never explained, and the passing
-test does not explain it.
+it, and again with 2b's phrase-change clearing staged out, so it could not fail: deleted (the coordinator, 15 Nov), the
+grid's case pinning the one rule. Why the shelf did not carry the last answer across a phrase change before 2b was
+never explained, and nothing in the suite now claims it is.
