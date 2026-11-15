@@ -147,7 +147,8 @@ test('a pool with no ABOUT is unanswerable: no cover, and the slot says so; the 
   try {
     await openGrid(page, artistId);
     const line = control(page).locator('[data-without-about]');
-    await expect(line).toHaveText(/^\d+ have no About\.$/);
+    /* "N not described.", Proposed ("Matched by role and count line", 14 Nov). */
+    await expect(line).toHaveText(/^\d+ not described\.$/);
     expect(Number((await line.textContent())?.split(' ')[0]), 'at least the seeded record without one').toBeGreaterThanOrEqual(1);
     await askFor(page, 'late night jazz');
     await expect(slot(page)).toHaveText('No About yet.', { timeout: 15_000 });
@@ -312,16 +313,24 @@ test('184: the count line takes one line at every N up to the record count, at t
         const words = (span.textContent ?? '').replace(/^\d+/, '');
         const lineHeight = parseFloat(getComputedStyle(span).lineHeight);
         const failing: string[] = [];
+        let widest = { n: 0, width: 0 };
         for (let n = 1; n <= top; n += 1) {
           span.textContent = `${n}${words}`;
+          /* "Report the widest N" ("Matched by role and count line", 14 Nov): its width held to one line. */
+          p.style.whiteSpace = 'nowrap';
+          const width = span.getBoundingClientRect().width;
+          p.style.whiteSpace = '';
+          if (width > widest.width) widest = { n, width };
           const range = document.createRange();
           range.selectNodeContents(span);
           const lines = new Set(Array.from(range.getClientRects()).map((r) => Math.round(r.top))).size;
           if (lines !== 1 || p.getBoundingClientRect().height / lineHeight >= 2) failing.push(`${n}: ${lines} lines`);
         }
-        return failing.join('; ');
+        return { failing: failing.join('; '), widest, room: p.getBoundingClientRect().width };
       }, upTo);
-      expect(twoLines, `the count line ${where}, N from 1 to ${upTo}: every N on one line`).toBe('');
+      if (typeof twoLines === 'string') throw new Error(`the count line ${where}: ${twoLines}`);
+      test.info().annotations.push({ type: `the count line ${where}`, description: `widest N ${twoLines.widest.n}, ${twoLines.widest.width.toFixed(1)} of ${twoLines.room.toFixed(1)}` });
+      expect(twoLines.failing, `the count line ${where}, N from 1 to ${upTo}: every N on one line`).toBe('');
     };
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto(`/?artistId=${artistId}`);

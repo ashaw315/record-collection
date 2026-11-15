@@ -23,7 +23,7 @@ import { DEFAULT_PAGE_SIZE, type Offset } from '@/lib/api/query-params';
 import { CONTENT_INSET } from './screen-frame';
 import { EmptyFigure } from './EmptyFigure';
 import { PickControl, type PickRecord } from './PickControl';
-import { countWithoutAbout } from '@/lib/db/queries/ask';
+import { countNotDescribed } from '@/lib/db/queries/ask';
 
 /**
  * SPEC.md §10 `/`: the collection.
@@ -159,7 +159,8 @@ export default async function CollectionPage({ searchParams }: PageProps<'/'>) {
     not over what a filter leaves, so a filter never changes the control". Read when the page loads, never in answer
     to a press.
   */
-  const withoutAbout = await countWithoutAbout();
+  /* §P.6 by mode ("Matched by role and count line", 14 Nov): no ABOUT while the ask ranks, no matched text once the pick is live. */
+  const withoutAbout = await countNotDescribed();
   /* §P.2: "a navigation clears them". The address is the page, so a control keyed on it starts empty on every one. */
   const pickKey = toQueryString(params);
   /*

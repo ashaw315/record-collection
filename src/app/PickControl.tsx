@@ -282,8 +282,8 @@ export function PickControl({ ruled = false, pool, answers = 'cell', withoutAbou
       */}
       {withoutAbout > 0 ? (
         <p data-without-about="" className="relative mt-[18px]">
-          {/* "N have no About.", Proposed (Design, 12 Nov; step 182): the first wording took two lines at the rail's width. */}
-          <span className="text-prose">{withoutAbout} have no About.</span>
+          {/* "N not described.", Proposed ("Matched by role and count line", 14 Nov): the line counts records with no text to be matched by, by mode. */}
+          <span className="text-prose">{withoutAbout} not described.</span>
         </p>
       ) : null}
       {/* §P.4 (12 Nov): "where the answer stands above the list, as at 390, it ends with the hairline that closes the control"; the sidebar's stylesheet draws it below the fork and not above, where the list stands beside the control. */}

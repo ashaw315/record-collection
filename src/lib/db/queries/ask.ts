@@ -36,18 +36,33 @@ const throwPickLatch = async (): Promise<void> => {
   await getDb().insert(appLatches).values({ name: PICK_LATCH }).onConflictDoNothing();
 };
 
-export async function pickEngaged(options: { write?: () => Promise<void> } = {}): Promise<boolean> {
-  const db = getDb();
-  const [held] = await db.select({ name: appLatches.name }).from(appLatches).where(eq(appLatches.name, PICK_LATCH));
-  if (held !== undefined) return true;
-  const [row] = await db
+/** Whether the latch is thrown: its row. */
+async function latched(): Promise<boolean> {
+  const [held] = await getDb().select({ name: appLatches.name }).from(appLatches).where(eq(appLatches.name, PICK_LATCH));
+  return held !== undefined;
+}
+
+/** Coverage complete: at least one record has matched text, and none with an ABOUT lacks it. Never vacuous. */
+async function coverageComplete(): Promise<boolean> {
+  const [row] = await getDb()
     .select({
       described: sql<number>`count(*) FILTER (WHERE ${recordMatchedText.edited} IS NOT NULL OR ${recordMatchedText.generated} IS NOT NULL)::int`,
       uncovered: sql<number>`count(*) FILTER (WHERE nullif(${records.snippet}, '') IS NOT NULL AND ${recordMatchedText.edited} IS NULL AND ${recordMatchedText.generated} IS NULL)::int`,
     })
     .from(records)
     .leftJoin(recordMatchedText, eq(recordMatchedText.recordId, records.id));
-  if ((row?.described ?? 0) === 0 || (row?.uncovered ?? 1) > 0) return false;
+  return (row?.described ?? 0) > 0 && (row?.uncovered ?? 1) === 0;
+}
+
+/** Whether the pick is live, read and never written: for a page render, which is no place to throw the latch. */
+export async function pickLive(): Promise<boolean> {
+  return (await latched()) || coverageComplete();
+}
+
+/** The route's read: live as above, and the latch thrown where coverage is complete and it was not yet. */
+export async function pickEngaged(options: { write?: () => Promise<void> } = {}): Promise<boolean> {
+  if (await latched()) return true;
+  if (!(await coverageComplete())) return false;
   /* A write that fails does not fail the ask (the coordinator, 14 Nov): coverage is complete, so this ask picks, and the next one sets the latch. */
   try {
     await (options.write ?? throwPickLatch)();
@@ -55,6 +70,20 @@ export async function pickEngaged(options: { write?: () => Promise<void> } = {})
     logger.error('ask.latch', `the pick's latch was not written: ${error instanceof Error ? error.message : String(error)}`);
   }
   return true;
+}
+
+/**
+ * §P.6's count line by mode ("Matched by role and count line", 14 Nov): records with no text to be matched by, which
+ * is no ABOUT while the ask ranks and no matched text once the pick is live. Over the whole collection, never the pool.
+ */
+export async function countNotDescribed(): Promise<number> {
+  if (!(await pickLive())) return countWithoutAbout();
+  const [row] = await getDb()
+    .select({ n: sql<number>`count(*)::int` })
+    .from(records)
+    .leftJoin(recordMatchedText, eq(recordMatchedText.recordId, records.id))
+    .where(sql`${recordMatchedText.edited} IS NULL AND ${recordMatchedText.generated} IS NULL`);
+  return row?.n ?? 0;
 }
 
 /**

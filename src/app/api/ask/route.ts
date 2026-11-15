@@ -49,13 +49,24 @@ export const POST = withErrorHandling('api.ask.POST', async (request: Request) =
     pick returns up to five and the page walks them.
   */
   if (await pickEngaged()) {
-    const eligible = await matchedTextsFor(pool);
-    if (eligible.length === 0) return NextResponse.json({ mode: 'pick', verdict: null, answers: [], from: 'phrase', askedFrom: null, unanswerable: true });
+    const described = await matchedTextsFor(pool);
+    /*
+      A title ask while the model picks ("Matched by role and count line", 14 Nov): the named record's matched text is
+      sent as the phrase and the record is left out, so no title reaches the model and the ground is one. A title whose
+      record has no matched text is an ordinary phrase, as a title of a record not in the collection is.
+    */
+    const titled = await recordByTitleKey(phrase, pool);
+    const own = titled === null ? undefined : described.find((r) => r.id === titled);
+    const eligible = own === undefined ? described : described.filter((r) => r.id !== own.id);
+    const asked = own === undefined ? phrase : own.text;
+    const from = own === undefined ? 'phrase' : 'title';
+    const askedFrom = own?.id ?? null;
+    if (eligible.length === 0) return NextResponse.json({ mode: 'pick', verdict: null, answers: [], from, askedFrom, unanswerable: true });
     if (!process.env.OPENAI_API_KEY) {
       logger.error('api.ask', 'OPENAI_API_KEY is not set in this environment: the ask cannot ask the model pick; set it in Vercel’s project environment');
       return notConfigured('The ask is not configured on this deployment');
     }
-    const picked = await askPick(phrase, eligible, exclude ?? []);
+    const picked = await askPick(asked, eligible, exclude ?? []);
     if (!picked.ok) {
       logger.error('api.ask', `the model pick failed: ${picked.reason}`);
       return NextResponse.json({ error: { code: 'PICK_FAILED', message: 'The ask could not choose this time' } }, { status: 502 });
@@ -67,14 +78,14 @@ export const POST = withErrorHandling('api.ask.POST', async (request: Request) =
       has shown some, with no record.
     */
     if (picked.verdict === 'nothing-fits' && (exclude?.length ?? 0) > 0) {
-      return NextResponse.json({ mode: 'pick', verdict: 'run-exhausted', answers: [], from: 'phrase', askedFrom: null, unanswerable: false });
+      return NextResponse.json({ mode: 'pick', verdict: 'run-exhausted', answers: [], from, askedFrom, unanswerable: false });
     }
     return NextResponse.json({
       mode: 'pick',
       verdict: picked.verdict,
       answers: picked.picks.map((p) => ({ recordId: p.id, reason: p.reason, claims: p.claims })),
-      from: 'phrase',
-      askedFrom: null,
+      from,
+      askedFrom,
       unanswerable: false,
     });
   }

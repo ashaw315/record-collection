@@ -113,12 +113,12 @@ describe('the pitch by host (§P.5)', () => {
   yet." is Proposed (the Provisionals line).
 */
 describe('the count line (§P.6)', () => {
-  /* Reworded by Design ("Ask field captures read", 12 Nov; step 182): "N have no About.", since the first wording took two lines at the rail's width. */
+  /* Reworded by Design ("Ask field captures read", 12 Nov; step 182), then again as the line came to count records with no text to be matched by ("Matched by role and count line", 14 Nov): "N not described.", Proposed. */
   /* "The count line stands beneath the slot" (13 Nov; `P.6/slots-count-line`): it was drawn between the field and ASK, the defect the ask-overflow specimen showed in the rail and the sidebar. Fails against that order. */
-  it('draws "N have no About." beneath the slot, in either host, while any record has none, and not otherwise', () => {
+  it('draws "N not described." beneath the slot, in either host, while any record has none, and not otherwise', () => {
     const withLine = renderToStaticMarkup(<PickControl pool={POOL} withoutAbout={4} />);
     const line = /<p[^>]*data-without-about=""[^>]*>(?:<span[^>]*>)?([^<]*)/.exec(withLine);
-    expect(line?.[1]).toBe('4 have no About.');
+    expect(line?.[1]).toBe('4 not described.');
     expect(withLine.indexOf('data-without-about'), 'beneath the slot').toBeGreaterThan(withLine.indexOf('data-pick-slot'));
     const railLine = renderToStaticMarkup(<PickControl pool={POOL} answers="wall" withoutAbout={4} />);
     expect(railLine.indexOf('data-without-about'), 'beneath the slot in the rail').toBeGreaterThan(railLine.indexOf('data-pick-slot'));

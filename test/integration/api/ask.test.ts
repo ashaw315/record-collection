@@ -2,7 +2,7 @@ import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vites
 import { sql } from 'drizzle-orm';
 import { POST as ask } from '@/app/api/ask/route';
 import { storeEmbedding } from '@/lib/db/queries/embeddings';
-import { pickEngaged } from '@/lib/db/queries/ask';
+import { countNotDescribed, pickEngaged, pickLive } from '@/lib/db/queries/ask';
 import { aboutHash } from '@/lib/embeddings/plan';
 import { EMBEDDING_MODEL } from '@/lib/openai/embeddings';
 import { closeTestDb, getTestDb, truncateAll } from '../../helpers/db';
@@ -231,6 +231,40 @@ describe('POST /api/ask, the pick once coverage is complete, latched', () => {
     expect((await db.execute(sql`SELECT count(*)::int AS n FROM app_latches`)).rows[0], 'nothing written').toEqual({ n: 0 });
     expect(await pickEngaged()).toBe(true);
     expect((await db.execute(sql`SELECT count(*)::int AS n FROM app_latches`)).rows[0], 'written by the next').toEqual({ n: 1 });
+  });
+
+  /*
+    §P.6 as "Matched by role and count line" rules it (14 Nov): the line counts records with no text to be matched by,
+    ABOUTs while the ask ranks and matched text once the pick is live. Read without writing, since a page render is no
+    place to throw the latch; the route throws it.
+  */
+  it('counts records with no ABOUT while the ask ranks, and with no matched text once the pick is live, reading the latch without writing it', async () => {
+    const f = await seedFour();
+    await matched(f.rain, 'Rain on a tin roof. Slow and warm.');
+    expect(await pickLive()).toBe(false);
+    expect(await countNotDescribed(), 'ranking: silent has no ABOUT').toBe(1);
+    await matched(f.drive, 'Neon and quiet. A late drive.');
+    await matched(f.sunday, 'Strings at a crawl.');
+    expect(await pickLive(), 'coverage complete').toBe(true);
+    expect((await db.execute(sql`SELECT count(*)::int AS n FROM app_latches`)).rows[0], 'read, not written').toEqual({ n: 0 });
+    expect(await countNotDescribed(), 'the pick: silent has no matched text').toBe(1);
+    await record('Fifth', 'A new record with an ABOUT and nothing written for the pick.');
+    await db.execute(sql`INSERT INTO app_latches (name) VALUES ('ask_pick')`);
+    expect(await pickLive(), 'latched').toBe(true);
+    expect(await countNotDescribed(), 'silent and the new record').toBe(2);
+  });
+
+  /* "Matched by role and count line" (14 Nov): a title ask while the model picks sends the record's matched text as the phrase, leaves the record out, and sends no title. */
+  it('asks from a title by sending its record’s matched text as the phrase, leaving the record out, and sending no title', async () => {
+    const f = await seedFour();
+    await coverAll(f);
+    const sent = pickReplies({ verdict: 'answer', picks: [{ id: f.rain, reason: 'Rain and warmth.', claims: ['Slow and warm.'] }] });
+    const body = await (await ask(request({ phrase: 'the drive', pool: [f.rain, f.drive, f.sunday], take: 5 }))).json();
+    expect(body).toMatchObject({ mode: 'pick', from: 'title', askedFrom: f.drive });
+    const user = sent[0].body.input.find((m) => m.role === 'user')?.content ?? '';
+    expect(user, 'the record’s matched text as the phrase').toMatch(/What they want to play: Neon and quiet\. A late drive\./);
+    expect(user, 'no title').not.toMatch(/the drive/i);
+    expect(user, 'the record left out of the records sent').not.toContain(`[${f.drive}]`);
   });
 
   it('sends only the pool’s records with matched text, the edit in place of the generated text, and the run’s shown records as named', async () => {
