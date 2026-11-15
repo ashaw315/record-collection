@@ -16,11 +16,25 @@ describe('askSlotMessage', () => {
     expect(message).toBe(SLOT_MESSAGES.notConfigured);
   });
 
-  it('says "No About yet." for an unanswerable pool, "Not answered." for any other failure, and nothing for an answer', () => {
-    expect(askSlotMessage({ ok: true, status: 200, unanswerable: true })).toBe('No About yet.');
-    expect(askSlotMessage({ ok: true, status: 200, unanswerable: false, answered: 0 })).toBe('No About yet.');
+  /* "Matched by role and count line" (14 Nov) withdrew the slot's no-ABOUT state (`P.6/slot-about`): with no text to be matched by among what the filters leave, the slot says none has been described yet. Proposed. */
+  it('says "None described." for a pool with no text to be matched by, "Not answered." for any other failure, and nothing for an answer', () => {
+    expect(askSlotMessage({ ok: true, status: 200, unanswerable: true })).toBe('None described.');
+    expect(askSlotMessage({ ok: true, status: 200, unanswerable: false, answered: 0 })).toBe('None described.');
     expect(askSlotMessage({ ok: false, status: 500, code: 'INTERNAL', routeMessage: 'boom' })).toBe('Not answered.');
     expect(askSlotMessage({ ok: false, status: 400, code: 'VALIDATION', routeMessage: 'Write what you want first' })).toBe('Not answered.');
     expect(askSlotMessage({ ok: true, status: 200, unanswerable: false, answered: 5 })).toBe('');
+  });
+
+  /*
+    The model pick's words (§P.2, "Consolation and count reason" and "Undescribed title named", 14 and 15 Nov), Proposed
+    under §P.2's "the model pick's words" provisional: nothing fits is a message, and an answer when a consolation is
+    drawn beside it; the run's end names none; a title whose record has no matched text is named, and asked as a phrase.
+  */
+  it('says that nothing fits, that the run has ended, and names a title not described yet', () => {
+    expect(askSlotMessage({ ok: true, status: 200, unanswerable: false, answered: 0, verdict: 'nothing-fits' })).toBe('Nothing fits.');
+    expect(askSlotMessage({ ok: true, status: 200, unanswerable: false, answered: 1, verdict: 'nothing-fits' }), 'with a consolation beside it').toBe('Nothing fits.');
+    expect(askSlotMessage({ ok: true, status: 200, unanswerable: false, answered: 0, verdict: 'run-exhausted' })).toBe('That was all.');
+    expect(askSlotMessage({ ok: true, status: 200, unanswerable: false, answered: 3, verdict: 'answer', undescribedTitle: 'Diamond Jubilee' })).toBe('Diamond Jubilee: not described yet.');
+    expect(askSlotMessage({ ok: true, status: 200, unanswerable: false, answered: 3, verdict: 'answer' })).toBe('');
   });
 });

@@ -57197,3 +57197,30 @@ claims. The CHECK stops empty strings, not plausible filler; honesty is the prom
 diagnostic calls pick.ts with the described records as an explicit pool, states the pool size ("among the 10 described
 records"), prints picks, takes Adam's marks, then reveals reasons, and runs the six phrases at low and at the next
 effort up, reporting quality and latency for each.
+
+**Unit 3 carries step 185 (the coordinator, 15 Nov).** 185 is folded into unit 3 rather than drawn twice; 170, the
+hold bound, is parked behind step 3, and Design told so. So unit 3 covers the far view in both hosts as §P.4 rules
+them: the band's cell beneath the control, and the column host's cells in the count column, 24 below its last line,
+up to five, two across. **Its captures add** the far view at 1440 × 900 and × 768, labelled by host and width, on the
+tallest five, beside the 390 timing (production build locally, all five presses' times) and the shelf, table and grid
+at 1440 × 900.
+
+## 15 Nov: step 3, unit 2b, the control's run
+
+**Built:** the run's shown set (a record joins when displayed, by ASK, SURPRISE ME or a pull, in last-shown order),
+cleared on a phrase change, a navigation and the run's end; each ask leaves the whole set out. On the shelf, the model
+pick's answer is walked one per press with no request, then asked again with the batch named. A reply to a phrase
+since changed is ignored on arrival. A press while a request is in flight does nothing (interim, pending Design). The
+slot: "None described." (the role), "Nothing fits.", "That was all.", and "<title>: not described yet." beside its
+answer, each Proposed and cut to the rail's 112 once the first wordings ("None described yet.", "Nothing here fits.",
+"That was all that fit.") took two lines. SURPRISE ME's fallback, once the run has shown every record, leaves out the
+record shown last while another remains (§P.2's "not twice in a row"), which pick-answer-156 and pick-pull-156 caught.
+
+**Not built in 2b, and why:** a consolation record beside "Nothing fits." and the requirement-unmet stand-in are not
+drawn until unit 3 draws them labelled, so none is styled as an answer; requirement-unmet reads "Nothing fits." until
+then. **An edit discarding the queue is not built:** no editor exists in the app, the queue is walked with no request,
+and nothing tells the page a description changed mid-walk; it comes with the edit surface Design has not ruled.
+
+**For the run-history step's Done line:** the shelf's "B after A" case passed against the control before 2b and after
+it; why the shelf did not carry the last answer across a phrase change before 2b was never explained, and the passing
+test does not explain it.

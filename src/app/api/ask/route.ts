@@ -61,7 +61,9 @@ export const POST = withErrorHandling('api.ask.POST', async (request: Request) =
     const asked = own === undefined ? phrase : own.text;
     const from = own === undefined ? 'phrase' : 'title';
     const askedFrom = own?.id ?? null;
-    if (eligible.length === 0) return NextResponse.json({ mode: 'pick', verdict: null, answers: [], from, askedFrom, unanswerable: true });
+    /* "Undescribed title named" (15 Nov): a title whose record is in the pool with no matched text is asked as the phrase typed, and named, so the slot can say it is not described yet. */
+    const undescribed = titled !== null && own === undefined ? titled : null;
+    if (eligible.length === 0) return NextResponse.json({ mode: 'pick', verdict: null, answers: [], from, askedFrom, undescribed, unanswerable: true });
     if (!process.env.OPENAI_API_KEY) {
       logger.error('api.ask', 'OPENAI_API_KEY is not set in this environment: the ask cannot ask the model pick; set it in Vercel’s project environment');
       return notConfigured('The ask is not configured on this deployment');
@@ -78,7 +80,7 @@ export const POST = withErrorHandling('api.ask.POST', async (request: Request) =
       has shown some, with no record.
     */
     if (picked.verdict === 'nothing-fits' && (exclude?.length ?? 0) > 0) {
-      return NextResponse.json({ mode: 'pick', verdict: 'run-exhausted', answers: [], from, askedFrom, unanswerable: false });
+      return NextResponse.json({ mode: 'pick', verdict: 'run-exhausted', answers: [], from, askedFrom, undescribed, unanswerable: false });
     }
     return NextResponse.json({
       mode: 'pick',
@@ -86,6 +88,7 @@ export const POST = withErrorHandling('api.ask.POST', async (request: Request) =
       answers: picked.picks.map((p) => ({ recordId: p.id, reason: p.reason, claims: p.claims })),
       from,
       askedFrom,
+      undescribed,
       unanswerable: false,
     });
   }

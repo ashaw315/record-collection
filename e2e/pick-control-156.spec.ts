@@ -268,7 +268,8 @@ test.describe('§P.5: on the far view, where the rail draws as a band, the contr
   slot keeps its reserved height and nothing runs past its width.
 */
 /* Step 178 (§P.6, 11 Nov): the unanswerable ask's message takes "None showing."'s place; its wording is Proposed. */
-const MESSAGES = ['The only one.', 'No About yet.', 'Not set up yet.'];
+/* The slot's messages, each Proposed: "None described." for the role (14 Nov), and the model pick's "Nothing fits." and "That was all." (§P.2), each cut to fit the rail's 112 once its first wording took two lines. A title not described yet names the record, so its length is the title's and it is not among these. */
+const MESSAGES = ['The only one.', 'None described.', 'Not set up yet.', 'Nothing fits.', 'That was all.'];
 const HOSTS = [
   { name: 'the rail, at 1440', width: 1440, query: '' },
   { name: 'the band, at 320', width: 320, query: '?view=grid' },

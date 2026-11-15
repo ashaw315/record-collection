@@ -151,7 +151,8 @@ test('a pool with no ABOUT is unanswerable: no cover, and the slot says so; the 
     await expect(line).toHaveText(/^\d+ not described\.$/);
     expect(Number((await line.textContent())?.split(' ')[0]), 'at least the seeded record without one').toBeGreaterThanOrEqual(1);
     await askFor(page, 'late night jazz');
-    await expect(slot(page)).toHaveText('No About yet.', { timeout: 15_000 });
+    /* "None described." (Proposed): the slot's no-ABOUT state withdrawn for the role (`P.6/slot-about`, 14 Nov). */
+    await expect(slot(page)).toHaveText('None described.', { timeout: 15_000 });
     expect(await drawn(page)).toEqual([]);
   } finally {
     await removeRecordsFor(artistId);

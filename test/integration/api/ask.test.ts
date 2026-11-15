@@ -267,6 +267,16 @@ describe('POST /api/ask, the pick once coverage is complete, latched', () => {
     expect(user, 'the record left out of the records sent').not.toContain(`[${f.drive}]`);
   });
 
+  /* "Undescribed title named" (15 Nov): a title whose record has no matched text asks as an ordinary phrase, and the answer names the record so the slot can say it is not described yet. */
+  it('asks a title whose record has no matched text as the phrase typed, and names that record as undescribed', async () => {
+    const f = await seedFour();
+    await coverAll(f);
+    const sent = pickReplies({ verdict: 'answer', picks: [{ id: f.rain, reason: 'Rain and warmth.', claims: ['Slow and warm.'] }] });
+    const body = await (await ask(request({ phrase: 'silent', pool: [f.rain, f.silent], take: 5 }))).json();
+    expect(body).toMatchObject({ mode: 'pick', from: 'phrase', askedFrom: null, undescribed: f.silent });
+    expect(sent[0].body.input.find((m) => m.role === 'user')?.content ?? '').toMatch(/What they want to play: silent/);
+  });
+
   it('sends only the pool’s records with matched text, the edit in place of the generated text, and the run’s shown records as named', async () => {
     const f = await seedFour();
     await coverAll(f);

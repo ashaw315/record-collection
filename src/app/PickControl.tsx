@@ -29,7 +29,15 @@ function fitToPhrase(el: HTMLTextAreaElement) {
 /* §P.6's slot messages live in `src/lib/ask/slot.ts`, written to fit the slot at the rail's width (one line). */
 const MESSAGES = SLOT_MESSAGES;
 
-type AskAnswer = { answers: Array<{ recordId: string; nearness: number }>; from: 'phrase' | 'title'; askedFrom: string | null; unanswerable: boolean };
+type AskAnswer = {
+  mode?: 'ranking' | 'pick';
+  verdict?: 'answer' | 'nothing-fits' | 'requirement-unmet' | 'run-exhausted' | null;
+  answers: Array<{ recordId: string }>;
+  from: 'phrase' | 'title';
+  askedFrom: string | null;
+  undescribed?: string | null;
+  unanswerable: boolean;
+};
 
 /**
  * **Q22's control, step 178 (§P.2, §P.4, §P.5, §P.6 as Design's "Ask field" and "the rest of the moods" rule them,
@@ -94,12 +102,21 @@ export function PickControl({ ruled = false, pool, answers = 'cell', withoutAbou
   /* The slot's message: cleared by the next answer, and with the view. */
   const [message, setMessage] = useState('');
   /*
-    §P.2's last answer: the records the reader was shown, left out of the next ask while enough remain (the route
-    applies the rule), and of SURPRISE ME's draw with the whole pool as the fallback. One form for both since "Ask
-    field reconciled" (12 Nov) withdrew the singular last-served record and its tier: nothing singular survives from
-    the moods build. On the shelf a record pulled by its spine or the arrows was shown, so it is the last answer too.
+    §P.2's run (Design's "a run leaves out its history"; the coordinator, 14 Nov): asks with one phrase, and every
+    record the run has DISPLAYED, by ASK, SURPRISE ME or a spine or arrow pull, left out of each ask while enough
+    others remain (the route applies the rule) and out of SURPRISE ME's draw. A record joins when it is shown, never
+    when it is returned, so a queued record the reader never saw is never left out. The set clears when the phrase
+    changes, on a navigation (the control is keyed on the address), and when the run starts again.
   */
-  const [lastAnswer, setLastAnswer] = useState<readonly string[]>([]);
+  const [shown, setShown] = useState<readonly string[]>([]);
+  /* In the order last shown: a record served again moves to the end, so the set's last is the record just served, which SURPRISE ME's fallback leaves out. */
+  const named = (ids: readonly string[]) => setShown((prev) => [...prev.filter((id) => !ids.includes(id)), ...ids]);
+  /* The phrase the run is asking with; a different phrase at ASK starts a new run. */
+  const runPhrase = useRef<string | null>(null);
+  /* The model pick's answer walked on the shelf: one record per press, with no request, until it is spent. */
+  const [queue, setQueue] = useState<readonly string[]>([]);
+  /* Each request's number: a reply whose number is not the latest belongs to a phrase or run since changed, and is ignored on arrival. */
+  const request = useRef(0);
   /* §P.4: the covers in rank order, where the host draws them. */
   const [drawn, setDrawn] = useState<readonly PickRecord[]>([]);
   /* §P.4: where the far view's cell stands, from the wall's answer: beneath the control, or in the count column, which the wall draws. */
@@ -108,7 +125,7 @@ export function PickControl({ ruled = false, pool, answers = 'cell', withoutAbou
   useEffect(
     () =>
       channel?.hearPulls((id) => {
-        setLastAnswer([id]);
+        named([id]);
       }),
     [channel],
   );
@@ -141,13 +158,29 @@ export function PickControl({ ruled = false, pool, answers = 'cell', withoutAbou
     }
     setHost(answer.host ?? 'here');
     setDrawn(records);
-    /* The last answer is what was shown: the cells here, and on a pull the record the wall tells of when it comes out (`hearPulls`). A draw the wall ignored or let stay changes nothing (pick-pull-156, 12 Nov). */
-    setLastAnswer(records.map((record) => record.id));
+    /* What was displayed joins the run: the cells here, and on a pull the record the wall tells of when it comes out (`hearPulls`). A draw the wall ignored or let stay changes nothing (pick-pull-156, 12 Nov). */
+    named(records.map((record) => record.id));
   };
 
-  /** ASK: the phrase or a title to the route, the pool as ids, the last answer left out. */
+  /** ASK: the phrase or a title to the route, the pool as ids, the run's shown records left out. */
   const ask = async () => {
+    /* Interim, pending Design (the coordinator, 14 Nov): a press while a request is in flight does nothing, as §P.3 treats an ask while a record moves. */
     if (askInert || asking) return;
+    const asked = phrase.trim();
+    let exclude = shown;
+    if (runPhrase.current !== asked) {
+      runPhrase.current = asked;
+      exclude = [];
+      setShown([]);
+      setQueue([]);
+    } else if (queue.length > 0) {
+      const [next, ...rest] = queue;
+      setQueue(rest);
+      setMessage('');
+      show([next]);
+      return;
+    }
+    const mine = (request.current += 1);
     setAsking(true);
     try {
       const response = await fetch('/api/ask', {
@@ -158,10 +191,12 @@ export function PickControl({ ruled = false, pool, answers = 'cell', withoutAbou
           pool: pool.map((record) => record.id),
           /* §P.2 (12 Nov): an answer is what is shown; the count is keyed to its form, one where it is a pull (a re-roll pulls the next nearest) and five where it is cells, never to the view's name: the wall says which, and the far view cannot pull. */
           take: answers === 'wall' && channel?.pulls() === true ? 1 : 5,
-          ...(lastAnswer.length > 0 ? { exclude: [...lastAnswer] } : {}),
+          ...(exclude.length > 0 ? { exclude: [...exclude] } : {}),
         }),
       });
       const body = (await response.json().catch(() => null)) as (AskAnswer & { error?: { message?: string; code?: string } }) | null;
+      /* A reply to a phrase or run since changed answers a question that no longer exists. */
+      if (mine !== request.current) return;
       if (!response.ok || body === null) {
         /* §P.6 (12 Nov): the slot says so in its own words, never the route's; ASK stays live. */
         setMessage(askSlotMessage({ ok: false, status: response.status, code: body?.error?.code, routeMessage: body?.error?.message }));
@@ -169,13 +204,31 @@ export function PickControl({ ruled = false, pool, answers = 'cell', withoutAbou
         return;
       }
       const ids = body.answers.map((a) => a.recordId);
-      const slot = askSlotMessage({ ok: true, status: response.status, unanswerable: body.unanswerable, answered: ids.length });
-      if (slot !== '') {
+      const undescribedTitle = body.undescribed ? byId(body.undescribed)?.title : undefined;
+      const slot = askSlotMessage({ ok: true, status: response.status, unanswerable: body.unanswerable, answered: ids.length, verdict: body.verdict ?? null, undescribedTitle });
+      /* The run's end: it names none, and the ask after it starts the run again (§P.2). */
+      if (body.verdict === 'run-exhausted') setShown([]);
+      /*
+        Nothing fits, and a requirement unmet, are the slot's message; a consolation record beside it is drawn only
+        labelled as the closest available, which is unit 3's, so until then none is drawn as though it were an answer.
+      */
+      if (body.verdict !== undefined && body.verdict !== null && body.verdict !== 'answer') {
+        setMessage(body.verdict === 'requirement-unmet' ? SLOT_MESSAGES.nothingFits : slot);
+        setDrawn([]);
+        return;
+      }
+      if (ids.length === 0) {
         setMessage(slot);
         setDrawn([]);
         return;
       }
-      setMessage('');
+      setMessage(slot);
+      /* The model pick's answer on the shelf: the first pulled, the rest walked one per press, a record joining the run when it is pulled. */
+      if (body.mode === 'pick' && answers === 'wall' && channel?.pulls() === true) {
+        setQueue(ids.slice(1));
+        show(ids.slice(0, 1));
+        return;
+      }
       show(ids);
     } finally {
       setAsking(false);
@@ -184,7 +237,7 @@ export function PickControl({ ruled = false, pool, answers = 'cell', withoutAbou
 
   /* §P.2: "SURPRISE ME draws from the whole pool, with an ABOUT or not, ignoring the ask field and leaving its text", the last answer's records left out while another remains. */
   const surprise = () => {
-    const id = drawSurprise(pool.map((record) => record.id), lastAnswer, Math.random);
+    const id = drawSurprise(pool.map((record) => record.id), shown, Math.random);
     /* §P.6: "An ask the pool cannot answer draws nothing." */
     if (id === null) return;
     setMessage('');
@@ -212,7 +265,15 @@ export function PickControl({ ruled = false, pool, answers = 'cell', withoutAbou
           autoComplete="off"
           value={phrase}
           /* A phrase is one line of thought, wrapped: a pasted line break reads as a space, and Enter asks below. */
-          onChange={(event) => setPhrase(event.target.value.replace(/\r?\n/g, ' '))}
+          onChange={(event) => {
+            const next = event.target.value.replace(/\r?\n/g, ' ');
+            setPhrase(next);
+            /* A different phrase ends the run: its queue goes, and a reply in flight for it is ignored on arrival. */
+            if (next.trim() !== runPhrase.current) {
+              request.current += 1;
+              setQueue([]);
+            }
+          }}
           onKeyDown={(event) => {
             if (event.key === 'Enter') {
               event.preventDefault();
