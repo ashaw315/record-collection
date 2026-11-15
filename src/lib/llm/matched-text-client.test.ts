@@ -85,3 +85,16 @@ describe('the reply, stubbed', () => {
     expect(await createMatchedTextClient(transport(JSON.stringify({ sentences: [{ text: 'x', basis: 'guessed' }], unknown: [] }))).write(subject, facts)).toMatchObject({ ok: false, reason: 'unreadable' });
   });
 });
+
+/* Drafting effort is measured, not assumed (the coordinator, 15 Nov): the first ten are drafted at medium and the next step up, side by side. */
+describe('the effort', () => {
+  it('drafts at medium by default and at the effort asked for', async () => {
+    const seen: string[] = [];
+    const t = { create: async (req: { output_config: { effort: string } }) => { seen.push(req.output_config.effort); return { content: [{ type: 'text', text: JSON.stringify({ sentences: [], unknown: [] }) }], stop_reason: 'end_turn', usage: {} }; } };
+    const client = createMatchedTextClient(t as never);
+    await client.write(subject, facts);
+    await client.write(subject, facts, { effort: 'high' });
+    expect(seen).toEqual(['medium', 'high']);
+  });
+});
+

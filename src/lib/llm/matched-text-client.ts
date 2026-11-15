@@ -59,16 +59,16 @@ export function buildMatchedTextPrompt(subject: MatchedTextSubject, facts: Relea
   ].join('\n');
 }
 
-export type MatchedTextClient = { write: (subject: MatchedTextSubject, facts: ReleaseFacts | null) => Promise<MatchedTextResult> };
+export type MatchedTextClient = { write: (subject: MatchedTextSubject, facts: ReleaseFacts | null, options?: { effort?: Effort }) => Promise<MatchedTextResult> };
 
 /** Injectable over the transport, as the snippet's client is, so a stubbed reply runs the real parse with no socket. */
 export function createMatchedTextClient(transport: { create: MessageCreate }): MatchedTextClient {
   return {
-    async write(subject, facts) {
+    async write(subject, facts, options = {}) {
       const { text, observed, ranOutOfRoom: cut } = await callAnthropic(transport, {
         model: MODEL,
         max_tokens: MATCHED_TEXT_MAX_TOKENS,
-        output_config: { effort: MATCHED_TEXT_EFFORT },
+        output_config: { effort: options.effort ?? MATCHED_TEXT_EFFORT },
         messages: [{ role: 'user', content: buildMatchedTextPrompt(subject, facts) }],
       });
       /* Part of a description is worse than none: it would be stored as finished text. */

@@ -57232,3 +57232,13 @@ file in ~/Downloads with every sentence marked [supported] or [inferred] and wha
 <file>` stores Adam's marked ids into `generated`, never `edited`. Drafting spends Anthropic calls and storing writes
 production, so both are Adam's to run. Effort medium (the snippet's is low): drafting is offline and once per record.
 Storing ten leaves the ask ranking (the latch needs every record with an ABOUT); unit 5's script reads the ten.
+
+**Drafting effort measured, not assumed (the coordinator, 15 Nov):** `npm run matched:draft -- --sample <the ten>
+--compare-effort` drafts each at medium and high, shown together under one heading in the review file; Adam marks
+`<id> high` to store the high draft, and a bare id stores medium.
+
+**Unit 3's captions must be the real collection's length (the coordinator, 15 Nov).** §P.4's figures came from the
+real collection's captions at 1440 (step 182), and the column host is captured "on the tallest five": caption height
+is what takes a cell from 204.0 to 262.5, and five tall cells are what overflow the count column at 768. Seeded
+records carry captions at least as long as the real collection's longest, and each capture states the lengths used.
+**Order:** unit 5 before unit 3, deliberately: unit 5 says whether the picks are any good, unit 3 how they are drawn.

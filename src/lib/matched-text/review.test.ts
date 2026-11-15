@@ -33,4 +33,16 @@ describe('renderReview', () => {
   it('says a draft that did not finish has none, rather than showing nothing', () => {
     expect(out).toMatch(/The Ink Spots \(3\) — Greatest[\s\S]*No draft: failed: cut/);
   });
+
+  /* The same record drafted at two efforts, shown together, each marked so Adam can name which to store. */
+  it('shows a record drafted at two efforts together, each under its effort, with how to store either', () => {
+    const two = renderReview([
+      { ...drafts[0], effort: 'medium' },
+      { ...drafts[0], effort: 'high', sentences: [{ text: 'Organ and bass, the drums swinging.', basis: 'inferred' }] },
+    ], 'Compared');
+    expect(two.match(/## The Doors — The Doors/g)?.length, 'one heading for the record').toBe(1);
+    expect(two).toMatch(/At medium:[\s\S]*Organ carries the hooks[\s\S]*At high:[\s\S]*Organ and bass, the drums swinging\./);
+    expect(two).toMatch(/e315c6a7 high/);
+  });
 });
+

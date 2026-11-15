@@ -6,7 +6,9 @@
  *
  *   npm run matched:draft -- --sample 1611cb00 de2ad140   # drafts for these records
  *   npm run matched:draft -- --all                        # drafts for every record with no matched text
- *   npm run matched:draft -- --store marked.txt           # second pass: store the ids listed, one per line
+ *   npm run matched:draft -- --sample … --compare-effort   # each drafted at medium and high, side by side
+ *   npm run matched:draft -- --store marked.txt           # second pass: store the ids listed, one per line; a line
+ *                                                          # "e315c6a7 high" stores that effort's draft, medium otherwise
  *
  * The review file goes to ~/Downloads, each sentence marked [supported] or [inferred]; the drafts are kept in
  * `.matched/drafts.json`, so storing spends no call. The store writes `generated` and never Adam's edit. The pick goes
@@ -26,6 +28,8 @@ import { renderReview, type ReviewDraft } from '@/lib/matched-text/review';
 const MODEL = 'claude-opus-5';
 const args = process.argv.slice(2);
 const mode = args.includes('--store') ? 'store' : args.includes('--all') ? 'all' : 'sample';
+/* The first ten drafted at medium and the next step up (the coordinator, 15 Nov): evidence for the effort, not a judgement. */
+const efforts = args.includes('--compare-effort') ? (['medium', 'high'] as const) : ([undefined] as const);
 const WORK = join(process.cwd(), '.matched');
 const OUT = join(homedir(), 'Downloads');
 mkdirSync(WORK, { recursive: true });
@@ -34,11 +38,13 @@ type Draft = ReviewDraft & { text: string | null };
 if (mode === 'store') {
   const file = args[args.indexOf('--store') + 1];
   if (file === undefined) throw new Error('write-matched-text: --store wants a file of ids, one per line');
-  const ids = readFileSync(file, 'utf8').split('\n').map((l) => l.trim()).filter((l) => /^[0-9a-f]{8}/.test(l)).map((l) => l.slice(0, 8));
+  const marks = readFileSync(file, 'utf8').split('\n').map((l) => l.trim()).filter((l) => /^[0-9a-f]{8}/.test(l)).map((l) => ({ prefix: l.slice(0, 8), effort: /\b(low|medium|high)\b/.exec(l)?.[1] }));
   const drafts: Draft[] = JSON.parse(readFileSync(join(WORK, 'drafts.json'), 'utf8'));
+  const ids = marks.map((m) => m.prefix);
   let stored = 0;
-  for (const prefix of ids) {
-    const d = drafts.find((x) => x.id.startsWith(prefix));
+  for (const { prefix, effort } of marks) {
+    /* Where a record was drafted at two efforts, the mark names which; a mark naming none takes medium, the default. */
+    const d = drafts.find((x) => x.id.startsWith(prefix) && (x.effort === undefined || x.effort === (effort ?? 'medium')));
     if (d === undefined || d.text === null) { console.log(`${prefix}: no finished draft to store`); continue; }
     await storeGeneratedMatchedText(d.id, d.text, MODEL);
     stored += 1;
@@ -63,12 +69,15 @@ const client = getMatchedTextClient();
 const drafts: Draft[] = [];
 for (const r of rows) {
   const facts = r.payload === null ? null : groundingFromPayload(r.payload);
-  const result = await client.write({ artist: r.artist, title: r.title, year: r.year, about: r.about }, facts);
-  const draft: Draft = result.ok
-    ? { id: r.id, artist: r.artist, title: r.title, year: r.year, about: r.about, status: 'finished', sentences: result.sentences, unknown: result.unknown, text: result.text }
-    : { id: r.id, artist: r.artist, title: r.title, year: r.year, about: r.about, status: `failed: ${result.reason}`, sentences: [], unknown: [], text: null };
-  drafts.push(draft);
-  console.log(`${r.id.slice(0, 8)}  ${r.artist} — ${r.title}: ${draft.status}, ${draft.sentences.length} sentence(s), ${draft.sentences.filter((s) => s.basis === 'inferred').length} inferred`);
+  for (const effort of efforts) {
+    const result = await client.write({ artist: r.artist, title: r.title, year: r.year, about: r.about }, facts, effort === undefined ? {} : { effort });
+    const base = { id: r.id, artist: r.artist, title: r.title, year: r.year, about: r.about, ...(effort === undefined ? {} : { effort }) };
+    const draft: Draft = result.ok
+      ? { ...base, status: 'finished', sentences: result.sentences, unknown: result.unknown, text: result.text }
+      : { ...base, status: `failed: ${result.reason}`, sentences: [], unknown: [], text: null };
+    drafts.push(draft);
+    console.log(`${r.id.slice(0, 8)}  ${r.artist} — ${r.title}${effort === undefined ? '' : ` at ${effort}`}: ${draft.status}, ${draft.sentences.length} sentence(s), ${draft.sentences.filter((s) => s.basis === 'inferred').length} inferred`);
+  }
 }
 writeFileSync(join(WORK, 'drafts.json'), JSON.stringify(drafts, null, 2));
 const date = new Date().toISOString().slice(0, 10);
