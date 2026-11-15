@@ -534,5 +534,15 @@
         "how": "anchors"
       }
     ]
+  },
+  {
+    "file": "Time the phone answer",
+    "ref": "refs/drops/2026-11-14-04",
+    "heads": [
+      {
+        "head": "§P.2: the model pick, minimum",
+        "how": "anchors"
+      }
+    ]
   }
 ]
