@@ -2,6 +2,7 @@ import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vites
 import { sql } from 'drizzle-orm';
 import { POST as ask } from '@/app/api/ask/route';
 import { storeEmbedding } from '@/lib/db/queries/embeddings';
+import { pickEngaged } from '@/lib/db/queries/ask';
 import { aboutHash } from '@/lib/embeddings/plan';
 import { EMBEDDING_MODEL } from '@/lib/openai/embeddings';
 import { closeTestDb, getTestDb, truncateAll } from '../../helpers/db';
@@ -210,6 +211,26 @@ describe('POST /api/ask, the pick once coverage is complete, latched', () => {
     const body = await (await ask(request({ phrase: 'slow', pool: [f.rain, late], take: 5 }))).json();
     expect(body.mode, 'latched: one record without matched text does not flip it back').toBe('pick');
     expect(sent[0].body.input.find((m) => m.role === 'user')?.content ?? '', 'and that record is not sent').not.toContain(late);
+  });
+
+  /* Not vacuous (the coordinator, 14 Nov): with no ABOUT and no matched text anywhere, "every record with an ABOUT has matched text" is true of nothing, and a latch thrown there would pick over an empty pool for ever. */
+  it('does not latch where no record has matched text, though no record has an ABOUT either', async () => {
+    const lone = await record('Untold', null);
+    phraseEmbeds([1, 0]);
+    expect((await (await ask(request({ phrase: 'x', pool: [lone], take: 3 }))).json()).mode).toBe('ranking');
+    expect((await db.execute(sql`SELECT count(*)::int AS n FROM app_latches`)).rows[0]).toEqual({ n: 0 });
+  });
+
+  /* Two asks together both find coverage complete: the write is insert-if-absent, and a write that fails anyway does not fail the ask, which answers in the pick; the next ask sets the latch. */
+  it('answers in the pick when the latch’s write fails, logging it, and sets the latch on the next ask', async () => {
+    const f = await seedFour();
+    await coverAll(f);
+    const logged = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    expect(await pickEngaged({ write: () => Promise.reject(new Error('could not write')) }), 'this ask still picks').toBe(true);
+    expect(logged.mock.calls.map((c) => c.join(' ')).join('\n')).toMatch(/the pick's latch was not written: could not write/);
+    expect((await db.execute(sql`SELECT count(*)::int AS n FROM app_latches`)).rows[0], 'nothing written').toEqual({ n: 0 });
+    expect(await pickEngaged()).toBe(true);
+    expect((await db.execute(sql`SELECT count(*)::int AS n FROM app_latches`)).rows[0], 'written by the next').toEqual({ n: 1 });
   });
 
   it('sends only the pool’s records with matched text, the edit in place of the generated text, and the run’s shown records as named', async () => {

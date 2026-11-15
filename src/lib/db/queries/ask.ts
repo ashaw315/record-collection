@@ -1,6 +1,7 @@
 import 'server-only';
 import { and, eq, inArray, sql } from 'drizzle-orm';
 import { getDb } from '@/db/client';
+import { logger } from '@/lib/logger';
 import { appLatches, recordEmbeddings, recordMatchedText, records } from '@/db/schema';
 import { nameSortKey } from '@/lib/db/name-sort';
 
@@ -30,7 +31,12 @@ const PICK_LATCH = 'ask_pick';
  * joins §P.6's ineligible count rather than flipping the collection back. Thrown here, on the first ask that finds
  * coverage complete, and held by its row (§4.8).
  */
-export async function pickEngaged(): Promise<boolean> {
+/** The latch's write, insert-if-absent, so two asks finding coverage together write one row. */
+const throwPickLatch = async (): Promise<void> => {
+  await getDb().insert(appLatches).values({ name: PICK_LATCH }).onConflictDoNothing();
+};
+
+export async function pickEngaged(options: { write?: () => Promise<void> } = {}): Promise<boolean> {
   const db = getDb();
   const [held] = await db.select({ name: appLatches.name }).from(appLatches).where(eq(appLatches.name, PICK_LATCH));
   if (held !== undefined) return true;
@@ -42,7 +48,12 @@ export async function pickEngaged(): Promise<boolean> {
     .from(records)
     .leftJoin(recordMatchedText, eq(recordMatchedText.recordId, records.id));
   if ((row?.described ?? 0) === 0 || (row?.uncovered ?? 1) > 0) return false;
-  await db.insert(appLatches).values({ name: PICK_LATCH }).onConflictDoNothing();
+  /* A write that fails does not fail the ask (the coordinator, 14 Nov): coverage is complete, so this ask picks, and the next one sets the latch. */
+  try {
+    await (options.write ?? throwPickLatch)();
+  } catch (error) {
+    logger.error('ask.latch', `the pick's latch was not written: ${error instanceof Error ? error.message : String(error)}`);
+  }
   return true;
 }
 
