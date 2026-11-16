@@ -1,5 +1,5 @@
 import 'server-only';
-import { sql } from 'drizzle-orm';
+import { inArray, sql } from 'drizzle-orm';
 import { getDb } from '@/db/client';
 import { recordMatchedText } from '@/db/schema';
 
@@ -29,18 +29,14 @@ export type DraftRow = { id: string; artist: string; title: string; year: number
  * first form, `= ANY((…))`, was a row constructor, which failed the script's first real run (42809) before any call.
  */
 export async function recordsToDraft(selection: { prefixes: readonly string[] } | 'all'): Promise<DraftRow[]> {
-  /*
-    One array parameter. Drizzle expands a JavaScript array into one parameter per element, so `ANY(${array})` is a row
-    constructor again; the array goes as one Postgres array literal, `{a,b}`, its elements checked as hex first so
-    nothing else can enter the literal.
-  */
-  if (selection !== 'all') {
-    const bad = selection.prefixes.find((p) => !/^[0-9a-f]{1,8}$/.test(p));
-    if (bad !== undefined) throw new Error(`recordsToDraft: "${bad}" is not a short id`);
-  }
   const where = selection === 'all'
     ? sql`m.generated IS NULL AND m.edited IS NULL`
-    : sql`left(r.id::text, 8) = ANY(${`{${selection.prefixes.join(',')}}`}::text[])`;
+    /*
+      inArray over the expression, which Drizzle writes as a parameterised IN list, one parameter per prefix: nothing is
+      concatenated into the SQL. Its first form, = ANY((…)), was a row constructor (42809), and = ANY(${array}) is the
+      same, since Drizzle expands an array into one parameter per element.
+    */
+    : inArray(sql`left(r.id::text, 8)`, [...selection.prefixes]);
   return (await getDb().execute<DraftRow>(sql`
     SELECT r.id, a.name AS artist, r.title, r.release_year AS year, nullif(r.snippet, '') AS about, c.payload
     FROM records r JOIN artists a ON a.id = r.artist_id
