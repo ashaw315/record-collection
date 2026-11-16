@@ -117,4 +117,19 @@ describe('buildSnippetPrompt with grounding', () => {
     expect(prompt).not.toMatch(/contradict/i);
     expect(prompt).toContain('ARTIST: Mandy, Indiana');
   });
+
+  /* The matched text's prompt (15 Nov): a release's performers are usually credited on its tracks, not the release, and Traffic's prompt carried only its producers and engineers. */
+  it('reads each track’s own credits with the track’s position', () => {
+    const facts = groundingFromPayload({ id: 1, title: 'T', tracklist: [
+      { position: 'A1', title: 'Glad', extraartists: [{ name: 'Steve Winwood', role: 'Organ, Piano' }, { name: 'Chris Wood', role: 'Saxophone' }] },
+      { position: 'B2', title: 'John Barleycorn', extraartists: [{ name: 'Jim Capaldi', role: 'Vocals' }] },
+      { position: 'B3', title: 'Every Mother’s Son' },
+    ] });
+    expect(facts?.trackCredits).toEqual([
+      { position: 'A1', name: 'Steve Winwood', role: 'Organ, Piano' },
+      { position: 'A1', name: 'Chris Wood', role: 'Saxophone' },
+      { position: 'B2', name: 'Jim Capaldi', role: 'Vocals' },
+    ]);
+  });
 });
+

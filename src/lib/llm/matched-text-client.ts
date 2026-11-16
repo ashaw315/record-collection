@@ -37,13 +37,20 @@ const Reply = z.object({
 
 export function buildMatchedTextPrompt(subject: MatchedTextSubject, facts: ReleaseFacts | null): string {
   const tracks = facts === null || facts.tracks.length === 0 ? 'none supplied' : facts.tracks.map((t) => `${t.position} ${t.title}`).join('\n');
-  const credits = facts === null || facts.credits.length === 0 ? 'none supplied' : facts.credits.map((c) => `${c.name}: ${c.role}`).join('\n');
+  const releaseCredits = (facts?.credits ?? []).map((c) => `${c.name}: ${c.role}`);
+  /* Each track's credits under its position, where a release's performers usually are (15 Nov). */
+  const trackCredits = (facts?.trackCredits ?? []).map((c) => `${c.position}: ${c.name}, ${c.role}`);
+  const credits = releaseCredits.length + trackCredits.length === 0
+    ? 'none supplied'
+    : [...releaseCredits, ...(trackCredits.length === 0 ? [] : ['On each track, by position:', ...trackCredits])].join('\n');
   return [
     `Describe how this record sounds, so that someone asking for music to play can be matched to it: ${subject.artist}, "${subject.title}"${subject.year === null ? '' : ` (${subject.year})`}.`,
     '',
     'Write concretely: the instruments, the pace, the density, the dynamics, and how the record changes across a side and between sides. Where the sides differ, say how; a record that changes across its sides is two answers. Give the variation and the exceptions, never an average: "mostly quiet, with two abrasive tracks", "side one instrumental and loose, side two slower and wearier". Not a pile of mood adjectives: say what is playing and how, and use a feeling-word only where the sound you have described carries it.',
     '',
     'Where you do not know something, leave it out. Never guess, and never fill a gap with plausible language. List what you could not describe under "unknown".',
+    '',
+    'Never write a number the material below does not give: no durations, tempos, track counts or ensemble sizes from your own knowledge. Describe them in words instead where you can: "mid-tempo", "sparse", "a large orchestra", "builds slowly over a long side".',
     '',
     'Write each point as a whole sentence that carries its own qualification, so it can be quoted alone without saying more than it means. Mark each sentence "supported" where the material below supports it, and "inferred" where it rests on your own knowledge of the record.',
     '',

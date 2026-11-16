@@ -30,6 +30,12 @@ export type ReleaseFacts = {
    * read. Empty where the release carries none, which the checker reads as unchecked, not wrong.
    */
   tracks: { position: string; title: string }[];
+  /**
+   * Each track's own credits, by its position (15 Nov). A release's performers are usually credited on its tracks,
+   * not on the release: Traffic's release credits were all producers and engineers. Optional, so a fact built by hand
+   * without it reads as no track credits.
+   */
+  trackCredits?: { position: string; name: string; role: string }[];
 };
 
 export type DiscographyEntry = { title: string; year: number; format: string };
@@ -54,7 +60,7 @@ const Release = z.object({
   extraartists: z.array(Person).optional(),
   companies: z.array(z.object({ name: z.string().optional(), entity_type_name: z.string().optional() })).optional(),
   community: z.object({ have: z.number().optional(), want: z.number().optional(), rating: z.object({ count: z.number().optional(), average: z.number().optional() }).optional() }).optional(),
-  tracklist: z.array(z.object({ position: z.string().optional(), title: z.string().optional() })).optional(),
+  tracklist: z.array(z.object({ position: z.string().optional(), title: z.string().optional(), extraartists: z.array(Person).optional() })).optional(),
 });
 
 /** The release's facts from its cached payload, or null when the payload is not a release. */
@@ -80,6 +86,7 @@ export function groundingFromPayload(payload: unknown): ReleaseFacts | null {
         ? null
         : { have: community.have, want: community.want, rating: community.rating?.average ?? 0, ratings: community.rating?.count ?? 0 },
     tracks: (r.tracklist ?? []).map((t) => ({ position: meaningful(t.position) ?? '', title: meaningful(t.title) })).filter((t): t is { position: string; title: string } => t.title !== null),
+    trackCredits: (r.tracklist ?? []).flatMap((t) => (t.extraartists ?? []).map((p) => ({ position: meaningful(t.position) ?? '', name: meaningful(p.name), role: meaningful(p.role) }))).filter((c): c is { position: string; name: string; role: string } => c.name !== null && c.role !== null),
   };
 }
 

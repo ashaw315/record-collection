@@ -20,7 +20,7 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { recordsToDraft, storeGeneratedMatchedText } from '@/lib/db/queries/matched-text';
 import { groundingFromPayload } from '@/lib/llm/about-grounding';
-import { createMatchedTextClient, getMatchedTextClient, matchedTextTransport } from '@/lib/llm/matched-text-client';
+import { buildMatchedTextPrompt, createMatchedTextClient, getMatchedTextClient, matchedTextTransport } from '@/lib/llm/matched-text-client';
 import { chooseDraft, parseMarked } from '@/lib/matched-text/marks';
 import { renderReview, type ReviewDraft } from '@/lib/matched-text/review';
 
@@ -60,6 +60,14 @@ const prefixes = mode === 'sample' ? args.filter((a) => /^[0-9a-f]{8}/.test(a)) 
 if (mode === 'sample' && prefixes.length === 0) throw new Error('write-matched-text: give record id prefixes, or --all, or --store <file>');
 /* The selection is the query module's, run against the test database there (the first real run failed in an untested query, 15 Nov). */
 const rows = await recordsToDraft(mode === 'all' ? 'all' : { prefixes });
+
+/* --prompt (15 Nov): what the model is sent for each record, printed, with no call and nothing written. */
+if (args.includes('--prompt')) {
+  for (const r of rows) {
+    process.stdout.write(`\n===== ${r.id.slice(0, 8)} ${r.artist} — ${r.title}\n${buildMatchedTextPrompt({ artist: r.artist, title: r.title, year: r.year, about: r.about }, r.payload === null ? null : groundingFromPayload(r.payload))}\n`);
+  }
+  process.exit(0);
+}
 
 if (measuring) {
   const transport = matchedTextTransport();

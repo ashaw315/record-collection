@@ -46,6 +46,22 @@ describe('the prompt', () => {
     expect(prompt).toMatch(/not a source of (musical )?claims/i);
   });
 
+  it('carries each track’s credits under its position, where the performers are, and says none only where neither kind was supplied', () => {
+    const withTracks = buildMatchedTextPrompt(subject, { ...facts, credits: [], trackCredits: [{ position: 'A1', name: 'Charlie McCoy', role: 'Harmonica' }, { position: 'B1', name: 'Pete Drake', role: 'Pedal Steel Guitar' }] });
+    expect(withTracks).toContain('A1: Charlie McCoy, Harmonica');
+    expect(withTracks).toContain('B1: Pete Drake, Pedal Steel Guitar');
+    expect(withTracks).not.toMatch(/Its credits:\nnone supplied/);
+  });
+
+  /* The coordinator, 15 Nov: "roughly seven minutes", "a forty-piece orchestra" were inferred, specific enough to be wrong, and the pick's claim check would accept them. Qualitative inference stays; numbers come from the material or not at all. */
+  it('forbids a number the material does not give, durations, tempos and sizes among them, and keeps qualitative description', () => {
+    expect(prompt).toMatch(/never (write|give|invent) a number/i);
+    expect(prompt).toMatch(/duration/i);
+    expect(prompt).toMatch(/tempo/i);
+    expect(prompt).toMatch(/size/i);
+    expect(prompt).toMatch(/mid-tempo|sparse|builds slowly/i);
+  });
+
   it('carries the tracklist by side and the credits, and asks each sentence to be whole and marked supported or inferred', () => {
     expect(prompt).toContain('A1 Girl From The North Country');
     expect(prompt).toContain('B1 Lay Lady Lay');

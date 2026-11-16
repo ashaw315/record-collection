@@ -57264,3 +57264,19 @@ sends model, max_tokens and messages only). **When something next touches that c
 name its effort high, the model default that wrote the ABOUTs we have, then send it; sending its named low would
 quietly downgrade a path that works. Name and behaviour agree either way. **To watch on the rerun:** Traffic, the
 richest credits, drafted fewer [supported] sentences than Pharoah; if that holds the prompt underuses the material.
+
+**Drafting effort decided: medium (Adam's rerun, 15 Nov).** Across the six, medium wrote 75 sentences with 31
+supported and high 86 with 29: every sentence high added was inferred (Traffic 7 inferred to 14). High was measured
+and is worse for this task, more speculation and not more grounding. `--compare-effort` stays opt-in; `--all` drafts
+at medium.
+
+**The credits that never reached the prompt (15 Nov).** The grounding sent only release-level credits; a release's
+performers are usually credited on its tracks. Traffic's eight release credits were producers, engineers, lacquer,
+design and photography, and Whiteman's were none, though both carry performer credits on every track. Each track's
+credits now go in under its position (`--prompt` prints what is sent). This explains Traffic's ratio; it was a bug,
+not the model describing loosely. **Numbers:** the prompt now forbids a number the material does not give (durations,
+tempos, track counts, ensemble sizes), since the pick's claim check would accept an invented one.
+
+**Length, for Adam before --all:** the rerun's drafts at medium average 381 words, 12.5 sentences, 2,262 characters;
+a 55-record pick request at that length is about 32,000 tokens (about $0.064 a press at Sol's input rate), and at six
+to eight sentences about 18,600 (about $0.037). Estimated at four characters a token; the first pick call measures it.
