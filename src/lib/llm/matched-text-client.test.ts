@@ -40,10 +40,17 @@ describe('the prompt', () => {
     expect(prompt).toMatch(/"unknown"/);
   });
 
-  it('gives the ABOUT as context only, never as a source of musical claims', () => {
+  /*
+    The ABOUT, used and marked honestly (the coordinator, 16 Nov). "Not a source of musical claims" was ignored: the
+    model restated the ABOUT as sound and marked it supported, because it sat in the material. The ABOUT is itself
+    model-written, the same class as inferred, so it may be used and anything resting on it is inferred; supported
+    covers the tracklist, the credits and the format only.
+  */
+  it('lets the ABOUT be used, marks anything resting on it inferred, and keeps supported to the tracklist, credits and format', () => {
     expect(prompt).toContain(subject.about ?? '');
-    expect(prompt).toMatch(/context only/i);
-    expect(prompt).toMatch(/not a source of (musical )?claims/i);
+    expect(prompt).not.toMatch(/not a source of/i);
+    expect(prompt).toMatch(/"supported" only where the tracklist, the credits or the format/i);
+    expect(prompt).toMatch(/anything resting on the ABOUT[^.]*"inferred"/i);
   });
 
   it('carries each track’s credits under its position, where the performers are, and says none only where neither kind was supplied', () => {

@@ -14,8 +14,9 @@ import { callAnthropic, type AnthropicRequest, type Effort, type Observed } from
  *
  * Whole sentences, because the pick's claim check takes a whole stored sentence (14 Nov), each marked as resting on the
  * supplied Discogs material or inferred from the model's own knowledge, so Adam reads the inferred hardest: that is
- * where the fame bias sits. The marks and the unknowns live in the review file, not the schema. The ABOUT is given as
- * context only, so a mood in it is never restated as sound.
+ * where the fame bias sits. The marks and the unknowns live in the review file, not the schema. The ABOUT may be used,
+ * but it is model-written, so anything resting on it is inferred (16 Nov): told it was no source, the model used it
+ * anyway and marked it supported, which inverted the one signal Adam reads by.
  *
  * Description writing stays on Anthropic's key, locally (the coordinator, 14 Nov), as the ABOUT drafts are made.
  */
@@ -54,9 +55,9 @@ export function buildMatchedTextPrompt(subject: MatchedTextSubject, facts: Relea
     '',
     'Write six to eight sentences, chosen by what someone asking for music could reach: how it sounds and the occasion it suits, how it changes across a side and between sides, and whether it wants attention or sits in the background. Include personnel, format and sequence detail only where it bears on how the record sounds; the rest belongs elsewhere.',
     '',
-    'Write each point as a whole sentence that carries its own qualification, so it can be quoted alone without saying more than it means. Mark each sentence "supported" where the material below supports it, and "inferred" where it rests on your own knowledge of the record.',
+    'Write each point as a whole sentence that carries its own qualification, so it can be quoted alone without saying more than it means. Mark a sentence "supported" only where the tracklist, the credits or the format below supports everything it says, and "inferred" where any of it rests on your own knowledge of the record or on the ABOUT.',
     '',
-    `The record's ABOUT, for context only. It is not a source of musical claims: do not restate its moods or its history as sound.\n${subject.about ?? 'none'}`,
+    `The record's ABOUT. You may use it, but it was written by a model from this material and its own knowledge, so anything resting on the ABOUT is marked "inferred", never "supported".\n${subject.about ?? 'none'}`,
     '',
     `Its tracklist, by position (a letter is a side):\n${tracks}`,
     '',

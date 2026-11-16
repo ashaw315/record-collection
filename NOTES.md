@@ -57285,3 +57285,12 @@ occasion, change across sides, attention or background), personnel, format and s
 sound; not a bare cap. The 18,600 estimate came from truncating drafts at seven sentences, which is not what the prompt
 produces: the rerun's review file states each draft's sentences, characters, ratio and any numbered sentence, and that
 measured length replaces both estimates before --all.
+
+**Supported was overstated through the ABOUT (16 Nov).** The ABOUT sat in the material block, and the model restated it
+as sound and marked it supported, though the prompt called it no source: three of Hello Mary's four supported sentences,
+two to three of Whiteman's and Traffic's. Whole-sentence inferred marks were right (Whiteman's 0 of 4 wrong). The prompt
+now lets the ABOUT be used and marks anything resting on it inferred; supported covers the tracklist, credits and
+format only. The first --all's 55 drafts carry the old marking and are not reviewed; Adam reruns --all. **To recheck on
+the rerun:** the first --all ran inferred low on recent records (Bluey 0, Astrid Sonne 2, OutKast 2) and high on
+canonical ones (Gaucho 8, Kraftwerk 7, Miles Davis 7, Simon & Garfunkel 7). If honest marking keeps that, the records
+Adam dug for are described better than the famous ones, through richer Discogs credits: the inverse of the fame bias.
