@@ -3,6 +3,7 @@ import { sql } from 'drizzle-orm';
 import { POST as ask } from '@/app/api/ask/route';
 import { storeEmbedding } from '@/lib/db/queries/embeddings';
 import { countNotDescribed, pickEngaged, pickLive } from '@/lib/db/queries/ask';
+import { PICK_SCHEMA } from '@/lib/ask/pick';
 import { aboutHash } from '@/lib/embeddings/plan';
 import { EMBEDDING_MODEL } from '@/lib/openai/embeddings';
 import { closeTestDb, getTestDb, truncateAll } from '../../helpers/db';
@@ -275,6 +276,30 @@ describe('POST /api/ask, the pick once coverage is complete, latched', () => {
     const body = await (await ask(request({ phrase: 'silent', pool: [f.rain, f.silent], take: 5 }))).json();
     expect(body).toMatchObject({ mode: 'pick', from: 'phrase', askedFrom: null, undescribed: f.silent });
     expect(sent[0].body.input.find((m) => m.role === 'user')?.content ?? '').toMatch(/What they want to play: silent/);
+  });
+
+  /*
+    The outgoing request read whole (the coordinator, 15 Nov): drafting's transport dropped its effort and no test saw
+    it, because every test faked the transport. The pick posts through fetch, which these stub, so the body here is the
+    one sent: the configured model and effort, the strict schema, every eligible record's text, the named ids.
+  */
+  it('sends one body carrying the configured model and effort, the strict schema, every eligible record’s text and the named ids', async () => {
+    const f = await seedFour();
+    await coverAll(f);
+    vi.stubEnv('ASK_PICK_MODEL', 'gpt-from-env');
+    vi.stubEnv('ASK_PICK_EFFORT', 'medium');
+    const sent = pickReplies({ verdict: 'answer', picks: [{ id: f.sunday, reason: 'Slow strings.', claims: ['Strings and coffee, slow.'] }] });
+    await ask(request({ phrase: 'slow', pool: [f.rain, f.drive, f.sunday], take: 5, exclude: [f.drive] }));
+    expect(sent).toHaveLength(1);
+    const body = sent[0].body as unknown as { model: string; reasoning: { effort: string }; text: { format: { type: string; strict: boolean; schema: unknown } }; input: Array<{ role: string; content: string }> };
+    expect(body.model).toBe('gpt-from-env');
+    expect(body.reasoning).toEqual({ effort: 'medium' });
+    expect(body.text.format).toMatchObject({ type: 'json_schema', strict: true, schema: PICK_SCHEMA });
+    const user = body.input.find((m) => m.role === 'user')?.content ?? '';
+    for (const [id, text] of [[f.rain, 'Rain on a tin roof. Slow and warm.'], [f.drive, 'Neon and quiet. A late drive.'], [f.sunday, 'Strings and coffee, slow.']] as const) {
+      expect(user, `the eligible ${id}, with its text`).toContain(`[${id}] ${text}`);
+    }
+    expect(user).toMatch(new RegExp(`already named[^\\n]*${f.drive}`, 'i'));
   });
 
   it('sends only the pool’s records with matched text, the edit in place of the generated text, and the run’s shown records as named', async () => {

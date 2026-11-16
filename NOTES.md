@@ -57260,5 +57260,7 @@ high were the same request, and Traffic finishing at "high" and cut at "medium" 
 **Measured with effort sent, at a 16,000 ceiling:** medium 790 to 1,658 output tokens, two of six thinking; high 1,100
 to 3,588, five of six thinking, all twelve finished. The limit is 16,000, the reference's non-streaming default, over
 four times the largest call. **The ABOUT drafts' snippet client has the same dropped effort** (its production create
-sends model, max_tokens and messages only), reported and not changed here. **To watch on the rerun:** Traffic, the
+sends model, max_tokens and messages only). **When something next touches that client** (the coordinator, 15 Nov):
+name its effort high, the model default that wrote the ABOUTs we have, then send it; sending its named low would
+quietly downgrade a path that works. Name and behaviour agree either way. **To watch on the rerun:** Traffic, the
 richest credits, drafted fewer [supported] sentences than Pharoah; if that holds the prompt underuses the material.
