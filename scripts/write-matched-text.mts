@@ -20,13 +20,15 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { recordsToDraft, storeGeneratedMatchedText } from '@/lib/db/queries/matched-text';
 import { groundingFromPayload } from '@/lib/llm/about-grounding';
-import { getMatchedTextClient } from '@/lib/llm/matched-text-client';
+import { createMatchedTextClient, getMatchedTextClient, matchedTextTransport } from '@/lib/llm/matched-text-client';
 import { chooseDraft, parseMarked } from '@/lib/matched-text/marks';
 import { renderReview, type ReviewDraft } from '@/lib/matched-text/review';
 
 const MODEL = 'claude-opus-5';
 const args = process.argv.slice(2);
 const mode = args.includes('--store') ? 'store' : args.includes('--all') ? 'all' : 'sample';
+/* --measure (15 Nov): one call per record as drafting makes it, each response's tokens and content blocks recorded to .matched/measure.json, and nothing else written. */
+const measuring = args.includes('--measure');
 /* The first ten drafted at medium and the next step up (the coordinator, 15 Nov): evidence for the effort, not a judgement. */
 const efforts = args.includes('--compare-effort') ? (['medium', 'high'] as const) : ([undefined] as const);
 const WORK = join(process.cwd(), '.matched');
@@ -58,6 +60,28 @@ const prefixes = mode === 'sample' ? args.filter((a) => /^[0-9a-f]{8}/.test(a)) 
 if (mode === 'sample' && prefixes.length === 0) throw new Error('write-matched-text: give record id prefixes, or --all, or --store <file>');
 /* The selection is the query module's, run against the test database there (the first real run failed in an untested query, 15 Nov). */
 const rows = await recordsToDraft(mode === 'all' ? 'all' : { prefixes });
+
+if (measuring) {
+  const transport = matchedTextTransport();
+  const rowsOut: unknown[] = [];
+  for (const r of rows) for (const effort of efforts) {
+    const facts = r.payload === null ? null : groundingFromPayload(r.payload);
+    let shape: { blocks: Array<{ type: string; chars: number }>; stop: string | null; input: number | null; output: number | null; limit: number } | null = null;
+    const watched = createMatchedTextClient({
+      create: async (request) => {
+        const response = (await transport.create(request)) as { content: Array<{ type: string; text?: string; thinking?: string }>; stop_reason?: string | null; usage?: { input_tokens?: number; output_tokens?: number } };
+        /* Shape only: block types and their lengths, never the text. */
+        shape = { blocks: response.content.map((b) => ({ type: b.type, chars: (b.text ?? b.thinking ?? '').length })), stop: response.stop_reason ?? null, input: response.usage?.input_tokens ?? null, output: response.usage?.output_tokens ?? null, limit: request.max_tokens };
+        return response;
+      },
+    });
+    const result = await watched.write({ artist: r.artist, title: r.title, year: r.year, about: r.about }, facts, effort === undefined ? {} : { effort });
+    rowsOut.push({ id: r.id.slice(0, 8), title: r.title, effort: effort ?? 'medium', ok: result.ok, sentences: result.ok ? result.sentences.length : 0, ...(shape ?? {}) });
+    console.log(JSON.stringify(rowsOut.at(-1)));
+  }
+  writeFileSync(join(WORK, 'measure.json'), JSON.stringify(rowsOut, null, 2));
+  process.exit(0);
+}
 
 const client = getMatchedTextClient();
 const drafts: Draft[] = [];

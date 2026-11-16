@@ -57249,3 +57249,16 @@ phrase at low and medium shown only as A and B in a per-phrase shuffled order, a
 for Adam to mark y or n; `--reveal <marked file>` adds each pick's reason, each run's effort and time, and fits and
 times per effort. Reads production and spends calls, so Adam's. Against production today it refuses before any call:
 no record has matched text. The provider flip to Anthropic, promised for this run, is not built yet.
+
+## 15 Nov: nine of twelve drafts cut, diagnosed with numbers
+
+**Cause:** claude-opus-5 thinks adaptively when `thinking` is left out, its thinking text comes back empty by default,
+and thinking counts against `max_tokens`. At 1,500 the five records that thought were cut (Smerz spent all 1,500
+thinking and wrote nothing); Pharoah did not think and finished in 1,028. **Second defect:** the production transport
+dropped `output_config`, so every draft ran at the model's default effort, high, whatever was asked; Adam's medium and
+high were the same request, and Traffic finishing at "high" and cut at "medium" was two runs of one request.
+**Measured with effort sent, at a 16,000 ceiling:** medium 790 to 1,658 output tokens, two of six thinking; high 1,100
+to 3,588, five of six thinking, all twelve finished. The limit is 16,000, the reference's non-streaming default, over
+four times the largest call. **The ABOUT drafts' snippet client has the same dropped effort** (its production create
+sends model, max_tokens and messages only), reported and not changed here. **To watch on the rerun:** Traffic, the
+richest credits, drafted fewer [supported] sentences than Pharoah; if that holds the prompt underuses the material.

@@ -20,7 +20,7 @@ import { callAnthropic, type AnthropicRequest, type Effort, type Observed } from
  * Description writing stays on Anthropic's key, locally (the coordinator, 14 Nov), as the ABOUT drafts are made.
  */
 const MODEL = 'claude-opus-5';
-export const MATCHED_TEXT_MAX_TOKENS = 1_500;
+export const MATCHED_TEXT_MAX_TOKENS = 16_000;
 /* Medium, not the snippet's low: drafting runs once per record, offline, where a concrete and correct description matters more than the seconds, unlike the pick on the phone. */
 const MATCHED_TEXT_EFFORT: Effort = 'medium';
 
@@ -87,18 +87,27 @@ export function createMatchedTextClient(transport: { create: MessageCreate }): M
   };
 }
 
+/**
+ * The production transport, exported so the drafting script's measure mode can wrap it and read each response's shape
+ * (15 Nov): what it sends is what drafting sends. A test reaching the real network is refused by name at the request site.
+ */
+export function matchedTextTransport(options: { fetch?: typeof fetch } = {}): { create: MessageCreate } {
+  /* An injected fetch is the test's seam onto the real request body; production runs on the global one, which the guard watches. */
+  const used = options.fetch ?? globalThis.fetch;
+  const sdk = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY, fetch: used });
+  return {
+    create: async (request: AnthropicRequest) => {
+      if (usesRealNetwork(used)) assertNoLiveCall('https://api.anthropic.com/v1/messages');
+      /* output_config sent (15 Nov): dropped here, every call ran at the model's default effort, high on claude-opus-5, whatever was asked. */
+      return sdk.messages.create({ model: request.model, max_tokens: request.max_tokens, output_config: request.output_config, messages: request.messages } as never) as unknown as Promise<{ content: Array<{ type: string; text?: string }> }>;
+    },
+  };
+}
+
 let shared: MatchedTextClient | undefined;
 
-/** The production client; a test reaching the real network is refused by name at the request site. */
+/** The production client. */
 export function getMatchedTextClient(): MatchedTextClient {
-  if (shared === undefined) {
-    const sdk = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-    shared = createMatchedTextClient({
-      create: async (request: AnthropicRequest) => {
-        if (usesRealNetwork(globalThis.fetch)) assertNoLiveCall('https://api.anthropic.com/v1/messages');
-        return sdk.messages.create({ model: request.model, max_tokens: request.max_tokens, messages: request.messages }) as unknown as Promise<{ content: Array<{ type: string; text?: string }> }>;
-      },
-    });
-  }
+  if (shared === undefined) shared = createMatchedTextClient(matchedTextTransport());
   return shared;
 }

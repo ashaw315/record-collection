@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { buildMatchedTextPrompt, createMatchedTextClient, type MatchedTextSubject } from './matched-text-client';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { buildMatchedTextPrompt, createMatchedTextClient, MATCHED_TEXT_MAX_TOKENS, matchedTextTransport, type MatchedTextSubject } from './matched-text-client';
 import type { ReleaseFacts } from './about-grounding';
 
 /**
@@ -95,6 +95,29 @@ describe('the effort', () => {
     await client.write(subject, facts);
     await client.write(subject, facts, { effort: 'high' });
     expect(seen).toEqual(['medium', 'high']);
+  });
+});
+
+/*
+  The production transport (15 Nov): it dropped output_config, so every draft ran at the model's default effort, and its
+  1,500 limit cut nine of twelve drafts in thinking. Every test above injects a fake transport, so none could see it;
+  this drives the real one against a stubbed fetch and reads the body it sends.
+*/
+describe('the production transport', () => {
+  afterEach(() => { vi.restoreAllMocks(); vi.unstubAllEnvs(); });
+
+  it('sends the effort asked for, and a limit with room for thinking and the answer', async () => {
+    vi.stubEnv('ANTHROPIC_API_KEY', 'sk-ant-test');
+    const bodies: Array<{ output_config?: { effort?: string }; max_tokens?: number }> = [];
+    const fetchImpl = vi.fn(async (_url: unknown, init?: RequestInit) => {
+      bodies.push(JSON.parse(String(init?.body)));
+      return new Response(JSON.stringify({ id: 'm', type: 'message', role: 'assistant', model: 'claude-opus-5', content: [{ type: 'text', text: JSON.stringify({ sentences: [], unknown: [] }) }], stop_reason: 'end_turn', usage: { input_tokens: 1, output_tokens: 1 } }), { status: 200, headers: { 'content-type': 'application/json' } });
+    });
+    await createMatchedTextClient(matchedTextTransport({ fetch: fetchImpl as unknown as typeof fetch })).write(subject, facts, { effort: 'high' });
+    expect(bodies[0]?.output_config).toEqual({ effort: 'high' });
+    /* Measured 15 Nov: the largest call, thinking and answer together, was 3,588 output tokens at high. */
+    expect(bodies[0]?.max_tokens).toBe(MATCHED_TEXT_MAX_TOKENS);
+    expect(MATCHED_TEXT_MAX_TOKENS).toBeGreaterThanOrEqual(3_588 * 4);
   });
 });
 
