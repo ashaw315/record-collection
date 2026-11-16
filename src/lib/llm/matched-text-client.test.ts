@@ -62,6 +62,17 @@ describe('the prompt', () => {
     expect(prompt).toMatch(/mid-tempo|sparse|builds slowly/i);
   });
 
+  /*
+    Length (the coordinator, 15 Nov): six to eight sentences, chosen by what a phrase can reach. A bare cap keeps
+    whatever came first; the prompt says what to keep, sound and occasion, and personnel, format and sequence only
+    where they bear on the sound, and the count follows.
+  */
+  it('asks for six to eight sentences, sound and occasion first, personnel, format and sequence only where they bear on the sound', () => {
+    expect(prompt).toMatch(/six to eight sentences/i);
+    expect(prompt).toMatch(/how it sounds and (the )?occasion/i);
+    expect(prompt).toMatch(/personnel, format (and|or) sequence[^.]*only where (it|they) bears? on how (it|the record) sounds/i);
+  });
+
   it('carries the tracklist by side and the credits, and asks each sentence to be whole and marked supported or inferred', () => {
     expect(prompt).toContain('A1 Girl From The North Country');
     expect(prompt).toContain('B1 Lay Lady Lay');

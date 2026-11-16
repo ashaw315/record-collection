@@ -17,6 +17,13 @@ export type ReviewDraft = {
   effort?: string;
 };
 
+/*
+  A sentence with a number in it, for checking (15 Nov): the prompt forbids a number the material does not give, and
+  the pick's claim check would accept one. Digits or number words; a side's own name ("side two") is not a number.
+*/
+const NUMBER = /\b\d|\b(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|fifteen|twenty|thirty|forty|fifty|sixty|hundred|dozen)\b/i;
+const hasNumber = (text: string) => NUMBER.test(text.replace(/\bside (one|two|three|four)\b/gi, 'side'));
+
 export function renderReview(drafts: readonly ReviewDraft[], title: string): string {
   const lines = [
     `# ${title}`,
@@ -40,6 +47,12 @@ export function renderReview(drafts: readonly ReviewDraft[], title: string): str
       for (const s of v.sentences) lines.push(`- [${s.basis}] ${s.text}`);
       lines.push('');
       if (v.unknown.length > 0) lines.push(`Not known: ${v.unknown.join('; ')}`, '');
+      /* Each draft's own figures (15 Nov), so the rerun's ratio and length are read here rather than recounted. */
+      const supported = v.sentences.filter((x) => x.basis === 'supported').length;
+      const chars = v.sentences.map((x) => x.text).join(' ').length;
+      lines.push(`${v.sentences.length} sentences, ${chars} characters; ${supported} supported, ${v.sentences.length - supported} inferred.`, '');
+      const numbered = v.sentences.filter((x) => hasNumber(x.text));
+      lines.push(numbered.length === 0 ? 'Numbers to check: none' : [`Numbers to check: ${numbered.length}`, ...numbered.map((x) => `- ${x.text}`)].join('\n'), '');
     }
   }
   return `${lines.join('\n')}\n`;

@@ -57280,3 +57280,8 @@ tempos, track counts, ensemble sizes), since the pick's claim check would accept
 **Length, for Adam before --all:** the rerun's drafts at medium average 381 words, 12.5 sentences, 2,262 characters;
 a 55-record pick request at that length is about 32,000 tokens (about $0.064 a press at Sol's input rate), and at six
 to eight sentences about 18,600 (about $0.037). Estimated at four characters a token; the first pick call measures it.
+**Decided shorter (the coordinator, 15 Nov):** six to eight sentences, chosen by what a phrase can reach (sound,
+occasion, change across sides, attention or background), personnel, format and sequence only where they bear on the
+sound; not a bare cap. The 18,600 estimate came from truncating drafts at seven sentences, which is not what the prompt
+produces: the rerun's review file states each draft's sentences, characters, ratio and any numbered sentence, and that
+measured length replaces both estimates before --all.

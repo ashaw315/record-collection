@@ -44,5 +44,23 @@ describe('renderReview', () => {
     expect(two).toMatch(/At medium:[\s\S]*Organ carries the hooks[\s\S]*At high:[\s\S]*Organ and bass, the drums swinging\./);
     expect(two).toMatch(/e315c6a7 high/);
   });
+
+  /*
+    The rerun tests two changes at once (the coordinator, 15 Nov): each draft states its own figures, so the ratio, the
+    length that replaces the token estimates, and any number that survived the rule are read off the file, not recounted.
+  */
+  it('states each draft’s sentence count, characters and supported against inferred', () => {
+    expect(out).toMatch(/2 sentences, 66 characters; 1 supported, 1 inferred/);
+  });
+
+  it('lists each sentence carrying a number for checking, digits or words, and not a side’s name', () => {
+    const numbered = renderReview([{ ...drafts[0], sentences: [
+      { text: 'The title track runs roughly seven minutes.', basis: 'inferred' },
+      { text: 'A 40-piece orchestra plays.', basis: 'inferred' },
+      { text: 'Side two is slower than side one.', basis: 'inferred' },
+    ] }], 'Numbers');
+    expect(numbered).toMatch(/Numbers to check: 2\n- The title track runs roughly seven minutes\.\n- A 40-piece orchestra plays\./);
+    expect(out).toMatch(/Numbers to check: none/);
+  });
 });
 
