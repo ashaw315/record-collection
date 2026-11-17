@@ -57343,3 +57343,25 @@ a probable error at 0.
 
 **For an ABOUT pass, not now:** Donovan — The Hurdy Gurdy Man's ABOUT is in the wrong register, encyclopaedic ("It
 matters because ...") rather than the sound-and-occasion voice of the other 54.
+
+**The three redrafts read (the coordinator, 17 Nov).** The no-data rule took (Mandy wrote no such sentence, so the client
+filter never fired), the unknown-versus-body rule held on Kim Gordon and Glenn Miller, sides are numbered, the detector
+flagged two of 24 sentences ("the first minutes", worth the glance; ASR10, the predicted false positive). **The credit
+rule is untested, not passed or failed:** Glenn Miller's stereo-spread sentence did not return, but its new unknown list
+doubts "whether the stereo is true stereo or reprocessed", so the unknown rule would have suppressed it too; one draft
+cannot separate the causes. It is tested when a record with a format-but-not-credit sentence next redrafts (Ink Spots is
+the candidate, not queued). Glenn Miller's new supported sentence ("favours familiarity", "best-known") is the residual
+marking leak, logged because it moved the record from 0 supported to 1 for a soft reason.
+
+**Side positions are stored for 54 of 55 (17 Nov, read-only).** Every track of every record but one carries a side in the
+cached tracklist, the old compilations included (Glenn Miller, Peter Paul & Mary, Dylan GH II, Ink Spots, Blues Project
+all fully positioned), so an inferred side sentence is inferred for its character claims, and Adam judges the adjectives,
+not the running order. The exception is Carpenters `7d953882`: "Bacharach-David Medley" has no position between B3 and B5
+(a B4 by its place, which Discogs leaves blank for the medley), so its side placement in a draft is the model's.
+
+**YBG is in the credits:** `a950eb99`'s A2 "The Candy House" carries "YBG, Vocals [Additional]" as a track credit. The
+redraft's [inferred] on that sentence is conservative, not a name from the model's knowledge; no name rule is needed on
+this evidence. The failure class stays worth watching: the numbers rule has no counterpart for names.
+
+**For the ABOUT pass, with Donovan:** Glenn Miller's ABOUT asserts "the Miller orchestra's own studio sides", which the
+redrafted matched text now correctly refuses to inherit; the ABOUT is the thing wrong there.
