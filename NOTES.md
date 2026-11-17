@@ -57290,7 +57290,19 @@ measured length replaces both estimates before --all.
 as sound and marked it supported, though the prompt called it no source: three of Hello Mary's four supported sentences,
 two to three of Whiteman's and Traffic's. Whole-sentence inferred marks were right (Whiteman's 0 of 4 wrong). The prompt
 now lets the ABOUT be used and marks anything resting on it inferred; supported covers the tracklist, credits and
-format only. The first --all's 55 drafts carry the old marking and are not reviewed; Adam reruns --all. **To recheck on
-the rerun:** the first --all ran inferred low on recent records (Bluey 0, Astrid Sonne 2, OutKast 2) and high on
-canonical ones (Gaucho 8, Kraftwerk 7, Miles Davis 7, Simon & Garfunkel 7). If honest marking keeps that, the records
-Adam dug for are described better than the famous ones, through richer Discogs credits: the inverse of the fame bias.
+format only. The first --all's 55 drafts (kept as `.matched/drafts-before-marking-fix.json`) carry the old marking and
+were not reviewed; Adam's rerun (17 Nov) is 440 sentences, 319 inferred (72.5%, against 57.8%), spread 2 to 8.
+
+**The rerun's marking, audited against --prompt (17 Nov):** Traffic, Bluey and Pharoah's supported sentences are built
+from the track credits and the tracklist (Traffic's two organs on Empty Pages, Pharoah's second drummer in the right
+channel, Bluey's instrument list), and the credit facts stayed supported, so the rule did not over-correct. The leak
+that remains is about one sentence per record: a credit-built sentence carrying an ABOUT phrase or an unsourced
+adjective and marked supported (Traffic's title track "sung plainly, unhurried"; Pharoah's "sung chant ... rolling bass
+vamp", "opens with ... very sparse and unmetered"). Noted, not chased: Adam reads supported a little harder than the
+mark suggests, and the pick quotes the sentence either way.
+
+**Grounding follows the credits, not the fame (17 Nov, on honest marks).** Recent records average about 5.1 inferred of
+8, canonical ones about 7.1: the records Adam dug for are described better than the famous ones, because their Discogs
+credits are richer, the inverse of the fame bias the scope doc warned of. Sharper still, **compilations are the worst
+grounded**: Glenn Miller 8, Peter Paul & Mary 8, Dylan's Greatest Hits II 7, On The Radio 6, Blues Project 6, Ink Spots
+6, on thin per-track credits. If more compilations arrive, their descriptions need Adam's ear most.
