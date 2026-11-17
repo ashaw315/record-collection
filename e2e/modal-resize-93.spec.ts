@@ -69,10 +69,18 @@ test('the modal open at 390 × 844, turned to 844 × 390: until the viewport set
 
   await page.setViewportSize(TURNED);
   const turnedAt = Date.now();
-  /* The accepted transient: the viewport has changed and has not yet settled. */
-  expect(await width(page, '[data-sleeve]'), 'before it settles the sleeve is still at its old size').toBe(before);
-  const overrun = await page.evaluate(() => (document.querySelector('[data-sleeve-controls]') as HTMLElement).getBoundingClientRect().bottom - window.innerHeight);
-  expect(overrun, 'and its controls run off the turned window: the state the settling ends').toBeGreaterThan(0);
+  /*
+    The accepted transient: the viewport has changed and has not yet settled. Sampled at one instant, in one evaluate:
+    read as two round trips, the width came back unsettled and the controls settled (gate 44159846833, 17 Nov), because
+    two trips can outlast the 150ms. The residual is one trip outlasting it, which this cannot remove; it would fail the
+    width line below, and say so.
+  */
+  const transient = await page.evaluate(() => ({
+    width: (document.querySelector('[data-sleeve]') as HTMLElement).getBoundingClientRect().width,
+    overrun: (document.querySelector('[data-sleeve-controls]') as HTMLElement).getBoundingClientRect().bottom - window.innerHeight,
+  }));
+  expect(transient.width, 'before it settles the sleeve is still at its old size (sampled with the overrun, in one trip)').toBe(before);
+  expect(transient.overrun, 'and its controls run off the turned window: the state the settling ends').toBeGreaterThan(0);
   if (WRITE_CAPTURES) { mkdirSync(CAPTURES, { recursive: true }); await page.screenshot({ path: join(CAPTURES, `rotation-0844x390-before-settle-s${before}.png`) }); }
 
   /* At once: sampled in the page, the square goes from the old size to the new with no size between. */

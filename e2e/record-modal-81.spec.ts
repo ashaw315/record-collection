@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
+import { easeOutCubic } from '../src/app/records/[id]/sleeve-open';
 import sharp from 'sharp';
 import { registerCleanup, trackArtist } from './cleanup';
 import { seedImage } from './seed';
@@ -586,8 +587,22 @@ test.describe('§M.5: the turn', () => {
     const changes = moving.filter((f, i) => i > 0 && f.face !== moving[i - 1].face);
     expect(changes.length, 'the face changes once').toBe(1);
     const at = moving.indexOf(changes[0]);
-    expect(total[at - 1], 'and does so edge-on: the frame before is past 60').toBeGreaterThan(60);
-    expect(total[at], 'and the frame after short of 120').toBeLessThan(120);
+    /*
+      Edge-on, at a tolerance that follows the sampling gap (gate 44157773442, 17 Nov: the frame after the change stood at
+      127.5 against a fixed 120, a gap of 66ms or more between frames at the change, where the fixed 30 degrees allowed
+      53ms). The two frames either side of the change can have travelled no further than the turn's rate at the earlier
+      frame's progress allows, the ease-out only slowing from there. The gap has a ceiling: edge-on must be separable from
+      a change at rest, 90 degrees away either side, so the tolerance stays under 45 degrees, which at the rate at the
+      change is a gap under 80ms. Past that the sample is bad data and this says so and fails; it does not widen to fit
+      the runner.
+    */
+    const gapMs = moving[at].t - moving[at - 1].t;
+    expect(gapMs, `the frames either side of the change are ${gapMs.toFixed(1)}ms apart: past 80ms the turn is not being sampled, and this is bad data, not a turn`).toBeLessThanOrEqual(80);
+    const progressBefore = Math.min(1, Math.max(0, (moving[at - 1].t - moving[0].t) / TURN_MS));
+    const degPerMs = (180 * (easeOutCubic(Math.min(1, progressBefore + 0.001)) - easeOutCubic(Math.max(0, progressBefore - 0.001)))) / (0.002 * TURN_MS);
+    const travel = degPerMs * gapMs + 2;
+    expect(total[at - 1], `and does so edge-on: the frame before stands within ${travel.toFixed(1)} of 90, the most the turn travels in ${gapMs.toFixed(1)}ms there`).toBeGreaterThan(90 - travel);
+    expect(total[at], `and the frame after within ${travel.toFixed(1)} past 90`).toBeLessThan(90 + travel);
 
     const lasted = moving[moving.length - 1].t - moving[0].t;
     expect(lasted, `it lasts about ${TURN_MS}ms`).toBeGreaterThan(TURN_MS * 0.8);

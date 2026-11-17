@@ -57365,3 +57365,15 @@ this evidence. The failure class stays worth watching: the numbers rule has no c
 
 **For the ABOUT pass, with Donovan:** Glenn Miller's ABOUT asserts "the Miller orchestra's own studio sides", which the
 redrafted matched text now correctly refuses to inherit; the ABOUT is the thing wrong there.
+
+**Two chromium flakes, both sampling races on the loaded runner, fixed in the specs with the coordinator's agreement
+(17 Nov).** Gates 44157773442 and 44159846833 each read GREEN WITH FLAKES on one spec the commits never touched.
+`modal-resize-93:62` sampled a 150ms transient in two round trips and the second came back settled (overrun −18); it now
+reads width and overrun in one evaluate, and names the residual, one trip outlasting the settle, which fails the width
+line by name (staged with a 200ms wait). `record-modal-81:540` asserted the face change within a fixed 60 to 120, which at
+the ease-out cubic's rate at the change (about 0.57 degrees per ms, not the 0.9 first estimated from an ease-in-out
+the capture's name suggested) allowed a 53ms gap between frames; CI's 127.5 was a gap of 66ms or more. The tolerance
+now follows the measured gap at the imported easing's rate, under a ceiling of 80ms: edge-on must stay separable from a
+change at rest, 90 degrees away, so the tolerance stays under 45 degrees. Past the ceiling the sample is bad data and
+the test fails by name rather than widening to fit the runner. Staged: a build changing face at 60 fails the tolerance;
+gaps of 108ms at the change fail the ceiling by name; both specs 28 passed at load 3.2.
