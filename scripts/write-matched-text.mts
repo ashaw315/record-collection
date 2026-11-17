@@ -15,13 +15,13 @@
  * live when every record with an ABOUT has matched text (§4.8's latch), not before; storing ten of fifty-five leaves
  * the ask ranking, and the ten are read by unit 5's diagnostic script.
  */
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { recordsToDraft, storeGeneratedMatchedText } from '@/lib/db/queries/matched-text';
 import { groundingFromPayload } from '@/lib/llm/about-grounding';
 import { buildMatchedTextPrompt, createMatchedTextClient, getMatchedTextClient, matchedTextTransport } from '@/lib/llm/matched-text-client';
-import { chooseDraft, parseMarked, storeLine } from '@/lib/matched-text/marks';
+import { chooseDraft, mergeDrafts, parseMarked, storeLine } from '@/lib/matched-text/marks';
 import { renderReview, type ReviewDraft } from '@/lib/matched-text/review';
 
 const MODEL = 'claude-opus-5';
@@ -108,9 +108,14 @@ for (const r of rows) {
     console.log(`${r.id.slice(0, 8)}  ${r.artist} — ${r.title}${effort === undefined ? '' : ` at ${effort}`}: ${draft.status}, ${draft.sentences.length} sentence(s), ${draft.sentences.filter((s) => s.basis === 'inferred').length} inferred`);
   }
 }
-writeFileSync(join(WORK, 'drafts.json'), JSON.stringify(drafts, null, 2));
+/* Merged into the kept drafts, the previous file kept beside it (17 Nov): a redraft of three leaves the other 52 for the store. */
+const draftsFile = join(WORK, 'drafts.json');
+const kept: Draft[] = existsSync(draftsFile) ? JSON.parse(readFileSync(draftsFile, 'utf8')) : [];
+if (kept.length > 0) copyFileSync(draftsFile, join(WORK, 'drafts-previous.json'));
+const merged = mergeDrafts(kept, drafts);
+writeFileSync(draftsFile, JSON.stringify(merged, null, 2));
 const date = new Date().toISOString().slice(0, 10);
 const out = join(OUT, `Matched text drafts, ${date}.md`);
 writeFileSync(out, renderReview(drafts, `Matched text drafts, ${date}`));
-console.log(`write-matched-text: ${drafts.filter((d) => d.text !== null).length} finished, ${drafts.filter((d) => d.text === null).length} with no draft; review file ${out}`);
+console.log(`write-matched-text: ${drafts.filter((d) => d.text !== null).length} finished, ${drafts.filter((d) => d.text === null).length} with no draft; review file ${out}; drafts.json holds ${merged.length} (${kept.length} kept before this run${kept.length > 0 ? ', previous file drafts-previous.json' : ''})`);
 process.exit(0);

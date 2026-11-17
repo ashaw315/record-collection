@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { chooseDraft, parseMarked, storeLine } from './marks';
+import { chooseDraft, mergeDrafts, parseMarked, storeLine } from './marks';
 
 /**
  * **What `--store` writes to production is decided here (the coordinator, 15 Nov):** the ids in Adam's marked file, each
@@ -49,6 +49,22 @@ describe('storeLine', () => {
   it('says loudly when a draft is short because a sentence was dropped, and which', () => {
     expect(storeLine({ ...d, sentences: d.sentences.slice(0, 7), dropped: ['That is not something this material tells you.'] }))
       .toBe('1611cb00: stored (Mandy, Indiana — i’ve seen a way), 7 sentences — SHORT, 1 dropped for describing the material: That is not something this material tells you.');
+  });
+});
+
+/*
+  A draft run adds to the drafts file rather than replacing it (the coordinator, 17 Nov). Three redrafts after a 55-record
+  run must leave 55 in the file for the store: 52 kept, 3 replaced. Otherwise the only way back is a fresh --all.
+*/
+describe('mergeDrafts', () => {
+  const kept = [{ id: 'a', text: 'A old' }, { id: 'b', text: 'B old' }, { id: 'c', text: 'C old', effort: 'high' }];
+
+  it('replaces a record’s draft at the same effort and keeps every other record', () => {
+    expect(mergeDrafts(kept, [{ id: 'b', text: 'B new' }])).toEqual([{ id: 'a', text: 'A old' }, { id: 'b', text: 'B new' }, { id: 'c', text: 'C old', effort: 'high' }]);
+  });
+
+  it('adds a record not drafted before, and keeps a draft at another effort of the same record', () => {
+    expect(mergeDrafts(kept, [{ id: 'c', text: 'C medium' }, { id: 'd', text: 'D' }])).toEqual([...kept, { id: 'c', text: 'C medium' }, { id: 'd', text: 'D' }]);
   });
 });
 
