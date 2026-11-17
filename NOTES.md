@@ -57373,7 +57373,10 @@ reads width and overrun in one evaluate, and names the residual, one trip outlas
 line by name (staged with a 200ms wait). `record-modal-81:540` asserted the face change within a fixed 60 to 120, which at
 the ease-out cubic's rate at the change (about 0.57 degrees per ms, not the 0.9 first estimated from an ease-in-out
 the capture's name suggested) allowed a 53ms gap between frames; CI's 127.5 was a gap of 66ms or more. The tolerance
-now follows the measured gap at the imported easing's rate, under a ceiling of 80ms: edge-on must stay separable from a
-change at rest, 90 degrees away, so the tolerance stays under 45 degrees. Past the ceiling the sample is bad data and
-the test fails by name rather than widening to fit the runner. Staged: a build changing face at 60 fails the tolerance;
-gaps of 108ms at the change fail the ceiling by name; both specs 28 passed at load 3.2.
+now follows the measured gap at the imported easing's rate at the earlier frame, with 2 degrees of slack, under a
+ceiling on the tolerance itself: tolerance with slack within 45 degrees, so edge-on stays separable from a change at
+rest, 90 degrees away (the coordinator, on 80ms letting it past 45). At the change's rate that is a 75ms gap, less
+where the earlier frame fell sooner; and since the ease-out slows past the change, to 0.40 a ms at 127.5, CI's sample
+was a gap of 78ms or more, not the 66 first computed at a constant rate, and is refused as bad data under the bound.
+Past the bound the test fails by name rather than widening to fit the runner. Staged: a build changing face at 60 fails
+the tolerance; gaps of 118ms at the change fail the bound by name (tolerance 75.1); the spec 24 passed at load 3.5.
