@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { renderReview, type ReviewDraft } from './review';
+import { parseReview, rebuildDrafts, renderReview, type ReviewDraft } from './review';
 
 /**
  * **The matched-text review file, for Adam to mark (step 3, unit 4; the coordinator, 14 Nov).** Each sentence carries
@@ -84,6 +84,66 @@ describe('renderReview', () => {
     const dropped = renderReview([{ ...drafts[0], dropped: ['Which tracks are the quiet ones is not something this material tells you.'] }], 'Dropped');
     expect(dropped).toMatch(/Dropped, for describing the material rather than the record: 1\n- Which tracks are the quiet ones is not something this material tells you\./);
     expect(out).not.toMatch(/Dropped/);
+  });
+});
+
+/*
+  The review file read back (17 Nov). Three redrafts ran under the whole-file write and left three drafts where 55 had
+  been; the 52 survive only in the review file Adam reads, which carries every sentence with its mark, the ABOUT, the
+  year and the figures. Parsing it rebuilds what the store needs without a model call. The full id is not in the file.
+*/
+describe('parseReview', () => {
+  const sources: ReviewDraft[] = [
+    { ...drafts[0], about: 'First paragraph of the ABOUT.\n\nSecond paragraph, as Hello Mary’s has.', unknown: ['how loud the mix runs', 'the tempos'] },
+    { id: '47b69af6-0000-4000-8000-000000000000', artist: 'Joff Bush', title: 'Bluey The Album', year: 2021, about: 'Cues.', status: 'finished',
+      sentences: [{ text: 'Chamber-sized and acoustic.', basis: 'supported' }, { text: 'Side one is brighter.', basis: 'inferred' }, { text: 'It suits a room with children in it.', basis: 'inferred' }], unknown: [] },
+  ];
+  const parsed = parseReview(renderReview(sources, 'Matched text drafts, 2026-11-16'));
+
+  it('reads each record’s prefix, artist, title, year and ABOUT, the ABOUT’s paragraphs kept', () => {
+    expect(parsed.map((r) => r.prefix)).toEqual(['e315c6a7', '47b69af6']);
+    expect(parsed[0]).toMatchObject({ artist: 'The Doors', title: 'The Doors', year: 1967, about: 'First paragraph of the ABOUT.\n\nSecond paragraph, as Hello Mary’s has.' });
+    expect(parsed[1]).toMatchObject({ artist: 'Joff Bush', title: 'Bluey The Album', year: 2021, about: 'Cues.' });
+  });
+
+  it('reads every sentence with its mark, verbatim, and the unknowns', () => {
+    expect(parsed[0].sentences).toEqual(sources[0].sentences);
+    expect(parsed[1].sentences).toEqual(sources[1].sentences);
+    expect(parsed[0].unknown).toEqual(['how loud the mix runs', 'the tempos']);
+    expect(parsed[1].unknown).toEqual([]);
+  });
+
+  it('carries no effort where the file names none, rather than a reconstructed one', () => {
+    expect(parsed.every((r) => !('effort' in r))).toBe(true);
+  });
+
+  it('refuses a record whose figures line disagrees with the sentences read under it', () => {
+    const text = renderReview(sources, 'T').replace('3 sentences, ', '4 sentences, ');
+    expect(() => parseReview(text)).toThrow(/47b69af6.*figures line says 4 sentences, 3 read/);
+  });
+
+  it('refuses a record without a figures line, which a file from before 15 Nov would lack', () => {
+    const text = renderReview(sources, 'T').replace(/\n3 sentences, [^\n]*\n/, '\n');
+    expect(() => parseReview(text)).toThrow(/47b69af6.*no figures line/);
+  });
+});
+
+/* The parsed records joined to the database rows by prefix (17 Nov): the full id and the four fields must agree, or the record is refused. */
+describe('rebuildDrafts', () => {
+  const parsed = parseReview(renderReview(drafts.slice(0, 1), 'T'));
+  const row = { id: drafts[0].id, artist: 'The Doors', title: 'The Doors', year: 1967, about: drafts[0].about, payload: null };
+
+  it('rebuilds an entry the store accepts: the row’s full id and fields, the file’s sentences, the text joined, and no effort', () => {
+    const { imported, refused } = rebuildDrafts(parsed, [row]);
+    expect(refused).toEqual([]);
+    expect(imported).toEqual([{ id: drafts[0].id, artist: 'The Doors', title: 'The Doors', year: 1967, about: drafts[0].about, status: 'finished', sentences: drafts[0].sentences, unknown: drafts[0].unknown, text: 'Organ carries the hooks and the bass. Side two ends long and slow.' }]);
+  });
+
+  it('refuses a record with no row, and one whose fields differ from the row’s, naming the fields', () => {
+    expect(rebuildDrafts(parsed, []).refused).toEqual(['e315c6a7: no record in the database without stored matched text']);
+    const { imported, refused } = rebuildDrafts(parsed, [{ ...row, about: 'A different ABOUT.', year: 1968 }]);
+    expect(imported).toEqual([]);
+    expect(refused).toEqual(['e315c6a7: the file’s year, about differ from the database’s']);
   });
 });
 

@@ -78,3 +78,52 @@ export function renderReview(drafts: readonly ReviewDraft[], title: string): str
   }
   return `${lines.join('\n')}\n`;
 }
+
+/** A record read back from a review file: everything the store needs but the full id, which the file does not carry. */
+export type ParsedReview = { prefix: string; artist: string; title: string; year: number | null; about: string | null; sentences: Array<{ text: string; basis: 'supported' | 'inferred' }>; unknown: string[] };
+
+/*
+  The review file read back (17 Nov): the inverse of renderReview, for the 52 drafts that survived only there. Each
+  record's figures line is checked against what was read under it, and a record without one, or whose counts disagree,
+  is refused rather than rebuilt with less than the file says it holds.
+*/
+export function parseReview(text: string): ParsedReview[] {
+  const out: ParsedReview[] = [];
+  const blocks = text.split(/^## /m).slice(1);
+  for (const block of blocks) {
+    const lines = block.split('\n');
+    const head = /^(.*) — (.*?)(?: \((\d{4})\))?  `([0-9a-f]{8})`\s*$/.exec(lines[0]);
+    if (head === null) throw new Error(`parseReview: a heading could not be read: ${lines[0]}`);
+    const [, artist, title, year, prefix] = head;
+    const body = lines.slice(1).join('\n');
+    const aboutAt = body.indexOf('ABOUT, given as context only: ');
+    const firstSentence = body.search(/^- \[(supported|inferred)\] /m);
+    const aboutRaw = aboutAt === -1 || firstSentence === -1 ? '' : body.slice(aboutAt + 'ABOUT, given as context only: '.length, firstSentence).trim();
+    const sentences = [...body.matchAll(/^- \[(supported|inferred)\] (.*)$/gm)].map((m) => ({ text: m[2], basis: m[1] as 'supported' | 'inferred' }));
+    const unknownLine = /^Not known: (.*)$/m.exec(body);
+    const figures = /^(\d+) sentences, (\d+) characters; (\d+) supported, (\d+) inferred\.$/m.exec(body);
+    if (figures === null) throw new Error(`parseReview: ${prefix} has no figures line`);
+    const supported = sentences.filter((x) => x.basis === 'supported').length;
+    if (Number(figures[1]) !== sentences.length || Number(figures[3]) !== supported) throw new Error(`parseReview: ${prefix}: figures line says ${figures[1]} sentences, ${sentences.length} read; ${figures[3]} supported, ${supported} read`);
+    out.push({ prefix, artist, title, year: year === undefined ? null : Number(year), about: aboutRaw === 'none' ? null : aboutRaw, sentences, unknown: unknownLine === null ? [] : unknownLine[1].split('; ') });
+  }
+  return out;
+}
+
+/** What the importer writes for a parsed record, joined to its database row by prefix; the row's full id and fields, the file's sentences. */
+export type RebuiltDraft = { id: string; artist: string; title: string; year: number | null; about: string | null; status: 'finished'; sentences: ParsedReview['sentences']; unknown: string[]; text: string };
+
+export function rebuildDrafts(parsed: readonly ParsedReview[], rows: readonly { id: string; artist: string; title: string; year: number | null; about: string | null }[]): { imported: RebuiltDraft[]; refused: string[] } {
+  const byPrefix = new Map(rows.map((r) => [r.id.slice(0, 8), r]));
+  const imported: RebuiltDraft[] = [];
+  const refused: string[] = [];
+  for (const r of parsed) {
+    const row = byPrefix.get(r.prefix);
+    if (row === undefined) { refused.push(`${r.prefix}: no record in the database without stored matched text`); continue; }
+    const differs = (['artist', 'title', 'year', 'about'] as const).filter((f) => row[f] !== r[f]);
+    if (differs.length > 0) { refused.push(`${r.prefix}: the file’s ${differs.join(', ')} differ from the database’s`); continue; }
+    imported.push({ id: row.id, artist: row.artist, title: row.title, year: row.year, about: row.about, status: 'finished', sentences: r.sentences, unknown: r.unknown, text: r.sentences.map((x) => x.text).join(' ') });
+  }
+  return { imported, refused };
+}
+

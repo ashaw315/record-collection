@@ -22,7 +22,7 @@ import { recordsToDraft, storeGeneratedMatchedText } from '@/lib/db/queries/matc
 import { groundingFromPayload } from '@/lib/llm/about-grounding';
 import { buildMatchedTextPrompt, createMatchedTextClient, getMatchedTextClient, matchedTextTransport } from '@/lib/llm/matched-text-client';
 import { chooseDraft, mergeDrafts, parseMarked, storeLine } from '@/lib/matched-text/marks';
-import { renderReview, type ReviewDraft } from '@/lib/matched-text/review';
+import { parseReview, rebuildDrafts, renderReview, type ReviewDraft } from '@/lib/matched-text/review';
 
 const MODEL = 'claude-opus-5';
 const args = process.argv.slice(2);
@@ -56,6 +56,32 @@ if (mode === 'store') {
   }
   console.log(`write-matched-text: ${stored} of ${ids.length} stored${short === 0 ? '' : `, ${short} SHORT by a dropped sentence`}`);
   process.exit(0);
+}
+
+/*
+  --import-review <file> (17 Nov): the drafts a review file holds, rebuilt into drafts.json with no model call. Three
+  redrafts ran under the whole-file write and left three where 55 had been; the 52 survived only in the review file.
+  Each record's full id and its artist, title, year and ABOUT come from the database by prefix and must match the file,
+  or the record is refused. A draft already in drafts.json wins over the file's copy of it, so a redraft is kept.
+*/
+if (args.includes('--import-review')) {
+  const file = args[args.indexOf('--import-review') + 1];
+  if (file === undefined) throw new Error('write-matched-text: --import-review wants the review file');
+  const parsed = parseReview(readFileSync(file, 'utf8'));
+  /* recordsToDraft leaves out a record whose matched text is already stored; such a record needs no import. */
+  const rebuilt = rebuildDrafts(parsed, await recordsToDraft({ prefixes: parsed.map((r) => r.prefix) }));
+  const imported: Draft[] = rebuilt.imported;
+  const refused = rebuilt.refused;
+  const draftsFile = join(WORK, 'drafts.json');
+  const current: Draft[] = existsSync(draftsFile) ? JSON.parse(readFileSync(draftsFile, 'utf8')) : [];
+  if (current.length > 0) copyFileSync(draftsFile, join(WORK, 'drafts-previous.json'));
+  /* The file's copies first, then what drafts.json already holds, so a draft made since the file replaces the file's. */
+  const merged = mergeDrafts(imported, current);
+  const kept = current.filter((c) => imported.some((i) => i.id === c.id && (i.effort ?? '') === (c.effort ?? ''))).length;
+  writeFileSync(draftsFile, JSON.stringify(merged, null, 2));
+  for (const line of refused) console.log(`refused ${line}`);
+  console.log(`write-matched-text: ${parsed.length} in the file, ${imported.length - kept} imported, ${kept} already in drafts.json and kept as they are, ${refused.length} refused; drafts.json holds ${merged.length}${current.length > 0 ? ', previous file drafts-previous.json' : ''}`);
+  process.exit(refused.length === 0 ? 0 : 1);
 }
 
 const prefixes = mode === 'sample' ? args.filter((a) => /^[0-9a-f]{8}/.test(a)) : [];
