@@ -57306,3 +57306,28 @@ mark suggests, and the pick quotes the sentence either way.
 credits are richer, the inverse of the fame bias the scope doc warned of. Sharper still, **compilations are the worst
 grounded**: Glenn Miller 8, Peter Paul & Mary 8, Dylan's Greatest Hits II 7, On The Radio 6, Blues Project 6, Ink Spots
 6, on thin per-track credits. If more compilations arrive, their descriptions need Adam's ear most.
+
+**The coordinator's first-pass review of the 55 (17 Nov), and what followed.** The numbers rule held 55 of 55: no
+invented duration, tempo or ensemble size, and two drafts declined a figure their ABOUT offered (The Doors' "seven-minute
+Light My Fire" became "stretches past the length of a single"). The detector, though, fired on 126 of 440 sentences,
+nearly all bare number-words; narrowed to units, bare figures outside a quoted title, and people-counts above the
+credited names, it fires on 9 of 440, and the ordinal "second" was its first defect, caught by measuring against the
+real drafts. **To redraft:** Mandy, Indiana `1611cb00` (a sentence about what the material does not say, now dropped
+mechanically and reported in the review); Glenn Miller `52435f53` and Kim Gordon `a950eb99` (the body asserts what
+their own unknown list disclaims: the prompt now forbids it, and there is no mechanical check, since it needs the
+sentence and the unknown item to be read together). Side names are pinned to side one to side four (159 numbered
+against 24 lettered in the 55).
+
+**Pavement `d975683b` is not an import truncation on the evidence here.** The cached release's tracklist runs A1 to C6,
+18 tracks, and its format reads "Vinyl, LP"; the draft's unknown list says so. Whether the matched Discogs release has
+a fourth side of music, or an etched side four, or is the wrong release for Adam's copy, is settled by its Discogs page,
+which is Adam's to read; a quarter of the record is undescribed until then.
+
+**Grounding tracks Discogs credit depth for the pressing, not fame and not the model's knowledge (the coordinator).**
+Traffic's 6 supported come from per-track credits; Gaucho's 0 from credits of writers, producer and lacquer cutter.
+The 21 records at 0 or 1 supported cannot be improved by prompting: a 1963 budget compilation has no more credit data.
+And the supported count is not a quality signal: Kraftwerk `ed971f49` is accurate throughout at 1, Glenn Miller carries
+a probable error at 0.
+
+**For an ABOUT pass, not now:** Donovan — The Hurdy Gurdy Man's ABOUT is in the wrong register, encyclopaedic ("It
+matters because ...") rather than the sound-and-occasion voice of the other 54.

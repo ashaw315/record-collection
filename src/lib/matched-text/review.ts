@@ -15,14 +15,34 @@ export type ReviewDraft = {
   unknown: string[];
   /** Set where a record is drafted at more than one effort (the coordinator, 15 Nov): each draft is shown under it. */
   effort?: string;
+  /** Distinct names in the release and track credits (17 Nov): a people-count above it cannot be from the credits. */
+  credited?: number;
+  /** Sentences the client dropped for describing the material rather than the record (17 Nov). */
+  dropped?: string[];
 };
 
 /*
-  A sentence with a number in it, for checking (15 Nov): the prompt forbids a number the material does not give, and
-  the pick's claim check would accept one. Digits or number words; a side's own name ("side two") is not a number.
+  A sentence with a number to check (17 Nov). The first detector fired on any number word, 126 of 440 sentences, nearly
+  all "one voice", "two guitars", "four-piece", while the prompt's rule held on all 55. What the rule forbids is a figure
+  the material does not give: a duration or tempo, a bare figure, or a people-count the credits cannot cover. A quoted
+  title is not a figure ("Born 2"), nor is a side's name, nor a count the credited names can make up.
 */
-const NUMBER = /\b\d|\b(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|fifteen|twenty|thirty|forty|fifty|sixty|hundred|dozen)\b/i;
-const hasNumber = (text: string) => NUMBER.test(text.replace(/\bside (one|two|three|four)\b/gi, 'side'));
+const WORDS: Record<string, number> = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9, ten: 10, eleven: 11, twelve: 12, dozen: 12, fifteen: 15, twenty: 20, thirty: 30, forty: 40, fifty: 50, sixty: 60, hundred: 100 };
+const WORD = Object.keys(WORDS).join('|');
+/* "second" alone is an ordinal ("placed second", "a second guitarist"); only a counted second, or seconds, is a duration. */
+const UNIT = new RegExp(`\\b(\\d+|${WORD})[- ](minutes?|seconds?|hours?|bpm|beats)\\b|\\b(minutes?|seconds|hours?|bpm)\\b`, 'i');
+const ENSEMBLE = new RegExp(`\\b(\\d+|${WORD})[- ](piece|man|men|members?|musicians?|players?|singers?|voices?|drummers?|guitarists?|percussionists?|horns|strings|strong)\\b`, 'gi');
+/* A quoted title is not a figure; a single-quoted one opens after a space, which an apostrophe inside a word never does. */
+const unquoted = (text: string) => text.replace(/"[^"]*"|“[^”]*”|(^|\s)'[^']*'(?=[\s,.;:]|$)/g, '$1""');
+function needsChecking(text: string, credited: number): boolean {
+  const t = unquoted(text);
+  if (UNIT.test(t) || /\d/.test(t)) return true;
+  for (const m of t.matchAll(ENSEMBLE)) {
+    const n = /^\d+$/.test(m[1]) ? Number(m[1]) : WORDS[m[1].toLowerCase()];
+    if (n > credited) return true;
+  }
+  return false;
+}
 
 export function renderReview(drafts: readonly ReviewDraft[], title: string): string {
   const lines = [
@@ -51,8 +71,9 @@ export function renderReview(drafts: readonly ReviewDraft[], title: string): str
       const supported = v.sentences.filter((x) => x.basis === 'supported').length;
       const chars = v.sentences.map((x) => x.text).join(' ').length;
       lines.push(`${v.sentences.length} sentences, ${chars} characters; ${supported} supported, ${v.sentences.length - supported} inferred.`, '');
-      const numbered = v.sentences.filter((x) => hasNumber(x.text));
+      const numbered = v.sentences.filter((x) => needsChecking(x.text, v.credited ?? 0));
       lines.push(numbered.length === 0 ? 'Numbers to check: none' : [`Numbers to check: ${numbered.length}`, ...numbered.map((x) => `- ${x.text}`)].join('\n'), '');
+      if (v.dropped !== undefined && v.dropped.length > 0) lines.push([`Dropped, for describing the material rather than the record: ${v.dropped.length}`, ...v.dropped.map((x) => `- ${x}`)].join('\n'), '');
     }
   }
   return `${lines.join('\n')}\n`;

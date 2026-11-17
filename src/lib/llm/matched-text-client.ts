@@ -28,13 +28,22 @@ const MATCHED_TEXT_EFFORT: Effort = 'medium';
 export type MatchedTextSubject = { artist: string; title: string; year: number | null; about: string | null };
 export type Sentence = { text: string; basis: 'supported' | 'inferred' };
 export type MatchedTextResult =
-  | ({ ok: true; text: string | null; sentences: Sentence[]; unknown: string[] } & Observed)
+  | ({ ok: true; text: string | null; sentences: Sentence[]; unknown: string[]; dropped: string[] } & Observed)
   | ({ ok: false; reason: 'cut' | 'unreadable' } & Observed);
 
 const Reply = z.object({
   sentences: z.array(z.object({ text: z.string(), basis: z.enum(['supported', 'inferred']) })),
   unknown: z.array(z.string()),
 });
+
+/*
+  The shape of a sentence about the material rather than the record (17 Nov): it names the material, negates, and uses
+  a telling verb ("that is not something this material tells you"). Run over the 55's 440 sentences it matched that one
+  sentence and no other; "no sung lyric credited" and "all credited" name the credits without a negation and a verb.
+*/
+const describesTheMaterial = (text: string) =>
+  /\b(material|tracklist|credits|information|listing)\b/i.test(text) && /\b(not|cannot)\b|n[’']t\b/i.test(text) &&
+  /\b(tell|tells|say|says|give|gives|show|shows|specify|specifies|indicate|indicates|supply|supplies|reveal|reveals|state|states|record|records|list|lists)\b/i.test(text);
 
 export function buildMatchedTextPrompt(subject: MatchedTextSubject, facts: ReleaseFacts | null): string {
   const tracks = facts === null || facts.tracks.length === 0 ? 'none supplied' : facts.tracks.map((t) => `${t.position} ${t.title}`).join('\n');
@@ -58,6 +67,8 @@ export function buildMatchedTextPrompt(subject: MatchedTextSubject, facts: Relea
     'Write each point as a whole sentence that carries its own qualification, so it can be quoted alone without saying more than it means. Mark a sentence "supported" only where the tracklist, the credits or the format below supports everything it says, and "inferred" where any of it rests on your own knowledge of the record or on the ABOUT.',
     '',
     `The record's ABOUT. You may use it, but it was written by a model from this material and its own knowledge, so anything resting on the ABOUT is marked "inferred", never "supported".\n${subject.about ?? 'none'}`,
+    '',
+    'Never write a sentence about what the material does not say or does not tell you: that goes under "unknown" and nowhere else. A sentence never asserts what you list under "unknown". Call the sides side one, side two, side three and side four, never side A or side B.',
     '',
     `Its tracklist, by position (a letter is a side):\n${tracks}`,
     '',
@@ -90,9 +101,12 @@ export function createMatchedTextClient(transport: { create: MessageCreate }): M
       } catch {
         return { ok: false, reason: 'unreadable', ...observed };
       }
-      const sentences = parsed.sentences.map((s) => ({ text: s.text.trim(), basis: s.basis })).filter((s) => s.text !== '');
+      const all = parsed.sentences.map((s) => ({ text: s.text.trim(), basis: s.basis })).filter((s) => s.text !== '');
+      /* A sentence about the material's silence is not a claim about the record (17 Nov); it is dropped, and reported. */
+      const sentences = all.filter((s) => !describesTheMaterial(s.text));
+      const dropped = all.filter((s) => describesTheMaterial(s.text)).map((s) => s.text);
       /* No sentence is blank, NULL in the store (§4.6), never an empty text. */
-      return { ok: true, text: sentences.length === 0 ? null : sentences.map((s) => s.text).join(' '), sentences, unknown: parsed.unknown, ...observed };
+      return { ok: true, text: sentences.length === 0 ? null : sentences.map((s) => s.text).join(' '), sentences, unknown: parsed.unknown, dropped, ...observed };
     },
   };
 }

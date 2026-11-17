@@ -53,14 +53,37 @@ describe('renderReview', () => {
     expect(out).toMatch(/2 sentences, 66 characters; 1 supported, 1 inferred/);
   });
 
-  it('lists each sentence carrying a number for checking, digits or words, and not a side’s name', () => {
-    const numbered = renderReview([{ ...drafts[0], sentences: [
+  /*
+    Narrowed (the coordinator's review of the 55, 17 Nov): the first detector fired on 126 of 440 sentences, nearly all
+    bare number-words ("one voice with one instrument", "four-piece ... two guitars"), while the rule itself held 55 of
+    55. It now fires on a quantity with a unit, a bare figure outside a quoted title, and a people-count larger than the
+    names the credits supply; a count the credits can cover, and a side's name, do not fire.
+  */
+  it('lists a sentence carrying a duration, a tempo, a bare figure or a people-count the credits cannot cover, and not one the credits cover or a side’s name', () => {
+    const numbered = renderReview([{ ...drafts[0], credited: 4, sentences: [
       { text: 'The title track runs roughly seven minutes.', basis: 'inferred' },
-      { text: 'A 40-piece orchestra plays.', basis: 'inferred' },
-      { text: 'Side two is slower than side one.', basis: 'inferred' },
+      { text: 'A forty-piece orchestra plays behind him.', basis: 'inferred' },
+      { text: 'It sits around 120 bpm throughout.', basis: 'inferred' },
+      { text: 'There are 11 tracks.', basis: 'inferred' },
+      { text: 'A four-piece band: two guitars that both sing, bass and drums.', basis: 'supported' },
+      { text: 'The core sound is one voice with one instrument at a time.', basis: 'supported' },
+      { text: '"Born 2" opens side one, and "When I\'m Sixty-Four" closes side two.', basis: 'supported' },
+      { text: 'Placed second on side one, it adds a second guitarist, and Taylor\'s own \'Loss Of Life (Part 2)\' follows.', basis: 'supported' },
     ] }], 'Numbers');
-    expect(numbered).toMatch(/Numbers to check: 2\n- The title track runs roughly seven minutes\.\n- A 40-piece orchestra plays\./);
+    expect(numbered).toMatch(/Numbers to check: 4\n- The title track runs roughly seven minutes\.\n- A forty-piece orchestra plays behind him\.\n- It sits around 120 bpm throughout\.\n- There are 11 tracks\./);
     expect(out).toMatch(/Numbers to check: none/);
+  });
+
+  it('counts an ensemble size against no credits at all where the draft carries none, so it fires', () => {
+    const numbered = renderReview([{ ...drafts[0], sentences: [{ text: 'A four-piece band plays.', basis: 'inferred' }] }], 'Numbers');
+    expect(numbered).toMatch(/Numbers to check: 1/);
+  });
+
+  /* Mandy, Indiana's eighth sentence (17 Nov) described what the material did not say, stored as a citable claim. */
+  it('shows a sentence the client dropped for describing the material, so Adam sees the draft is a sentence short', () => {
+    const dropped = renderReview([{ ...drafts[0], dropped: ['Which tracks are the quiet ones is not something this material tells you.'] }], 'Dropped');
+    expect(dropped).toMatch(/Dropped, for describing the material rather than the record: 1\n- Which tracks are the quiet ones is not something this material tells you\./);
+    expect(out).not.toMatch(/Dropped/);
   });
 });
 

@@ -97,9 +97,10 @@ for (const r of rows) {
   const facts = r.payload === null ? null : groundingFromPayload(r.payload);
   for (const effort of efforts) {
     const result = await client.write({ artist: r.artist, title: r.title, year: r.year, about: r.about }, facts, effort === undefined ? {} : { effort });
-    const base = { id: r.id, artist: r.artist, title: r.title, year: r.year, about: r.about, ...(effort === undefined ? {} : { effort }) };
+    const credited = new Set([...(facts?.credits ?? []), ...(facts?.trackCredits ?? [])].map((c) => c.name)).size;
+    const base = { id: r.id, artist: r.artist, title: r.title, year: r.year, about: r.about, credited, ...(effort === undefined ? {} : { effort }) };
     const draft: Draft = result.ok
-      ? { ...base, status: 'finished', sentences: result.sentences, unknown: result.unknown, text: result.text }
+      ? { ...base, status: 'finished', sentences: result.sentences, unknown: result.unknown, dropped: result.dropped, text: result.text }
       : { ...base, status: `failed: ${result.reason}`, sentences: [], unknown: [], text: null };
     drafts.push(draft);
     console.log(`${r.id.slice(0, 8)}  ${r.artist} — ${r.title}${effort === undefined ? '' : ` at ${effort}`}: ${draft.status}, ${draft.sentences.length} sentence(s), ${draft.sentences.filter((s) => s.basis === 'inferred').length} inferred`);

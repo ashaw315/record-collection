@@ -80,6 +80,21 @@ describe('the prompt', () => {
     expect(prompt).toMatch(/personnel, format (and|or) sequence[^.]*only where (it|they) bears? on how (it|the record) sounds/i);
   });
 
+  /*
+    The coordinator's review of the 55 (17 Nov): one sentence described what the material did not say, two records
+    asserted in the body what their own unknown list disclaimed, and the sides were named three ways, which fragments
+    the vocabulary a phrase has to reach.
+  */
+  it('says a sentence never describes what the material does not say and never asserts what is listed under unknown', () => {
+    expect(prompt).toMatch(/never (write|writes) a sentence about what the material does not (say|tell|give)/i);
+    expect(prompt).toMatch(/never asserts? what you list under "unknown"/i);
+  });
+
+  it('pins the sides’ names to side one, side two, side three and side four', () => {
+    expect(prompt).toMatch(/call the sides side one, side two, side three and side four/i);
+    expect(prompt).toMatch(/never side A/i);
+  });
+
   it('carries the tracklist by side and the credits, and asks each sentence to be whole and marked supported or inferred', () => {
     expect(prompt).toContain('A1 Girl From The North Country');
     expect(prompt).toContain('B1 Lay Lady Lay');
@@ -106,6 +121,19 @@ describe('the reply, stubbed', () => {
       text: 'Acoustic guitar, harmonica and pedal steel, played close and unhurried. Side one is brisk and light; side two slows into crooned ballads.',
       sentences: [{ basis: 'supported' }, { basis: 'inferred' }],
       unknown: ['how loud the mix runs'],
+    });
+  });
+
+  it('drops a sentence that describes what the material does not say, keeps the rest, and reports the dropped one', async () => {
+    const r = await createMatchedTextClient(transport(JSON.stringify({ sentences: [
+      { text: 'Pedal steel and harmonica, close and unhurried.', basis: 'supported' },
+      { text: 'Which tracks are the quiet ones is not something this material tells you.', basis: 'supported' },
+      { text: 'The sound is a trio core, with no sung lyric credited on side two.', basis: 'supported' },
+    ], unknown: [] }))).write(subject, facts);
+    expect(r).toMatchObject({
+      ok: true,
+      text: 'Pedal steel and harmonica, close and unhurried. The sound is a trio core, with no sung lyric credited on side two.',
+      dropped: ['Which tracks are the quiet ones is not something this material tells you.'],
     });
   });
 
