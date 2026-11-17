@@ -90,6 +90,11 @@ describe('the prompt', () => {
     expect(prompt).toMatch(/never asserts? what you list under "unknown"/i);
   });
 
+  /* The coordinator, 17 Nov: five or six of the 55 spent their last slot on a mastering credit. A format observation that bears on the sound (mono, a stereo spread) is not a credit and stays. */
+  it('says a mastering, lacquer, design or label credit is never worth a sentence, and names only credits', () => {
+    expect(prompt).toMatch(/a mastering, lacquer, design or label credit is never worth a sentence/i);
+  });
+
   it('pins the sides’ names to side one, side two, side three and side four', () => {
     expect(prompt).toMatch(/call the sides side one, side two, side three and side four/i);
     expect(prompt).toMatch(/never side A/i);

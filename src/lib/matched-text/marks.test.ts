@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { chooseDraft, parseMarked } from './marks';
+import { chooseDraft, parseMarked, storeLine } from './marks';
 
 /**
  * **What `--store` writes to production is decided here (the coordinator, 15 Nov):** the ids in Adam's marked file, each
@@ -34,3 +34,21 @@ describe('chooseDraft', () => {
     expect(chooseDraft(drafts, { prefix: 'e315c6a7', effort: 'low' })).toBeUndefined();
   });
 });
+
+/*
+  The --store path says what it stored (the coordinator, 17 Nov). A sentence dropped for describing the material leaves
+  a draft a sentence short, and the review file says so; the store is the other path Adam reads, once he adds records.
+*/
+describe('storeLine', () => {
+  const d = { id: '1611cb00-0000-4000-8000-000000000000', artist: 'Mandy, Indiana', title: 'i’ve seen a way', sentences: new Array(8).fill({ text: 'x', basis: 'inferred' as const }) };
+
+  it('names the record and its sentence count', () => {
+    expect(storeLine(d)).toBe('1611cb00: stored (Mandy, Indiana — i’ve seen a way), 8 sentences');
+  });
+
+  it('says loudly when a draft is short because a sentence was dropped, and which', () => {
+    expect(storeLine({ ...d, sentences: d.sentences.slice(0, 7), dropped: ['That is not something this material tells you.'] }))
+      .toBe('1611cb00: stored (Mandy, Indiana — i’ve seen a way), 7 sentences — SHORT, 1 dropped for describing the material: That is not something this material tells you.');
+  });
+});
+

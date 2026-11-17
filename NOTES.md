@@ -57318,10 +57318,22 @@ their own unknown list disclaims: the prompt now forbids it, and there is no mec
 sentence and the unknown item to be read together). Side names are pinned to side one to side four (159 numbered
 against 24 lettered in the 55).
 
-**Pavement `d975683b` is not an import truncation on the evidence here.** The cached release's tracklist runs A1 to C6,
-18 tracks, and its format reads "Vinyl, LP"; the draft's unknown list says so. Whether the matched Discogs release has
-a fourth side of music, or an etched side four, or is the wrong release for Adam's copy, is settled by its Discogs page,
-which is Adam's to read; a quarter of the record is undescribed until then.
+**Pavement `d975683b` is closed (Adam, 17 Nov): side four of Wowee Zowee is blank.** The cached release's A1 to C6, 18
+tracks, is the complete tracklist; the import stored everything there is and the draft described it, hedging honestly
+("side four, if the LP has one"). No redraft. When it is next redrafted for another reason, its unknown list's side-four
+item is now a known thing, and the blank fourth side is arguably worth a sentence: a 2LP you do not flip past side three.
+
+**The side-name pin's stated reason was wrong (the coordinator, 17 Nov).** It was justified by lexical reach ("side two"
+not reaching "Side B"), but the pick sends every eligible record's whole text to the model, so nothing lexical fragments;
+the second time an argument from lexical overlap was made under a route that does none. The pin stays for new drafts and
+the three redrafts, as cheap consistency. The 24 lettered mentions in the other 52 are harmless under this route: do not
+redraft 52 records for them.
+
+**A mastering, lacquer, design or label credit is never worth a sentence (17 Nov):** in the prompt for new records and
+the three redrafts; the other 52 keep what they have (five or six spent a slot on one). The rule names credits only, so a
+format observation that bears on the sound, mono or a stereo spread, is not in its words; whether the model reads it so
+shows in the redrafts, since there is no mechanical filter. The --store path now prints each record's sentence count and
+says SHORT, with the sentence, where one was dropped.
 
 **Grounding tracks Discogs credit depth for the pressing, not fame and not the model's knowledge (the coordinator).**
 Traffic's 6 supported come from per-track credits; Gaucho's 0 from credits of writers, producer and lacquer cutter.

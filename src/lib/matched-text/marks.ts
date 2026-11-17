@@ -17,3 +17,14 @@ export function chooseDraft<D extends { id: string; effort?: string }>(drafts: r
   if (own.every((d) => d.effort === undefined)) return mark.effort === undefined ? own[0] : undefined;
   return own.find((d) => d.effort === (mark.effort ?? 'medium'));
 }
+
+/**
+ * What the store prints for each record it writes (17 Nov). A draft a sentence short because the client dropped a
+ * sentence about the material says so here, loudly, since this is the path Adam reads when he adds records.
+ */
+export function storeLine(d: { id: string; artist: string; title: string; sentences: readonly unknown[]; dropped?: readonly string[] }): string {
+  const head = `${d.id.slice(0, 8)}: stored (${d.artist} — ${d.title}), ${d.sentences.length} sentences`;
+  const dropped = d.dropped ?? [];
+  return dropped.length === 0 ? head : `${head} — SHORT, ${dropped.length} dropped for describing the material: ${dropped.join(' ')}`;
+}
+

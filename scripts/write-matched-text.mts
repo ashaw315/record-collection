@@ -21,7 +21,7 @@ import { join } from 'node:path';
 import { recordsToDraft, storeGeneratedMatchedText } from '@/lib/db/queries/matched-text';
 import { groundingFromPayload } from '@/lib/llm/about-grounding';
 import { buildMatchedTextPrompt, createMatchedTextClient, getMatchedTextClient, matchedTextTransport } from '@/lib/llm/matched-text-client';
-import { chooseDraft, parseMarked } from '@/lib/matched-text/marks';
+import { chooseDraft, parseMarked, storeLine } from '@/lib/matched-text/marks';
 import { renderReview, type ReviewDraft } from '@/lib/matched-text/review';
 
 const MODEL = 'claude-opus-5';
@@ -44,15 +44,17 @@ if (mode === 'store') {
   const drafts: Draft[] = JSON.parse(readFileSync(join(WORK, 'drafts.json'), 'utf8'));
   const ids = marks.map((m) => m.prefix);
   let stored = 0;
+  let short = 0;
   for (const mark of marks) {
     const { prefix } = mark;
     const d = chooseDraft(drafts, mark);
     if (d === undefined || d.text === null) { console.log(`${prefix}: no finished draft to store`); continue; }
     await storeGeneratedMatchedText(d.id, d.text, MODEL);
     stored += 1;
-    console.log(`${prefix}: stored (${d.artist} — ${d.title})`);
+    if ((d.dropped ?? []).length > 0) short += 1;
+    console.log(storeLine(d));
   }
-  console.log(`write-matched-text: ${stored} of ${ids.length} stored`);
+  console.log(`write-matched-text: ${stored} of ${ids.length} stored${short === 0 ? '' : `, ${short} SHORT by a dropped sentence`}`);
   process.exit(0);
 }
 

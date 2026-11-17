@@ -62,7 +62,7 @@ export function buildMatchedTextPrompt(subject: MatchedTextSubject, facts: Relea
     '',
     'Never write a number the material below does not give: no durations, tempos, track counts or ensemble sizes from your own knowledge. Describe them in words instead where you can: "mid-tempo", "sparse", "a large orchestra", "builds slowly over a long side".',
     '',
-    'Write six to eight sentences, chosen by what someone asking for music could reach: how it sounds and the occasion it suits, how it changes across a side and between sides, and whether it wants attention or sits in the background. Include personnel, format and sequence detail only where it bears on how the record sounds; the rest belongs elsewhere.',
+    'Write six to eight sentences, chosen by what someone asking for music could reach: how it sounds and the occasion it suits, how it changes across a side and between sides, and whether it wants attention or sits in the background. Include personnel, format and sequence detail only where it bears on how the record sounds; the rest belongs elsewhere. A mastering, lacquer, design or label credit is never worth a sentence.',
     '',
     'Write each point as a whole sentence that carries its own qualification, so it can be quoted alone without saying more than it means. Mark a sentence "supported" only where the tracklist, the credits or the format below supports everything it says, and "inferred" where any of it rests on your own knowledge of the record or on the ABOUT.',
     '',
