@@ -57415,3 +57415,25 @@ by thin personnel credits, a Discogs field unrelated to tracklist position, so t
 to the gap, and the audit finds all six fully lettered; and MusicBrainz's track number field does carry A1/B1 for vinyl
 releases, which he had dismissed. Declined by him: Cover Art Archive plus OCR on label images, unless an audit returns
 about thirty records; this one returns none.
+
+**The coordinator's two small questions, answered from the drafts file (17 Nov).** The triple is Cindy Lee — Diamond
+Jubilee (01ad99d8), 32 positions over sides A to F (5, 6, 5, 5, 6, 5). Its description's first sentence, supported, names
+all six sides and that each holds five or six short songs; it then names side B and side D by letter (a Monday draft,
+before the side-naming pin) and F3 in a credits sentence, says nothing of sides E and F individually, and lists "how each
+individual side differs" under unknown. So it covers the sides' existence, not each side's music, and says so. Carpenters
+(7d953882): the description puts the medley on side two, which is right (B4), as "the Bacharach-David medley that
+follows" Druscilla Penny (B2), which skips One Love (B3), an imprecise sequence and not a wrong side; it lists "the exact
+songs in the Bacharach-David medley" under unknown while the payload's sub-tracks name all six. So nothing is wrong about
+placement, the fix is later for Carpenters, and its draft is stored as it is; a redraft after the sub-track fix would
+place the medley at B4 and could name its songs, one call, when the record next redrafts.
+
+**Two small units built on the audit (17 Nov).** The grounding takes an index entry's position from its sub-tracks'
+shared prefix (B4 from B4.a to B4.f) and nothing where they disagree; against production, read-only, the only tracklist
+line that changes in 55 prompts is Carpenters' medley, blank to B4. The side rule joins the prompt after the sides pin: a
+side the tracklist does not give is never placed, goes under unknown, and a record with no sides at all is described as
+a whole with fewer sentences, worded as the rule's consequence and not a range; the length sentence is unchanged. The
+review gains "Sides to check, the tracklist giving none" on a record whose prompt carried no lettered position, matching
+any side reference (number, word, letter, ordinal), since the collection holds a six-sided triple; absent on sided
+records and on drafts from before the field. Both tests are synthetic and say so: no real payload of the 55 lacks
+positions. Open for the coordinator: the prompt says "six to eight sentences" and his message says the target stays
+eight; the wording was left as it stands and the test pins it, so tightening it to eight is his call, not made here.

@@ -479,8 +479,15 @@ be regenerated, edited and one day retired without touching `records`.
 CHECK that `generated` and `edited` are each NULL or hold something other
 than whitespace: a blank is NULL, so "unknown" has one form. The CHECK stops
 an empty string and nothing more: plausible filler passes it. Whether the
-text is honest comes from the drafting prompt and Adam's review, not the
-database. The cascade is
+text is honest comes from the drafting prompt and Adam's correction in use,
+not the database. **Correction in use replaces verification up front**
+(Adam, 17 Nov: "i want this whole thing to be more accurate than even
+myself"): reading 440 sentences in an hour is a weak check that reads as a
+strong one, and verifying properly would mean playing 55 records. So the
+drafts are stored whole, unmarked, once the edit path below and the answers'
+reasons (§P.2) are built, and a wrong sentence is corrected from the edit
+sheet when a reason shows it, through §5.2's matched-text resource, the only
+writer of `edited`. The cascade is
 §4.5's exception, for the same reason: the text is an attribute of its
 record.
 
@@ -648,6 +655,16 @@ Note: `app/api/records/stats/route.ts` is a static segment and must not be swall
 | DELETE | `/api/records/:id/snippet` | Clears `snippet`, leaves `snippet_edited_at` (§4.2 — a deliberate deletion is an edit). |
 
 **`confirmReplace` is required only when `snippet_edited_at` is set**, and its absence there is a refusal rather than a silent overwrite: `409` with a code naming the situation, so a client that has not asked the user cannot destroy their text by omission. Defaulting it to true would put the safety in the UI, where the next caller — a script, a retry, a second client — does not inherit it.
+
+**Matched text** (§4.6, A78; the coordinator, 17 Nov). A separate resource, as the snippet is. The one write here is Adam's. Generation is not an endpoint: the model's text is written by the drafting script on Adam's machine (`npm run matched:draft -- --store`), never by a route, since every production write of generated text is his to run.
+
+| Method | Path | Notes |
+|---|---|---|
+| GET | `/api/records/:id/matched-text` | `{ data: { generated, generatedModel, generatedAt, edited, editedAt, effective } }`. `effective` is `edited` where set and `generated` otherwise, the text the pick reads, so the edit sheet opens on it (§4.6). A record with no row answers every field `null` with `200`: no matched text is a state of the record, not a missing record, and the sheet has to open on a record with no text so Adam can write one. |
+| PATCH | `/api/records/:id/matched-text` | Save Adam's edit. Body `{ edited: string }`, trimmed, non-blank, unknown keys rejected. Writes `edited` and `edited_at` and nothing else. Inserts the row where none exists, so a record the model never described can be described by hand, and then counts as covered (§4.8): the latch's escape hatch. Answers as GET does. PATCH, as the snippet's is, and honest about writing two of six fields. |
+| DELETE | `/api/records/:id/matched-text` | Clears `edited` and `edited_at`, so the pick reads `generated` again. Never touches `generated`. Design's sheet rules clearing an edit back to the generated text; her "no delete" is of a record's text, never of this verb, so the two do not conflict. |
+
+All three: `401` unauthenticated, `400` for a non-UUID id, `404` where the record does not exist. No `confirmReplace`: an edit replaces an edit by design (§4.6, "a second edit starts from his first"), and nothing here writes `generated`. §4.6's two CHECKs are each on one column, so a row with `edited` set and `generated` NULL is legal and the upsert needs no migration.
 
 ### 5.3 Want list
 | Method | Path | Notes |
