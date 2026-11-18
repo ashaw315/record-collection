@@ -1,6 +1,6 @@
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { sql } from 'drizzle-orm';
-import { collectionTitles, recordsToDraft, storeGeneratedMatchedText } from '@/lib/db/queries/matched-text';
+import { clearMatchedTextEdit, collectionTitles, editMatchedText, readMatchedText, recordsToDraft, storeGeneratedMatchedText } from '@/lib/db/queries/matched-text';
 import { closeTestDb, getTestDb, truncateAll } from '../helpers/db';
 
 /**
@@ -77,5 +77,73 @@ describe('recordsToDraft and collectionTitles', () => {
     const [a, b, c] = await three();
     expect((await collectionTitles()).map((r) => r.id).sort()).toEqual([a, b, c].sort());
     expect((await collectionTitles())[0]).toMatchObject({ title: 'Stored', artist: 'Store' });
+  });
+});
+
+/*
+  §5.2's matched-text resource (the coordinator, 17 Nov): the read, the edit and its clearing, the only writer of `edited`.
+  Two absences kept apart, as the snippet's are: a record with no row is a state of the record, a record that does not
+  exist is not found. The edit's upsert is proved here against Postgres, not assumed: a row with `edited` set and
+  `generated` NULL passes §4.6's two CHECKs, since each is on one column, which is why no migration precedes the route.
+*/
+const MISSING = '62e4e7db-951d-441c-acf0-11be68ab4daf';
+
+describe('readMatchedText', () => {
+  it('is null for a record that does not exist, and every field null for a record with no row', async () => {
+    expect(await readMatchedText(MISSING)).toBeNull();
+    const id = await aRecord();
+    expect(await readMatchedText(id)).toEqual({ generated: null, generatedModel: null, generatedAt: null, edited: null, editedAt: null });
+  });
+
+  it('reads both halves of a row', async () => {
+    const id = await aRecord();
+    await storeGeneratedMatchedText(id, 'Generated.', 'model-a');
+    await editMatchedText(id, 'Edited.');
+    const state = await readMatchedText(id);
+    expect(state).toMatchObject({ generated: 'Generated.', generatedModel: 'model-a', edited: 'Edited.' });
+    expect(state?.generatedAt).toBeInstanceOf(Date);
+    expect(state?.editedAt).toBeInstanceOf(Date);
+  });
+});
+
+describe('editMatchedText', () => {
+  it('inserts the row where none exists, with the generated half NULL, and the CHECKs accept it', async () => {
+    const id = await aRecord();
+    expect(await editMatchedText(id, 'By hand.')).toEqual({ ok: true });
+    const r = await row(id);
+    expect(r).toMatchObject({ generated: null, generated_model: null, generated_at: null, edited: 'By hand.' });
+    expect(r.edited_at).not.toBeNull();
+  });
+
+  it('writes edited and edited_at on a row that has a generated text, touching nothing else', async () => {
+    const id = await aRecord();
+    await storeGeneratedMatchedText(id, 'Generated.', 'model-a');
+    const before = await row(id);
+    await editMatchedText(id, 'Edited.');
+    const after = await row(id);
+    expect(after).toMatchObject({ generated: 'Generated.', generated_model: 'model-a', generated_at: before.generated_at, edited: 'Edited.' });
+    expect(after.edited_at).not.toBeNull();
+  });
+
+  it('is not found for a record that does not exist, writing nothing', async () => {
+    expect(await editMatchedText(MISSING, 'Nowhere.')).toEqual({ ok: false, reason: 'not_found' });
+    expect((await db.execute(sql`SELECT count(*)::int AS n FROM record_matched_text`)).rows[0]).toEqual({ n: 0 });
+  });
+});
+
+describe('clearMatchedTextEdit', () => {
+  it('clears edited and edited_at and leaves the generated half', async () => {
+    const id = await aRecord();
+    await storeGeneratedMatchedText(id, 'Generated.', 'model-a');
+    await editMatchedText(id, 'Edited.');
+    expect(await clearMatchedTextEdit(id)).toEqual({ ok: true });
+    expect(await row(id)).toMatchObject({ generated: 'Generated.', generated_model: 'model-a', edited: null, edited_at: null });
+  });
+
+  it('is ok on a record with no row, creating none, and not found for a record that does not exist', async () => {
+    const id = await aRecord();
+    expect(await clearMatchedTextEdit(id)).toEqual({ ok: true });
+    expect(await row(id)).toBeUndefined();
+    expect(await clearMatchedTextEdit(MISSING)).toEqual({ ok: false, reason: 'not_found' });
   });
 });

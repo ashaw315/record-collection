@@ -57535,3 +57535,34 @@ path's upsert needs no migration.
 
 **Gate 44224689257 on d238cfb0 (unit 3a with the side rule and the grounding fix), read from its logs:** unit 5301 passed, 3
 skipped; chromium 1114 passed, 1 skipped; mobile 397 passed, 4 skipped; report-only 4 passed; no flaky or retry line.
+
+## 18 Nov: the edit path, §5.2's matched-text resource
+
+**Built on the coordinator's go, as restated: GET, PATCH and DELETE `/api/records/:id/matched-text`, the only writer of
+`edited`.** GET answers the row's six fields and `effective` (the edit where set, the generated text otherwise), every
+field null at 200 for a record with no row, 404 for no record. PATCH takes `{ edited: string }`, trimmed, non-blank,
+unknown keys rejected (a body carrying `generated` is refused, since that half is the script's), writes `edited` and
+`edited_at` in one upsert and nothing else, inserting the row where none exists: a missing record fails the foreign key in
+the same statement, and that is the 404, no check-then-act. DELETE clears `edited` and `edited_at`, never `generated`,
+and is idempotent on a record with no edit or no row, creating none. No confirmReplace. No migration: the upsert's row
+with `edited` set and `generated` NULL is proved against Postgres in the query test, not assumed.
+
+**Tests first.** The route test (`test/integration/api/record-matched-text.test.ts`, 20 cases) failed as a file against
+the tree without the route ("Cannot find package … matched-text/route"); the query layer's seven cases in
+`matched-text.test.ts` failed "is not a function". With the code, 35 passed. The route's upsert is proved through the
+latch: with one described record and one with an ABOUT and no row, `pickLive()` is false, and after a PATCH on the
+second it is true, so a hand-written description counts as covered (§4.8's escape hatch); that case fails against a PATCH
+that only updates. **The unauthenticated case follows the repo's convention** (refresh-prices.test.ts, influences.test.ts,
+ask.test.ts): §3 puts every route behind the middleware, a handler called directly cannot see a 401, so the test asserts
+the path runs under the middleware as a session route. It is a proxy for the 401, named as one, and it passed on its first
+run, as influences' did, since any path not in PUBLIC_PATHS or CRON_PATHS is a session route; it fails against the path
+being added to PUBLIC_PATHS or excluded by the matcher.
+
+**Step level:** record-matched-text, matched-text, ask, record-snippet and auth routes suites 121 passed; typecheck 0
+errors; lint 0 errors (6 warnings, all at HEAD); build compiled with the route listed. Load during the runs 10 to 20,
+Chrome and the window server, no other runner. Out of scope and not built: the edit sheet (Design's), any generation
+endpoint, the store, the adversarial pass, 3b, the 300-character layout capture (owed next).
+
+**The consequence named on 18 Nov stands:** once 54 records are stored, a hand edit on the 55th completes coverage and
+the next ask engages the pick. Before the store, production holds no described row, so an edit today makes one described
+and 54 uncovered, and nothing flips.
