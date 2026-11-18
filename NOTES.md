@@ -57378,5 +57378,7 @@ ceiling on the tolerance itself: tolerance with slack within 45 degrees, so edge
 rest, 90 degrees away (the coordinator, on 80ms letting it past 45). At the change's rate that is a 75ms gap, less
 where the earlier frame fell sooner; and since the ease-out slows past the change, to 0.40 a ms at 127.5, CI's sample
 was a gap of 78ms or more, not the 66 first computed at a constant rate, and is refused as bad data under the bound.
+The constant-rate arithmetic, multiplying every gap by the rate at 90, was the coordinator's and Code's together, and
+is recorded as a shared error, not a correction of one by the other (the coordinator, 17 Nov).
 Past the bound the test fails by name rather than widening to fit the runner. Staged: a build changing face at 60 fails
 the tolerance; gaps of 118ms at the change fail the bound by name (tolerance 75.1); the spec 24 passed at load 3.5.
