@@ -22,7 +22,14 @@ const quiet: AuditedDraft = { id: '01ad99d8-5938-4a14-a1af-b0ed7bae4a3e', artist
 const failed: AuditedDraft = { id: 'ffffffff-0000-4000-8000-000000000000', artist: 'X', title: 'Y', sentences: ['Z.'], result: { ok: false, reason: 'the model refused: no' } };
 
 describe('renderAudit', () => {
-  const text = renderAudit([one, quiet, failed], 'Matched text audit, 2026-11-18');
+  const text = renderAudit([one, quiet, failed], 'Matched text audit, 2026-11-18', { model: 'audit-model', effort: 'high' });
+
+  /* An audit result is attributable to a named model AND a named effort, or it cannot be compared with the next one (the coordinator, 18 Nov). */
+  it('names the model and the effort the audit ran at, in the head', () => {
+    const head = text.slice(0, text.indexOf('## '));
+    expect(head).toMatch(/model audit-model/);
+    expect(head).toMatch(/effort high/);
+  });
 
   it('heads the file with the reading rule: disagreement only, agreement is not evidence, and who each kind goes to', () => {
     const head = text.slice(0, text.indexOf('## '));

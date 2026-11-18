@@ -138,10 +138,21 @@ function endpoint(): string {
   return `${base === undefined || base === '' ? 'https://api.openai.com' : base.replace(/\/$/, '')}/v1/responses`;
 }
 
+export type AuditConfig = { model: string; effort: string };
+
+/**
+ * The model and the effort an audit runs at, resolved once and named in every report (the coordinator, 18 Nov): an
+ * audit result is attributable to a named model AND a named effort, or it cannot be compared with the next one. A call
+ * may name its effort over the setting, as the planted run does to compare two.
+ */
+export function auditConfig(options: { effort?: string } = {}): AuditConfig {
+  return { model: process.env[MODEL_VAR] || AUDIT_MODEL_DEFAULT, effort: options.effort ?? (process.env[EFFORT_VAR] || EFFORT_DEFAULT) };
+}
+
 /** One request per draft, the reply read and checked. A missing key refuses by name before any request. */
 export async function auditDraft(subject: AuditSubject, sentences: readonly string[], facts: ReleaseFacts | null, options: { fetchImpl?: typeof fetch; effort?: string } = {}): Promise<AuditResult> {
   const key = requireOpenAiKey();
-  const config = { model: process.env[MODEL_VAR] || AUDIT_MODEL_DEFAULT, effort: options.effort ?? (process.env[EFFORT_VAR] || EFFORT_DEFAULT) };
+  const config = auditConfig(options);
   const response = await (options.fetchImpl ?? fetch)(endpoint(), {
     method: 'POST',
     headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json' },

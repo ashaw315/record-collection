@@ -57655,3 +57655,50 @@ test first (the default-effort assertion failed against medium), and medium is n
 not shown to work. One call each; the 55 follow once this is committed. Step level: LLM, matched-text and pick suites
 263 passed, typecheck 0 errors, lint 0 errors (6 warnings, all at HEAD), build compiled. Eight files, one judgement, the
 rendering shared by refactor.
+
+## 18 Nov: the pass calibrated with planted errors; the effort measured; the 55 run at medium; the lists
+
+**Process, recorded once (the coordinator, 18 Nov).** His message set two preconditions before the 55-record run, the
+effort decision and a planted-error calibration, and the run was started without answering either; it was stopped on
+his next message after at most two calls. The rule from here: when a message states items before an action, the action
+waits until they are answered, and a precondition thought wrong is argued, not passed over. This is the fifth item to go
+past unanswered this week (three file-state reads, the four 3a questions, these two).
+
+**The effort has its own variable** (`MATCHED_AUDIT_EFFORT`, beside `MATCHED_AUDIT_MODEL`), and both are named in every
+report's head and in audit.json, so a result is attributable to a model and an effort. `--effort` names a run's effort
+over the setting. The default had been set to high on one control trial without being flagged as a decision; the
+coordinator's reading rule, written before the numbers: both efforts catch six, take medium; a difference of one is not
+separable at n=6, take medium and record high not shown better; two or more, take the better; four or fewer at either,
+fix the pass first. False flags counted beside the catch rate.
+
+**The planted set** (`src/lib/matched-text/plant.ts`, `--planted`): six kinds, each in a copy of a different draft in
+place of its last sentence, never in the database or drafts.json: side-move (999, "Hollywood" opens side one),
+opener-swap (ABBA, the record opens with "Hey, Hey Helen"), track-count (Astrid Sonne, side one holds a single track),
+mono-on-stereo (Blood, Sweat And Tears, mono throughout), absent-musician (Dylan's Greatest Hits II, Herbie Flowers on
+bass), role-swap (Nashville Skyline, Bob Dylan plays drums). Validates the material kind only; the knowledge kind cannot
+be controlled this way and stays advisory, stated in the report. **Medium: 6 of 6 caught, 0 misfiled, 0 missed; other
+flags beside them 3 material, 6 knowledge. High: 6 of 6, 0, 0; other flags 4 material, 5 knowledge.** The other material
+flags verified by hand against the material: ABBA s1 (arranging "everything themselves" against four outside
+arrangement credits) true; ABBA s4 ("SOS" the one side-one track with arranged strings; the credit is A1 Mamma Mia's)
+true; Astrid Sonne s3 (A4 "voice and viola"; Alvilda Reiter's guitar is credited) true; high's extra, Astrid Sonne s2
+("a couple of elements each" against tracks of three), a reading stricter than the sentence, counted false. So false
+flags: medium 0 of 3, high 1 of 4. Tokens: 7,130 in at each; 3,636 out at medium, 8,723 at high. By the rule: medium.
+
+**The caveat put to the coordinator, not resolved here:** the planted errors are blatant, and the one subtle real error,
+Carpenters' "the medley that follows", was missed at medium in both trials (the control call and the 55 run) and held
+at high in its one trial. Combined, medium 6 of 8, high 7 of 7, on unequal and tiny samples. Whether to rerun the 55 at
+high (66k in, about 47k out) is his.
+
+**The 55 at medium (gpt-6.1-sol):** 55 audited, 0 not audited; 11 sentences contradicted by the material across 9
+records, 27 by the auditor's own knowledge across 20; 66,534 tokens in, 19,416 out. **Carpenters: not flagged, CONTROL
+MISSED.** The eleven, each verified against the stored tracklist and credits by Code: ABBA s1 true; ABBA s4 true;
+Astrid Sonne s3 true; Hello Mary s5 (side two "a few more tracks": A1–A6 and B7–B11, six and five) true; Huey Lewis s1
+("five-piece": six members credited) true; Huey Lewis s3 (the mix "by Bob Clearmountain": A4 mixed by Larry Alexander)
+true, trivial; John Lennon s6 (side two "starts with Intuition and Only People": B2 Out The Blue between) true, the
+Carpenters shape; Paul Whiteman s4 (Cuban Overture "in the middle of the side": B1 of two) true; Smerz s1 ("everything
+themselves": cello, flute, two violins and additional drum programming credited to others) true; The Blues Project s5
+(the side's sequence: B2 Cheryl's Going Home precedes B3 The Flute Thing, B5 is a Kooper original) true; The Doors s7
+("bracketed by two long pieces": the sentence's own second half says the ends of both sides, A6 and B5, which the
+tracklist supports) FALSE. Ten of eleven hold. The 27 knowledge items are listed in the report with their caveat; two
+(Donovan In Concert s1 and s5) say the supplied credits are incomplete, which bears on the queued ABOUT pass for Donovan.
+Reports: `.matched/audit.md`, `.matched/audit-planted-{medium,high}.md`, copies in Downloads. Nothing to Adam.

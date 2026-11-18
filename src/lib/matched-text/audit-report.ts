@@ -11,7 +11,7 @@ export type AuditedDraft = { id: string; artist: string; title: string; sentence
 
 const n = (count: number, noun: string) => `${count.toLocaleString('en-US')} ${noun}${count === 1 ? '' : 's'}`;
 
-export function renderAudit(drafts: readonly AuditedDraft[], title: string): string {
+export function renderAudit(drafts: readonly AuditedDraft[], title: string, config: { model: string; effort: string }): string {
   const audited = drafts.filter((d) => d.result.ok);
   const material = audited.reduce((sum, d) => sum + (d.result.ok ? d.result.material.length : 0), 0);
   const knowledge = audited.reduce((sum, d) => sum + (d.result.ok ? d.result.knowledge.length : 0), 0);
@@ -21,6 +21,8 @@ export function renderAudit(drafts: readonly AuditedDraft[], title: string): str
   const tokensOut = audited.reduce((sum, d) => sum + (d.result.ok ? d.result.tokens.output ?? 0 : 0), 0);
   const lines = [
     `# ${title}`,
+    '',
+    `Run at model ${config.model}, effort ${config.effort}: an audit is attributable to both, or it cannot be compared with the next.`,
     '',
     '**Disagreement only. Agreement is not evidence.** A second model read each draft beside its tracklist, credits and format, never the ABOUT, and was asked only for what it disagreed with. A sentence not listed here is not thereby confirmed, and a record with nothing listed is not confirmed either: it is a record about which the auditor reported no disagreement.',
     '',

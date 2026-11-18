@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { AUDIT_SCHEMA, auditDraft, auditRequest, readAudit, type AuditSubject } from './matched-text-audit';
+import { AUDIT_SCHEMA, auditConfig, auditDraft, auditRequest, readAudit, type AuditSubject } from './matched-text-audit';
 import { renderMaterial } from './matched-text-client';
 import type { ReleaseFacts } from './about-grounding';
 
@@ -105,6 +105,23 @@ describe('reading a stubbed reply', () => {
     expect(readAudit({ status: 'incomplete', incomplete_details: { reason: 'max_output_tokens' } }, SENTENCES)).toMatchObject({ ok: false, reason: /cut off: max_output_tokens/ });
     expect(readAudit({ status: 'completed', output: [{ type: 'message', content: [{ type: 'refusal', refusal: 'no' }] }] }, SENTENCES)).toMatchObject({ ok: false, reason: /refused/ });
     expect(readAudit({ status: 'completed', output: [{ type: 'message', content: [{ type: 'output_text', text: '{not json' }] }] }, SENTENCES)).toMatchObject({ ok: false, reason: /not the audit’s JSON/ });
+  });
+});
+
+describe('auditConfig', () => {
+  afterEach(() => vi.unstubAllEnvs());
+
+  /* One resolution of the model and the effort, so the script's header and the request name the same pair. */
+  it('reads MATCHED_AUDIT_MODEL and MATCHED_AUDIT_EFFORT, lets a call name its effort over the setting, and never reads the pick’s variables', () => {
+    vi.stubEnv('ASK_PICK_MODEL', 'the-picks-model');
+    vi.stubEnv('ASK_PICK_EFFORT', 'low');
+    vi.stubEnv('MATCHED_AUDIT_MODEL', 'the-audits-model');
+    vi.stubEnv('MATCHED_AUDIT_EFFORT', 'medium');
+    expect(auditConfig()).toEqual({ model: 'the-audits-model', effort: 'medium' });
+    expect(auditConfig({ effort: 'high' })).toEqual({ model: 'the-audits-model', effort: 'high' });
+    vi.stubEnv('MATCHED_AUDIT_MODEL', '');
+    vi.stubEnv('MATCHED_AUDIT_EFFORT', '');
+    expect(auditConfig()).toEqual({ model: 'gpt-6.1-sol', effort: 'high' });
   });
 });
 
