@@ -112,8 +112,14 @@ describe('the prompt', () => {
     expect(prompt).not.toMatch(/where the material reaches/i);
   });
 
-  it('pins the sides’ names to side one, side two, side three and side four', () => {
-    expect(prompt).toMatch(/call the sides side one, side two, side three and side four/i);
+  /*
+    The pin was enumerated, "side one, side two, side three and side four", which names four sides for a collection
+    holding a six-sided triple, so Cindy Lee's draft reached for letters, "A through F", because the pin gave it nothing to
+    say (the coordinator, 18 Nov). Generic now: as many sides as the record has, so it covers six, and eight if one turns up.
+  */
+  it('pins the sides’ names to side one, side two and so on, for as many sides as the record has, never letters', () => {
+    expect(prompt).toMatch(/call the sides side one, side two and so on, for as many sides as the record has/i);
+    expect(prompt).not.toMatch(/side three and side four/i);
     expect(prompt).toMatch(/never side A/i);
   });
 

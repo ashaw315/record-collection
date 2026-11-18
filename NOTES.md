@@ -57464,3 +57464,74 @@ run's timing loop recorded no draw: an init script runs before the document has 
 
 **Left for 3b:** the column host's five cells, two across, 24 between, first row in view, the rest scrolling; the 18 the
 build draws is a defect.
+
+## 18 Nov: the length sentence stays a range; the side-naming pin made generic; 3a approved; answers for the coordinator
+
+**The length sentence: a ruling reversed and the reversal reversed (the coordinator, 18 Nov).** On 17 Nov the
+coordinator said "the target stays eight" against the prompt's "six to eight sentences", and on 18 Nov, told the clause
+was in, ruled it out: a floor of six invites six. The prompt was changed to "Write eight sentences" and the two assertions
+with it (e64fed79, committed through the checked path and not pushed). Then he reverted his own instruction: "six to
+eight" was his standing ruling of 15 Nov ("chosen by what a phrase can reach"), overturned without his recognising it as
+his, on a worry the build's own data had already refuted: all 55 drafted at exactly eight while the prompt permitted six,
+fifty-five trials and zero sixes. The range costs nothing and does real work on thin material, where padding would
+otherwise land. The commit was undone before any push; the test's two range assertions were restored first and failed
+against "Write eight sentences", then the prompt was restored and the file passed, 17 of 17. The reversal was caught by
+Code saying where the wording came from. The side rule's consequence sentence stays as it is: it does a different job.
+
+**The side-naming pin made generic (the coordinator, 18 Nov).** The pin enumerated "side one, side two, side three and
+side four", four sides for a collection holding a six-sided triple, so Cindy Lee's draft reached for letters ("A through
+F") because the pin gave it nothing to say. It now reads "side one, side two and so on, for as many sides as the record
+has, never side A or side B", covering six sides, and eight if one turns up. Test first: the pin's test rewritten to the
+generic wording and the absence of "side three and side four", failing against the enumerated prompt (1 failed, 16
+passed), passing with the change; LLM and matched-text suites 228 passed, typecheck 0 errors, lint 0 errors (6 warnings,
+all at HEAD), build compiled. Step level. No draft redrafted.
+
+**3a approved by Adam ("pick-reasons-3a look good"), scoped.** The three provisionals (the reason's place in the panel and
+in the cell, its length at 160 wide, the label "Closest available") are approved against what the captures carried:
+reasons of 91 to 108 characters, titles of 82 and an artist of 47. The pick's schema puts no bound on a reason (below), so
+his approval does not extend to longer ones; a bound, once set, owes him one capture at its maximum, not another review.
+
+**The reason has no bound (finding).** `src/lib/ask/pick.ts`'s strict schema types `reason` as a string with no
+maxLength, `readPick` keeps `String(raw.reason)` whole, and the prompt's only constraint is "one sentence". No real pick
+reason has been recorded: the 3a captures were stubbed. The nearest measurement is the retired suggestion design's
+(the 20 Oct runs above): about 88 output tokens per suggestion, and the same six running 526 and 1,210 output tokens on
+two runs, so a model's reason length varied 2.3× unprompted. **Decided (the coordinator, 18 Nov): no bound yet, and not in
+the schema.** Real reason lengths cannot be measured until picks run, which needs the latch, which needs the store, so
+measurement sits downstream of the edit path; and a character bound would fight the consolation reason, which §P requires
+to name what was asked, what this record has instead, and that it is closest in feel, three things in one sentence that
+run well past a hundred characters legitimately. Instead the layout's tolerance is measured, not the model's output: one
+stubbed capture per host at a reason of about 300 characters, three times what Adam approved, reporting whether the cell
+grows and the text wraps whole, or clips, overflows or pushes the row out of view. Graceful means no bound and Adam's
+approval extends; a break is a 3b item with the number it breaks at. Owed after the edit path.
+
+**The triple (Cindy Lee, Diamond Jubilee), read from its prompt on 18 Nov:** 32 tracks on six sides, A5 B6 C5 D5 E6 F5, so
+the draft's "five or six songs on each" is right. The draft names sides A, B, C, D and F, each only by where Steven
+Lind's credits land (A3, B3–B5, C2, C4, D3, D4, F3), and never side E, whose six songs carry no credit; it describes no
+side by its sound and files "how each individual side differs" under unknown. So the description does not cover every
+side that carries music; it describes the record as a whole, honestly. It also calls the sides "A through F", against the
+prompt's pin "side one, side two, side three and side four, never side A", which names four sides for a collection with
+a six-sided record: the pin's wording is the coordinator's to extend, and the review's SIDE check already reads letters.
+
+**Carpenters, read from its draft on 18 Nov:** nothing wrong, an omission. The medley is placed on side two (it is B4)
+and said to follow "Druscilla Penny" (B2), which skips "One Love" (B3), so "follows" is loose, not false; the medley is
+described as a stitched run of short pop tunes, which its sub-track titles support. The draft lists "the exact songs in the
+Bacharach-David medley and its writer credits" under unknown though the material carried them (the grounding dropped
+the index entry's sub-tracks before f075e4a1). So the fix is cosmetic until it next redrafts: Carpenters does not join a
+redraft list on this ground. **The coordinator's correction (18 Nov): with "One Love" between them, "the medley that
+follows" Druscilla Penny is false, trivially so, not loose. It is kept and reserved: not fixed, since it is exactly the
+small wrongness correction in use exists for, and recorded as a validation case for the adversarial pass. It is a
+known-wrong sentence, wrong in a way the stored tracklist proves (B2 Druscilla Penny, B3 One Love, B4 the medley), so the
+pass must return it under "contradicted by the material"; if it does not flag it, the pass does not work. A real positive
+control, not a synthetic one.** No redraft for Cindy Lee or Carpenters (the coordinator, 18 Nov): both cosmetic until
+those records next redraft, and inconsistent side naming is harmless under this route.
+
+**The side check** shipped widened in 9ac4fe0c (gate 44218572631 OK): the SIDE pattern matches "side" followed by any
+word or one or two digits, and any ordinal through eighth, last, final, closing or opening before "side", so a sixth
+side is read.
+
+**The CHECK and the upsert:** §4.6's `generated` is nullable and migration 0035 declares it without NOT NULL; the two
+CHECKs are each on one column. A row with `edited` set and `generated` NULL is legal today, as §5.2 states, so the edit
+path's upsert needs no migration.
+
+**Gate 44224689257 on d238cfb0 (unit 3a with the side rule and the grounding fix), read from its logs:** unit 5301 passed, 3
+skipped; chromium 1114 passed, 1 skipped; mobile 397 passed, 4 skipped; report-only 4 passed; no flaky or retry line.
