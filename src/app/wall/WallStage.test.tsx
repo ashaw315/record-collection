@@ -411,6 +411,16 @@ describe('§P.4: the column host’s cell, in the count column', () => {
     expect(column).toContain('Wired');
   });
 
+  /* Step 3, unit 3a (§P.2): on the shelf the reason stands in the pulled record's facts, for the record the ask pulled and no other. Fails against a stage that hands the panel no reason (WallStage.tsx, the RecordPanel). */
+  it('hands the panel the ask’s reason when the record it pulled arrives, and none for another record', () => {
+    const reason = 'Loud and fast throughout, for a room that wants waking.';
+    const asked = render({ pull: { id: 'b', direction: 'out', ms: OUT_MS }, askReason: { id: 'b', reason } });
+    expect(asked).toContain('data-testid="panel-reason"');
+    expect(asked).toContain(reason);
+    expect(render({ pull: { id: 'b', direction: 'out', ms: OUT_MS }, askReason: { id: 'a', reason } }), 'another record’s reason is not this record’s').not.toContain('panel-reason');
+    expect(render({ pull: { id: 'b', direction: 'out', ms: OUT_MS } }), 'a spine pull carries none').not.toContain('panel-reason');
+  });
+
   /* Step 3, unit 3a (§P.2): the answer's reason travels with the cell into the count column. Fails against a cell drawn without its reason (WallStage.tsx, the GridCell in the count column). */
   it('draws the answer’s reason in the count column’s cell, beneath its caption', () => {
     const column = countColumn(render({ far: true, pickCell: { ...cell, reason: 'Loud and fast throughout, for a room that wants waking.' } }));

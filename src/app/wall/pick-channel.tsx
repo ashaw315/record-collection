@@ -29,10 +29,10 @@ export type CellHost = 'here' | 'count-column';
 export type WallAnswer = { did: PickAnswer['kind'] | 'cannot-pull'; host: CellHost | null };
 
 export type PickChannel = {
-  /** The control asks for the record the pick names; the wall says what it did, and with no wall listening nothing moves. */
-  ask: (named: string | null) => WallAnswer;
+  /** The control asks for the record the pick names, with the pick's reason where it has one (§P.2, unit 3a); the wall says what it did, and with no wall listening nothing moves. */
+  ask: (named: string | null, reason?: string | null) => WallAnswer;
   /** The wall answers asks while mounted; the returned function stops it. */
-  answerAsks: (answer: (named: string | null) => WallAnswer) => () => void;
+  answerAsks: (answer: (named: string | null, reason: string | null) => WallAnswer) => () => void;
   /** The control hands the wall the cell to draw in the count column, or none; the wall draws it only on the far view. */
   showCell: (record: PickRecord | null) => void;
   /** The wall hears cells while mounted; the returned function stops it. */
@@ -59,13 +59,13 @@ const Channel = createContext<PickChannel | null>(null);
 
 export function PickChannelProvider({ children }: { children: ReactNode }) {
   const [channel] = useState<PickChannel>(() => {
-    let answer: ((named: string | null) => WallAnswer) | null = null;
+    let answer: ((named: string | null, reason: string | null) => WallAnswer) | null = null;
     let hear: ((id: string) => void) | null = null;
     let hearView: (() => void) | null = null;
     let hearCell: ((record: PickRecord | null) => void) | null = null;
     let pulls: (() => boolean | null) | null = null;
     return {
-      ask: (named) => answer?.(named) ?? { did: 'ignore', host: null },
+      ask: (named, reason = null) => answer?.(named, reason) ?? { did: 'ignore', host: null },
       pulls: () => pulls?.() ?? null,
       answerPulls: (next) => {
         pulls = next;

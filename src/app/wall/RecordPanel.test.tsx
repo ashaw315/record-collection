@@ -32,6 +32,33 @@ const at = (html: string, marker: string) => {
   return index;
 };
 
+/*
+  Step 3, unit 3a (the Mood Pick target §P.2): "Every answer of the ask carries its reason ... On the shelf it stands in
+  the pulled record's facts." The model's one sentence, drawn only for a record an ask pulled; a record pulled by its
+  spine or the arrows has none. Where in the panel it stands, beneath the year and above the note, is provisional and
+  captured for Adam. Fails against a panel with no reason prop (RecordPanel.tsx:33).
+*/
+describe('the ask’s reason in the pulled record’s facts (§P.2)', () => {
+  const reason = 'Slow and spacious with abrasive peaks, for a late room that wants attention rather than company.';
+  const withReason = renderToStaticMarkup(<RecordPanel summary={summary} reason={reason} alwaysExpanded onTurnOver={() => undefined} onPutBack={() => undefined} />);
+
+  it('draws the reason beneath the year and above the note, in the prose register', () => {
+    const year = at(withReason, 'data-testid="panel-year"');
+    const drawn = at(withReason, 'data-testid="panel-reason"');
+    const note = at(withReason, 'data-testid="panel-snippet"');
+    expect(drawn, 'after the year').toBeGreaterThan(year);
+    expect(drawn, 'before the note').toBeLessThan(note);
+    const tag = /<p data-testid="panel-reason"[^>]*class="([^"]*)"[^>]*>([^<]*)<\/p>/.exec(withReason);
+    expect(tag?.[2], 'the model’s sentence, whole').toBe(reason);
+    expect(tag?.[1] ?? '', 'the prose register').toContain('text-prose');
+  });
+
+  it('draws none where the record was not pulled by an ask', () => {
+    expect(render()).not.toContain('panel-reason');
+    expect(renderToStaticMarkup(<RecordPanel summary={summary} reason={null} alwaysExpanded onTurnOver={() => undefined} onPutBack={() => undefined} />)).not.toContain('panel-reason');
+  });
+});
+
 describe('the panel’s order is the record screen’s (§W.19)', () => {
   it('runs artist, title, year, note, fact groups, the link, then the two verbs together at the foot', () => {
     const html = render();

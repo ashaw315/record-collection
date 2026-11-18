@@ -44,6 +44,7 @@ export function WallStage({
   onZoomIn,
   onZoomOut,
   pickCell = null,
+  askReason = null,
   arrivalInMarkup = true,
   framed,
   onSeatClick,
@@ -89,6 +90,8 @@ export function WallStage({
   onZoomOut?: () => void;
   /** §P.4's column host: the pick's answer, drawn in the count column beneath the count on the far view, or nothing. */
   pickCell?: PickRecord | null;
+  /** §P.2 (unit 3a): the reason the ask gave for the record it pulled, shown in that record's facts and no other's. */
+  askReason?: { id: string; reason: string } | null;
   /**
    * §W.29: whether the composition carries its arrival offset in the markup.
    * True on the server and for the first client render, so hydration
@@ -151,6 +154,7 @@ export function WallStage({
       <div data-testid="record-chrome" data-nav={`${order.indexOf(arriving.id)}/${order.length}`}>
         <RecordPanel
           summary={summary}
+          reason={askReason !== null && askReason.id === arriving.id ? askReason.reason : null}
           alwaysExpanded
           onTurnOver={onTurnOver ?? (() => undefined)}
           onPutBack={onPutBack ?? (() => undefined)}

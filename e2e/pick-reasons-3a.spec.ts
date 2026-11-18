@@ -3,6 +3,7 @@ import { registerCleanup, trackArtist } from './cleanup';
 import { removeRecordsFor, seedRecords } from './seed';
 import { login } from './sign-in';
 import { wallMeasured } from './wall-measured';
+import { clickSpine } from './wall-ready';
 import { nearViewMinWidth, shelfOfferedMinWidth } from '../src/app/wall/view-fork';
 
 /**
@@ -131,6 +132,41 @@ for (const width of [shelfOfferedMinWidth(), nearViewMinWidth() - 1]) {
     }
   });
 }
+
+/** Settled out: the gesture landed with one record out, which is its id. */
+async function settledOut(page: Page): Promise<string> {
+  await expect.poll(() => page.locator('[data-wall-container]').getAttribute('data-phase'), { timeout: 30_000 }).toBe('landed');
+  await expect.poll(() => page.locator('[data-pulled]').count(), { timeout: 30_000 }).toBe(1);
+  return (await page.locator('[data-pulled]').getAttribute('data-pulled')) ?? '';
+}
+const panelReason = (page: Page) => page.locator('[data-testid="record-panel"] [data-testid="panel-reason"]');
+
+test('on the shelf, the pulled record’s facts carry the ask’s reason, the walk carries the next, and a spine pull carries none', async ({ page }) => {
+  test.setTimeout(120_000);
+  const { artistId, records } = await fixture(page, 3);
+  try {
+    await stubAnswers(page, records);
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(`/?artistId=${artistId}`);
+    await wallMeasured(page);
+    await ask(page);
+    expect(await settledOut(page), 'the first answer is pulled').toBe(records[0].id);
+    await expect(panelReason(page), 'its reason stands in the pulled record’s facts').toHaveText(REASONS[0]);
+    /* The walk: the next answer of the same reply, pulled with no request, carries its own reason. */
+    await control(page).getByRole('button', { name: /^ask$/i }).click();
+    await expect.poll(() => settledOut(page), { timeout: 30_000 }).toBe(records[1].id);
+    await expect(panelReason(page)).toHaveText(REASONS[1]);
+    /* Put back, then a spine pull: a record the reader pulled has no reason to show. */
+    await page.getByTestId('action-put').click();
+    await expect.poll(() => page.locator('[data-pulled]').count(), { timeout: 30_000 }).toBe(0);
+    await clickSpine(page, page.locator(`a[data-seat="${records[2].id}"] [data-spine]`));
+    expect(await settledOut(page)).toBe(records[2].id);
+    await expect(page.getByTestId('record-panel')).toBeVisible();
+    await expect(panelReason(page), 'a spine pull carries no reason').toHaveCount(0);
+  } finally {
+    await removeRecordsFor(artistId);
+  }
+});
 
 test('on the far view at 1440×900, the column host’s cell in the count column carries its reason', async ({ page }) => {
   const { artistId, records } = await fixture(page);

@@ -32,11 +32,14 @@ import { HIT_ALONE } from '@/app/hit-area';
  */
 export function RecordPanel({
   summary,
+  reason = null,
   onTurnOver,
   onPutBack,
   alwaysExpanded = true,
 }: {
   summary: RecordSummary;
+  /** §P.2 (unit 3a): the ask's one-sentence reason, where this record was pulled by an ask; null where it was pulled by its spine or the arrows. */
+  reason?: string | null;
   onTurnOver: () => void;
   onPutBack: () => void;
   /** Kept for the callers that pass it; the panel has one state now, expanded. */
@@ -56,6 +59,17 @@ export function RecordPanel({
       {summary.year !== null && (
         <p data-testid="panel-year" className="mt-[4px] text-prose" style={{ color: LABEL_INK }}>
           {summary.year}
+        </p>
+      )}
+
+      {/*
+        §P.2 (step 3, unit 3a): "Every answer of the ask carries its reason ... On the shelf it stands in the pulled
+        record's facts." The model's sentence, in the prose register, drawn only for the record an ask pulled. Beneath
+        the year and above the note is where it stands for now; its place and how it reads are provisional (§P.2).
+      */}
+      {reason !== null && reason !== '' && (
+        <p data-testid="panel-reason" className={`mt-[18px] text-prose leading-[1.55] ${INK}`}>
+          {reason}
         </p>
       )}
 

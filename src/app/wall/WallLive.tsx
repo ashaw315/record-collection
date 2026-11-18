@@ -452,9 +452,17 @@ if (offset !== null) offset.style.transform = '';
     one pull from two. The hold's test reads it.
   */
   const [pullStarts, setPullStarts] = useState(0);
+  /*
+    §P.2 (step 3, unit 3a): the reason the ask gave for the record it pulled, shown in that record's facts. It belongs
+    to the ask's pull alone: a record pulled by its spine or the arrows has none, and the panel reads it only while the
+    record it names is the one out, so a later pull of another record shows none without anything clearing it. Every
+    put back clears it, so the same record pulled again by its spine shows none either.
+  */
+  const [askReason, setAskReason] = useState<{ id: string; reason: string } | null>(null);
   const begin = useCallback(
     (id: string, direction: PullState['direction']) => {
       started.current = null;
+      if (direction === 'back') setAskReason(null);
       if (direction === 'out') {
         setPullStarts((n) => n + 1);
         setSide('front');
@@ -483,17 +491,19 @@ if (offset !== null) offset.style.transform = '';
   const far = viewport === 0 ? null : isFarView(viewport) || routeView === 'far';
   useEffect(() => {
     if (channel === null) return;
-    return channel.answerAsks((named) => {
+    return channel.answerAsks((named, reason) => {
       /* §P.1: the split is which view the reader is on, not the window's width (`P.1/split-on-shelf`). The far view cannot pull, so its answer is §P.4's cell; unmeasured, no view is settled yet. */
       if (far === null) return { did: 'ignore', host: null };
       /* §P.4: in the band host (below the fork, where the shelf IS the far view) the cell stands beneath the control; in the column host, in the count column. */
       if (far) return { did: 'cannot-pull', host: isFarView(viewport) ? 'here' : 'count-column' };
       const answer = pickAnswer(pullsRef.current, queued.current, named);
+      const pulling = answer.kind === 'pull' ? answer.id : answer.kind === 'reroll' ? answer.pull : null;
       if (answer.kind === 'pull') begin(answer.id, 'out');
       if (answer.kind === 'reroll') {
         queued.current = answer.pull;
         begin(answer.back, 'back');
       }
+      if (pulling !== null) setAskReason(reason === null || reason === '' ? null : { id: pulling, reason });
       return { did: answer.kind, host: null };
     });
   }, [channel, far, viewport, begin]);
@@ -685,6 +695,7 @@ if (offset !== null) offset.style.transform = '';
         onZoomOut={viewport > 0 && !isFarView(viewport) ? zoomOut : undefined}
         framed={framed}
         pickCell={pickCell}
+        askReason={askReason}
         onSeatClick={(id) => {
           if (pulls.length === 0 && queued.current === null) begin(id, 'out');
         }}

@@ -158,7 +158,7 @@ export function PickControl({ ruled = false, pool, answers = 'cell', withoutAbou
     }
     const first = records[0];
     if (first === undefined) return;
-    const answer = answers === 'wall' ? (channel?.ask(first.id) ?? { did: 'ignore', host: null }) : { did: 'cannot-pull', host: 'here' as const };
+    const answer = answers === 'wall' ? (channel?.ask(first.id, first.reason ?? null) ?? { did: 'ignore', host: null }) : { did: 'cannot-pull', host: 'here' as const };
     if (answer.did !== 'cannot-pull') {
       /* §P.3: "Where the pick names the record already out, nothing moves", and the slot says so. */
       if (answer.did === 'stay') setMessage(MESSAGES.only);
