@@ -57437,3 +57437,30 @@ any side reference (number, word, letter, ordinal), since the collection holds a
 records and on drafts from before the field. Both tests are synthetic and say so: no real payload of the 55 lacks
 positions. Open for the coordinator: the prompt says "six to eight sentences" and his message says the target stays
 eight; the wording was left as it stands and the test pins it, so tightening it to eight is his call, not made here.
+
+## 17 Nov: step 3, unit 3a, the reasons and the consolation
+
+**Built in three slices, each committed through the checked path (6c5c9d69, 9d817652, e6f3a392), captures to follow in
+the ship.** Every answer carries its reason beneath its caption in the table, the grid, the far view's band host and its
+column host's cell; on the shelf it stands in the pulled record's facts, beneath the year and above the note, for the
+record the ask pulled and no other, cleared by every put back so a spine or arrow pull shows none. A nothing-fits or
+requirement-unmet reply with one record draws it where the answer would be, labelled "Closest available" (Proposed) above
+its cover in a cell and above its reason in the facts, with the slot's message kept; none is drawn where none was given,
+and the slot's words are the same for both verdicts since the reason carries the difference. The run's end says "That's
+all that fits.", measured on one line at the rail's 112 by pick-control-156's sweep, so "No more fit." was not needed;
+slot.test, ask-run-history and pick-control-156 pinned "That was all." and changed with the ruling.
+
+**Captured on the production build locally (E2E_SERVER=build), seeded and stubbed, docs/captures/pick-reasons-3a/:**
+the shelf, the far view's column host at 1440 × 900 and × 768 (the first cell; its five are 3b's), the table and the
+grid at 1440 × 900 and at 390 × 844, each in an answer state and a consolation state; seeded titles 82 characters and the
+artist 47 against the collection's longest 74 and 31, read from production the same day (55 records; Glenn Miller's title,
+Paul Whiteman's name); the five reasons 91 to 108 characters, the consolation's 101. Five presses on the grid at 390, press to five reasons
+redrawn on the page's clock with the stub answering at once: 13.2, 12.6, 11.3, 11.8, 11.6 ms at load 4.19. The first
+run's timing loop recorded no draw: an init script runs before the document has a root, so observing
+`document.documentElement` threw; it observes `document` now.
+
+**Provisional on these, for Adam:** the reason's place in the panel (beneath the year, above the note) and in the cell
+(beneath the artist, 6 below), its length at 160 wide (four to six lines), and the label's words.
+
+**Left for 3b:** the column host's five cells, two across, 24 between, first row in view, the rest scrolling; the 18 the
+build draws is a defect.
