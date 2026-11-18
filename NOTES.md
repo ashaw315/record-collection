@@ -57398,3 +57398,20 @@ contents, the newer a superset. So side placement is grounded for all 55, and th
 only where they also carry character claims. Proposed, not applied: the grounding takes an index entry's side from its
 sub-tracks (B4 from B4.a), or lists the sub-tracks under their own positions; a one-record fix with a test from this
 payload. Carpenters' prompt is the one that changes.
+
+**The side-positions audit, extended at the coordinator's three additions (17 Nov).** (1) Three points per record:
+the stored payload is Discogs' release response as fetched, in Discogs' own field names (`type_`, `sub_tracks`,
+`resource_url`, `formats[].qty`), so the raw response and what the database retained are the one object; no Discogs call
+was made to re-fetch. Against the prompt, for all 55: every record's prompt carries exactly the positions its payload
+carries at the top level; the only difference anywhere is Carpenters' index entry, whose six sub-track positions
+(B4.a to B4.f) the grounding does not read. No heading entries, no index entries elsewhere, no unlettered track positions
+in any of the 55. So there is no data gap and one prompt-input gap, on one record. (2) Every one of the 55 matched
+releases is vinyl: 49 single LPs, five doubles, one triple, by the payload's formats. (3) MusicBrainz in the build is
+artist-level only: artist search, artist relations and lineups, cached by MBID in `musicbrainz_cache`; nothing fetches a
+release or a recording, so the build holds no MusicBrainz track positions for any record, and its coverage for these 55
+was not checked, since no record needs a fallback. The coordinator corrects two of his own statements: the six records
+he named to Adam (Glenn Miller, Peter Paul & Mary, Dylan GH II, Ink Spots, Blues Project, Pointer Sisters) were selected
+by thin personnel credits, a Discogs field unrelated to tracklist position, so the list was chosen on a signal unrelated
+to the gap, and the audit finds all six fully lettered; and MusicBrainz's track number field does carry A1/B1 for vinyl
+releases, which he had dismissed. Declined by him: Cover Art Archive plus OCR on label images, unless an audit returns
+about thirty records; this one returns none.
