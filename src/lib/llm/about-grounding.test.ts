@@ -74,6 +74,35 @@ describe('groundingFromPayload: the tracklist (5 Nov)', () => {
   it('reads no tracks from a release that carries none, and says so by an empty list', () => {
     expect(groundingFromPayload({ id: 1, title: 'Bare' })?.tracks).toEqual([]);
   });
+
+  /*
+    The side-positions audit of the 55 (17 Nov): Carpenters' stored release (Discogs 10490333) files its medley as an
+    index entry with an empty position and six sub-tracks positioned B4.a to B4.f; the prompt showed it unplaced, the
+    one gap in 55 records, and it was the data's reader and not the data. The entry's position is its sub-tracks' shared
+    one. Fails against a reader of the top-level position alone. The fixture is three entries of that payload as stored.
+  */
+  it('takes an index entry’s position from its sub-tracks, so a medley sits on its side', () => {
+    const facts = groundingFromPayload({
+      id: 10490333, title: 'Carpenters', tracklist: [
+        { title: 'One Love', type_: 'track', position: 'B3' },
+        { title: 'Bacharach-David Medley', type_: 'index', position: '', sub_tracks: [
+          { title: 'Knowing When To Leave', type_: 'track', position: 'B4.a' }, { title: 'Make It Easy On Yourself', type_: 'track', position: 'B4.b' },
+          { title: "(There's) Always Something There To Remind Me", type_: 'track', position: 'B4.c' }, { title: "I'll Never Fall In Love Again", type_: 'track', position: 'B4.d' },
+          { title: 'Walk On By', type_: 'track', position: 'B4.e' }, { title: 'Do You Know The Way To San Jose', type_: 'track', position: 'B4.f' },
+        ], extraartists: [{ name: 'Burt Bacharach', role: 'Written-By' }] },
+        { title: 'Sometimes', type_: 'track', position: 'B5' },
+      ],
+    });
+    expect(facts?.tracks).toEqual([{ position: 'B3', title: 'One Love' }, { position: 'B4', title: 'Bacharach-David Medley' }, { position: 'B5', title: 'Sometimes' }]);
+    /* The entry's credits sit at the same derived position, so a credit on a medley is placed as the medley is. */
+    expect(facts?.trackCredits).toEqual([{ position: 'B4', name: 'Burt Bacharach', role: 'Written-By' }]);
+  });
+
+  it('leaves an index entry unplaced where its sub-tracks do not share a position, and where it has none', () => {
+    const split = groundingFromPayload({ id: 1, title: 'Split', tracklist: [{ title: 'Suite', type_: 'index', position: '', sub_tracks: [{ title: 'i', position: 'A4.a' }, { title: 'ii', position: 'B1.a' }] }] });
+    expect(split?.tracks).toEqual([{ position: '', title: 'Suite' }]);
+    expect(groundingFromPayload({ id: 1, title: 'Bare', tracklist: [{ title: 'Heading', type_: 'heading', position: '' }] })?.tracks).toEqual([{ position: '', title: 'Heading' }]);
+  });
 });
 
 describe('buildSnippetPrompt with grounding', () => {

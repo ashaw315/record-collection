@@ -60,8 +60,21 @@ const Release = z.object({
   extraartists: z.array(Person).optional(),
   companies: z.array(z.object({ name: z.string().optional(), entity_type_name: z.string().optional() })).optional(),
   community: z.object({ have: z.number().optional(), want: z.number().optional(), rating: z.object({ count: z.number().optional(), average: z.number().optional() }).optional() }).optional(),
-  tracklist: z.array(z.object({ position: z.string().optional(), title: z.string().optional(), extraartists: z.array(Person).optional() })).optional(),
+  tracklist: z.array(z.object({ position: z.string().optional(), title: z.string().optional(), extraartists: z.array(Person).optional(), sub_tracks: z.array(z.object({ position: z.string().optional() })).optional() })).optional(),
 });
+
+/*
+  An entry's position, or its sub-tracks' shared one (17 Nov). Discogs files a medley as an index entry with no position
+  of its own and sub-tracks at B4.a, B4.b…; read at the top level alone, Carpenters' medley was the one unplaced track in
+  55 records, and the side was in the payload all along. Where the sub-tracks do not agree, nothing is invented.
+*/
+function positionOf(entry: { position?: string; sub_tracks?: { position?: string }[] }): string {
+  const own = meaningful(entry.position);
+  if (own !== null) return own;
+  const shared = new Set((entry.sub_tracks ?? []).map((s) => /^([A-Za-z]*\d*)/.exec(meaningful(s.position) ?? '')?.[1] ?? ''));
+  const [only] = shared;
+  return shared.size === 1 && only !== undefined && only !== '' ? only : '';
+}
 
 /** The release's facts from its cached payload, or null when the payload is not a release. */
 export function groundingFromPayload(payload: unknown): ReleaseFacts | null {
@@ -85,8 +98,8 @@ export function groundingFromPayload(payload: unknown): ReleaseFacts | null {
       community === undefined || community.have === undefined || community.want === undefined
         ? null
         : { have: community.have, want: community.want, rating: community.rating?.average ?? 0, ratings: community.rating?.count ?? 0 },
-    tracks: (r.tracklist ?? []).map((t) => ({ position: meaningful(t.position) ?? '', title: meaningful(t.title) })).filter((t): t is { position: string; title: string } => t.title !== null),
-    trackCredits: (r.tracklist ?? []).flatMap((t) => (t.extraartists ?? []).map((p) => ({ position: meaningful(t.position) ?? '', name: meaningful(p.name), role: meaningful(p.role) }))).filter((c): c is { position: string; name: string; role: string } => c.name !== null && c.role !== null),
+    tracks: (r.tracklist ?? []).map((t) => ({ position: positionOf(t), title: meaningful(t.title) })).filter((t): t is { position: string; title: string } => t.title !== null),
+    trackCredits: (r.tracklist ?? []).flatMap((t) => (t.extraartists ?? []).map((p) => ({ position: positionOf(t), name: meaningful(p.name), role: meaningful(p.role) }))).filter((c): c is { position: string; name: string; role: string } => c.name !== null && c.role !== null),
   };
 }
 
