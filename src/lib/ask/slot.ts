@@ -13,8 +13,8 @@ export const SLOT_MESSAGES = {
   failed: 'Not answered.',
   /* The model pick's words (§P.2, 14 Nov), under its provisional: nothing fits is a message, a consolation beside it or not. */
   nothingFits: 'Nothing fits.',
-  /* The run's end names none, and the ask after it starts the run again (§P.2). */
-  runEnded: 'That was all.',
+  /* The run's end names none, and the ask after it starts the run again (§P.2). "That was all." read as the whole shelf seen; the wording keeps "fit" (§P.2, Proposed, unit 3a), measured on one line at the rail's 112 by pick-control-156, with "No more fit." the fallback if it took two. */
+  runEnded: 'That’s all that fits.',
 } as const;
 
 export type AskOutcome =

@@ -91,7 +91,7 @@ export function WallStage({
   /** §P.4's column host: the pick's answer, drawn in the count column beneath the count on the far view, or nothing. */
   pickCell?: PickRecord | null;
   /** §P.2 (unit 3a): the reason the ask gave for the record it pulled, shown in that record's facts and no other's. */
-  askReason?: { id: string; reason: string } | null;
+  askReason?: { id: string; reason: string; consolation?: boolean } | null;
   /**
    * §W.29: whether the composition carries its arrival offset in the markup.
    * True on the server and for the first client render, so hydration
@@ -155,6 +155,7 @@ export function WallStage({
         <RecordPanel
           summary={summary}
           reason={askReason !== null && askReason.id === arriving.id ? askReason.reason : null}
+          consolation={askReason !== null && askReason.id === arriving.id && askReason.consolation === true}
           alwaysExpanded
           onTurnOver={onTurnOver ?? (() => undefined)}
           onPutBack={onPutBack ?? (() => undefined)}
@@ -264,7 +265,7 @@ export function WallStage({
       */}
       {far && pickCell !== null ? (
         <div data-pick-answer="" className="relative mt-[24px] w-[160px]">
-          <GridCell id={pickCell.id} title={pickCell.title} artist={pickCell.artist} cover={pickCell.cover} reason={pickCell.reason ?? null} />
+          <GridCell id={pickCell.id} title={pickCell.title} artist={pickCell.artist} cover={pickCell.cover} reason={pickCell.reason ?? null} consolation={pickCell.consolation === true} />
         </div>
       ) : null}
     </div>

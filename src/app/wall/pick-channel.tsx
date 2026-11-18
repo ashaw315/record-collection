@@ -11,7 +11,10 @@ import type { PickAnswer } from './reroll';
 /** A record the pick can serve, with what §T.5's cell draws. */
 /* No moods since 14 Nov: the moods are retired (§P.2; Adam, 14 Nov) and nothing read the set the page loaded for each record. */
 /** A pool's record; as an answer it carries the pick's reason (§P.2, unit 3a), which a pool row and a SURPRISE ME draw do not. */
-export type PickRecord = { id: string; title: string; artist: string; cover: string | null; reason?: string | null };
+export type PickRecord = { id: string; title: string; artist: string; cover: string | null; reason?: string | null; consolation?: boolean };
+
+/** What an ask carries with the record it names (§P.2): the pick's reason, and whether the record is a consolation beside a nothing-fits message. */
+export type AskCarry = { reason: string | null; consolation: boolean };
 
 /**
  * Where the far view's cell stands (§P.4): `here`, beneath the control, in
@@ -30,9 +33,9 @@ export type WallAnswer = { did: PickAnswer['kind'] | 'cannot-pull'; host: CellHo
 
 export type PickChannel = {
   /** The control asks for the record the pick names, with the pick's reason where it has one (§P.2, unit 3a); the wall says what it did, and with no wall listening nothing moves. */
-  ask: (named: string | null, reason?: string | null) => WallAnswer;
+  ask: (named: string | null, carry?: AskCarry) => WallAnswer;
   /** The wall answers asks while mounted; the returned function stops it. */
-  answerAsks: (answer: (named: string | null, reason: string | null) => WallAnswer) => () => void;
+  answerAsks: (answer: (named: string | null, carry: AskCarry) => WallAnswer) => () => void;
   /** The control hands the wall the cell to draw in the count column, or none; the wall draws it only on the far view. */
   showCell: (record: PickRecord | null) => void;
   /** The wall hears cells while mounted; the returned function stops it. */
@@ -59,13 +62,13 @@ const Channel = createContext<PickChannel | null>(null);
 
 export function PickChannelProvider({ children }: { children: ReactNode }) {
   const [channel] = useState<PickChannel>(() => {
-    let answer: ((named: string | null, reason: string | null) => WallAnswer) | null = null;
+    let answer: ((named: string | null, carry: AskCarry) => WallAnswer) | null = null;
     let hear: ((id: string) => void) | null = null;
     let hearView: (() => void) | null = null;
     let hearCell: ((record: PickRecord | null) => void) | null = null;
     let pulls: (() => boolean | null) | null = null;
     return {
-      ask: (named, reason = null) => answer?.(named, reason) ?? { did: 'ignore', host: null },
+      ask: (named, carry = { reason: null, consolation: false }) => answer?.(named, carry) ?? { did: 'ignore', host: null },
       pulls: () => pulls?.() ?? null,
       answerPulls: (next) => {
         pulls = next;

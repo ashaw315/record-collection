@@ -23,6 +23,16 @@ describe('GridCell with a reason (§P.2)', () => {
     expect(reasonTag?.[1] ?? '', 'the prose register, as the slot’s message is').toContain('text-prose');
   });
 
+  /* §P.2: "a record beside [the nothing-fits message] is a consolation ... labelled as the closest available", so it never reads as an answer. "Closest available" is Proposed. */
+  it('labels a consolation "Closest available" before its cover, in the label register, and labels an answer not at all', () => {
+    const html = renderToStaticMarkup(<GridCell {...props} reason={reason} consolation />);
+    const label = /<p data-grid-consolation=""[^>]*class="([^"]*)"[^>]*>([^<]*)<\/p>/.exec(html);
+    expect(label?.[2]).toBe('Closest available');
+    expect(label?.[1] ?? '', 'the label register').toContain('uppercase');
+    expect(html.indexOf('data-grid-consolation'), 'before the cover').toBeLessThan(html.indexOf('data-grid-cover'));
+    expect(renderToStaticMarkup(<GridCell {...props} reason={reason} />)).not.toContain('data-grid-consolation');
+  });
+
   it('draws no reason where the cell carries none, so the grid’s own cells are unchanged', () => {
     const html = renderToStaticMarkup(<GridCell {...props} />);
     expect(html).not.toContain('data-grid-reason');

@@ -33,6 +33,7 @@ import { HIT_ALONE } from '@/app/hit-area';
 export function RecordPanel({
   summary,
   reason = null,
+  consolation = false,
   onTurnOver,
   onPutBack,
   alwaysExpanded = true,
@@ -40,6 +41,8 @@ export function RecordPanel({
   summary: RecordSummary;
   /** §P.2 (unit 3a): the ask's one-sentence reason, where this record was pulled by an ask; null where it was pulled by its spine or the arrows. */
   reason?: string | null;
+  /** §P.2: the pull is a consolation, a stand-in beside the nothing-fits message, labelled so it never reads as an answer. */
+  consolation?: boolean;
   onTurnOver: () => void;
   onPutBack: () => void;
   /** Kept for the callers that pass it; the panel has one state now, expanded. */
@@ -68,9 +71,16 @@ export function RecordPanel({
         the year and above the note is where it stands for now; its place and how it reads are provisional (§P.2).
       */}
       {reason !== null && reason !== '' && (
-        <p data-testid="panel-reason" className={`mt-[18px] text-prose leading-[1.55] ${INK}`}>
-          {reason}
-        </p>
+        <>
+          {consolation && (
+            <p data-testid="panel-consolation" className={`mt-[18px] ${LABEL}`}>
+              Closest available
+            </p>
+          )}
+          <p data-testid="panel-reason" className={`${consolation ? 'mt-[6px]' : 'mt-[18px]'} text-prose leading-[1.55] ${INK}`}>
+            {reason}
+          </p>
+        </>
       )}
 
       {summary.snippet !== null && (

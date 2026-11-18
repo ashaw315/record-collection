@@ -9,9 +9,15 @@ import { LABEL } from './records/[id]/grid-type';
  * component and cannot drift. The link covers the cell by its `::after`, so
  * the element holding the cell is `relative`.
  */
-export function GridCell({ id, title, artist, cover, reason = null }: { id: string; title: string; artist: string; cover: string | null; reason?: string | null }) {
+export function GridCell({ id, title, artist, cover, reason = null, consolation = false }: { id: string; title: string; artist: string; cover: string | null; reason?: string | null; consolation?: boolean }) {
   return (
     <>
+      {/* §P.2: a record beside the nothing-fits message "is a consolation ... labelled as the closest available", so it never reads as an answer. "Closest available" is Proposed. */}
+      {consolation && (
+        <p data-grid-consolation="" className={`mb-[6px] ${LABEL}`}>
+          Closest available
+        </p>
+      )}
       <GridCover url={cover} />
       <Link
         data-grid-title=""

@@ -53,6 +53,15 @@ describe('the ask’s reason in the pulled record’s facts (§P.2)', () => {
     expect(tag?.[1] ?? '', 'the prose register').toContain('text-prose');
   });
 
+  /* §P.2: on the shelf the consolation is the pull, so the label stands in its facts, above the reason that says what it is not. */
+  it('labels a consolation "Closest available" above its reason, and an answer not at all', () => {
+    const html = renderToStaticMarkup(<RecordPanel summary={summary} reason={reason} consolation alwaysExpanded onTurnOver={() => undefined} onPutBack={() => undefined} />);
+    expect(at(html, 'data-testid="panel-consolation"'), 'above the reason').toBeLessThan(at(html, 'data-testid="panel-reason"'));
+    expect(at(html, 'data-testid="panel-consolation"'), 'beneath the year').toBeGreaterThan(at(html, 'data-testid="panel-year"'));
+    expect(html).toContain('>Closest available<');
+    expect(withReason).not.toContain('panel-consolation');
+  });
+
   it('draws none where the record was not pulled by an ask', () => {
     expect(render()).not.toContain('panel-reason');
     expect(renderToStaticMarkup(<RecordPanel summary={summary} reason={null} alwaysExpanded onTurnOver={() => undefined} onPutBack={() => undefined} />)).not.toContain('panel-reason');

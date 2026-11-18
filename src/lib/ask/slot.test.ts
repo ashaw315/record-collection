@@ -33,7 +33,8 @@ describe('askSlotMessage', () => {
   it('says that nothing fits, that the run has ended, and names a title not described yet', () => {
     expect(askSlotMessage({ ok: true, status: 200, unanswerable: false, answered: 0, verdict: 'nothing-fits' })).toBe('Nothing fits.');
     expect(askSlotMessage({ ok: true, status: 200, unanswerable: false, answered: 1, verdict: 'nothing-fits' }), 'with a consolation beside it').toBe('Nothing fits.');
-    expect(askSlotMessage({ ok: true, status: 200, unanswerable: false, answered: 0, verdict: 'run-exhausted' })).toBe('That was all.');
+    /* §P.2 (step 3, unit 3a): "whatever it says keeps 'fit' or its sense, because 'That was all.' reads as the whole shelf seen". Proposed there, measured on one line at the rail's 112 by pick-control-156. */
+    expect(askSlotMessage({ ok: true, status: 200, unanswerable: false, answered: 0, verdict: 'run-exhausted' })).toBe('That’s all that fits.');
     expect(askSlotMessage({ ok: true, status: 200, unanswerable: false, answered: 3, verdict: 'answer', undescribedTitle: 'Diamond Jubilee' })).toBe('Diamond Jubilee: not described yet.');
     expect(askSlotMessage({ ok: true, status: 200, unanswerable: false, answered: 3, verdict: 'answer' })).toBe('');
   });

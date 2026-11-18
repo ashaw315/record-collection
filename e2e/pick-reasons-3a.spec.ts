@@ -168,6 +168,63 @@ test('on the shelf, the pulled record’s facts carry the ask’s reason, the wa
   }
 });
 
+/*
+  §P.2: "The nothing-fits answer is the message that nothing fits; a record beside it is a consolation, drawn only where
+  one is close in feel, labelled as the closest available, and never required." A requirement unmet is the same one
+  record, its reason naming the requirement. The run's end says that was all that fit and names none.
+*/
+const CONSOLATION = 'Slow and warm, though sung throughout where no vocals were asked for; the closest in feel.';
+const standIn = (verdict: 'nothing-fits' | 'requirement-unmet', records: Row[]) => ({ mode: 'pick', verdict, answers: records.map((r) => ({ recordId: r.id, reason: CONSOLATION, claims: ['c'] })), from: 'phrase', askedFrom: null, undescribed: null, unanswerable: false });
+const consolations = (page: Page) =>
+  page.evaluate(() => Array.from(document.querySelectorAll('[data-pick-answer]')).filter((el) => (el as HTMLElement).getClientRects().length > 0).map((cell) => ({ label: cell.querySelector('[data-grid-consolation]')?.textContent ?? null, reason: cell.querySelector('[data-grid-reason]')?.textContent ?? null })));
+
+test('in the grid, a stand-in is drawn labelled "Closest available" beside the message, none is drawn where none was given, and the run’s end says that was all that fits', async ({ page }) => {
+  const { artistId, records } = await fixture(page, 2);
+  try {
+    let reply: Record<string, unknown> = standIn('nothing-fits', records.slice(0, 1));
+    await page.route('**/api/ask', (route) => route.fulfill({ json: reply }));
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(`/?view=grid&artistId=${artistId}`);
+    await page.locator('[data-collection-filters][data-hydrated="true"]').first().waitFor({ timeout: 30_000 });
+    const slot = control(page).locator('[data-pick-slot]');
+    const press = () => control(page).getByRole('button', { name: /^ask$/i }).click();
+    await ask(page);
+    await expect(slot, 'the message is the answer').toHaveText('Nothing fits.');
+    await expect.poll(() => consolations(page), { timeout: 30_000 }).toEqual([{ label: 'Closest available', reason: CONSOLATION }]);
+    reply = standIn('requirement-unmet', records.slice(1, 2));
+    await press();
+    await expect.poll(() => consolations(page), { timeout: 30_000, message: 'a requirement unmet: the same one labelled record, its reason naming the requirement' }).toEqual([{ label: 'Closest available', reason: CONSOLATION }]);
+    await expect(slot).toHaveText('Nothing fits.');
+    reply = standIn('nothing-fits', []);
+    await press();
+    await expect(slot).toHaveText('Nothing fits.');
+    await expect.poll(() => consolations(page), { timeout: 30_000, message: 'never required: none drawn where none was given' }).toEqual([]);
+    reply = { mode: 'pick', verdict: 'run-exhausted', answers: [], from: 'phrase', askedFrom: null, undescribed: null, unanswerable: false };
+    await press();
+    await expect(slot).toHaveText('That’s all that fits.');
+    expect(await consolations(page), 'the run’s end names none').toEqual([]);
+  } finally {
+    await removeRecordsFor(artistId);
+  }
+});
+
+test('on the shelf, a stand-in is pulled, with the message in the slot and the label and reason in its facts', async ({ page }) => {
+  const { artistId, records } = await fixture(page, 2);
+  try {
+    await page.route('**/api/ask', (route) => route.fulfill({ json: standIn('nothing-fits', records.slice(0, 1)) }));
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(`/?artistId=${artistId}`);
+    await wallMeasured(page);
+    await ask(page);
+    expect(await settledOut(page), 'the stand-in is the pull').toBe(records[0].id);
+    await expect(control(page).locator('[data-pick-slot]')).toHaveText('Nothing fits.');
+    await expect(page.locator('[data-testid="record-panel"] [data-testid="panel-consolation"]')).toHaveText('Closest available');
+    await expect(panelReason(page)).toHaveText(CONSOLATION);
+  } finally {
+    await removeRecordsFor(artistId);
+  }
+});
+
 test('on the far view at 1440×900, the column host’s cell in the count column carries its reason', async ({ page }) => {
   const { artistId, records } = await fixture(page);
   try {

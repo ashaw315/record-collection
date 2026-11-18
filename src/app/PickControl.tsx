@@ -29,8 +29,8 @@ function fitToPhrase(el: HTMLTextAreaElement) {
 /* §P.6's slot messages live in `src/lib/ask/slot.ts`, written to fit the slot at the rail's width (one line). */
 const MESSAGES = SLOT_MESSAGES;
 
-/** What the control shows for one answer: the record and the pick's reason, null where there is none. */
-type Answer = { id: string; reason: string | null };
+/** What the control shows for one answer: the record, the pick's reason (null where there is none), and whether it is a consolation beside a nothing-fits message (§P.2). */
+type Answer = { id: string; reason: string | null; consolation?: boolean };
 
 type AskAnswer = {
   mode?: 'ranking' | 'pick';
@@ -154,11 +154,11 @@ export function PickControl({ ruled = false, pool, answers = 'cell', withoutAbou
     const records: PickRecord[] = [];
     for (const a of answersToShow) {
       const record = byId(a.id);
-      if (record !== undefined) records.push({ ...record, reason: a.reason });
+      if (record !== undefined) records.push({ ...record, reason: a.reason, consolation: a.consolation === true });
     }
     const first = records[0];
     if (first === undefined) return;
-    const answer = answers === 'wall' ? (channel?.ask(first.id, first.reason ?? null) ?? { did: 'ignore', host: null }) : { did: 'cannot-pull', host: 'here' as const };
+    const answer = answers === 'wall' ? (channel?.ask(first.id, { reason: first.reason ?? null, consolation: first.consolation === true }) ?? { did: 'ignore', host: null }) : { did: 'cannot-pull', host: 'here' as const };
     if (answer.did !== 'cannot-pull') {
       /* §P.3: "Where the pick names the record already out, nothing moves", and the slot says so. */
       if (answer.did === 'stay') setMessage(MESSAGES.only);
@@ -218,12 +218,19 @@ export function PickControl({ ruled = false, pool, answers = 'cell', withoutAbou
       /* The run's end: it names none, and the ask after it starts the run again (§P.2). */
       if (body.verdict === 'run-exhausted') setShown([]);
       /*
-        Nothing fits, and a requirement unmet, are the slot's message; a consolation record beside it is drawn only
-        labelled as the closest available, which is unit 3's, so until then none is drawn as though it were an answer.
+        §P.2 (unit 3a): nothing fits, and a requirement unmet, are the slot's message, the same words for both, since
+        "the reason carries the difference, and no state is added". A record beside it is a consolation, drawn where
+        the pick gave one and never required, labelled the closest available so it never reads as an answer: a cell
+        where the answer is cells, the pull where it is a pull, its reason saying what it is not.
       */
       if (body.verdict !== undefined && body.verdict !== null && body.verdict !== 'answer') {
         setMessage(body.verdict === 'requirement-unmet' ? SLOT_MESSAGES.nothingFits : slot);
-        setDrawn([]);
+        const standIn = answered[0];
+        if (body.verdict === 'run-exhausted' || standIn === undefined) {
+          setDrawn([]);
+          return;
+        }
+        show([{ ...standIn, consolation: true }]);
         return;
       }
       if (ids.length === 0) {
@@ -339,7 +346,7 @@ export function PickControl({ ruled = false, pool, answers = 'cell', withoutAbou
         <ul data-pick-answers="" className="relative mt-[24px] flex flex-col gap-[18px]">
           {drawn.map((record, index) => (
             <li key={record.id} data-pick-answer="" data-rank={index + 1} className="w-[160px]">
-              <GridCell id={record.id} title={record.title} artist={record.artist} cover={record.cover} reason={record.reason ?? null} />
+              <GridCell id={record.id} title={record.title} artist={record.artist} cover={record.cover} reason={record.reason ?? null} consolation={record.consolation === true} />
             </li>
           ))}
         </ul>

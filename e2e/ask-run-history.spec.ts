@@ -182,7 +182,8 @@ test.describe('the control with the model pick’s replies (stubbed /api/ask)', 
       await expect(slotText(page)).toHaveText('Nothing fits.');
       reply = { mode: 'pick', verdict: 'run-exhausted', answers: [], from: 'phrase', askedFrom: null, undescribed: null, unanswerable: false };
       await control(page).getByRole('button', { name: /^ask$/i }).click();
-      await expect(slotText(page)).toHaveText('That was all.');
+      /* §P.2 (unit 3a): the run's end keeps "fit" or its sense; "That was all." read as the whole shelf seen. */
+      await expect(slotText(page)).toHaveText('That’s all that fits.');
       reply = { mode: 'pick', verdict: 'answer', answers: [{ recordId: records[0].id, reason: 'r', claims: ['c'] }], from: 'phrase', askedFrom: null, undescribed: records[1].id, unanswerable: false };
       await control(page).locator('[data-ask-field]').fill(records[1].title);
       await control(page).getByRole('button', { name: /^ask$/i }).click();

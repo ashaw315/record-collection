@@ -458,7 +458,7 @@ if (offset !== null) offset.style.transform = '';
     record it names is the one out, so a later pull of another record shows none without anything clearing it. Every
     put back clears it, so the same record pulled again by its spine shows none either.
   */
-  const [askReason, setAskReason] = useState<{ id: string; reason: string } | null>(null);
+  const [askReason, setAskReason] = useState<{ id: string; reason: string; consolation?: boolean } | null>(null);
   const begin = useCallback(
     (id: string, direction: PullState['direction']) => {
       started.current = null;
@@ -491,7 +491,7 @@ if (offset !== null) offset.style.transform = '';
   const far = viewport === 0 ? null : isFarView(viewport) || routeView === 'far';
   useEffect(() => {
     if (channel === null) return;
-    return channel.answerAsks((named, reason) => {
+    return channel.answerAsks((named, { reason, consolation }) => {
       /* §P.1: the split is which view the reader is on, not the window's width (`P.1/split-on-shelf`). The far view cannot pull, so its answer is §P.4's cell; unmeasured, no view is settled yet. */
       if (far === null) return { did: 'ignore', host: null };
       /* §P.4: in the band host (below the fork, where the shelf IS the far view) the cell stands beneath the control; in the column host, in the count column. */
@@ -503,7 +503,7 @@ if (offset !== null) offset.style.transform = '';
         queued.current = answer.pull;
         begin(answer.back, 'back');
       }
-      if (pulling !== null) setAskReason(reason === null || reason === '' ? null : { id: pulling, reason });
+      if (pulling !== null) setAskReason(reason === null || reason === '' ? null : { id: pulling, reason, consolation });
       return { did: answer.kind, host: null };
     });
   }, [channel, far, viewport, begin]);
