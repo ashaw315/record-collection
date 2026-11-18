@@ -57382,3 +57382,19 @@ The constant-rate arithmetic, multiplying every gap by the rate at 90, was the c
 is recorded as a shared error, not a correction of one by the other (the coordinator, 17 Nov).
 Past the bound the test fails by name rather than widening to fit the runner. Staged: a build changing face at 60 fails
 the tolerance; gaps of 118ms at the change fail the bound by name (tolerance 75.1); the spec 24 passed at load 3.5.
+
+**Side positions in the 55's stored tracklists, read-only from the prompts the drafting sends (the coordinator's
+question, asked three times, answered 17 Nov).** Every one of the 55 records with no matched text has a stored tracklist,
+and 54 carry a side letter on every position. The one exception is Carpenters — Carpenters (7d953882, Discogs release
+10490333): ten entries, nine lettered A1 to B5, and the "Bacharach-David Medley" with an empty position. The stored
+payload shows why: Discogs files the medley as an index entry, `type_: "index"`, `position: ""`, with six `sub_tracks`
+positioned B4.a to B4.f. The import stored them whole; the grounding (`about-grounding.ts`) reads only each entry's
+top-level `position` and never `sub_tracks`, so the prompt shows the medley unplaced and the side is in the data all
+along. Discogs lacks nothing here, and no other release is needed. The coordinator's line to Adam that the model was
+guessing side placement on about six records (Glenn Miller, Peter Paul & Mary, Dylan GH II, Ink Spots, Blues Project,
+Pointer Sisters) is withdrawn by him as a suspicion about one record presented as a finding about six: all six have
+every position lettered in the stored data; the evidence was Glenn Miller's two drafts naming different side-two
+contents, the newer a superset. So side placement is grounded for all 55, and the sentences carrying it are inferred
+only where they also carry character claims. Proposed, not applied: the grounding takes an index entry's side from its
+sub-tracks (B4 from B4.a), or lists the sub-tracks under their own positions; a one-record fix with a test from this
+payload. Carpenters' prompt is the one that changes.
