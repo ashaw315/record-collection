@@ -57604,3 +57604,54 @@ the band host at 1044 × 768, where a reason past about six lines carries the ro
 are the coordinator's to decide on; not shown to Adam. The capture tool is committed and rerunnable; load during the runs
 3 to 13, no other runner. The CI gate 44329237199 on the edit path was in progress throughout; the captures ran locally
 against the production build and did not touch it.
+
+## 18 Nov: the adversarial pass, built; the control missed at medium and held at high; a register of weak checks
+
+**Gate 44329237199 on 5651a1fe (the edit path, the length revert, the generic pin), read from its logs: NOT OK.** Unit
+5329 passed, 3 skipped, OK; mobile 397 passed, 4 skipped, OK; report-only 4 passed, OK; chromium 1113 passed, 1 flaky,
+1 skipped, GREEN WITH FLAKES. The flake is `region-remount-q48.spec.ts:82`, the reader-scroll half's "the view stays
+where the reader put it", one frame: t=32 on the sampler's clock, top 126, the view before the scroll, kept because the
+scroll's own recorded time was under 32. Q57 (7 Nov) already made the filter read the scroll's time, so this is a new
+instance past that fix: a frame after the scroll's recorded time showing the pre-scroll view. The diff under the gate
+touched no wall code (a route, a query layer, a prompt sentence, tests, NOTES). Not read from the trace yet; the
+trace, screenshot and error context are downloaded beside the logs. For the coordinator: re-gate, or read the trace
+first, or take it after the pass and the store.
+
+**A register of weak checks, pinned as weak (the coordinator, 18 Nov).** Checks that pass while the thing they are
+named for could be broken, each stated as such where it lives, listed here so no one later reads them as coverage:
+- the pick's claim check (`src/lib/ask/pick.ts`): a claim is a whole stored sentence that exists; a cherry-picked
+  sentence passes, so the reader is shown the record's text beside the reason.
+- the matched-text route's unauthenticated case (`test/integration/api/record-matched-text.test.ts`, and the same
+  shape in influences.test.ts): asserts the path runs under the middleware as a session route; a proxy for the 401 that
+  passed on its first run and fails only against the path being made public or excluded by the matcher.
+- the audit's "no disagreement reported": the auditor reports only what it disagrees with, so an empty list is not
+  confirmation, and the report says so at its head and on every quiet record.
+**Queued, for the next visit to `scripts/commit-checked.sh`:** keep a passing check's summary line, not its log, so a
+passing check stays quotable; today the log is removed on success and the line lives only in the console (ae682805's
+line was cut by a tail of that output).
+
+**The adversarial pass, built as restated (the coordinator, 17 and 18 Nov).** `src/lib/llm/matched-text-audit.ts`: a
+Responses-endpoint request on OpenAI (the drafting is Anthropic's) with its own variables, `MATCHED_AUDIT_MODEL`
+(default the pick's model name, `gpt-6.1-sol`, never read from `ASK_PICK_MODEL`) and `MATCHED_AUDIT_EFFORT`; the
+material rendered by `renderMaterial`, now shared with the drafting prompt so the auditor reads exactly what the drafter
+read, tracklist, credits and format, never the ABOUT; the draft by numbered sentence; a strict schema with two lists,
+`material` (sentence, quote, contradiction, evidence) and `knowledge` (sentence, quote, contradiction), required and
+nothing else. The system text: report only disagreement; agreement is not evidence; the two kinds reported separately
+and never merged; unsupported is not contradicted. `readAudit` keeps an item only if it names a sentence that exists and
+quotes it, matched loosely, dropping and saying the rest, and reads the tokens. `src/lib/matched-text/audit-report.ts`
+renders the two kinds under separate headings, material first, counts them apart and never together, writes a quiet
+record as "no disagreement reported, not confirmation", a failed one as not audited, and `findControl` reads the
+positive control. `scripts/audit-matched-text.mts` (`npm run matched:audit -- <prefixes> | --all`, `--prompt`) reads
+drafts.json and the cached releases, writes `.matched/audit.json`, `.matched/audit.md` and the report to Downloads,
+and writes nothing to production or to drafts.json. Tests first: both files failed at import; 36 passed with the
+modules. The script's proving command: Carpenters' request printed with no call, the numbered eight sentences and the
+ten positions B1 to B5 in it, no ABOUT.
+
+**The positive control.** Carpenters' sentence 5, "the Bacharach-David medley that follows" Druscilla Penny, with One
+Love (B3) between them. **At medium effort the auditor reported no disagreement: CONTROL MISSED** (1,248 tokens in, 445
+out). **At high it came back under the material kind: CONTROL HELD**, "The medley does not directly follow Druscilla
+Penny; One Love comes between them", evidence B2, B3, B4 copied (1,248 in, 957 out). So the default effort is high,
+test first (the default-effort assertion failed against medium), and medium is not offered as a default the pass has
+not shown to work. One call each; the 55 follow once this is committed. Step level: LLM, matched-text and pick suites
+263 passed, typecheck 0 errors, lint 0 errors (6 warnings, all at HEAD), build compiled. Eight files, one judgement, the
+rendering shared by refactor.

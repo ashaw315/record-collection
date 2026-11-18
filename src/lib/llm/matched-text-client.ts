@@ -45,7 +45,11 @@ const describesTheMaterial = (text: string) =>
   /\b(material|tracklist|credits|information|listing)\b/i.test(text) && /\b(not|cannot)\b|n[’']t\b/i.test(text) &&
   /\b(tell|tells|say|says|give|gives|show|shows|specify|specifies|indicate|indicates|supply|supplies|reveal|reveals|state|states|record|records|list|lists)\b/i.test(text);
 
-export function buildMatchedTextPrompt(subject: MatchedTextSubject, facts: ReleaseFacts | null): string {
+/**
+ * The material as the model is given it: the tracklist by position, the credits, the format. One rendering, shared with
+ * the adversarial pass (18 Nov), so the auditor reads exactly what the drafter read, and never the ABOUT.
+ */
+export function renderMaterial(facts: ReleaseFacts | null): string {
   const tracks = facts === null || facts.tracks.length === 0 ? 'none supplied' : facts.tracks.map((t) => `${t.position} ${t.title}`).join('\n');
   const releaseCredits = (facts?.credits ?? []).map((c) => `${c.name}: ${c.role}`);
   /* Each track's credits under its position, where a release's performers usually are (15 Nov). */
@@ -53,6 +57,10 @@ export function buildMatchedTextPrompt(subject: MatchedTextSubject, facts: Relea
   const credits = releaseCredits.length + trackCredits.length === 0
     ? 'none supplied'
     : [...releaseCredits, ...(trackCredits.length === 0 ? [] : ['On each track, by position:', ...trackCredits])].join('\n');
+  return [`Its tracklist, by position (a letter is a side):\n${tracks}`, '', `Its credits:\n${credits}`, '', `Its format: ${facts?.format ?? 'not supplied'}.`].join('\n');
+}
+
+export function buildMatchedTextPrompt(subject: MatchedTextSubject, facts: ReleaseFacts | null): string {
   return [
     `Describe how this record sounds, so that someone asking for music to play can be matched to it: ${subject.artist}, "${subject.title}"${subject.year === null ? '' : ` (${subject.year})`}.`,
     '',
@@ -73,11 +81,7 @@ export function buildMatchedTextPrompt(subject: MatchedTextSubject, facts: Relea
     /* The side rule (the coordinator, 17 Nov): the number rule's equivalent for placement. Fewer sentences follow from it; the target above does not move. */
     'Where the tracklist gives no side for a track, do not place it: a side you were not given goes under "unknown", and no sentence names it. Where the tracklist gives no sides at all, describe the record as a whole and write nothing about its sides; the record then carries fewer sentences, which is right, since it cannot support them.',
     '',
-    `Its tracklist, by position (a letter is a side):\n${tracks}`,
-    '',
-    `Its credits:\n${credits}`,
-    '',
-    `Its format: ${facts?.format ?? 'not supplied'}.`,
+    renderMaterial(facts),
     '',
     'Answer with JSON only, in this shape: {"sentences": [{"text": "…", "basis": "supported" or "inferred"}], "unknown": ["…"]}',
   ].join('\n');
