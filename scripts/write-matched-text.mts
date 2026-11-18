@@ -126,7 +126,9 @@ for (const r of rows) {
   for (const effort of efforts) {
     const result = await client.write({ artist: r.artist, title: r.title, year: r.year, about: r.about }, facts, effort === undefined ? {} : { effort });
     const credited = new Set([...(facts?.credits ?? []), ...(facts?.trackCredits ?? [])].map((c) => c.name)).size;
-    const base = { id: r.id, artist: r.artist, title: r.title, year: r.year, about: r.about, credited, ...(effort === undefined ? {} : { effort }) };
+    /* Whether any position carries a side letter (17 Nov): the review's side check runs only where none does. */
+    const sided = (facts?.tracks ?? []).some((t) => /^[A-Z]/.test(t.position));
+    const base = { id: r.id, artist: r.artist, title: r.title, year: r.year, about: r.about, credited, sided, ...(effort === undefined ? {} : { effort }) };
     const draft: Draft = result.ok
       ? { ...base, status: 'finished', sentences: result.sentences, unknown: result.unknown, dropped: result.dropped, text: result.text }
       : { ...base, status: `failed: ${result.reason}`, sentences: [], unknown: [], text: null };

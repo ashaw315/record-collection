@@ -79,6 +79,28 @@ describe('renderReview', () => {
     expect(numbered).toMatch(/Numbers to check: 1/);
   });
 
+  /*
+    The side-placement check (the coordinator, 17 Nov), the mechanical half of the prompt's rule: on a record whose
+    prompt carried no lettered position, a sentence naming any side is a placement the material did not give. Any side
+    reference, since the collection holds a triple with sides A to F: a number, a word, a letter or an ordinal side.
+    Synthetic: none of the 55 lacks positions, so no real draft exercises this; it holds the check, not a finding.
+  */
+  it('lists every sentence naming a side, by number, word, letter or ordinal, on a record whose prompt gave no sides, and nothing on one that did', () => {
+    const sentences = [
+      { text: 'Side one opens with the title track.', basis: 'inferred' as const },
+      { text: 'The guitars thin out on side F.', basis: 'inferred' as const },
+      { text: 'Side 5 is the loud one.', basis: 'inferred' as const },
+      { text: 'The second side is slower.', basis: 'inferred' as const },
+      { text: 'Organ carries the hooks, and the sides are not told apart.', basis: 'supported' as const },
+    ];
+    const unsided = renderReview([{ ...drafts[0], sided: false, sentences }], 'Sides');
+    expect(unsided).toMatch(/Sides to check, the tracklist giving none: 4\n- Side one opens with the title track\.\n- The guitars thin out on side F\.\n- Side 5 is the loud one\.\n- The second side is slower\./);
+    expect(renderReview([{ ...drafts[0], sided: false, sentences: sentences.slice(4) }], 'Sides')).toMatch(/Sides to check, the tracklist giving none: none/);
+    /* A record whose prompt gave sides has nothing to check here, and a draft from before the field existed is read as one. */
+    expect(renderReview([{ ...drafts[0], sided: true, sentences }], 'Sides')).not.toMatch(/Sides to check/);
+    expect(renderReview([{ ...drafts[0], sentences }], 'Sides')).not.toMatch(/Sides to check/);
+  });
+
   /* Mandy, Indiana's eighth sentence (17 Nov) described what the material did not say, stored as a citable claim. */
   it('shows a sentence the client dropped for describing the material, so Adam sees the draft is a sentence short', () => {
     const dropped = renderReview([{ ...drafts[0], dropped: ['Which tracks are the quiet ones is not something this material tells you.'] }], 'Dropped');

@@ -19,7 +19,16 @@ export type ReviewDraft = {
   credited?: number;
   /** Sentences the client dropped for describing the material rather than the record (17 Nov). */
   dropped?: string[];
+  /** Whether the prompt carried any lettered position (17 Nov); absent on drafts from before the field, read as sided. */
+  sided?: boolean;
 };
+
+/*
+  A sentence placing something on a side the tracklist did not give (the coordinator, 17 Nov): any side reference, by
+  number, word, letter or ordinal, since the collection holds a triple with sides A to F. Checked only where the prompt
+  carried no lettered position; where it did, the sides are the material's and a side's name is not a figure.
+*/
+const SIDE = /\bside (?:[a-z]+|\d{1,2})\b|\b(?:first|second|third|fourth|fifth|sixth|seventh|eighth|last|final|closing|opening) side\b/i;
 
 /*
   A sentence with a number to check (17 Nov). The first detector fired on any number word, 126 of 440 sentences, nearly
@@ -73,6 +82,10 @@ export function renderReview(drafts: readonly ReviewDraft[], title: string): str
       lines.push(`${v.sentences.length} sentences, ${chars} characters; ${supported} supported, ${v.sentences.length - supported} inferred.`, '');
       const numbered = v.sentences.filter((x) => needsChecking(x.text, v.credited ?? 0));
       lines.push(numbered.length === 0 ? 'Numbers to check: none' : [`Numbers to check: ${numbered.length}`, ...numbered.map((x) => `- ${x.text}`)].join('\n'), '');
+      if (v.sided === false) {
+        const sided = v.sentences.filter((x) => SIDE.test(unquoted(x.text)));
+        lines.push(sided.length === 0 ? 'Sides to check, the tracklist giving none: none' : [`Sides to check, the tracklist giving none: ${sided.length}`, ...sided.map((x) => `- ${x.text}`)].join('\n'), '');
+      }
       if (v.dropped !== undefined && v.dropped.length > 0) lines.push([`Dropped, for describing the material rather than the record: ${v.dropped.length}`, ...v.dropped.map((x) => `- ${x}`)].join('\n'), '');
     }
   }

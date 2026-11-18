@@ -95,6 +95,23 @@ describe('the prompt', () => {
     expect(prompt).toMatch(/a mastering, lacquer, design or label credit is never worth a sentence/i);
   });
 
+  /*
+    The side-placement rule (the coordinator, 17 Nov). The number rule held on 55 of 55; nothing equivalent stopped a
+    model with no positions writing "side one opens with X". A side the material does not give stays unknown, and a
+    record without sides keeps its album-level description with fewer sentences, as a consequence of the rule and not a
+    range the prompt permits: the target stays eight. Synthetic: no real payload of the 55 lacks positions (the audit of
+    17 Nov found 54 fully lettered and one medley placed by its sub-tracks), so this holds the rule's text, not a draft.
+  */
+  it('says a side the tracklist does not give is never placed, goes under unknown, and a record without sides carries fewer sentences rather than invented ones', () => {
+    expect(prompt).toMatch(/where the tracklist gives no side for a track, do not place it/i);
+    expect(prompt).toMatch(/a side you were not given goes under "unknown", and no sentence names it/i);
+    expect(prompt).toMatch(/gives no sides at all, describe the record as a whole and write nothing about its sides/i);
+    expect(prompt).toMatch(/carries fewer sentences/i);
+    /* The target is unchanged: no floor is added for a case that today affects no record. */
+    expect(prompt).toMatch(/six to eight sentences/i);
+    expect(prompt).not.toMatch(/where the material reaches/i);
+  });
+
   it('pins the sides’ names to side one, side two, side three and side four', () => {
     expect(prompt).toMatch(/call the sides side one, side two, side three and side four/i);
     expect(prompt).toMatch(/never side A/i);

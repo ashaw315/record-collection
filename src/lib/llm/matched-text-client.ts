@@ -70,6 +70,9 @@ export function buildMatchedTextPrompt(subject: MatchedTextSubject, facts: Relea
     '',
     'Never write a sentence about what the material does not say or does not tell you: that goes under "unknown" and nowhere else. A sentence never asserts what you list under "unknown". Call the sides side one, side two, side three and side four, never side A or side B.',
     '',
+    /* The side rule (the coordinator, 17 Nov): the number rule's equivalent for placement. Fewer sentences follow from it; the target above does not move. */
+    'Where the tracklist gives no side for a track, do not place it: a side you were not given goes under "unknown", and no sentence names it. Where the tracklist gives no sides at all, describe the record as a whole and write nothing about its sides; the record then carries fewer sentences, which is right, since it cannot support them.',
+    '',
     `Its tracklist, by position (a letter is a side):\n${tracks}`,
     '',
     `Its credits:\n${credits}`,
