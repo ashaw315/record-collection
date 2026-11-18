@@ -29,10 +29,14 @@ function fitToPhrase(el: HTMLTextAreaElement) {
 /* §P.6's slot messages live in `src/lib/ask/slot.ts`, written to fit the slot at the rail's width (one line). */
 const MESSAGES = SLOT_MESSAGES;
 
+/** What the control shows for one answer: the record and the pick's reason, null where there is none. */
+type Answer = { id: string; reason: string | null };
+
 type AskAnswer = {
   mode?: 'ranking' | 'pick';
   verdict?: 'answer' | 'nothing-fits' | 'requirement-unmet' | 'run-exhausted' | null;
-  answers: Array<{ recordId: string }>;
+  /* §P.2 (unit 3a): each answer carries the model's reason; the ranking's answers carry none. */
+  answers: Array<{ recordId: string; reason?: string }>;
   from: 'phrase' | 'title';
   askedFrom: string | null;
   undescribed?: string | null;
@@ -114,7 +118,7 @@ export function PickControl({ ruled = false, pool, answers = 'cell', withoutAbou
   /* The phrase the run is asking with; a different phrase at ASK starts a new run. */
   const runPhrase = useRef<string | null>(null);
   /* The model pick's answer walked on the shelf: one record per press, with no request, until it is spent. */
-  const [queue, setQueue] = useState<readonly string[]>([]);
+  const [queue, setQueue] = useState<readonly Answer[]>([]);
   /* Each request's number: a reply whose number is not the latest belongs to a phrase or run since changed, and is ignored on arrival. */
   const request = useRef(0);
   /* §P.4: the covers in rank order, where the host draws them. */
@@ -145,9 +149,13 @@ export function PickControl({ ruled = false, pool, answers = 'cell', withoutAbou
 
   const byId = (id: string) => pool.find((record) => record.id === id);
 
-  /** Where the view can pull, the first answer is pulled; where it cannot, the covers draw beneath the control. */
-  const show = (ids: readonly string[]) => {
-    const records = ids.map(byId).filter((record): record is PickRecord => record !== undefined);
+  /** Where the view can pull, the first answer is pulled; where it cannot, the covers draw beneath the control, each with its reason (§P.2). */
+  const show = (answersToShow: readonly Answer[]) => {
+    const records: PickRecord[] = [];
+    for (const a of answersToShow) {
+      const record = byId(a.id);
+      if (record !== undefined) records.push({ ...record, reason: a.reason });
+    }
     const first = records[0];
     if (first === undefined) return;
     const answer = answers === 'wall' ? (channel?.ask(first.id) ?? { did: 'ignore', host: null }) : { did: 'cannot-pull', host: 'here' as const };
@@ -203,7 +211,8 @@ export function PickControl({ ruled = false, pool, answers = 'cell', withoutAbou
         setDrawn([]);
         return;
       }
-      const ids = body.answers.map((a) => a.recordId);
+      const answered: Answer[] = body.answers.map((a) => ({ id: a.recordId, reason: a.reason ?? null }));
+      const ids = answered.map((a) => a.id);
       const undescribedTitle = body.undescribed ? byId(body.undescribed)?.title : undefined;
       const slot = askSlotMessage({ ok: true, status: response.status, unanswerable: body.unanswerable, answered: ids.length, verdict: body.verdict ?? null, undescribedTitle });
       /* The run's end: it names none, and the ask after it starts the run again (§P.2). */
@@ -225,11 +234,11 @@ export function PickControl({ ruled = false, pool, answers = 'cell', withoutAbou
       setMessage(slot);
       /* The model pick's answer on the shelf: the first pulled, the rest walked one per press, a record joining the run when it is pulled. */
       if (body.mode === 'pick' && answers === 'wall' && channel?.pulls() === true) {
-        setQueue(ids.slice(1));
-        show(ids.slice(0, 1));
+        setQueue(answered.slice(1));
+        show(answered.slice(0, 1));
         return;
       }
-      show(ids);
+      show(answered);
     } finally {
       setAsking(false);
     }
@@ -242,7 +251,8 @@ export function PickControl({ ruled = false, pool, answers = 'cell', withoutAbou
     if (id === null) return;
     setMessage('');
     if (drawn.length === 1 && drawn[0]?.id === id) setMessage(MESSAGES.only);
-    show([id]);
+    /* A draw by chance has no reason (§P.2: SURPRISE ME ignores the ask field). */
+    show([{ id, reason: null }]);
   };
 
   const inRail = answers === 'wall';
@@ -329,7 +339,7 @@ export function PickControl({ ruled = false, pool, answers = 'cell', withoutAbou
         <ul data-pick-answers="" className="relative mt-[24px] flex flex-col gap-[18px]">
           {drawn.map((record, index) => (
             <li key={record.id} data-pick-answer="" data-rank={index + 1} className="w-[160px]">
-              <GridCell id={record.id} title={record.title} artist={record.artist} cover={record.cover} />
+              <GridCell id={record.id} title={record.title} artist={record.artist} cover={record.cover} reason={record.reason ?? null} />
             </li>
           ))}
         </ul>

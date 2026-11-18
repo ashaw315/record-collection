@@ -260,7 +260,7 @@ export function WallStage({
       */}
       {far && pickCell !== null ? (
         <div data-pick-answer="" className="relative mt-[24px] w-[160px]">
-          <GridCell id={pickCell.id} title={pickCell.title} artist={pickCell.artist} cover={pickCell.cover} />
+          <GridCell id={pickCell.id} title={pickCell.title} artist={pickCell.artist} cover={pickCell.cover} reason={pickCell.reason ?? null} />
         </div>
       ) : null}
     </div>

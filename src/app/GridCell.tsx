@@ -9,7 +9,7 @@ import { LABEL } from './records/[id]/grid-type';
  * component and cannot drift. The link covers the cell by its `::after`, so
  * the element holding the cell is `relative`.
  */
-export function GridCell({ id, title, artist, cover }: { id: string; title: string; artist: string; cover: string | null }) {
+export function GridCell({ id, title, artist, cover, reason = null }: { id: string; title: string; artist: string; cover: string | null; reason?: string | null }) {
   return (
     <>
       <GridCover url={cover} />
@@ -24,6 +24,16 @@ export function GridCell({ id, title, artist, cover }: { id: string; title: stri
       <div data-grid-artist="" className={LABEL}>
         {artist}
       </div>
+      {/*
+        §P.2 (step 3, unit 3a): "Every answer of the ask carries its reason ... in the table and the grid beneath each
+        cover's caption." The model's one sentence, in the prose register the slot's message takes; only an answer
+        carries one, so the grid's own cells draw nothing here. Its length and how it reads in each host are provisional.
+      */}
+      {reason !== null && reason !== '' && (
+        <p data-grid-reason="" className="mt-[6px] text-prose">
+          {reason}
+        </p>
+      )}
     </>
   );
 }

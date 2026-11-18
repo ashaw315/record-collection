@@ -411,6 +411,15 @@ describe('§P.4: the column host’s cell, in the count column', () => {
     expect(column).toContain('Wired');
   });
 
+  /* Step 3, unit 3a (§P.2): the answer's reason travels with the cell into the count column. Fails against a cell drawn without its reason (WallStage.tsx, the GridCell in the count column). */
+  it('draws the answer’s reason in the count column’s cell, beneath its caption', () => {
+    const column = countColumn(render({ far: true, pickCell: { ...cell, reason: 'Loud and fast throughout, for a room that wants waking.' } }));
+    expect(column).toContain('data-grid-reason');
+    expect(column).toContain('Loud and fast throughout, for a room that wants waking.');
+    expect(column.indexOf('data-grid-reason'), 'after the artist').toBeGreaterThan(column.indexOf('data-grid-artist'));
+    expect(countColumn(render({ far: true, pickCell: cell })), 'a cell served without a reason draws none').not.toContain('data-grid-reason');
+  });
+
   /* The markup only: that the drawing's FIT is unchanged is a layout fact, measured by pick-answer-156's ink before and after. */
   it('puts nothing in the overview’s svg: its markup is byte-identical with and without a cell', () => {
     const svg = (html: string) => /<svg data-wall="overview"[\s\S]*?<\/svg>/.exec(html)?.[0] ?? '';

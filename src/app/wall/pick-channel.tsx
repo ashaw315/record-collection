@@ -10,7 +10,8 @@ import type { PickAnswer } from './reroll';
  */
 /** A record the pick can serve, with what §T.5's cell draws. */
 /* No moods since 14 Nov: the moods are retired (§P.2; Adam, 14 Nov) and nothing read the set the page loaded for each record. */
-export type PickRecord = { id: string; title: string; artist: string; cover: string | null };
+/** A pool's record; as an answer it carries the pick's reason (§P.2, unit 3a), which a pool row and a SURPRISE ME draw do not. */
+export type PickRecord = { id: string; title: string; artist: string; cover: string | null; reason?: string | null };
 
 /**
  * Where the far view's cell stands (§P.4): `here`, beneath the control, in
