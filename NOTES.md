@@ -57566,3 +57566,41 @@ endpoint, the store, the adversarial pass, 3b, the 300-character layout capture 
 **The consequence named on 18 Nov stands:** once 54 records are stored, a hand edit on the 55th completes coverage and
 the next ask engages the pick. Before the store, production holds no described row, so an edit today makes one described
 and 54 uncovered, and nothing flips.
+
+## 18 Nov: the layout's tolerance of a long reason, measured (the coordinator's 300-character capture)
+
+**Asked:** the pick's schema puts no bound on a reason, Adam approved 3a against 91 to 108 characters, and a bound is not
+to be decided before picks run; so measure the layout's tolerance instead of the model's output, one stubbed capture per
+host at about 300 characters, and say whether the cell grows and the text wraps whole, or clips, overflows or pushes the
+row out of view. **Done:** `e2e/capture/pick-reasons-300.capture.ts`, written to `docs/captures/pick-reasons-300/`
+(18 stills and a README), on the production build locally, seeded and stubbed as 3a's were. Each host captured twice, at
+the longest approved reason (108 characters, 3a's) and at 305, so the growth is a difference the page drew. Measured on
+the page: the reason's lines (its height over its line height, 19.5), the host's height, the text's scroll width past its
+box, the nearest hiding ancestor that fails to contain it, the reason's bottom against the window, and whether the page
+scrolls far enough to reach it.
+
+**No host clips or overflows at 305.** Every cell grows from 399 to 535.5 (five lines to twelve, 136.5 more) and the
+pulled record's panel from 257.3 to 317.7 (two lines to five, 60.4 more); the text wraps whole inside the 160 in every
+host, and no ancestor with a hiding overflow cuts it, the far region included.
+
+**Where it stands against the window, approved → long:**
+- the shelf, 1440 × 900: in view at both, bottom 407 → 468.
+- the far view's column host, 1440 × 900: in view at both, 619 → 756. At 1440 × 768: in view at both, 756 of 768 at
+  305, twelve lines with 12 to spare; a thirteenth line passes the window, so this cell breaks at about 13 lines, which at
+  this prose's 25 characters a line is about 330 characters (arithmetic from the measured line, not measured itself).
+- the far view's band host, 1044 × 900: in view at both, 745 → 881 of 900, nineteen to spare at 305. **At 1044 × 768 the
+  long reason pushes the row's bottom to 881 in a 768 window, 113 past it, reached by scrolling; the approved length
+  fits, 745 of 768.** By the same arithmetic the band at 768 holds six lines (764.5) and breaks at seven, about 155 to
+  180 characters. This is the one host where 305 pushes the row out of view, and it is 3b's class of question (the first
+  row wholly in view wherever scrolled), at the window step 182 already named as tight.
+- the table's and the grid's sidebars at 1440 × 900, and their bands at 390 × 844: the stack of five is below the fold at
+  BOTH lengths, reached by scrolling (first bottom 1150 → 1287 at 1440; 1071 → 1208 at 390; the fifth 2818 → 3501 and
+  1905 → 2315), so there the long reason adds 136.5 a cell to a stack that already scrolls, and changes nothing else.
+
+**Reading, for the coordinator:** the layout degrades gracefully: it grows and wraps, nothing clips, nothing overflows.
+No bound is needed for the cells' or the panel's sake, and Adam's approval extends to length as such. The one number is
+the band host at 1044 × 768, where a reason past about six lines carries the row below the window, and the far column at
+768, where the thirteenth line would; both are the first-row-in-view question 3b owns, not a clipping defect. The captures
+are the coordinator's to decide on; not shown to Adam. The capture tool is committed and rerunnable; load during the runs
+3 to 13, no other runner. The CI gate 44329237199 on the edit path was in progress throughout; the captures ran locally
+against the production build and did not touch it.
