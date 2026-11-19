@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { findControl, renderAudit, type AuditedDraft } from './audit-report';
+import { auditFileStem, findControl, findRuling, renderAudit, type AuditedDraft } from './audit-report';
 
 /**
  * **The adversarial pass's report (the coordinator, 18 Nov): the two kinds of disagreement under separate headings,
@@ -92,5 +92,56 @@ describe('findControl', () => {
     const underKnowledge: AuditedDraft = { ...one, result: { ...one.result, ok: true, material: [], knowledge: [...(one.result.ok ? one.result.knowledge : []), { sentence: 2, quote: one.sentences[1], contradiction: 'x' }] } } as AuditedDraft;
     expect(findControl([underKnowledge], '7d953882', /Druscilla Penny/)).toEqual({ held: false, kind: 'knowledge', sentence: 2 });
     expect(findControl([quiet], '7d953882', /Druscilla Penny/)).toEqual({ held: false, kind: null, sentence: null });
+  });
+
+  /*
+    The ten redrafts (18 Nov) replaced both control drafts, and the run over them reported the controls "missed" while no
+    sentence of either draft held the control's pattern: a control whose sentence is gone proves nothing either way and
+    is not a miss. Fails against findControl reading the result's lists alone, never the draft's sentences.
+  */
+  it('says a control whose sentence is not in the draft is absent, which is not a miss', () => {
+    const redrafted: AuditedDraft = { ...one, sentences: ['Side two begins with "Superstar".', 'The record ends with "Sometimes".'], result: { ok: true, material: [], knowledge: [], dropped: [], tokens: { input: 1, output: 1 } } };
+    expect(findControl([redrafted], '7d953882', /Druscilla Penny/)).toEqual({ held: false, kind: 'absent', sentence: null });
+  });
+});
+
+/*
+  Each run's files named by the run (the coordinator, 19 Nov): the script wrote audit.json, audit.md and one Downloads file
+  by model and effort, so every run overwrote the last, and the ten redrafts' audit json was lost to two control re-runs
+  before a copy was made. Fails against a stem without the time.
+*/
+describe('auditFileStem', () => {
+  it('names a run’s files by its time to the second, its model and its effort, so no run overwrites another', () => {
+    expect(auditFileStem({ model: 'gpt-6.1-sol', effort: 'medium' }, new Date('2026-11-19T10:22:33Z'))).toBe('audit-2026-11-19T10-22-33Z-gpt-6.1-sol-medium');
+    expect(auditFileStem({ model: 'gpt-6.1-sol', effort: 'medium' }, new Date('2026-11-19T10:22:34Z'))).not.toBe(auditFileStem({ model: 'gpt-6.1-sol', effort: 'medium' }, new Date('2026-11-19T10:22:33Z')));
+  });
+});
+
+/*
+  The ruled-false register (the coordinator, 19 Nov): the pass re-flagged Huey Lewis's Clearmountain shape a day after he
+  ruled it false, so a repeat flag is marked as previously ruled, and counted apart, rather than re-adjudicated every run.
+  By record and the claim's pattern, as the controls are, with the same limit: a restated claim will not match.
+*/
+describe('the ruled-false register', () => {
+  const huey: AuditedDraft = {
+    id: '7cfdc4cb-0000-4000-8000-000000000000', artist: 'Huey Lewis & The News', title: 'Sports',
+    sentences: ["Bob Clearmountain's mix gives the whole thing a big, dry, forward snare.", 'A five-piece band.'],
+    result: { ok: true, material: [
+      { sentence: 1, quote: "Bob Clearmountain's mix gives the whole thing a big, dry, forward snare.", contradiction: 'A4 was mixed by Larry Alexander.', evidence: 'A4: Larry Alexander, Mixed By' },
+      { sentence: 2, quote: 'A five-piece band.', contradiction: 'Six are credited.', evidence: 'credits' },
+    ], knowledge: [], dropped: [], tokens: { input: 1, output: 1 } },
+  };
+
+  it('finds a ruling by the record and the claim, and none for a claim not ruled on', () => {
+    expect(findRuling('7cfdc4cb', "Bob Clearmountain's mix gives the whole thing a big, dry, forward snare.")).toMatchObject({ ruled: 'the coordinator, 18 Nov' });
+    expect(findRuling('7cfdc4cb', 'A five-piece band.')).toBeNull();
+    expect(findRuling('01ad99d8', "Bob Clearmountain's mix gives the whole thing a big, dry, forward snare.")).toBeNull();
+  });
+
+  it('marks the ruled flag in the report as previously ruled false, with who and when, and counts it apart in the head', () => {
+    const text = renderAudit([huey], 'Audit', { model: 'm', effort: 'medium' });
+    expect(text).toMatch(/- 1\. Bob Clearmountain[^\n]*\n  Previously ruled false \(the coordinator, 18 Nov\): a mix credit/);
+    expect(text).not.toMatch(/- 2\. A five-piece band\.\n  Previously ruled/);
+    expect(text.slice(0, text.indexOf('## '))).toMatch(/2 sentences contradicted by the material, 1 of them previously ruled false/);
   });
 });

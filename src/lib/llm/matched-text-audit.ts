@@ -31,11 +31,13 @@ const EFFORT_VAR = 'MATCHED_AUDIT_EFFORT';
 /* The same default as the pick's, chosen on 14 Nov from OpenAI's models page; a different model from the drafter's, which is what the pass needs. */
 export const AUDIT_MODEL_DEFAULT = 'gpt-6.1-sol';
 /*
-  High, decided by the positive control (18 Nov): at medium the auditor reported no disagreement on Carpenters, whose
-  medley sentence the stored tracklist proves wrong; at high it came back under the material kind with the positions as
-  evidence. The pass runs once per record, offline, where a missed contradiction costs more than the seconds.
+  Medium, by the coordinator's reading rule written before the numbers (18 Nov): the planted set caught six of six at
+  both efforts, with no false flag at medium and one at high; both positive controls were missed at both efforts in the
+  blind 55 runs, and the one trial at high that had held Carpenters in the morning missed it in the run on the same
+  input. A difference of one or none is medium, with high recorded as not shown better. The default had been set to
+  high on that single trial without being flagged as a decision, which is why this comment carries the rule.
 */
-const EFFORT_DEFAULT = 'high';
+const EFFORT_DEFAULT = 'medium';
 
 /** The reply's shape, strict: the two lists required and nothing else, each item's fields required. */
 export const AUDIT_SCHEMA = {
@@ -79,6 +81,12 @@ const SYSTEM = [
   '"material": a sentence contradicted by the material below. The tracklist, the credits or the format say otherwise: a track placed on the wrong side, an order the positions contradict, a performer the credits give to someone else, a format the listing does not show. Quote the sentence whole in "quote", say in "contradiction" what is wrong, and copy into "evidence" the lines of the material that prove it.',
   '"knowledge": a sentence contradicted by your own knowledge of this record, where the material neither confirms nor denies it. Quote the sentence whole, and say in "contradiction" what you know instead. These are weaker, will be read with that caveat, and are kept apart from the first kind for that reason.',
   'A sentence that is not supported by the material is not contradicted by it: unsupported is not contradicted, and is not reported here. A sentence the material does not reach belongs to the second kind only if you know it to be false.',
+  /*
+    The one bounded fix attempt (the coordinator, 18 Nov), tried and withdrawn: a sentence here telling the auditor to
+    check every sentence against each fact it establishes before reporting. Three trials of both controls at medium
+    under it: Carpenters 0 of 3, Hello Mary's sentence 8 0 of 3 while its sentence 5 was flagged in all three. Below the
+    pre-registered two of three on both, so the prompt stays as the planted calibration measured it. No third round.
+  */
   'Number each item by the sentence’s number in the description, and quote that sentence exactly and whole. Return empty lists where you disagree with nothing.',
 ].join('\n');
 

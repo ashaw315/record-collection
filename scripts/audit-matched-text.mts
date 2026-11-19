@@ -11,8 +11,9 @@
  *       # the catch-rate measurement (the coordinator, 18 Nov): six kinds of error the stored material disproves,
  *       # each planted in a copy of a different draft, the pass run over the copies; --prompt plants and prints, no call
  *
- * Reads `.matched/drafts.json` and the records' cached releases from the database (a read); writes `.matched/audit.json`
- * and the report to `.matched/audit.md` and ~/Downloads. Writes nothing to production and nothing to drafts.json.
+ * Reads `.matched/drafts.json` and the records' cached releases from the database (a read); writes each run's own files,
+ * `.matched/audit-<time>-<model>-<effort>.{json,md}` and a copy of the report in ~/Downloads under the same time, so no
+ * run overwrites another (19 Nov). Writes nothing to production and nothing to drafts.json.
  *
  * The positive control: Carpenters' sentence placing the medley right after "Druscilla Penny", with "One Love" (B3)
  * between them in the stored tracklist. It must come back under the material kind; if it does not, the pass does not
@@ -24,11 +25,21 @@ import { join } from 'node:path';
 import { recordsToDraft } from '@/lib/db/queries/matched-text';
 import { groundingFromPayload } from '@/lib/llm/about-grounding';
 import { auditConfig, auditDraft, auditRequest } from '@/lib/llm/matched-text-audit';
-import { findControl, renderAudit, type AuditedDraft } from '@/lib/matched-text/audit-report';
+import { auditFileStem, findControl, findRuling, renderAudit, type AuditedDraft } from '@/lib/matched-text/audit-report';
 import { plantAcross, renderPlanted, scorePlanted, type PlantedRow } from '@/lib/matched-text/plant';
 import type { ReviewDraft } from '@/lib/matched-text/review';
 
-const CONTROL = { prefix: '7d953882', pattern: /Druscilla Penny/ };
+/*
+  The positive controls, real sentences the stored tracklist proves wrong, each owed under the material kind:
+  Carpenters' medley "that follows" Druscilla Penny, with One Love (B3) between; and Hello Mary's "a shorter, tighter
+  first side and a longer second" (sentence 8), where side one has six tracks and side two five, the twin of the error the
+  auditor caught in the same record's sentence 5 (the coordinator, 18 Nov). The pass holds only if every control holds.
+*/
+const CONTROLS = [
+  /* The pattern is the claim, not the track: the redraft still names Druscilla Penny without saying the medley follows it. */
+  { name: 'Carpenters, the medley that follows', prefix: '7d953882', pattern: /Druscilla Penny[^.]*medley that follows/ },
+  { name: 'Hello Mary, a shorter first side', prefix: '729c1a01', pattern: /shorter, tighter first side/ },
+];
 const args = process.argv.slice(2);
 const WORK = join(process.cwd(), '.matched');
 mkdirSync(WORK, { recursive: true });
@@ -74,11 +85,12 @@ if (planted) {
     rows.push({ ...p, result });
     console.log(`${p.kind}  ${p.id.slice(0, 8)} ${p.artist} — ${p.title}: ${result.ok ? `material ${result.material.map((m) => m.sentence).join(',') || 'none'}, knowledge ${result.knowledge.map((k) => k.sentence).join(',') || 'none'}; planted is ${p.index}; ${result.tokens.input ?? '?'} in, ${result.tokens.output ?? '?'} out` : `NOT AUDITED, ${result.reason}`}`);
   }
-  const date = new Date().toISOString().slice(0, 10);
-  const title = `Planted errors, ${date}, ${config.model} at ${config.effort}`;
-  const file = join(WORK, `audit-planted-${config.effort}.md`);
+  const at = new Date();
+  const stem = `planted-${auditFileStem(config, at)}`;
+  const title = `Planted errors, ${at.toISOString().slice(0, 16)}Z, ${config.model} at ${config.effort}`;
+  const file = join(WORK, `${stem}.md`);
   writeFileSync(file, renderPlanted(rows, config, title));
-  writeFileSync(join(WORK, `audit-planted-${config.effort}.json`), JSON.stringify(rows, null, 2));
+  writeFileSync(join(WORK, `${stem}.json`), JSON.stringify(rows, null, 2));
   const out = join(homedir(), 'Downloads', `${title}.md`);
   copyFileSync(file, out);
   const score = scorePlanted(rows);
@@ -104,16 +116,19 @@ for (const d of chosen) {
   if (result.ok) {
     tokensIn += result.tokens.input ?? 0;
     tokensOut += result.tokens.output ?? 0;
-    console.log(`${d.id.slice(0, 8)}  ${d.artist} — ${d.title}: material ${result.material.length}, knowledge ${result.knowledge.length}${result.dropped.length === 0 ? '' : `, dropped ${result.dropped.length}`}; ${result.tokens.input ?? '?'} in, ${result.tokens.output ?? '?'} out`);
+    const ruled = result.material.filter((m) => findRuling(d.id, m.quote) !== null).length;
+    console.log(`${d.id.slice(0, 8)}  ${d.artist} — ${d.title}: material ${result.material.length}${ruled === 0 ? '' : ` (${ruled} previously ruled false)`}, knowledge ${result.knowledge.length}${result.dropped.length === 0 ? '' : `, dropped ${result.dropped.length}`}; ${result.tokens.input ?? '?'} in, ${result.tokens.output ?? '?'} out`);
   } else {
     console.log(`${d.id.slice(0, 8)}  ${d.artist} — ${d.title}: NOT AUDITED, ${result.reason}`);
   }
 }
 
-const date = new Date().toISOString().slice(0, 10);
-const title = `Matched text audit, ${date}, ${config.model} at ${config.effort}`;
-writeFileSync(join(WORK, 'audit.json'), JSON.stringify({ config, audited }, null, 2));
-const report = join(WORK, 'audit.md');
+/* Named by the run (the coordinator, 19 Nov): audit.json and audit.md were overwritten by every run, and the ten redrafts' audit was lost that way. */
+const at = new Date();
+const stem = auditFileStem(config, at);
+const title = `Matched text audit, ${at.toISOString().slice(0, 16)}Z, ${config.model} at ${config.effort}`;
+writeFileSync(join(WORK, `${stem}.json`), JSON.stringify({ config, at: at.toISOString(), args, audited }, null, 2));
+const report = join(WORK, `${stem}.md`);
 writeFileSync(report, renderAudit(audited, title, config));
 const out = join(homedir(), 'Downloads', `${title}.md`);
 copyFileSync(report, out);
@@ -122,10 +137,13 @@ const material = audited.reduce((s, a) => s + (a.result.ok ? a.result.material.l
 const knowledge = audited.reduce((s, a) => s + (a.result.ok ? a.result.knowledge.length : 0), 0);
 const failed = audited.filter((a) => !a.result.ok).length;
 console.log(`audit-matched-text: ${audited.length} audited, ${material} contradicted by the material, ${knowledge} contradicted by the auditor's own knowledge, ${failed} not audited; ${tokensIn} tokens in, ${tokensOut} out; model ${config.model}, effort ${config.effort}; report ${out}`);
-if (audited.some((a) => a.id.startsWith(CONTROL.prefix))) {
-  const control = findControl(audited, CONTROL.prefix, CONTROL.pattern);
-  console.log(control.held
-    ? `CONTROL HELD: Carpenters' medley sentence (${control.sentence}) came back contradicted by the material`
-    : `CONTROL MISSED: Carpenters' medley sentence ${control.kind === 'knowledge' ? `came back under the auditor's own knowledge (sentence ${control.sentence}), not the material` : 'was not reported'}; the pass has not shown it reads the material, and nothing proceeds on its output`);
+let missed = 0;
+for (const c of CONTROLS) {
+  if (!audited.some((a) => a.id.startsWith(c.prefix))) continue;
+  const control = findControl(audited, c.prefix, c.pattern);
+  if (control.held) console.log(`CONTROL HELD: ${c.name} (sentence ${control.sentence}) came back contradicted by the material`);
+  else if (control.kind === 'absent') console.log(`CONTROL ABSENT: ${c.name}: no sentence of the draft as held carries it (redrafted), so this run says nothing about the control`);
+  else { missed += 1; console.log(`CONTROL MISSED: ${c.name} ${control.kind === 'knowledge' ? `came back under the auditor's own knowledge (sentence ${control.sentence}), not the material` : 'was not reported'}`); }
 }
+if (missed > 0) console.log(`${missed} of ${CONTROLS.length} controls missed: the pass has not shown it reads the material, and nothing proceeds on its output; verified flags stand on their verification, not on the pass`);
 process.exit(0);

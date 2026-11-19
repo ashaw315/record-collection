@@ -121,7 +121,7 @@ describe('auditConfig', () => {
     expect(auditConfig({ effort: 'high' })).toEqual({ model: 'the-audits-model', effort: 'high' });
     vi.stubEnv('MATCHED_AUDIT_MODEL', '');
     vi.stubEnv('MATCHED_AUDIT_EFFORT', '');
-    expect(auditConfig()).toEqual({ model: 'gpt-6.1-sol', effort: 'high' });
+    expect(auditConfig()).toEqual({ model: 'gpt-6.1-sol', effort: 'medium' });
   });
 });
 
@@ -149,12 +149,13 @@ describe('the call', () => {
   });
 
   /*
-    The positive control decided the default effort (18 Nov): at medium the auditor reported no disagreement on
-    Carpenters, whose medley sentence the stored tracklist proves wrong (B3 between B2 and B4); at high it came back
-    under the material kind with the three positions as evidence. So the default is high, and medium is not offered as
-    a default the pass has not shown to work.
+    Medium, by the coordinator's reading rule written before the numbers (18 Nov): the planted set caught six of six at
+    both efforts with one false flag at high and none at medium, and the two positive controls were missed at both in
+    the blind 55 runs. One control trial at high had held in the morning and set the default to high without being
+    flagged as a decision; the same request missed in the run, so a single trial decides nothing, and the rule's
+    "difference of one or none" is medium, high recorded as not shown better.
   */
-  it('defaults the model when MATCHED_AUDIT_MODEL is unset, still ignoring ASK_PICK_MODEL, and the effort to high, which the control required', async () => {
+  it('defaults the model when MATCHED_AUDIT_MODEL is unset, still ignoring ASK_PICK_MODEL, and the effort to medium, which the reading rule chose', async () => {
     vi.stubEnv('OPENAI_API_KEY', 'sk-test');
     vi.stubEnv('ASK_PICK_MODEL', 'the-picks-model');
     vi.stubEnv('MATCHED_AUDIT_MODEL', '');
@@ -164,6 +165,6 @@ describe('the call', () => {
     const [, init] = fetchImpl.mock.calls[0] as unknown as [string, { body: string }];
     expect(JSON.parse(init.body).model).not.toBe('the-picks-model');
     expect(JSON.parse(init.body).model).toMatch(/\S/);
-    expect(JSON.parse(init.body).reasoning).toEqual({ effort: 'high' });
+    expect(JSON.parse(init.body).reasoning).toEqual({ effort: 'medium' });
   });
 });
