@@ -58202,3 +58202,37 @@ view" lever: Design has it noted, nothing filed, weighed once the capacity figur
 left out if still over, the slot's "No answer came. Ask again." when none remains, the run kept; and the requirement-unmet
 slot drawn above its stand-in with "None has all of it.", both wordings measured at 112, 320 and 1280. Waits on the
 coordinator, who has said nothing more comes until Adam reports his press.
+
+**Gate 44611551904 on 6df5bd81 (the fourth drop's intake): GREEN WITH FLAKES, not OK.** unit 5381 passed, 3 skipped,
+OK (20:43Z to 20:48Z); e2e mobile 397 passed, 4 skipped, OK (to 20:55Z); e2e report-only 4 passed, OK; e2e chromium
+1114 passed, 1 flaky, 1 skipped, not OK (to 21:05Z). The flake, read from the gate's own test-results before anything
+else: record-page-8a:432 ("the year figure and its label read against their field on a record with no cover") failed its
+first attempt at seeding and passed the retry in 2.0s. The trace's network: login 200, artist 201, label 201, store 201,
+two genres 201, then `POST /api/pressings` 200 at 20:57:40.095Z, a row FOUND, and `POST /api/records` 400 at .111Z,
+`VALIDATION_ERROR fieldErrors.pressingId "No pressing with that id exists"`. Sixteen milliseconds between finding the
+pressing and failing to reference it. The cause is the spec's shape under `fullyParallel: true`: the richest case's
+pressing (FE 36811, no suffix) is deliberately shared by key across the file's tests, the comment at the helper saying
+why (suffixing it would hide the found-or-create behaviour §4 rules); the file's tests run across workers; one worker's
+afterEach cleanup deletes the pressing its test created once that test's record is gone, and another worker had just
+been handed the same row with a 200 and had not yet referenced it. The build did what §4 says; the test's seed window is
+the defect. Not fixed here, since the fix changes a test and the reuse is a deliberate claim: either the record POST
+re-finds the pressing on exactly that 400, or the file's pressings are deleted last. Q79. The chromium log also carries
+Next's `⨯ Error: The destination stream closed early` lines, present in earlier green gates, not read as part of this.
+
+**The queue's pass (the coordinator, 19 Nov).** Q31 and Q32 closed `done 15 Nov`, their deliverable
+`claude/audio-analysis-research.md` being the coordinator's own file, which no commit here holds and which is not on this
+disk under the repo, Development, Downloads or the Claude project folder (searched by name and content); the rows record
+his lapse in his words, the close-in-the-turn rule being attributed to him in the file's header and broken on his own
+rows. The check had no date form, so `done <date>` is added for a deliverable no commit holds, with the rule that its
+record column must then say where it lives and a finding when it says "nothing"; test first, failing with the date read
+as a missing commit, 32 passed after. Q57 closed `done 3c366457`. Q22 rewritten to what remains: the embedding ranking it
+described is superseded by the model pick and held unbuilt-over, the distance report delivered 12 Nov; what is still its
+own is the field's label provisional, the rest pointed at Q59, Q72 and the new rows. New rows: Q73 (Blocked on Adam,
+19 Nov: the placement, the bound's final figure and §P.4's lever as one decision), Q74 (the four verified-wrong
+sentences, waiting on §67's sheet), Q75 (`[supported]` unverified on 125 of 439, no owner), Q76 (parked: the pass's
+recall, investment stopped by rule), Q77 (the re-ask-once and the two slot wordings, ruled today, not built), Q78
+(Design's queue: §67's sheet's provisionals and the dropped-reason wording), Q79 (the flake above). Each row points at
+NOTES rather than restating; queue-1 PASS, consistency nothing to report, 73 items. **Q30:** no answer from Design is
+recorded anywhere in NOTES (searched 19 Nov); what is recorded is conduct: Design's 6 Nov ask to add the applied-files
+list to the export bundle, and every change file since anchoring on an export's commit ("the 7eb36076 export's
+handoff" today). Left open with that written in; the coordinator asks Design and closes it.

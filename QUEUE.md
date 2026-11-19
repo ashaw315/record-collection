@@ -34,7 +34,9 @@ to catch, and the check's one numbered assertion, `queue-1`, with the exit
 code, is that no row here carries one of their heads. The draft's ids Q13 to Q18 were those
 six, restated verbatim, and are retired, never reused.
 
-**Statuses.** `open`; `done <commit>`; `dropped <commit or §section>`;
+**Statuses.** `open`; `done <commit>`, or `done <date>` for a deliverable no
+commit here holds, whose record column then says where it lives (the
+coordinator, 19 Nov); `dropped <commit or §section>`;
 `ruled <§section>`; `parked` (real, and nobody works it: counted apart from
 open, since 11 Nov). A row is `| id | status | item | record lives in |`, and
 the last column says whether anything other than this file would notice the
@@ -54,8 +56,9 @@ item going missing.
 | Q6 | done 41bbc928 | The Images disc size and §55's figures, measured 6 Nov from the build: Design answered in the 6 Nov drop, and the work is three unnumbered handoff steps (§55, §60, §W.8) this row does not restate | NOTES, 6 Nov; the handoff |
 | Q7 | done 4ece9b6a | The 455px put back: ten of ten returned to where they began on the build; nothing owed | NOTES, 6 Nov |
 | Q8 | dropped §W.8 | The hold's bound figure: Design answered in the 6 Nov drop, and the measuring at three candidates is step 170, which is Q64; a duplicate of a row that exists | NOTES, 6 Nov; Q64 |
+| Q73 | open | The ask control's placement (above the heading, or the scroll), the reason bound's final figure (160 set; 140 proposed, not set, since both capacity figures were measured above the heading) and §P.4's "wholly in view" lever, one decision with three parts; Adam judges by pressing ASK on his phone. **Put to Adam:** 19 Nov | NOTES, 19 Nov (evening and night); docs/captures/ask-fold-moved and ask-fold-capacity |
 
-Q47 is the one row here that waits on Adam.
+Q73 is the one row here that waits on Adam.
 
 ## In flight
 
@@ -76,7 +79,7 @@ here; see above.
 | Q19 | done b749d61 | The queue file and its check | this file |
 | Q20 | done 6b20ff1 | `scripts/check-design-card.mjs`, the card's report-only checks; 15 tests in the document suite | the script |
 | Q21 | open | inferReissue is wrong on 2 records | NOTES |
-| Q22 | open | The vibe search (Code): the embedding store and run (4d255a6e), the ranking with `POST /api/ask` (074f0dd6), the control (step 178, 12 Nov: the field in each host, a column in the sidebar and a row in the bands, captured) and its corrections to the card (step 180: the slot's own words when asking is not set up; 181: reworded; 182: the count keyed to the answer's form, one as a pull and five as cells, the label WHAT TO PLAY, the count line "N have no About.", the 390 hairline, the sidebar's gap, recaptured) are built; Adam's embedding run and text backfill are done and confirmed end to end on 12 Nov (53 vectors; barcodes from August found); what remains is the distance report for Design (`scripts/report-ask-distances.mts`, now runnable), Design's rulings on the field's label and the count column's five, and the far answer's pair once a buying source is ruled (Q59) | NOTES, 7 Nov, 11 Nov (fifth, eighth, ninth) and 12 Nov; §P.2 to §P.6; the handoff's step 178 |
+| Q22 | open | The ask (Code), as it stands 19 Nov: the embedding ranking this row once described (the store and run 4d255a6e, the ranking at `POST /api/ask` 074f0dd6, the distance report delivered 12 Nov) is superseded by §P.2's model pick, latched 14 Nov, and is held unbuilt-over, not deleted, by the handoff's pick step; the control and its corrections (steps 178 to 182) stand. What is still this row's: the ask field's label WHAT TO PLAY, Proposed, judged from the captures (§P.5's provisional, open); the far answer's pair is Q59, the embedding's future Q72, the pick's own open work the handoff's unbuilt steps and Q73 to Q77 | NOTES, 12, 14 and 17 to 19 Nov; §P.2 to §P.6; the handoff's Provisionals |
 | Q23 | parked | Want-list tagging (Phase 4): never designed | mood-search-scope doc |
 | Q24 | parked | lookup-flows:1743: an unread flake | the known-flaky table |
 | Q25 | dropped §P.2 | Mood tagging's retry and run-record: the moods are retired by §P.2, so the feature this served does not exist | SPEC §5.10; §P.2 |
@@ -98,7 +101,7 @@ here; see above.
 | Q54 | parked | The hand-application guard in commit-checked, a whole-file drop passing only where its files match the newest drop ref's copies; the record half done at 007a4551 | NOTES, 7 Nov |
 | Q55 | open | Code's debt: three components carry their own copy of the §9.3 box string (ErrorBody, ShelfEmpty, CollectionList); fold them into the one constant | NOTES, 7 Nov |
 | Q56 | parked | The landed record's 54 backfilled lines are undated until read against the commits themselves, never against the rule that produced them; after Q57 | NOTES, 7 Nov |
-| Q57 | open | region-remount-q48.spec.ts:82 assumes the reader's scroll lands within 100ms of the sampler; record the scroll's own time and read frames after it; before Q55 and Q56 | NOTES, 7 Nov |
+| Q57 | done 3c366457 | region-remount-q48.spec.ts:82 assumed the reader's scroll lands within 100ms of the sampler: the scroll's own time read (13b2015a), then its rounded frame time compared with the scroll's unrounded one, fixed 19 Nov from the gate's trace | NOTES, 7 and 19 Nov |
 | Q58 | ruled §43 | record-band-43:33, intermittent, painted mid-parse (the partial-band and partial-cell shapes): ruled report-only, the WATCH line printing with every gate verdict, the remedy §43's boundary option (Q60) with step 171 parked; decided, not pending | NOTES, 8 and 9 Nov; gate-watches.txt; docs/measurements/band-43 |
 | Q59 | open | A buying recommendation inside the ask's far answer (Adam, 9 and 10 Nov): ruled 11 Nov into §P.2 as the meantime pair, drawn as the owned record alone until a buying source is ruled; only the source is still this row; after Q22 | §P.2; Q22; Q23 |
 | Q60 | parked | §43's boundary remedy ("First paint is styled"): ruled, not built, parked by Adam's 9 Nov redirect with the far-view thread; when it is picked up is Adam's to say | NOTES, 9 and 10 Nov; Q58; §43 |
@@ -108,6 +111,11 @@ here; see above.
 | Q72 | open | A record added gets its ABOUT and embedding with no step from Adam (Adam, 13 Nov: "so when a new record is entered in collection it has About and embedding"; mechanism the coordinator's, no approval gate): generated on add with Q37's grounding, ABOUT stored only in the same transaction as its embedding (`record_embeddings`, keyed by the ABOUT's hash), so the two cannot diverge and §P.6's count is right by construction; editing re-embeds in the same way; any failure (no key, provider down, refused) saves the record with no ABOUT, loudly, never an empty ABOUT, placeholder or zero vector; the existing records with an ABOUT and no current embedding are counted first. Needs: the Neon driver's transaction verified (CLAUDE.md §2), OPENAI_API_KEY in Vercel (Adam installs it; never asked for), and a reading of the 4 Nov rule that drafts are marked by Adam before storing, which this retires for new records: put to Adam by the coordinator 13 Nov, not settled until he answers. After Q37, which changes the grounding it calls **Held, not deprioritised (the coordinator, 14 Nov):** built after the model pick, against the fields that survive it. As written it automates the ABOUT and its embedding together, and the embedding feeds the ranking the pick replaces, while the sound-and-occasion text the pick reads (SPEC §4.6) has no generation yet; building it now would specify the wrong set of fields. | the coordinator, 13 Nov; Q37; Q22; §P.6 |
 | Q64 | open | Step 170 (§W.8, the bound at a candidate): Code's measure-window mode for held presses at 3000, 4000 and 6000ms first, then Adam's run; its precondition, Q45, closed (reconciled 13 Nov); placed after handoff steps 184 and 185, which finish the ask Adam uses, so his production runs are not spent before it is finished (the coordinator, 13 Nov); then Q37, then Q72 | scripts/measure-window.mts; Q45; §W.8 |
 | Q27 | parked | Vercel deployment retention: 294 production deployments at 22.4 MB each is about 6.4 GB of the 7.5 GB; no action chosen, the first proposal wrong twice over; parked against a limit that moves | the Vercel investigation |
+| Q74 | open | Four matched-text sentences verified wrong and in use (Smerz s1, Vandross s5, ABBA s3, Blues Project s8): not hand-fixed by ruling, they are the first cases of §67's sheet and wait for it; owner Code once the sheet exists, Adam corrects through it | NOTES, 19 Nov (first); the audit files under .matched/ |
+| Q75 | open | `[supported]` is the drafting model's own unchecked field, on 125 of 439 stored sentences, and nothing in the pipeline verifies it against the tracklist, credits or format it claims; no owner and no mechanism yet | NOTES, 19 Nov (first); 71dcaa18 |
+| Q76 | parked | The adversarial pass's recall: both planted controls missed at medium and at high, the one pre-registered fix attempt failed 0 of 3 and 0 of 3 and was withdrawn, investment stopped by the coordinator's rule; a zero from it is an unexamined result, not a clean one | NOTES, 18 Nov (the pass's three entries) and 19 Nov (first) |
+| Q77 | open | Ruled by Design 19 Nov, not built: a reason over the bound re-asked once, its record left out if still over, the slot's "No answer came. Ask again." when none remains; and the requirement-unmet slot drawn with "None has all of it." above its stand-in, both wordings measured at the rail's 112, 320 and 1280; two bullets of the handoff's pick step, test first with a stubbed over-bound reply, since the API's strict maximum never produces one | the handoff's pick step, after "Bound the reason"; NOTES, 19 Nov (night) |
+| Q79 | open | record-page-8a:432 flaked on gate 44611551904 (6df5bd81): under fullyParallel the richest case's pressing is shared by key across the file's tests, found (200) by one worker 16ms before another worker's afterEach deleted it, so the record POST answered 400 "No pressing with that id exists"; the test's shape, not the build, and the found-or-create reuse is deliberate there; a fix needs agreement (re-find on that 400, or the file's pressings deleted last) | NOTES, 19 Nov (night); the gate's test-results |
 
 ## Design's queue
 
@@ -122,14 +130,15 @@ here; see above.
 | Q71 | done eb996c30 | Verified and fixed 11 Nov: an edit whose pressing section was untouched re-posted it, and a pressing with an empty §4 match key (a matrix alone) came back new, moving the record and orphaning the first; the form now keeps the pressing it had when the section reads as loaded (`samePressing`), asserted in record-form.spec. Production on 11 Nov: no pressing made this way, and 10 pressings nothing references, from other paths, left as they are (the coordinator, 12 Nov: referenced by nothing, and under §66 a barcode search goes through a record's current pressing, so they can never surface) | NOTES, 11 Nov (eleventh); scripts/count-orphan-pressings.mts; §4 |
 | Q28 | ruled §43 | §43's ruling, the same question as Q10; closed 10 Nov | §43 |
 | Q29 | done 8ad5496b | The vibe search surface: filed by Design 10 Nov ("Ask field") and made safe for the control 11 Nov ("the rest of the moods"), both holds lifted; what remains is Q22's build | NOTES, 10 and 11 Nov; Q22 |
-| Q30 | open | The export bundle (four exports at 35da788 / fcab6ed in Downloads): whether Design consumed them, one question to Design that the coordinator is asking; closes on its answer | nothing |
+| Q30 | open | The export bundle (four exports at 35da788 / fcab6ed in Downloads): whether Design consumed them, one question to Design that the coordinator is asking; closes on its answer. No answer is recorded (checked 19 Nov); what is recorded is conduct: Design asked on 6 Nov for the applied-files list to be added to the bundle, and every change file since anchors on an export's commit | NOTES, 6 Nov (20:05); the change files' anchors |
+| Q78 | open | §67's sheet, Design's half: the two provisionals that return with the sheet step's capture (its look and words at 1440 × 900 and 390, its head at 390 with the keyboard up, judged by Adam on his phone; §P.2's reason as a press), and the dropped-reason slot wording proposed 19 Nov; Code's build of the step is the twins test's, not restated here | the handoff's Provisionals; NOTES, 19 Nov |
 
 ## Owed by the coordinator
 
 | id | status | item | record lives in |
 |---|---|---|---|
-| Q31 | open | The audio-analysis research write-up; Adam still wants it (11 Nov) | nothing |
-| Q32 | open | The matching table: candidate recording, duration difference, version differences, confidence; Adam still wants it (11 Nov) | nothing |
+| Q31 | done 15 Nov | The audio-analysis research write-up, delivered 15 Nov; the row read "Adam still wants it" for four days after, against the close-in-the-turn rule this file's header attributes to the coordinator, broken by him on his own row (his words, 19 Nov) | claude/audio-analysis-research.md, the coordinator's file, outside this repo |
+| Q32 | done 15 Nov | The matching table (candidate recording, duration difference, version differences, confidence), delivered 15 Nov with Q31; open four days after, the same lapse, recorded as his | claude/audio-analysis-research.md, the coordinator's file, outside this repo |
 
 ## Ruled by Adam, 11 Nov
 

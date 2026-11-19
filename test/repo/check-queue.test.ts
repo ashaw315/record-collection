@@ -99,6 +99,21 @@ describe('consistency', () => {
     expect(consistency(stale, { resolves, targetsText })).toContainEqual('Q11: done names abcdef0, which git does not resolve (line 15)');
   });
 
+  /*
+    **A deliverable outside this repo closes on its date (the coordinator, 19 Nov).** Q31 and Q32, the audio-analysis
+    write-up and the matching table, were delivered 15 Nov in a file of the coordinator's that no commit here holds, so
+    `done <sha>` had nothing to name and both sat open four days. `done 15 Nov` closes such a row, and its record column
+    must then say where the thing lives: "nothing" there is the state the file's own rule exists to prevent. Fails
+    against a check that reads the date as a missing commit, and against one that accepts the date over "nothing".
+  */
+  it('accepts done with a date for a deliverable outside the repo when the record column says where it lives, and reports the date over "nothing"', () => {
+    const placed = parseQueue(FIXTURE.replace('| Q11 | done 194ac24 | Remove rule 3 and its test | NOTES |', '| Q11 | done 15 Nov | The write-up | claude/research.md, outside this repo |'));
+    expect(consistency(placed, { resolves, targetsText })).toEqual([]);
+    expect(placed[3]).toMatchObject({ id: 'Q11', status: 'done', ref: '15 Nov' });
+    const nowhere = parseQueue(FIXTURE.replace('| Q11 | done 194ac24 | Remove rule 3 and its test | NOTES |', '| Q11 | done 15 Nov 2026 | The write-up | nothing |'));
+    expect(consistency(nowhere, { resolves, targetsText })).toContainEqual('Q11: done 15 Nov 2026 names a date and no commit, so its record column must say where the deliverable lives, not "nothing" (line 15)');
+  });
+
   it('reports a ruling naming a section no target holds', () => {
     const items = parseQueue(FIXTURE.replace('| Q12 | ruled §43 |', '| Q12 | ruled §99 |'));
     expect(consistency(items, { resolves, targetsText })).toContainEqual('Q12: ruled §99, which no design target or withdrawal holds (line 16)');

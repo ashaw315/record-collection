@@ -71,6 +71,8 @@ export function parseQueue(text) {
 
 const SHA = /^[0-9a-f]{7,40}$/;
 const SECTION = /^§\S+$/;
+/* `done 15 Nov` (the coordinator, 19 Nov): a deliverable no commit here holds closes on its date, and the row's record column says where it lives. */
+const DATE = /^\d{1,2} [A-Z][a-z]{2}( \d{4})?$/;
 
 /**
  * Internal consistency, as findings: duplicate ids, unknown statuses, a done
@@ -89,7 +91,9 @@ export function consistency(items, { resolves, targetsText }) {
       findings.push(`${it.id}: status "${it.status}" is not one of ${STATUSES.join(', ')} ${at}`);
       continue;
     }
-    if (it.status === 'done' || (it.status === 'dropped' && !(it.ref ?? '').startsWith('§'))) {
+    if (it.status === 'done' && it.ref !== null && DATE.test(it.ref)) {
+      if (/^nothing$/i.test(it.record.trim())) findings.push(`${it.id}: done ${it.ref} names a date and no commit, so its record column must say where the deliverable lives, not "nothing" ${at}`);
+    } else if (it.status === 'done' || (it.status === 'dropped' && !(it.ref ?? '').startsWith('§'))) {
       if (it.ref === null || !SHA.test(it.ref)) findings.push(`${it.id}: ${it.status} names no commit ${at}`);
       else if (!resolves(it.ref)) findings.push(`${it.id}: ${it.status} names ${it.ref}, which git does not resolve ${at}`);
     } else if (it.status === 'ruled' || it.status === 'dropped') {
