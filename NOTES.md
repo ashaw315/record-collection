@@ -58236,3 +58236,26 @@ NOTES rather than restating; queue-1 PASS, consistency nothing to report, 73 ite
 recorded anywhere in NOTES (searched 19 Nov); what is recorded is conduct: Design's 6 Nov ask to add the applied-files
 list to the export bundle, and every change file since anchoring on an export's commit ("the 7eb36076 export's
 handoff" today). Left open with that written in; the coordinator asks Design and closes it.
+
+**Gate 44617708618 on 4fda65ef (the queue's pass): GREEN WITH FLAKES, not OK.** unit 5382 passed, 3 skipped, OK
+(21:20Z to 21:28Z); e2e mobile 397 passed, 4 skipped, OK (to 21:32Z); e2e report-only 4 passed, OK; e2e chromium 1114
+passed, 1 flaky, 1 skipped, not OK (to 21:45Z). The flake is record-modal-81:548, the turn test moved onto the frame
+clock this morning (3c366457), failing its first attempt at the edge-on check: "the frame before stands within 11.0 of
+90, the most the turn travels in 16.6ms there", received 75.02; passed on the retry. **Read from the attempt's trace, every
+sampled angle inverted through the ease-out onto the turn's clock (TURN_MS 600):** the sampler's stamps run 16.7, 16.7,
+33.3, 16.7, 16.6, 33.4, 16.6, 16.7, 33.3 … and the poses' own gaps run 0, 15.4, 16.7, 33.3, 16.7, 16.6, 33.4, 16.6, 16.7,
+33.3 …, the same sequence one place later; the pose's time minus its stamp is −17 at every one-frame gap and −34 after
+every two-frame gap, from the first moving frame to the last. **So each sample holds the pose the turn wrote in the frame
+before the one whose timestamp it carries:** within a frame the callbacks run in registration order, and the sampler's
+tick runs before the turn's step, reading last frame's transform and stamping it with this frame's time. The change of
+face fell between poses at 98.7 and 132.1 on the turn's clock, a 33.4ms gap with a dropped frame in it, 75.0 to 94.6
+degrees; the test took the gap from the stamps either side, 132.7 and 149.3, 16.6, and allowed 11.0. With the poses' own
+gap the allowance is 21 and the frame stands 15 inside it. The build turned correctly; the test paired each pose with the
+wrong frame's time. This morning's finding stands and was incomplete: the callback's 20 to 70ms lag hid a one-frame lag
+beneath it, and the frame clock removed only the first. **Not fixed, a test change needing agreement; the candidates,
+one preferred:** (A, preferred) the sampler starts after the turn's own first frame has registered, so its tick runs after
+the step in every frame and each stamp is the pose's frame, verified by the inversion printing zero lag on a local run
+and in the spec's console line; (B) the gap taken between the poses themselves, each angle inverted through the easing,
+which pairs correctly whatever the order but reads the turn's clock off the turn's own curve; (C) nothing, and the 11
+degrees of margin stays a flake under a dropped frame at the change. gatefold-88's two samplers have the same shape and
+the same question. Q80.
