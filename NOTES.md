@@ -58045,3 +58045,70 @@ heading, at about 762 and 818, in view in both. The two sidebars are alike to th
    for 3b or its own step: a slot wording for the verdict, Proposed, and a capture of it. The reason's wording is right.
 The cap holds against the captures: the column host fits at 1440 × 768 even at 305, only the far band at 1044 × 768
 fails there; the bound is worth setting and is not what fixes the fold.
+
+## 19 Nov, evening: the reason's length measured from the model; the fold measured in the moved layouts; the count line fixed; the count-check withdrawn
+
+**Decision 1, the measured figure (`scripts/measure-reason-lengths.mts`, `npm run matched:reasons`):** twenty phrases
+against the 55 held drafts through `askPick` itself, no latch, no store, no database, the pick's own model and effort.
+Nineteen answered, one failed ("warm and crackly, something old": "no pick survived the checks", every cited claim
+failing the whole-sentence check, which the page would show as "Not answered."), one requirement-unmet ("quiet music
+with no vocals for reading", its stand-in's reason naming the requirement and what the record has instead). **64
+reasons: min 117, p10 140, median 160, p90 185, max 210 characters. Every one of the 64 is over the approved 108.** The
+91 to 108 Adam approved were 3a's stubbed sentences, not the model's; the model writes about half as much again. Raw
+file `.matched/reason-lengths-2026-11-19T16-41-46Z.json`. The figure is Design's and the coordinator's to set from this;
+the number this measurement gives is that a bound at 108 would re-ask every answer, and a bound at the p90, 185, would
+re-ask one in ten.
+
+**Decision 2, the count-check widening, withdrawn by the coordinator; the gap recorded as he asked:** a people-count
+attached to a named track is unchecked by anything in the pipeline. The numbers detector fires only on a count larger
+than the credits' names at the record level; a smaller count against one track's credits (Vandross s5, "two
+percussionists" where three are credited on B1) passes it and every other check, and the pass missed it twice.
+
+**Decision 3, the fold measured, not computed, in the moved layouts** (`docs/captures/ask-fold-moved/`, 24 stills and the
+README, a folder of its own because the first run's four stills in `ask-fold/` are committed evidence and the check
+refused the ship that rewrote them; the control's node moved in the page before `[data-collection-filters]` and before `[data-collection-heading]`,
+the browser laying the page out again, its rule and label travelling with it; a moved node, not a built variant, which
+is one JSX move once Adam chooses). With the count line where it is ruled (fixed below), the first cell's bottom
+against the window, the margin negative where it falls past:
+
+| placement | reason | 390 × 844 | 1440 × 900 |
+|---|---|---|---|
+| as built | approved 108 | −269 | −292 |
+| as built | median 160 | −288.5 | −311.5 |
+| above the filters | approved 108 | −57 | −71 |
+| above the filters | median 160 | −76.5 | −90.5 |
+| above the filters | p90 185 | −96 | −110 |
+| above the heading | approved 108 | +39.5 | +39.5 |
+| above the heading | median 160 | +20 | +20 |
+| above the heading | p90 185 | +0.5 | +0.5 |
+
+So the 18 pixels between Code's arithmetic and Design's were never the question: with the count line ruled into place
+the control above the filters fails by 57 at 390 and 71 at 1440 at the approved length, and by more at the model's
+lengths. Above the heading clears both windows at the approved length by 39.5, at the median by 20, and at the p90 by
+half a pixel; the field stands at 231 of 844 and 287 of 900 there. The table and the grid are alike to the pixel. None
+of this rules anything: Adam judges the fix by pressing ASK, and these are so he does not choose blind.
+
+**Defect 2 fixed, the count line beneath the slot and the answers 24 below it (§P.6, §P.4; the coordinator, 19 Nov):**
+the answers list now follows the line in PickControl. The component had left the list next to the slot on a note that
+read the two's order as Design's open question of 13 Nov; the coordinator's reading today is the ruling. Test first, in
+pick-ask-178: after an ask at 1280 and 390 the line stands 18 beneath the slot and the first cell 24 below the line;
+it failed against the build at 1231.5, then passed. Step level: PickControl and ask suites 44 passed; pick-ask-178,
+pick-control-156, pick-reasons-3a, ask-run-history and ask-wrap-184 on chromium 52 passed in 3.2m at load up to 33;
+typecheck 0 errors, lint 0 errors (6 warnings, all at HEAD), build compiled.
+
+**Defect 3, both halves, and where each goes:** the capture half, 3a's consolation stub pairing a nothing-fits verdict
+with a requirement-unmet-shaped reason, is a fix to the 3a capture tool and goes to 3b with the far column's five, so
+3b's captures show each verdict under its own slot. The build half, no slot wording for the requirement-unmet verdict,
+is its own small step after 3b: Code proposes the wording (Proposed, the slot's register: "Not quite: closest in feel."
+is the first offer), the measured reason from decision 1 shows the shape it labels, Design judges, and the step's
+capture shows the two findings told apart by the slot.
+
+**Confirmed for Design: the tree and HEAD both carry the superseding card's §67.** Record Detail 8a at 7eb36076 reads
+"not the drafting model's marking of it: no sentence is shown as supported or unsupported" and "The mark is a field in
+the drafting model's own output, passed through unchecked: the claim check confirms a citation is a whole stored
+sentence, never that it is true." The superseded wording, "the claim check's marking", is in no committed card and not
+in the tree; it lived in refs/drops/2026-11-19-02 only. The two files' handoff edits are the same text to the letter,
+so the handoff carries one copy of each bullet and nothing is backed out.
+
+**gatefold-88 accepted** by the coordinator as the same fit as the modal's: two measurements landing on the same whole
+number of frames.

@@ -259,6 +259,38 @@ test('at 390 the answer ends with the control’s closing hairline before the li
   }
 });
 
+/*
+  Defect 2 of Design's reading of the 3a captures (the coordinator, 19 Nov): §P.6 stands the count line beneath the
+  slot and §P.4 draws the answers 24 below the count line, and 3a's answers list was inserted between the slot and the
+  line, so in every host that draws answers inside the control the line landed beneath the last cell (1928 at 390,
+  2841 at 1440, ask-fold). Measured after an ask, in the sidebar and the band: the line 18 below the slot, the first
+  cell 24 below the line. Fails against the list drawn before the line.
+*/
+test('after an ask, the count line stands beneath the slot and the answers 24 below the count line, in the sidebar and in the band', async ({ page }) => {
+  const { artistId } = await fixture(page);
+  try {
+    for (const width of [1280, 390]) {
+      await openGrid(page, artistId, width);
+      await askFor(page, 'late night jazz');
+      await expect.poll(() => drawn(page), { timeout: 15_000 }).toHaveLength(5);
+      const order = await page.evaluate(() => {
+        const visible = (el: Element) => (el as HTMLElement).getClientRects().length > 0;
+        const control = Array.from(document.querySelectorAll<HTMLElement>('[data-pick-control]')).find(visible);
+        const slot = control?.querySelector<HTMLElement>('[data-pick-slot]') ?? null;
+        const line = control?.querySelector<HTMLElement>('[data-without-about]') ?? null;
+        const list = control?.querySelector<HTMLElement>('[data-pick-answers]') ?? null;
+        if (control === undefined || slot === null || line === null || list === null) return null;
+        return { slotBottom: slot.getBoundingClientRect().bottom, lineTop: line.getBoundingClientRect().top, lineBottom: line.getBoundingClientRect().bottom, listTop: list.getBoundingClientRect().top };
+      });
+      if (order === null) throw new Error(`at ${width} the control, its slot, its count line or its list is not drawn`);
+      expect(order.lineTop - order.slotBottom, `at ${width} the count line stands 18 beneath the slot`).toBeCloseTo(18, 0);
+      expect(order.listTop - order.lineBottom, `at ${width} the first answer stands 24 below the count line`).toBeCloseTo(24, 0);
+    }
+  } finally {
+    await removeRecordsFor(artistId);
+  }
+});
+
 test('the field’s label and the count line each take one line at the rail’s width, and the count line at 320 and 1280', async ({ page }) => {
   const { artistId } = await fixture(page, ['N']);
   try {

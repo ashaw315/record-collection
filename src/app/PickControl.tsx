@@ -342,6 +342,21 @@ export function PickControl({ ruled = false, pool, answers = 'cell', withoutAbou
         the count column instead), a wrapped row where it draws as a band (band-rules, sidebar-layout): the second
         proposal, the coordinator, 12 Nov.
       */}
+      {/*
+        §P.6 (11 Nov): "the line counting records with no ABOUT, absent when every record has one." Drawn on load,
+        never in answer to a press, so it moves nothing. 18 above, as the rail's lines are. "The count line stands
+        beneath the slot" ("Ask field wraps and count line", 13 Nov; it stood between the field and ASK). It stands
+        before the answers: 3a's list was inserted between the slot and this line, on a note here that read the two's
+        order as Design's open question, and the line landed beneath the last cell in every band and sidebar host
+        (ask-fold, 19 Nov). §P.6 stands the line beneath the slot and §P.4 the answers 24 below the line (the
+        coordinator, 19 Nov).
+      */}
+      {withoutAbout > 0 ? (
+        <p data-without-about="" className="relative mt-[18px]">
+          {/* "N not described.", Proposed ("Matched by role and count line", 14 Nov): the line counts records with no text to be matched by, by mode. */}
+          <span className="text-prose">{withoutAbout} not described.</span>
+        </p>
+      ) : null}
       {drawn.length > 0 && host === 'here' && (
         <ul data-pick-answers="" className="relative mt-[24px] flex flex-col gap-[18px]">
           {drawn.map((record, index) => (
@@ -351,19 +366,6 @@ export function PickControl({ ruled = false, pool, answers = 'cell', withoutAbou
           ))}
         </ul>
       )}
-      {/*
-        §P.6 (11 Nov): "the line counting records with no ABOUT, absent when every record has one." Drawn on load,
-        never in answer to a press, so it moves nothing. 18 above, as the rail's lines are. "The count line stands
-        beneath the slot" ("Ask field wraps and count line", 13 Nov; it stood between the field and ASK). Where covers
-        draw here, the line follows them: §P.4 draws the covers "24 below the slot", and which of the two stands next
-        to the slot is Design's open question (13 Nov), so the covers' place is left as it was ruled.
-      */}
-      {withoutAbout > 0 ? (
-        <p data-without-about="" className="relative mt-[18px]">
-          {/* "N not described.", Proposed ("Matched by role and count line", 14 Nov): the line counts records with no text to be matched by, by mode. */}
-          <span className="text-prose">{withoutAbout} not described.</span>
-        </p>
-      ) : null}
       {/* §P.4 (12 Nov): "where the answer stands above the list, as at 390, it ends with the hairline that closes the control"; the sidebar's stylesheet draws it below the fork and not above, where the list stands beside the control. */}
       {drawn.length > 0 && host === 'here' && !inRail && <hr data-pick-close-rule="" className={`mt-[24px] hidden border-t ${HAIRLINE}`} />}
     </div>
