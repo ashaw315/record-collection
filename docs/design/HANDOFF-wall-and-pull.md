@@ -995,9 +995,11 @@ Its rows are in the governs table above, one per section; this section does not 
 - **Unnumbered, for Code to number — §P.2: the model pick, minimum.**
   - **Pick** by giving the model the phrase and every eligible record. It returns up to five, or a flag that nothing fits, with at most one consolation record that is close in feel, or none, or a flag that the run has named everything that fits. Each answer comes with a one-sentence reason. When the phrase states a requirement that no fitting record meets, return the closest in feel as the stand-in, flagged as a requirement unmet, not as nothing fits. Its reason names the requirement and what the record has instead.
   - **Leave out** the run's named records, as §P.2 rules, by passing them to the model as excluded.
-  - **Count line:** count records with no matched text once the pick is live, and records with no ABOUT before that. Wording "N not described." (Proposed). Assert one line by line box at the rail's width at every N up to the record count, and report the widest N. This bullet lands before unit 4.
+  - **Count line:** count records with no matched text once the pick is live, and records with no ABOUT before that. Wording "N not described." (Proposed). Assert one line by line box at the rail's width at every N up to the record count, and fail if any N up to the record count takes two lines; the wording breaks at 2,000 in the rail. This bullet lands before unit 4.
   - **A title ask:** where the phrase is a record's title, send that record's matched text as the phrase, and leave the record out. Send no titles. Assert "the doors" as a title ask, with The Doors not among the answers. Where the title is a record in the collection with no matched text, ask as an ordinary phrase, and have the slot name the record and say it hasn't been described yet. Assert it on a seeded record with no matched text.
   - **Draw the reason** where the card says. Draw the stand-in as one record with its reason, and draw the run's end as a message in the slot with no record.
+  - **Bound the reason** in the prompt and in the schema's maximum. Propose the figure from the 91 to 108 Adam approved, and report it. A reason over the bound is re-asked, not truncated. Assert that no drawn reason exceeds the bound.
+  - **The run's end reads "That's all that fits.",** not "That was all.". Measure it by line box at the rail's 112, and at 320 and 1280. If it takes two lines at 112, use "No more fit." and measure that. If both take two lines, report both widths and stop: the wording comes back to Design, and "fit" isn't the part that gets cut.
   - **Nothing fits:** draw the message as the answer. Draw a consolation record only where the model returns one, labelled as the closest available, never styled as an answer. Assert one phrase with a consolation and one without.
   - **Draw what the model returns,** one to five, and never pad. Assert an answer of three drawn as three in every host.
   - **Hold** the ranking path unbuilt-over rather than deleting it. The far and tie sentences rule it if a distance filter returns.
@@ -1010,6 +1012,8 @@ Its rows are in the governs table above, one per section; this section does not 
   - **Open it from an answer's reason,** over the ask, in every host. Closing it changes nothing in the run, the field or the drawn answer.
   - **Set the text out a sentence at a time,** splitting by the claim check's own sentence rule, so the sheet and the citations agree on what a sentence is. A press opens one sentence for editing. An emptied sentence is removed, and an opened one may be typed as two.
   - **Head:** the reason, held in view while the text scrolls.
+  - **Show no support marking** on any sentence.
+  - **Capture the head at 390 with a reason at the bound,** not at 91 to 108 alone.
   - **Report** whether the answer carries the sentence its reason rests on. Where it does, open that sentence on arrival; where it doesn't, open none.
   - **Clear:** shown only where an edit exists. It asks first, as does closing with a change unsaved, using the page's existing asking line.
   - **The shelf queue is discarded on save,** as you have it.
@@ -1091,6 +1095,7 @@ The provisionals in force, for the note in Maintaining this file that a provisio
 - **§P.2 · the model pick's words.** The reason's length and fit in each host, the nothing-fits wording, and the run's-end wording. Returns from the model-pick step's capture, for Adam. Open.
 - **§67 · the correcting sheet.** Its look and words at 1440 × 900 and 390, from the sheet step's capture. Its head at 390 with the keyboard up, judged by Adam on his phone, since no capture draws the keyboard. Open.
 - **§P.2 · the reason as a press.** How the reason reads as something to press, in each host. Returns with the sheet step's capture. Open.
+- **§P.2 · the reason's bound.** The figure, proposed by Code from the approved range. Returns with the model-pick step's report. Open.
 
 ## Findings for screens without a pass
 

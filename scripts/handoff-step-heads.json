@@ -554,5 +554,53 @@
         "how": "anchors"
       }
     ]
+  },
+  {
+    "file": "Correcting sheet",
+    "ref": "refs/drops/2026-11-19-01",
+    "heads": [
+      {
+        "head": "§67 and §P.2: the correcting sheet",
+        "how": "inserts"
+      }
+    ]
+  },
+  {
+    "file": "Run end wording",
+    "ref": "refs/drops/2026-11-19-01",
+    "heads": [
+      {
+        "head": "§P.2: the model pick, minimum",
+        "how": "anchors"
+      }
+    ]
+  },
+  {
+    "file": "Reason bound and no marking",
+    "ref": "refs/drops/2026-11-19-02",
+    "heads": [
+      {
+        "head": "§P.2: the model pick, minimum",
+        "how": "anchors"
+      },
+      {
+        "head": "§67 and §P.2: the correcting sheet",
+        "how": "anchors"
+      }
+    ]
+  },
+  {
+    "file": "Reason bound and the model mark",
+    "ref": "refs/drops/2026-11-19-03",
+    "heads": [
+      {
+        "head": "§P.2: the model pick, minimum",
+        "how": "anchors"
+      },
+      {
+        "head": "§67 and §P.2: the correcting sheet",
+        "how": "anchors"
+      }
+    ]
   }
 ]
