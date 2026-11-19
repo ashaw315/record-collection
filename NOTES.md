@@ -57702,3 +57702,202 @@ themselves": cello, flute, two violins and additional drum programming credited 
 tracklist supports) FALSE. Ten of eleven hold. The 27 knowledge items are listed in the report with their caveat; two
 (Donovan In Concert s1 and s5) say the supplied credits are incomplete, which bears on the queued ABOUT pass for Donovan.
 Reports: `.matched/audit.md`, `.matched/audit-planted-{medium,high}.md`, copies in Downloads. Nothing to Adam.
+
+## 18 Nov: the 55 at high; both controls missed at both efforts; the effort under the rule
+
+**The second control (the coordinator, 18 Nov):** Hello Mary 729c1a01 sentence 8, "a shorter, tighter first side and a
+longer second", where side one has six tracks and side two five, the twin of the error the auditor caught in the same
+record's sentence 5. The script now holds a list of controls and reports the pass as not shown to read the material if any
+misses. Two of the medium run's eleven reversed on the coordinator's reading and Code's re-check: The Doors s7 and Huey
+Lewis s3 are false flags (the first reads half the sentence, the second contradicts a mix credit, not the sound), so nine
+of eleven hold.
+
+**The 55 at high (gpt-6.1-sol):** 55 audited, 13 contradicted by the material, 34 by the auditor's own knowledge;
+66,534 tokens in, 56,477 out (medium: 19,416 out). **Both controls missed: Carpenters not flagged (one knowledge flag on
+its sentence 2, an oboist), Hello Mary sentence 8 not flagged though sentence 5 was, at both efforts.** High's thirteen
+are medium's eleven plus Astrid Sonne s2 ("a couple of elements each" against tracks of three, false, as in the planted
+run) and Luther Vandross s6 ("two percussionists" on B1 where congas and two percussion are credited, true). So high: 10
+true of 13; medium: 9 true of 11. Knowledge flags: 27 at medium, 34 at high, 26 shared. The same Carpenters request at
+high held once (the control call) and missed once (the blind run): one trial each way, which is why one control cannot
+decide the effort.
+
+**The effort under the rule as written:** the planted set, six of six at both with fewer false flags at medium; the
+controls, 0 of 2 at medium in the blind run and 0 of 2 at high, Carpenters 1 of 2 at high across both trials; the 55,
+one more true flag at high for one more false and 2.9 times the output tokens. No difference of two anywhere. Medium, with
+high recorded as not shown better. The default in the code returns to medium with the next commit of the module (it is
+high from the one control trial of the morning). **The pass has not shown it reads the material: nothing proceeds on its
+output; the flags verified by hand stand on their verification** (the coordinator's distinction).
+
+**Self-consistency check, proposed and not built:** a pure function over a draft's eight sentences, no model and no
+material, for a side-size or placement claim stated twice in opposite directions (Hello Mary s5 against s8, Whiteman s3
+against s4) and an "everything themselves" claim against other players named in the same draft (Smerz s1 against s2 and
+s3); its hits under the review's check lines. About five files, one judgement; it would not have caught the eight other
+verified errors.
+
+**Load during the high run reached 303 (one-minute) with `scripts/analytics-verify/index.mjs` and its headless
+browsers running again, not this session's; it does not touch the API's answers, and nothing of Code's ran beside it.**
+
+## 18 Nov: the two gate traces read; the self-consistency check built and swept; the pass's one fix attempt withdrawn; the ten redrafted and verified
+
+**The two gate flakes are both the tests' measurement, not the build, read from the frames the traces hold.**
+Gate 44329237199, region-remount-q48:82, "the view stays where the reader put it": the scroll was written at 31.80ms
+on the sampler's clock (`put.at`, unrounded) and the frame reported had `t` 32, rounded from a tick that ran before the
+write and read the old 126; every frame from t 47 to the window's end at 4s read 366, the written value, and no other
+value appears in 247 frames. The Q57 fix compares a rounded frame time with an unrounded scroll time, so a frame up to
+half a millisecond before the scroll counts as after it. Proposed, not applied: compare both rounded
+(`f.t > Math.round(put.at)`), which excludes that frame and loses at most one real one. Gate 44339581232,
+record-modal-81:541, "the frame before stands within 10.6 of 90": the sampler stamps each frame with `performance.now()`
+in its callback while the turn advances on the frame's own timestamp (SleeveModal `step(now)`); inverting every
+sampled angle through the ease-out gives animation gaps of exactly 16.6, 33.3, 50.0 and 66.6ms (one, two, three and
+four frames) against wall gaps of 5.8 to 59.1, with the callback 20 to 70ms behind the frame. Around the change the
+wall gap read 17.0ms where the animation gap was 33.4, so the tolerance was computed for one frame when the sample
+had skipped one; on the animation clock the allowance is 22.8 and 76.39 is 13.6 from 90, inside it. Proposed, not
+applied: stamp the frame with the rAF callback's timestamp. Both changes are to tests that encode a measurement, not a
+ruling; neither is made without agreement. Decoder: scratchpad `trace-frames.mjs`, which reads the evaluate results the
+trace records.
+
+**The self-consistency check (`src/lib/matched-text/consistency.ts`, in the review file and `matched:draft --review`):**
+three shapes, each a pair of a draft's own sentences: an exclusivity claim ("everything themselves", "themselves ...
+all of it", "no one else") beside a sentence naming someone the claim does not include; a side given one or two pieces
+beside a track placed in that side's middle; the two sides sized in opposite directions. Swept over the 55 as held
+before the redraft: exactly Whiteman s3/s4 and Smerz s1/s3, no false pair. **Correction to the 18 Nov proposal:** Hello
+Mary was never in its reach; sentences 5 and 8 size the sides the same way, both wrong against the tracklist, and a
+draft consistent with itself and wrong is the pass's to find. The check's test states that limit. After the redraft the
+sweep found Smerz again (new s1 against s7) only after the exclusivity pattern was widened to the redraft's wording,
+"built by the duo themselves ... perform all of it": the first pattern read only "everything themselves" and the sweep
+said 0 of 55 against a sentence that plainly made the claim. The wording is not the test; test added from the real
+sentence. Step level: matched-text and LLM suites 272 passed, typecheck 0 errors, lint 0 errors (6 warnings, all at
+HEAD).
+
+**The pass's one bounded fix attempt (pre-registered by the coordinator), tried and withdrawn.** One sentence added to
+the system prompt: having established a fact from the material, check every sentence against it before reporting.
+Three trials of both controls at medium, gpt-6.1-sol, on the drafts as held before the redraft: Carpenters 0 of 3,
+Hello Mary s8 0 of 3 while s5 was flagged in all three (641, 917 and 812 tokens out). Below the stopping rule's two of
+three on both; the sentence and its test are removed, the prompt is the one the planted calibration measured, and no
+third round. The default effort is medium in the tree, with the reading rule in the module's comment, test changed with
+the ruling. The control patterns are now the claims ("medley that follows", "shorter, tighter first side"), and a
+control whose sentence the draft as held no longer carries reports CONTROL ABSENT, not missed (findControl, test first):
+the first run over the ten reported both controls "missed" where neither sentence existed any more.
+
+**The ten redrafted once at the drafting default (claude-opus-5, medium), the prompt as at HEAD, and verified by hand
+against the material.** All ten finished, Astrid Sonne at seven sentences, the rest eight. Of the twelve verified
+errors: ten gone (ABBA "everything themselves" and the SOS strings credit; Astrid Sonne's A4 guitar now named; Hello
+Mary's two side-size claims, now six and five by count; Huey Lewis's five-piece; Lennon's side-two order, now B1, B2/B4
+with "Only People breaks that run", B5, B6; Whiteman's Cuban Overture now first; Blues Project's side-two order, now B1
+to B5 in order; Carpenters' "follows" gone, One Love unmentioned). **Two survived, restated:** Smerz s1 "write, produce,
+engineer and perform all of it" (cello, flute, two violins, drum programming credited to others; s2 and s7 name them);
+Luther Vandross s5 "two percussionists" on She's A Super Lady, where congas and two percussion are credited, three
+players. **Two new, neither worse than what it replaced:** ABBA s3 '"Mamma Mia", the one track carrying a separate
+string arrangement', true of side one and false of the record (B3 Intermezzo No. 1 has one too; the old sentence gave
+the credit to the wrong track); Blues Project s8 "the covers and originals alternate", false at B1 to B2, two covers in
+a row (the old sentence had the order wrong twice). The pass over the ten at medium (12,070 in, 4,300 out): material
+flags on ABBA s3 (true), Huey Lewis s7 Clearmountain (false, the coordinator's ruling of the same shape), Smerz s1
+(true), Blues Project s8 (true); Vandross s5 not flagged, missed again. Knowledge flags, advisory: ABBA s5 (I Do is 4/4,
+not a waltz), ABBA s6 (Intermezzo has wordless vocals), Huey Lewis s3 (Heart Of Rock & Roll is about rock and roll, not
+radio, and not a shuffle), Huey Lewis s4 (Walking On A Thin Line is up-tempo), Lennon s2 (Mind Games' slide is guitar
+and Mellotron, not pedal steel). The drafts as held before the redraft are in the scratchpad
+(`matched-before-redraft-18nov/drafts.json`, sha 45ea9ca8) and in `.matched/drafts-previous.json` until the next run.
+
+**A weak point in the audit script, queued:** it writes `.matched/audit.{json,md}` and one Downloads file by model and
+effort, so each run overwrites the last; the ten's audit.json was overwritten by the control re-runs before a copy was
+made, and its flags survive only in the record above. The 55 runs survive as `audit-medium.*` and `audit-high.*` by hand
+copies. Next visit: name each run's files by its arguments or its time. The Downloads copy of the 55-at-medium report is
+overwritten by the two-record runs; the local copy is intact and is not re-sent to Downloads unasked.
+
+**Commits:** none this session beyond 95bd1885 (unpushed, ahead 1); the tree holds the second control, the medium
+default, the fix attempt's record, the self-consistency unit (consistency.ts and its test, review.ts and its test,
+write-matched-text.mts --review), the control-absent fix, and this entry, held until Adam says the machine is free.
+`docs/design/Mood Pick - build target.dc.html` was modified in the tree before this session and is not Code's.
+
+## 19 Nov: the gate flakes fixed on their clocks; the sampler survey; pattern checks named a standing risk; [supported] unverified; Design's §67 drop; the store handed over
+
+**Both test fixes applied (the coordinator, 19 Nov).** region-remount-q48 compares the scroll's time rounded as the
+frames' are. record-modal-81's sampler, and the two-press loop beside it, stamp each frame with the rAF callback's
+timestamp, the clock the turn advances on. Step level: both specs on chromium, 25 passed in 2.1m at load 5 rising to
+35 under two workers and the build server. The assertions whose inputs changed, all green before and after: q48's "the
+view stays where the reader put it" (the frame set it reads); the turn test's edge-on tolerance (`gapMs`,
+`progressBefore`, `travel`), its "lasts about 600ms" (0.8 to 1.4) and the two-press test's "ends in one turn's time"
+(TURN_MS + 100). The run gives their pass, not their values; the specs do not print them. **The coordinator's own
+record, at his request:** he had read a 17ms gap as a good sample and so ruled out a sampling problem; the 17ms was the
+sampling problem. He reasoned from a number without asking which clock produced it.
+
+**The sampler survey (his question before the fix):** `sampleTurn` is one spec's, record-modal-81, three callers plus
+the two-press loop. The pattern, a rAF loop stamped with `performance.now()` in its callback, is in nine spec files.
+The modal's class, an animation value judged against a tolerance derived from wall gaps, is record-modal-81 alone. The
+near class, a rAF animation's duration measured on the wall clock against a loose bound, is record-modal-81's "lasts"
+and "ends" (fixed) and gatefold-88's `lasted` (0.8 to 1.4 × OPEN_MS, line 178) and `ended` (< 1.5 × OPEN_MS, line
+278), green and unchanged: the lag only inflates a duration, and the bounds have 240 and 300ms of room. **Proposed,
+not applied without agreement: the same stamp in gatefold-88's samplePress and its two-press loop.** The rest use the
+wall clock for what it measures: cover-travel-92 compares eased values across properties within one frame and uses t as
+a label and for its own escape timing; modal-resize-93 times the turn against a viewport settle, a wall event;
+wall-first-paint's blank is the reader's wall time between painted frames, bounded; pick-zoom-race-156,
+zoom-out-pulled and record-band-43 stamp frames rounded and assert nothing on t but a report. The q48 class, a rounded
+frame time against an unrounded event, was q48 alone.
+
+**Hello Mary, recorded as the coordinator asked:** two of the twelve were in the check's reach, Whiteman and Smerz, not
+three; sentences 5 and 8 are consistent and wrong, which is the pass's class, not the check's.
+
+**A standing risk for every pattern-based check in this repo (the coordinator, 19 Nov):** the self-consistency check
+reported 0 of 55 against a sentence that plainly made the claim, because its pattern read "everything themselves" and
+the redraft said "perform all of it"; the "Numbers to check" detector failed the opposite way on 17 Nov, firing on 126
+of 440 sentences. **A zero from a pattern is not a clean result, it is an unexamined one**, and a hit count is only as
+good as the wordings the pattern was written from. The controls, the ruled-false register below and the sides check
+are all patterns and all carry this. Every pattern here is now written from a real sentence with that sentence in its
+test, and a sweep's zero is reported as "no match", never as "none".
+
+**The four surviving errors stay (his readings accepted), and none is hand-fixed in drafts.json:** Smerz s1 and
+Vandross s5 survived the redraft; ABBA s3 and Blues Project s8 are new and less wrong than what they replaced. They are
+the correcting sheet's first four real cases, and Design's §67 names them in the same four. The PATCH endpoint is the
+channel and the write is Adam's.
+
+**Three script changes (his two operational items and his review-file point), tests first:** each audit run now
+writes `.matched/audit-<time>-<model>-<effort>.{json,md}` and a Downloads copy under the same time, never `audit.json`
+(auditFileStem); a ruled-false register (`RULED_FALSE` in audit-report.ts: Huey Lewis's Clearmountain, The Doors'
+"bracketed", Astrid Sonne's "a couple of elements", each with who ruled and why) marks a repeat flag "previously ruled
+false" in the report and the console and counts it apart in the head; and every review file names in its head what
+rendered it, the commit, whether the tree had uncommitted changes, the time and the checks carried. The ten's review in
+Downloads, rendered before the detector was widened and reading "none" for Smerz, is replaced by one rendered now
+(`--review` with prefixes), which reads Smerz s1 against s7 and names its version. Step level: matched-text and LLM
+suites 276 passed, typecheck 0 errors, lint 0 errors (6 warnings, all at HEAD).
+
+**Astrid Sonne at seven sentences:** the client dropped none, the model wrote seven under "six to eight". The range
+working; nothing follows. The other 54 are at eight.
+
+**[supported] is unverified across the board, and this says so plainly.** Of the 439 sentences held, 125 are marked
+[supported] and 314 [inferred], across 53 of 55 records. The mark is a field in the drafting model's own JSON, parsed
+and passed through; nothing in the pipeline checks a supported sentence against the material it claims to rest on. The
+pick's claim check verifies that a citation is a whole stored sentence, not that the sentence is true; the review's
+numbers and sides checks read figures and placements, not credits; the self-consistency check reads the draft against
+itself; only the adversarial pass reads the material, and it is a sampler that missed both controls at both efforts
+and missed Vandross twice. Smerz s1 and Vandross s5 are marked [supported] and the credits disprove them, which is the
+worse case: the mark asserts the credits back the claim. So [supported] reads as "the model says the material backs
+this", never as checked. Nothing built for it; the coordinator asked for the count and the answer.
+
+**Design's drop (19 Nov), captured as `refs/drops/2026-11-19-01` before anything ran against it:** `Record Detail 8a -
+build target.dc.html` 445,039 bytes, sha256 3a888958…575bd, and `Mood Pick - build target.dc.html` 70,537 bytes, sha256
+17868a2f…5339, both matching the change file's figures and the Downloads copies; `Correcting sheet - for Code to
+apply.md` beside them. New §67, the matched text's correcting sheet, as the card's last section with its own no-entry
+call; §P.2 widened to the reason as a press and its no-entry call widened to name it. Change 1 is an unnumbered step
+for Code to number; its governs rows and provisionals are listed in the file. The drop-ref report: §P.2 and §67 changed
+with their rows edited; landed lists complete as far as Design's lists reach. Not applied yet: the step is announced and
+numbered first, by the loop. **The question answered before building:** the pick's response does carry the sentence
+the reason rests on. `/api/ask` returns each answer as `{ recordId, reason, claims }`, the claims being the whole stored
+sentences the claim check verified. The page does not read them: `PickControl.tsx`'s `AskAnswer` type takes
+`{ recordId, reason? }`, and the wall channel's `ask()` carries the reason alone. So the sentence reaches the client
+and stops one type short of the page; carrying `claims` through the client type and the channel payload is a small
+change inside the step, and §67's "open that sentence on arrival" can be built as ruled.
+
+**The store (all 55, as ordered) is prepared and not run.** `.matched/store-all-55.txt` holds the 55 prefixes; the
+command is `npm run matched:draft -- --store .matched/store-all-55.txt`, which writes `generated` for each to production
+through storeGeneratedMatchedText. A production write is Adam's by the standing rule, restated in the same message for
+PATCH, so it is handed over rather than run; if the coordinator means Code to run it on his word, that word is asked for.
+
+**The intake of the 19 Nov drop, forced before any commit:** the first checked commit of the day ran 969 passed, 6 failed,
+all six the repo's intake tests reading the drop in the tree: the index's assertion 1 (§67 with no governs row) and the
+landed record not listing the change files in the new ref. The change file's three changes are applied to the handoff
+(the unnumbered step before "No step: §G.7.", the two provisionals, the §67 row and §P.2's appended sentence), the step
+is listed in `scripts/handoff-unbuilt.json` with its evidence, and the intake command run with its decisions:
+"Correcting sheet" applied; **"Count line headroom" and "Run end wording" (both 15 Nov) held**, since neither was ever
+relayed or applied: the handoff still reads "report the widest N" and has no "That's all that fits." Both sit in
+`refs/drops/2026-11-19-01` as held, for the coordinator to relay or close. Index 14 PASS of 14; document suite 973 passed,
+2 failed before the unbuilt entry, then green.

@@ -137,7 +137,12 @@ test('a zoom-in keeps the wall’s region and the reader’s view: no remount, n
   const put = await page.evaluate(() => { const el = document.querySelector('[data-region="wall"]') as HTMLElement; el.scrollTop += 240; const t0 = (window as unknown as { __q48t0: number }).__q48t0; return { left: Math.round(el.scrollLeft), top: Math.round(el.scrollTop), at: performance.now() - t0 }; });
   await page.waitForTimeout(4000);
   const later = await page.evaluate(() => { const w = window as unknown as { __q48: Frame[]; __q48stop: boolean }; w.__q48stop = true; return w.__q48; });
-  const settledLater = later.filter((f) => f.t > put.at);
+  /*
+    Both rounded (gate 44329237199, 18 Nov): a frame's t is rounded and the scroll's time was not, so a tick that ran up
+    to half a millisecond before the write, and read the view before it, counted as after it (t 32 against 31.80, the
+    only frame of 247 not at the written value). Rounding both drops that frame and at most one real one.
+  */
+  const settledLater = later.filter((f) => f.t > Math.round(put.at));
   const absentLater = settledLater.filter((f) => !f.present);
   const remountedLater = settledLater.filter((f) => f.present && !f.same);
   const movedLater = settledLater.filter((f) => f.present && unclamped(f, put.left, put.top));

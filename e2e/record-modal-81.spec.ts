@@ -516,12 +516,19 @@ const sampleTurn = (page: Page, quietMs: number) => page.evaluate(async (quiet) 
   control.click();
   await new Promise<void>((resolve) => {
     let seen = false; let rest = 0;
-    const tick = () => {
+    /*
+      Stamped with the frame's own timestamp, the clock the turn advances on (SleeveModal's step(now)), not with
+      performance.now() in the callback (gate 44339581232, 18 Nov): under load the callback ran 20 to 70ms behind the
+      frame, so two frames 33ms apart on the turn's clock read 17ms apart here and the edge-on tolerance below was
+      computed for one frame when the sample had skipped one. Every angle inverted through the ease-out fell on whole
+      frames of the turn's clock; none fell on the callback's.
+    */
+    const tick = (now: number) => {
       const cs = getComputedStyle(sleeve); const r = sleeve.getBoundingClientRect();
       const turning = sleeve.hasAttribute('data-turning');
-      frames.push({ t: performance.now() - started, transform: cs.transform, perspective: getComputedStyle(stage).perspective, face: sleeve.getAttribute('data-face'), label: (label.textContent ?? '').trim().toLowerCase(), turning, width: r.width, height: r.height, top: r.top, opacity: cs.opacity });
+      frames.push({ t: now - started, transform: cs.transform, perspective: getComputedStyle(stage).perspective, face: sleeve.getAttribute('data-face'), label: (label.textContent ?? '').trim().toLowerCase(), turning, width: r.width, height: r.height, top: r.top, opacity: cs.opacity });
       seen = seen || turning; rest = seen && !turning ? rest + 1 : 0;
-      const t = performance.now() - started;
+      const t = now - started;
       if ((seen && rest >= 3) || (!seen && t > quiet) || t > 6000) resolve(); else requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);
@@ -677,8 +684,9 @@ test.describe('§M.5 (step 91): the turn’s swell, measured from frames', () =>
       let pressedAgain = false; let midTurn = false; let ended = 0; let seen = false;
       control.click();
       await new Promise<void>((resolve) => {
-        const tick = () => {
-          const t = performance.now() - started;
+        /* The frame's timestamp, as sampleTurn's: `ended` is read against the turn's own clock. */
+        const tick = (now: number) => {
+          const t = now - started;
           const turning = sleeve.hasAttribute('data-turning');
           if (turning) {
             seen = true;
