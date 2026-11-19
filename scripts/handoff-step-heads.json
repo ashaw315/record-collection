@@ -602,5 +602,15 @@
         "how": "anchors"
       }
     ]
+  },
+  {
+    "file": "Slot for unmet and dropped reason",
+    "ref": "refs/drops/2026-11-19-04",
+    "heads": [
+      {
+        "head": "§P.2: the model pick, minimum",
+        "how": "anchors"
+      }
+    ]
   }
 ]

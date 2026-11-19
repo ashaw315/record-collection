@@ -58161,3 +58161,44 @@ cause, the coordinator's: the sentence this replaced said "the answer is the sam
 slot, and the build followed the withdrawn wording. The slot's words come from Design.
 
 **Adam has stored all 55 and the pick is live;** he is pressing ASK on his phone.
+
+**The target held at 160 (the coordinator, 19 Nov, after gate 44579080022 OK):** 140 is not set, because both capacity
+figures were measured for the control above the heading, one of the two placements Adam is choosing between; the other
+is the scroll, where the fold stops constraining the bound, so setting 140 now would choose the placement by the back
+door. What is queued behind his press: the scroll, and 160 stands; above the heading, and 160 is not viable (the median
+162 against the one-line-spare 160 clears by half a pixel on one machine's rendering), and the choice is 140 or Design's
+"wholly in view" lever, both to be measured first. When 140 is set the twenty phrases are re-run, never extrapolated.
+
+**The re-ask the coordinator asked tested synthetically does not exist in the tree.** His message read it as near-dead
+code to keep and test with a stubbed over-bound reply. The build has the bound in the prompt and the schema's maximum
+and nothing else: `readPick` does not read a reason's length, no re-ask is coded, and the handoff's "Assert that no drawn
+reason exceeds the bound" has no assertion. The backstop today is the API's strict mode alone; a stubbed reply with a
+reason of 189 would pass `readPick` and be drawn. So there is nothing to test yet; the synthetic test he asks for is the
+first failing test of the re-ask step below, which is the TDD route anyway.
+
+**The selection lesson, recorded as asked:** pick-answer-156 failed at the gate because it asserted §P.4's withdrawn
+"24 below the slot" and the step-level run covered five pick specs chosen by name, not it. When a change moves a measured
+distance, the specs to run are the ones that ASSERT that distance, found by grepping `e2e/` for the number and the
+phrase: `grep -rln '24 below\|below the slot\|beneath the slot'` names eleven specs in a second, pick-answer-156 among
+them. Also in memory (select-specs-by-the-number).
+
+**Design's fourth drop of 19 Nov, "Slot for unmet and dropped reason" (refs/drops/2026-11-19-04, captured 15:27:47),
+intaken, not relayed by the coordinator first:** it arrived at 14:59 as the card in `docs/design/` (sha256 1d7b0817…2a22,
+72461 bytes, the Downloads copy identical) and the change file beside it; `git status` showed the card modified against
+7eb36076's bcbb005f, which is how it was noticed. Anchored on 7eb36076's handoff, which no commit since has touched;
+supersedes nothing; so taken in under the 8 Nov rule (proceed on anchored drops). Ruled, bold, in §P.2: a reason still
+over the bound when asked again leaves its record out of the answer, and where that leaves none the slot says no answer
+came and the next press asks again; this is the coordinator's re-ask-once proposal, ruled, narrowing "re-asked, never
+cut" and withdrawing nothing. Plain prose: Adam's 91 to 108 was of stubbed text; the bound is set from what the page
+holds and judged by Adam again at the model's lengths. Proposed wording: "None has all of it." for the requirement-unmet
+slot (defect 3's words, now Design's), and "No answer came. Ask again." where every answer was left out; each to be
+measured on one line at the rail's 112, and at 320 and 1280, and sent back rather than cut if either takes two lines.
+Handoff: two bullets after "Bound the reason" (re-ask once, and the requirement-unmet slot), the bound's provisional
+appended. Intake: landed record appended; index 14 PASS of 14; document suite 977 passed; INTAKE OK. The §P.4 "wholly in
+view" lever: Design has it noted, nothing filed, weighed once the capacity figures and Adam's press are in.
+
+**The next unit, not begun:** the re-ask step as ruled, test first with a stubbed reply whose reason is over `REASON_MAX`
+(the API never produces one under strict mode, so the stub is the only way to see the path run): one re-ask, the record
+left out if still over, the slot's "No answer came. Ask again." when none remains, the run kept; and the requirement-unmet
+slot drawn above its stand-in with "None has all of it.", both wordings measured at 112, 320 and 1280. Waits on the
+coordinator, who has said nothing more comes until Adam reports his press.
