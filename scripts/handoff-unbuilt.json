@@ -68,5 +68,10 @@
     "head": "§P.2: the model pick, minimum",
     "status": "unbuilt",
     "evidence": "Ruled 13 Nov (\"Model pick minimum\", the card at 580798d3). The route ranks the pool by cosine nearness of stored vectors (src/app/api/ask/route.ts:63) and draws no reason; checked 13 Nov."
+  },
+  {
+    "head": "§67 and §P.2: the correcting sheet",
+    "status": "unbuilt",
+    "evidence": "Ruled 19 Nov (\"Correcting sheet\", the cards at 3a888958 and 17868a2f). The resource it builds on exists (src/app/api/records/[id]/matched-text/route.ts, 18 Nov) and nothing opens it from an answer: the ask's client type drops the claims the route returns (src/app/PickControl.tsx:39) and the reason is drawn, not pressed; checked 19 Nov."
   }
 ]
