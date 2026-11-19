@@ -44,6 +44,7 @@ test.describe.configure({ timeout: 60_000 });
  */
 const suffix = () => `${Date.now()}-${Math.floor(Math.random() * 1e6)}`;
 
+/* Both samplers below stamp with the wall clock on purpose (19 Nov): the blank they bound is the reader's time between painted frames, not an animation's progress. Not the record-modal-81 defect. */
 const PROBE = `
 window.__views = []; const t0 = performance.now();
 (function sample() {

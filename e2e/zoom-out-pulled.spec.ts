@@ -29,6 +29,7 @@ async function sample(page: Page) {
     const drawn = (el: Element | null) => el !== null && (el as HTMLElement).getClientRects().length > 0;
     w.__frames = [];
     w.__mark = 'pulled';
+    /* The wall clock on purpose (19 Nov): t labels frames in the annotation and nothing is asserted on it. Not the record-modal-81 defect. */
     const t0 = performance.now();
     const tick = () => {
       const f = {

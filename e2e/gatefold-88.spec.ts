@@ -73,7 +73,8 @@ const samplePress = (page: Page, control: string, quietMs: number) => page.evalu
   button.click();
   await new Promise<void>((resolve) => {
     let seen = false; let rest = 0;
-    const tick = () => {
+    /* Stamped with the frame's own timestamp, the clock the opening advances on, as record-modal-81's sampler is (19 Nov): performance.now() in the callback ran 20 to 70ms behind the frame under load. */
+    const tick = (now: number) => {
       const spread = document.querySelector<HTMLElement>('[data-spread]');
       const panel = document.querySelector<HTMLElement>('[data-leaf="panel"]');
       const right = document.querySelector<HTMLElement>('[data-leaf="right"]');
@@ -81,14 +82,14 @@ const samplePress = (page: Page, control: string, quietMs: number) => page.evalu
       const r = right?.getBoundingClientRect() ?? null;
       const cs = panel === null ? null : getComputedStyle(panel);
       frames.push({
-        t: performance.now() - started, moving, panel: panel?.getAttribute('data-panel') ?? null, transform: cs?.transform ?? 'absent', origin: cs?.transformOrigin ?? '',
+        t: now - started, moving, panel: panel?.getAttribute('data-panel') ?? null, transform: cs?.transform ?? 'absent', origin: cs?.transformOrigin ?? '',
         foldX: r?.left ?? null, top: r?.top ?? null, size: r?.width ?? null,
         label: (document.querySelector('[data-face-label]')?.textContent ?? '').trim().toLowerCase(),
         closedShown: document.querySelector('[data-sleeve]') !== null, rightShown: right !== null && right.querySelector('img[data-sleeve-face="inside-right"]') !== null,
         opacity: spread === null ? '1' : getComputedStyle(spread).opacity,
       });
       seen = seen || moving; rest = seen && !moving ? rest + 1 : 0;
-      const t = performance.now() - started;
+      const t = now - started;
       if ((seen && rest >= 3) || (!seen && t > quiet) || t > 6000) resolve(); else requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);
@@ -176,6 +177,8 @@ for (const [width, height] of [[390, 844], [GRID_FORK, NO_SCROLL_HEIGHT]] as con
       */
       const t0 = moving[0].t;
       const lasted = moving[moving.length - 1].t - t0;
+      /* Reported, as the turn's swell is: the coordinator reads this against the clock the sampler stamps with (19 Nov). */
+      console.log(`OPEN ${width}x${height}: lasted ${lasted.toFixed(1)}ms from ${moving.length} frames`);
       expect(lasted).toBeGreaterThan(OPEN_MS * 0.8);
       expect(lasted).toBeLessThan(OPEN_MS * 1.4);
 
@@ -269,10 +272,12 @@ test.describe('§M.5 (step 91): a press while the gatefold is opening is ignored
       const name = pressed?.getAttribute('data-sleeve-control') ?? null;
       pressed?.click();
       let motions = 0; let was = true; let ended = 0;
-      await new Promise<void>((resolve) => { const tick = () => { const now = spread()?.hasAttribute('data-opening') === true; if (was && !now) { motions += 1; ended = performance.now() - started; } was = now; if (performance.now() - started > 2500) resolve(); else requestAnimationFrame(tick); }; requestAnimationFrame(tick); });
+      /* The frame's timestamp, as samplePress's: `ended` is read on the opening's own clock. */
+      await new Promise<void>((resolve) => { const tick = (frameAt: number) => { const now = spread()?.hasAttribute('data-opening') === true; if (was && !now) { motions += 1; ended = frameAt - started; } was = now; if (frameAt - started > 2500) resolve(); else requestAnimationFrame(tick); }; requestAnimationFrame(tick); });
       return { midway, name, motions, ended, open: spread() !== null, label: (document.querySelector('[data-face-label]')?.textContent ?? '').toLowerCase() };
     });
     expect({ midway: result.midway, pressed: result.name }, 'the precondition: FOLD was pressed while it was opening').toEqual({ midway: true, pressed: 'fold' });
+    console.log(`OPEN two presses: ended at ${result.ended.toFixed(1)}ms from the first press`);
     expect(result.motions, 'one motion ran').toBe(1);
     expect({ open: result.open, label: result.label }, 'and the spread is open').toEqual({ open: true, label: 'inside' });
     expect(result.ended).toBeLessThan(OPEN_MS * 1.5);

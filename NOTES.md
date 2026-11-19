@@ -57901,3 +57901,147 @@ is listed in `scripts/handoff-unbuilt.json` with its evidence, and the intake co
 relayed or applied: the handoff still reads "report the widest N" and has no "That's all that fits." Both sit in
 `refs/drops/2026-11-19-01` as held, for the coordinator to relay or close. Index 14 PASS of 14; document suite 973 passed,
 2 failed before the unbuilt entry, then green.
+
+## 19 Nov, later: gate 44545704318 OK; the store handed to Adam; the two held files read; gatefold on the frame clock; six samplers annotated; the numbers detector proposed, not built
+
+**Gate 44545704318 on 3c366457: OK, no retries.** unit 5378 passed, 3 skipped; e2e chromium 1114 passed, 1 skipped;
+report-only 4 passed; mobile 397 passed, 4 skipped; every half "ledger clean, tree unchanged — OK". 14:37Z to 14:58Z.
+**The store is Adam's** (the coordinator, 19 Nov: "the rule doesn't bend"), to run once the gate read green, which it has;
+the command is `npm run matched:draft -- --store .matched/store-all-55.txt`, given to him verbatim.
+
+**The two held files, in the coordinator's own words: "mine, not yours or Design's" — the coordinator held two offered
+files for four days and the intake found them, not him.** What each rules, and the build against it:
+- *Count line headroom* (15 Nov): §P.6's count line, Proposed "N not described.", records its headroom from Code's
+  sweep: one line at the rail's 112 up to 1,999, breaking at 2,000, and up to 999,999 at 320 and 1280. Its one handoff
+  edit replaces "report the widest N" in the model-pick step's count-line bullet with "fail if any N up to the record
+  count takes two lines; the wording breaks at 2,000 in the rail". **The build satisfies it:** pick-ask-178's test 184
+  asserts one line at every N up to the record count at the rail's width, 320 and 1280, by line box, and reports the N
+  it breaks at. A record gap: the handoff bullet's wording, not the build.
+- *Run end wording* (15 Nov): §P.2's run's-end wording must keep "fit"; Proposed "That's all that fits.", and "No more
+  fit." if that takes two lines at 112. Its one handoff edit inserts a bullet in the model-pick step to measure it by
+  line box at 112, 320 and 1280. **The build satisfies it:** `slot.ts` carries "That’s all that fits." with §P.2 cited,
+  asserted in ask-run-history, pick-reasons-3a and slot.test, and pick-control-156 measures it with the slot's other
+  messages by line box in the rail at 1440, the band at 320 and the sidebar at 1280. A record gap, as the coordinator
+  guessed. Neither file's bullet is applied to the handoff until he rules.
+
+**gatefold-88 on the frame clock, measured before and after on this machine (the coordinator's ask).** Before, wall
+clock in the callback, load 2.3 rising to 8.3: lasted 610.2ms at 390 × 844 from 38 frames, 630.7ms at 1440 × 900 from
+31 frames; the two-press `ended` 642.8ms. After, the rAF timestamp, load 6.1 rising to 15.3: 616.6ms from 38 frames and
+616.6ms from 32 frames, both exactly 37 frame intervals at 16.67; `ended` 642.3ms. The 1440 value moved 14ms shorter,
+the 390 value 6ms longer onto the frame grid, `ended` by half a millisecond: at this load the callback's lag was within
+one frame, not the 20 to 70ms the gate's runner showed, so the fix changes the clock the numbers are read on and barely
+the numbers here. Not a no-op: the values now fall on whole frames, and under a loaded runner they will stay there.
+Both runs 7 passed. The OPEN lines are printed by the spec, as the turn's SWELL lines are.
+
+**The six wall-clock samplers are annotated in the specs**, at the sampler, each saying the wall clock is deliberate and
+why, and naming the record-modal-81 defect as the one it is not: cover-travel-92, modal-resize-93 (two loops),
+wall-first-paint (two samplers, one comment above both), pick-zoom-race-156, zoom-out-pulled, record-band-43. Comment
+only; typecheck 0 errors, lint 0 errors (6 warnings, all at HEAD).
+
+**The numbers detector widened to a named track, proposed and not built, since the condition is harder than it
+sounds.** The ask: fire on a people-count that mismatches in either direction where the count is attached to a named
+track, comparing against that track's credits exactly; keep larger-only for record-level claims. Three things stand in
+the way, each a judgement: (1) the review draft carries `credited`, one number, and nothing per track, so the drafting
+script must write the tracks and their credits into each draft (a shape change to drafts.json, and the held 55 lack it
+until re-rendered from the database), and `--review` must join the facts by prefix as the audit does; (2) the count's
+noun must map to credit roles, and that map is the judgement: "two percussionists" against congas, percussion and
+percussion (three), "a six-voice choir" against six backing-vocals lines, "horns" against trumpet, saxophone and
+trombone, "two basses" against two Bass lines; a wrong map fires false in both directions, and the 17 Nov detector
+already showed what a loose noun list does (126 of 440); (3) "attached to a named track" is a quoted title in the
+sentence, which is detectable, but a sentence may name two tracks (Vandross s5 names one, Astrid s4 names none and
+describes four). Proposed shape: `trackCredits` on the draft, written by the script from the facts; a role map kept
+small and written from the real sentences (percussion, voices, basses, guitars, drums, horns, strings); fire only where
+exactly one title is quoted; report as "Counts to check against the named track: N", under "Numbers to check". It would
+have caught Vandross s5 and nothing else among the known errors. About four files and one judgement, the role map.
+
+**A second drop landed at 10:44 while the above was being written, captured as `refs/drops/2026-11-19-02` before
+anything ran against it:** "Reason bound and no marking", with both cards again (Mood Pick 71,323 bytes, sha256
+bcbb005f…4206; Record Detail 8a 445,634 bytes, sha256 93f2bf45…3fe3, both matching the change file). It rules, by its
+own list: §P.2, the reason has a bound set where it is written, Code proposing the figure from the approved 91 to 108,
+stated in the prompt and the schema, a reason over it re-asked and never cut, the figure provisional; §67, the sheet
+shows no support marking; and, in prose, ABBA's third sentence is an ambiguity, not a flat error, so the correction's
+shape is judged on the other three. Its handoff edits are a bullet in the model-pick step, two in the sheet step and a
+provisional. **Not applied: recorded as held**, the cards taken in as they landed, because the bound is a ruling the
+coordinator decided the other way on 18 Nov ("no bound, not in the schema; both numbers go to 3b") and the relay is
+his. Design's "Not seen" asks for the 3a and 300 captures to be attached.
+
+## 19 Nov, afternoon: the third drop, superseded and replaced; the bound reversed with Design's reason; the stack above the ask field measured; three defects from the captures
+
+**Three drops in one day, the second superseded by the third.** "Reason bound and no marking" (refs/drops/2026-11-19-02)
+was taken in, its three handoff edits applied and its line recorded applied, before the coordinator's word that Design
+had superseded it by name with "Reason bound and the model mark" (refs/drops/2026-11-19-03: Record Detail 8a 445,796
+bytes, sha256 65c0f95f…dd26; Mood Pick unchanged at 71,323, bcbb005f…4206, both matching the change file). The two
+files' handoff edits are the same text to the letter; what changed is the card's §67 sentence, which called the mark
+the claim check's judgement where it is the drafting model's own unchecked field, and the new card replaces it: "The
+mark is a field in the drafting model's own output, passed through unchecked: the claim check confirms a citation is a
+whole stored sentence, never that it is true." So nothing is backed out of the handoff; the superseded card lived in
+HEAD for no commit (both drops sit uncommitted until the intake commit below), and the record holds both lines. The
+coordinator: "My fault for telling you the earlier drop was ready before the correction landed."
+
+**The bound reverses the coordinator's 18 Nov ruling, recorded with Design's reason (his ask):** a host can only be
+shaped around a reason of known length, so without a bound every host is shaped by its worst case. In his words: "I
+ruled on the model's output and missed what it does to the design." The bound's step (an unnumbered bullet in the
+model-pick step) carries two additions he wants proposed, not chosen alone: a retry limit with a defined end for "a
+reason over the bound is asked for again, never cut", and the figure from measurement where cheap. **Proposed, for his
+ruling:** two re-asks, then the answer drawn with no reason and the slot saying so in one line, Proposed "No reason this
+time.", the record never lost and the reason never cut; the attempts and the over-length reasons logged. For the figure:
+`askPick` is importable and takes a pool from drafts.json with no latch and no store, so twenty phrases against the 55
+held drafts is twenty calls at about 18,000 input tokens each (the whole pool's text in every request), 360,000 in, and
+a real distribution of reason lengths; no new machinery beyond a probe in scripts/ that becomes the tool. Within his
+"about twenty", so it runs on his word, and the figure stays provisional either way.
+
+**The two held files, in the coordinator's words: "The reason nothing was applied is me: I never relayed them, from 15
+Nov until your intake surfaced them. Not refused, not held by you, not covered. Design is told."** Both anchors still
+stand in the step as it is, so both are applied and recorded applied: "Count line headroom" replaces "report the widest
+N" in the model-pick step's count-line bullet with the two-lines failure and the 2,000 figure; "Run end wording" inserts
+its measuring bullet after "Draw the reason", where the bound's bullet also goes, so the order is Draw, Bound, Run's end.
+Which is which: both are record gaps. The build carries "That's all that fits." (slot.ts, three specs and the unit test)
+and measures it with the slot's other messages by line box in the rail at 1440, the band at 320 and the sidebar at
+1280 (pick-control-156); and pick-ask-178's test 184 asserts one line at every N up to the record count at 112, 320
+and 1280 and reports the N it breaks at, which is what the file's bullet asks for in words. "Report the widest N" was a
+live difference in the handoff's wording only.
+
+**The stack above the ask field, measured thing by thing (`docs/captures/ask-fold/`, from the production build, load 17
+to 22 with another project's vitest running beside it, not this repo's).** Every drawn leaf above the field in the
+field's column, document positions; the split, each thing from its top to the next thing's top so the gaps are counted:
+
+| | 390 × 844 band (table and grid alike) | 1440 × 900 sidebar (table and grid alike) |
+|---|---|---|
+| header | 65 | 87 |
+| search (label and field) | 90.5 | 107.5 |
+| view names (and ADD RECORD at 390) | 34 | 51 |
+| heading ("5 of 22 records" and Collection) | 96.5 | 120.5 |
+| sort | 44 | 66 |
+| genre | 44 | 44 |
+| label | 56 | 57 |
+| Clear filters (to the rule) | 68 | 44 |
+| the rule and "What to play" | 41.5 | 41.5 |
+| **the field's top** | **539.5** | **618.5** |
+
+So the filters (sort, genre, label, Clear filters) are 212 of 539.5 at 390 and 211 of 618.5 at 1440; search, the view
+names and the heading are 221 and 279; the header 65 and 87. Below the field: the field 45, ASK and SURPRISE ME 44, the
+slot 19.5 (its min-height, empty), then 24 to the first cell, which is 399 tall at the approved 108 characters: its
+bottom is 227 past the window at 390 and 250 past at 1440. Read against the fix: with the control above the filters
+only, the first cell would end at about 859 of 844 at 390 and 939 of 900 at 1440, still 15 and 39 past; above the
+heading, at about 762 and 818, in view in both. The two sidebars are alike to the pixel, as are the two bands.
+
+**Three defects from the captures (Design, relayed), against rulings in force:**
+1. The answer below the fold at 390 and in both 1440 sidebars at the approved length: confirmed above, 227 and 250
+   past. Only the shelf and the far column put it in view.
+2. The count line beneath the answers in every band and sidebar host: confirmed, at 1928 at 390 and 2841 at 1440, after
+   the last cell. **Built, then broken, not queued:** §P.6's move put the count line beneath the slot on 13 Nov, and
+   3a's answers list was inserted between the slot and the count line (PickControl.tsx: the slot at 336, the list at
+   346, the count line at 362), so where the answers are drawn inside the control the line lands beneath them; the
+   rail has no list inside the control and draws it right. §P.4 puts the answer 24 below the count line: the list
+   belongs after the line. A 3a defect for 3b or its own step.
+3. "Nothing fits." above a requirement-unmet answer in every consolation capture. **Read against the code, the capture
+   and the build each carry half of it.** 3a's consolation capture stubs a nothing-fits reply (pick-reasons-3a.capture.ts
+   line 55, verdict 'nothing-fits') whose stand-in reason is written in the requirement-unmet shape, what was asked,
+   what this has instead, closest in feel; so the picture shows "Nothing fits." over a requirement-unmet reason because
+   the capture put them together, not because the build did. The build's own gap is the other half: `askSlotMessage`
+   has no wording for the 'requirement-unmet' verdict at all (slot.ts: run-exhausted, nothing-fits, unanswerable, the
+   undescribed title, else empty), so a real requirement-unmet answer draws its stand-in under an empty slot, and §P.2's
+   two findings are told apart by the reason alone. Never captured, since 3a captured no requirement-unmet reply. Open
+   for 3b or its own step: a slot wording for the verdict, Proposed, and a capture of it. The reason's wording is right.
+The cap holds against the captures: the column host fits at 1440 × 768 even at 305, only the far band at 1044 × 768
+fails there; the bound is worth setting and is not what fixes the fold.

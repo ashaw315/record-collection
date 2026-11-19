@@ -86,6 +86,7 @@ test('the modal open at 390 × 844, turned to 844 × 390: until the viewport set
   /* At once: sampled in the page, the square goes from the old size to the new with no size between. */
   const sizes = await page.evaluate(async (target) => {
     const seen: number[] = [];
+    /* The wall clock on purpose (19 Nov): it bounds how long to watch for a size change, and asserts nothing on the time. Not the record-modal-81 defect. */
     await new Promise<void>((resolve) => { const started = performance.now(); const tick = () => { const w = (document.querySelector('[data-sleeve]') as HTMLElement).getBoundingClientRect().width; if (seen[seen.length - 1] !== w) seen.push(w); if (w === target && performance.now() - started > 100 || performance.now() - started > 3000) resolve(); else requestAnimationFrame(tick); }; requestAnimationFrame(tick); });
     return seen;
   }, after);
@@ -142,6 +143,7 @@ test('a resize that keeps the square’s size moves nothing: a turn under way is
   await page.setViewportSize({ width: 1500, height: NO_SCROLL_HEIGHT });
   const during = await page.evaluate(async (settle) => {
     const sleeve = document.querySelector('[data-sleeve]') as HTMLElement;
+    /* The wall clock on purpose (19 Nov): the viewport's settle is a wall event, so whether the turn was still running after it is read on the same clock. Not the record-modal-81 defect. */
     const started = performance.now(); let turningAfterSettle = false; let cutAt: number | null = null; let was = sleeve.hasAttribute('data-turning');
     await new Promise<void>((resolve) => { const tick = () => { const t = performance.now() - started; const now = sleeve.hasAttribute('data-turning'); if (was && !now && cutAt === null) cutAt = t; if (now && t > settle + 60) turningAfterSettle = true; was = now; if (t > 1200) resolve(); else requestAnimationFrame(tick); }; requestAnimationFrame(tick); });
     return { turningAfterSettle, cutAt, face: sleeve.getAttribute('data-face') };

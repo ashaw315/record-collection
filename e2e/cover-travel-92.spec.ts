@@ -85,6 +85,7 @@ const sample = (page: Page, action: 'press' | 'close' | 'escape' | 'back' | 'pre
   let escaped = what !== 'press-then-escape';
   await new Promise<void>((resolve) => {
     let rest = 0;
+    /* The wall clock on purpose (19 Nov): t times this test's own escape press and labels frames; the eased values are compared across properties within one frame, never against t. Not the record-modal-81 defect. */
     const tick = () => {
       const t = performance.now() - started;
       const modal = document.querySelector<HTMLElement>('[data-sleeve-modal]');

@@ -5,7 +5,7 @@ import { isSettled } from './paint-settle';
 import { readSeventeen } from './seventeen';
 import { login } from './sign-in';
 
-/** Recorded from before the page's first script: every animation frame's band height and cell boxes, until the test reads them. */
+/** Recorded from before the page's first script: every animation frame's band height and cell boxes, until the test reads them. The wall clock on purpose (19 Nov): t dates paints for the slowest-paint report and nothing is asserted on it. Not the record-modal-81 defect. */
 const RECORDER = `window.__paint = { frames: [] };
 (function () { var rec = window.__paint; function tick() { var band = document.querySelector('[data-band="record"]'); if (band) { var b = band.getBoundingClientRect(); rec.frames.push({ t: performance.now(), band: Math.round(b.height * 10) / 10, cells: Array.from(band.querySelectorAll(':scope > [data-cell]')).map(function (c) { var r = c.getBoundingClientRect(); return [c.getAttribute('data-cell'), Math.round(r.left), Math.round(r.top), Math.round(r.width), Math.round(r.height)]; }) }); } if (rec.frames.length < 400) requestAnimationFrame(tick); } requestAnimationFrame(tick); })();`;
 
