@@ -58112,3 +58112,52 @@ so the handoff carries one copy of each bullet and nothing is backed out.
 
 **gatefold-88 accepted** by the coordinator as the same fit as the modal's: two measurements landing on the same whole
 number of frames.
+
+## 19 Nov, night: gate 44572556696 NOT OK and its cause; the layout's capacity in lines and characters; the bound in the pick; the model follows the target and overshoots it by two
+
+**Gate 44572556696 on 699bddb1: NOT OK, 2 failed in the chromium half** (unit 5379 passed, mobile 397 passed, report-only
+4 passed), both pick-answer-156 at 1440, the table and the grid, each failing twice with no green retry: "24 below the
+slot", received 66. The count-line fix put the count line between the slot and the cell, and that spec quoted §P.4's
+earlier sentence, "24 below the slot". The card as it reads now: "24 below the control's last line: the count line where
+it is drawn, and the slot where it is not", with §P.6 standing the count line beneath the slot. So the test encoded the
+withdrawn wording and changes with the ruling: it reads the control's last line, the count line 18 beneath the slot and
+the cell 24 below the line. **My step-level selection missed it:** five pick specs ran, pick-answer-156 was not among
+them, and the gate found the cross-file break, which is what gates are for. pick-answer-156 and pick-ask-178 on
+chromium 37 passed in 1.8m after the change; typecheck 0 errors, lint 0 errors (6 warnings, all at HEAD).
+
+**The capacity, measured (`docs/captures/ask-fold-capacity/`, `ask-fold-capacity.capture.ts`):** the control above the
+heading, the count line ruled, the first cell's reason grown one word at a time through three reasons the model wrote,
+the cell's bottom read after each word. The cell is 160 wide and the line 19.5 at both windows, so the figures are the
+same at 390 × 844 and 1440 × 900 to the half pixel: **wholly in view, 7 lines, 188 characters of the model's words,
+0.5 to spare; one line to spare, 6 lines, 160 characters, 20 to spare.** The coordinator's arithmetic from the fold
+table held exactly. Characters move a line either way with the words (183 took 7 lines, 198 took 8; 149 and 160 took
+6, 176 took 7), so the line counts are the firm figures and the characters are about.
+
+**The bound in the pick (§P.2, Design, 19 Nov; the figures as the coordinator defined them), test first:** `REASON_TARGET`
+160 and `REASON_MAX` 188 in pick.ts; the prompt's reason sentence now reads "one sentence of about 160 characters, never
+more than 188", and the schema's reason carries `maxLength: 188`, which OpenAI's strict mode accepted (twenty calls, none
+refused). The twenty phrases re-run under it: **67 reasons, 0 failed, min 150, p10 154, median 162, p90 169, max 174;
+44 of 67 over 160, none over 188.** Against the run without it (64 reasons, 117 to 210, median 160): the spread
+collapsed from 93 characters to 24 and the tail is gone, so the model does not ignore the target, it follows it closely
+and lands two characters above it. The median does not land under the one-line-spare figure: it lands on it, 162
+against 160. The lever works and the number is set at the edge. **Proposed, for the coordinator:** a target of 140 with
+the maximum at 188, which by this run's spread would land the median near 142 and the p90 near 150, six lines with room,
+and a twenty-phrase run at 140 to show it. Raw files `.matched/reason-lengths-2026-11-19T16-41-46Z.json` (no bound) and
+`-17-30-04Z.json` (the bound). One phrase that failed every claim check without the bound ("warm and crackly, something
+old") came back requirement-unmet with it; one sample each, not a finding.
+
+**The retry limit, the coordinator's proposal and not a ruling, recorded and not built until Design has seen it, since
+it touches §P.2's "every answer carries its reason":** two attempts per reason, the first and one re-ask for a shorter
+one; on a second failure the record is dropped from the answer rather than drawn without a reason, an answer of four
+being legal and a reasonless record not; if every record fails twice, 502 PICK_FAILED, an outcome that exists. At a
+bound near the p90 his rough arithmetic is about one answer lost in twenty asks; to be measured, not trusted. With the
+schema maximum accepted by the API, nothing over the bound reaches the client at all, so the re-ask would answer only a
+reason the model could not fit under the maximum, which this run never produced.
+
+**Defect 3 settled from the card (Design told):** §P.2's live sentence, "Where records fit in feel but none meets
+something the phrase requires, THE SLOT SAYS SO, and a consolation record, where one is drawn, has a reason that names
+the requirement it fails", so an empty slot for a requirement-unmet answer is a defect against the card. The likely
+cause, the coordinator's: the sentence this replaced said "the answer is the same one record" and never mentioned the
+slot, and the build followed the withdrawn wording. The slot's words come from Design.
+
+**Adam has stored all 55 and the pick is live;** he is pressing ASK on his phone.

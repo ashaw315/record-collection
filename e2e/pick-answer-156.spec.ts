@@ -73,6 +73,8 @@ const answer = (page: Page) =>
       cell: box(cell),
       button: box(control?.querySelector('button') ?? null),
       slot: box(control?.querySelector('[data-pick-slot]') ?? null),
+      /* §P.6's count line, drawn while any record has no text: the control's last line where it is drawn (§P.4). */
+      line: box(control?.querySelector('[data-without-about]') ?? null),
       message: control?.querySelector('[data-pick-slot]')?.textContent ?? null,
       linkCovers: link === null || cell === null ? false : (() => { const a = getComputedStyle(link, '::after'); return a.position === 'absolute' && a.content !== 'none'; })(),
     };
@@ -94,8 +96,15 @@ test.describe('§P.4: the answer on the table and the grid', () => {
         expect(a.inControl, 'drawn as part of the control').toBe(true);
         if (a.cell === null || a.slot === null) throw new Error('no cell');
         expect(a.cell.top, 'beneath the control and its slot').toBeGreaterThanOrEqual(a.slot.bottom);
-        /* §P.4: "It is drawn at §T.5's 160, the least a cover is, and 24 below the slot." */
-        expect(a.cell.top - a.slot.bottom, '24 below the slot').toBeCloseTo(24, 0);
+        /*
+          §P.4 as it reads now: "24 below the control’s last line: the count line where it is drawn, and the slot where it is
+          not", with §P.6 standing the count line beneath the slot. The first form of this assertion quoted the earlier
+          sentence, "24 below the slot", and held the answers list between the slot and the count line in place (gate
+          44572556696, 19 Nov); the fixture draws the count line, so the cell is 24 below it and the line 18 below the slot.
+        */
+        const last = a.line ?? a.slot;
+        if (a.line !== null) expect(a.line.top - a.slot.bottom, 'the count line 18 beneath the slot').toBeCloseTo(18, 0);
+        expect(a.cell.top - last.bottom, `24 below the control’s last line, ${a.line === null ? 'the slot' : 'the count line'}`).toBeCloseTo(24, 0);
         expect(a.cell.width, 'at §T.5’s 160').toBeCloseTo(160, 0);
         expect(a.title ?? '', 'a record the screen shows').toContain(suffix);
         expect(a.artist).toBe(`Pick-${suffix}`);

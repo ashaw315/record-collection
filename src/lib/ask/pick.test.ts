@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { askPick, PICK_SCHEMA, pickRequest, readPick, type PickRecordText } from './pick';
+import { askPick, PICK_SCHEMA, pickRequest, readPick, type PickRecordText, REASON_MAX, REASON_TARGET } from './pick';
 
 /**
  * **Step 3, unit 1: the model pick, server side (§P.2's "the model pick, minimum"; the coordinator, 13 and 14 Nov).**
@@ -39,6 +39,21 @@ describe('the request', () => {
     expect(user).toContain('something calm for a rainy morning');
     for (const r of POOL) expect(user.split(r.text).length - 1, r.id).toBe(1);
     expect(user).toMatch(/already named[^\n]*b2/i);
+  });
+
+  /*
+    The reason's bound (§P.2, Design, 19 Nov; the figures the coordinator's, from ask-fold-capacity): a prompt target that
+    moves the whole distribution, and a schema maximum at the layout's capacity as the backstop. Measured on 19 Nov: the
+    model wrote 117 to 210 characters under "one sentence" alone, every one over the approved 108; above the heading the
+    first cell holds 7 lines wholly in view, about 188 characters of the model's words, and 6 lines with one to spare,
+    about 160. Fails against a prompt without the figures, and a schema whose reason has no maximum.
+  */
+  it('states the reason’s target length and its maximum in the prompt, and caps the reason in the schema at the maximum', () => {
+    const system = pickRequest('x', POOL, [], { model: 'm', effort: 'low' }).input.find((m) => m.role === 'system')?.content ?? '';
+    expect(system).toContain(`about ${REASON_TARGET} characters`);
+    expect(system).toContain(`never more than ${REASON_MAX}`);
+    expect(REASON_TARGET).toBeLessThan(REASON_MAX);
+    expect(PICK_SCHEMA.properties.picks.items.properties.reason).toMatchObject({ type: 'string', maxLength: REASON_MAX });
   });
 
   it('tells the model fewer is correct when fewer fit, that nothing fitting is an answer, never to pad, and to keep caveats', () => {

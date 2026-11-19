@@ -17,6 +17,17 @@ import { requireOpenAiKey } from '@/lib/openai/embeddings';
  * cost". Effort is `ASK_PICK_EFFORT`, low by default, since the phone's loop waits on every press.
  */
 export type PickRecordText = { id: string; text: string };
+
+/*
+  The reason's bound (§P.2, Design, 19 Nov: "set where it is written, not where it is drawn"), two numbers from
+  ask-fold-capacity (the coordinator, 19 Nov): with the control above the heading and the count line beneath the slot,
+  the first cell holds seven lines of reason wholly in view at 390 × 844 and 1440 × 900 alike, about 188 characters of
+  the model's own words, and six lines with one to spare, about 160. Under "one sentence" alone the model wrote 117 to
+  210, median 160, every one over the approved 108 (which were 3a's stubs, not the model's). The target is the
+  mechanism, moving the whole distribution; the maximum is the backstop. Both provisional, the figures Design's to judge.
+*/
+export const REASON_TARGET = 160;
+export const REASON_MAX = 188;
 export type PickVerdict = 'answer' | 'nothing-fits' | 'requirement-unmet';
 export type Picked = { id: string; reason: string; claims: string[] };
 export type PickResult =
@@ -44,7 +55,8 @@ export const PICK_SCHEMA = {
         required: ['id', 'reason', 'claims'],
         properties: {
           id: { type: 'string' },
-          reason: { type: 'string' },
+          /* The backstop (§P.2, 19 Nov): nothing over the layout's capacity is ever drawn; the prompt's target is the mechanism. */
+          reason: { type: 'string', maxLength: REASON_MAX },
           claims: { type: 'array', items: { type: 'string' } },
         },
       },
@@ -58,7 +70,7 @@ const SYSTEM = [
   'If nothing fits, set verdict "nothing-fits" and return at most one record as a stand-in to play in the meantime, its reason saying what it is not.',
   'If the phrase states a requirement (for example no vocals) that no fitting record meets, set verdict "requirement-unmet" and return the closest in feel as one stand-in, its reason naming the requirement and what the record has instead.',
   'Never return a record listed as already named.',
-  'Each reason is one sentence in the reader’s terms of sound and occasion, saying why this record answers the phrase. Do not quote the record’s text in the reason. Carry any relevant caveat from the text into the reason rather than dropping it: a record that is slow with abrasive peaks is not simply gentle.',
+  `Each reason is one sentence of about ${REASON_TARGET} characters, never more than ${REASON_MAX}, in the reader’s terms of sound and occasion, saying why this record answers the phrase. Do not quote the record’s text in the reason. Carry any relevant caveat from the text into the reason rather than dropping it: a record that is slow with abrasive peaks is not simply gentle.`,
   'For each record, list in "claims" the whole sentences, copied exactly from that record’s text, that the reason rests on: at least one, and never part of a sentence.',
 ].join('\n');
 
