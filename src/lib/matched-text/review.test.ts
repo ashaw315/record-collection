@@ -101,6 +101,33 @@ describe('renderReview', () => {
     expect(renderReview([{ ...drafts[0], sentences }], 'Sides')).not.toMatch(/Sides to check/);
   });
 
+  /*
+    The self-consistency check (the coordinator, 18 Nov), under the other check lines: the pairs of a draft's own
+    sentences that disagree, each quoted with why, so a reader sees the contradiction without the tracklist. The
+    detectors are consistency.ts's; this proves the line and the pair reach the file. Fails against a renderer that
+    does not call disagreements, or prints the count without the sentences.
+  */
+  it('lists the pairs of sentences that disagree with each other, both quoted with why, and says none where none do', () => {
+    const disagreeing = renderReview([{ ...drafts[0], sentences: [
+      { text: 'The duo perform and engineer everything themselves.', basis: 'supported' },
+      { text: 'Strings come from Peder Mannerfelt on three tracks.', basis: 'supported' },
+    ] }], 'Consistency');
+    expect(disagreeing).toMatch(/Sentences that disagree with each other: 1\n- sentence 1 says everything is theirs alone; sentence 2 names Peder Mannerfelt\n  1: The duo perform and engineer everything themselves\.\n  2: Strings come from Peder Mannerfelt on three tracks\./);
+    expect(out).toMatch(/Sentences that disagree with each other: none/);
+  });
+
+  /*
+    A file that outlives the tool that wrote it says which version wrote it (the coordinator, 19 Nov): the ten redrafts'
+    review in Downloads reads "disagree with each other: none" for Smerz, rendered before the detector was widened.
+    Fails against a head that does not carry the version it was given.
+  */
+  it('names in its head the version that rendered it, where the caller gives one', () => {
+    const versioned = renderReview(drafts.slice(0, 1), 'Versioned', { version: 'write-matched-text at abc1234, checks: numbers, sides, self-consistency' });
+    expect(versioned.slice(0, versioned.indexOf('## '))).toMatch(/Rendered by write-matched-text at abc1234, checks: numbers, sides, self-consistency\./);
+    /* The head is not a record: the importer still reads the file. */
+    expect(parseReview(versioned).map((r) => r.prefix)).toEqual(['e315c6a7']);
+  });
+
   /* Mandy, Indiana's eighth sentence (17 Nov) described what the material did not say, stored as a citable claim. */
   it('shows a sentence the client dropped for describing the material, so Adam sees the draft is a sentence short', () => {
     const dropped = renderReview([{ ...drafts[0], dropped: ['Which tracks are the quiet ones is not something this material tells you.'] }], 'Dropped');

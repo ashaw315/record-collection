@@ -9,23 +9,33 @@
  *   npm run matched:draft -- --sample … --compare-effort   # each drafted at medium and high, side by side
  *   npm run matched:draft -- --store marked.txt           # second pass: store the ids listed, one per line; a line
  *                                                          # "e315c6a7 high" stores that effort's draft, medium otherwise
+ *   npm run matched:draft -- --review                     # the review of drafts.json as held, no call, to .matched only
  *
  * The review file goes to ~/Downloads, each sentence marked [supported] or [inferred]; the drafts are kept in
  * `.matched/drafts.json`, so storing spends no call. The store writes `generated` and never Adam's edit. The pick goes
  * live when every record with an ABOUT has matched text (§4.8's latch), not before; storing ten of fifty-five leaves
  * the ask ranking, and the ten are read by unit 5's diagnostic script.
  */
+import { execSync } from 'node:child_process';
 import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { recordsToDraft, storeGeneratedMatchedText } from '@/lib/db/queries/matched-text';
 import { groundingFromPayload } from '@/lib/llm/about-grounding';
 import { buildMatchedTextPrompt, createMatchedTextClient, getMatchedTextClient, matchedTextTransport } from '@/lib/llm/matched-text-client';
+import { disagreements } from '@/lib/matched-text/consistency';
 import { chooseDraft, mergeDrafts, parseMarked, storeLine } from '@/lib/matched-text/marks';
 import { parseReview, rebuildDrafts, renderReview, type ReviewDraft } from '@/lib/matched-text/review';
 
 const MODEL = 'claude-opus-5';
 const args = process.argv.slice(2);
+/*
+  What rendered a review file, in its head (the coordinator, 19 Nov): the commit, whether the tree had uncommitted changes
+  to the renderer's code, the time, and the checks the renderer carries, so a file read later is read against the right
+  version of its checks.
+*/
+const sh = (cmd: string) => execSync(cmd, { encoding: 'utf8' }).trim();
+const VERSION = `write-matched-text at ${sh('git rev-parse --short HEAD')}${sh('git status --porcelain -- src scripts') === '' ? '' : ' with uncommitted changes'}, ${new Date().toISOString().slice(0, 16)}Z; checks: numbers, sides, self-consistency (exclusivity, side count against middle, side sizes)`;
 const mode = args.includes('--store') ? 'store' : args.includes('--all') ? 'all' : 'sample';
 /* --measure (15 Nov): one call per record as drafting makes it, each response's tokens and content blocks recorded to .matched/measure.json, and nothing else written. */
 const measuring = args.includes('--measure');
@@ -82,6 +92,26 @@ if (args.includes('--import-review')) {
   for (const line of refused) console.log(`refused ${line}`);
   console.log(`write-matched-text: ${parsed.length} in the file, ${imported.length - kept} imported, ${kept} already in drafts.json and kept as they are, ${refused.length} refused; drafts.json holds ${merged.length}${current.length > 0 ? ', previous file drafts-previous.json' : ''}`);
   process.exit(refused.length === 0 ? 0 : 1);
+}
+
+/*
+  --review (18 Nov): the review file of what drafts.json holds, rendered with no model call and nothing written to
+  drafts.json, so a check the renderer carries (the self-consistency check) is swept over every draft at once. Written to
+  .matched only, with each disagreeing pair printed: this is Code's sweep, not Adam's review.
+*/
+if (args.includes('--review')) {
+  const wanted = args.filter((a) => /^[0-9a-f]{8}/.test(a)).map((a) => a.slice(0, 8));
+  const held: Draft[] = (JSON.parse(readFileSync(join(WORK, 'drafts.json'), 'utf8')) as Draft[]).filter((d) => wanted.length === 0 || wanted.some((p) => d.id.startsWith(p)));
+  const file = join(WORK, 'review.md');
+  writeFileSync(file, renderReview(held, `Matched text drafts held, ${new Date().toISOString().slice(0, 10)}`, { version: VERSION }));
+  let disagreeing = 0;
+  for (const d of held) {
+    const pairs = disagreements(d.sentences.map((s) => s.text));
+    if (pairs.length > 0) disagreeing += 1;
+    for (const p of pairs) console.log(`${d.id.slice(0, 8)}  ${d.artist} — ${d.title}: ${p.why}`);
+  }
+  console.log(`write-matched-text --review: ${held.length} drafts rendered to ${file}, no call made, drafts.json untouched; ${disagreeing} with sentences that disagree with each other`);
+  process.exit(0);
 }
 
 const prefixes = mode === 'sample' ? args.filter((a) => /^[0-9a-f]{8}/.test(a)) : [];
@@ -144,6 +174,6 @@ const merged = mergeDrafts(kept, drafts);
 writeFileSync(draftsFile, JSON.stringify(merged, null, 2));
 const date = new Date().toISOString().slice(0, 10);
 const out = join(OUT, `Matched text drafts, ${date}.md`);
-writeFileSync(out, renderReview(drafts, `Matched text drafts, ${date}`));
+writeFileSync(out, renderReview(drafts, `Matched text drafts, ${date}`, { version: VERSION }));
 console.log(`write-matched-text: ${drafts.filter((d) => d.text !== null).length} finished, ${drafts.filter((d) => d.text === null).length} with no draft; review file ${out}; drafts.json holds ${merged.length} (${kept.length} kept before this run${kept.length > 0 ? ', previous file drafts-previous.json' : ''})`);
 process.exit(0);

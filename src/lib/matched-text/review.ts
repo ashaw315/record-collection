@@ -4,6 +4,8 @@
  * that is where a famous record gets described from reputation rather than from the material. What was not known is
  * listed, never filled. The ABOUT is shown as the context it was given as. The marks live here, not in the schema.
  */
+import { disagreements } from './consistency';
+
 export type ReviewDraft = {
   id: string;
   artist: string;
@@ -53,10 +55,12 @@ function needsChecking(text: string, credited: number): boolean {
   return false;
 }
 
-export function renderReview(drafts: readonly ReviewDraft[], title: string): string {
+export function renderReview(drafts: readonly ReviewDraft[], title: string, options: { version?: string } = {}): string {
   const lines = [
     `# ${title}`,
     '',
+    /* A file that outlives the tool that wrote it says which version wrote it (the coordinator, 19 Nov). */
+    ...(options.version === undefined ? [] : [`Rendered by ${options.version}.`, '']),
     `${drafts.length} record(s). Each sentence is marked [supported], resting on the Discogs material the model was given, or [inferred], resting on its own knowledge of the record: read the inferred hardest. To store a draft, put its id (the eight characters in backticks) in a file, one per line, and run the store.`,
     '',
   ];
@@ -86,6 +90,9 @@ export function renderReview(drafts: readonly ReviewDraft[], title: string): str
         const sided = v.sentences.filter((x) => SIDE.test(unquoted(x.text)));
         lines.push(sided.length === 0 ? 'Sides to check, the tracklist giving none: none' : [`Sides to check, the tracklist giving none: ${sided.length}`, ...sided.map((x) => `- ${x.text}`)].join('\n'), '');
       }
+      /* The self-consistency check (18 Nov): pairs of the draft's own sentences that disagree, quoted with why. Nothing here is confirmation. */
+      const pairs = disagreements(v.sentences.map((x) => x.text));
+      lines.push(pairs.length === 0 ? 'Sentences that disagree with each other: none' : [`Sentences that disagree with each other: ${pairs.length}`, ...pairs.flatMap((p) => [`- ${p.why}`, `  ${p.a}: ${v.sentences[p.a - 1].text}`, `  ${p.b}: ${v.sentences[p.b - 1].text}`])].join('\n'), '');
       if (v.dropped !== undefined && v.dropped.length > 0) lines.push([`Dropped, for describing the material rather than the record: ${v.dropped.length}`, ...v.dropped.map((x) => `- ${x}`)].join('\n'), '');
     }
   }
