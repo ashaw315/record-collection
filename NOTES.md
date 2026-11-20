@@ -58697,3 +58697,29 @@ and not the per-press one, and the grid is worse than he knows, which Design nee
 Accepted as reported by the coordinator: the failed pick's figures, the empty-input path proven by gate 44757619832,
 the second step-level sample. Load figures continue on every step-level run for a few days. Record only; rides with the
 next unit.
+
+**Adam was on the shelf (the coordinator, 20 Nov, evening).** So he has felt the one-wait shape and not the per-press
+one, and the host he says he will actually use, the phone, where §W.24 gives him no shelf and §P.4 draws cells, is the
+one that pays the full model call on every press. **Two consequences, his, recorded.** (1) Last night's five presses
+tested the pick's quality, not the layout or the wait: on the shelf at desktop the answer stands in the pulled record's
+facts and the fold problem does not exist, so the fold is still untested with real data and so is the per-press wait;
+he had read the presses as having settled more than they did. (2) The queueing question is not academic: the grid is the
+phone, the phone is where the press-until-something-appeals loop lives for him, and it is the host that cannot queue.
+"Ask for ten, show five" is a ruling on §P.2's cap, but about the host he uses, not a desktop nicety. He is pressing on
+his phone now, which gives the fold, the wait and the slot in one go. Nothing to build. **Owed:** the production latency
+lines once his phone presses accrue, with the take and the record count, so Design's indication is designed against a
+real phone figure rather than the bench's 7.3 to 15.2s. The logging has been live on production since 16ab4b7c's
+deployment at 14:53Z (the answered line) and 401f3ecf's at 15:38Z (the failed line); earlier presses left no figure.
+
+**The production lines are reachable, and short-lived (20 Nov, 18:58Z).** `vercel logs` on the linked project returns
+runtime rows with their messages: a probe GET of the production alias (record-collection-rust.vercel.app, 307 to /login)
+appeared within thirty seconds. But a window of 24 hours held that one row and nothing else, so Adam's presses of last
+night and of today, if any reached production, were already gone: the plan's retention is shorter than the window, and
+consistent with Vercel's Hobby figure of one hour, which I have not confirmed from the plan itself. **So the owed report
+needs a poller, not a read:** from 18:58Z this session polls Vercel every five minutes for `/api/ask` rows and stores
+each new one, keyed by its id, so a press is caught before retention drops it. The lines carry the take, the records
+asked over, the picks and the two millisecond figures as the route logs them. Hourly retention is a finding of its own:
+a figure Adam feels on the phone at 21:00 is unreadable at 22:30 unless something was listening. If the lines are to
+accrue across days for Design, the poller becomes a committed tool or Vercel gets a log drain; neither built tonight.
+The deployment URL itself answers 401 to an unauthenticated POST, Vercel's gate before the app, so a probe there logs
+nothing; the alias is the address that reaches the app.
