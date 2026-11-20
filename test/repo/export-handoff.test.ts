@@ -1,4 +1,5 @@
 import { execFileSync, spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -111,8 +112,8 @@ describe('the script', () => {
       const sha = execFileSync('git', ['rev-parse', '--short', 'HEAD'], { encoding: 'utf8' }).trim();
       const stdout = execFileSync('node', [SCRIPT, '--out', out], { encoding: 'utf8' });
       const files = readdirSync(out).sort();
-      /* Five since 6 Nov: the handoff, DESIGN-RULES, WITHDRAWALS, ASSERTIONS-spec and the applied change files (Design's ask, the coordinator's approval). */
-      expect(files).toHaveLength(5);
+      /* Six since 19 Nov: the handoff, DESIGN-RULES, WITHDRAWALS, ASSERTIONS-spec, the applied change files (Design's ask, 6 Nov) and the cards' hashes (Design's gap, Q81). */
+      expect(files).toHaveLength(6);
       const rules = files.find((f) => f.startsWith('DESIGN-RULES'));
       expect(rules).toBe(`DESIGN-RULES — export for Design, ${localDate()} at ${sha}.md`);
       const written = readFileSync(join(out, rules ?? ''), 'utf8');
@@ -120,6 +121,36 @@ describe('the script', () => {
       expect(written.endsWith(committed)).toBe(true);
       expect(written.split('\n')[0]).toMatch(/DESIGN-RULES\.md as committed at/);
       expect(stdout).toContain(rules ?? 'DESIGN-RULES');
+    } finally {
+      rmSync(out, { recursive: true, force: true });
+    }
+  });
+
+  /*
+    Design's first bundle gap (Q81, relayed by the coordinator 19 Nov): the export carried the handoff, the rules, the
+    withdrawals and the applied list but no card, so which card the tree held reached Design only through a relay; it
+    cost a round trip on 04548440, and Design chained a drop onto a card it could not confirm had landed. One line per
+    card HEAD holds, its sha256 and byte count at the export's commit, so Design anchors on the landed card directly and
+    the coordinator stops hashing cards by hand. Fails against the bundle without it: no such file, no such lines.
+  */
+  it('writes each card HEAD holds with its sha256 and byte count at the export’s commit, one line per card, beside the handoff', () => {
+    const out = mkdtempSync(join(tmpdir(), 'export-cards-'));
+    try {
+      const sha = execFileSync('git', ['rev-parse', '--short', 'HEAD'], { encoding: 'utf8' }).trim();
+      const stdout = execFileSync('node', [SCRIPT, '--out', out], { encoding: 'utf8' });
+      const name = `Cards — export for Design, ${localDate()} at ${sha}.md`;
+      expect(readdirSync(out)).toContain(name);
+      const written = readFileSync(join(out, name), 'utf8');
+      expect(written.split('\n')[0]).toMatch(/each card .*as committed at .*read-only for Design/);
+      const cards = execFileSync('git', ['ls-tree', '-r', '--name-only', 'HEAD', 'docs/design/'], { encoding: 'utf8' }).trim().split('\n').filter((p) => p.endsWith('.dc.html'));
+      expect(cards.length, 'the precondition: HEAD holds cards').toBeGreaterThan(0);
+      for (const card of cards) {
+        const bytes = execFileSync('git', ['show', `HEAD:${card}`]);
+        const digest = createHash('sha256').update(bytes).digest('hex');
+        expect(written, card).toContain(`- ${card.slice('docs/design/'.length)} — sha256 ${digest}, ${bytes.length} bytes`);
+      }
+      expect(written.split('\n').filter((l) => l.startsWith('- ')).length, 'one line per card and no other').toBe(cards.length);
+      expect(stdout).toContain(name);
     } finally {
       rmSync(out, { recursive: true, force: true });
     }

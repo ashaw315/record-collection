@@ -46,9 +46,34 @@ import { pathToFileURL } from 'node:url';
   apply" and keeps any other verb, as Design's own list names them.
 */
 const CHANGE_FILE = /^docs\/design\/(.+ - for Code to [a-z]+)(?:\.md)?$/;
-const changeName = (path) => {
+export const changeName = (path) => {
   const m = path.match(CHANGE_FILE);
   return m === null ? null : m[1].replace(/ - for Code to apply$/, '');
+};
+
+/**
+ * A change file's changes, from its own headings ("## Change 1 — the model-pick step"), in order (Q81, 19 Nov): what the
+ * record says happened to each, so a file applied in part, or not at all, says which and why.
+ */
+export const changeHeadings = (text) => [...text.matchAll(/^## Change (\d+) — (.+?)\s*$/gm)].map((m) => ({ n: Number(m[1]), title: m[2] }));
+
+/** "Change 1 (title)" each, joined as prose: a, b and c. */
+const changeProse = (changes) => {
+  const items = changes.map((c) => `Change ${c.n} (${c.title})`);
+  return items.length <= 1 ? items.join('') : `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`;
+};
+
+/*
+  What happened to each change (Design's second bundle gap, Q81, relayed by the coordinator 19 Nov). The applied list
+  recorded arrival and a boolean: "Count line headroom" and "Run end wording" read as arrived with nothing applied, and
+  the list could not say why, and the why, that they were never relayed, took four days and an intake to surface. A
+  held file now carries its reason, and a file applied in part says which changes were and why the rest were not.
+*/
+const outcomes = (l) => {
+  if (!Array.isArray(l.changes) || l.changes.length === 0) return '';
+  const done = l.changes.filter((c) => c.applied);
+  const not = l.changes.filter((c) => !c.applied);
+  return `; applied ${changeProse(done)}${not.length === 0 ? '' : `; not applied ${changeProse(not)}: ${l.why ?? 'no reason recorded'}`}`;
 };
 
 /**
@@ -79,9 +104,9 @@ export function landedText(list, { sha, date }, { drops, horizon = null } = { dr
   const arrival = (l) => (l.ref === null || l.ref === undefined ? `no drop ref (${l.how})` : `arrived ${l.ref} (${l.arrived})`);
   const landing = (l) =>
     Array.isArray(l.supersededBy) ? `not landed: superseded by ${l.supersededBy.join(' and ')}`
-    : l.applied === false ? 'arrived, nothing applied'
+    : l.applied === false ? `arrived, nothing applied${l.why === undefined ? '' : `: ${l.why}`}${Array.isArray(l.changes) && l.changes.length > 0 ? ` (${l.changes.map((c) => `Change ${c.n} ${c.title}`).join('; ')})` : ''}`
     : l.landed === null ? 'not yet landed'
-    : `landed ${l.landed.sha} (${l.landed.date})${l.landed.inferred ? ', inferred' : ''}`;
+    : `landed ${l.landed.sha} (${l.landed.date})${l.landed.inferred ? ', inferred' : ''}${outcomes(l)}`;
   const lines = list.map((l) => `- ${l.file} — ${arrival(l)}; ${landing(l)}`);
   return `${head}\n\n${horizon === null ? '' : `${horizon}\n\n`}${lines.join('\n')}\n`;
 }
@@ -107,20 +132,37 @@ export const RECORD = 'docs/design-landed.jsonl';
  * @param {Array<{ ref: string, date: string, files: string[] }>} drops
  * @param {string} today
  * @param {Array<{ sha: string, date: string, touchesDesign: boolean }>} [commits]
- * @param {{ applied: string[], held: string[] } | null} [decisions]
+ * @param {{ applied: string[], held: string[], partial?: Array<{ file: string, applied: number[] }>, why?: Record<string, string>, changes?: Record<string, Array<{ n: number, title: string }>> } | null} [decisions]
+ *   `partial`, `why` and `changes` since 19 Nov (Q81): a held or partly applied file's reason, and each file's changes
+ *   from its own headings, so the record says what happened to each change and not only that the file arrived.
  */
 export function recordUpdate(existing, drops, today, commits = [], decisions = null) {
   /* The backfill's lines carry their landing from history, since the commit adding them is not when they landed; an intake's own line is dated by the commit that adds it. */
   const arrivals = landedList({ drops, commits: existing === null ? commits : [] });
   const listed = new Set(existing === null ? [] : parseRecord(existing).entries.map((e) => e.file));
   const fresh = arrivals.filter((a) => !listed.has(a.file));
+  const partialOf = (file) => (decisions?.partial ?? []).find((p) => p.file === file);
+  /* The intake's word on one file, as the record holds it: a boolean or 'partial', the reason where not all was applied, and each change's outcome where the file's headings are known. */
+  const outcome = (file) => {
+    const heads = decisions.changes?.[file] ?? [];
+    const why = decisions.why?.[file];
+    const partial = partialOf(file);
+    if (decisions.applied.includes(file)) return { applied: true, ...(heads.length === 0 ? {} : { changes: heads.map((h) => ({ ...h, applied: true })) }) };
+    if (partial !== undefined) return { applied: 'partial', ...(why === undefined ? {} : { why }), changes: heads.map((h) => ({ ...h, applied: partial.applied.includes(h.n) })) };
+    return { applied: false, ...(why === undefined ? {} : { why }), ...(heads.length === 0 ? {} : { changes: heads.map((h) => ({ ...h, applied: false })) }) };
+  };
   if (decisions !== null) {
-    const undecided = fresh.filter((a) => !decisions.applied.includes(a.file) && !decisions.held.includes(a.file)).map((a) => a.file);
+    const undecided = fresh.filter((a) => !decisions.applied.includes(a.file) && !decisions.held.includes(a.file) && partialOf(a.file) === undefined).map((a) => a.file);
     if (undecided.length > 0) return { text: existing, appended: [], undecided };
     if (existing !== null) existing = existing.split('\n').map((line) => {
       if (line.trim() === '') return line;
       const entry = JSON.parse(line);
-      return entry.applied === false && decisions.applied.includes(entry.file) ? JSON.stringify({ ...entry, applied: true }) : line;
+      if ((entry.applied === false || entry.applied === 'partial') && decisions.applied.includes(entry.file)) {
+        const rest = { ...entry };
+        delete rest.why;
+        return JSON.stringify({ ...rest, applied: true, ...(Array.isArray(entry.changes) ? { changes: entry.changes.map((c) => ({ ...c, applied: true })) } : {}) });
+      }
+      return line;
     }).join('\n');
   }
   if (existing === null && fresh.length === 0) return { text: null, appended: [] };
@@ -136,7 +178,7 @@ export function recordUpdate(existing, drops, today, commits = [], decisions = n
     text = `${JSON.stringify({ horizon, begins: begins.arrived, first: begins.ref, backfilledOn: today })}\n`;
   }
   for (const a of fresh) {
-    const entry = { file: a.file, ref: a.ref, captured: a.arrived, ...(decisions === null ? {} : { applied: decisions.applied.includes(a.file) }) };
+    const entry = { file: a.file, ref: a.ref, captured: a.arrived, ...(decisions === null ? {} : outcome(a.file)) };
     if (a.landed !== null) entry.landed = { ...a.landed, by: 'backfill: the first design-touching commit after the capture' };
     text += `${JSON.stringify(entry)}\n`;
   }
@@ -154,7 +196,7 @@ export function parseRecord(text) {
 export function landedFromRecord(record, landingOf) {
   /* A superseded entry never landed: the commit adding its line is not a landing (Q54). */
   return record.entries.map((e) => ({
-    file: e.file, ref: e.ref, arrived: e.captured, how: e.how, supersededBy: e.supersededBy, ...(e.applied === undefined ? {} : { applied: e.applied }),
+    file: e.file, ref: e.ref, arrived: e.captured, how: e.how, supersededBy: e.supersededBy, ...(e.applied === undefined ? {} : { applied: e.applied }), ...(e.why === undefined ? {} : { why: e.why }), ...(e.changes === undefined ? {} : { changes: e.changes }),
     /* A held entry (applied: false) arrived and was not applied: the commit adding its line is not a landing either. */
     landed: Array.isArray(e.supersededBy) || e.applied === false ? null : e.landed === undefined ? landingOf(e.line) : { sha: e.landed.sha, date: e.landed.date, ...(e.landed.inferred ? { inferred: true } : {}) },
   }));

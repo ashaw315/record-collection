@@ -113,6 +113,22 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   writeFileSync(landedPath, landedExport({ sha, date }));
   process.stdout.write(`${landedPath}\n`);
   /*
+    Each card HEAD holds, by its sha256 and byte count at the export's commit (Design's first bundle gap, Q81, relayed by
+    the coordinator 19 Nov). The bundle carried the handoff, the rules, the withdrawals and the applied list but no card,
+    so which card the tree held reached Design only through a relay: a round trip on 04548440, settled by quoting an
+    intake report, and a drop chained onto a card Design could not confirm had landed. With these lines Design anchors
+    on the landed card directly, and nobody hashes cards by hand to stand in for them.
+  */
+  const { createHash } = await import('node:crypto');
+  const cards = git('ls-tree', '-r', '--name-only', 'HEAD', 'docs/design/').trim().split('\n').filter((p) => p.endsWith('.dc.html'));
+  const cardLines = cards.map((card) => {
+    const bytes = execFileSync('git', ['show', `HEAD:${card}`]);
+    return `- ${card.slice('docs/design/'.length)} — sha256 ${createHash('sha256').update(bytes).digest('hex')}, ${bytes.length} bytes`;
+  });
+  const cardsPath = join(outDir, `Cards — export for Design, ${date} at ${sha}.md`);
+  writeFileSync(cardsPath, `Export note, not part of any file: each card the repository holds under docs/design, as committed at ${sha} on ${date}, by its sha256 and byte count. It is read-only for Design: a drop anchors on the card whose figures these are, and a card whose figures differ has not landed.\n\n${cardLines.join('\n')}\n`);
+  process.stdout.write(`${cardsPath}\n`);
+  /*
     A step's captures beside them (the coordinator, 28 Oct): captures were
     the one thing still hand-carried, and the import's Provisionals line was
     held open twice by a folder upload rather than by anything left to do.

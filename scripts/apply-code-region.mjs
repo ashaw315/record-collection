@@ -109,23 +109,43 @@ const spawned = (command, args) => {
   return { code: r.status ?? 1, output: `${r.stdout ?? ''}${r.stderr ?? ''}` };
 };
 
-/** The intake's word on each change file it records (the coordinator, 14 Nov): `--applied "<name>"` and `--held "<name>"`, each repeatable. */
+/**
+ * The intake's word on each change file it records (the coordinator, 14 Nov): `--applied "<name>"`, `--held "<name>"
+ * --why "<reason>"`, and since 19 Nov (Q81, Design's second bundle gap) `--partial "<name>" --changes "1,3" --why
+ * "<reason the rest was not applied>"`, each repeatable. A held or partly applied file without its reason is refused:
+ * "arrived, nothing applied" with no why is what let two never-relayed files read as arrived for four days.
+ */
 export function decisionsFrom(argv) {
-  const out = { applied: [], held: [] };
+  const out = { applied: [], held: [], partial: [], why: {} };
+  let last = null;
   for (let i = 0; i < argv.length; i += 1) {
     const flag = argv[i];
-    if (flag !== '--applied' && flag !== '--held') continue;
-    const name = argv[i + 1];
-    if (name === undefined || name.startsWith('--')) throw new Error(`${flag} needs a change file's name`);
-    out[flag === '--applied' ? 'applied' : 'held'].push(name);
-    i += 1;
+    const value = argv[i + 1];
+    if (flag === '--applied' || flag === '--held' || flag === '--partial') {
+      if (value === undefined || value.startsWith('--')) throw new Error(`${flag} needs a change file's name`);
+      if (flag === '--applied') out.applied.push(value);
+      else if (flag === '--held') out.held.push(value);
+      else out.partial.push({ file: value, applied: null });
+      last = { flag, name: value };
+      i += 1;
+    } else if (flag === '--why' || flag === '--changes') {
+      if (last === null || last.flag === '--applied' || value === undefined || value.startsWith('--')) throw new Error(`${flag} follows --held or --partial "<name>" and needs a value`);
+      if (flag === '--why') out.why[last.name] = value;
+      else out.partial.find((p) => p.file === last.name).applied = value.split(',').map((s) => Number(s.trim())).filter((n) => Number.isInteger(n) && n > 0);
+      i += 1;
+    }
+  }
+  for (const name of out.held) if (out.why[name] === undefined) throw new Error(`--held "${name}" needs --why "<the reason nothing of it was applied>"`);
+  for (const p of out.partial) {
+    if (p.applied === null) throw new Error(`--partial "${p.file}" needs --changes "<the numbers of the changes applied>"`);
+    if (out.why[p.file] === undefined) throw new Error(`--partial "${p.file}" needs --why "<the reason the rest was not applied>"`);
   }
   return out;
 }
 
 /** A change file the refs hold and the intake was told nothing about is not recorded, and fails the intake: "arrived" is not "applied". */
 export function undecidedLines(names) {
-  return names.map((n) => `  UNDECIDED  ${n}: in the refs and not in the landed record; run the intake with --applied "${n}" or --held "${n}", so the record says which`);
+  return names.map((n) => `  UNDECIDED  ${n}: in the refs and not in the landed record; run the intake with --applied "${n}" or --held "${n}" --why "<reason>", or --partial "${n}" --changes "<numbers>" --why "<reason>", so the record says which`);
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
@@ -137,14 +157,23 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
     appended with its ref and capture time, the record created with its horizon on the first run. The intake's commit
     names the file, so the landing commit is the first commit holding each line.
   */
-  const { recordUpdate, fromGit, RECORD } = await import('./landed-list.mjs');
+  const { recordUpdate, fromGit, RECORD, changeName, changeHeadings } = await import('./landed-list.mjs');
   /* LANDED_RECORD is for code-region.test's runs of this command in the real repo, which must not write the real record (10 Nov). */
   const target = process.env.LANDED_RECORD ?? RECORD;
   const existing = existsSync(RECORD) ? readFileSync(RECORD, 'utf8') : null;
   const d = new Date();
   const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   const git = fromGit();
-  const landed = recordUpdate(existing, git.drops, today, git.commits, decisionsFrom(process.argv.slice(2)));
+  /* Each change file's changes, from its headings at the first ref holding it (Q81): what the record says happened to each. */
+  const changes = {};
+  for (const drop of git.drops) {
+    for (const path of drop.files) {
+      const name = changeName(path);
+      if (name === null || changes[name] !== undefined) continue;
+      changes[name] = changeHeadings(execFileSync('git', ['show', `${drop.ref}:${path}`], { encoding: 'utf8' }));
+    }
+  }
+  const landed = recordUpdate(existing, git.drops, today, git.commits, { ...decisionsFrom(process.argv.slice(2)), changes });
   const undecided = landed.undecided ?? [];
   if (landed.text !== null && landed.text !== existing) writeFileSync(target, landed.text);
   process.stdout.write(`landed record (${target}): ${landed.appended.length} appended${landed.appended.length > 0 ? ` (${landed.appended.join(', ')}); name ${target} in this intake's commit` : ''}\n`);

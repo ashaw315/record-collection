@@ -58351,3 +58351,25 @@ what is needed. His record of it, kept in his words in the row: closed in conver
 row, and on 19 Nov proposed for closing on inferred conduct with the answer forgotten; the miss his, "the third this
 week where my own record-keeping was the fault". Code's check found no answer recorded and left the row open, and held
 that conduct is not an answer; both right. With the answer came Design's two bundle gaps, Q81, to build.
+
+**Q81 built: the export bundle's two gaps (Design's, relayed by the coordinator 19 Nov, "both justified by incidents").**
+Test first, seven cases failing across export-handoff, landed-list and code-region before the build. **Gap 1:** the
+export writes a sixth file, `Cards — export for Design, <date> at <sha>.md`, one line per card HEAD holds under
+docs/design (seven today; the Mood Pick card's line reads 1d7b0817…2a22 and 72461 bytes, the figures the fourth drop was anchored on), each its sha256 and byte count at the export's commit, under a note saying a drop anchors on
+the card whose figures these are and a card whose figures differ has not landed; the bundle-count test changes from
+five files to six. What it retires: the coordinator hashing every card by hand and reporting the figures back, "a diff
+tool standing in for a line the export should carry", and the 04548440 round trip. **Gap 2:** the record and the applied
+list say what happened to each change in a file, not only that it arrived. The intake's flags gain `--why "<reason>"`
+after `--held` (required: a held file with no reason is refused, since "arrived, nothing applied" with no why is what let
+"Count line headroom" and "Run end wording" read as arrived for four days) and `--partial "<name>" --changes "1,3" --why
+"<reason the rest was not>"`; each file's changes are read from its own "## Change N — title" headings at its first drop
+ref (`changeHeadings`), and the record line carries `applied: true | false | 'partial'`, `why` and `changes` with each
+one's outcome. The export prints "arrived, nothing applied: <why> (Change 1 …; Change 2 …)", "landed <sha>; applied
+Change 1 (…) and Change 3 (…); not applied Change 2 (…): <why>", or "landed <sha>; applied Change 1 (…), Change 2 (…) and
+Change 3 (…)"; a held or partial line a later intake names applied is rewritten whole, its reason dropped. Older lines
+without headings print as before. Was gap 2 built on 8 Nov somewhere else, as Design recalls? No: what exists from
+then is the applied list itself (6 Nov ask, built 7 Nov) and the per-file boolean of 14 Nov; nothing recorded a reason or
+a change's outcome, and the two files Design names never reached a ref here at all, which no list on Code's side can
+report; it is Design's list against Code's that shows a file never relayed. Step level: export-handoff, landed-list and
+code-region suites 52 passed; lint 0 errors, 6 warnings at HEAD. The intake is shared infrastructure, so the unit ships
+under a gate.

@@ -1,7 +1,7 @@
 import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { describe, expect, it, vi } from 'vitest';
-import { RECORD, fromGit, landedFromRecord, landedList, landedText, parseRecord, recordUpdate } from '../../scripts/landed-list.mjs';
+import { RECORD, changeHeadings, fromGit, landedFromRecord, landedList, landedText, parseRecord, recordUpdate } from '../../scripts/landed-list.mjs';
 import { underLoad } from '../helpers/spawn-budget';
 
 vi.setConfig({ testTimeout: underLoad(1_639) });
@@ -193,6 +193,49 @@ describe('the committed record', () => {
     expect(landedText(list, { sha: 'abc1234', date: '2026-11-09' }, { drops: refs.length, horizon: held.horizon })).toContain('- First paint is styled — arrived');
     expect(landedText(list, { sha: 'abc1234', date: '2026-11-09' }, { drops: refs.length, horizon: held.horizon })).toMatch(/- First paint is styled — arrived [^\n]*; arrived, nothing applied\n/);
   });
+  /*
+    Design's second bundle gap (Q81, relayed by the coordinator 19 Nov): "arrived, nothing applied" with no why. "Count
+    line headroom" and "Run end wording" read that way for four days, and the why, that they were never relayed, took
+    Code's intake to surface. The record now holds, per file, what happened to each of its changes: all applied; none,
+    with the reason; or some, with the reason for the rest. The changes are the file's own "## Change N — title"
+    headings at its drop ref. Fails against a record that holds a boolean and no reason.
+  */
+  const CHANGES = { 'First paint is styled': [{ n: 1, title: 'WITHDRAWALS.md, one entry' }, { n: 2, title: 'Provisionals' }, { n: 3, title: 'governs rows' }] };
+  const decided = (decisions: Record<string, unknown>) => parseRecord(recordUpdate(recordUpdate(null, refs.slice(0, 3), '2026-11-07').text ?? '', refs, '2026-11-09', [], { applied: [], held: [], partial: [], why: {}, changes: CHANGES, ...decisions }).text ?? '').entries.at(-1);
+
+  it('records what happened to each change of a file: all applied, none with the reason, or some with the reason for the rest', () => {
+    expect(decided({ held: ['First paint is styled'], why: { 'First paint is styled': 'never relayed to Code' } })).toMatchObject({
+      file: 'First paint is styled', applied: false, why: 'never relayed to Code',
+      changes: [{ n: 1, title: 'WITHDRAWALS.md, one entry', applied: false }, { n: 2, title: 'Provisionals', applied: false }, { n: 3, title: 'governs rows', applied: false }],
+    });
+    expect(decided({ partial: [{ file: 'First paint is styled', applied: [1, 3] }], why: { 'First paint is styled': 'Change 2 names a claim §W.9 withdrew' } })).toMatchObject({
+      file: 'First paint is styled', applied: 'partial', why: 'Change 2 names a claim §W.9 withdrew',
+      changes: [{ n: 1, applied: true }, { n: 2, applied: false }, { n: 3, applied: true }],
+    });
+    const applied = decided({ applied: ['First paint is styled'] });
+    expect(applied).toMatchObject({ file: 'First paint is styled', applied: true, changes: [{ n: 1, applied: true }, { n: 2, applied: true }, { n: 3, applied: true }] });
+    expect(applied).not.toHaveProperty('why');
+  });
+
+  it('prints each change’s outcome and the reason, so a file that arrived with nothing applied says why, and one applied in part says which', () => {
+    const at = { sha: 'abc1234', date: '2026-11-09' };
+    const landing = () => ({ sha: 'addedit', date: '2026-11-09T10:00:00-05:00' });
+    const text = (decisions: Record<string, unknown>) => {
+      const record = parseRecord(recordUpdate(recordUpdate(null, refs.slice(0, 3), '2026-11-07').text ?? '', refs, '2026-11-09', [], { applied: [], held: [], partial: [], why: {}, changes: CHANGES, ...decisions }).text ?? '');
+      return landedText(landedFromRecord(record, landing), at, { drops: refs.length, horizon: record.horizon });
+    };
+    expect(text({ held: ['First paint is styled'], why: { 'First paint is styled': 'never relayed to Code' } })).toMatch(/- First paint is styled — arrived [^\n]*; arrived, nothing applied: never relayed to Code \(Change 1 WITHDRAWALS\.md, one entry; Change 2 Provisionals; Change 3 governs rows\)\n/);
+    expect(text({ partial: [{ file: 'First paint is styled', applied: [1, 3] }], why: { 'First paint is styled': 'Change 2 names a claim §W.9 withdrew' } })).toMatch(/- First paint is styled — arrived [^\n]*; landed addedit \(2026-11-09T10:00:00-05:00\); applied Change 1 \(WITHDRAWALS\.md, one entry\) and Change 3 \(governs rows\); not applied Change 2 \(Provisionals\): Change 2 names a claim §W\.9 withdrew\n/);
+    expect(text({ applied: ['First paint is styled'] })).toMatch(/- First paint is styled — arrived [^\n]*; landed addedit \(2026-11-09T10:00:00-05:00\); applied Change 1 \(WITHDRAWALS\.md, one entry\), Change 2 \(Provisionals\) and Change 3 \(governs rows\)\n/);
+  });
+
+  it('reads a change file’s changes from its own headings, in order, and none from a file with no numbered change', () => {
+    expect(changeHeadings('# X - for Code to apply\n\nProse.\n\n## Change 1 — the model-pick step\n\nIn the bullet...\n\n## Change 2 — Provisionals\n\n## Change 3 — governs rows\n\n**§P.2** stands.\n')).toEqual([
+      { n: 1, title: 'the model-pick step' }, { n: 2, title: 'Provisionals' }, { n: 3, title: 'governs rows' },
+    ]);
+    expect(changeHeadings('# For Code: a question, no change to apply\n\nProse only.\n')).toEqual([]);
+  });
+
   it('with no record and no change file in any ref writes nothing', () => {
     expect(recordUpdate(null, refs.slice(0, 1), '2026-11-07')).toEqual({ text: null, appended: [] });
   });

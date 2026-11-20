@@ -264,12 +264,31 @@ describe('the intake runs the index and the document suite, and fails on either'
 */
 describe('the intake’s word on each file it records', () => {
   it('reads --applied and --held, each repeatable, and nothing else as a name', () => {
-    expect(decisionsFrom(['--applied', 'Requirement unmet', '--held', 'Tracks break at a side', '--applied', 'Phrase in view by height'])).toEqual({
+    expect(decisionsFrom(['--applied', 'Requirement unmet', '--held', 'Tracks break at a side', '--why', 'never relayed', '--applied', 'Phrase in view by height'])).toEqual({
       applied: ['Requirement unmet', 'Phrase in view by height'],
       held: ['Tracks break at a side'],
+      partial: [],
+      why: { 'Tracks break at a side': 'never relayed' },
     });
-    expect(decisionsFrom([])).toEqual({ applied: [], held: [] });
+    expect(decisionsFrom([])).toEqual({ applied: [], held: [], partial: [], why: {} });
     expect(() => decisionsFrom(['--held'])).toThrow(/--held needs a change file's name/);
+  });
+
+  /*
+    Design's second bundle gap (Q81, relayed by the coordinator 19 Nov): the record said a file arrived with nothing
+    applied and could not say why, and the why ("never relayed") took four days to surface. A held file carries its
+    reason, and a file applied in part says which changes and why not the rest; the intake refuses either without one.
+  */
+  it('reads --held with its --why, and --partial with --changes and --why, refusing either without the reason', () => {
+    expect(decisionsFrom(['--partial', 'Count line order', '--changes', '1,3', '--why', 'Change 2 names a claim §P.4 withdrew'])).toEqual({
+      applied: [],
+      held: [],
+      partial: [{ file: 'Count line order', applied: [1, 3] }],
+      why: { 'Count line order': 'Change 2 names a claim §P.4 withdrew' },
+    });
+    expect(() => decisionsFrom(['--held', 'Run end wording'])).toThrow(/--held "Run end wording" needs --why/);
+    expect(() => decisionsFrom(['--partial', 'Count line order', '--changes', '1'])).toThrow(/--partial "Count line order" needs --why/);
+    expect(() => decisionsFrom(['--partial', 'Count line order', '--why', 'x'])).toThrow(/--partial "Count line order" needs --changes/);
   });
 
   it('names each undecided file and how to decide it, so the intake fails on it', () => {
