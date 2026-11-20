@@ -58292,3 +58292,25 @@ CLAUDE.md §9 beside the rule: "it does not depend on the mechanism being right.
 actually reached the DOM, whatever delayed it, so even if the React-19-commit account is also wrong the stamp is still
 correct. Option 1 would have been true only while its story was. Prefer an observation over an inference wherever the
 observation is available." The assertion did the refuting, built first, before the fix it was meant to protect.
+Committed dfcaa5a5 through the checked path (978 passed, tree unchanged) and shipped with this record.
+
+**Q79, the coordinator's three questions answered before he rules (19 Nov, late).** First a fact that bears on all three:
+the gates run under four workers, not the config's one. `scripts/ship.sh` defaults `workers=4` and passes it to
+`ci-gate.sh`; the chromium log of gate 44611551904 reads "Running 1116 tests using 4 workers". (1) Re-finding the
+pressing on that 400 tolerates the race: the two workers still contend, the test recovers, and a pressing that is
+genuinely missing is then masked by the retry, so the test can no longer tell what a 400 means. His reading is right.
+(2) "Delete the file's pressings last" does not close the window under fullyParallel: an afterAll runs once per worker,
+so a worker finishing its share of the file deletes the pressing while another worker's test from the same file may be
+between its find and its reference. It narrows the window; it does not remove the shared row. His reading is right. (3)
+A per-worker key is available: `test.info().parallelIndex` is the worker slot, stable for the run, and the catalog
+number suffixed with it gives each worker its own pressing while the file's tests in that worker still share it by key.
+What the sharing buys today: nothing the race does not. Since the cleanup's pressing half (11 Nov) deletes a deleted
+record's pressing once nothing references it, a test's pressing is gone by the time the next test in the same worker
+posts it, so within a worker every post is a 201; the 200 the file's comment celebrates (a second run reusing the first
+run's rows) stopped happening on 11 Nov, and the only 200 the file can see now is the race itself, two workers in the
+same sixteen milliseconds. The found-or-create behaviour §4 rules is held by `test/integration/api/pressings.test.ts`,
+six assertions of a 200 on a repeated post against the real database; the e2e file's `post` accepting 200 or 201 stays
+true and harmless. So keying per worker costs the claim nothing, and removes the shared mutable row rather than racing
+it more politely. The proposal, for his ruling: the catalog number and the matrix suffixed with the worker's
+parallelIndex in record-page-8a's `createRecord`, the file's comment rewritten to say where the 200 path is held and why
+the race was the only 200 left, and the spec's seed window gone.
