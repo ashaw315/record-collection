@@ -320,3 +320,35 @@ describe('a per-record constraint, for a note regenerated after a fact-check (Q4
     expect(buildSnippetPrompt(SUBJECT)).not.toMatch(/FOR THIS RECORD IN PARTICULAR/);
   });
 });
+
+describe('the artist’s own facts in the grounding (Q37, Adam’s ruling of 11 Nov; built 20 Nov)', () => {
+  /*
+    The artists table carries formed year and origin, and artist_memberships the members, and the prompt read none of
+    them: a note that placed a band's formation or home wrong was recalling what the catalogue already held. Fails
+    against a prompt that leaves the three out when the grounding carries them, and against one that prints an empty
+    label when it does not. The 55 existing ABOUTs were drafted without these lines and stay as they are (NOTES, 20 Nov).
+  */
+  const facts = { label: null, country: null, year: null, format: null, artistId: null, credits: [], companies: [], community: null, tracks: [] } as unknown as ReleaseFacts;
+
+  it('carries the artist’s formed year, origin and members, each member with their instrument where known', () => {
+    const prompt = buildSnippetPrompt(SUBJECT, {
+      facts,
+      discography: [],
+      artist: { formedYear: 1977, origin: 'Stoke-on-Trent, England', members: [{ name: 'Cal Morris', instrument: 'vocals' }, { name: 'Bones Roberts', instrument: null }] },
+    });
+    expect(prompt).toMatch(/Artist formed: 1977/);
+    expect(prompt).toMatch(/Artist from: Stoke-on-Trent, England/);
+    expect(prompt).toMatch(/Artist members: Cal Morris \(vocals\); Bones Roberts/);
+  });
+
+  it('carries no artist line for a field the catalogue does not hold, and none at all without artist facts', () => {
+    const empty = buildSnippetPrompt(SUBJECT, { facts, discography: [], artist: { formedYear: null, origin: null, members: [] } });
+    for (const label of ['Artist formed', 'Artist from', 'Artist members']) expect(empty, label).not.toContain(label);
+    const partial = buildSnippetPrompt(SUBJECT, { facts, discography: [], artist: { formedYear: 1965, origin: null, members: [] } });
+    expect(partial).toMatch(/Artist formed: 1965/);
+    expect(partial).not.toContain('Artist from');
+    expect(partial).not.toContain('Artist members');
+    const none = buildSnippetPrompt(SUBJECT, { facts, discography: [] });
+    for (const label of ['Artist formed', 'Artist from', 'Artist members']) expect(none, label).not.toContain(label);
+  });
+});

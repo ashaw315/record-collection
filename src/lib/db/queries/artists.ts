@@ -5,7 +5,8 @@ import { countReferences } from './referrers';
 import { nameSortKey } from '@/lib/db/name-sort';
 import { orderFor } from '@/lib/db/order';
 import { getDb } from '@/db/client';
-import { artists, records, wantList } from '@/db/schema';
+import { artistMemberships, artists, records, wantList } from '@/db/schema';
+import type { ArtistFacts } from '@/lib/llm/about-grounding';
 import type { Offset, SortDirection } from '@/lib/api/query-params';
 import type { DeleteOutcome } from './tags';
 
@@ -108,6 +109,25 @@ export async function listArtists(options: {
     total: totals?.value ?? 0,
     totalAll: allTotals?.value ?? 0,
   };
+}
+
+/**
+ * The artist's facts for an ABOUT's grounding (Q37, Adam's ruling of 11 Nov): formed year and origin as stored, and
+ * the members of a group from `artist_memberships`, read from the group's side only, since a person's memberships are
+ * of groups and not of them. Earliest joiner first, then by name, so the line reads as a lineup and not as insertion
+ * order. Null for an artist that does not exist, never an empty shape.
+ */
+export async function artistGroundingFacts(id: string): Promise<ArtistFacts | null> {
+  const db = getDb();
+  const [row] = await db.select({ formedYear: artists.formedYear, origin: artists.originCountry }).from(artists).where(eq(artists.id, id)).limit(1);
+  if (row === undefined) return null;
+  const members = await db
+    .select({ name: artists.name, instrument: artistMemberships.instrument })
+    .from(artistMemberships)
+    .innerJoin(artists, eq(artists.id, artistMemberships.personArtistId))
+    .where(eq(artistMemberships.groupArtistId, id))
+    .orderBy(sql`${artistMemberships.beganYear} NULLS LAST`, asc(artists.name));
+  return { formedYear: row.formedYear, origin: row.origin, members };
 }
 
 export async function findArtistById(id: string): Promise<Artist | undefined> {

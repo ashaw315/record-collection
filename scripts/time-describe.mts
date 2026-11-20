@@ -18,13 +18,14 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { sql } from 'drizzle-orm';
 import { getDb } from '@/db/client';
+import { artistGroundingFacts } from '@/lib/db/queries/artists';
 import { getDiscogsClient } from '@/lib/discogs/client';
 import { discographyOf, groundingFromPayload, type DiscographyEntry, type ReleaseFacts } from '@/lib/llm/about-grounding';
 import { getMatchedTextClient } from '@/lib/llm/matched-text-client';
 import { getSnippetClient } from '@/lib/llm/snippet-client';
 import { summarize } from './measure-summary.mjs';
 
-type Row = { id: string; artist: string; title: string; year: number | null; releaseId: number };
+type Row = { id: string; artistRowId: string; artist: string; title: string; year: number | null; releaseId: number };
 type Timing = {
   id: string; artist: string; title: string; releaseId: number;
   discogsMs: number; aboutMs: number; matchedMs: number; totalMs: number;
@@ -41,7 +42,7 @@ const db = getDb();
 const where = prefixes.length === 0 ? sql`TRUE` : sql`(${sql.join(prefixes.map((p) => sql`r.id::text LIKE ${p + '%'}`), sql` OR `)})`;
 const rows = (
   await db.execute<Row>(sql`
-    SELECT r.id, a.name AS artist, r.title, r.release_year AS year, p.discogs_release_id AS "releaseId"
+    SELECT r.id, a.id AS "artistRowId", a.name AS artist, r.title, r.release_year AS year, p.discogs_release_id AS "releaseId"
     FROM records r JOIN artists a ON a.id = r.artist_id JOIN pressings p ON p.id = r.pressing_id
     WHERE p.discogs_release_id IS NOT NULL AND ${where}
     ORDER BY r.created_at DESC LIMIT ${prefixes.length === 0 ? sample : prefixes.length}`)
@@ -73,7 +74,9 @@ for (const r of rows) {
   let about: string | null = null;
   const [, aboutMs] = await timed(async () => {
     try {
-      const result = await abouts.write({ artist: r.artist, title: r.title }, facts === null ? undefined : { facts, discography, constraints: [] });
+      /* Q37 (20 Nov): the artist's own facts from the database, as the add flow would read them. */
+      const artist = (await artistGroundingFacts(r.artistRowId)) ?? undefined;
+      const result = await abouts.write({ artist: r.artist, title: r.title }, facts === null ? undefined : { facts, discography, constraints: [], artist });
       if (result.ok) about = result.snippet; else failures.push(`about: ${result.reason}`);
     } catch (error) {
       failures.push(`about: ${error instanceof Error ? error.message : String(error)}`);

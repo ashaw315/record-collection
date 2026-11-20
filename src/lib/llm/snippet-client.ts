@@ -128,7 +128,7 @@ export function buildSnippetPrompt(subject: SnippetSubject, grounding?: Groundin
           'true and do not contradict them; a claim about when this record came, what came',
           'before or after it, who played on it, or who issued it should agree with them. Do',
           'not recite them: this is a note, not a catalogue entry. These credits, the label, the',
-          'format, the year and the companies are already in the collector’s database and already',
+          'format, the year, the companies and the artist’s formation, home and members are already in the collector’s database and already',
           'searchable, so naming them in the note adds nothing a reader could not find by typing',
           'the name. The note’s job is the thing no field holds: what the record sounds like,',
           'what it is doing, why someone would put it on.',
@@ -143,6 +143,12 @@ export function buildSnippetPrompt(subject: SnippetSubject, grounding?: Groundin
             grounding.discography.length === 0
               ? null
               : `The artist’s own releases, oldest first: ${grounding.discography.map((d) => `${d.title} (${d.year}${d.format === '' ? '' : `, ${d.format}`})`).join('; ')}`,
+            /* Q37 (20 Nov): the artist's formation, home and members, where the catalogue holds them, so neither is recalled. */
+            grounding.artist === undefined || grounding.artist.formedYear === null ? null : `Artist formed: ${grounding.artist.formedYear}`,
+            grounding.artist === undefined || grounding.artist.origin === null ? null : `Artist from: ${grounding.artist.origin}`,
+            grounding.artist === undefined || grounding.artist.members.length === 0
+              ? null
+              : `Artist members: ${grounding.artist.members.map((m) => (m.instrument === null ? m.name : `${m.name} (${m.instrument})`)).join('; ')}`,
           ].filter((line): line is string => line !== null),
           '',
         ];

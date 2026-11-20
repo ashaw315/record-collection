@@ -24,6 +24,7 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { sql } from 'drizzle-orm';
 import { getDb } from '@/db/client';
+import { artistGroundingFacts } from '@/lib/db/queries/artists';
 import { findRecordSubject, storeGeneratedSnippet } from '@/lib/db/queries/snippet';
 import { getDiscogsClient } from '@/lib/discogs/client';
 import { checkNote, type Conflict } from '@/lib/llm/about-check';
@@ -31,7 +32,7 @@ import { discographyOf, groundingFromPayload, type DiscographyEntry, type Releas
 import { recordLlmRun } from '@/lib/llm/rate-limit';
 import { getSnippetClient } from '@/lib/llm/snippet-client';
 
-type Row = { id: string; artist: string; title: string; year: number | null; releaseId: number | null; payload: unknown };
+type Row = { id: string; artistRowId: string; artist: string; title: string; year: number | null; releaseId: number | null; payload: unknown };
 type Draft = { id: string; artist: string; title: string; year: number | null; facts: ReleaseFacts | null; discography: DiscographyEntry[]; note: string | null; status: string; inputTokens: number | null; outputTokens: number | null; ms: number; conflicts: Conflict[]; constraints: string[] };
 
 const args = process.argv.slice(2);
@@ -61,7 +62,7 @@ mkdirSync(WORK, { recursive: true });
 async function rows(where: ReturnType<typeof sql>): Promise<Row[]> {
   return (
     await db.execute<Row>(sql`
-      SELECT r.id, a.name AS artist, r.title, r.release_year AS year, p.discogs_release_id AS "releaseId", c.payload
+      SELECT r.id, a.id AS "artistRowId", a.name AS artist, r.title, r.release_year AS year, p.discogs_release_id AS "releaseId", c.payload
       FROM records r JOIN artists a ON a.id = r.artist_id
       LEFT JOIN pressings p ON p.id = r.pressing_id
       LEFT JOIN discogs_cache c ON c.discogs_release_id = p.discogs_release_id
@@ -162,7 +163,9 @@ for (const r of selected) {
   const draft: Draft = { id: r.id, artist: r.artist, title: r.title, year: r.year, facts, discography, note: null, status: 'not run', inputTokens: null, outputTokens: null, ms: 0, conflicts: [], constraints: constraintsFor(r.id) };
   if (subject === null) { draft.status = 'failed: no subject'; drafts.push(draft); continue; }
   try {
-    const result = await client.write(subject, facts === null ? undefined : { facts, discography, constraints: constraintsFor(r.id) });
+    /* Q37 (20 Nov): the artist's formed year, origin and members from the database, for records drafted from here; the 55 already drafted stand. */
+    const artist = (await artistGroundingFacts(r.artistRowId)) ?? undefined;
+    const result = await client.write(subject, facts === null ? undefined : { facts, discography, constraints: constraintsFor(r.id), artist });
     draft.ms = Date.now() - t0;
     draft.inputTokens = result.inputTokens ?? null;
     draft.outputTokens = result.outputTokens ?? null;

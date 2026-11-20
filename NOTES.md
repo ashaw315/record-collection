@@ -58690,9 +58690,11 @@ All three are how the app behaves while it is working, and ruling them separatel
    Design needs, before ruling: a host that waits five seconds and a host that waits twelve may want different
    indications, and today the shelf's host waits the full call once per run while the grid's waits it every press.
 
-**Open, from the coordinator to Adam:** which host he pressed on last night. If the shelf, he has felt the one-wait shape
-and not the per-press one, and the grid is worse than he knows, which Design needs before it rules. The production lines
-(`take 1` against `take 5`, the model figure) will say the same from his presses as they accrue.
+**Answered (Adam to the coordinator, 11:21; closed here, the entry below records the relay):** he was on the shelf. So he
+has felt the one-wait shape and not the per-press one; the phone gives him no shelf under §W.24 and draws cells under
+§P.4, so the host he says he will actually use is the one that pays the model call on every press, and he has not met it
+yet. Design needs that before it rules. The production lines (`take 1` against `take 5`, the model figure) will say the
+same from his phone presses as they accrue.
 
 Accepted as reported by the coordinator: the failed pick's figures, the empty-input path proven by gate 44757619832,
 the second step-level sample. Load figures continue on every step-level run for a few days. Record only; rides with the
@@ -58723,3 +58725,50 @@ a figure Adam feels on the phone at 21:00 is unreadable at 22:30 unless somethin
 accrue across days for Design, the poller becomes a committed tool or Vercel gets a log drain; neither built tonight.
 The deployment URL itself answers 401 to an unauthenticated POST, Vercel's gate before the app, so a probe there logs
 nothing; the alias is the address that reaches the app.
+
+**Q37, first half: the ABOUT grounding reads the artist's formed year, origin and members and the prompt carries them
+(Adam's ruling of 11 Nov; the coordinator's go, 20 Nov; built 21:00).** First, the row's premise against the code, since
+it decides the unit's shape: the ABOUT grounding downloads nothing about the artist but `/artists/{id}/releases`, the
+discography, and the Discogs side of the app has never fetched an artist page (no fixture, no call). The download that
+carries the three is the MusicBrainz lineup walk, `/artist/{mbid}?inc=artist-rels` (walk-lineup.ts): its payload holds
+`life-span.begin`, `area` and `country`, and the member-of-band relations, and the walk keeps the members as
+`artist_memberships` rows and discards the other two. Production, read once (counts only): 248 artists, 49 with records,
+`formed_year` set on 1 and `origin_country` on 1, 209 membership rows across 93 groups, 81 MusicBrainz cache rows, 204
+artists with an MBID. So "members" are stored already and never used; formed year and origin have §4.1's columns and
+nothing writes them. No schema change. **The unit split in two on that:** this half reads whatever the three hold and
+grounds with it, whichever path fills them; the second half, writing formed year and origin from the walk's payload (and
+the add flow's question for an artist with no MBID), is next and has a fork to settle below.
+
+**Built, test first:** `ArtistFacts` on the grounding (about-grounding.ts), `artistGroundingFacts(id)` in
+queries/artists.ts (formed year and origin as stored; the group's members from the group's side only, earliest joiner
+first then by name, each with their instrument; null for no such artist), three prompt lines under the catalogue's facts
+(`Artist formed:`, `Artist from:`, `Artist members:`), each omitted when the catalogue holds nothing for it, and the
+recital clause widened to name them. write-abouts.mts and time-describe.mts read the facts by the record's artist id and
+pass them, so the drafting script and the add flow's rehearsal ground alike. Failing first: the two prompt tests against
+a prompt without the lines, the three query tests against a missing export; then 234 passed across src/lib/llm and the
+two artist integration files.
+
+**The difference is deliberate: the 55 existing ABOUTs stand, grounded without these lines.** The 56th record's ABOUT is
+grounded with the artist's formation, home and members where the database holds them, and the 55 are not regenerated:
+that would be 55 model calls and 55 ABOUTs Adam has not read, and correction in use covers matched text, not ABOUTs
+(the coordinator). write-abouts.mts's default selection is records with no ABOUT, so nothing here reaches a stored one.
+**The consequence weighed, as asked:** I see no reason the uneven grounding is a problem, and one small bias worth
+naming. The pick reads each record's own matched text and judges by sound and occasion, so a formation year in one ABOUT
+and not another changes nothing it compares; but a richer text gives the pick more sentences to cite as claims, so a
+newer record could be marginally more pickable than an older one of equal fit. The same shape as the side-naming
+inconsistency, accepted. In practice the lines are empty today for 48 of the 49 artists with records until the second
+half writes them.
+
+**The second half's fork, for the coordinator before it is built.** Formed year and origin come from MusicBrainz, which
+the app reaches by MBID; 204 of 248 artists have one, and a new artist from the add flow has none until §4.3's search by
+name auto-accepts an unambiguous hit or the user picks. So: (a) the walk writes `formed_year` and `origin_country` onto
+the group when they are null, never over a value Adam entered (CLAUDE.md §8), and a record described for an artist that
+has been walked grounds with them; or (b) the add flow also resolves the artist by name and fetches its facts, adding a
+MusicBrainz call and §4.3's ambiguity to Q72's twenty-three seconds. (a) is the minimum and matches the row; (b) is a
+Q72 decision. Origin's form is the second question: MusicBrainz gives an area name ("Stoke-on-Trent") and a country code
+("GB"); the column is free text Adam has filled once; I would store the area name with the country where both exist.
+
+Step level: src/lib/llm suites and the two artist integration files, 234 passed; typecheck 0 errors; lint 0 errors, 6
+warnings at HEAD; build compiled in 19s at load 5. No e2e spec covers the drafting scripts, so no e2e sample this unit.
+The one-off production read was a scratch script, deleted; its SQL was a count of the artists table and the memberships,
+its reading is above.

@@ -40,9 +40,18 @@ export type ReleaseFacts = {
 
 export type DiscographyEntry = { title: string; year: number; format: string };
 
+/**
+ * The artist's own facts from the collector's database (Q37, Adam's ruling of 11 Nov): `artists.formed_year` and
+ * `artists.origin_country` as stored, and the group's members from `artist_memberships` with each person's name and
+ * instrument. Read by `artistGroundingFacts` (queries/artists.ts) and carried by the prompt from 20 Nov; the ABOUTs
+ * drafted before then were grounded without them and stand.
+ */
+export type ArtistFacts = { formedYear: number | null; origin: string | null; members: { name: string; instrument: string | null }[] };
+
 export type Grounding = {
   facts: ReleaseFacts;
   discography: DiscographyEntry[];
+  artist?: ArtistFacts;
   /** This record's own instructions, for a note regenerated after a fact-check (Q47, 6 Nov): a correction the catalogue's facts cannot carry, stated to the model verbatim. */
   constraints?: string[];
 };
