@@ -58629,3 +58629,38 @@ the minute after, which is the run's own. Nothing load-shaped.
 Step level: ask route suite 21 passed; the four ask specs on chromium at four, 52 passed; typecheck 0 errors; lint 0
 errors, 6 warnings at HEAD; build compiled in 17s at load 6. Shipped through ship.sh with no count, so the gate it
 dispatches is the first at the config's four rather than ship's, covering 8a6fa5e9 and this commit.
+
+**Does the take reach the model? No, and the shelf does not discard the rest either: a third case (the coordinator's
+question, 20 Nov, answered from the code).** `pickRequest` (pick.ts) sends a fixed system prompt, "Return up to five
+records that fit the phrase, best first", with the phrase, the named ids and every eligible record's text; `take` is
+read by the route and goes nowhere in the pick path, neither into the prompt nor into a slice afterwards, and the route
+returns every pick. But the shelf's client does not throw four away: PickControl.tsx keeps `answered.slice(1)` as a
+queue and walks it one record per press with no request ("the first pulled, the rest walked one per press"), asking
+again only when the queue is empty or the phrase changes. So the shelf pays the full five-reason wait once per run of up
+to five presses, the first press slow and the next four instant, while the grid pays it once per press. Per press the
+shelf is cheaper than the grid; per first press it is as slow. **What a prompt carrying the take would do:** the first
+shelf press would be faster, since the output falls from five reasons to one over the same input (the pool's texts are
+most of the request, so not a fifth of the time; the bench's 7.3 to 15.2s is five reasons), and every press after it
+would be a full wait instead of none. Five shelf presses would cost five model calls instead of one. **Not built, since
+it is a claim change, Design's (§P.2, "a re-roll pulls the next nearest") and his to rule:** whether the shelf should be
+one slow press then four free, or five faster presses each with its own wait. The in-flight indication question depends
+on which: as built, the shelf's host waits the grid's twelve seconds on the first press of a run and nothing after.
+The production lines will show it as `take 1` with `5 picked` at the same model figure as `take 5`.
+
+**A failed pick's milliseconds (the coordinator: a pick that fails is the case most likely to have been slow).** The
+error line is now `the model pick failed after {total}ms, the model {model}ms, over {n} records, take {t}: {reason}`.
+Test first in the route suite, failing against the old line with no figure, the same 25ms hold and bound of 20; then 22
+passed.
+
+**Gate 44757619832 on 16ab4b7c, the first at the config's four with no input passed: OK on every half.** Its uploaded logs
+say `Running 1117 tests using 4 workers` (chromium, 1116 passed, 1 skipped), `401 tests using 4 workers` (mobile, 397
+passed, 4 skipped) and report-only 4 passed; unit 5397 passed, 3 skipped. The job log's `tail -5` does not carry the
+Running line, so the count is read from the e2e artifacts. Chromium 14:52Z to 15:11Z, 19 minutes; mobile 8; unit 7.
+The empty-input path in gate.yml is proven by this run, not by reading it.
+
+**Second step-level sample at four:** the same four ask specs on chromium, 52 passed in 1.8m, no retry, load 5.8 before
+and 29.6 on the minute after. Load before and after is reported on every step-level e2e run for a few days (the
+coordinator), so a baseline exists before anyone reads a flake against it.
+
+Step level: ask route suite 22 passed; the four ask specs on chromium at four, 52 passed; typecheck 0 errors; lint 0
+errors, 6 warnings at HEAD; build compiled in 18s at load 6.5.

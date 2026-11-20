@@ -72,7 +72,9 @@ export const POST = withErrorHandling('api.ask.POST', async (request: Request) =
     const modelStarted = performance.now();
     const picked = await askPick(asked, eligible, exclude ?? []);
     if (!picked.ok) {
-      logger.error('api.ask', `the model pick failed: ${picked.reason}`);
+      /* Timed as the answered press is: the press most likely to have been slow is the one that fails (the coordinator, 20 Nov). */
+      const failedAt = performance.now();
+      logger.error('api.ask', `the model pick failed after ${Math.round(failedAt - started)}ms, the model ${Math.round(failedAt - modelStarted)}ms, over ${eligible.length} records, take ${take}: ${picked.reason}`);
       return NextResponse.json({ error: { code: 'PICK_FAILED', message: 'The ask could not choose this time' } }, { status: 502 });
     }
     /*

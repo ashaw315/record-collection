@@ -380,4 +380,29 @@ describe('POST /api/ask, the pick once coverage is complete, latched', () => {
     expect(json.error.message).not.toMatch(/refus/);
     expect(logged.mock.calls.map((c) => c.join(' ')).join('\n')).toMatch(/the model refused/);
   });
+
+  /*
+    A failed pick is timed too (the coordinator, 20 Nov): the press most likely to have been slow is the one that fails,
+    and timing every success and no failure measures the fast half of the distribution and calls it the distribution.
+    Fails against an error line with no milliseconds, or with a figure the mocked endpoint's 25ms hold did not produce.
+  */
+  it('logs a failed pick’s milliseconds, total and the model’s, with the records asked over and the take, before the reason', async () => {
+    const f = await seedFour();
+    await coverAll(f);
+    const logged = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
+      await new Promise((r) => setTimeout(r, 25));
+      return new Response(JSON.stringify({ status: 'completed', output: [{ type: 'message', content: [{ type: 'refusal', refusal: 'no' }] }] }), { status: 200 });
+    });
+    expect((await ask(request({ phrase: 'x', pool: [f.rain, f.drive, f.sunday], take: 1 }))).status).toBe(502);
+    const lines = logged.mock.calls.map((c) => String(c[0]));
+    const line = lines.find((l) => l.startsWith('[api.ask]') && /the model pick failed/.test(l));
+    const m = /the model pick failed after (\d+)ms, the model (\d+)ms, over (\d+) records, take (\d+): (.+)$/.exec(line ?? '');
+    expect(m, `the failure line with its milliseconds, among: ${lines.join(' | ') || 'nothing logged'}`).not.toBeNull();
+    const [, total, model, over, take, reason] = m ?? [];
+    expect(Number(model), 'the model’s wait, not a fake number').toBeGreaterThanOrEqual(20);
+    expect(Number(total)).toBeGreaterThanOrEqual(Number(model));
+    expect({ over, take }).toEqual({ over: '3', take: '1' });
+    expect(reason).toMatch(/the model refused/);
+  });
 });
