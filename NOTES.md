@@ -58428,3 +58428,9 @@ transaction after both calls have returned, and nothing written before; a cut be
 which is the row's failure behaviour. No reason it is not the answer: the Neon HTTP driver's transaction is the one
 CLAUDE.md §2 requires verified before deploy, and test/integration/neon-transactions.test.ts is where that verification
 lives, so the write goes through the same path. The embedding: not written, agreed.
+
+**Gates read (19 Nov, late).** 44656672984 on 9780d688 (Q80's fix and records): unit 5382 passed, 3 skipped; chromium 1115
+passed, 1 skipped, ledger clean; report-only 4 passed; mobile 397 passed, 4 skipped; every half OK, 01:51Z to 02:13Z.
+44663107073 on 731f22b5 (Q77 unit A, the fifth drop's intake, Q81): unit 5388 passed, 3 skipped; chromium 1115 passed, 1
+skipped, ledger clean; report-only 4 passed; mobile 397 passed, 4 skipped; every half OK, 02:46Z to 03:12Z. Both at four
+workers, nothing else on the runner. The clock-alignment assertions ran on both gates' chromium halves without a word.
