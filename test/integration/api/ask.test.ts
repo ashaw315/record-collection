@@ -335,6 +335,35 @@ describe('POST /api/ask, the pick once coverage is complete, latched', () => {
     expect(sent).toEqual([]);
   });
 
+  /*
+    The ask's latency, logged where Adam reads it (the coordinator, 20 Nov): one info line per answered pick with the
+    route's total and the model's own milliseconds, the records asked over, the take and the picks, so production's
+    figures accrue in Vercel's logs from real presses and the shelf's take of one can be read against the grid's five.
+    Fails against the route logging no line, or a line with a number the model's wait did not produce: the mocked
+    endpoint holds the reply for 25ms, and the bound of 20 leaves room for the timer's granularity while refusing a zero.
+  */
+  it('logs each answered pick’s milliseconds, total and the model’s, with the records asked over, the take and the picks', async () => {
+    const f = await seedFour();
+    await coverAll(f);
+    const logged = vi.spyOn(console, 'info').mockImplementation(() => undefined);
+    const reply = { verdict: 'answer', picks: [{ id: f.sunday, reason: 'Slow strings.', claims: ['Strings and coffee, slow.'] }] };
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
+      await new Promise((r) => setTimeout(r, 25));
+      return new Response(JSON.stringify({ status: 'completed', output: [{ type: 'message', content: [{ type: 'output_text', text: JSON.stringify(reply) }] }] }), { status: 200 });
+    });
+    const res = await ask(request({ phrase: 'slow', pool: [f.rain, f.drive, f.sunday], take: 1 }));
+    expect(res.status).toBe(200);
+    const lines = logged.mock.calls.map((c) => String(c[0]));
+    const line = lines.find((l) => l.startsWith('[api.ask]') && /\dms\b/.test(l));
+    expect(line, `an info line with milliseconds, among: ${lines.join(' | ') || 'nothing logged'}`).toBeDefined();
+    const m = /answered in (\d+)ms, the model (\d+)ms, over (\d+) records, take (\d+), (\d+) picked, verdict (\S+)/.exec(line ?? '');
+    expect(m, line).not.toBeNull();
+    const [, total, model, over, take, picked, verdict] = m ?? [];
+    expect(Number(model), 'the model’s wait, not a fake number').toBeGreaterThanOrEqual(20);
+    expect(Number(total)).toBeGreaterThanOrEqual(Number(model));
+    expect({ over, take, picked, verdict }).toEqual({ over: '3', take: '1', picked: '1', verdict: 'answer' });
+  });
+
   it('refuses with the 503 when the key is absent, and a failed pick with a 502 in the reader’s terms, the reason in the log', async () => {
     const f = await seedFour();
     await coverAll(f);

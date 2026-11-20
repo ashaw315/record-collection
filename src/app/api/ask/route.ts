@@ -32,6 +32,7 @@ const schema = z.strictObject({
 });
 
 export const POST = withErrorHandling('api.ask.POST', async (request: Request) => {
+  const started = performance.now();
   let raw: unknown;
   try {
     raw = await request.json();
@@ -68,11 +69,20 @@ export const POST = withErrorHandling('api.ask.POST', async (request: Request) =
       logger.error('api.ask', 'OPENAI_API_KEY is not set in this environment: the ask cannot ask the model pick; set it in Vercel’s project environment');
       return notConfigured('The ask is not configured on this deployment');
     }
+    const modelStarted = performance.now();
     const picked = await askPick(asked, eligible, exclude ?? []);
     if (!picked.ok) {
       logger.error('api.ask', `the model pick failed: ${picked.reason}`);
       return NextResponse.json({ error: { code: 'PICK_FAILED', message: 'The ask could not choose this time' } }, { status: 502 });
     }
+    /*
+      The ask's latency, where Adam reads it (the coordinator, 20 Nov): the bench measured the model call alone at 7.3 to
+      15.2s; this line is production's own figure for each real press, the model's wait (one request, or two when a reason
+      ran over the bound) inside the route's total. `take` is in it because the shelf asks for one and the grid for five
+      while the pick returns up to five either way, so lines at each take say whether a shelf press pays for five reasons.
+    */
+    const ended = performance.now();
+    logger.info('api.ask', `pick answered in ${Math.round(ended - started)}ms, the model ${Math.round(ended - modelStarted)}ms, over ${eligible.length} records, take ${take}, ${picked.picks.length} picked, verdict ${picked.verdict}`);
     if (picked.dropped.length > 0) logger.info('api.ask', `the pick dropped ${picked.dropped.map((d) => `${d.id} (${d.why})`).join('; ')}`);
     /*
       A run's end is the app's to say, from the run's shown records, never the model's (the coordinator, 14 Nov): the

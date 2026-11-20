@@ -58604,3 +58604,28 @@ was the heavier server, so each is a sample; the first is the next unit's.
 Step level: ci-gate and ship suites 13 passed; the config loaded by `playwright test --list` and read back as
 `workers: 4`; gate.yml parses; typecheck 0 errors; lint 0 errors, 6 warnings at HEAD. No gate: the next unit's ship
 dispatches one on both, the first gate at the config's four rather than ship's.
+
+**The ask's latency logged on production, one line per answered pick (the coordinator, 20 Nov; built 10:00).** The route
+now logs, after every answered pick, `[api.ask] pick answered in {total}ms, the model {model}ms, over {n} records, take
+{t}, {p} picked, verdict {v}`: the route's total from the request's arrival, the model's wait as askPick took it (one
+request, or two when a reason ran over the bound and was asked again), the records asked over, the take the page sent,
+the picks returned and the verdict. Test first in the route suite and failing with "nothing logged": the mocked endpoint
+holds its reply 25ms, and the test refuses a model figure under 20 or a total under the model's, so a line with a fake or
+zero number fails it; then 21 passed. A failed pick's error line carries no milliseconds; the proposal was the answered
+press, and the failure's latency is a separate line if it is wanted. The ranking path logs nothing, since production is
+latched to the pick and the ranking is dead there.
+
+**The one-versus-five question, as I read it (my reading, not the coordinator's words, so correct it if wrong):** the
+shelf asks with a take of one and the grid with five, and the pick returns up to five either way (`take` is the
+ranking's; the pick ignores it). So does a shelf press pay for five reasons it does not show? The line carries the take
+for this: lines on production with `take 1` against `take 5` answer it from real presses, in the model figure, once Adam
+has pressed from both. Nothing here changes what is asked; if the take-one lines are as slow as the take-five, the
+candidate change is asking the model for one when the shelf asks, and that is a ruling, not this unit's.
+
+**The first step-level sample at four workers:** pick-reasons-3a, pick-answer-156, pick-ask-178 and ask-run-history on
+chromium against `next dev`, `Running 52 tests using 4 workers`, 52 passed in 1.7m, no retry, load 5.6 before and 25.6 on
+the minute after, which is the run's own. Nothing load-shaped.
+
+Step level: ask route suite 21 passed; the four ask specs on chromium at four, 52 passed; typecheck 0 errors; lint 0
+errors, 6 warnings at HEAD; build compiled in 17s at load 6. Shipped through ship.sh with no count, so the gate it
+dispatches is the first at the config's four rather than ship's, covering 8a6fa5e9 and this commit.
