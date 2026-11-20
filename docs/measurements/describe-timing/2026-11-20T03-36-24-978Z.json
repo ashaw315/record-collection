@@ -1,0 +1,177 @@
+{
+  "measured": "2026-11-20T03:36:24.987Z",
+  "sample": 10,
+  "summary": {
+    "discogsMs": {
+      "n": 10,
+      "min": 441,
+      "median": 1336.5,
+      "p90": 1875,
+      "max": 2163
+    },
+    "aboutMs": {
+      "n": 10,
+      "min": 6058,
+      "median": 7980,
+      "p90": 9146,
+      "max": 10685
+    },
+    "matchedMs": {
+      "n": 10,
+      "min": 11200,
+      "median": 13535.5,
+      "p90": 14465,
+      "max": 14934
+    },
+    "totalMs": {
+      "n": 10,
+      "min": 18266,
+      "median": 22743.5,
+      "p90": 24013,
+      "max": 25118
+    },
+    "completed": 10
+  },
+  "timings": [
+    {
+      "id": "8120765c-32bd-466d-9e51-6ef975313eac",
+      "artist": "Peter, Paul & Mary",
+      "title": "(Ten) Years Together (The Best Of Peter, Paul And Mary)",
+      "releaseId": 1623320,
+      "discogsMs": 1035,
+      "aboutMs": 10685,
+      "matchedMs": 11200,
+      "totalMs": 22920,
+      "grounded": true,
+      "aboutOk": true,
+      "matchedOk": true,
+      "failures": []
+    },
+    {
+      "id": "b9bd16aa-3fce-48bb-90de-0c55af9cec57",
+      "artist": "Joni Mitchell",
+      "title": "Ladies Of The Canyon",
+      "releaseId": 5379044,
+      "discogsMs": 1738,
+      "aboutMs": 7006,
+      "matchedMs": 13566,
+      "totalMs": 22310,
+      "grounded": true,
+      "aboutOk": true,
+      "matchedOk": true,
+      "failures": []
+    },
+    {
+      "id": "e2e5edc0-8278-4b02-92d1-9d3d6be90f55",
+      "artist": "Isaac Hayes",
+      "title": "Hot Buttered Soul",
+      "releaseId": 11630128,
+      "discogsMs": 1875,
+      "aboutMs": 8778,
+      "matchedMs": 14465,
+      "totalMs": 25118,
+      "grounded": true,
+      "aboutOk": true,
+      "matchedOk": true,
+      "failures": []
+    },
+    {
+      "id": "e931d933-688f-4473-9f79-3b8edee60a17",
+      "artist": "Carly Simon",
+      "title": "No Secrets",
+      "releaseId": 22548410,
+      "discogsMs": 1278,
+      "aboutMs": 7140,
+      "matchedMs": 14934,
+      "totalMs": 23352,
+      "grounded": true,
+      "aboutOk": true,
+      "matchedOk": true,
+      "failures": []
+    },
+    {
+      "id": "0af4723d-6bfe-4862-878f-32e53988bec9",
+      "artist": "The Mamas & The Papas",
+      "title": "The Mamas & The Papas",
+      "releaseId": 1238549,
+      "discogsMs": 1085,
+      "aboutMs": 9146,
+      "matchedMs": 12336,
+      "totalMs": 22567,
+      "grounded": true,
+      "aboutOk": true,
+      "matchedOk": true,
+      "failures": []
+    },
+    {
+      "id": "7cfdc4cb-cc93-4f07-8981-9688031de9ac",
+      "artist": "Huey Lewis & The News",
+      "title": "Sports",
+      "releaseId": 23952254,
+      "discogsMs": 1623,
+      "aboutMs": 6570,
+      "matchedMs": 13677,
+      "totalMs": 21870,
+      "grounded": true,
+      "aboutOk": true,
+      "matchedOk": true,
+      "failures": []
+    },
+    {
+      "id": "307c2754-58ea-404d-a2b1-78d128aa57e1",
+      "artist": "Hot Tuna",
+      "title": "First Pull Up, Then Pull Down",
+      "releaseId": 9480273,
+      "discogsMs": 926,
+      "aboutMs": 8632,
+      "matchedMs": 12562,
+      "totalMs": 22120,
+      "grounded": true,
+      "aboutOk": true,
+      "matchedOk": true,
+      "failures": []
+    },
+    {
+      "id": "c8b0af3d-9f7e-4402-bb5a-47e6e646ab0f",
+      "artist": "Hot Tuna",
+      "title": "Hot Tuna",
+      "releaseId": 1458122,
+      "discogsMs": 441,
+      "aboutMs": 6058,
+      "matchedMs": 11767,
+      "totalMs": 18266,
+      "grounded": true,
+      "aboutOk": true,
+      "matchedOk": true,
+      "failures": []
+    },
+    {
+      "id": "309a4726-d345-4ac9-ba68-f775fb289b2e",
+      "artist": "ABBA",
+      "title": "ABBA",
+      "releaseId": 465186,
+      "discogsMs": 2163,
+      "aboutMs": 8345,
+      "matchedMs": 13505,
+      "totalMs": 24013,
+      "grounded": true,
+      "aboutOk": true,
+      "matchedOk": true,
+      "failures": []
+    },
+    {
+      "id": "b38d7c37-e91d-411f-b7a3-87e08c7953b7",
+      "artist": "Pointer Sisters",
+      "title": "Break Out",
+      "releaseId": 1296391,
+      "discogsMs": 1395,
+      "aboutMs": 7615,
+      "matchedMs": 13993,
+      "totalMs": 23003,
+      "grounded": true,
+      "aboutOk": true,
+      "matchedOk": true,
+      "failures": []
+    }
+  ]
+}

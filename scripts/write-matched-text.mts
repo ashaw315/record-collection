@@ -154,16 +154,19 @@ const drafts: Draft[] = [];
 for (const r of rows) {
   const facts = r.payload === null ? null : groundingFromPayload(r.payload);
   for (const effort of efforts) {
+    /* Timed (Q72, the coordinator, 19 Nov): each drafting run supplies the add flow's budget with figures for free. */
+    const t0 = Date.now();
     const result = await client.write({ artist: r.artist, title: r.title, year: r.year, about: r.about }, facts, effort === undefined ? {} : { effort });
+    const ms = Date.now() - t0;
     const credited = new Set([...(facts?.credits ?? []), ...(facts?.trackCredits ?? [])].map((c) => c.name)).size;
     /* Whether any position carries a side letter (17 Nov): the review's side check runs only where none does. */
     const sided = (facts?.tracks ?? []).some((t) => /^[A-Z]/.test(t.position));
-    const base = { id: r.id, artist: r.artist, title: r.title, year: r.year, about: r.about, credited, sided, ...(effort === undefined ? {} : { effort }) };
+    const base = { id: r.id, artist: r.artist, title: r.title, year: r.year, about: r.about, credited, sided, ms, ...(effort === undefined ? {} : { effort }) };
     const draft: Draft = result.ok
       ? { ...base, status: 'finished', sentences: result.sentences, unknown: result.unknown, dropped: result.dropped, text: result.text }
       : { ...base, status: `failed: ${result.reason}`, sentences: [], unknown: [], text: null };
     drafts.push(draft);
-    console.log(`${r.id.slice(0, 8)}  ${r.artist} — ${r.title}${effort === undefined ? '' : ` at ${effort}`}: ${draft.status}, ${draft.sentences.length} sentence(s), ${draft.sentences.filter((s) => s.basis === 'inferred').length} inferred`);
+    console.log(`${r.id.slice(0, 8)}  ${r.artist} — ${r.title}${effort === undefined ? '' : ` at ${effort}`}: ${draft.status}, ${draft.sentences.length} sentence(s), ${draft.sentences.filter((s) => s.basis === 'inferred').length} inferred, ${ms}ms`);
   }
 }
 /* Merged into the kept drafts, the previous file kept beside it (17 Nov): a redraft of three leaves the other 52 for the store. */

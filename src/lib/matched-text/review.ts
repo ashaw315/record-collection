@@ -17,6 +17,8 @@ export type ReviewDraft = {
   unknown: string[];
   /** Set where a record is drafted at more than one effort (the coordinator, 15 Nov): each draft is shown under it. */
   effort?: string;
+  /** The model call's milliseconds (Q72, 19 Nov): recorded so every drafting run supplies timing for the add flow's budget. */
+  ms?: number;
   /** Distinct names in the release and track credits (17 Nov): a people-count above it cannot be from the credits. */
   credited?: number;
   /** Sentences the client dropped for describing the material rather than the record (17 Nov). */

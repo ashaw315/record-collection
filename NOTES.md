@@ -58395,12 +58395,65 @@ bypassed, not met, and is rewritten; Q24, Q38 and Q42 say the gate already runs 
 make the config say four, so local reproduces the gate, the environment that matters. The cost, from the config's own
 measurements: those are old (278 tests, Aug and Sep: the default of about six oversubscribed the one dev server with
 ECONNRESETs and a 30s timeout; three workers flaked two runs of two; two was clean at about a minute's cost per run), and
-the suite is now 1115 tests on chromium, so the figure that matters is a fresh one. Measure before setting: one
-`sweep-twice` of the full suite at four workers locally, flakes and wall clock against the last two-worker run, and if it
-is clean set `workers: 4` for local and CI alike with the ship script passing nothing, one number in one place. If four
+the suite is now 1115 tests on chromium, so the figure that matters is a fresh one. Measure before setting: one full
+run of both projects at four workers locally (not `sweep-twice`, which is the twice-read instrument and no flake sweep;
+this is a plain `npx playwright test --workers=4`, read by its summary line and flake count), wall clock against the
+last two-worker run, and if it is clean set `workers: 4` for local and CI alike with the ship script passing nothing, one
+number in one place. If four
 flakes locally on the single dev server, the alternative is the ship script dropping its override so the gate matches the
 config at one, which halves the gate's throughput (gate.yml: one worker takes about twice two's 56 minutes) and keeps
 local blind to races the gate would otherwise find. I would take the first and measure it first.
+
+**The coordinator's framing of that sweep, and a second difference (19 Nov, late).** Approved, measure first, and narrower
+than proposed: the gate has run at four since 6 Nov, two weeks of four-worker evidence from CI, so the open question is
+not whether four is safe but whether this machine sustains four against one server. One full-suite run answers that. It
+is a capacity check on one machine and nothing else: a parallelism race appears intermittently by nature, so a single
+clean run proves nothing about races and is not meant to, and **a local flake three weeks from now reads as information,
+not as grounds to revert a settled number.** His question before the sweep, answered: local Playwright serves from
+`next dev` by default (`E2E_SERVER` unset is `dev`, playwright.config.ts), while both gates set `E2E_SERVER=build` since
+Q39, so local and the gate differ in two ways, workers and server, and the old flaking reason, about six workers
+oversubscribing one dev server with ECONNRESETs, may not describe a build at all. The sweep's shape waits on his word:
+four workers against `E2E_SERVER=build` measures the gate's environment on this machine, which is what a config of four
+would be set from; four against dev measures what a step-level run at four would see while working. He reads this before
+the sweep runs.
+
+**First production results of the model pick (Adam, relayed by the coordinator, 19 Nov, late).** Five presses on one
+phrase, "quiet, alone, late": Smerz, Believer ("pretty good"); Astrid Sonne, Great Doubt ("another good one"); Darkside,
+Psychic ("another good one"); Donovan, Donovan In Concert ("cant comment on this"); Dire Straits, Dire Straits (no
+judgement). **Two findings.** The run-history rule works on production: five presses, five distinct records, no repeat,
+§P.2's run clause confirmed against the real collection for the first time. And the order degraded sensibly rather than
+randomly: the two sparsest records in the collection first, a plausible third, then a live record with an audience
+against a phrase containing "alone", then the weakest fit; nearest-first is doing real work. **The caution recorded with
+it, his:** this phrase cannot separate reading from word-matching, since every one of the five descriptions carries
+"quiet", "sparse", "alone" or "late" in its own text; the discriminating test is the "quiet and warm" / "quiet and sad"
+pair, which Adam runs next. He is pressing once more on the same phrase first, which exercises the exhaustion path,
+"That's all that fits." against the rail's 112, for the first time with real data. **Kept, in his words:** on the fourth
+record he said "cant comment on this" about a record he owns, the limit on him as verifier stated plainly in use, the same
+thing he said on 19 Nov when he ruled out marking the drafts; it supports correction-in-use rather than undermining it:
+he judges the records he knows when he meets them, not the ones he doesn't. None of this is the placement judgement Q73
+waits on; that is his press on the phone with the control's position in view.
+
+**Q72's latency measured (the coordinator's approval, 19 Nov, late: ten records, not fifty-five).** `scripts/time-describe.mts`
+(`npm run describe:time`) runs each stage of describing a record as the add flow would, in sequence: the Discogs release
+and the artist's releases fetched live (never from discogs_cache, which a new record has no row in), the ABOUT drafted,
+the matched text drafted from it; nothing stored, no llm_runs row, the drafts not kept; one measurement file written,
+docs/measurements/describe-timing/2026-11-20T03-36-24-978Z.json. The summary is `scripts/measure-summary.mjs`
+(nearest-rank p90, test first in test/repo/measure-summary.test.ts, failing against the missing module). The ten most
+recently added records with a release id, every one completing every stage:
+
+| stage | median | p90 | max |
+|---|---|---|---|
+| Discogs, release and discography | 1.3s | 1.9s | 2.2s |
+| ABOUT | 8.0s | 9.1s | 10.7s |
+| matched text | 13.5s | 14.5s | 14.9s |
+| total | 22.7s | 24.0s | 25.1s |
+
+So the add route's `maxDuration` pins at 60 seconds: two and a half times the p90, under every plan's maximum (Hobby's
+300), and a twelfth of the default the function would otherwise inherit, so a runaway cannot run for five minutes. The
+matched text is the long stage, 60 per cent of the total, which is where a budget cut would land first; a store in one
+transaction after both return means a cut leaves neither, as agreed. Instrumented for free thereafter: write-matched-text
+now records each draft's milliseconds in drafts.json and prints it (the ABOUT script already did), so the next real
+drafting run supplies better figures without a timing run. Run alone at load 2 to 3 while a CI gate ran on GitHub.
 
 **Q77 B1 built: the re-ask once (the coordinator's go, 19 Nov, late).** Test first in pick.test, stubbing what the API's
 strict maximum never produces: a reason over REASON_MAX. Three failed before the build (one call made where two were
