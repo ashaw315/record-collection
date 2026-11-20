@@ -175,4 +175,61 @@ describe('the call', () => {
     expect(JSON.parse(String(init.body)).model).toBe('gpt-configured');
     expect(r).toMatchObject({ ok: true, verdict: 'answer' });
   });
+
+  /*
+    §P.2 (Design, 19 Nov, "Slot for unmet and dropped reason"; Q77 B1): "A reason over the bound is asked for again,
+    never cut... A reason still over the bound when asked again leaves its record out of the answer." The API's strict
+    maximum never produces an over-bound reason, so these stub one: a green line says our code re-asks and leaves out,
+    not that the model ever runs over. Where every answer is left out, the pick refuses as today and the slot says "Not
+    answered." until Design's rewording of the no-answer slot lands (B2). Fails against a pick that draws the reason it
+    was given whatever its length, and never asks twice.
+  */
+  const CLAIM_A = 'Solo piano, slow and sparse, recorded close in a quiet room.';
+  const CLAIM_C = 'Warm country croon over pedal steel and brushed drums, short and unhurried.';
+  const over = `${'Slow and close, '.repeat(12)}over the bound.`;
+  const replying = (...bodies: unknown[]) => vi.fn(async () => new Response(JSON.stringify(bodies.shift()), { status: 200 }));
+  const userOf = (fetchImpl: ReturnType<typeof vi.fn>, call: number) => (JSON.parse(String((fetchImpl.mock.calls[call] as unknown as [string, RequestInit])[1].body)).input as Array<{ role: string; content: string }>).find((m) => m.role === 'user')?.content ?? '';
+
+  it('asks once more for a reason over the bound, for that record alone, and keeps the record with the reason that came back within it, in its place', async () => {
+    vi.stubEnv('OPENAI_API_KEY', 'sk-test');
+    expect([...over].length, 'the precondition: the stub is over the bound').toBeGreaterThan(REASON_MAX);
+    const fetchImpl = replying(
+      reply({ verdict: 'answer', picks: [pick('a1', [CLAIM_A], over), pick('c3', [CLAIM_C])] }),
+      reply({ verdict: 'answer', picks: [pick('a1', [CLAIM_A], 'Slow and close, within the bound.')] }),
+    );
+    const r = await askPick('calm', POOL, [], { fetchImpl });
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+    const again = userOf(fetchImpl, 1);
+    expect(again, 'the re-ask carries the over-bound record').toContain('[a1]');
+    expect(again, 'and not the one within the bound').not.toContain('[c3]');
+    expect(again).toMatch(new RegExp(`again[^\\n]*${REASON_MAX}|${REASON_MAX}[^\\n]*again`, 'i'));
+    expect(r).toMatchObject({ ok: true, verdict: 'answer', picks: [{ id: 'a1', reason: 'Slow and close, within the bound.' }, { id: 'c3' }], dropped: [] });
+  });
+
+  it('leaves out a record whose reason is still over the bound when asked again, saying so, and never asks a third time', async () => {
+    vi.stubEnv('OPENAI_API_KEY', 'sk-test');
+    const fetchImpl = replying(
+      reply({ verdict: 'answer', picks: [pick('a1', [CLAIM_A], over), pick('c3', [CLAIM_C])] }),
+      reply({ verdict: 'answer', picks: [pick('a1', [CLAIM_A], over)] }),
+    );
+    const r = await askPick('calm', POOL, [], { fetchImpl });
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+    expect(r).toMatchObject({ ok: true, verdict: 'answer', picks: [{ id: 'c3' }], dropped: [{ id: 'a1', why: expect.stringMatching(/over the bound.*asked again|asked again.*over the bound/) }] });
+  });
+
+  it('refuses the answer, naming the bound, when every record was left out over it, and re-asks a stand-in the same way, keeping the verdict with none when it is still over', async () => {
+    vi.stubEnv('OPENAI_API_KEY', 'sk-test');
+    const none = await askPick('calm', POOL, [], { fetchImpl: replying(reply({ verdict: 'answer', picks: [pick('a1', [CLAIM_A], over)] }), reply({ verdict: 'answer', picks: [pick('a1', [CLAIM_A], over)] })) });
+    expect(none).toMatchObject({ ok: false, reason: expect.stringMatching(/over the bound/) });
+    const standIn = replying(reply({ verdict: 'nothing-fits', picks: [pick('a1', [CLAIM_A], over)] }), reply({ verdict: 'nothing-fits', picks: [pick('a1', [CLAIM_A], over)] }));
+    expect(await askPick('loud', POOL, [], { fetchImpl: standIn })).toMatchObject({ ok: true, verdict: 'nothing-fits', picks: [], dropped: [{ id: 'a1' }] });
+    expect(standIn).toHaveBeenCalledTimes(2);
+  });
+
+  it('asks nothing again when every reason is within the bound', async () => {
+    vi.stubEnv('OPENAI_API_KEY', 'sk-test');
+    const fetchImpl = replying(reply({ verdict: 'answer', picks: [pick('a1', [CLAIM_A]), pick('c3', [CLAIM_C])] }));
+    await askPick('calm', POOL, [], { fetchImpl });
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+  });
 });

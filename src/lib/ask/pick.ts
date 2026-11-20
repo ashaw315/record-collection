@@ -89,6 +89,25 @@ export function pickRequest(phrase: string, pool: readonly PickRecordText[], nam
   };
 }
 
+/*
+  §P.2 (Design, 19 Nov, "Slot for unmet and dropped reason"): "A reason over the bound is asked for again, never cut,
+  because a cut reason can lose the clause that names the mismatch. A reason still over the bound when asked again leaves
+  its record out of the answer." The second request carries the over-bound records alone, with their texts, and says it
+  is asking again; the records whose reasons come back within the bound keep their places, the rest are left out with
+  the reason named. The API's strict maximum should never let a reason over REASON_MAX through, so this path is the
+  backstop's backstop, exercised by stubs (pick.test). Where it leaves an answer with nothing, the pick refuses as it
+  always has and the slot says "Not answered."; the slot that says no answer came waits on Design's rewording (Q77 B2).
+*/
+export function reaskRequest(phrase: string, records: readonly PickRecordText[], config: { model: string; effort: string }) {
+  const request = pickRequest(phrase, records, [], config);
+  const user = request.input.find((m) => m.role === 'user');
+  if (user !== undefined) user.content = `Asked again: each record below was chosen for this phrase, and the reason given ran past ${REASON_MAX} characters. Give each its one-sentence reason again, about ${REASON_TARGET} characters and never more than ${REASON_MAX}, with its claims as before, and leave none out.\n\n${user.content}`;
+  return request;
+}
+
+/** Characters as the schema's maxLength counts them: code points, not UTF-16 units. */
+const reasonLength = (reason: string) => [...reason].length;
+
 const loose = (s: string) => s.toLowerCase().replace(/\s+/g, ' ').trim();
 
 /*
@@ -143,17 +162,40 @@ function endpoint(): string {
   return `${base === undefined || base === '' ? 'https://api.openai.com' : base.replace(/\/$/, '')}/v1/responses`;
 }
 
-/** One request, the reply read and checked. A missing key refuses by name before any request. */
+/** One request, the reply read and checked; a second for any reason over the bound. A missing key refuses by name before any request. */
 export async function askPick(phrase: string, pool: readonly PickRecordText[], named: readonly string[], options: { fetchImpl?: typeof fetch; effort?: string } = {}): Promise<PickResult> {
   const key = requireOpenAiKey();
   /* A call may name its effort over the setting: the diagnostic asks one phrase at two (the coordinator, 15 Nov). */
   const config = { model: process.env[MODEL_VAR] || PICK_MODEL_DEFAULT, effort: options.effort ?? (process.env[EFFORT_VAR] || 'low') };
-  const response = await (options.fetchImpl ?? fetch)(endpoint(), {
-    method: 'POST',
-    headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json' },
-    body: JSON.stringify(pickRequest(phrase, pool, named, config)),
-  });
-  const answer: unknown = await response.json().catch(() => null);
-  if (!response.ok) return { ok: false, reason: `OpenAI responses ${response.status}: ${(answer as { error?: { message?: string } } | null)?.error?.message ?? 'no message in the answer'}` };
-  return readPick(answer, pool, named);
+  const post = async (body: unknown): Promise<{ ok: true; answer: unknown } | { ok: false; reason: string }> => {
+    const response = await (options.fetchImpl ?? fetch)(endpoint(), {
+      method: 'POST',
+      headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const answer: unknown = await response.json().catch(() => null);
+    if (!response.ok) return { ok: false, reason: `OpenAI responses ${response.status}: ${(answer as { error?: { message?: string } } | null)?.error?.message ?? 'no message in the answer'}` };
+    return { ok: true, answer };
+  };
+  const sent = await post(pickRequest(phrase, pool, named, config));
+  if (!sent.ok) return sent;
+  const first = readPick(sent.answer, pool, named);
+  if (!first.ok) return first;
+  const over = first.picks.filter((p) => reasonLength(p.reason) > REASON_MAX);
+  if (over.length === 0) return first;
+  /* Asked again, once, for those records alone (§P.2); what comes back within the bound replaces, the rest is left out. */
+  const records = pool.filter((r) => over.some((p) => p.id === r.id));
+  const again = await post(reaskRequest(phrase, records, config));
+  const reread = again.ok ? readPick(again.answer, records, []) : again;
+  const within = new Map(reread.ok ? reread.picks.filter((p) => reasonLength(p.reason) <= REASON_MAX).map((p) => [p.id, p] as const) : []);
+  const picks: Picked[] = [];
+  const dropped = [...first.dropped];
+  for (const p of first.picks) {
+    if (reasonLength(p.reason) <= REASON_MAX) { picks.push(p); continue; }
+    const re = within.get(p.id);
+    if (re !== undefined) picks.push({ ...p, reason: re.reason, claims: re.claims });
+    else dropped.push({ id: p.id, why: `its reason was over the bound of ${REASON_MAX} when asked again${reread.ok ? '' : ` (${reread.reason})`}` });
+  }
+  if (first.verdict === 'answer' && picks.length === 0) return { ok: false, reason: `every reason was over the bound of ${REASON_MAX} when asked again` };
+  return { ok: true, verdict: first.verdict, picks, dropped };
 }
