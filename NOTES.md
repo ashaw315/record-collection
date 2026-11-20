@@ -58335,3 +58335,19 @@ matched text's generation, the marking question answered by Adam's 19 Nov ruling
 pairing no longer the thing that matters since the embedding feeds the held ranking. Shape to propose before building; two
 questions to answer first (the model call inside the add or after it; what the record page shows between). Sits after
 Q73 and Q78. The proposal and the answers are in the report to him, and go here when he rules.
+
+**Design's fifth drop of 19 Nov, "Bound figure from what fits" (refs/drops/2026-11-19-05, 21:08).** Prose only, no card,
+anchored on 6df5bd81's handoff, supersedes nothing. Two handoff lines still set the bound "from the 91 to 108 Adam
+approved", 3a's stubbed text; replaced as the coordinator ruled: the pick step's "Bound the reason" bullet now holds the
+prompt target at 160 until Adam has judged the placement, the bound and §P.4's "wholly in view" together, and reports the
+model's spread of reason lengths under it; the provisional's figure is "set with the placement and §P.4's 'wholly in
+view' as one decision after Adam's press". §P.2 stands; no card, no withdrawal entry (DESIGN-RULES: a wording change to
+a handoff line that names no claim). The drop's diff report also shows the fourth drop's bullets as added since
+refs/drops/2026-11-19-04, which is that capture predating their application. Intake: landed record appended, index 14
+PASS of 14, document suite 978 passed, INTAKE OK. Pushed at once, as an intake is.
+
+**Q30 closed, done 11 Nov, on Design's answer (the coordinator, 19 Nov, late).** Both exports consumed, the bundle gives
+what is needed. His record of it, kept in his words in the row: closed in conversation on 11 Nov, never written to the
+row, and on 19 Nov proposed for closing on inferred conduct with the answer forgotten; the miss his, "the third this
+week where my own record-keeping was the fault". Code's check found no answer recorded and left the row open, and held
+that conduct is not an answer; both right. With the answer came Design's two bundle gaps, Q81, to build.
