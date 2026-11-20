@@ -58259,3 +58259,36 @@ and in the spec's console line; (B) the gap taken between the poses themselves, 
 which pairs correctly whatever the order but reads the turn's clock off the turn's own curve; (C) nothing, and the 11
 degrees of margin stays a flake under a dropped frame at the change. gatefold-88's two samplers have the same shape and
 the same question. Q80.
+
+**Q80 built, and the mechanism named above was wrong (the coordinator's ruling, 19 Nov, late).** He ruled candidate A
+with one strengthening: the self-verification is an assertion, not a console line, failing by name as bad data when any
+pose's time differs from its stamp by more than a frame's tolerance; the same on gatefold-88's two samplers; and a standing
+rule. Built test first. **RED:** the alignment assertion in the turn test, each moving pose's angle inverted through the
+ease-out onto the turn's clock and compared with its stamp, half a frame the tolerance, the last 0.1 per cent of the turn
+left unread since the inversion is conditioned coarser than that there; against the sampler as it stood, 34 poses, lag
+1.8 (the first, pose 0) then 17.1 to 17.3ms at every frame, failed. **Candidate A tried, as ruled:** the sampler's first
+tick registered from a timeout after the turn's first frame, so it ran after the step in every frame; 33 poses, lag 16.4
+then 17.1 to 17.2ms, unchanged, failed. **So the callbacks' order was not the cause.** The turn writes its pose through
+React state from its frame callback (`setTurn` in SleeveModal's `step`), and React 19 commits a state update made in a
+frame callback in a task after that frame's rendering, so frame N's pose is in the DOM from frame N + 1 on, whichever
+callback ran first; the data I read from the trace fit both mechanisms identically and I named one without an experiment
+that separated them. **The fix that holds:** the sampler stamps each pose with the frame whose callbacks last ran before
+the pose appeared in the DOM, observed with a MutationObserver on the stage, `committedAt = lastFrame` on each commit and
+the tick stamping with `committedAt` rather than its own frame; the first pose, written at the click, carries the click's
+time. 34 poses, lag 0.0 to 0.3ms, the 0.3 the turn's start inside the click handler after the sampler's; passed.
+gatefold-88's samplePress stamped the same way with the same assertion in the opening test, seen failing first with the
+old stamp (lag 1.1 to 33.5 at 1440 × 900, −7.0 to 17.0 at 390 × 844), then 0.0 to 0.3 and 0.0 to 0.2; its inline
+`ended` sampler and record-modal-81's two-presses sampler stamp `ended` the same way, one line each, no pose there to
+invert. The rule is in CLAUDE.md §9 under the measurement rules, with the three gates as its evidence and this refutation
+in it. Held uncommitted until his word, the fix not being the one ruled. Step level: record-modal-81 and gatefold-88 on
+both projects, 31 passed in 1.4m at load 4 to 15 (nothing else running); typecheck 0 errors; lint 0 errors, 6
+warnings, all at HEAD; build compiled.
+
+**The coordinator's word on it (19 Nov, late): commit and ship as built.** His record, in his words: "I ruled option 1
+and called the one-frame offset 'a fit, not a story' — it was both, since the data fit the ordering mechanism and the
+React-commit mechanism identically. You named one without the separating experiment; I ruled on it without asking for
+one. Record it as mine as much as yours." And the reason the fix that holds is better than the one ruled, now in
+CLAUDE.md §9 beside the rule: "it does not depend on the mechanism being right. A MutationObserver sees when the pose
+actually reached the DOM, whatever delayed it, so even if the React-19-commit account is also wrong the stamp is still
+correct. Option 1 would have been true only while its story was. Prefer an observation over an inference wherever the
+observation is available." The assertion did the refuting, built first, before the fix it was meant to protect.

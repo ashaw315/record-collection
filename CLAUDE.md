@@ -199,6 +199,37 @@ This app is about vinyl records. Several distinctions matter and are easy to fla
   **A guard is not verified by reading it.** Three defects in this one were
   invisible to inspection and obvious the moment the scenario was staged for
   real. Stage it.
+
+  **A test that samples an animation asserts its own clock alignment before
+  it asserts anything about the animation (the coordinator, 19 Nov).** Invert
+  each sampled value through the animation's own curve onto its clock, and
+  fail by name when a sample's stamp stands more than half a frame from the
+  time its value says: the sample holds another frame's pose, and that is bad
+  data, not a bad animation. Print the lag beside it, but the assertion is
+  the check; a printed diagnostic nobody reads is the weak-check pattern. Three
+  gates in three days failed on one sampler, each a frame paired with the
+  wrong time, and each would have failed this assertion on its first run
+  instead: 17 Nov (gate 44157773442), the edge-on tolerance fixed at 30
+  degrees while the sampled gap at the change was 78ms; 18 Nov (44339581232),
+  stamps from `performance.now()` in the callback, 20 to 70ms behind the
+  frame under load; 19 Nov (44617708618), every pose one frame behind its
+  stamp, because the turn writes its pose through React state from its frame
+  callback and React commits that after the frame's rendering, so a frame's
+  pose is in the DOM from the next frame on whatever order the callbacks run
+  in. The callbacks' order was named first as the cause, and the assertion
+  itself refuted it: the lag was 17.2ms with the sampler registered after the
+  step. The samplers now stamp a pose with the frame current when it
+  appeared in the DOM, observed, and the assertion reads 0.0 to 0.3ms.
+
+  **Prefer an observation over an inference wherever the observation is
+  available (the coordinator, 19 Nov).** The ordering fix was ruled on a
+  mechanism the data fit, and the data fit two mechanisms identically; Code
+  named one without the experiment that separated them, and the coordinator
+  ruled on it without asking for one. The fix that holds does not depend on
+  either account being right: a MutationObserver sees when the pose actually
+  reached the DOM, whatever delayed it, so the stamp is correct even if the
+  React-commit account is also wrong. The ruled fix would have been true
+  only while its story was.
 - **Report the summary line, never the exit code.** An exit status is not evidence
   a run passed. Three concealments happened in a single session: a pipeline
   reporting `tail`'s status; a run killed mid-flight that reported 210 of 465

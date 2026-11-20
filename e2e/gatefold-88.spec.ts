@@ -67,14 +67,27 @@ type Frame = { t: number; moving: boolean; panel: string | null; transform: stri
 /** Presses a control and samples every animation frame until the sleeve has rested for three, or for `quietMs` where nothing is expected to move. */
 const samplePress = (page: Page, control: string, quietMs: number) => page.evaluate(async ({ name, quiet }) => {
   const frames: Array<{ t: number; moving: boolean; panel: string | null; transform: string; origin: string; foldX: number | null; top: number | null; size: number | null; label: string; closedShown: boolean; rightShown: boolean; opacity: string }> = [];
-  const started = performance.now();
   const button = document.querySelector(`[data-sleeve-control="${name}"]`) as HTMLElement;
   button.focus();
+  /*
+    Stamped as record-modal-81's sampler is (19 Nov): each pose with the frame whose callbacks last ran before it
+    appeared in the DOM, not the frame it was read in. The opening writes its value through React state from its frame
+    callback (SleeveModal's step), and React commits that in a task after the frame's rendering, so a frame's pose is in
+    the DOM from the next frame on and a sampler reading in frame N holds frame N − 1's pose, whatever order the
+    callbacks run in (gate 44617708618). The frame's own timestamp rather than performance.now() in the callback since
+    gate 44339581232: under load the callback ran 20 to 70ms behind the frame. The opening test asserts the alignment
+    before it reads anything else off these frames.
+  */
+  let lastFrame = performance.now();
+  const started = lastFrame;
+  let committedAt = started;
+  const observer = new MutationObserver(() => { committedAt = lastFrame; });
+  observer.observe(document.querySelector('[data-sleeve-stage]') as HTMLElement, { attributes: true, childList: true, characterData: true, subtree: true });
   button.click();
   await new Promise<void>((resolve) => {
     let seen = false; let rest = 0;
-    /* Stamped with the frame's own timestamp, the clock the opening advances on, as record-modal-81's sampler is (19 Nov): performance.now() in the callback ran 20 to 70ms behind the frame under load. */
     const tick = (now: number) => {
+      lastFrame = now;
       const spread = document.querySelector<HTMLElement>('[data-spread]');
       const panel = document.querySelector<HTMLElement>('[data-leaf="panel"]');
       const right = document.querySelector<HTMLElement>('[data-leaf="right"]');
@@ -82,7 +95,7 @@ const samplePress = (page: Page, control: string, quietMs: number) => page.evalu
       const r = right?.getBoundingClientRect() ?? null;
       const cs = panel === null ? null : getComputedStyle(panel);
       frames.push({
-        t: now - started, moving, panel: panel?.getAttribute('data-panel') ?? null, transform: cs?.transform ?? 'absent', origin: cs?.transformOrigin ?? '',
+        t: committedAt - started, moving, panel: panel?.getAttribute('data-panel') ?? null, transform: cs?.transform ?? 'absent', origin: cs?.transformOrigin ?? '',
         foldX: r?.left ?? null, top: r?.top ?? null, size: r?.width ?? null,
         label: (document.querySelector('[data-face-label]')?.textContent ?? '').trim().toLowerCase(),
         closedShown: document.querySelector('[data-sleeve]') !== null, rightShown: right !== null && right.querySelector('img[data-sleeve-face="inside-right"]') !== null,
@@ -90,7 +103,7 @@ const samplePress = (page: Page, control: string, quietMs: number) => page.evalu
       });
       seen = seen || moving; rest = seen && !moving ? rest + 1 : 0;
       const t = now - started;
-      if ((seen && rest >= 3) || (!seen && t > quiet) || t > 6000) resolve(); else requestAnimationFrame(tick);
+      if ((seen && rest >= 3) || (!seen && t > quiet) || t > 6000) { observer.disconnect(); resolve(); } else requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);
   });
@@ -166,6 +179,16 @@ for (const [width, height] of [[390, 844], [GRID_FORK, NO_SCROLL_HEIGHT]] as con
         expect(f.opacity, 'no fade').toBe('1');
         eased.push(byRotation);
       }
+      /*
+        The sampler's own clock, asserted before anything is read off it (the coordinator, 19 Nov): each frame's value
+        inverted through the ease-out onto the opening's clock stands within half a frame of its stamp, or the sample
+        holds another frame's pose and this says so by name, as bad data rather than a bad opening. Past 0.999 the
+        inversion is conditioned coarser than the tolerance, so the last thousandth is not read.
+      */
+      const FRAME_MS = 1000 / 60;
+      const lags = moving.map((f, i) => ({ t: f.t, lag: f.t - OPEN_MS * (1 - Math.cbrt(1 - eased[i])) })).filter((_, i) => eased[i] < 0.999);
+      console.log(`OPEN clock ${width}x${height}: ${lags.length} poses, lag ${Math.min(...lags.map((l) => l.lag)).toFixed(1)} to ${Math.max(...lags.map((l) => l.lag)).toFixed(1)}ms (stamp minus the pose's own time)`);
+      for (const l of lags) expect(Math.abs(l.lag), `the sampler is on the opening's clock: the pose stamped ${l.t.toFixed(1)}ms stands ${l.lag.toFixed(1)}ms from its own time, more than half a frame, so the sample holds another frame's pose and what is read from these frames is bad data, not an opening`).toBeLessThanOrEqual(FRAME_MS / 2);
       for (let i = 1; i < eased.length; i += 1) expect(eased[i], `frame ${i} has not gone back`).toBeGreaterThanOrEqual(eased[i - 1] - 0.005);
       expect(moving.filter((f, i) => i > 0 && f.panel !== moving[i - 1].panel).length, 'the panel changes once, edge-on').toBe(1);
       /*
@@ -262,7 +285,12 @@ test.describe('§M.5 (step 91): a press while the gatefold is opening is ignored
     const id = await seedSleeve(page, ['gatefold_left', 'gatefold_right']);
     await openSleeve(page, id, GRID_FORK, NO_SCROLL_HEIGHT);
     const result = await page.evaluate(async () => {
-      const started = performance.now();
+      /* As samplePress stamps: `ended` is the frame whose callbacks last ran before the opening's end reached the DOM, the opening's own clock. */
+      let lastFrame = performance.now();
+      const started = lastFrame;
+      let committedAt = started;
+      const observer = new MutationObserver(() => { committedAt = lastFrame; });
+      observer.observe(document.querySelector('[data-sleeve-stage]') as HTMLElement, { attributes: true, childList: true, characterData: true, subtree: true });
       (document.querySelector('[data-sleeve-control="open"]') as HTMLElement).click();
       await new Promise((r) => setTimeout(r, 150));
       const spread = () => document.querySelector<HTMLElement>('[data-spread]');
@@ -272,8 +300,7 @@ test.describe('§M.5 (step 91): a press while the gatefold is opening is ignored
       const name = pressed?.getAttribute('data-sleeve-control') ?? null;
       pressed?.click();
       let motions = 0; let was = true; let ended = 0;
-      /* The frame's timestamp, as samplePress's: `ended` is read on the opening's own clock. */
-      await new Promise<void>((resolve) => { const tick = (frameAt: number) => { const now = spread()?.hasAttribute('data-opening') === true; if (was && !now) { motions += 1; ended = frameAt - started; } was = now; if (frameAt - started > 2500) resolve(); else requestAnimationFrame(tick); }; requestAnimationFrame(tick); });
+      await new Promise<void>((resolve) => { const tick = (frameAt: number) => { lastFrame = frameAt; const now = spread()?.hasAttribute('data-opening') === true; if (was && !now) { motions += 1; ended = committedAt - started; } was = now; if (frameAt - started > 2500) { observer.disconnect(); resolve(); } else requestAnimationFrame(tick); }; requestAnimationFrame(tick); });
       return { midway, name, motions, ended, open: spread() !== null, label: (document.querySelector('[data-face-label]')?.textContent ?? '').toLowerCase() };
     });
     expect({ midway: result.midway, pressed: result.name }, 'the precondition: FOLD was pressed while it was opening').toEqual({ midway: true, pressed: 'fold' });

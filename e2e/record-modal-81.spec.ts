@@ -509,27 +509,36 @@ const sampleTurn = (page: Page, quietMs: number) => page.evaluate(async (quiet) 
   const stage = sleeve.parentElement as HTMLElement;
   const label = document.querySelector('[data-face-label]') as HTMLElement;
   const frames: Array<{ t: number; transform: string; perspective: string; face: string | null; label: string; turning: boolean; width: number; height: number; top: number; opacity: string }> = [];
-  const started = performance.now();
   /* Focused first, as a press by keyboard or pointer leaves it: a scripted click alone does not move focus. */
   const control = document.querySelector('[data-sleeve-control="turn"]') as HTMLElement;
   control.focus();
+  /*
+    A pose is stamped with the frame whose callbacks last ran before it appeared in the DOM, not with the frame the
+    sampler read it in. The turn writes its pose through React state from its frame callback (SleeveModal's step), and
+    React commits a frame callback's update in a task after that frame's rendering, so a frame's pose is in the DOM
+    from the next frame on, whatever order the callbacks run in: a sampler reading in frame N holds the pose of frame
+    N − 1 (gate 44617708618, 19 Nov: every sampled pose 17.2ms behind its stamp, the same with the sampler registered
+    after the turn's step, which refuted the first reading that the callbacks' order was the cause). Stamped with the
+    frame's own timestamp rather than performance.now() in the callback since gate 44339581232 (18 Nov): under load the
+    callback ran 20 to 70ms behind the frame. Every angle inverted through the ease-out now falls within 0.3ms of its
+    stamp, which the turn test asserts before it reads anything else off these frames.
+  */
+  let lastFrame = performance.now();
+  const started = lastFrame;
+  let committedAt = started;
+  const observer = new MutationObserver(() => { committedAt = lastFrame; });
+  observer.observe(stage, { attributes: true, childList: true, characterData: true, subtree: true });
   control.click();
   await new Promise<void>((resolve) => {
     let seen = false; let rest = 0;
-    /*
-      Stamped with the frame's own timestamp, the clock the turn advances on (SleeveModal's step(now)), not with
-      performance.now() in the callback (gate 44339581232, 18 Nov): under load the callback ran 20 to 70ms behind the
-      frame, so two frames 33ms apart on the turn's clock read 17ms apart here and the edge-on tolerance below was
-      computed for one frame when the sample had skipped one. Every angle inverted through the ease-out fell on whole
-      frames of the turn's clock; none fell on the callback's.
-    */
     const tick = (now: number) => {
+      lastFrame = now;
       const cs = getComputedStyle(sleeve); const r = sleeve.getBoundingClientRect();
       const turning = sleeve.hasAttribute('data-turning');
-      frames.push({ t: now - started, transform: cs.transform, perspective: getComputedStyle(stage).perspective, face: sleeve.getAttribute('data-face'), label: (label.textContent ?? '').trim().toLowerCase(), turning, width: r.width, height: r.height, top: r.top, opacity: cs.opacity });
+      frames.push({ t: committedAt - started, transform: cs.transform, perspective: getComputedStyle(stage).perspective, face: sleeve.getAttribute('data-face'), label: (label.textContent ?? '').trim().toLowerCase(), turning, width: r.width, height: r.height, top: r.top, opacity: cs.opacity });
       seen = seen || turning; rest = seen && !turning ? rest + 1 : 0;
       const t = now - started;
-      if ((seen && rest >= 3) || (!seen && t > quiet) || t > 6000) resolve(); else requestAnimationFrame(tick);
+      if ((seen && rest >= 3) || (!seen && t > quiet) || t > 6000) { observer.disconnect(); resolve(); } else requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);
   });
@@ -591,6 +600,19 @@ test.describe('§M.5: the turn', () => {
     /* One way only: the leaving face's angle rises to edge-on, the arriving face's rises from edge-on to flat. */
     const total = moving.map((f, i) => (f.face === 'front' ? angles[i] : 180 + angles[i]));
     for (let i = 1; i < total.length; i += 1) expect(total[i], `frame ${i} has not turned back`).toBeGreaterThanOrEqual(total[i - 1] - 0.01);
+    /*
+      The sampler's own clock, asserted before anything is read off it (the coordinator, 19 Nov, after gate
+      44617708618): each pose's time on the turn's clock, found by inverting its angle through the ease-out, must stand
+      within half a frame of the stamp the sampler gave it. A whole frame's difference means the sample holds the pose
+      the turn wrote in some other frame than the one its stamp names, and every gap read from the stamps then pairs
+      the wrong frames; that is bad data, and this says so by name rather than letting the edge-on check below fail on
+      it. Printed too. Past 0.999 of the turn the inversion is conditioned coarser than the tolerance, so the last
+      degree is not read.
+    */
+    const FRAME_MS = 1000 / 60;
+    const lags = moving.map((f, i) => ({ t: f.t, lag: f.t - TURN_MS * (1 - Math.cbrt(1 - total[i] / 180)) })).filter((_, i) => total[i] / 180 < 0.999);
+    console.log(`TURN clock: ${lags.length} poses, lag ${Math.min(...lags.map((l) => l.lag)).toFixed(1)} to ${Math.max(...lags.map((l) => l.lag)).toFixed(1)}ms (stamp minus the pose's own time)`);
+    for (const l of lags) expect(Math.abs(l.lag), `the sampler is on the turn's clock: the pose stamped ${l.t.toFixed(1)}ms stands ${l.lag.toFixed(1)}ms from its own time on the turn, more than half a frame, so the sample holds another frame's pose and the gaps below are bad data, not a turn`).toBeLessThanOrEqual(FRAME_MS / 2);
     const changes = moving.filter((f, i) => i > 0 && f.face !== moving[i - 1].face);
     expect(changes.length, 'the face changes once').toBe(1);
     const at = moving.indexOf(changes[0]);
@@ -680,12 +702,17 @@ test.describe('§M.5 (step 91): the turn’s swell, measured from frames', () =>
       const sleeve = document.querySelector('[data-sleeve]') as HTMLElement;
       const control = document.querySelector('[data-sleeve-control="turn"]') as HTMLElement;
       const turned: number[] = [];
-      const started = performance.now();
+      let lastFrame = performance.now();
+      const started = lastFrame;
+      let committedAt = started;
+      /* As sampleTurn stamps: `ended` is the frame whose callbacks last ran before the turn's end reached the DOM, the turn's own clock. */
+      const observer = new MutationObserver(() => { committedAt = lastFrame; });
+      observer.observe(sleeve.parentElement as HTMLElement, { attributes: true, childList: true, characterData: true, subtree: true });
       let pressedAgain = false; let midTurn = false; let ended = 0; let seen = false;
       control.click();
       await new Promise<void>((resolve) => {
-        /* The frame's timestamp, as sampleTurn's: `ended` is read against the turn's own clock. */
         const tick = (now: number) => {
+          lastFrame = now;
           const t = now - started;
           const turning = sleeve.hasAttribute('data-turning');
           if (turning) {
@@ -694,9 +721,9 @@ test.describe('§M.5 (step 91): the turn’s swell, measured from frames', () =>
             const n = tf === 'none' ? [1, 0, 0] : tf.slice(tf.indexOf('(') + 1, -1).split(',').map(Number);
             const angle = n.length >= 16 ? (Math.atan2(-n[2], n[0]) * 180) / Math.PI : 0;
             turned.push(sleeve.getAttribute('data-face') === 'front' ? angle : 180 + angle);
-          } else if (seen && ended === 0) ended = t;
+          } else if (seen && ended === 0) ended = committedAt - started;
           if (!pressedAgain && t >= 150) { pressedAgain = true; midTurn = turning; control.click(); }
-          if (t > 2500) resolve(); else requestAnimationFrame(tick);
+          if (t > 2500) { observer.disconnect(); resolve(); } else requestAnimationFrame(tick);
         };
         requestAnimationFrame(tick);
       });
