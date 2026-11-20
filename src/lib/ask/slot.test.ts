@@ -38,4 +38,17 @@ describe('askSlotMessage', () => {
     expect(askSlotMessage({ ok: true, status: 200, unanswerable: false, answered: 3, verdict: 'answer', undescribedTitle: 'Diamond Jubilee' })).toBe('Diamond Jubilee: not described yet.');
     expect(askSlotMessage({ ok: true, status: 200, unanswerable: false, answered: 3, verdict: 'answer' })).toBe('');
   });
+
+  /*
+    §P.2 (Design, 19 Nov, "Slot for unmet and dropped reason"): a requirement unmet has its own words, "None has all of
+    it.", drawn above its stand-in, in place of 3a's "the same words for both". Proposed, measured on one line at the
+    rail's 112 and at 320 and 1280 by pick-control-156 (95.0 wide). Fails against the slot that read a requirement unmet
+    as nothing fits. The slot for answers all left out over the bound is not here: its proposed wording took two lines
+    at 112 and went back to Design.
+  */
+  it('says "None has all of it." for a requirement unmet, with or without a stand-in', () => {
+    expect(askSlotMessage({ ok: true, status: 200, unanswerable: false, answered: 1, verdict: 'requirement-unmet' })).toBe('None has all of it.');
+    expect(askSlotMessage({ ok: true, status: 200, unanswerable: false, answered: 0, verdict: 'requirement-unmet' })).toBe('None has all of it.');
+    expect(SLOT_MESSAGES.requirementUnmet).toBe('None has all of it.');
+  });
 });

@@ -194,7 +194,9 @@ test('in the grid, a stand-in is drawn labelled "Closest available" beside the m
     reply = standIn('requirement-unmet', records.slice(1, 2));
     await press();
     await expect.poll(() => consolations(page), { timeout: 30_000, message: 'a requirement unmet: the same one labelled record, its reason naming the requirement' }).toEqual([{ label: 'Closest available', reason: CONSOLATION }]);
-    await expect(slot).toHaveText('Nothing fits.');
+    /* §P.2 (Design, 19 Nov): the requirement-unmet slot has its own words, above its stand-in; until then it read "Nothing fits.", 3a's "same words for both", withdrawn with the ruling. */
+    await expect(slot).toHaveText('None has all of it.');
+    expect(await slot.evaluate((el) => el.getBoundingClientRect().bottom), 'drawn above its stand-in').toBeLessThanOrEqual(await page.locator('[data-pick-answer]').filter({ visible: true }).first().evaluate((el) => el.getBoundingClientRect().top));
     reply = standIn('nothing-fits', []);
     await press();
     await expect(slot).toHaveText('Nothing fits.');

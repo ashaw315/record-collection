@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
-import { askSlotMessage, SLOT_MESSAGES } from '@/lib/ask/slot';
+import { askSlotMessage, SLOT_MESSAGES, type AskVerdict } from '@/lib/ask/slot';
 import { drawSurprise } from '@/lib/ask/surprise';
 import { GridCell } from './GridCell';
 import { usePickChannel, type CellHost, type PickRecord } from './wall/pick-channel';
@@ -34,7 +34,7 @@ type Answer = { id: string; reason: string | null; consolation?: boolean };
 
 type AskAnswer = {
   mode?: 'ranking' | 'pick';
-  verdict?: 'answer' | 'nothing-fits' | 'requirement-unmet' | 'run-exhausted' | null;
+  verdict?: AskVerdict | null;
   /* §P.2 (unit 3a): each answer carries the model's reason; the ranking's answers carry none. */
   answers: Array<{ recordId: string; reason?: string }>;
   from: 'phrase' | 'title';
@@ -218,13 +218,14 @@ export function PickControl({ ruled = false, pool, answers = 'cell', withoutAbou
       /* The run's end: it names none, and the ask after it starts the run again (§P.2). */
       if (body.verdict === 'run-exhausted') setShown([]);
       /*
-        §P.2 (unit 3a): nothing fits, and a requirement unmet, are the slot's message, the same words for both, since
-        "the reason carries the difference, and no state is added". A record beside it is a consolation, drawn where
-        the pick gave one and never required, labelled the closest available so it never reads as an answer: a cell
-        where the answer is cells, the pull where it is a pull, its reason saying what it is not.
+        §P.2: nothing fits, and a requirement unmet, are the slot's message, each in its own words since Design's "Slot
+        for unmet and dropped reason" (19 Nov; 3a had drawn the same words for both). A record beside it is a
+        consolation, drawn where the pick gave one and never required, labelled the closest available so it never
+        reads as an answer: a cell where the answer is cells, the pull where it is a pull, its reason saying what it is
+        not.
       */
       if (body.verdict !== undefined && body.verdict !== null && body.verdict !== 'answer') {
-        setMessage(body.verdict === 'requirement-unmet' ? SLOT_MESSAGES.nothingFits : slot);
+        setMessage(slot);
         const standIn = answered[0];
         if (body.verdict === 'run-exhausted' || standIn === undefined) {
           setDrawn([]);

@@ -58314,3 +58314,24 @@ true and harmless. So keying per worker costs the claim nothing, and removes the
 it more politely. The proposal, for his ruling: the catalog number and the matrix suffixed with the worker's
 parallelIndex in record-page-8a's `createRecord`, the file's comment rewritten to say where the 200 path is held and why
 the race was the only 200 left, and the spec's seed window gone.
+
+**Q77, unit A: the two slot wordings measured, one drawn, one sent back (19 Nov, late).** The go from the coordinator,
+not waiting on Adam's press. Test first: slot.test gains "None has all of it." for a requirement unmet with or without a
+stand-in, failing against the slot that read it as nothing fits (received ''); pick-reasons-3a's stand-in test, which
+encoded 3a's "the same words for both", changes with the ruling and now reads "None has all of it." drawn above its
+stand-in; pick-control-156's one-line measurement takes the two wordings in its three hosts, gaining each wording's own
+width beside the slot's so a wording sent back is reported with its numbers. Measured in Chromium: the slot is 112 wide
+in the rail at 1440, 284 in the band at 320, 300 in the sidebar at 1280. "None has all of it." is 95.0 wide and one line
+in all three, and is drawn. "No answer came. Ask again." is 157.6 wide, one line at 284 and 300 and two at 112, so by the
+ruling's own clause it goes back to Design rather than being cut, and is not in the tree: not in the slot's messages, not
+in the control, not in the measurement, each place saying why; the verdict that would carry it waits with it. Q78 carries
+the send-back. GREEN: slot and PickControl suites 13 passed; typecheck 0 errors; lint 0 errors, 6 warnings at HEAD. The
+PickControl change is one line: the override that drew nothing-fits for a requirement unmet is gone, the slot module's
+own words reaching the slot. Unit B next: the re-ask once, the still-over record left out, test first with a stubbed
+over-bound reply; the no-answer verdict and its slot land with the rewording.
+
+**Q72 off hold (the coordinator, 19 Nov, late).** The row rewritten as its first work: the hold's reason gone with the
+matched text's generation, the marking question answered by Adam's 19 Nov ruling for every record, the ABOUT-plus-embedding
+pairing no longer the thing that matters since the embedding feeds the held ranking. Shape to propose before building; two
+questions to answer first (the model call inside the add or after it; what the record page shows between). Sits after
+Q73 and Q78. The proposal and the answers are in the report to him, and go here when he rules.

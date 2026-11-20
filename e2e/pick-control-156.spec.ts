@@ -269,7 +269,15 @@ test.describe('§P.5: on the far view, where the rail draws as a band, the contr
 */
 /* Step 178 (§P.6, 11 Nov): the unanswerable ask's message takes "None showing."'s place; its wording is Proposed. */
 /* The slot's messages, each Proposed: "None described." for the role (14 Nov), and the model pick's "Nothing fits." (§P.2), each cut to fit the rail's 112 once its first wording took two lines. The run's end is §P.2's "That’s all that fits." (step 3, unit 3a), proposed there "to be measured on one line at the rail's 112, and if it takes two there, 'No more fit.'": this is that measurement. A title not described yet names the record, so its length is the title's and it is not among these. */
-const MESSAGES = ['The only one.', 'None described.', 'Not set up yet.', 'Nothing fits.', 'That’s all that fits.'];
+/*
+  §P.2 (Design, 19 Nov, "Slot for unmet and dropped reason"): the requirement-unmet slot's own words, and the slot where
+  every answer was left out over the reason's bound, each "to be measured on one line at the rail's 112, and at 320 and
+  1280. If either takes two lines at 112, report the widths and send it back rather than cutting": this is that
+  measurement. Measured 19 Nov: "None has all of it." is 95.0 wide and one line in the rail's 112, the band's 284 at
+  320 and the sidebar's 300 at 1280, and is drawn. "No answer came. Ask again." is 157.6 wide, one line at 284 and 300
+  and two in the rail's 112, so it is sent back and not drawn; it is not here until Design's rewording lands.
+*/
+const MESSAGES = ['The only one.', 'None described.', 'Not set up yet.', 'Nothing fits.', 'That’s all that fits.', 'None has all of it.'];
 const HOSTS = [
   { name: 'the rail, at 1440', width: 1440, query: '' },
   { name: 'the band, at 320', width: 320, query: '?view=grid' },
@@ -289,12 +297,20 @@ for (const host of HOSTS) {
         range.selectNodeContents(slot);
         const lines = range.getClientRects().length;
         const lineHeight = parseFloat(getComputedStyle(slot).lineHeight);
-        const result = { message, empty, height: slot.getBoundingClientRect().height, lines, lineHeight, overflow: slot.scrollWidth - slot.clientWidth };
+        /* The words' own width on one line, against the slot's: what a wording sent back is reported with (§P.2, 19 Nov). */
+        const probe = document.createElement('span');
+        probe.style.whiteSpace = 'nowrap';
+        probe.textContent = message;
+        slot.appendChild(probe);
+        const textWidth = probe.getBoundingClientRect().width;
+        probe.remove();
+        const result = { message, empty, height: slot.getBoundingClientRect().height, lines, lineHeight, overflow: slot.scrollWidth - slot.clientWidth, slotWidth: slot.clientWidth, textWidth };
         slot.textContent = '';
         return result;
       });
     }, MESSAGES);
     if (fits === null) throw new Error('no slot drawn');
+    console.log(`SLOT ${host.name}: ${fits[0].slotWidth} wide; ${fits.map((f) => `"${f.message}" ${f.textWidth.toFixed(1)} on ${f.lines} line${f.lines === 1 ? '' : 's'}`).join('; ')}`);
     for (const f of fits) {
       expect(f.empty, 'the slot is reserved before anything is asked').toBeGreaterThan(0);
       /*
