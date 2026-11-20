@@ -58563,3 +58563,44 @@ while the dev sweep runs against the tree:** the ask route logs each ask's total
 (one info line, test first in the route suite), so production's own figures accrue in Vercel's logs where Adam reads them,
 and the next relay carries real presses rather than this bench. Design gets the bench figure now: a press waits on the
 order of ten seconds, up to fifteen.
+
+**The dev sweep did not complete, and what it measured was a machine out of memory, not four workers (20 Nov, 00:01).**
+Started 23:21:49 at load 3.7 behind the commit's check, `npx playwright test --project=chromium --project=mobile
+--workers=4` against `next dev`, the full suite of 1518. The harness stopped it at 00:01 because the system was
+critically low on memory: when read a minute later, swap stood at 9.2 GB used of 11.3, 12 MB of pages free, load 259 on
+the minute, Docker's virtual machine at 75 per cent of a core and Chrome's processes the largest residents; no Playwright,
+Chromium or dev-server process was left behind. In its forty minutes the sweep reached 295 of 1518, with four failures and
+five retries in that first fifth: genre-column-155 at 72 and 106, genres-collapse at 83, grid-99 at 73 (failed its retry
+too) and floor-ceiling-measure at 109, every one a measurement spec of the kind load fails. **None of the three
+pre-registered readings is taken from this run:** they were fixed for a sweep that runs, and this one ran on a machine
+the reboot rule (CLAUDE.md's memory of 4.4 GB clean against 11.6 GB flaking) says is unreadable before it starts. The
+pace says the same: 295 in forty minutes is about three and a half hours for the suite, against the gate's 1115 in
+twenty-two on CI. Not restarted on my own, as the harness's note asks; a reboot is the machine's owner's, and the sweep
+runs again after it, alone, dev first as ruled.
+
+**Both sweeps cancelled, the coordinator's call, and four set by decision (20 Nov, 09:40).** His reason, recorded as his:
+he asked for an experiment Adam cannot supply the conditions for, and the conditions it needed are not the conditions the
+change has to survive. Adam works across several things at once and cannot idle the machine; a sweep on an idle machine
+would measure a state he does not work in, and three load incidents this week say the loaded machine is the normal one.
+Nothing was running to kill: the machine had rebooted thirteen minutes before (load 7.5 against a fifteen-minute average
+of 72), and the dev sweep had already ended on the memory exhaustion above. **The change, one number in one place:**
+`playwright.config.ts` says `workers: 4` for every run, and nothing else carries a count. `ship.sh` passes none and
+refuses `--workers` by name, pointing at the config; `ci-gate.sh` passes the `workers` input only when a run asks for
+one; `gate.yml`'s input is empty by default and the two Playwright steps add `--workers` only when it is set, so the
+gate runs the config's. Until now the gate ran four because ship.sh said so while the config said two locally and one
+on CI, which is how a step-level run never ran what the gate ran (Q79). Tests first and failing: ci-gate's default
+dispatch (received `workers=1`), ship's dispatch (received `4`) and ship's refusal of the flag (exited 0); then green,
+13 passed across the two files. The config's comment is rewritten to the ruling and keeps the Aug 2026 measurements as
+history of a suite a fifth of this size. **His grounds, for a reversible one-line change:** the gate has run four since
+6 Nov with no capacity trouble; a step-level run is a handful of specs, not 1518, so four there is a small load even on
+a busy machine; if it is too much it shows in our own runs within a day, and reverting is one number.
+
+**Step-level runs are now the measurement, and this is what to watch for (the coordinator's instruction).** Failures
+that are load-shaped, not deterministic: timeouts, measurement specs missing a budget or a pixel, failures that pass on
+a retry. Seeing them, report and we drop back; do not chase them as bugs first. A deterministic failure is a defect as
+before. Every step-level e2e run from here on runs at four against `next dev`, the load the gate's reading above said
+was the heavier server, so each is a sample; the first is the next unit's.
+
+Step level: ci-gate and ship suites 13 passed; the config loaded by `playwright test --list` and read back as
+`workers: 4`; gate.yml parses; typecheck 0 errors; lint 0 errors, 6 warnings at HEAD. No gate: the next unit's ship
+dispatches one on both, the first gate at the config's four rather than ship's.

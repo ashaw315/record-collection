@@ -2,7 +2,7 @@
 #
 # The unit's last commit, its push, its gate's dispatch and the run id, as one sequence.
 #
-#     scripts/ship.sh -m "message" [--workers N] path [path...]
+#     scripts/ship.sh -m "message" path [path...]
 #
 # Four incidents, each fixed locally, and each next chain typed by hand and
 # free to omit the guard (the coordinator, 6 Nov): two refusals piped through
@@ -17,14 +17,19 @@
 # NOTES-only commits still go through commit-checked.sh alone and ride with
 # the next unit; ci-gate.sh stays callable for a gate on request.
 # test/repo/ship.test.ts stages every refusal with stub scripts.
+#
+# No worker count passes through here (the coordinator, 20 Nov): the count is
+# playwright.config.ts's, one number in one place, and the gate runs it. Until
+# then this passed four while the config said two, and local never ran what
+# the gate ran. `--workers` is refused by name rather than read as a path, so
+# an old chain fails here and not in commit-checked's refusal of the path.
 set -uo pipefail
 
 here="$(cd "$(dirname "$0")" && pwd)"
-workers=4
 args=()
 while [ $# -gt 0 ]; do
   case "$1" in
-    --workers) shift; workers="${1:?--workers needs a count}"; shift ;;
+    --workers) echo 'ship: --workers is gone; the worker count is playwright.config.ts'"'"'s, one number in one place (a one-off count goes through scripts/ci-gate.sh <ref> [workers])' >&2; exit 2 ;;
     *) args+=("$1"); shift ;;
   esac
 done
@@ -33,7 +38,7 @@ done
 # bash 3.2, and the chain that called it read exit 0 through tail. This script is for the unit's last commit; a unit
 # already committed is pushed and gated by ci-gate.sh.
 if [ ${#args[@]} -eq 0 ]; then
-  echo 'usage: scripts/ship.sh -m "message" [--workers N] path [path...]   (the unit'"'"'s last commit, its push and its gate; a unit already committed is pushed and gated by scripts/ci-gate.sh)' >&2
+  echo 'usage: scripts/ship.sh -m "message" path [path...]   (the unit'"'"'s last commit, its push and its gate; a unit already committed is pushed and gated by scripts/ci-gate.sh)' >&2
   exit 2
 fi
 
@@ -50,7 +55,7 @@ if ! git push -q origin HEAD; then
   exit 1
 fi
 
-"$here/ci-gate.sh" "$head" "$workers"
+"$here/ci-gate.sh" "$head"
 status=$?
 if [ $status -ne 0 ]; then
   echo "ship: pushed ${head}, but the dispatch FAILED with status $status." >&2

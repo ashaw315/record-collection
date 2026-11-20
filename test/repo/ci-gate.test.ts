@@ -48,16 +48,17 @@ describe('scripts/ci-gate.sh dispatches the gate on a full commit id', () => {
   /* A commit every remote branch holds: the oldest on origin/main is on no other machine's edits. */
   const pushed = git('rev-list', '--max-parents=0', 'origin/main').split('\n')[0];
 
-  it('resolves a seven-character id to the forty the workflow checks out', () => {
+  /* No worker count by default (the coordinator, 20 Nov): the gate runs playwright.config.ts's four, one number in one place; a count is passed only when a run asks for one. */
+  it('resolves a seven-character id to the forty the workflow checks out, and passes no worker count', () => {
     const short = pushed.slice(0, 7);
     const { status, calls, output } = dispatch([short]);
     expect(status, output).toBe(0);
-    expect(calls).toEqual(['workflow', 'run', 'gate.yml', '-f', `commit=${pushed}`, '-f', 'workers=1']);
+    expect(calls).toEqual(['workflow', 'run', 'gate.yml', '-f', `commit=${pushed}`]);
     expect(pushed).toMatch(/^[0-9a-f]{40}$/);
     expect(output).toContain(pushed);
   });
 
-  it('passes the workers input through', () => {
+  it('passes a worker count through when one run asks for it', () => {
     const { calls } = dispatch([pushed, '2']);
     expect(calls).toEqual(['workflow', 'run', 'gate.yml', '-f', `commit=${pushed}`, '-f', 'workers=2']);
   });

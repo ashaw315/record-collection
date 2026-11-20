@@ -73,47 +73,31 @@ export default defineConfig({
    */
   retries: process.env.CI ? 2 : 1,
   /**
-   * TWO locally, not Playwright's default — reduced from three on 2026-08-14.
+   * **FOUR, everywhere, and set here alone (the coordinator, 20 Nov).** The
+   * gate had run four since 6 Nov (ship.sh passed it) while this said two for
+   * local and one for CI, so a step-level run never ran what the gate ran, and
+   * Q79's cross-worker race escaped step level for that reason. Decided rather
+   * than measured: the sweep that was to measure four on this machine was
+   * cancelled, because the machine is never idle while Adam works, and an idle
+   * measurement would describe a state the change does not have to survive.
+   * The grounds: two weeks of the gate at four with no capacity trouble; a
+   * step-level run is a handful of specs, so four there is a small load; and
+   * reverting is this one number. **Step-level runs are the ongoing
+   * measurement**: load-shaped failures (timeouts, measurement specs, a pass
+   * on retry) are reported and the number dropped back, never chased as bugs
+   * first. Nothing else sets a count: ship.sh passes none and gate.yml runs
+   * the config's unless a run is dispatched with one.
    *
-   * **This is MITIGATION, not diagnosis.** Three flakes accumulated across
-   * three different spec files (`record-form`, `manage`, `collection-filters`),
-   * every one load-dependent and every one passing in isolation. Measured
-   * again, full suite each time:
-   *
-   * | workers | runs | flaky | wall clock |
-   * |---|---|---|---|
-   * | 3 | 2 | **2** — a different spec each time | 5.1m |
-   * | **2** | **3** | **0** | 6.0-6.3m |
-   *
-   * Something is genuinely SHARED between concurrent workers — most likely test
-   * data in the one database they all use. Fewer workers makes collisions
-   * rarer, not impossible, so a flake here later is not a surprise and not a
-   * refutation. The cost is about a minute per run, which is worth paying
-   * against a flake on every run.
-   *
-   * The original reduction from ~6 to 3, still the larger effect:
-   *
-   * The default is roughly half the cores — ~6 on a 12-core machine — and every
-   * one of them drives ONE dev server. Measured 2026-08-12, three full runs at
-   * each setting:
-   *
-   * | workers | result |
-   * |---|---|
-   * | default (~6) | 1-6 failures per run: `manage` timing out at 30s, and `ECONNRESET` on setup POSTs across four other files |
-   * | **3** | **278 passed, zero failures, zero flaky, twice** |
-   *
-   * The failures were never in the app. `ECONNRESET` is the dev server dropping
-   * connections it cannot accept, and the `manage` timeout is the same
-   * saturation reaching a test that does four sequential round trips. Both
-   * vanish when the server is not oversubscribed.
-   *
-   * Wall clock is unchanged (~4.9m vs ~4.6m): the bottleneck was the server, so
-   * more workers bought contention rather than throughput.
-   *
-   * **This is why the `manage` flake survived four investigations** — every one
-   * looked at the test and the component, and the cause was in this line.
+   * The history, kept because every earlier cut was mitigation and the shared
+   * database it pointed at is still shared: Aug 2026, the default of about six
+   * against one dev server gave 1 to 6 failures a run, `manage` timing out and
+   * `ECONNRESET` on setup POSTs, and three was clean twice at 278 tests; 14
+   * Aug, three flaked two runs of two across three files and two was clean
+   * three times, about a minute slower. Those figures are of a suite a fifth
+   * of this one's size against `next dev`; the gate's are of 1115 against a
+   * build. A flake here later is information, not a refutation.
    */
-  workers: process.env.CI ? 1 : 2,
+  workers: 4,
   /**
    * `list` alongside `html` so retried tests are VISIBLE in the terminal.
    *

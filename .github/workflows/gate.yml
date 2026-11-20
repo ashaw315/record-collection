@@ -28,8 +28,9 @@ on:
         description: The commit to gate, its full id
         required: true
       workers:
-        description: Playwright workers. 1 by default, the coordinator, 2 Nov. Workers share each job's database, and that has flaked three specs five times.
-        default: '1'
+        description: Playwright workers. Empty, the default, runs playwright.config.ts's count (four, the coordinator, 20 Nov), one number in one place; a count here overrides it for this run alone.
+        required: false
+        default: ''
 
 permissions:
   contents: read
@@ -104,7 +105,7 @@ jobs:
   e2e:
     needs: commit-id
     runs-on: ubuntu-latest
-    # One worker takes about twice two workers' 56 minutes, and a job cut off reports nothing.
+    # Four workers took 22 minutes on 19 Nov and one about twice two workers' 56; a job cut off reports nothing.
     timeout-minutes: 240
     strategy:
       fail-fast: false
@@ -136,10 +137,11 @@ jobs:
         env:
           PROJECT: ${{ matrix.project }}
           E2E_SERVER: build
+          WORKERS: ${{ inputs.workers }}
         run: |
           LOG="$RUNNER_TEMP/gate-logs/$(git rev-parse --short=7 HEAD)-e2e-$PROJECT.log"
           mkdir -p "$(dirname "$LOG")"
-          npx tsx scripts/run-tests.ts npx playwright test --project="$PROJECT" --output "test-results/$PROJECT" --workers=${{ inputs.workers }} --retries=1 > "$LOG" 2>&1 || true
+          npx tsx scripts/run-tests.ts npx playwright test --project="$PROJECT" --output "test-results/$PROJECT" ${WORKERS:+--workers=$WORKERS} --retries=1 > "$LOG" 2>&1 || true
           tail -5 "$LOG"
           tail -1 "$LOG" | grep -q -- '— OK'
       # The report-only project (the coordinator, 10 Nov): parked tests, record-band-43:33 first, run after the gating
@@ -148,9 +150,10 @@ jobs:
         if: always() && matrix.project == 'chromium'
         env:
           E2E_SERVER: build
+          WORKERS: ${{ inputs.workers }}
         run: |
           LOG="$RUNNER_TEMP/gate-logs/$(git rev-parse --short=7 HEAD)-e2e-report-only.log"
-          npx tsx scripts/run-tests.ts npx playwright test --project=report-only --output "test-results/report-only" --workers=${{ inputs.workers }} --retries=1 > "$LOG" 2>&1 || true
+          npx tsx scripts/run-tests.ts npx playwright test --project=report-only --output "test-results/report-only" ${WORKERS:+--workers=$WORKERS} --retries=1 > "$LOG" 2>&1 || true
           tail -5 "$LOG"
       - uses: actions/upload-artifact@v4
         if: always()

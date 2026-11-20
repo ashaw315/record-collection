@@ -18,7 +18,9 @@
 set -euo pipefail
 
 REF="${1:?usage: scripts/ci-gate.sh <ref> [workers]}"
-WORKERS="${2:-1}"
+# Empty by default (the coordinator, 20 Nov): the gate then runs playwright.config.ts's count, the one place it is
+# set; a count here is a one-off override for the run it names.
+WORKERS="${2:-}"
 # Another dispatch-only workflow takes the same full-id guard (171's CI run, 8 Nov): CI_WORKFLOW names it.
 WORKFLOW="${CI_WORKFLOW:-gate.yml}"
 if [ ! -f "$(git rev-parse --show-toplevel)/.github/workflows/${WORKFLOW}" ]; then
@@ -40,6 +42,10 @@ if [ -z "$(git branch -r --contains "$FULL" 2>/dev/null)" ]; then
   exit 4
 fi
 
-gh workflow run "${WORKFLOW}" -f "commit=${FULL}" -f "workers=${WORKERS}"
-echo "ci-gate: dispatched ${WORKFLOW} on ${FULL} (${REF}), workers ${WORKERS}"
+if [ -n "$WORKERS" ]; then
+  gh workflow run "${WORKFLOW}" -f "commit=${FULL}" -f "workers=${WORKERS}"
+else
+  gh workflow run "${WORKFLOW}" -f "commit=${FULL}"
+fi
+echo "ci-gate: dispatched ${WORKFLOW} on ${FULL} (${REF}), workers ${WORKERS:-from playwright.config.ts}"
 echo "ci-gate: gh run list --workflow=${WORKFLOW} -L 1"

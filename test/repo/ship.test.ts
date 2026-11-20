@@ -30,7 +30,7 @@ vi.setConfig({ testTimeout: underLoad(1_565) });
  *
  * Fails against: a script that pushes or dispatches after a refused commit;
  * one that dispatches after a failed push; one that dispatches a ref other
- * than the pushed head or without the worker count; one that prints the
+ * than the pushed head or with a worker count of its own; one that prints the
  * first run in the list rather than the one whose head is the pushed id.
  */
 const SCRIPT = join(process.cwd(), 'scripts', 'ship.sh');
@@ -93,15 +93,27 @@ describe('ship.sh: commit, push, dispatch, read, each on the previous status', (
     expect(r.output).toMatch(/push/i);
   });
 
-  it('a green commit is pushed, and the pushed head is dispatched with the worker count', () => {
+  /* The count is playwright.config.ts's alone (the coordinator, 20 Nov): ship passes nothing, so the gate runs the config's four, one number in one place. */
+  it('a green commit is pushed, and the pushed head is dispatched with no worker count', () => {
     const s = stage({ commit: 0 });
     writeFileSync(join(s.dir, 'second.txt'), 'second\n');
-    const r = s.run(['-m', 'unit', '--workers', '4', 'second.txt']);
+    const r = s.run(['-m', 'unit', 'second.txt']);
     expect(r.status).toBe(0);
     const head = s.git('rev-parse', 'HEAD');
     expect(s.remoteHead(), 'the remote holds the new head').toBe(head);
     expect(r.calls.filter((c) => c.startsWith('commit-checked'))).toEqual(['commit-checked -m unit second.txt']);
-    expect(r.calls.filter((c) => c.startsWith('ci-gate'))).toEqual([`ci-gate ${head} 4`]);
+    expect(r.calls.filter((c) => c.startsWith('ci-gate'))).toEqual([`ci-gate ${head}`]);
+  });
+
+  it('refuses --workers by name before any commit, and says where the count lives', () => {
+    const s = stage({ commit: 0 });
+    const before = s.remoteHead();
+    writeFileSync(join(s.dir, 'second.txt'), 'second\n');
+    const r = s.run(['-m', 'unit', '--workers', '4', 'second.txt']);
+    expect(r.status).not.toBe(0);
+    expect(r.calls).toEqual([]);
+    expect(s.remoteHead(), 'nothing pushed').toBe(before);
+    expect(r.output).toContain('playwright.config.ts');
   });
 
   it('prints the run whose head is the pushed id, not the first in the list, as its last line', () => {
