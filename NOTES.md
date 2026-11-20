@@ -58516,3 +58516,50 @@ passed, 1 skipped, ledger clean; report-only 4 passed; mobile 397 passed, 4 skip
 44663107073 on 731f22b5 (Q77 unit A, the fifth drop's intake, Q81): unit 5388 passed, 3 skipped; chromium 1115 passed, 1
 skipped, ledger clean; report-only 4 passed; mobile 397 passed, 4 skipped; every half OK, 02:46Z to 03:12Z. Both at four
 workers, nothing else on the runner. The clock-alignment assertions ran on both gates' chromium halves without a word.
+44667053519 on 3838f892 (Q79's fix and Q77 B1): unit 5392 passed, 3 skipped; chromium 1115 passed, 1 skipped, ledger
+clean; report-only 4 passed; mobile 397 passed, 4 skipped; every half OK, 03:20Z to 03:42Z, four workers. record-page-8a
+ran its ten under the per-worker key without a word. 44669691341 on 4768912e (the timing instrument) dispatched 03:44Z.
+
+**The sweep's shape ruled, and its reading pre-registered before either run (the coordinator, 19 Nov, late).** Dev first,
+then a build, both at four workers, both projects, full suite. Dev is the primary test, not the lesser one: step level is
+where Q79 escaped and step level runs against dev, and `next dev` compiles on demand while a build serves prebuilt
+assets, so dev is the heavier server; passing four against a build would not say four is safe where it actually runs.
+**The reading, fixed now so it cannot be fitted afterwards:** clean on dev, set four everywhere, the ship script passing
+nothing, one number in one place, and the capacity question closes; flakes on dev and clean on build, four is right for
+the gate and wrong for local-against-dev, "one number in one place" is not available, and the real question becomes
+whether local should serve a build at all, met before choosing; flakes on both, the gate's own four is suspect, a larger
+finding than the config. **The difference that remains either way, written plainly:** setting workers to four closes one
+of two gaps; local still serves dev while the gate serves a build, and that stays so, since a build in front of every
+step-level run would cost the inner loop more than the symmetry is worth. **A green step level is not gate-equivalent,
+and build-only behaviour is caught on the gate alone.**
+
+**Incidental, from the slot check (the coordinator):** before unit A, production drew "Nothing fits." for a
+requirement-unmet verdict, which is defect 3 live in front of Adam, not only in a capture. His press came after unit A,
+so it should have read "None has all of it."; he is looking, and the address, view and width come if he still sees none.
+
+**One design question, not two (the coordinator, for whoever relays next):** Design holds the in-flight press, off hold
+tonight, and Q72's pending state while a new record's description arrives, about twenty-three seconds by the timing
+above. Both are how the app shows work in progress; ruled separately they risk two answers to one question. They go to
+Design together.
+
+**The ask's latency, the one Adam feels, measured in its largest part (the coordinator, 19 Nov, late: "press to answer
+drawn, on production, at the effort the pick runs, several presses with the slowest named").** What can be measured from
+here is the model call as the route makes it: `measure-reason-lengths` gains each ask's milliseconds and `--sample <n>`,
+and eight phrases were asked of askPick against the 55 held drafts, the pool production asks over, at the pick's default
+effort (low; production's effort is whatever Vercel's ASK_PICK_EFFORT holds, unset here, so the default) and default
+model:
+
+| | model call |
+|---|---|
+| min | 7.3s |
+| median | 12.3s |
+| max | 15.2s, "loud guitars for cleaning the flat" |
+
+Eight of eight answered (one requirement-unmet), 26 reasons, 153 to 179 characters, median 164. **What this is not:**
+press to drawn on production adds the route's three reads (the latch, the pool's matched texts, the title key), Vercel's
+function and its cold start, the network to the phone, and the client's draw, none of which run here; the model call is
+the bulk, and the whole is Adam's to feel or production's to log. **Proposed, not built, since a source change cannot land
+while the dev sweep runs against the tree:** the ask route logs each ask's total and model milliseconds through the logger
+(one info line, test first in the route suite), so production's own figures accrue in Vercel's logs where Adam reads them,
+and the next relay carries real presses rather than this bench. Design gets the bench figure now: a press waits on the
+order of ten seconds, up to fifteen.

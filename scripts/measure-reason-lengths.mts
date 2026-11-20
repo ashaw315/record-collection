@@ -49,9 +49,16 @@ const pool: PickRecordText[] = drafts.filter((d) => d.text !== null).map((d) => 
 
 type Row = { phrase: string; verdict: string; reasons: Array<{ id: string; chars: number; reason: string }>; failed?: string };
 const rows: Row[] = [];
-for (const phrase of PHRASES) {
+/* --sample <n> (the coordinator, 19 Nov): the first n phrases, for a timing that needs several presses, not twenty. */
+const sampleAt = args.indexOf('--sample');
+const asked = sampleAt === -1 ? PHRASES : PHRASES.slice(0, Number(args[sampleAt + 1]) || PHRASES.length);
+/* Each ask's milliseconds (19 Nov): the model call as the route makes it, the pool's text and all; the latency Adam feels is this plus the route's reads and the client's draw. */
+const times: Array<{ phrase: string; ms: number }> = [];
+for (const phrase of asked) {
+  const t0 = Date.now();
   const result = await askPick(phrase, pool, []);
-  if (!result.ok) { rows.push({ phrase, verdict: 'failed', reasons: [], failed: result.reason }); console.log(`${phrase}: FAILED, ${result.reason}`); continue; }
+  times.push({ phrase, ms: Date.now() - t0 });
+  if (!result.ok) { rows.push({ phrase, verdict: 'failed', reasons: [], failed: result.reason }); console.log(`${phrase}: FAILED, ${result.reason}, ${times.at(-1)?.ms}ms`); continue; }
   const reasons = result.picks.map((p) => ({ id: p.id.slice(0, 8), chars: [...p.reason].length, reason: p.reason }));
   rows.push({ phrase, verdict: result.verdict, reasons });
   console.log(`${phrase}: ${result.verdict}, ${reasons.length} reason(s), ${reasons.map((r) => r.chars).join(', ')} chars`);
@@ -61,7 +68,10 @@ const lengths = rows.flatMap((r) => r.reasons.map((x) => x.chars)).sort((a, b) =
 const at = (q: number) => lengths[Math.min(lengths.length - 1, Math.floor(q * lengths.length))];
 const stamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
 const out = join(process.cwd(), '.matched', `reason-lengths-${stamp}Z.json`);
-writeFileSync(out, JSON.stringify({ at: new Date().toISOString(), model: process.env.ASK_PICK_MODEL ?? 'default', effort: process.env.ASK_PICK_EFFORT ?? 'default', pool: pool.length, phrases: PHRASES.length, lengths, rows }, null, 2));
+writeFileSync(out, JSON.stringify({ at: new Date().toISOString(), model: process.env.ASK_PICK_MODEL ?? 'default', effort: process.env.ASK_PICK_EFFORT ?? 'default', pool: pool.length, phrases: asked.length, lengths, rows, times }, null, 2));
 const over = (n: number) => lengths.filter((l) => l > n).length;
+const sortedMs = times.map((t) => t.ms).sort((a, b) => a - b);
+const slowest = times.reduce((s, t) => (t.ms > s.ms ? t : s), times[0]);
 console.log(`measure-reason-lengths: ${rows.length} phrases, ${rows.filter((r) => r.failed).length} failed, ${lengths.length} reasons; min ${lengths[0]}, p10 ${at(0.1)}, median ${at(0.5)}, p90 ${at(0.9)}, max ${lengths[lengths.length - 1]}; over 108: ${over(108)}, over 120: ${over(120)}, over 140: ${over(140)}, over 160: ${over(160)}; written ${out}`);
+console.log(`each ask's model call: min ${sortedMs[0]}ms, median ${sortedMs[Math.floor(sortedMs.length / 2)]}ms, max ${sortedMs[sortedMs.length - 1]}ms, the slowest "${slowest.phrase}"; the pool ${pool.length} records of text, effort ${process.env.ASK_PICK_EFFORT || 'low (the default)'}`);
 process.exit(0);
