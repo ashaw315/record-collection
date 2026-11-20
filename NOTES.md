@@ -58455,6 +58455,35 @@ transaction after both return means a cut leaves neither, as agreed. Instrumente
 now records each draft's milliseconds in drafts.json and prints it (the ABOUT script already did), so the next real
 drafting run supplies better figures without a timing run. Run alone at load 2 to 3 while a CI gate ran on GitHub.
 
+**Three more production results, and the mechanism question answered (Adam, relayed by the coordinator, 19 Nov, late).**
+"quiet and warm" gave Nashville Skyline. "quiet and sad" gave Carpenters, reason "Restrained singing and softly swelling
+arrangements make this a sad, quiet evening listen, though a few brisk songs briefly interrupt the ballad mood." "feels
+like winter" gave Kraftwerk, The Man-Machine, reason "Cool synth tones, impassive voices and uncluttered machine rhythms
+suggest a crisp winter night, with enough gentle glow to feel inviting rather than bleak." "big band but recorded
+recently" gave Glenn Miller labelled Closest available, reason "This gives you full swing-orchestra reeds and punching
+brass for dancing or dinner, but offers period atmosphere rather than an established recent recording." **Findings,
+his.** The pick infers rather than word-matches, and Kraftwerk is the proof: "winter" appears in no stored description;
+its text carries "cold, tidy, friendly electronic pop", "flat and unemotional", "short on clutter" and "glowing...
+gentle vocals", and the reason composed those into a crisp winter night and then distinguished inviting from bleak, the
+judgement the phrase requires; the discriminating result the "quiet, alone, late" run could not give. Carpenters' reason
+is composed across four stored sentences rather than lifted from one and volunteers a caveat, the brisk songs, the model
+qualifying its fit rather than selling it; recorded with it that "sadness" does appear in that record's text, so this one
+alone would not have settled the mechanism, Kraftwerk did. The requirement-unmet path ran correctly on its first real
+data: what was asked, what this has instead, that it is closest in feel, all three present, and the Closest available
+label drew. **One check, possibly a defect:** Adam reported no slot message above the Glenn Miller card, where "None has
+all of it." (9dae803d, gate 44663107073 OK) should stand; he had not noticed the reasons either until asked, so it may be
+above his eyeline, and he is looking. **Checked, two ways.** The build: pick-reasons-3a gains Adam's scene, the far view
+at 390 × 844 with a requirement-unmet reply, asserting the slot reads "None has all of it.", is drawn and one line high,
+stands above the stand-in's cell, and still holds the message after the cell has drawn; 1 passed in 17.3s on chromium,
+beside the grid at 1440 and the shelf the file already held. A test that passed first, kept as the scene it is: its
+failure is a slot empty, cleared or beneath the cell, none of which the build does. Production: Vercel's deployments on
+GitHub show unit A reached production with f0a89638's deployment, created 02:23Z on 20 Nov and succeeded, since 9dae803d
+was pushed with that intake and not alone; 731f22b5 (02:46Z), 3838f892 (03:21Z) and 4768912e (03:44Z) followed, each
+successful. Before 02:23Z production drew "Nothing fits." for a requirement unmet, which is also a message, not none. So
+neither the build nor the deploy explains an empty slot, and the eyeline is the likeliest: in the band host the slot
+stands with the control, above the count line and 24 above the first cell, and Adam had scrolled to the card. If he still
+sees none, what is needed is the address he pressed on (the view and its width), which the coordinator relays.
+
 **Q77 B1 built: the re-ask once (the coordinator's go, 19 Nov, late).** Test first in pick.test, stubbing what the API's
 strict maximum never produces: a reason over REASON_MAX. Three failed before the build (one call made where two were
 expected; the answer drawn with its over-bound reason), one passed first, the guard that nothing is asked again when

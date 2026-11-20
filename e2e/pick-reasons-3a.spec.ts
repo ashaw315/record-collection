@@ -210,6 +210,34 @@ test('in the grid, a stand-in is drawn labelled "Closest available" beside the m
   }
 });
 
+/*
+  Adam's phone (19 Nov, the coordinator's check): a requirement unmet on production drew the Closest available card and
+  its reason, and he reported no slot message above it. The slot's words shipped the same evening (9dae803d). This is
+  that scene at 390 × 844, the far view's band host: the message stands in the slot, above the stand-in's cell, drawn.
+  Fails against a slot that is empty or cleared after the stand-in draws, and against one drawn beneath the cell.
+*/
+test('on the phone at 390 × 844, a requirement unmet draws "None has all of it." in the slot above its stand-in', async ({ page }) => {
+  const { artistId, records } = await fixture(page, 2);
+  try {
+    await page.route('**/api/ask', (route) => route.fulfill({ json: standIn('requirement-unmet', records.slice(0, 1)) }));
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(`/?artistId=${artistId}`);
+    await wallMeasured(page);
+    await ask(page);
+    const slot = control(page).locator('[data-pick-slot]');
+    await expect(slot).toHaveText('None has all of it.');
+    await expect.poll(() => consolations(page), { timeout: 30_000 }).toEqual([{ label: 'Closest available', reason: CONSOLATION }]);
+    const drawn = await slot.evaluate((el) => { const r = el.getBoundingClientRect(); return { bottom: r.bottom, height: r.height, visible: el.getClientRects().length > 0 && getComputedStyle(el).visibility !== 'hidden' && getComputedStyle(el).opacity !== '0' }; });
+    expect(drawn.visible, 'the slot is drawn, not hidden').toBe(true);
+    expect(drawn.height, 'one line, not collapsed').toBeGreaterThan(10);
+    const cellTop = await page.locator('[data-pick-answer]').filter({ visible: true }).first().evaluate((el) => el.getBoundingClientRect().top);
+    expect(drawn.bottom, 'above its stand-in').toBeLessThanOrEqual(cellTop);
+    await expect(slot, 'and still there once the stand-in has drawn').toHaveText('None has all of it.');
+  } finally {
+    await removeRecordsFor(artistId);
+  }
+});
+
 test('on the shelf, a stand-in is pulled, with the message in the slot and the label and reason in its facts', async ({ page }) => {
   const { artistId, records } = await fixture(page, 2);
   try {
