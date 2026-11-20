@@ -146,6 +146,7 @@ The stack in `SPEC.md` §2 is fixed. Beyond it:
 - Server-only code must never be importable from a client component. Mark server modules with `import 'server-only'`.
 - Database access lives in a query layer, not inline in route handlers.
 - Comments explain *why*, never *what*. Do not narrate the code.
+- **When a fix makes a comment false, the comment is part of the fix (the coordinator, 19 Nov).** record-page-8a's comment celebrated a 200 from a second run reusing the first run's pressings, behaviour the cleanup's pressing half ended on 11 Nov; the comment outlived its path by eight days and kept the shared row alive, and the row raced on the gate (Q79). A comment describing a path that no longer exists is how a defect survives its reason. Rewrite it to what is true now, and point at where the claim it made is actually held.
 
 ---
 

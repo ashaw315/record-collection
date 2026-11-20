@@ -26,17 +26,19 @@ function makeSuffix(): string {
 }
 
 /**
- * 201 created, or 200 reused.
+ * 201 created, or 200 reused: both are correct answers from the pressings route, since §4 makes pressings SHARED and
+ * found-or-created, and the endpoint documents 200 for a reuse.
  *
- * **Both are correct, and asserting 201 alone was a domain error on my part.**
- * §4 makes pressings SHARED and found-or-created: two records of the same
- * pressing are meant to resolve to one row, so the endpoint documents 200 for a
- * reuse. The first run created them and the second reused them, which is the
- * schema working.
- *
- * Suffixing the catalog number per run would have made this green by making
- * every pressing unique — hiding the one behaviour CLAUDE.md §8 calls the worst
- * bug this app can ship.
+ * **But this file no longer sees a 200 except by racing itself (Q79, the coordinator, 19 Nov).** An earlier comment
+ * here celebrated the second run reusing the first run's pressings. That path ended on 11 Nov, when the cleanup's
+ * pressing half began deleting a record's pressing once nothing references it: within a worker every post since has
+ * been a 201, and the only 200 left was two workers posting the same key inside sixteen milliseconds, one of them then
+ * deleting the row from under the other (gate 44611551904, "No pressing with that id exists"). The comment outlived
+ * its path by eight days and kept the shared row alive. §4's found-or-create is held where it is actually asserted:
+ * test/integration/api/pressings.test.ts, six assertions of a 200 on a repeated post against the real database. So the
+ * key here is suffixed per worker (Playwright's parallelIndex), which removes the shared mutable row rather than racing
+ * it more politely; re-finding on the 400 would have masked a pressing genuinely missing, and deleting the file's
+ * pressings last would have narrowed the window once per worker's afterAll, not closed it.
  */
 async function post(page: Page, path: string, data: unknown) {
   const response = await page.request.post(path, { data, failOnStatusCode: false });
@@ -139,7 +141,8 @@ async function createRecord(page: Page, which: Case, suffix: string): Promise<st
     which.catalogNumber === null && which.matrixRunout === null && which.yearPressed === null
       ? null
       : await post(page, '/api/pressings', {
-          catalogNumber: which.catalogNumber,
+          /* The pressing's key is (catalog number, country, year); the worker's index keeps each worker's row its own (Q79), and the page's pressing line still contains the catalog number. */
+          catalogNumber: which.catalogNumber === null ? null : `${which.catalogNumber} w${test.info().parallelIndex}`,
           matrixRunout: which.matrixRunout,
           yearPressed: which.yearPressed,
           countryPressed: which.countryPressed,

@@ -58373,3 +58373,58 @@ a change's outcome, and the two files Design names never reached a ref here at a
 report; it is Design's list against Code's that shows a file never relayed. Step level: export-handoff, landed-list and
 code-region suites 52 passed; lint 0 errors, 6 warnings at HEAD. The intake is shared infrastructure, so the unit ships
 under a gate.
+
+**Q79 fixed as approved (the coordinator, 19 Nov, late): the pressing keyed per worker.** record-page-8a's record helper
+suffixes the catalog number with Playwright's parallelIndex, the worker slot, so each worker's pressing is its own row
+and the page's pressing line still contains the catalog number the spec asserts; the pressing's key is (catalog number,
+country, year) and the matrix is deliberately not part of it (queries/pressings.ts), so the catalog number is the field
+that must differ. The comment is half the fix, as he said: the old one celebrated a second run reusing the first run's
+pressings, a path the cleanup's pressing half ended on 11 Nov, and it outlived its path by eight days and kept the shared
+row alive; the new one says the only 200 the file could see was the race itself, and points at
+test/integration/api/pressings.test.ts, six assertions of a 200 on a repeated post, where §4's found-or-create is held.
+Standing form in CLAUDE.md §6: when a fix makes a comment false, the comment is part of the fix. No RED to show: the
+race cannot be staged on demand, and the gate's flake was its failing run; the spec at four workers locally, as the gate
+runs, 10 passed twice (36.7s and 30.2s, load 17).
+
+**The gate runs at four workers and step level does not (the coordinator, 19 Nov, drawing the consequence I reported
+without drawing).** `scripts/ship.sh` has defaulted `workers=4` since be966711 (6 Nov) and passes it to `ci-gate.sh`; the
+config runs two locally and one under CI by itself; the gate's logs read "using 4 workers". So a step-level run and a gate
+are not the same experiment, and a step-level pass cannot catch a cross-worker race by construction, which is how Q79
+escaped. Q9's last clause ("the CI gate at four workers once a four-worker run is clean") described a precondition
+bypassed, not met, and is rewritten; Q24, Q38 and Q42 say the gate already runs there. **The proposal, not applied:**
+make the config say four, so local reproduces the gate, the environment that matters. The cost, from the config's own
+measurements: those are old (278 tests, Aug and Sep: the default of about six oversubscribed the one dev server with
+ECONNRESETs and a 30s timeout; three workers flaked two runs of two; two was clean at about a minute's cost per run), and
+the suite is now 1115 tests on chromium, so the figure that matters is a fresh one. Measure before setting: one
+`sweep-twice` of the full suite at four workers locally, flakes and wall clock against the last two-worker run, and if it
+is clean set `workers: 4` for local and CI alike with the ship script passing nothing, one number in one place. If four
+flakes locally on the single dev server, the alternative is the ship script dropping its override so the gate matches the
+config at one, which halves the gate's throughput (gate.yml: one worker takes about twice two's 56 minutes) and keeps
+local blind to races the gate would otherwise find. I would take the first and measure it first.
+
+**Q77 B1 built: the re-ask once (the coordinator's go, 19 Nov, late).** Test first in pick.test, stubbing what the API's
+strict maximum never produces: a reason over REASON_MAX. Three failed before the build (one call made where two were
+expected; the answer drawn with its over-bound reason), one passed first, the guard that nothing is asked again when
+every reason is within the bound, which fails against a build that re-asks always and not against today's. The build:
+askPick reads the first reply, and for the records whose reasons are over the bound (counted in code points, as the
+schema counts) posts a second request carrying those records alone, their texts, and a line saying it is asking again
+and why; a reason that comes back within the bound replaces the first in its place with its claims rechecked, a record
+still over is left out with the reason named ("its reason was over the bound of 188 when asked again"), never a third
+request; where an answer is left with nothing the pick refuses, naming the bound, and the route's 502 reaches the slot as
+"Not answered." until Design's rewording of the no-answer slot lands (B2); a stand-in over the bound twice leaves the
+verdict with no stand-in. The handoff's bullet "Re-ask an over-bound reason once" is built in its first two sentences;
+its third and fourth, the slot and the run kept, are B2's. Step level: pick suite 21 passed, ask route suite 20 passed;
+typecheck 0 errors; lint 0 errors, 6 warnings at HEAD; build compiled.
+
+**Q72's budget, cost and atomicity (the coordinator's three questions, 19 Nov, late), answered before building.** The
+budget: Vercel's function duration page (read 19 Nov, last updated 24 Aug 2026) gives, with fluid compute on by default,
+a default of 300 seconds on every plan, the maximum 300 on Hobby and 800 on Pro; this project's vercel.json sets no
+duration, so the default 300 applies, and Next's `after()` work runs within the function's maxDuration, which the add
+route can pin with `export const maxDuration` rather than inherit. The cost end to end is not measured: the drafting
+script records each ABOUT draft's milliseconds in its report but no run's figures are in the repo, and the matched-text
+script records none, so the first step of the build is to time both calls and the Discogs fetch over the 55 with the
+scripts that exist, and set the route's maxDuration from the p90 with room. The atomicity: both texts written in one
+transaction after both calls have returned, and nothing written before; a cut between the calls then stores neither,
+which is the row's failure behaviour. No reason it is not the answer: the Neon HTTP driver's transaction is the one
+CLAUDE.md §2 requires verified before deploy, and test/integration/neon-transactions.test.ts is where that verification
+lives, so the write goes through the same path. The embedding: not written, agreed.
