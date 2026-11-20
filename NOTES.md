@@ -58664,3 +58664,36 @@ coordinator), so a baseline exists before anyone reads a flake against it.
 
 Step level: ask route suite 22 passed; the four ask specs on chromium at four, 52 passed; typecheck 0 errors; lint 0
 errors, 6 warnings at HEAD; build compiled in 18s at load 6.5.
+
+**The take proposal withdrawn, the coordinator's, with his reason (20 Nov).** His proposed fix, a prompt carrying the
+take, was wrong in the worst available direction: it would have turned one wait and four instant presses into five
+waits, on the press-until-something-appeals loop that is the whole feature. Recorded as his. **And the third case is not
+a defect.** It follows from §P.2's own rule that the count follows the answer's form: a pull shows one record, so four can
+wait in a queue; cells show five at once, so none can. The grid must pay per press as built, and no fix exists that does
+not change what the pick is asked for.
+
+**Three Design items that are one question (supersedes "One design question, not two" above; for whoever relays next).**
+All three are how the app behaves while it is working, and ruling them separately risks three different answers:
+
+1. **The in-flight press** (off hold since 19 Nov): what a press shows while its request is out; today a press while one
+   is in flight does nothing (PickControl.tsx, interim, the coordinator, 14 Nov).
+2. **Q72's pending state** while a new record's description arrives: about twenty-three seconds by the measurement of
+   19 Nov (Discogs median 1.3s, ABOUT 8.0s, matched text 13.5s, total 22.7s, max 25.1s).
+3. **The pick's shape per host, one lever and a ruling, not a build.** The same trade in both directions:
+   - The shelf today: one slow press (the model call, 7.3 to 15.2s on the bench), then four free. One model call per run.
+   - The grid today: a wait on every press. One model call per press.
+   - The grid could have the shelf's shape by asking the pick for more than it draws, ten and showing five, trading a
+     slower first press for instant ones after. That changes §P.2's cap of five and the pick's instruction, so it is
+     Design's and Adam's.
+   - The shelf could have the grid's shape by carrying the take, which the coordinator proposed and withdrew above.
+     Nobody should want that.
+   Design needs, before ruling: a host that waits five seconds and a host that waits twelve may want different
+   indications, and today the shelf's host waits the full call once per run while the grid's waits it every press.
+
+**Open, from the coordinator to Adam:** which host he pressed on last night. If the shelf, he has felt the one-wait shape
+and not the per-press one, and the grid is worse than he knows, which Design needs before it rules. The production lines
+(`take 1` against `take 5`, the model figure) will say the same from his presses as they accrue.
+
+Accepted as reported by the coordinator: the failed pick's figures, the empty-input path proven by gate 44757619832,
+the second step-level sample. Load figures continue on every step-level run for a few days. Record only; rides with the
+next unit.
