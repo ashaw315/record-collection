@@ -1,6 +1,6 @@
 import { config } from 'dotenv';
 import { readLedger, saveStart } from './ledger';
-import { closeTestDb, holdTestDatabase, truncateAll, getTestDb } from '../test/helpers/db';
+import { assertTestDatabaseReachable, closeTestDb, holdTestDatabase, truncateAll, getTestDb } from '../test/helpers/db';
 import { seedSeventeen } from './seventeen';
 
 /**
@@ -41,6 +41,9 @@ export default async function globalSetup(): Promise<void> {
   // test/repo/dotenv-quiet.test.ts for why that is a contamination risk rather
   // than mere noise.
   config({ path: '.env.test', quiet: true });
+
+  /* Named before anything else touches it: a run with Docker down says which port and which command (the coordinator, 21 Nov). */
+  await assertTestDatabaseReachable(process.env.TEST_DATABASE_URL ?? '');
 
   await truncateAll();
 

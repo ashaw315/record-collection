@@ -23,6 +23,32 @@ export function assertLocalTestDatabase(connectionString: string | undefined): s
   return assertLocalHost(connectionString);
 }
 
+/**
+ * **Reachable, or said by name (the coordinator, 21 Nov).** Both global setups call this before anything touches the
+ * database. Without it a run with Docker down printed `Command failed: npx drizzle-kit migrate` and `No test files
+ * found, exiting with code 1`, nothing naming Postgres or the port (staged 21 Nov), and commit-checked refused with "the
+ * check failed", which reads as a broken test. Adam quits Docker between sessions, so this is the ordinary case, and
+ * CLAUDE.md §2's three states apply: absent is honestly reported, and it is reported here rather than skipped.
+ */
+export async function assertTestDatabaseReachable(connectionString: string, timeoutMs = 3_000): Promise<void> {
+  const checked = assertLocalTestDatabase(connectionString);
+  const url = new URL(checked);
+  const address = `${url.hostname}:${url.port || '5432'}`;
+  const probe = new Pool({ connectionString: checked, connectionTimeoutMillis: timeoutMs, max: 1 });
+  try {
+    await probe.query('SELECT 1');
+  } catch (error) {
+    // pg's refused connection is an AggregateError with an empty message and a code; the code is the cause a reader
+    // needs (seen as `is not reachable ()` on 21 Nov, Docker up and the container absent).
+    const code = typeof error === 'object' && error !== null && 'code' in error ? String(error.code) : '';
+    const message = error instanceof Error ? error.message : String(error);
+    const cause = [code, message].filter((part) => part !== '').join(': ');
+    throw new Error(`the test database at ${address} is not reachable (${cause}); start Docker with npm run db:test:up`);
+  } finally {
+    await probe.end().catch(() => undefined);
+  }
+}
+
 let pool: Pool | undefined;
 let db: ReturnType<typeof drizzle> | undefined;
 

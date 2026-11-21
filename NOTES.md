@@ -59059,3 +59059,70 @@ which writes their facts as it goes. Different artists, different reads; both ar
     node --env-file=.env.local --conditions=react-server --import tsx scripts/resolve-artist-facts.mts --apply
 
 Record only; rides with the next unit.
+
+**Docker, staged and answered (the coordinator's question, 21 Nov), and his correction recorded as his.** He had said
+the integration tests need it; staged, it is every vitest run including a pure unit file, because the global setup
+migrates before any file runs. What needs Docker: every vitest run, commit-checked and ship.sh, every Playwright run
+(e2e/global-setup seeds the same database), and the wsproxy for the Neon-driver transaction tests. What does not:
+typecheck, lint, build, `playwright test --list`, and every drafting, audit, measurement and resolver script, which read
+`.env.local` and talk to Neon; the app on Vercel never touches it. How it failed: loudly in exit code, confusingly in
+words, `Command failed: npx drizzle-kit migrate` and `No test files found, exiting with code 1`, nothing naming Postgres
+or the port. So Adam can quit Docker between sessions, which he now does, and nothing in his daily path needs it.
+
+**The migration's cost per run, measured for the conditional-setup question: about two seconds, so ignored as he said.**
+`drizzle-kit migrate` alone, three runs: 1.90, 1.69, 1.48s; a pure unit file's whole vitest run, twice: 3.34, 3.44s (load
+4.5). Not worth a conditional setup; the false dependency costs two seconds and the probe below makes it honest.
+
+**The probe, built (test first, with the run itself staged):** `assertTestDatabaseReachable` (test/helpers/db.ts) opens
+one connection with a three-second limit and `SELECT 1`, and fails with "the test database at localhost:5433 is not
+reachable (cause); start Docker with npm run db:test:up"; the vitest global setup calls it before migrating. Its tests
+(test/repo/test-database-probe.test.ts): resolves on the live database; fails by name on a closed port the test opens and
+closes; and a nested `vitest run` of a pure unit file with TEST_DATABASE_URL on a closed port fails with the probe's
+message and never prints drizzle's. **Watched failing before the code existed, and in the plainest way:** Adam quit
+Docker between the test's writing and its run, so the run died with the exact message under repair, `Command failed: npx
+drizzle-kit migrate`. The green run waits for Docker; the file carries the pass or the next entry carries the fix.
+
+**Compose had no restart policy on either service; `restart: unless-stopped` added to both.** So the database and the
+proxy come back when Docker Desktop starts, and a container Adam stops by hand stays stopped; `npm run db:test:up`
+remains the fallback. `docker compose config` validates the file; the policy read back from the containers waits for
+the daemon. Gate: none owed by §10's list for the compose file, and this unit's probe touches test/helpers and the global
+setup, which are on it, so the unit is gated anyway.
+
+**Jeff Beck: the class, not the instance (the coordinator's proposal), and the risk he imagined is real but bounded.**
+Proposed: when an import matches an existing artist by name and that row holds no Discogs artist id, write the id just
+resolved, nothing else on the row touched; every artist row that predates the id is the class, and Q72's new record by
+an existing artist is the case that needs the link path to work. **Against it:** a name match can be the wrong row, a
+hand-entered artist Discogs marks with a suffix (Adam's "Darkside", the NYC duo, which Discogs calls Darkside (22))
+matched by an import of the unsuffixed namesake's record (the Austrian Darkside), and writing that id would entrench it:
+the link path would then resolve the row to the wrong MusicBrainz artist and ground the duo's ABOUTs with the wrong
+band's formation and members. **Bounded, because the larger fault already happens in that case today:** the import
+attaches the RECORD to the wrong row with or without the id, and the exact lower-cased name match cannot see a Discogs
+suffix the local name lacks. The id makes the mis-attachment discoverable (a linked MusicBrainz artist whose releases are
+not the row's) where today it is silent. I would build it with one guard: write the id only where no other artist row
+holds it (the duplicate the resolver found would then refuse as held-by-other rather than overwrite). His call; not
+built.
+
+**Later, Docker back (Adam started it): the probe's green run, a second real red on the way, and the policy read back.**
+The daemon was up and the record-collection containers were not, because the policy had not been applied yet, so the
+first run of the probe's own test file met the case for real: `Error: the test database at localhost:5433 is not
+reachable (); start Docker with npm run db:test:up`, at the global setup, before any migration. The message did its job
+and showed one fault of its own: the parentheses were empty, because pg's refused connection is an AggregateError with
+no message text and a `code`. Test first ("carries the cause by its code"), red on `is not reachable ()`, then the cause
+is the code and the message where either exists: `(ECONNREFUSED)`. `docker compose up -d --wait` then recreated both
+containers from the new file, and `docker inspect -f '{{.HostConfig.RestartPolicy.Name}}'` reads `unless-stopped` for
+record-collection-test-db and for record-collection-wsproxy. Step level: test-database-probe, ci-gate and ship, 17
+passed (load 1.7); the Playwright side staged by hand, `TEST_DATABASE_URL` on a closed port with one spec named, and the
+e2e global setup fails with the probe's line, `(ECONNREFUSED)`, 9.9s wall because Next's dev server boots first. **That
+staging is not a committed test, and here is why rather than silence:** the test would spawn Playwright and the dev
+server for a ten-second run per check, on a port a running dev server holds, to cover one import and one call; the
+function and the vitest setup carry the tests, and the Playwright wiring is read, not verified. auth.spec.ts on chromium
+as the sample at four: `Running 11 tests using 4 workers`, 11 passed, 19.3s, no retry, load 2.20 before and 3.10 after.
+typecheck 0 errors, lint 0 errors and 6 warnings, build compiled.
+
+**Q37's landing, read from production rather than from the pasted line (the coordinator's ask):** scripts/
+report-artist-facts.mts, read-only. 49 artists with records. MBID held: 47, missing Blood, Sweat And Tears and Jeff Beck,
+the two known refusals, so the apply's 38 landed (9 held before). Origin held: 47, every MBID holder, so the backfill's
+eight landed too. Formed year held: 28. The 19 MBID holders without one split as the code intends: 16 are Persons
+(formedYear is never written for type Person, §4.1's field is a band's), 12 of them with no cached payload because a
+Person walk writes the facts and then does not cache ("not walked, not cached, and said"), and 3 are Groups MusicBrainz
+has no life-span begin for (Hello Mary, Smerz (2), Water From Your Eyes). Members recorded for 30. Nothing here to fix.

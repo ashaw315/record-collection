@@ -2,6 +2,10 @@ services:
   postgres:
     image: postgres:16-alpine
     container_name: record-collection-test-db
+    # Back when Docker Desktop starts, without `npm run db:test:up` (the coordinator, 21 Nov): Adam quits Docker between
+    # sessions, and every vitest and Playwright run needs this database before its first file. `unless-stopped`, not
+    # `always`: a container he stops by hand stays stopped.
+    restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -34,6 +38,7 @@ services:
   wsproxy:
     image: ghcr.io/neondatabase/wsproxy:latest
     container_name: record-collection-wsproxy
+    restart: unless-stopped
     environment:
       # NOT `APPEND_PORT`: the driver already sends `?address=host:port`, and
       # appending to it produced `postgres:5432postgres:5432` -- "too many
