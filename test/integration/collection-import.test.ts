@@ -196,7 +196,10 @@ describe('importCollection', () => {
     const second = await latestImportRun();
     expect(second?.report.skipped.length, 'the next run replaces it').toBe(9);
     expect(second?.finishedAt).not.toBe(first?.finishedAt);
-    expect(Number((await db.execute(sql`SELECT count(*)::int AS n FROM discogs_import_runs`)).rows[0]?.n), 'every run kept').toBe(2);
+    /* The two stamps distinct at the column's microseconds, not at the ISO string's milliseconds (the sweep of 21 Nov): latent, two imports inside one millisecond being a statement about today's machine. */
+    const runs = (await db.execute<{ n: number; distinct: number }>(sql`SELECT count(*)::int AS n, count(DISTINCT finished_at)::int AS distinct FROM discogs_import_runs`)).rows[0];
+    expect(runs?.n, 'every run kept').toBe(2);
+    expect(runs?.distinct, 'each run with its own finished_at').toBe(2);
   });
 
   /*

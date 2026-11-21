@@ -395,17 +395,16 @@ describe('updated_at trigger', () => {
 
   it('does not change updated_at on SELECT', async () => {
     const artistId = await insertArtist('Void');
-    const first = await db.execute<{ updated_at: Date }>(
-      sql`SELECT updated_at FROM artists WHERE id = ${artistId}`,
+    // Compared in Postgres too (the sweep of 21 Nov): at Date's millisecond, a change inside the same millisecond as
+    // the first read would have read as no change, the one failure this test exists to see.
+    const first = await db.execute<{ updated_at: string }>(
+      sql`SELECT updated_at::text AS updated_at FROM artists WHERE id = ${artistId}`,
+    );
+    const second = await db.execute<{ updated_at: string; same: boolean }>(
+      sql`SELECT updated_at::text AS updated_at, updated_at = ${first.rows[0].updated_at}::timestamptz AS same FROM artists WHERE id = ${artistId}`,
     );
 
-    const second = await db.execute<{ updated_at: Date }>(
-      sql`SELECT updated_at FROM artists WHERE id = ${artistId}`,
-    );
-
-    expect(new Date(second.rows[0].updated_at).getTime()).toBe(
-      new Date(first.rows[0].updated_at).getTime(),
-    );
+    expect(second.rows[0].same, `${first.rows[0].updated_at} then ${second.rows[0].updated_at}`).toBe(true);
   });
 
   it('applies to every table, not just artists', async () => {

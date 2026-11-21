@@ -59381,3 +59381,57 @@ question for after Design's ruling.
 Nothing built. Step level: the two scripts load and run read-only against production; no test changes, no build change.
 Gate 44946760259 on 1d2a9dae in progress at this writing. The three standing items (the two live millisecond tests,
 record-matched-text's header, the ten-versus-five figure delivered) stand.
+
+## 21 Nov, last: the two live false greens fixed and the latent one with them; the matched-text header rewritten by the rule; the ten-run's shortfall is the model's; 680 explained
+
+**The coordinator's go on the sweep (21 Nov):** the count holds, eight with four faulted, two fixed and two live. Fix the two
+live false greens with the 14 Nov remedy, the whole point of the sweep: a false green on schema.test.ts:406 means the
+trigger could break on every table and the test stay green, the one failure a schema test exists to see. Fix
+collection-import.test.ts:198 too, relabelled latent rather than "in shape only": unreachable on today's machine is a
+statement about today's machine. Classify every sweep's hits by direction from here; false green against false red sets
+the order of work. And the rule for every check from here: the check is the half that has to be unambiguous, the prompt
+can carry a word the check cannot.
+
+**Fixed, each seen red first by staging the fault the instrument now sees:**
+
+- schema.test.ts "does not change updated_at on SELECT": the first read as `updated_at::text`, the second asks Postgres
+  `updated_at = first::timestamptz`. Staged with an UPDATE between the reads: red, `2026-11-21 22:04:25.810512+00 then
+  22:04:25.812203+00: expected false to be true`, two stamps 1.7ms apart that `getTime()` could have read as one.
+- artist-identity.test.ts "puts the OLDEST row first": `created_at < created_at` asked of Postgres across the two rows,
+  strictly, where `<=` on milliseconds passed whatever the order. Staged with the rows swapped: red.
+- collection-import.test.ts "records each run": `count(DISTINCT finished_at)` is 2 beside the existing count of 2. Staged
+  by levelling both stamps to the minimum: red, `expected 1 to be 2`. The ISO-string inequality stays beside it.
+
+Staging out, the three files and record-matched-text 92 passed.
+
+**record-matched-text.test.ts:138, by the rule, not a ruling.** The claim is "the time moved" only if something reads
+edited_at to decide. Nothing does: every `editedAt` read in src/ is the ABOUT's `snippet_edited_at` on records, a
+different column with its own design; matched-text.ts reads `edited_at` and `generated_at` only into the state the
+review file and the cell show. And `generated_at` is written by `new Date()` too (matched-text.ts:14), as `edited_at` is
+(line 68): both JavaScript clocks, no clock mixing, purely a header problem. The header now says what `>=` can hold: the
+edit is replaced and the stamp did not go backwards; the write is untouched, no column moved to SQL `now()`.
+
+**The ten-run's shortfall is the model's, not the validator's.** The bench's "returned" column is the raw count in the
+model's answer before readPick, so the three pairs already held the answer, and a fourth ten-run adds a sample:
+
+| ten-run | model returned | validator rejected | past five | kept |
+|---|---|---|---|---|
+| 1 | 8 | 0 | 3 | 5 |
+| 2 | 7 | 0 | 2 | 5 |
+| 3 | 10 | 1 (a claim not a whole sentence of its text) | 4 | 5 |
+| 4 | 8 | 1 (an id not in the pool) | 2 | 5 |
+
+Asked for ten, the model named ten once in four; the validator took one record on two runs, and adding those back
+gives 8, 7, 10, 9, still ten once in four. The count would not rise with a validation change; the model declines to
+stretch. By the coordinator's criterion the ten shape is finished: 1.8 times the cost for a payoff that arrived once in
+four, and a run of 7 or 8 queues two or three, not five. The good half, kept on Q78 whatever Adam decides: the first
+five of a ten answer matched a five answer bar one swap, so quality does not fall when more is asked.
+
+**680, for the coordinator's arithmetic.** 680 is both: 234 ABOUT sentences plus 446 matched-text sentences, by
+`sentencesOf`, which splits on a full stop, question or exclamation mark followed by a space. That splitter counts
+"Rev. Gary Davis's" and the like as a boundary, so 446 runs a few above a hand count; his 439 or 440 is the truer
+sentence count and the difference is the splitter, not the redrafts.
+
+**Step level:** schema, artist-identity, collection-import and record-matched-text 92 passed, three red first; typecheck
+0 errors; lint 0 errors, 6 warnings; build compiled. Test files only; a gate is dispatched by ship.sh since
+test/integration is shared ground. Gate 44954651498 on 34400951 in progress at this writing.

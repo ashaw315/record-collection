@@ -201,10 +201,13 @@ describe('findArtistsNamed — every artist with that name', () => {
 
     expect(found).toHaveLength(2);
     expect(found[0].id).toBe(oldest.id);
-    expect(
-      found[0].createdAt.getTime(),
-      'the first row is the earlier one',
-    ).toBeLessThanOrEqual(found[1].createdAt.getTime());
+    /*
+      Asked of Postgres at the column's microseconds, and strictly (the sweep of 21 Nov): the two inserts land inside one
+      millisecond as often as not, and `<=` on Date's milliseconds then passed whatever the order was.
+    */
+    const earlier = await db.execute<{ earlier: boolean }>(sql`
+      SELECT (SELECT created_at FROM artists WHERE id = ${found[0].id}) < (SELECT created_at FROM artists WHERE id = ${found[1].id}) AS earlier`);
+    expect(earlier.rows[0].earlier, 'the first row is the earlier one, to the microsecond').toBe(true);
   });
 
   it('returns an empty array when nobody has that name', async () => {

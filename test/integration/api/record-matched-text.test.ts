@@ -124,7 +124,12 @@ describe('PATCH /api/records/:id/matched-text', () => {
     expect(await pickLive(), 'the hand-written description covers it').toBe(true);
   });
 
-  /** Fails against: a PATCH that replaces an edit without moving its time. §4.6: a second edit starts from the first. */
+  /**
+   * Fails against: a PATCH that keeps the first edit, or refuses the second for want of a confirmReplace. §4.6: a second
+   * edit starts from the first. The claim is that the edit is replaced, not that its time moved (the sweep of 21 Nov):
+   * nothing in the product reads edited_at or generated_at to decide anything, both are stamped by `new Date()` in
+   * matched-text.ts and so hold milliseconds, and `>=` below can only say the stamp did not go backwards.
+   */
   it('replaces an edit with the next one, no confirmReplace', async () => {
     const id = await seedRecord();
     await patch(id, { edited: 'First.' });
@@ -135,7 +140,7 @@ describe('PATCH /api/records/:id/matched-text', () => {
     expect(response.status).toBe(200);
     const after = await row(id);
     expect(after.edited).toBe('Second.');
-    expect(after.editedAt?.getTime()).toBeGreaterThanOrEqual(first?.getTime() ?? Infinity);
+    expect(after.editedAt?.getTime(), 'the stamp did not go backwards; both are JavaScript clocks').toBeGreaterThanOrEqual(first?.getTime() ?? Infinity);
   });
 
   /** Fails against: a route accepting an empty edit (the CHECK would refuse it as a 500), unknown keys, or a non-string. */
