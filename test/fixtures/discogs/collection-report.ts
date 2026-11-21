@@ -26,6 +26,7 @@ export function collectionReportFromFixtures(): CollectionReport {
       blank: mapped.blank,
       dropped: mapped.dropped,
       cover: 'attached',
+      artistIdHeld: null,
     };
   });
   return { username: 'AdamPseudo', total: page.pagination.items, imported, skipped: [], failed: [] };

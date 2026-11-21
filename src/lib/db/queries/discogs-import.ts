@@ -117,11 +117,23 @@ async function findOrCreateArtist(
   }
 
   const [byName] = await tx
-    .select({ id: artists.id })
+    .select({ id: artists.id, discogsArtistId: artists.discogsArtistId })
     .from(artists)
     .where(sql`lower(${artists.name}) = lower(${name})`)
     .limit(1);
-  if (byName !== undefined) return byName.id;
+  if (byName !== undefined) {
+    /*
+      Jeff Beck's class (the coordinator, 21 Nov): a row that predates the Discogs id and takes its records by name
+      never gains the id, so the MusicBrainz link path has nothing to look up. Written only where the row holds none:
+      no other row holds this id, because the lookup above found none and the partial unique index refuses a second
+      holder. A row holding a DIFFERENT id is two Discogs artists on one local name; its id stands, the record still
+      attaches by name as before, and collection-import reads the row afterwards and says so in the run's report.
+    */
+    if (discogsArtistId !== null && byName.discogsArtistId === null) {
+      await tx.update(artists).set({ discogsArtistId }).where(eq(artists.id, byName.id));
+    }
+    return byName.id;
+  }
 
   const [created] = await tx
     .insert(artists)

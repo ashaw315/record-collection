@@ -28,7 +28,14 @@ import { logger } from '@/lib/logger';
  * the other eight. The cover is attached after the commit, as the single
  * import does, and its outcome is reported, never fatal.
  */
-export type ImportedItem = { releaseId: number; recordId: string; title: string; artist: string; blank: Omission[]; dropped: Omission[]; cover: string };
+/**
+ * The import's Discogs artist id against the row the record landed on (the coordinator, 21 Nov): the row holds another
+ * id, so the import wrote nothing and the record attached by name may be another band's. Read from the row after the
+ * import, never inferred from the branch the import took. `null` when the ids agree or the release names none; absent on
+ * a run stored before 21 Nov, which the report's reader tolerates.
+ */
+export type ArtistIdHeld = { rowName: string; rowDiscogsArtistId: number; releaseDiscogsArtistId: number };
+export type ImportedItem = { releaseId: number; recordId: string; title: string; artist: string; blank: Omission[]; dropped: Omission[]; cover: string; artistIdHeld: ArtistIdHeld | null };
 /** Named by the record that holds the release, so the report reads as records and not as ids. */
 export type SkippedItem = { releaseId: number; reason: 'already here'; title: string; artist: string };
 /** Named from the page's basic information, since a release can fail before its detail is fetched. */
@@ -85,7 +92,17 @@ async function importOne(client: DiscogsClient, item: CollectionItem): Promise<I
     blank,
     dropped: mapped.dropped,
     cover: cover.attached ? 'attached' : `not attached: ${'reason' in cover ? String(cover.reason) : 'no primary image'}`,
+    artistIdHeld: await artistIdHeld(created.artistId, mapped.release.artistDiscogsId),
   };
+}
+
+/** The row the record landed on, read after the import: the held id where it differs from the release's, else null. */
+async function artistIdHeld(artistId: string, releaseDiscogsArtistId: number | null): Promise<ArtistIdHeld | null> {
+  if (releaseDiscogsArtistId === null) return null;
+  const db = getDb();
+  const [row] = await db.select({ name: artists.name, discogsArtistId: artists.discogsArtistId }).from(artists).where(eq(artists.id, artistId)).limit(1);
+  if (row === undefined || row.discogsArtistId === null || row.discogsArtistId === releaseDiscogsArtistId) return null;
+  return { rowName: row.name, rowDiscogsArtistId: row.discogsArtistId, releaseDiscogsArtistId };
 }
 
 export async function importCollection(client: DiscogsClient): Promise<CollectionReport> {

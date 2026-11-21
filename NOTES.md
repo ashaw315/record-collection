@@ -59126,3 +59126,41 @@ eight landed too. Formed year held: 28. The 19 MBID holders without one split as
 (formedYear is never written for type Person, §4.1's field is a band's), 12 of them with no cached payload because a
 Person walk writes the facts and then does not cache ("not walked, not cached, and said"), and 3 are Groups MusicBrainz
 has no life-span begin for (Hello Mary, Smerz (2), Water From Your Eyes). Members recorded for 30. Nothing here to fix.
+
+## 21 Nov, later: the probe shipped and gated; Jeff Beck's class fixed on the import, the refusal said in the run's report
+
+**Shipped 1accfbf1, 991 passed, gate 44928746165.** The probe unit above, with the compose policy and the production
+counts for Q37's landing.
+
+**Jeff Beck's class, built as ruled, with the guard, and the refusal said (the coordinator, 21 Nov).** In
+findOrCreateArtist's by-name branch (src/lib/db/queries/discogs-import.ts), a row that holds no Discogs artist id takes
+the import's, nothing else on the row touched; Adam's name and formed year survive as before. **The guard, write only
+where no other row holds that id, turned out to be enforced twice already rather than needing a third check:** the by-id
+lookup runs first in the same transaction and found no holder, and artists_discogs_artist_id_key is a partial unique
+index that refuses a second holder outright. So "another row holds it" never reaches the name branch: when another row
+holds the id the import attaches to THAT row by id, which §6 rules the right answer, and the name row is never consulted.
+**The refusal that can arise is the other shape: the name-matched row holds a DIFFERENT id.** That is two Discogs
+artists on one local name, the Darkside case one import later: the first import wrote the Austrian band's id onto Adam's
+duo, and the duo's own import now finds its row holding a stranger's id. The id stands, the record attaches by name as it
+did before this unit, and the run's report says so.
+
+**Where it is said: the release's own line, not a fifth line.** collection-import reads the artist row AFTER the import
+(observation, not the branch taken: `artistIdHeld`, null when the ids agree or the release names none) and the item's
+text on the complete or blank line gains "the artist row Astrid Sonne holds Discogs artist 424242 and this release names
+6253832; attached by name, the id not written". §T.6's four lines still partition the run, which is why not a fifth
+line: tagging was refused a fifth element for that reason on 28 Oct. A run stored before today has no such key, and the
+reader treats absence as null (tested). **The import report is the right surface for the collection run and the wrong one
+for the form path:** `POST /api/discogs/import` imports one release through the same findOrCreateArtist, writes the id
+the same way, and has no report; its refusal case is silent there. Not built; the form path answers with the record, and
+the record page is where a line would go if the coordinator wants it.
+
+**Tests first.** discogs-import.test.ts: writes the id onto a null-id row and nothing else (red: `discogs_artist_id:
+null`); leaves a different id in place and still attaches (passed first time, as a guard does before the write exists: a
+write that replaced the id would fail it, and the write was then built not to). collection-import.test.ts: the report
+names both sides for the one release and null for the other eight (red: `undefined`). import-report.test.ts: the line
+carries it, and a stored run without the field reads as before (red: the bare name). Then 49 passed across the three.
+Step level: typecheck 0 errors, lint 0 errors and 6 warnings, build compiled; import-159 on chromium, `Running 2 tests
+using 1 worker` (the file's own serial setting), 2 passed, 18.2s, no retry, load 2.65 before and 2.28 after. Gate: owed by
+nothing on §10's list (no fixture, helper or config changed; the report fixture gained one field), dispatched anyway
+because ship.sh dispatches one per completed unit; it runs on GitHub's runner beside the probe's, which is where
+concurrent gates are fine (§10's "nothing beside a gate" is the local machine's rule).

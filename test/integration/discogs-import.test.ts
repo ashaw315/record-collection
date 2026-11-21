@@ -146,6 +146,36 @@ describe('find-or-create', () => {
     expect(await count('artists')).toBe(1);
   });
 
+  /*
+    Jeff Beck's class (the coordinator, 21 Nov): every artist row that predates the Discogs id. Production's Jeff Beck
+    took three imported records by name and still held no id, so the resolver's link path had nothing to look up.
+    Fails against a by-name match that leaves the row's null id alone.
+  */
+  it('writes the Discogs artist id onto a row matched by name that holds none, and nothing else on the row', async () => {
+    await db.execute(sql`INSERT INTO artists (name, formed_year) VALUES ('Discharge', 1977)`);
+
+    await importRelease({ release: RELEASE, target: 'record' });
+
+    const rows = await db.execute<{ name: string; discogs_artist_id: number | null; formed_year: number | null }>(sql`SELECT name, discogs_artist_id, formed_year FROM artists`);
+    expect(rows.rows).toEqual([{ name: 'Discharge', discogs_artist_id: RELEASE.artistDiscogsId, formed_year: 1977 }]);
+    expect(RELEASE.artistDiscogsId, 'the fixture carries an id, or this test wrote null over null').not.toBeNull();
+  });
+
+  /*
+    The refusal (the coordinator's guard): a row matched by name that already holds a different Discogs id is two
+    Discogs artists claiming one local row. The id is not written over, and the record attaches by name as it did
+    before this unit; collection-import.test.ts holds that the report says so. Fails against a write that replaces
+    the id, and against a match that stops attaching.
+  */
+  it('leaves a different Discogs artist id in place on a row matched by name, and still attaches the record to it', async () => {
+    await db.execute(sql`INSERT INTO artists (name, discogs_artist_id) VALUES ('Discharge', 111)`);
+
+    const record = await importRelease({ release: RELEASE, target: 'record' });
+
+    const rows = await db.execute<{ id: string; discogs_artist_id: number | null }>(sql`SELECT id, discogs_artist_id FROM artists`);
+    expect(rows.rows).toEqual([{ id: record.artistId, discogs_artist_id: 111 }]);
+  });
+
   it('reuses a pressing matched by discogs release id', async () => {
     // §4: pressings are SHARED and found-or-created. Two records of the same
     // pressing point at one row.

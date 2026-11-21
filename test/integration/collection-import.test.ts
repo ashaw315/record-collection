@@ -291,6 +291,23 @@ describe('importCollection', () => {
     expect(await db.select().from(artistMatchCandidates)).toEqual([]);
   });
 
+  /*
+    The refusal said where Adam reads the run (the coordinator, 21 Nov): a release whose artist row holds a different
+    Discogs id than the release names is two Discogs artists on one local row, and the record attached by name may be
+    the wrong row's. Read from the row after the import, not inferred from the branch taken. Fails against a report that
+    carries nothing, or one that names only one side.
+  */
+  it('reports a release whose artist row holds another Discogs artist id, naming the row and the release’s artist, and nothing for the rest', async () => {
+    await db.insert(artists).values({ name: 'Astrid Sonne', discogsArtistId: 424242 });
+    const report = await importCollection(fakeClient());
+    expect(report.failed).toEqual([]);
+    const great = report.imported.find((item) => item.releaseId === 29613763);
+    expect(great?.artistIdHeld).toEqual({ rowName: 'Astrid Sonne', rowDiscogsArtistId: 424242, releaseDiscogsArtistId: 6253832 });
+    expect(report.imported.filter((item) => item.releaseId !== 29613763).map((item) => item.artistIdHeld)).toEqual(Array(8).fill(null));
+    const [row] = await db.select().from(artists).where(eq(artists.name, 'Astrid Sonne'));
+    expect(row?.discogsArtistId, 'the held id survives').toBe(424242);
+  });
+
   it('is idempotent on release id: a second run imports nothing and reports the nine as already here', async () => {
     await importCollection(fakeClient());
     const again = await importCollection(fakeClient());

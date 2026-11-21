@@ -16,6 +16,21 @@ const report = collectionReportFromFixtures();
 const DISCOGS_HOLDS = (JSON.parse(readFileSync('test/fixtures/discogs/collection-page-1.json', 'utf8')) as { pagination: { items: number } }).pagination.items;
 
 describe('reportLines', () => {
+  /*
+    The import's refusal to write a Discogs artist id, said on the release's own line (the coordinator, 21 Nov), so
+    §T.6's four lines still partition the run. Fails against a line that drops it, and against a reader that throws on a
+    run stored before the field existed.
+  */
+  it('carries a held artist id on the release’s own line, both sides named, and reads a stored run without the field', () => {
+    const held = structuredClone(report);
+    held.imported[0] = { ...held.imported[0], artistIdHeld: { rowName: 'Astrid Sonne', rowDiscogsArtistId: 424242, releaseDiscogsArtistId: 6253832 } };
+    const [complete] = reportLines(held);
+    expect(complete.items[0]).toBe('Astrid Sonne — Great Doubt: the artist row Astrid Sonne holds Discogs artist 424242 and this release names 6253832; attached by name, the id not written');
+    const stored = structuredClone(report) as { imported: Array<Record<string, unknown>> };
+    for (const item of stored.imported) delete item.artistIdHeld;
+    expect(reportLines(stored as unknown as typeof report)[0].items[0]).toBe('Astrid Sonne — Great Doubt');
+  });
+
   /* Fails against the three lines of step 158, against another order, or against a blank release counted twice. */
   it('gives the four lines in the drawn order, each with its count, and the counts partition what Discogs holds', () => {
     const lines = reportLines(report);
