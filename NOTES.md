@@ -58772,3 +58772,18 @@ Step level: src/lib/llm suites and the two artist integration files, 234 passed;
 warnings at HEAD; build compiled in 19s at load 5. No e2e spec covers the drafting scripts, so no e2e sample this unit.
 The one-off production read was a scratch script, deleted; its SQL was a count of the artists table and the memberships,
 its reading is above.
+
+**The first production latency lines, Adam's phone (20 Nov, 20:48Z and 20:49Z; recorded 22:05Z).** Two presses, both
+the grid's take of five over the 55 described records, five picked, verdict answer, caught by the poller and kept as
+`docs/measurements/ask-latency/2026-11-20-production.jsonl` (the Vercel rows as fetched):
+
+| press (UTC) | route total | model | records | take | picked |
+|---|---|---|---|---|---|
+| 20:48:23 | 16,760ms | 16,641ms | 55 | 5 | 5 |
+| 20:49:19 | 12,529ms | 12,485ms | 55 | 5 | 5 |
+
+The route adds 44 and 119ms to the model's wait, so what Adam feels on the phone is the model call plus Vercel's
+function and the network, which these lines do not carry; the model figure sits at and above the bench's top (12.3s
+median, 15.2s max on the bench against 12.5 and 16.6s here). Two lines are thin, and no press followed in the next hour,
+so this is tonight's set: the per-press shape on the host he will use, 12 to 17 seconds a press, for Design's indication.
+Gate 44815908513 on 8fca891b (Q37's first half) OK on every half. Record only; rides with the next unit.
