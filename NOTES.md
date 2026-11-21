@@ -59339,3 +59339,45 @@ longer for its first drawn answer than one that asks for five and asks again.
 **Step level:** pick.test.ts 24 passed (one red first); typecheck 0 errors; lint 0 errors, 6 warnings; build compiled.
 No e2e run: the change is one phrase removed from a list the specs exercise through stubs, and the pick's live behaviour
 was measured on production by the bench. Gates 44935527838 (reason rule) and 44936268544 (updated_at) both passed.
+
+## 21 Nov, later still: the eighties press landed and the gap is real; the two reads Design needs before ruling on the year; the check's hole logged
+
+**Adam's press "something from the eighties" (the coordinator, 21 Nov):** two presses, both requirement-unmet, "None has
+all of it", then Break Out at 390 and The Man-Machine wider. Break Out is a 1983 release; the pick found the right record
+and disclaimed it, having no year to check against. The honest-hedge half, honest about a gap the build made. The
+coordinator has sent Design both shapes with a recommendation for passing the year to the pick over drafting it into the
+text, a stored year being a fact where a drafted one is the model recalling into permanent text nothing audits. Her rule;
+neither shape built here. Two reads asked for first, both from production, both read-only.
+
+**Does every record the pick is given hold a year? Yes, all 55 (scripts/report-pool-years.mts).** `release_year` is null
+on none of the 55 records with matched text. The pressing's `year_pressed` is null on 3 (Super Rich, ATLiens, The Doors)
+and differs from the release year on 10, the reissues: Gaucho released 1980 and pressed 1987, 999's The Biggest Prize In
+Sport released 1980 and pressed 2023, Jewels Of Thought 1970 and 2024, Weezer 1994 and 2024, and six more. So the column
+to pass is the record's release year, which is uniform, not the pressing's, which is partial and answers a different
+question ("from the eighties" is the music's year, not the vinyl's). No partial-blindness shape arises.
+
+**What shape A would cost in the prompt (scripts/ask-bench-year.mts, one call each on production's pool, the request as
+built, then the same request with each record line carrying `(released YYYY)`, rewritten on its way out):**
+
+| | input tokens | output tokens | model call | verdict |
+|---|---|---|---|---|
+| as built | 21,551 | 354 | 8.8s | requirement-unmet, Break Out as the stand-in: "An eighties release isn't confirmed, but this is a sonic stand-in..." |
+| with the year | 21,881 | 951 | 10.5s | answer: Break Out, Sports, Never Too Much, Gaucho, The Biggest Prize In Sport |
+
+The year adds 330 input tokens to 21,551, 1.5 per cent, about six tokens a record. Against the ten-versus-five figure
+(10.1s median for five) that is noise: the 1.7s between the two calls here is the output, 354 tokens against 951, because
+the answer went from one stand-in to five records with five reasons, not the input. The input cost is free for Design's
+purposes; the time a year costs is the time a fuller answer costs. One call each, so the timing is one sample; the token
+counts are the API's own and do not vary. The with-year answer is Adam's four plus 999's 1980 release, which is in the
+eighties; the hedge is gone from all five reasons because there was nothing left to hedge.
+
+**The §P.2 check's hole, logged, not widened (the coordinator):** neither of Adam's two reasons, "An eighties release isn't
+confirmed here" and "Not a confirmed eighties release", nor the bench's "An eighties release isn't confirmed", trips the
+six-phrase check: each speaks of the evidence rather than the record without naming the text, the description or the
+notes. Design told; the phrase list is not widened, that being the shape that gave 67 per cent noise. Logged on Q77's row
+so it is not rediscovered. Whether the year closes it by removing the thing hedged, as it did in the one call above, is a
+question for after Design's ruling.
+
+Nothing built. Step level: the two scripts load and run read-only against production; no test changes, no build change.
+Gate 44946760259 on 1d2a9dae in progress at this writing. The three standing items (the two live millisecond tests,
+record-matched-text's header, the ten-versus-five figure delivered) stand.
