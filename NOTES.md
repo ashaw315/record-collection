@@ -57626,6 +57626,11 @@ named for could be broken, each stated as such where it lives, listed here so no
   passed on its first run and fails only against the path being made public or excluded by the matcher.
 - the audit's "no disagreement reported": the auditor reports only what it disagrees with, so an empty list is not
   confirmation, and the report says so at its head and on every quiet record.
+- the Playwright global setup's call to the test database probe (`e2e/global-setup.ts`, added 21 Nov): the probe and
+  the vitest setup's call are tested; the e2e wiring was staged by hand once (`TEST_DATABASE_URL` on a closed port, the
+  setup failed with the probe's line in 9.9s) and is read, not verified, because the test would spawn Playwright and the
+  dev server for ten seconds per check to cover one import and one call. A reader of a green e2e run should not take the
+  probe's presence there as proven; if the call is removed, nothing fails until Docker is down.
 **Queued, for the next visit to `scripts/commit-checked.sh`:** keep a passing check's summary line, not its log, so a
 passing check stays quotable; today the log is removed on success and the line lives only in the console (ae682805's
 line was cut by a tail of that output).
@@ -59164,3 +59169,37 @@ using 1 worker` (the file's own serial setting), 2 passed, 18.2s, no retry, load
 nothing on §10's list (no fixture, helper or config changed; the report fixture gained one field), dispatched anyway
 because ship.sh dispatches one per completed unit; it runs on GitHub's runner beside the probe's, which is where
 concurrent gates are fine (§10's "nothing beside a gate" is the local machine's rule).
+
+## 21 Nov, evening: Q37 closed; two records, not builds; the record page's attention state, a fourth Design item that consolidates two
+
+**Q37 closes (the coordinator):** 47 of 49 with MBID and origin, the 19 without a formed year all explained. Both units
+accepted; the guard's double enforcement and the refusal's real shape accepted over his proposal.
+
+**The Playwright wiring is in the weak-check register** (the 18 Nov entry's list, a fourth item), beside the 401 proxy,
+as he asked: an uncovered path in prose drifts, the register is where the ones we chose not to cover are kept.
+
+**The Docker rule, plainly, where it will be met.** `unless-stopped` means a container Adam stops himself stays stopped
+across a Docker restart, so `npm run db:test:up` is needed every time he has stopped one, not only after a reboot; the
+policy only covers Docker Desktop itself coming back. The probe's message says the command every time the database is
+down; docker-compose.yml's comment now says the consequence; the session memory that said "start Docker after a reboot"
+is widened to the same.
+
+**The fourth Design item, which is a consolidation of two (the coordinator, inverting his own instruction).** The import
+report, where the id refusal now appears, is the surface Adam does not use: he adds records one at a time through the
+form, and has said he wants to add more, and the form path's refusal is silent. Not a separate line on the record page.
+**Proposed instead:** Q72 already needs a state on the record page for a description that failed to arrive (the state no
+card has, 19 Nov), and the import's refusal is the same thing from the reader's side: something about this record needs
+your attention, and here is what. One surface carrying both, ruled once by Design, on a page she rules closely, rather
+than two additions ruled apart. What the surface would carry, as the two cases stand today:
+- **Q72's failed description:** the record saved with no ABOUT or no matched text because the generation failed; what
+  failed and that the record is otherwise whole; what the reader can do (the About cell's path, when Q82's edit path
+  is ruled). Its pending form, the twenty-three seconds while the description arrives, is item 2 above and stays there.
+- **The artist id refusal, form path:** this record attached by name to an artist row that holds a different Discogs
+  artist id, the row and the release's artist named with both ids, the id not written; the record may be another band's.
+  Today this is said only on the collection import's report line, and the form path says nothing.
+What Design rules: one state or two; where on the record page; whether it clears when the condition does (the id
+refusal clears when Adam merges or splits the rows; the failed description when a description is written); and whether
+a card or list ever carries a mark for it, which §P.4 and §W.28 would govern. Goes to her with the three above, as a
+fourth that is really two made one. No build until ruled; the collection report's line stands as built.
+
+Record only: NOTES, QUEUE (Q72 and Q78 rows), the compose comment. Rides with the next unit.

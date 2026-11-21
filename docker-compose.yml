@@ -4,7 +4,8 @@ services:
     container_name: record-collection-test-db
     # Back when Docker Desktop starts, without `npm run db:test:up` (the coordinator, 21 Nov): Adam quits Docker between
     # sessions, and every vitest and Playwright run needs this database before its first file. `unless-stopped`, not
-    # `always`: a container he stops by hand stays stopped.
+    # `always`: a container he stops by hand stays stopped, across Docker restarts too, so after `docker stop` or
+    # `docker compose down` it is `npm run db:test:up` again, every time; the policy covers Docker itself coming back.
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
