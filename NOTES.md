@@ -58921,3 +58921,30 @@ changes.
 
 Step level: search-artist and resolve-by-name suites, 27 passed; typecheck 0 errors; lint 0 errors, 6 warnings at HEAD;
 build compiled in 19s at load 5. Two read-only production runs: 40 MusicBrainz searches, 38 URL lookups, nothing written.
+
+**The link path built: the resolver tries the Discogs page first, the name rule second, never a guess at either (the
+coordinator's go, 21 Nov; built 01:20Z).** `linkedArtistForDiscogsId` (resolve-by-name.ts) looks the import's Discogs
+artist id up as a MusicBrainz URL relationship and answers the one linked artist, or null for none, for two (not an
+answer; falls through) and for a page MusicBrainz lacks (its 404, the client's `status`). `resolveArtistByName` takes
+that first and the name rule only where it answers nothing, with the refusal unchanged; it gains `{ dryRun: true }`,
+which says what would happen, by which path, and writes nothing, so `scripts/resolve-artist-facts.mts`'s report and its
+`--apply` are one code path. Test first: three cases failing (link without a name search, fallback on a missing page, the
+dry run writing nothing), a fourth passing on arrival and kept as a guard: two artists linked to one page must not be
+accepted, and today's name rule already refuses Smerz twice, so the test could not fail until a link path existed to
+get it wrong; then 31 passed across the resolver and search-artist suites.
+
+**The dry run on production, nothing written: 38 of 40 would resolve, 31 by link and 7 by name (Buddy Rich, Hello Mary,
+Kraftwerk, Luther Vandross, The Ink Spots (3), Water From Your Eyes, Weezer), 2 refused.** Jeff Beck, the name rule's
+three namesakes, and **the kind the coordinator asked**: no Discogs artist id is stored on our side (the import gap, not
+an absent link upstream). The second refusal is new and right: Blood, Sweat And Tears links to f81d592c, which another
+artist row already holds, "Blood, Sweat & Tears", so the resolver refuses as held-by-other and names the holder. That
+row is a walk's creation with no records, the same band under MusicBrainz's spelling: §5.4's duplicate, Adam's to merge
+from the review, and the first time the catalogue has said it has two rows for one band. **Pretzel Logic, answered:**
+248 counts every artist row, the 49 with records and the people and acts the walks created; the two Pretzel Logic rows
+are two MusicBrainz artists of that name, both Steely Dan tribute acts the walk's derived-acts pass created on 8 Sep
+(kind `tribute`, no records, distinct MBIDs). Not a title stored as an artist; no data fault. `--apply` is Adam's as a
+production write (38 MBIDs stored and 38 lineup walks, at one MusicBrainz request a second, several minutes). The suffix
+helper waits for Design's ruling via the coordinator; the resolver did not wait for it.
+
+Step level: resolver and search-artist suites, 31 passed; typecheck 0 errors; lint 0 errors, 6 warnings at HEAD; build
+compiled in 18s at load 5. One read-only production run: about 45 MusicBrainz requests, nothing written.

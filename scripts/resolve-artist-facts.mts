@@ -1,43 +1,35 @@
 /*
-  Q37's second half, part two (the coordinator, 20 Nov): the artists with records and no MBID, tried under the rule.
-  The deliverable is the SPLIT, not the fills: how many resolve and how many the rule refuses, the refused named.
+  Q37's second half (the coordinator, 20 and 21 Nov): the artists with records and no MBID, resolved by the exact path
+  first (the Discogs artist id as a MusicBrainz URL relationship) and the name rule as the fallback, never a guess.
+  The deliverable is the SPLIT: how many resolve, by which path, and how many are refused, the refused named.
 
-      node --env-file=.env.local --conditions=react-server --import tsx scripts/resolve-artist-facts.mts            # report: one search per artist, nothing written
-      node --env-file=.env.local --conditions=react-server --import tsx scripts/resolve-artist-facts.mts --apply    # the resolved ones get their MBID and their walk
+      node --env-file=.env.local --conditions=react-server --import tsx scripts/resolve-artist-facts.mts            # report: a dry run per artist, nothing written
+      node --env-file=.env.local --conditions=react-server --import tsx scripts/resolve-artist-facts.mts --apply    # the resolved get their MBID and their walk
 
-  The report searches MusicBrainz once per artist (one request a second) and writes nothing; --apply runs the resolver,
-  which stores the MBID and walks the lineup for the accepted, and still stores nothing for the refused.
+  Both modes run the one resolver (resolve-by-name.ts); the report is its dry run, so what it says would happen is what
+  --apply does. The refused store nothing in either mode.
 */
 import { sql } from 'drizzle-orm';
 import { getDb } from '@/db/client';
 import { resolveArtistByName } from '@/lib/musicbrainz/resolve-by-name';
-import { pickExactName, searchArtistsByName, stripDiscogsSuffix } from '@/lib/musicbrainz/search-artist';
 
 const apply = process.argv.includes('--apply');
 const db = getDb();
 const rows = (await db.execute<{ id: string; name: string }>(sql`
   SELECT a.id, a.name FROM artists a WHERE a.musicbrainz_id IS NULL AND EXISTS (SELECT 1 FROM records r WHERE r.artist_id = a.id)
   ORDER BY a.name`)).rows;
-let resolved = 0;
+const byPath = { link: 0, name: 0 };
 const refused: string[] = [];
 for (const r of rows) {
-  if (apply) {
-    const outcome = await resolveArtistByName(r.id);
-    if (outcome?.outcome === 'resolved') { resolved += 1; console.log(`${r.name}: resolved ${outcome.mbid}; ${outcome.walk.text}`); }
-    else { refused.push(r.name); console.log(`${r.name}: refused ${JSON.stringify(outcome)}`); }
-    continue;
-  }
-  const name = stripDiscogsSuffix(r.name);
-  const hits = await searchArtistsByName(name);
-  const chosen = pickExactName(hits, name);
-  const sameName = hits.filter((h) => h.name.trim().toLowerCase() === name.trim().toLowerCase());
-  if (chosen === null) {
-    refused.push(r.name);
-    console.log(`${r.name}: REFUSED (${sameName.length} of ${hits.length} hits named ${JSON.stringify(name)}${sameName.length > 1 ? ': ' + sameName.map((h) => `${h.name} [${h.disambiguation ?? ''}] ${h.country ?? ''}`).join('; ') : ''})`);
+  const outcome = await resolveArtistByName(r.id, { dryRun: !apply });
+  if (outcome?.outcome === 'resolved' || outcome?.outcome === 'would-resolve') {
+    byPath[outcome.path] += 1;
+    console.log(`${r.name}: ${outcome.outcome === 'resolved' ? 'resolved' : 'would resolve'} by ${outcome.path} to ${outcome.mbid}${outcome.outcome === 'would-resolve' ? ` ${outcome.name}` : `; ${outcome.walk.text}`}`);
   } else {
-    resolved += 1;
-    console.log(`${r.name}: would resolve to ${chosen.mbid} ${chosen.name} [${chosen.disambiguation ?? ''}] ${chosen.type ?? ''} ${chosen.country ?? ''} score ${chosen.score} (${hits.length} hits)`);
+    refused.push(r.name);
+    console.log(`${r.name}: REFUSED ${JSON.stringify(outcome)}`);
   }
 }
-console.log(`\n${rows.length} artist(s) with records and no MBID: ${resolved} ${apply ? 'resolved' : 'would resolve'}, ${refused.length} refused${refused.length > 0 ? `: ${refused.join('; ')}` : ''}`);
+const total = byPath.link + byPath.name;
+console.log(`\n${rows.length} artist(s) with records and no MBID: ${total} ${apply ? 'resolved' : 'would resolve'} (${byPath.link} by link, ${byPath.name} by name), ${refused.length} refused${refused.length > 0 ? `: ${refused.join('; ')}` : ''}`);
 process.exit(0);
