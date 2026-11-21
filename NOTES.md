@@ -59008,3 +59008,54 @@ is any check at drafting time. Reports: `docs/measurements/about-audit/`.
 
 Step level: matched-text-audit and audit-bearing suites, 19 passed; typecheck 0 errors; lint 0 errors, 6 warnings at
 HEAD; build compiled in 16s at load 3. Live calls: 6 planted and 55 audits on OpenAI, production read only.
+
+**The net: sufficient as built, the uncovered part uncovered deliberately (the coordinator's ruling, 21 Nov).** His
+grounds: four verified errors in 55 ABOUTs is a low absolute count, and the correction path existed all along in the
+About cell; the 164 unauditable sentences are history and reception, and checking them means an external source per
+claim, a web search for 55 records, for claims that are low-stakes on their own page; and the matched-text prompt now
+refuses to inherit a doubtful ABOUT claim (Glenn Miller's redraft showed it), which is the net that matters, since it
+stands between a wrong ABOUT and the text the pick actually reads. Nothing more is built for this.
+
+**READ THIS BEFORE READING ANY ABOUT AUDIT'S ZERO AS REASSURANCE. The material reaches 70 of 234 sentences, 30 percent.**
+The adversarial pass's material kind can fire only where the tracklist, the credits, the label, the companies or the
+format reach, and in an ABOUT that is three sentences in ten; the other seven are history, reception and meaning, which
+only the knowledge kind, the advisory one with no mechanism behind it, can touch. **And the 30 percent is itself a lower
+bound of reach:** the classifier that counts it missed a position claim in a form it does not list ("a fiddle-and-steel
+romp in the middle", Nashville Skyline, counted 0 of 5 reachable while the auditor contradicted it from the tracklist).
+**Therefore a clean ABOUT audit can never mean a clean ABOUT**: it means the three in ten the material reaches carried
+nothing the auditor saw, with a pass that missed both of its positive controls on the matched text. Someone will
+otherwise read the next zero as reassurance; this paragraph is where they are sent.
+
+**The four material items are Adam's, Q82 under Blocked on Adam, with the real reason attached:** the fix is not for the
+ABOUT page but because all four are sequence and format claims, exactly the class that leaks into a matched-text side
+sentence when a record is next redrafted. ABBA's "two writers" is left: the conventional reading, not wrong in the way
+that matters. **The nine knowledge items are held as advisory, none acted on**, the four I read as likely real included:
+they are the unreliable half by construction and there is no mechanism behind them.
+
+**A conservative refusal found a data fault no check was looking for, which is an argument for the refusal and not an
+excuse for it (the coordinator).** "Blood, Sweat And Tears" and "Blood, Sweat & Tears" were two rows for one band, the
+second a walk's creation under MusicBrainz's spelling, and nothing in the catalogue would ever have said so: the name
+check is exact, the duplicate warning fires on an exact name, and the two spellings differ by one word. The link
+resolution refused as held-by-other because it would not attach an MBID a second row holds, and the refusal named the
+row. Adam is merging it. **One line on the walk, as a byproduct worth knowing and not acting on:** the walk creates
+artist rows for acts Adam does not own, every member it meets and every tribute and subgroup act in the band's
+relations (A48), which is how two Steely Dan tribute acts called Pretzel Logic sit in the table with no records, and how
+248 rows hold 49 artists with records.
+
+**Jeff Beck does not self-heal.** `findOrCreateArtist` (discogs-import.ts) looks an imported artist up by Discogs id
+first and, finding none, by lower-cased name, and a row found by name is returned with nothing written to it (§7.8
+leaves the name alone; the id is not filled either). So the next import of a Jeff Beck record finds "Jeff Beck" by name
+and leaves `discogs_artist_id` null. Filling a null id on a name match is not built, since a name match can be the wrong
+same-named artist (the Discharge hazard, §4.1) and an attached id is self-reinforcing. Closable by a one-off: Adam sets
+the Discogs artist id on Jeff Beck in the artist form, read off the guitarist's Discogs page rather than guessed, and
+the next dry run resolves him by link.
+
+**Two commands, not one; the backfill is not subsumed.** The backfill is for the eight artists walked before the walk
+wrote facts: their MusicBrainz payloads are cached, so it reads formed year and origin from the cache into null columns
+and makes no MusicBrainz call. The apply is for the thirty-eight with no MBID: it stores each MBID and runs each walk,
+which writes their facts as it goes. Different artists, different reads; both are Adam's as production writes:
+
+    node --env-file=.env.local --conditions=react-server --import tsx scripts/backfill-artist-facts.mts
+    node --env-file=.env.local --conditions=react-server --import tsx scripts/resolve-artist-facts.mts --apply
+
+Record only; rides with the next unit.
