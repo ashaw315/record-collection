@@ -118,10 +118,13 @@ describe('a reason that speaks about its material (the coordinator, 21 Nov)', ()
   /* Fails against a check that misses any of the seven phrases, or one that flags the words inside other words. */
   it('names the phrase a reason uses for what the model was given, and passes a reason about the record', () => {
     expect(mentionsMaterial('Full-orchestra swing, but the text offers period atmosphere, not evidence of a recent recording.')).toBe('the text');
-    for (const phrase of ['the description', 'the material', 'this material', 'the credits', 'the information', 'evidence']) {
+    for (const phrase of ['the description', 'this material', 'the credits', 'the information', 'evidence']) {
       expect(mentionsMaterial(`Warm and slow, though ${phrase} says little about the room.`), phrase).toBe(phrase);
     }
     expect(mentionsMaterial('Loud and fast, but it is a 1963 recording, not a recent one.')).toBeNull();
+    // "the material" means the repertoire as often as the source: four of the six hits across 680 stored sentences
+    // read it that way (the coordinator, 21 Nov), and both genuine self-references said "the credits".
+    expect(mentionsMaterial('Gershwin standards, the material carried by brass and a light swing.'), 'repertoire is not source').toBeNull();
     expect(mentionsMaterial('Textured guitars with context for a late night; well evidenced grooves.')).toBeNull();
     expect(mentionsMaterial('The Credits of a film score, hushed and wide.'), 'case does not matter').toBe('the credits');
   });

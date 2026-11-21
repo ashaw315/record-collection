@@ -59273,3 +59273,69 @@ the instrument could not see it: a weak-instrument flake, not load-shaped and no
 on the import's commit with the same probe code, passed). Fixed forward in the test alone: `before` read as text, and
 `updated_at > before::timestamptz` asked of Postgres at the column's own resolution. 32 passed. The timeout count is
 unchanged at instance one; this was not a timeout.
+
+## 21 Nov, late: "the material" dropped from the check; the millisecond class swept, four in it, none fixed yet; ten picks against five timed on production
+
+**The coordinator on the night's work (21 Nov):** the Glenn Miller split stands, "the text offers" off-register and
+fixed by the rule, "not evidence of a recent recording" an honest hedge no prompt rule should paper over. The year is
+NOT built and NOT sent to Design as a ruling: Adam is pressing "something from the eighties" on production first (he
+owns Sports, Break Out, Never Too Much and Gaucho), and if the pick returns them it already knows when his records were
+made and the gap is narrower than it looks. §P.2 has argued against mixing grounds once, for titles; a year is a fact
+rather than a judgement, which is a real difference, but the principle is live and is to be argued against, not stepped
+over. If the press shows a gap, two shapes to bring: pass the year to the pick (mixes grounds), or have the drafting
+prompt name the release year in the text (one ground, reaches the existing 55 only as they redraft). Both wait on the press.
+Design's rulings accepted as written; her reason for keeping the drawn answer in place, that a blank slot for seventeen
+seconds leaves Adam nothing to look at or compare against, noted.
+
+**The check's false positives: "the material" dropped.** Six hits in 680 sentences, four of them "the material" as
+repertoire: 67 per cent noise, the "Numbers to check" shape again. It was the only ambiguous phrase, it accounted for all
+four, and both genuine instances said "the credits". Test first: the loop's list loses it and a repertoire sentence
+("Gershwin standards, the material carried by brass...") is expected clean; red, `expected 'the material' to be null`;
+then `MATERIAL_PHRASES` is six, 24 passed. The prompt rule keeps the word: the rule forbids speaking about the source,
+which "the material" can mean, and the check is the mechanical half, which has to be unambiguous. The rescan
+(report-self-reference) now finds exactly the two: Kim Gordon's and The Mamas & The Papas' credits sentences.
+
+**The trigger test was a second fault, not a recurrence, and the class holds more.** The 14 Nov fix (677c9dc1, gate
+43643093027) was "applies to every table, not just artists", schema.test.ts:419, and its commit said the comparison was
+now "tested properly and still nowhere else" without sweeping the file: today's (b37c9bad, gate 44928746165) was "changes
+updated_at on UPDATE", thirty lines above it in the same describe block, with the same `Date.getTime()` comparison. So a
+second one with the same fault, found by the gate seven days after the first was fixed beside it. **The sweep, as asked,
+before fixing anything:** every test comparing a JavaScript Date to a Postgres timestamp, by `getTime()`, by `toISOString`,
+by a comparison matcher on a timestamp field, and by operators on Date values, across test/, src/ and e2e/. Candidates
+read in context: eight lines in six files, of which the two already fixed. Of the six remaining:
+
+| file | compares | fault | direction |
+|---|---|---|---|
+| test/integration/schema.test.ts:406, "does not change updated_at on SELECT" | two reads of one row, equal at ms | **yes**: a change inside one ms would read as none | false green, no flake |
+| test/integration/artist-identity.test.ts:205, "the first row is the earlier one" | two rows' createdAt, `<=` at ms | **yes**: two inserts in one ms read equal and `<=` passes whatever the order | false green, no flake |
+| test/integration/collection-import.test.ts:198, `second.finishedAt not.toBe first.finishedAt` | two runs' finished_at as ISO strings from Dates, ms | **yes** in shape: a microsecond column compared at ms; two full imports inside one ms is not reachable | would be a false red |
+| test/integration/collection-import.test.ts:194, finishedAt `>=` before minus 1000 | a tolerance of a second | no | |
+| test/integration/queries/list-record-ages.test.ts:42 | the same row read two ways, both through pg's Date, rows a day apart | no: both sides truncate alike and the claim is identity, not order | |
+| test/integration/api/record-matched-text.test.ts:138, editedAt `>=` first | two JS-written Dates (`editedAt: new Date()` in matched-text.ts:68), so the column holds milliseconds | not this class, but its header says "fails against a PATCH that replaces an edit without moving its time" and `>=` cannot fail against that | the name-is-a-claim shape |
+
+**Count: eight in the class across the project's history, four with the fault (two fixed, two live: schema:406 and
+artist-identity:205), one in shape only (collection-import:198), one of a different class (record-matched-text:138).**
+Nothing fixed, as asked. The remedy for the two live ones is the 14 Nov one, compare in SQL at the column's resolution;
+record-matched-text's is a different question, whether the claim is "the time moved" (then the write must be `now()` in
+SQL and the test compares there) or "the edit is replaced" (then the header is rewritten to what `>=` can hold). Both for
+the coordinator's go. The e2e specs compare no database timestamps; the ORDER BY tests order in Postgres, not in JS.
+
+**The figure Design needs: a ten-pick first press against a five-pick, on production's pool (scripts/ask-bench-take.mts,
+read-only, three pairs alternating five then ten, "something to put on while cooking dinner", a phrase many fit so ten
+can be returned).** The build asks for five in the system text and nowhere else (the schema caps nothing; readPick drops
+past five), so the bench rewrites that one phrase in the request on its way out and nothing else: same model, effort,
+pool, key.
+
+| | first model call | returned |
+|---|---|---|
+| five | 11.3, 9.8, 10.1s; median 10.1s | 5, 5, 5 |
+| ten | 18.4, 16.1, 20.2s; median 18.4s | 8, 7, 10 |
+
+Ten costs about 1.8 times five, six to ten seconds more on a press, and the first five of a ten answer were the same
+records as a five answer bar one swap (Carly Simon for Huey Lewis). Load 3.30 before and 2.22 after, nothing else
+running. For the queueing decision this is the number: a grid that asks for ten up front waits about eight seconds
+longer for its first drawn answer than one that asks for five and asks again.
+
+**Step level:** pick.test.ts 24 passed (one red first); typecheck 0 errors; lint 0 errors, 6 warnings; build compiled.
+No e2e run: the change is one phrase removed from a list the specs exercise through stubs, and the pick's live behaviour
+was measured on production by the bench. Gates 44935527838 (reason rule) and 44936268544 (updated_at) both passed.

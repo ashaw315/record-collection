@@ -111,10 +111,12 @@ const reasonLength = (reason: string) => [...reason].length;
 /*
   A reason that describes what the model was given rather than the record (Adam's press, 21 Nov: "the text offers period
   atmosphere, not evidence of a recent recording"; the coordinator: a class, and run-to-run, not length). The prompt rule
-  above forbids it; this is the mechanical check beside it, on the seven phrases he named, whole words only. Returns the
-  phrase, so the drop can name it, or null.
+  above forbids it; this is the mechanical check beside it, whole words only. Six phrases, not the seven he first named:
+  "the material" went, because across the 680 stored sentences it meant the repertoire four times out of four and never
+  the source, and both genuine self-references said "the credits" (the coordinator, 21 Nov). Returns the phrase, so the
+  drop can name it, or null.
 */
-const MATERIAL_PHRASES = ['the text', 'the description', 'the material', 'this material', 'the credits', 'the information', 'evidence'] as const;
+const MATERIAL_PHRASES = ['the text', 'the description', 'this material', 'the credits', 'the information', 'evidence'] as const;
 const MATERIAL_PATTERN = new RegExp(`\\b(${MATERIAL_PHRASES.join('|')})\\b`, 'i');
 export function mentionsMaterial(reason: string): string | null {
   const hit = MATERIAL_PATTERN.exec(reason);
