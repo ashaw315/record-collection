@@ -71,6 +71,38 @@ describe('the request', () => {
 
 const envelope = (body: unknown) => ({ status: 'completed', output: [{ type: 'message', content: [{ type: 'output_text', text: JSON.stringify(body) }] }] });
 
+describe('the ABOUT’s own prompt, beside the matched text’s left exactly as calibrated (the coordinator, 21 Nov)', () => {
+  /*
+    The matched-text prompt describes "a short description of how a record sounds", and its planted calibration is for
+    that text; an ABOUT is a note on what a record is, when it landed and why it matters, and it gets a second prompt
+    that says so, given its own catch rate by its own planted run. Fails against one prompt serving both, against the
+    matched prompt changing, and against the ABOUT prompt losing the two kinds or the agreement-is-not-evidence line.
+  */
+  const matched = auditRequest(subject, SENTENCES, facts, config).input.find((m) => m.role === 'system')?.content ?? '';
+  const about = auditRequest(subject, SENTENCES, facts, config, 'about').input.find((m) => m.role === 'system')?.content ?? '';
+
+  it('the ABOUT prompt describes a note on the record, not how it sounds, and differs from the matched prompt', () => {
+    expect(about).not.toMatch(/how a record sounds/);
+    expect(about).toMatch(/note about a record|short note/i);
+    expect(about).toMatch(/what it is|when it (landed|came)|why it matters/i);
+    expect(about).not.toBe(matched);
+  });
+
+  it('the matched prompt is the calibrated one, unchanged, and is the default', () => {
+    expect(matched).toMatch(/how a record sounds/);
+    expect(auditRequest(subject, SENTENCES, facts, config, 'matched').input.find((m) => m.role === 'system')?.content).toBe(matched);
+  });
+
+  it('the ABOUT prompt keeps the two kinds apart and the lines the reading depends on', () => {
+    expect(about).toMatch(/contradicted by the material/i);
+    expect(about).toMatch(/contradicted by your own knowledge/i);
+    expect(about).toMatch(/kept apart|separately|never merged/i);
+    expect(about).toMatch(/agreement is not evidence/i);
+    expect(about).toMatch(/unsupported is not contradicted|not supported[^.]*is not contradicted/i);
+    expect(about).toMatch(/history|reception|received|scene/i);
+  });
+});
+
 describe('reading a stubbed reply', () => {
   it('keeps the two kinds apart, each item carrying its sentence by number and the whole sentence quoted', () => {
     const read = readAudit(envelope({

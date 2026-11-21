@@ -31,6 +31,7 @@
     "abouts:embed": "node --env-file=.env.local --conditions=react-server --import tsx scripts/embed-abouts.mts",
     "matched:draft": "node --env-file=.env.local --conditions=react-server --import tsx scripts/write-matched-text.mts",
     "matched:audit": "node --env-file=.env.local --conditions=react-server --import tsx scripts/audit-matched-text.mts",
+    "abouts:audit": "node --env-file=.env.local --conditions=react-server --import tsx scripts/audit-abouts.mts",
     "matched:reasons": "node --env-file=.env.local --conditions=react-server --import tsx scripts/measure-reason-lengths.mts",
     "describe:time": "node --env-file=.env.local --conditions=react-server --import tsx scripts/time-describe.mts",
     "ask:diagnostic": "node --env-file=.env.local --conditions=react-server --import tsx scripts/ask-diagnostic.mts",

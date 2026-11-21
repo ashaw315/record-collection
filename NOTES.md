@@ -58948,3 +58948,63 @@ helper waits for Design's ruling via the coordinator; the resolver did not wait 
 
 Step level: resolver and search-artist suites, 31 passed; typecheck 0 errors; lint 0 errors, 6 warnings at HEAD; build
 compiled in 18s at load 5. One read-only production run: about 45 MusicBrainz requests, nothing written.
+
+**The adversarial pass pointed at the 55 stored ABOUTs (the coordinator's go, 21 Nov; built and run 02:00 to 02:20Z).**
+Built, test first: the auditor gains a second prompt for an ABOUT (`AuditKind 'about'`, matched-text-audit.ts), the
+matched-text prompt left byte-for-byte as calibrated and still the default, with tests that the two differ, that the
+matched one is unchanged, and that the ABOUT one keeps the two kinds and the agreement-is-not-evidence line (two failing
+first, then 15 passed); `bearing` and `bearingCount` (audit-bearing.ts), the mechanical denominator, a sentence counted
+as reachable when it names a track, a credited person, the label, a company, a format word, a side or a position (four
+cases failing against a missing module, then passed); and `scripts/audit-abouts.mts` (`npm run abouts:audit`), the pass
+over the stored ABOUTs read from the records table and split into sentences, the self-consistency detectors run over the
+same sentences with no model, `--planted` for this prompt's own catch rate, reports under `.abouts/` and ~/Downloads and
+copied into `docs/measurements/about-audit/`. Nothing written to production; nothing hand-fixed.
+
+**The ABOUT prompt's own catch rate, stated beside the matched text's and never read as it:** planted, 6 of 6 caught under
+the material kind at medium, 0 misfiled, 0 missed, 2 other knowledge flags beside the plants (ABBA 2); the matched-text
+prompt's planted run was also 6 of 6 at medium (18 Nov). The planted sentences replace each ABOUT's last, so the plants
+sat among prose, not marked sentences, and were caught there.
+
+**The 55, at medium, six minutes, 57,278 tokens in and 9,562 out: 5 contradicted by the material, 9 by the auditor's
+own knowledge, 0 self-consistency disagreements, 70 of 234 sentences bearable.** The head of the report says what this
+is: a lower bound on errors, never a clean bill, since the matched-text pass missed both of its positive controls at
+both efforts; and structurally weaker here, since the material could in principle bear on 70 of 234 sentences (30%),
+so the knowledge kind carries more of the result. Against the matched text's ten verified errors in 439 sentences, the
+ABOUTs show 5 material in 234, 5 in the 70 the material reaches.
+
+**The material list, with my verdict on each:**
+1. **ABBA, s5** "four voices and two writers": the credits name three Written-By, Ulvaeus & Andersson and Stig Anderson.
+   Holds against the credits on the letter; the two composers is the conventional reading and Anderson wrote lyrics.
+   Soft: true per material, not misleading in the way that matters.
+2. **Astrid Sonne, Great Doubt, s6** "the companion disc of edits": the format is Vinyl, LP, Album, one disc. Holds: this
+   pressing carries no companion disc, and the sentence puts one in the sleeve. An error.
+3. **Bob Dylan, Nashville Skyline, s5** "a fiddle-and-steel romp in the middle": Nashville Skyline Rag is A2 of ten.
+   Holds: a position claim the tracklist contradicts, the Carpenters shape. An error. **And a finding about the
+   denominator:** the bearing count gave this record 0 of 5, because "in the middle" names no track, side or position
+   word the classifier reads, so the denominator is itself a lower bound of reach; one of the five material items landed
+   on a sentence counted as unreachable.
+4. **Luther Vandross, Never Too Much, s3** "Then the tempo falls away for A House Is Not A Home": implies it follows the
+   title track; it is B3, the closer, five tracks on. Holds: sequence by "then", the medley control's shape. An error.
+5. **Peter, Paul & Mary, Ten Years Together, s2** "The sequence runs from coffeehouse hymns ... through the Dylan songs
+   ... the dragon, the protest numbers, the late pop flirtations": the record opens with two Dylan songs, the pop
+   number (A7) precedes Puff (B2), the protest songs close. Holds if "the sequence runs" is read as running order,
+   which it is. An error.
+   Four hold outright, one is soft. None hand-fixed; the About cell is the correction path if Adam wants them changed.
+
+**The knowledge list, advisory, with my read:** likely real: Blood, Sweat And Tears s1 (the horn section was not left
+intact; Brecker and Weiss left), Chuck Mangione s2 (the title track is instrumental; Satterfield sings elsewhere),
+Donna Summer s3 ("Could It Be Magic" is the uptempo disco reading, not slow), Hot Tuna s2 (recorded at the Chateau
+Liberté, not the New Orleans House, which was the debut's). Plausible: John Lennon s2 (Mind Games came out as the
+separation began, not just before), Buddy Rich s1 (some sides from 1961, not all mid-fifties). Weak: Dire Straits s2
+("brushed" as album-wide), Isaac Hayes s1 ("longer than most albums allow a side" against 12 and 19 minutes), James
+Taylor s2 ("vanished from everything after", too absolute). The self-consistency detectors fired on nothing: the three
+shapes need side counts, sizes or an exclusivity claim, and the ABOUT prose carried none of the pairs.
+
+**What the measurement says about the net, for the coordinator to decide:** the pass works on this text (6 of 6 planted);
+it found 4 clear material errors in 55 ABOUTs that nothing had checked, in the 30% of sentences it can reach, and 4
+likely knowledge errors it cannot prove; the 70% it cannot reach is where the ABOUT's history and reception claims
+live, and the knowledge kind is the only check on them. The correction path exists (the About cell); what does not exist
+is any check at drafting time. Reports: `docs/measurements/about-audit/`.
+
+Step level: matched-text-audit and audit-bearing suites, 19 passed; typecheck 0 errors; lint 0 errors, 6 warnings at
+HEAD; build compiled in 16s at load 3. Live calls: 6 planted and 55 audits on OpenAI, production read only.
