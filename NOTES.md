@@ -59203,3 +59203,64 @@ a card or list ever carries a mark for it, which §P.4 and §W.28 would govern. 
 fourth that is really two made one. No build until ruled; the collection report's line stands as built.
 
 Record only: NOTES, QUEUE (Q72 and Q78 rows), the compose comment. Rides with the next unit.
+
+## 21 Nov, night: the slot seen live; the reason that spoke about its text, a class, ruled out in the prompt and checked in code; the hedge traced to what the pick is not given
+
+**Adam pressed "big band but recorded recently" on production and sent the screen (the coordinator).** Three
+confirmations, each for the first time live: the requirement-unmet slot's "None has all of it." above the stand-in, the
+CLOSEST AVAILABLE label, §P.5's WHAT TO PLAY on the field. The slot question is closed; Q77's row says so.
+
+**The defect, in the reason: "...but the text offers period atmosphere, not evidence of a recent recording."** The class
+(the coordinator): the reason describes what the model was given, not the record. §P.2 forbade quoting the text and did
+not forbid mentioning it. Not a length effect (155 characters, within the bound), and the night before the same phrase got
+"but offers period atmosphere rather than an established recent recording", subject the record: run-to-run variation,
+which a rule and a check are for and a redraft is not.
+
+**Built, test first (three red, then 24 passed in pick.test.ts; 66 across the ask suites).** The prompt rule, in the
+pick's system text after the no-quoting rule: "The reason speaks about the record, never about the text, the description,
+the material, the credits, or what you were given: say what the record is, not what the text offers or fails to show."
+The check, `mentionsMaterial` (src/lib/ask/pick.ts): the seven phrases he named, whole words, case ignored, returning the
+phrase so the drop can name it; "textured", "context" and "evidenced" pass. **Where the check acts: §P.2's path for a bad
+reason, asked for again, never cut.** A reason that speaks about its text is asked for again for that record alone, with
+the rule restated in the re-ask; the reason that comes back clean replaces it in place; one still speaking of the text is
+left out with the phrase named ("its reason spoke about its text (\"the description\") when asked again"), the same
+shape as the bound's drop. One fault function decides both, so a reason over the bound and a reason about the text take
+one re-ask between them, never two. **A judgement call, reversible:** the coordinator said "flag"; the only existing
+mechanism for a reason the app will not show is the re-ask, and a flag that only logged would show Adam the fault.
+
+**The check's one soft spot, for the record:** "the material" also means the repertoire ("most of the material is country
+blues"), a sense the check cannot tell from the source-text sense. Such a reason is asked for again and usually comes back
+without the word; a reason using it twice is left out with the phrase named. The scan below shows the sense is common in
+the stored matched texts and would be in reasons.
+
+**Does the rule alone fix the hedge ("not evidence of a recent recording" where the record is from 1963)? Partly, and
+the rest is not the prompt's to fix.** The bench (scripts/ask-bench.mts, the phrase three times against the production
+pool at the configured effort, three model calls, nothing written): three requirement-unmet verdicts, Glenn Miller each
+time, 4.1, 4.5 and 5.3s, one request each, every reason clean on the check. Run 1: "...but it brings period atmosphere
+rather than the recent recording you want." Run 2: "...but offers period atmosphere rather than a confirmed recent
+recording." Run 3: "...but supplies period atmosphere rather than meeting your recent-recording requirement." So the
+class is gone in three of three; the hedge survives in one of three ("confirmed"), and none says 1963. **Why none can:**
+the pick is given the matched text and nothing else, no title, artist or year (`PickRecordText = { id, text }`,
+`matchedTextsFor` selects the text alone), and Glenn Miller's pool text names no year (scripts/report-pick-pool.mts,
+read-only: release year 1963, pressed 1963, years named in the text: none). "Not evidence of a recent recording" was the
+model being honest about what it had; "a 1963 recording, not a recent one" needs the year in the pool. **Proposed, not
+built:** give the pick each record's release year beside its text, one line. It changes what the pick is asked over,
+which §P.2 governs, so it is the coordinator's and Design's; the bench above is how to read the effect.
+
+**The same shape elsewhere, as asked.** The ABOUT audit's 14 flagged sentences (5 material, 9 knowledge): none speaks
+about its material; 0 of 14. The 55 stored ABOUTs (234 sentences) and 55 matched texts (446 sentences), scanned with the
+same check (scripts/report-self-reference.mts, read-only): 6 sentences, 0 in the ABOUTs proper and 1 in Great Gershwin's
+ABOUT using "the material" as repertoire ("Here the material comes back in a long-playing format"), 5 in matched texts.
+Three of the five are the repertoire sense (Hot Tuna twice, The Ink Spots: "most of the material is slow to mid-tempo
+ballad singing"), not the shape. **Two are the shape:** Kim Gordon — The Collective, "the credits add sound design and
+foley, so the tracks carry clattering incidental noise", and The Mamas & The Papas, "The credits name a session rhythm
+section of Hal Blaine on drums...". Both say what the record sounds like and cite the credits as their warrant on the
+way, which is the Mandy, Indiana shape ("this material does not say") in a milder form. Nothing hand-fixed; for the
+coordinator: a matched-text prompt rule of the same wording would stop the next ones, and these two are Adam's through
+the cell if he wants them reworded, like Q82's.
+
+**Step level:** pick.test.ts 24 passed and the six ask suites 66 passed; typecheck 0 errors; lint 0 errors, 6 warnings;
+build compiled; the eight ask, pick and slot specs on chromium, `Running 87 tests using 4 workers`, 87 passed, 3.1m, no
+retry, load 3.71 before and 19.27 after (the one-minute average, the run itself). Gate: the pick is shared by every ask
+spec, so one is owed and ship.sh dispatches it. Rides with this unit: bfdc30e0 (record only) and the probe's gate is
+44928746165, the import's 44929742515, both in progress at this writing.

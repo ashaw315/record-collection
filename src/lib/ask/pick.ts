@@ -70,7 +70,7 @@ const SYSTEM = [
   'If nothing fits, set verdict "nothing-fits" and return at most one record as a stand-in to play in the meantime, its reason saying what it is not.',
   'If the phrase states a requirement (for example no vocals) that no fitting record meets, set verdict "requirement-unmet" and return the closest in feel as one stand-in, its reason naming the requirement and what the record has instead.',
   'Never return a record listed as already named.',
-  `Each reason is one sentence of about ${REASON_TARGET} characters, never more than ${REASON_MAX}, in the reader’s terms of sound and occasion, saying why this record answers the phrase. Do not quote the record’s text in the reason. Carry any relevant caveat from the text into the reason rather than dropping it: a record that is slow with abrasive peaks is not simply gentle.`,
+  `Each reason is one sentence of about ${REASON_TARGET} characters, never more than ${REASON_MAX}, in the reader’s terms of sound and occasion, saying why this record answers the phrase. Do not quote the record’s text in the reason. The reason speaks about the record, never about the text, the description, the material, the credits, or what you were given: say what the record is, not what the text offers or fails to show. Carry any relevant caveat from the text into the reason rather than dropping it: a record that is slow with abrasive peaks is not simply gentle.`,
   'For each record, list in "claims" the whole sentences, copied exactly from that record’s text, that the reason rests on: at least one, and never part of a sentence.',
 ].join('\n');
 
@@ -101,12 +101,31 @@ export function pickRequest(phrase: string, pool: readonly PickRecordText[], nam
 export function reaskRequest(phrase: string, records: readonly PickRecordText[], config: { model: string; effort: string }) {
   const request = pickRequest(phrase, records, [], config);
   const user = request.input.find((m) => m.role === 'user');
-  if (user !== undefined) user.content = `Asked again: each record below was chosen for this phrase, and the reason given ran past ${REASON_MAX} characters. Give each its one-sentence reason again, about ${REASON_TARGET} characters and never more than ${REASON_MAX}, with its claims as before, and leave none out.\n\n${user.content}`;
+  if (user !== undefined) user.content = `Asked again: each record below was chosen for this phrase, and the reason given ran past ${REASON_MAX} characters or spoke about the text rather than the record. Give each its one-sentence reason again, about ${REASON_TARGET} characters and never more than ${REASON_MAX}, about the record, never about the text, with its claims as before, and leave none out.\n\n${user.content}`;
   return request;
 }
 
 /** Characters as the schema's maxLength counts them: code points, not UTF-16 units. */
 const reasonLength = (reason: string) => [...reason].length;
+
+/*
+  A reason that describes what the model was given rather than the record (Adam's press, 21 Nov: "the text offers period
+  atmosphere, not evidence of a recent recording"; the coordinator: a class, and run-to-run, not length). The prompt rule
+  above forbids it; this is the mechanical check beside it, on the seven phrases he named, whole words only. Returns the
+  phrase, so the drop can name it, or null.
+*/
+const MATERIAL_PHRASES = ['the text', 'the description', 'the material', 'this material', 'the credits', 'the information', 'evidence'] as const;
+const MATERIAL_PATTERN = new RegExp(`\\b(${MATERIAL_PHRASES.join('|')})\\b`, 'i');
+export function mentionsMaterial(reason: string): string | null {
+  const hit = MATERIAL_PATTERN.exec(reason);
+  return hit === null ? null : hit[1].toLowerCase();
+}
+/** Why a reason is asked for again, or null when it stands: over the bound, or about the text (§P.2's path for both). */
+function reasonFault(reason: string): string | null {
+  if (reasonLength(reason) > REASON_MAX) return `was over the bound of ${REASON_MAX}`;
+  const phrase = mentionsMaterial(reason);
+  return phrase === null ? null : `spoke about its text ("${phrase}")`;
+}
 
 const loose = (s: string) => s.toLowerCase().replace(/\s+/g, ' ').trim();
 
@@ -181,21 +200,24 @@ export async function askPick(phrase: string, pool: readonly PickRecordText[], n
   if (!sent.ok) return sent;
   const first = readPick(sent.answer, pool, named);
   if (!first.ok) return first;
-  const over = first.picks.filter((p) => reasonLength(p.reason) > REASON_MAX);
+  const over = first.picks.filter((p) => reasonFault(p.reason) !== null);
   if (over.length === 0) return first;
-  /* Asked again, once, for those records alone (§P.2); what comes back within the bound replaces, the rest is left out. */
+  /* Asked again, once, for those records alone (§P.2); what comes back without a fault replaces, the rest is left out. */
   const records = pool.filter((r) => over.some((p) => p.id === r.id));
   const again = await post(reaskRequest(phrase, records, config));
   const reread = again.ok ? readPick(again.answer, records, []) : again;
-  const within = new Map(reread.ok ? reread.picks.filter((p) => reasonLength(p.reason) <= REASON_MAX).map((p) => [p.id, p] as const) : []);
+  const within = new Map(reread.ok ? reread.picks.filter((p) => reasonFault(p.reason) === null).map((p) => [p.id, p] as const) : []);
   const picks: Picked[] = [];
   const dropped = [...first.dropped];
   for (const p of first.picks) {
-    if (reasonLength(p.reason) <= REASON_MAX) { picks.push(p); continue; }
+    if (reasonFault(p.reason) === null) { picks.push(p); continue; }
     const re = within.get(p.id);
-    if (re !== undefined) picks.push({ ...p, reason: re.reason, claims: re.claims });
-    else dropped.push({ id: p.id, why: `its reason was over the bound of ${REASON_MAX} when asked again${reread.ok ? '' : ` (${reread.reason})`}` });
+    if (re !== undefined) { picks.push({ ...p, reason: re.reason, claims: re.claims }); continue; }
+    /* The fault named is the second answer's where there was one, since that is the reason left out. */
+    const second = reread.ok ? reread.picks.find((q) => q.id === p.id) : undefined;
+    const fault = second === undefined ? reasonFault(p.reason) : reasonFault(second.reason);
+    dropped.push({ id: p.id, why: `its reason ${fault} when asked again${reread.ok ? '' : ` (${reread.reason})`}` });
   }
-  if (first.verdict === 'answer' && picks.length === 0) return { ok: false, reason: `every reason was over the bound of ${REASON_MAX} when asked again` };
+  if (first.verdict === 'answer' && picks.length === 0) return { ok: false, reason: `every reason was over the bound of ${REASON_MAX} or spoke about the text when asked again` };
   return { ok: true, verdict: first.verdict, picks, dropped };
 }

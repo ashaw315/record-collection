@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { askPick, PICK_SCHEMA, pickRequest, readPick, type PickRecordText, REASON_MAX, REASON_TARGET } from './pick';
+import { askPick, mentionsMaterial, PICK_SCHEMA, pickRequest, readPick, type PickRecordText, REASON_MAX, REASON_TARGET } from './pick';
 
 /**
  * **Step 3, unit 1: the model pick, server side (§P.2's "the model pick, minimum"; the coordinator, 13 and 14 Nov).**
@@ -56,6 +56,21 @@ describe('the request', () => {
     expect(PICK_SCHEMA.properties.picks.items.properties.reason).toMatchObject({ type: 'string', maxLength: REASON_MAX });
   });
 
+  /*
+    Adam's press on production, 21 Nov: "...but the text offers period atmosphere, not evidence of a recent recording".
+    The reason described what the model was given, not the record (the coordinator: a class, not a length effect; the
+    same phrase the night before got "but offers period atmosphere rather than an established recent recording").
+    Fails against the prompt of 20 Nov, which forbade quoting the text and not mentioning it.
+  */
+  it('tells the model the reason speaks about the record, never about the text, description, material, credits or what it was given', () => {
+    const system = pickRequest('x', POOL, [], { model: 'm', effort: 'low' }).input.find((m) => m.role === 'system')?.content ?? '';
+    expect(system).toMatch(/about the record, never about the text/i);
+    expect(system).toMatch(/description/i);
+    expect(system).toMatch(/material/i);
+    expect(system).toMatch(/credits/i);
+    expect(system).toMatch(/what you were given/i);
+  });
+
   it('tells the model fewer is correct when fewer fit, that nothing fitting is an answer, never to pad, and to keep caveats', () => {
     const system = pickRequest('x', POOL, [], { model: 'm', effort: 'low' }).input.find((m) => m.role === 'system')?.content ?? '';
     expect(system).toMatch(/up to five/i);
@@ -96,6 +111,19 @@ describe('reading a stubbed reply (our rule, not the model’s obedience)', () =
     const six = POOL.map((r) => pick(r.id, [/^.*?[.!?](?=\s|$)/.exec(r.text)?.[0] ?? '']));
     const r = readPick(reply({ verdict: 'answer', picks: six }), POOL, []);
     expect(r.ok && r.picks.map((p) => p.id)).toEqual(['a1', 'b2', 'c3', 'd4', 'e5']);
+  });
+});
+
+describe('a reason that speaks about its material (the coordinator, 21 Nov)', () => {
+  /* Fails against a check that misses any of the seven phrases, or one that flags the words inside other words. */
+  it('names the phrase a reason uses for what the model was given, and passes a reason about the record', () => {
+    expect(mentionsMaterial('Full-orchestra swing, but the text offers period atmosphere, not evidence of a recent recording.')).toBe('the text');
+    for (const phrase of ['the description', 'the material', 'this material', 'the credits', 'the information', 'evidence']) {
+      expect(mentionsMaterial(`Warm and slow, though ${phrase} says little about the room.`), phrase).toBe(phrase);
+    }
+    expect(mentionsMaterial('Loud and fast, but it is a 1963 recording, not a recent one.')).toBeNull();
+    expect(mentionsMaterial('Textured guitars with context for a late night; well evidenced grooves.')).toBeNull();
+    expect(mentionsMaterial('The Credits of a film score, hushed and wide.'), 'case does not matter').toBe('the credits');
   });
 });
 
@@ -224,6 +252,36 @@ describe('the call', () => {
     const standIn = replying(reply({ verdict: 'nothing-fits', picks: [pick('a1', [CLAIM_A], over)] }), reply({ verdict: 'nothing-fits', picks: [pick('a1', [CLAIM_A], over)] }));
     expect(await askPick('loud', POOL, [], { fetchImpl: standIn })).toMatchObject({ ok: true, verdict: 'nothing-fits', picks: [], dropped: [{ id: 'a1' }] });
     expect(standIn).toHaveBeenCalledTimes(2);
+  });
+
+  /*
+    The same path as the bound (§P.2: asked for again, never cut): a reason about the text is asked for again for that
+    record alone, replaced by one about the record, and left out with the phrase named when it still speaks of the text.
+    Fails against the 20 Nov code, which kept such a reason and asked nothing.
+  */
+  it('asks once more for a reason that speaks about the text, replaces it with one about the record, and leaves out a record whose reason still does, naming the phrase', async () => {
+    vi.stubEnv('OPENAI_API_KEY', 'sk-test');
+    const aboutText = 'Brassy and quick, but the text offers period atmosphere, not evidence of a recent recording.';
+    const replaced = replying(
+      reply({ verdict: 'answer', picks: [pick('a1', [CLAIM_A], aboutText), pick('c3', [CLAIM_C])] }),
+      reply({ verdict: 'answer', picks: [pick('a1', [CLAIM_A], 'Brassy and quick, but a 1963 recording, not a recent one.')] }),
+    );
+    const r = await askPick('big band but recorded recently', POOL, [], { fetchImpl: replaced });
+    expect(replaced).toHaveBeenCalledTimes(2);
+    const again = userOf(replaced, 1);
+    expect(again).toContain('[a1]');
+    expect(again).not.toContain('[c3]');
+    expect(again).toMatch(/about the record, never about the text/i);
+    expect(r).toMatchObject({ ok: true, verdict: 'answer', picks: [{ id: 'a1', reason: 'Brassy and quick, but a 1963 recording, not a recent one.' }, { id: 'c3' }], dropped: [] });
+
+    const still = replying(
+      reply({ verdict: 'answer', picks: [pick('a1', [CLAIM_A], aboutText), pick('c3', [CLAIM_C])] }),
+      reply({ verdict: 'answer', picks: [pick('a1', [CLAIM_A], 'Brassy, though the description gives no recording date.')] }),
+    );
+    expect(await askPick('big band but recorded recently', POOL, [], { fetchImpl: still })).toMatchObject({
+      ok: true, verdict: 'answer', picks: [{ id: 'c3' }], dropped: [{ id: 'a1', why: expect.stringMatching(/spoke about its text \("the description"\) when asked again/) }],
+    });
+    expect(still).toHaveBeenCalledTimes(2);
   });
 
   it('asks nothing again when every reason is within the bound', async () => {
