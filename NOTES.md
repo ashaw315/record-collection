@@ -58787,3 +58787,40 @@ function and the network, which these lines do not carry; the model figure sits 
 median, 15.2s max on the bench against 12.5 and 16.6s here). Two lines are thin, and no press followed in the next hour,
 so this is tonight's set: the per-press shape on the host he will use, 12 to 17 seconds a press, for Design's indication.
 Gate 44815908513 on 8fca891b (Q37's first half) OK on every half. Record only; rides with the next unit.
+
+**The latency question closed; poller and drain declined, the coordinator's, with his reasons (20 Nov, 22:40Z).** Two
+production presses at 16.6 and 12.5s model, the route under 120ms, against a bench of 7.3 to 15.2 over eight phrases
+put a phone press at twelve to seventeen seconds, and the only decision it feeds is Design's indication, which needs to
+know whether the wait is two seconds, fifteen or thirty: it is fifteen, and more figures would not change what gets
+drawn. No poller, since it needs someone to run it and nobody will; no drain, since it needs a receiver we do not have
+for a figure we already have. The session's poller is stopped. **The third option, named as the thing to build IF latency
+becomes a question again:** the ask route writing its own timing to the database, one row per ask: no retention problem,
+no external dependency, the app owns the data. More than this question needs today (a new table and a write on every
+ask), and the answer if Adam ever says a press got slower or drift over weeks is wanted rather than a figure for one
+decision.
+
+**Q37's check before the walk writes anything (the coordinator's precondition): no wrong MBID is cached.** The tool is
+`scripts/audit-artist-mbids.mts` (read-only: each artist with a record, its MBID, the cached payload's name,
+disambiguation, type, country, area and begin, beside the collection's titles). Of the 49 artists with records, 9 hold an
+MBID and 8 have a cached payload, and all 8 are the right artist read against their records: 999 ("English punk rock
+band", The Biggest Prize In Sport), Dire Straits, Donovan ("Scottish singer, songwriter and guitarist", two records),
+MGMT ("US pop rock group", Loss Of Life), Simon & Garfunkel, Steely Dan ("group founded by Walter Becker and Donald
+Fagen", Gaucho), The Blues Project, The Doors. The ninth, John Lennon, holds an MBID with no cached payload. **The
+suffixed names resolve to nothing, not to the wrong artist:** Darkside (22), James Taylor (2), Smerz (2) and The Ink
+Spots (3) hold no MBID at all, as do 40 of the 49; the Discogs suffix is part of the stored name, so a search for the
+exact name finds no hit and §4.3's rule stores nothing. So the walk cannot propagate a wrong formed year or origin from
+what is cached today, and the exposure is in future resolutions, which the rule below bounds. 7 of the 49 have
+memberships (999 six, Dire Straits nine, MGMT 28, Simon & Garfunkel two, Steely Dan twelve, The Blues Project seven, The
+Doors four).
+
+**"Ambiguous", stated as a number before the add-flow half is built.** The rule in `pickDisambiguated` (search-artist.ts)
+today: a name search's hits are accepted when exactly ONE hit carries the top hit's normalised name (trimmed, lower-cased);
+two or more with that name, or none, is ambiguous and nothing is stored. The number is 1, the comparison is exact
+equality of the normalised name, and the score is not consulted, because MusicBrainz ranks by how well documented an
+artist is and among four groups called Discharge the famous one scores 100 and the rest 83, so a score gap accepts
+exactly the case it should refuse (measured 14 Aug). **For storing facts from a name match I tighten it by one term:** the
+one hit must carry the artist's OWN normalised name as stored, not the top hit's, so "Carpenters" cannot be accepted
+through a sole hit named "The Carpenters"; and a Discogs suffix " (N)" is stripped from the stored name before the search
+only, so Smerz (2) searches as Smerz and is then refused when MusicBrainz holds two. Everything else is refused and
+stores nothing: no MBID, no formed year, no origin, no placeholder. The same principle as the row's failure behaviour,
+since a wrong formed year in the grounding becomes a wrong sentence in an ABOUT and there is no audit for ABOUTs.
