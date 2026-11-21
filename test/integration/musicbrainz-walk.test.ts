@@ -63,7 +63,7 @@ function bandRel(band: { id: string; name: string }) {
  */
 function mockMusicBrainz(
   relationsByMbid: Record<string, unknown[]>,
-  options: { failAfter?: number } = {},
+  options: { failAfter?: number; factsByMbid?: Record<string, Record<string, unknown>> } = {},
 ) {
   let calls = 0;
   const requested: string[] = [];
@@ -77,7 +77,7 @@ function mockMusicBrainz(
       throw new clientModule.MusicBrainzError('rate limited', { status: 503 });
     }
 
-    return { id: mbid, name: mbid, relations: relationsByMbid[mbid] ?? [] };
+    return { id: mbid, name: mbid, relations: relationsByMbid[mbid] ?? [], ...(options.factsByMbid?.[mbid] ?? {}) };
   });
 
   vi.spyOn(clientModule, 'getMusicBrainzClient').mockReturnValue({
@@ -353,6 +353,41 @@ describe('the complete walk', () => {
     await walkLineup(DISCHARGE.id);
 
     expect(await count('musicbrainz_cache', sql`musicbrainz_id = ${DISCHARGE.id}`)).toBe(1);
+  });
+});
+
+describe('the band’s own facts, written where the catalogue has none (Q37’s second half, 20 Nov)', () => {
+  /*
+    The walk downloaded the band's formation and home with its relations and kept only the relations (Q37, Adam's
+    ruling of 11 Nov). Now it fills `formed_year` and `origin_country` where they are null and never over a value Adam
+    entered. Fails against a walk that writes nothing, one that overwrites, and one that reads a person's birth as a
+    formation. The local artist is matched by its MBID, as a walked band is.
+  */
+  const facts = { type: 'Group', 'life-span': { begin: '1977', end: null, ended: false }, 'begin-area': { name: 'Stoke-on-Trent' }, area: { name: 'United Kingdom' }, country: 'GB' };
+  const relations = { [DISCHARGE.id]: [memberRel(CAL)], [CAL.id]: [bandRel(DISCHARGE)] };
+  const artistRow = async (mbid: string) =>
+    (await db.execute<{ formed_year: number | null; origin_country: string | null }>(sql`SELECT formed_year, origin_country FROM artists WHERE musicbrainz_id = ${mbid}`)).rows[0];
+
+  it('fills the band’s formed year and origin where they are null', async () => {
+    await db.execute(sql`INSERT INTO artists (name, musicbrainz_id) VALUES ('Discharge', ${DISCHARGE.id})`);
+    mockMusicBrainz(relations, { factsByMbid: { [DISCHARGE.id]: facts } });
+    await walkLineup(DISCHARGE.id);
+    expect(await artistRow(DISCHARGE.id)).toEqual({ formed_year: 1977, origin_country: 'Stoke-on-Trent, United Kingdom' });
+  });
+
+  it('leaves a value already entered, filling only the other column', async () => {
+    await db.execute(sql`INSERT INTO artists (name, musicbrainz_id, formed_year) VALUES ('Discharge', ${DISCHARGE.id}, 1976)`);
+    mockMusicBrainz(relations, { factsByMbid: { [DISCHARGE.id]: facts } });
+    await walkLineup(DISCHARGE.id);
+    expect(await artistRow(DISCHARGE.id)).toEqual({ formed_year: 1976, origin_country: 'Stoke-on-Trent, United Kingdom' });
+  });
+
+  it('writes a person’s area but never their birth year as a formation', async () => {
+    const person = { id: 'mb-miles', name: 'Miles Davis' };
+    await db.execute(sql`INSERT INTO artists (name, musicbrainz_id) VALUES ('Miles Davis', ${person.id})`);
+    mockMusicBrainz({ [person.id]: [bandRel(DISCHARGE)] }, { factsByMbid: { [person.id]: { type: 'Person', 'life-span': { begin: '1926-05-26' }, area: { name: 'United States' } } } });
+    await walkLineup(person.id);
+    expect(await artistRow(person.id)).toEqual({ formed_year: null, origin_country: 'United States' });
   });
 });
 

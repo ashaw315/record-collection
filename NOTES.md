@@ -58824,3 +58824,38 @@ through a sole hit named "The Carpenters"; and a Discogs suffix " (N)" is stripp
 only, so Smerz (2) searches as Smerz and is then refused when MusicBrainz holds two. Everything else is refused and
 stores nothing: no MBID, no formed year, no origin, no placeholder. The same principle as the row's failure behaviour,
 since a wrong formed year in the grounding becomes a wrong sentence in an ABOUT and there is no audit for ABOUTs.
+
+**Q37's second half, part one: the walk writes the band's formed year and origin where the catalogue has none (the
+coordinator's yes, 20 Nov; built 23:00).** `artistFactsFromPayload` (musicbrainz/artist-facts.ts, pure) reads the
+MusicBrainz artist payload the walk already fetches: `life-span.begin`'s year for anything but a Person, since a
+person's life-span begins at birth and §4.1's `formed_year` is a formation, and only within §4.1's bound with the clock
+injected; the origin as the begin-area with its area ("Stoke-on-Trent, United Kingdom"), the area alone where there is
+no begin-area or the two are one place, null where no place is named, and no country code appended since the area
+names the country. `fillArtistFactsWhereNull` (queries/artists.ts) writes each fact into its column only where the
+column is null (`COALESCE(column, fact)`), never over a value Adam entered (CLAUDE.md §8), nothing for null facts.
+`walkLineup` calls both once the band is resolved, so every band walked from here is filled. Test first and failing:
+six reader cases against a missing module, two fill cases against a missing export, three walk cases returning nulls
+(fills where null; leaves 1976 and fills the other column; a person's area but never their birth year); then 42 passed
+across the three files. **The eight already walked are not yet filled:** `scripts/backfill-artist-facts.mts` reads their
+cached payloads through the same reader and the same fill, no MusicBrainz call, and prints each write; it ran against
+the empty local test database ("0 artist(s) with a cached payload and a null column") to prove its wiring, and it is NOT
+run against production here, since that is a production write and waits for the coordinator's go. Expected from the
+audit: formed years 1976-12→1976 (999), 1977 (Dire Straits), 2002 (MGMT), 1963 (Simon & Garfunkel), 1972 (Steely Dan),
+1965 (The Blues Project, The Doors), none for Donovan (a Person), and origins from the areas.
+
+**Part two, the add flow resolving a new artist by name under the stated rule, is next and has one question of place:**
+Q72's add flow is not built, so today the only callers that describe a record are write-abouts.mts and time-describe.mts,
+and the app's own name resolution lives in `POST /api/artists/:id/lineup`. The resolver (search, the rule above, then the
+walk, which now writes the facts) is one function; whether it runs from the drafting scripts for an artist with no MBID,
+from the add flow when Q72 builds it, or both, is the question, and I would build the function with the scripts as its
+first caller so the 40 artists with no MBID can be tried under the rule before Q72 depends on it.
+
+Step level: artist-facts, artist-grounding-facts and musicbrainz-walk suites, 42 passed; typecheck 0 errors; lint 0
+errors, 6 warnings at HEAD; build compiled in 18s at load 3. No e2e spec covers the walk's write, so no e2e sample.
+
+**The first ship of this unit was refused by one load-shaped failure, not in the unit (23:28).** commit-checked read
+`986 passed, 1 failed`: `check-queue.test.ts`'s "prints queue-2's coverage on the repo's QUEUE.md" timed out at its
+8000ms budget (`underLoad(748)`), having run 11.5s; the file took 13.2s. It spawns the check as a command, nothing in
+this unit touches it or QUEUE.md, and the same test passed in the check six minutes earlier (e464f6da). Load was 3.0
+before and after; the load was the check's own 86 files. Reported as the coordinator asked for load-shaped failures (a
+timeout, passing on retry), not chased as a bug; the ship is run again and the second check's result is beside this.

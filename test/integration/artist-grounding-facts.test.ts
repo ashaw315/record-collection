@@ -2,7 +2,7 @@ import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { getTestDb, truncateAll, closeTestDb } from '../helpers/db';
 import { artists } from '@/db/schema';
 import { saveMemberships } from '@/lib/db/queries/artist-memberships';
-import { artistGroundingFacts } from '@/lib/db/queries/artists';
+import { artistGroundingFacts, fillArtistFactsWhereNull, findArtistById } from '@/lib/db/queries/artists';
 
 /**
  * **Q37 (Adam's ruling of 11 Nov; built 20 Nov): the ABOUT grounding reads the artist's formed year, origin and
@@ -52,5 +52,28 @@ describe('artistGroundingFacts', () => {
 
   it('answers null for an artist that does not exist', async () => {
     expect(await artistGroundingFacts('00000000-0000-4000-8000-000000000000')).toBeNull();
+  });
+});
+
+describe('fillArtistFactsWhereNull (Q37’s second half, 20 Nov)', () => {
+  /*
+    The walk's facts complete what the catalogue lacks and never replace what Adam entered (CLAUDE.md §8: external data
+    never overwrites user-entered data). Fails against a write that overwrites a held value, one that writes a null over
+    a value, and one that skips a null column because the other was held.
+  */
+  it('fills the null columns and leaves a held value, column by column', async () => {
+    const [blank] = await db.insert(artists).values({ name: 'Discharge' }).returning();
+    const [held] = await db.insert(artists).values({ name: 'Black Flag', formedYear: 1976, originCountry: null }).returning();
+    await fillArtistFactsWhereNull(blank.id, { formedYear: 1977, origin: 'Stoke-on-Trent, United Kingdom' });
+    await fillArtistFactsWhereNull(held.id, { formedYear: 1979, origin: 'Hermosa Beach, United States' });
+    expect(await findArtistById(blank.id)).toMatchObject({ formedYear: 1977, originCountry: 'Stoke-on-Trent, United Kingdom' });
+    expect(await findArtistById(held.id)).toMatchObject({ formedYear: 1976, originCountry: 'Hermosa Beach, United States' });
+  });
+
+  it('writes nothing for null facts, and nothing for an artist that does not exist', async () => {
+    const [kept] = await db.insert(artists).values({ name: 'Donovan', formedYear: null, originCountry: 'Scotland' }).returning();
+    await fillArtistFactsWhereNull(kept.id, { formedYear: null, origin: null });
+    expect(await findArtistById(kept.id)).toMatchObject({ formedYear: null, originCountry: 'Scotland' });
+    await expect(fillArtistFactsWhereNull('00000000-0000-4000-8000-000000000000', { formedYear: 1977, origin: 'x' })).resolves.toBeUndefined();
   });
 });

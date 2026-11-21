@@ -130,6 +130,24 @@ export async function artistGroundingFacts(id: string): Promise<ArtistFacts | nu
   return { formedYear: row.formedYear, origin: row.origin, members };
 }
 
+/**
+ * Writes the walk's formed year and origin into the columns that are null, and never over a value already held
+ * (CLAUDE.md §8: external data never overwrites what the user entered). A null fact writes nothing, and an artist that
+ * does not exist is a no-op, since the walk resolved the id a moment before.
+ */
+export async function fillArtistFactsWhereNull(id: string, facts: { formedYear: number | null; origin: string | null }): Promise<void> {
+  if (facts.formedYear === null && facts.origin === null) return;
+  const db = getDb();
+  await db
+    .update(artists)
+    .set({
+      formedYear: sql`COALESCE(${artists.formedYear}, ${facts.formedYear})`,
+      originCountry: sql`COALESCE(${artists.originCountry}, ${facts.origin})`,
+      updatedAt: new Date(),
+    })
+    .where(eq(artists.id, id));
+}
+
 export async function findArtistById(id: string): Promise<Artist | undefined> {
   const db = getDb();
   const [row] = await db.select(columns).from(artists).where(eq(artists.id, id)).limit(1);

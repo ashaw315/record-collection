@@ -7,6 +7,8 @@ import {
 } from './normalize-relations';
 import { readCachedArtist, writeCachedArtist } from './artist-cache';
 import { resolveArtist } from './resolve-artist';
+import { artistFactsFromPayload } from './artist-facts';
+import { fillArtistFactsWhereNull } from '@/lib/db/queries/artists';
 import { recordMatchCandidates } from '@/lib/db/queries/artist-match-candidates';
 import { saveMemberships } from '@/lib/db/queries/artist-memberships';
 import { saveDerivedActs } from '@/lib/db/queries/artist-derived-acts';
@@ -103,6 +105,8 @@ export async function walkLineup(bandMbid: string): Promise<WalkResult> {
   const band = await fetchArtist(bandMbid, bandMbid, { cache: false });
   const bandArtist = await resolveArtist({ mbid: band.mbid, name: band.name });
   await recordMatchCandidates(bandArtist.artistId, bandArtist.candidateIds);
+  /* Q37 (20 Nov): the payload's formation and home, kept where the catalogue has none; a person's birth is not a formation (artist-facts.ts). */
+  await fillArtistFactsWhereNull(bandArtist.artistId, artistFactsFromPayload(band.raw));
 
   /*
    * **A48: the band's OWN tribute and subgroup relations, from the same
