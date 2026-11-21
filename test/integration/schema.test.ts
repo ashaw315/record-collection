@@ -373,20 +373,24 @@ describe('duplicate records are legal (SPEC.md §4 schema-wide rule)', () => {
 });
 
 describe('updated_at trigger', () => {
+  /*
+    Compared in Postgres at the column's microsecond resolution, not in JavaScript at the millisecond's: gate 44928746165
+    (21 Nov) failed here with `expected 1795281278351 to be greater than 1795281278351`, the insert and the update landing
+    in one millisecond on the runner, two distinct timestamps truncated to one by `Date`. The trigger had worked; the
+    instrument could not see it.
+  */
   it('changes updated_at on UPDATE', async () => {
     const artistId = await insertArtist('Wipers');
-    const before = await db.execute<{ updated_at: Date }>(
-      sql`SELECT updated_at FROM artists WHERE id = ${artistId}`,
+    const before = await db.execute<{ updated_at: string }>(
+      sql`SELECT updated_at::text AS updated_at FROM artists WHERE id = ${artistId}`,
     );
 
     await db.execute(sql`UPDATE artists SET notes = 'Greg Sage' WHERE id = ${artistId}`);
 
-    const after = await db.execute<{ updated_at: Date }>(
-      sql`SELECT updated_at FROM artists WHERE id = ${artistId}`,
+    const after = await db.execute<{ updated_at: string; later: boolean }>(
+      sql`SELECT updated_at::text AS updated_at, updated_at > ${before.rows[0].updated_at}::timestamptz AS later FROM artists WHERE id = ${artistId}`,
     );
-    expect(new Date(after.rows[0].updated_at).getTime()).toBeGreaterThan(
-      new Date(before.rows[0].updated_at).getTime(),
-    );
+    expect(after.rows[0].later, `${before.rows[0].updated_at} then ${after.rows[0].updated_at}`).toBe(true);
   });
 
   it('does not change updated_at on SELECT', async () => {

@@ -59264,3 +59264,12 @@ build compiled; the eight ask, pick and slot specs on chromium, `Running 87 test
 retry, load 3.71 before and 19.27 after (the one-minute average, the run itself). Gate: the pick is shared by every ask
 spec, so one is owed and ship.sh dispatches it. Rides with this unit: bfdc30e0 (record only) and the probe's gate is
 44928746165, the import's 44929742515, both in progress at this writing.
+
+**Gate 44928746165 on the probe's commit: NOT OK, `5439 passed, 1 failed, 3 skipped`, the unit half; the e2e halves OK.**
+The one: test/integration/schema.test.ts, "changes updated_at on UPDATE", `expected 1795281278351 to be greater than
+1795281278351`. The insert and the update landed in one millisecond on the runner; the column holds microseconds and the
+test compared `Date.getTime()`, which holds milliseconds, so two distinct timestamps read as one. The trigger worked and
+the instrument could not see it: a weak-instrument flake, not load-shaped and not the probe's (the next gate, 44929742515
+on the import's commit with the same probe code, passed). Fixed forward in the test alone: `before` read as text, and
+`updated_at > before::timestamptz` asked of Postgres at the column's own resolution. 32 passed. The timeout count is
+unchanged at instance one; this was not a timeout.
