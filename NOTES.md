@@ -59435,3 +59435,95 @@ sentence count and the difference is the splitter, not the redrafts.
 **Step level:** schema, artist-identity, collection-import and record-matched-text 92 passed, three red first; typecheck
 0 errors; lint 0 errors, 6 warnings; build compiled. Test files only; a gate is dispatched by ship.sh since
 test/integration is shared ground. Gate 44954651498 on 34400951 in progress at this writing.
+
+## 21 Nov, after the last: the splitter chased from the seven; run 3's reject was ours; the ABOUT's clock is a null flag; the slip corrected; the five eighties reasons; Design's year ruling landed
+
+**The coordinator, accepting the sweep and the reads (21 Nov):** the five eighties records checked by him against their
+releases, Break Out 1983, Sports 1983, Never Too Much 1981, Gaucho 1980, The Biggest Prize In Sport 1980, a clean pass,
+and no hedge in any reason the result that matters more than the five. The pressing-year column independently
+justified Design's ruling: 999's 1980 release pressed 2023 would have fallen outside the eighties under the pressing
+year, on a record that just came back as a correct answer; she ruled it from argument and the data confirmed it. On Q78.
+
+**The seven sentences chased (scripts/report-false-splits.mts, read-only).** 680 was 234 ABOUT plus 446 matched-text
+sentences by `sentencesOf`, and the gap to the coordinator's 439 or 440 was the splitter, which ends a sentence at any
+full stop followed by a space, abbreviations included. From the splitter itself, over every stored text:
+
+| | sentences by the splitter | false boundaries | where |
+|---|---|---|---|
+| matched text (55) | 446 | 9 | ABBA ("Intermezzo No. \| 1"), Glenn Miller ("St. \| Louis Blues"), Hot Tuna twice ("Rev. \| Gary Davis"), OutKast ("Mr. \| DJ"), Simon & Garfunkel ("Fred Carter, Jr. \| on guitars"), Smerz twice ("Hester, Pt. \| 1" and "Pt. \| 2"), Sgt. Pepper ("Mr. \| Kite!") |
+| ABOUT (55) | 234 | 2 | Hot Tuna's two ABOUTs, both "Rev. \| Gary Davis" |
+
+So the true matched-text count is 437, eight records affected, and the gap was never the redrafts.
+
+**Where the rule is load-bearing.** Three copies of the same regex: `sentencesOf` in src/lib/ask/pick.ts:139, used by
+the claim check at pick.ts:158 (every claim must equal, loosely, one of the record's split sentences); a private copy in
+src/lib/llm/about-check.ts:34, the ABOUT's fact checker, which walks sentences for debut, date, label and personnel
+claims; and a copy in scripts/report-self-reference.mts. The drafting pipeline stores the model's own sentence list in
+.matched/drafts.json (audit-matched-text.mts reads `d.sentences`), but the database holds the joined text, and the claim
+check re-splits it with the regex, so the model's boundaries and the check's can differ. **§67's correcting sheet is not
+in the build**: no src or e2e file names it; it is Design's half on Q78 and Code's step unbuilt. So nothing shows Adam a
+fragment today, and when the sheet is built it must not take this splitter as it stands, or it would show him "...ends
+with Rev." as a sentence to correct, on Hot Tuna, whose text is among the eight.
+
+**Run 3's rejected claim was ours.** The claim was Hot Tuna — Hot Tuna's "Side one is mostly older blues and ragtime
+material — a Leroy Carr piece, a Jelly Roll Morton tune, traditional songs — played at an unhurried, conversational
+pace, and it ends with Rev. Gary Davis's "Death Don't Have No Mercy," the gravest and slowest-moving thing on the side."
+That is the stored sentence word for word (report-pick-pool), and the splitter had cut it at "Rev.", so the model cited
+a whole sentence and the check said it was not one. The pick lost a correct record to its own instrument. The reject
+table corrected: the validator's genuine rejects across the four ten-runs are 0, 0, 0, 1 (run 4's id not in the pool);
+the model returned 8, 7, 10, 8 raw. **And the arithmetic slip in the entry above:** "adding the rejects back gives 8, 7,
+10, 9" was wrong; the model column is the raw pre-validator count, so nothing is added back and the sequence is 8, 7,
+10, 8; post-validator it is 8, 7, 9, 7. Ten arrives once in four under every reading. Q78 carries the right figure.
+
+**Proposed, not built (the splitter is a rule the claim check and the coming sheet share, so the coordinator's go):**
+one `sentencesOf`, in one module, that does not end a sentence after a token in a short abbreviation list (Rev., Mr.,
+Mrs., Dr., St., Jr., Sr., Vol., No., Pt., feat., vs.) or a single initial, nor where the next fragment begins with a
+lowercase letter or a digit; about-check.ts and report-self-reference import it instead of their copies. Against the
+eleven boundaries above it joins every one and splits nothing else in the 680 (to be shown by a test over the stored
+texts' shapes, not by the list alone). The alternative, storing the model's own sentence list beside the text so the
+check and the sheet read boundaries the drafting model drew, reaches the 55 only as they redraft and adds a column; the
+regex fix reaches them now.
+
+**The ABOUT's clock is not a comparison.** `snippet_edited_at` is written by `new Date()` (snippet.ts:124) and read in
+three places, every one a null test: `owned = snippetEditedAt !== null` in snippet-view.ts:68 and about-cell.ts:103, and
+`WHERE snippet_edited_at IS NULL` as the generate path's guard (snippet.ts:90). It is a flag with a time in it, compared
+against no other clock, trigger-written or otherwise, so the ABOUT's ownership cannot read wrong by resolution. No src
+sweep for the class follows from it; if one is wanted it is a separate ask.
+
+**The five eighties reasons, with the year in the prompt, for Design against §P.2 (the bench's with-year call; none
+names the year, none hedges):**
+
+- Pointer Sisters — Break Out: "Glossy synth-pop with punchy drum machines and thick sisterly harmonies makes a bright
+  party pick, with a slower, warmer second side after the dance-heavy opening."
+- Huey Lewis & The News — Sports: "Swinging band rock with sing-along harmonies and a big, crisp snare suits driving or
+  a party, with a tense soldier song and a soft ballad interrupting the good times."
+- Luther Vandross — Never Too Much: "Layered soul with buoyant bass, percussion and massed harmonies starts in
+  dance-floor mode, then settles into an exposed closing ballad for a late evening."
+- Steely Dan — Gaucho: "Polished soul-jazz pairs electric piano, clean guitar and answering backing voices with
+  unhurried grooves, ideal for night driving or a cool, low-volume evening."
+- 999 — The Biggest Prize In Sport: "Fast, wiry punk rock with barked vocals and gang choruses is the loud, no-let-up
+  option for driving, cleaning or keeping a party moving, without a quiet breather."
+
+**Design's step and its assertion.** "Release year to the pick - for Code to apply" (anchored on b4f33787, sent with the
+target at 93838a6a, 76,295 bytes, on disk and verified) adds three bullets to the model-pick step: the year sent or
+"unknown" with the count of the 55 lacking one (0); an assertion on production that "something from the eighties" no
+longer takes the unmet path and its answers are 1980 to 1989 releases, with the reasons reported; and a running count of
+evidence hedges over the next presses, the phrase list not widened. **The assertion is still to land:** what ran was a
+bench that rewrote the request on its way out, not the build. It lands with the year unit, which is now ruled and not
+yet started. One discrepancy for the coordinator: Design's reason-subject bullet names "the text", "the description" or
+"the notes"; the check built on 9f9cff83 has "the text", "the description", "this material", "the credits", "the
+information" and "evidence", and not "the notes". Not changed here, under the no-widening rule; hers to confirm or mine
+to add on her word.
+
+**Design's drop of 21 Nov taken in (refs/drops/2026-11-21-01, captured 17:42).** Two change files, prose only, in one
+drop: "Ask in flight and reason subject" (the card at b4f33787, 74,570 bytes, the one the coordinator verified this
+morning) and "Release year to the pick" (the card at 93838a6a, 76,295 bytes, anchored on the first, on disk and verified
+by hash and size). Neither had been applied: the model-pick step in HANDOFF-wall-and-pull.md held none of their
+bullets. Applied now, in the order the anchor requires: after "Bound the reason", the In flight, Reason subject, Release
+year, Era phrases, Evidence hedges and Propose bullets; §P.2's bound provisional closed 21 Nov by Adam's use with the §P.3
+in-flight provisional added beside it; the §P.2 governs row gains the reason's subject and the release year, §P.3's the
+ask in flight. No withdrawal entry: both files say nothing is withdrawn, and the build implemented no claim either
+replaces. drop-ref's report: the target's §P.2 and §P.3 changed, both carried by the files; "Artist name without suffix"
+offered 20 Nov and still not on disk or in any ref. The landed list gains both. Of the new bullets, Reason subject is
+built (9f9cff83, with the "the notes" discrepancy above), In flight, Release year, Era phrases, Evidence hedges and
+Propose are not. Pushed at once as an intake; no gate, nothing under test changed.
