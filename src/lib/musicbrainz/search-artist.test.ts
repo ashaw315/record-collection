@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { normalizeSearchHits, pickDisambiguated, type ArtistSearchHit } from './search-artist';
+import { normalizeSearchHits, pickDisambiguated, pickExactName, stripDiscogsSuffix, type ArtistSearchHit } from './search-artist';
 
 /**
  * SPEC.md §4.3 — finding the MusicBrainz artist for a local row.
@@ -236,5 +236,44 @@ describe('normalizeSearchHits — the fields the picker screen actually shows', 
       country: 'GB',
       disambiguation: 'UK d-beat band',
     });
+  });
+});
+
+describe('storing facts from a name match: exactly one hit carrying the artist’s OWN name (Q37’s second half, 20 Nov)', () => {
+  /*
+    The rule stated before it was built (NOTES, 20 Nov): the number is 1, the comparison is exact equality of the
+    normalised name, the name compared is the artist's own as stored, not the top hit's, and the score is not consulted.
+    Fails against a picker keyed on the top hit's name (Carpenters accepted through a sole "The Carpenters"), one that
+    accepts two hits sharing the name, and one that lets the score decide.
+  */
+  it('accepts the one hit named as the artist is, whatever its rank', () => {
+    const hits = [hit('Hot Tuna Revival', 100), hit('Hot Tuna', 71), hit('Tuna', 60)];
+    expect(pickExactName(hits, 'Hot Tuna')?.score).toBe(71);
+  });
+
+  it('refuses two hits sharing the artist’s name, however far apart their scores', () => {
+    expect(pickExactName([hit('Smerz', 100), hit('Smerz', 40)], 'Smerz')).toBeNull();
+    expect(pickExactName([hit('James Taylor', 100), hit('James Taylor', 99), hit('James Taylor Quartet', 80)], 'James Taylor')).toBeNull();
+  });
+
+  it('refuses a sole hit under a different name, even the obvious one', () => {
+    expect(pickExactName([hit('The Carpenters', 100)], 'Carpenters')).toBeNull();
+    expect(pickExactName([], 'Carpenters')).toBeNull();
+  });
+
+  it('compares case- and whitespace-insensitively, as the lineup’s rule does', () => {
+    expect(pickExactName([hit('discharge ', 90)], 'Discharge')?.name).toBe('discharge ');
+  });
+});
+
+describe('a Discogs disambiguation suffix is stripped for the search and the comparison only', () => {
+  it('strips a trailing " (N)" and nothing else', () => {
+    expect(stripDiscogsSuffix('Smerz (2)')).toBe('Smerz');
+    expect(stripDiscogsSuffix('Darkside (22)')).toBe('Darkside');
+    expect(stripDiscogsSuffix('The Ink Spots (3)')).toBe('The Ink Spots');
+    expect(stripDiscogsSuffix('Discharge')).toBe('Discharge');
+    expect(stripDiscogsSuffix('Blink-182')).toBe('Blink-182');
+    expect(stripDiscogsSuffix('Peter, Paul & Mary')).toBe('Peter, Paul & Mary');
+    expect(stripDiscogsSuffix('Cassius (1999)')).toBe('Cassius (1999)');
   });
 });

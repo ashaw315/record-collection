@@ -58859,3 +58859,65 @@ errors, 6 warnings at HEAD; build compiled in 18s at load 3. No e2e spec covers 
 this unit touches it or QUEUE.md, and the same test passed in the check six minutes earlier (e464f6da). Load was 3.0
 before and after; the load was the check's own 86 files. Reported as the coordinator asked for load-shaped failures (a
 timeout, passing on retry), not chased as a bug; the ship is run again and the second check's result is beside this.
+
+**Instance one of the timeout count (the coordinator's correction, 20 Nov, 23:28).** I called the check-queue timeout
+load-shaped; load 3 is not a loaded machine, and a spawning test 3.5s over an 8000ms budget at load 3 is as consistent
+with the budget being tight as with the weather. So the count starts rather than closes: **instance one, 20 Nov 23:28,
+check-queue.test.ts "prints queue-2's coverage", 11.5s against 8000ms, in a spec the unit did not touch, passed on the
+retry.** The rule: one instance is not grounds to drop back and not a bug to chase; a second timeout this week in a
+spec no unit touched is the signal, and we drop to the previous worker count while we look; two or three make it the
+config rather than the weather. **One premise corrected, which narrows what a second instance would mean:** the four
+Playwright workers cannot put more processes inside this check. commit-checked runs vitest, and vitest.config runs the
+server project with `maxWorkers: 1` and `fileParallelism: false`, one file at a time, so the check's concurrency is
+unchanged by today's config; four reaches the e2e runs alone. A second unit-check timeout would therefore point at the
+budget (748ms at rest, measured 13 Nov, over a QUEUE.md that has grown since) or the machine, not the worker count; a
+second e2e timeout would point at the count. Both are counted; which suite says which.
+
+Backfill handed to Adam as a production write, the command in the reply; Simon & Garfunkel's line is the one to read
+when it lands (MusicBrainz may give 1957, Tom & Jerry, a fact that would read oddly in an ABOUT; not a hold). Part two's
+place approved: the drafting scripts first, the rule tried on the 40 names with no MBID before Q72 depends on it, and
+**the deliverable is the split, not the fills**: how many of the 40 resolve and how many the rule refuses, the refused
+named, since refusing 35 of 40 would make the rule too tight to keep.
+
+**Q37's second half, part two: the name rule built and tried on the 40, and the exact path measured beside it (the
+coordinator, 20 and 21 Nov; built and measured 21 Nov, 00:30Z).** `pickExactName` and `stripDiscogsSuffix`
+(search-artist.ts) are the rule as stated: exactly one hit carrying the artist's own normalised name, the suffix " (N)"
+stripped for the search and the comparison only, score not consulted. `resolveArtistByName` (resolve-by-name.ts) stores
+the accepted hit's MBID and runs the walk, which fills the facts; a shared name, no hit, or an MBID another artist holds
+stores nothing and says which. Test first and failing (five rule cases against missing functions, six resolver cases
+against a missing module), then 27 passed. `scripts/resolve-artist-facts.mts` reports the split without writing, or
+applies with `--apply`; `scripts/measure-discogs-link.mts` measures the exact path. Neither has written to production.
+
+**The split under the name rule, 40 artists with records and no MBID: 26 would resolve, 14 refused.** Refused for a
+shared name (10): ABBA (2: the Swedish group, a Parisian adoration group), Cindy Lee (2), Darkside (22) (10 of 10
+hits), Donna Summer (2), Isaac Hayes (2), James Taylor (2) (10 of 10), Jeff Beck (3), Pavement (2), The Beatles (5),
+Traffic (6). Refused for no hit on the exact name (4), and these are name-form mismatches, not ambiguity: Blood, Sweat
+And Tears (MusicBrainz: Blood, Sweat & Tears), Huey Lewis & The News (…and the News), Peter, Paul & Mary (…and Mary),
+Pointer Sisters (The Pointer Sisters). The 26 would-resolves read right against their records, every one at score 100
+and most with the disambiguation confirming it; and Smerz (2) resolves, since MusicBrainz holds one Smerz: the Discogs
+suffix marks a Discogs-side collision, not a MusicBrainz one. So the rule alone is usefully conservative (14 of 40
+refused, none of the 26 wrong on inspection), but ten of its refusals are artists whose identity is not in doubt.
+
+**The exact path, measured read-only: 37 of 49 resolve through their Discogs page.** The import holds a Discogs artist id
+for 38 of the 49; MusicBrainz's URL lookup (`/url?resource=https://www.discogs.com/artist/{id}&inc=artist-rels`) names
+one artist for 37 of them and none for The Ink Spots (3) (Discogs 15829856, unknown to MusicBrainz). Of the 5 linked
+artists that already hold an MBID (Donovan, John Lennon, MGMT, Simon & Garfunkel, The Doors), all 5 agree with the
+link and 0 differ, which also confirms yesterday's audit. The link answers correctly every case the name rule refused for
+ambiguity: Darkside (22) is DARKSIDE, the NYC electronic band (Psychic); James Taylor (2) is the singer-songwriter (Sweet
+Baby James); Cindy Lee the Canadian project (Diamond Jubilee); ABBA, Donna Summer, Isaac Hayes, Pavement, Traffic and The
+Beatles each the obvious one; and the four name-form mismatches resolve too. **Both paths together, over the 40 with no
+MBID:** 32 resolve through the link; of the 8 left (Buddy Rich, Hello Mary, Jeff Beck, Kraftwerk, Luther Vandross, Water
+From Your Eyes, Weezer, with no Discogs id, and The Ink Spots (3), unlinked), the name rule resolves 7 and refuses Jeff
+Beck (three namesakes). 39 of 40, one honest refusal. So the name rule is the rare fallback, and its refusal rate stops
+mattering, as the coordinator put it. **Not yet built:** the link path itself (a URL lookup before the name search in
+resolve-by-name.ts, keyed on `discogs_artist_id`), next, test first; then `--apply` is Adam's as a production write.
+
+**The suffix on screen (Adam saw "Smerz (2)" and "Darkside (22)"), the two checks run:** five stored names carry a
+suffix, Darkside (22), James Taylor (2), Protomartyr (2) (no records), Smerz (2) and The Ink Spots (3), and stripping it
+makes no two artists indistinguishable: the only duplicate name among the 248 is Pretzel Logic, twice, already identical
+and unsuffixed, so not this change's. Display only, the stored name untouched, since the import's find-or-create and the
+resolver read it. Where it is drawn, and which ruled lines name the artist, is listed in the next entry before anything
+changes.
+
+Step level: search-artist and resolve-by-name suites, 27 passed; typecheck 0 errors; lint 0 errors, 6 warnings at HEAD;
+build compiled in 19s at load 5. Two read-only production runs: 40 MusicBrainz searches, 38 URL lookups, nothing written.

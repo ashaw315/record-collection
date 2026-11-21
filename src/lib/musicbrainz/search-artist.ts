@@ -159,6 +159,29 @@ export function pickDisambiguated(hits: ArtistSearchHit[]): ArtistSearchHit | nu
 }
 
 /**
+ * **Accepting a hit so that FACTS may be stored from it (Q37's second half, 20 Nov): exactly one hit carrying the
+ * artist's OWN normalised name.** `pickDisambiguated` keys on the top hit's name, which is right for offering a lineup
+ * walk; for writing a formed year into the catalogue the comparison is to the name as stored, so "Carpenters" is not
+ * accepted through a sole hit named "The Carpenters". The number is 1, the comparison is `nameKey` equality, and the
+ * score is not consulted, for the reason above: it ranks documentation, and a gap accepts the famous one of several.
+ * Null is "store nothing", never a guess.
+ */
+export function pickExactName(hits: ArtistSearchHit[], name: string): ArtistSearchHit | null {
+  const key = nameKey(name);
+  const sameName = hits.filter((hit) => nameKey(hit.name) === key);
+  return sameName.length === 1 ? sameName[0] : null;
+}
+
+/**
+ * Discogs disambiguates shared names with a trailing " (N)", and the import keeps it in the stored name (Smerz (2),
+ * Darkside (22)). Stripped for the MusicBrainz search and the comparison only, never written back: the stripped name
+ * then meets the rule above, and two artists genuinely called Smerz refuse it, which is what the suffix marks.
+ */
+export function stripDiscogsSuffix(name: string): string {
+  return name.replace(/\s\(\d{1,3}\)$/, '');
+}
+
+/**
  * Searches MusicBrainz for an artist by name.
  *
  * One request against a one-per-second budget, so the caller should skip it
