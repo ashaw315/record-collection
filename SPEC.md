@@ -161,6 +161,7 @@ Seed with: LP, 2xLP, 7", 10", 12" Single, Box Set, Picture Disc, all with `is_se
 | spine_colour | TEXT | nullable. The average colour of this record's cover as `#rrggbb`, computed once when a cover image is attached and stored (§10b). |
 | snippet | TEXT | nullable. Two or three generated sentences about the album (§10b). Absence is normal. |
 | snippet_edited_at | TIMESTAMPTZ | nullable. Set when the user edits the snippet. |
+| snippet_reviewed_at | TIMESTAMPTZ | nullable. When Adam's own eyes were on this text (the coordinator, 22 Nov). A generation and a confirmed replace write NULL; an edit sets it; a delete clears it. Not whether a review happened: whether he read it. |
 
 **`spine_colour` is written once and never overwritten** (§7.8). It is computed from the *cover* image only — a matrix or label photograph averages to the vinyl or the label, not the sleeve, and would give a spine matching nothing on the shelf. `null` means no cover has been processed and is treated as absent rather than as a decision, so a record whose first cover failed to decode still gets a colour when a readable one arrives. A null spine invents no hue: at rest every spine is an outline (8a §11), so a record with no cover is indistinguishable there from one with; pulled, it takes the achromatic fallback `#3a3a3a` where a record with a cover takes its derived colour — a value with no hue, because none was sampled. ~~renders plain: an honest absence, not a gap in the wall, and never a default colour~~ — restated 2026-09-16: the words forbade the fallback the build has always drawn, and the intent was only ever that no hue be invented.
 
@@ -475,6 +476,8 @@ be regenerated, edited and one day retired without touching `records`.
 | generated_at | TIMESTAMPTZ | nullable. When `generated` was written |
 | edited | TEXT | nullable. Adam's text. No regeneration writes it, ever |
 | edited_at | TIMESTAMPTZ | nullable. Set with `edited` |
+| reviewed_at | TIMESTAMPTZ | nullable. When Adam's own eyes were on the text (the coordinator, 22 Nov). A store writes NULL, since a regeneration is a text nobody has read; an edit sets it; §67's sheet sets it when he marks a text read. Backfilled once by Adam's own statement from the record of how each of the 55 was stored, never assumed. |
+| checks | JSONB | nullable. The mechanical checks that travel with the draft: the sentences the client dropped, the self-consistency disagreements, and the sentences whose figure the stored credits cannot cover. Never the drafting model's own basis marks (§67; Q75). |
 
 CHECK that `generated` and `edited` are each NULL or hold something other
 than whitespace: a blank is NULL, so "unknown" has one form. The CHECK stops

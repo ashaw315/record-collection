@@ -482,10 +482,10 @@ describe('§4.2 — the Discogs master id is stored (A60)', () => {
   Adam's text; unknown has one form, NULL. Fails against a schema without the table.
 */
 describe('§4.6 conformance — record_matched_text', () => {
-  it('has exactly the six columns §4.6 names, every one but the key nullable', async () => {
+  it('has exactly the eight columns §4.6 names (the two of 22 Nov among them), every one but the key nullable', async () => {
     const cols = (await db.execute<{ column_name: string; is_nullable: string; data_type: string }>(sql`
       SELECT column_name, is_nullable, data_type FROM information_schema.columns WHERE table_name = 'record_matched_text' ORDER BY column_name`)).rows;
-    expect(cols.map((c) => c.column_name)).toEqual(['edited', 'edited_at', 'generated', 'generated_at', 'generated_model', 'record_id']);
+    expect(cols.map((c) => c.column_name)).toEqual(['checks', 'edited', 'edited_at', 'generated', 'generated_at', 'generated_model', 'record_id', 'reviewed_at']);
     expect(cols.filter((c) => c.is_nullable === 'NO').map((c) => c.column_name)).toEqual(['record_id']);
   });
 
