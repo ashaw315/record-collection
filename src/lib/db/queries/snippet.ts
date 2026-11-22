@@ -83,7 +83,7 @@ export async function storeGeneratedSnippet(
    */
   const updated = await db
     .update(records)
-    .set({ snippet, snippetEditedAt: null })
+    .set({ snippet, snippetEditedAt: null, snippetReviewedAt: null })
     .where(
       options.confirmReplace === true
         ? eq(records.id, recordId)
@@ -121,7 +121,8 @@ export async function editSnippet(recordId: string, snippet: string): Promise<Sn
 
   const updated = await db
     .update(records)
-    .set({ snippet, snippetEditedAt: new Date() })
+    /* An edit is a read (22 Nov). */
+    .set({ snippet, snippetEditedAt: new Date(), snippetReviewedAt: new Date() })
     .where(eq(records.id, recordId))
     .returning({ id: records.id });
 
@@ -148,7 +149,7 @@ export async function deleteSnippet(recordId: string): Promise<SnippetWrite> {
 
   const updated = await db
     .update(records)
-    .set({ snippet: null })
+    .set({ snippet: null, snippetReviewedAt: null })
     .where(eq(records.id, recordId))
     .returning({ id: records.id, snippetEditedAt: records.snippetEditedAt });
 
@@ -183,4 +184,18 @@ export async function findRecordSubject(
     .where(eq(records.id, recordId));
 
   return found[0] ?? null;
+}
+
+/**
+ * **Adam's mark on an ABOUT (the coordinator, 22 Nov): read, the text untouched.** Null until then: a generation writes
+ * null, since a text nobody has read is the state the column exists to name, and from the import's drafting on that is
+ * how every new ABOUT arrives.
+ */
+export async function markSnippetReviewed(recordId: string): Promise<SnippetWrite> {
+  const updated = await getDb()
+    .update(records)
+    .set({ snippetReviewedAt: new Date() })
+    .where(eq(records.id, recordId))
+    .returning({ id: records.id });
+  return updated.length > 0 ? { ok: true } : { ok: false, reason: 'not_found' };
 }

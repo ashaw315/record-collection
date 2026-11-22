@@ -5,6 +5,7 @@ import { artists, records } from '@/db/schema';
 import {
   deleteSnippet,
   editSnippet,
+  markSnippetReviewed,
   storeGeneratedSnippet,
   readSnippet,
 } from '@/lib/db/queries/snippet';
@@ -277,3 +278,31 @@ describe('a record that does not exist', () => {
  * `expected 400 to be 404`, which is the test being wrong rather than the code.
  */
 const MISSING = '62e4e7db-951d-441c-acf0-11be68ab4daf';
+
+/**
+ * **The ABOUT's unreviewed mark (the coordinator, 22 Nov): `snippet_reviewed_at`, beside the snippet, since from unit two
+ * an ABOUT arrives on import with nobody having read it.** Fails against a generation that marks itself read, an edit
+ * that does not count as a read, and a mark that touches the text.
+ */
+describe('snippet_reviewed_at', () => {
+  it('is null after a generation, and null again after a confirmed replace of a reviewed text', async () => {
+    const record = await seedRecord();
+    await storeGeneratedSnippet(record.id, 'A 1982 hardcore record.');
+    expect((await row(record.id)).snippetReviewedAt).toBeNull();
+    expect(await markSnippetReviewed(record.id)).toEqual({ ok: true });
+    expect((await row(record.id)).snippetReviewedAt).toBeInstanceOf(Date);
+    expect((await row(record.id)).snippet, 'the mark touches no text').toBe('A 1982 hardcore record.');
+    await storeGeneratedSnippet(record.id, 'Regenerated.', { confirmReplace: true });
+    expect((await row(record.id)).snippetReviewedAt, 'a regeneration is a text nobody has read').toBeNull();
+  });
+
+  it('an edit is a read, and a delete clears the mark with the text', async () => {
+    const record = await seedRecord();
+    await storeGeneratedSnippet(record.id, 'A 1982 hardcore record.');
+    await editSnippet(record.id, 'A 1982 hardcore record, the UK one.');
+    expect((await row(record.id)).snippetReviewedAt).toBeInstanceOf(Date);
+    await deleteSnippet(record.id);
+    expect((await row(record.id)).snippetReviewedAt).toBeNull();
+    expect(await markSnippetReviewed('62e4e7db-951d-441c-acf0-11be68ab4daf')).toEqual({ ok: false, reason: 'not_found' });
+  });
+});

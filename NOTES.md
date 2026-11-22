@@ -59951,3 +59951,96 @@ The matched-text client runs on the Anthropic key already in Vercel's environmen
 `callAnthropic`; whether it claims the shared rate-limit budget as the snippet does is to be checked in unit 2, since
 the import would be the first in-function caller of it. Per record: one call, about 950 tokens in and 1,640 out on
 claude-opus-5 (19 Nov). Not priced, by instruction: the queue, the review surface, the one-command local version.
+
+**22 Nov, mid-morning: the coordinator's third paste, the facts read for it.** The recommendation moved to both passes on
+import, since a later ABOUT does not refresh a stored text (above). Per press at two calls a record: ABOUT 8.0s plus
+matched text 13.5s is 21.5s median, 23.6s at p90; after ten new records' import (about 13s) and a 30-second margin,
+257s buys 10 records at p90 and 11 at the median; after thirty new (about 39s), 9 and 10. Corrections: production holds
+0 edited matched texts of 55 and 0 edited ABOUTs of 55, so the dozen corrections he remembers were redrafts under a
+constraint (Q47's three ABOUTs; the three matched-text redrafts of 17 Nov), never an edit in place, which is Design's
+point made by the data. What a draft is checked against today, in the review file: the client's drop of sentences
+describing the material; the self-consistency check (src/lib/matched-text/consistency.ts, three mechanical shapes);
+the count of credited names against any people-count a sentence makes; and the model's own basis marks, which §67
+rules out as the check. Separately and not to Adam: the adversarial audit (`npm run matched:audit`, a second model on
+OpenAI given the tracklist, credits and format, never the ABOUT). Nothing checks a matched-text sentence's names
+against the stored credits mechanically as `checkNote` does for an ABOUT's dates, labels and personnel; none of the
+results is stored with the text. The OPENAI key: present in .env.local (this machine's era assertion ran on it) and in
+Vercel (the pick answers in production), and record_embeddings holds 55 of 55, so every half of the 12 Nov task is done.
+The exact-duplicate artists: every row has its own MBID, no Discogs id, no record, one derived-acts link, created by
+the walk (resolve-artist.ts: found by MBID or created, "matches regardless of name"), on 21 Nov and 8 Sep; they are
+distinct MusicBrainz acts sharing a name (Beatles and Steely Dan tribute acts), not duplicates. The same path made the
+empty Blood, Sweat row on 8 Sep 2026 from Steve Katz's and Al Kooper's memberships: the walk writes a merge candidate
+only for an exact-name row with no MBID, and "& Tears" is not "And Tears", so no candidate was written. That is the live
+path, by design, and it recurs whenever MusicBrainz's name for a group Adam holds without an MBID differs by a word.
+
+## 22 Nov, midday: unit one's first half, the unreviewed mark with its backfill from evidence; the FK inventory; the loop's shape
+
+**The go (the coordinator, 22 Nov): unit one, backfill first, held on Design's condition.** The condition: reviewed_at
+asserts that Adam read a text, so each row is backfilled from the record of how it was stored, never because rows were
+stored together. **What the record shows.** ABOUTs, 55: 43 stored on 6 Nov from his marks on the review file
+(marked.txt, 43 of 43; "Q1 stored by Adam"); 3 stored 13 Nov with his own constraints after refusing the first drafts
+(Q47; one of the three, The Ink Spots, is also among the 43); 10 generated one at a time on the record page at his press
+between 25 Aug and 3 Nov, shown to him beside the edit and delete controls and left standing, before any review file
+existed. The 10 are the one judgement: his action and his reading, by a path other than marks, taken as reviewed and
+named in the migration for the coordinator to overrule before Adam pushes. Matched texts, 55: stored 19 Nov 16:35 from
+`.matched/store-all-55.txt`, all 55 prefixes prepared by Code on the coordinator's order after the coordinator's own
+first-pass review of 17 Nov; no record of Adam marking any; so none is backfilled and the review list opens on all 55,
+the record being honest, as the coordinator said it should be. Expected after the push, on production:
+`SELECT count(*) FILTER (WHERE snippet_reviewed_at IS NOT NULL), count(*) FROM records WHERE nullif(snippet,'') IS NOT
+NULL` reads 55 | 55, and `SELECT count(*) FILTER (WHERE reviewed_at IS NOT NULL), count(*) FROM record_matched_text`
+reads 0 | 55.
+
+**Split, said before the count tripped:** unit one as widened by the coordinator (the ABOUT's mark, the checks column,
+the three-form store) reaches fourteen files, so it ships as two commits under one gate: 1a, the data (this), and 1b,
+the command (the mechanical checks computed, the marks parsed, the review command, the two store flags setting the
+mark). One decision each.
+
+**The backfill is Adam's statement, not the migration's: the guard said so.** The first commit attempt carried the
+UPDATE inside 0037 and commit-checked refused it (991 passed, 1 failed; acknowledged): test/repo/migrations-additive.test.ts
+holds Adam's 14 Nov line as a text property of the SQL, every statement a CREATE or a nullable ADD COLUMN, with no marker
+that lets a row rewrite through, since Vercel's build applies a pushed migration to production. So 0037 adds the three
+columns alone, which Code may push, and the backfill is one UPDATE Adam runs after the deploy, with its evidence:
+
+```sql
+UPDATE records SET snippet_reviewed_at = updated_at
+WHERE snippet IS NOT NULL AND btrim(snippet) <> ''
+  AND (left(id::text, 8) IN ('01ad99d8','028865b5','05d37b5f','068da93c','0a286e77','0af4723d','1611cb00','1bcbce5d',
+    '1d4a4107','22d34772','309a4726','3505ac9c','3fc9c4fb','47b69af6','48461309','493d960e','52435f53','63d720c0',
+    '73ea635d','797a1ade','7a333685','7b9a5ee9','7cfdc4cb','7d953882','8120765c','946db39b','a950eb99','b1ac00c6',
+    'b38d7c37','b9bd16aa','bac64213','c61c5919','c893e66b','c8b0af3d','d7047c62','d962c494','dbcf97f0','de2ad140',
+    'e2e5edc0','e80a0cf3','e931d933','ed971f49','fadd5c0e')                                  -- his marks, 6 Nov
+    OR id IN ('e1e349f6-880f-4984-a310-b33a03153c03','e315c6a7-ac45-4dd3-a5d5-d58eeaa608a2')  -- Q47, his constraints
+    OR left(id::text, 8) IN ('2be8579e','729c1a01','cdcf94cb','9a514311','c8bc3a1d','e73e1de1','307c2754','b19cd530',
+    'ce57a185','d975683b'));                                             -- generated at his press on the record page
+-- UPDATE 55, or the state is not the one read. No statement for record_matched_text: none of the 55 is shown reviewed.
+```
+
+Until he runs it every stored text reads as unread, the honest state of a column nobody has filled.
+
+**1a, built, tests first.** Schema: `snippet_reviewed_at` on records; `reviewed_at` and `checks` (jsonb) on
+record_matched_text. Migration 0037 (drizzle-kit generate, additive), applied clean on the test database, 38 of 38. Queries: a store writes reviewed_at null and the checks given, so a
+regeneration is unread again; `markMatchedTextReviewed(id, { text? })` sets the mark, with a corrected text written as
+his edit through the same columns the PATCH writes; `editMatchedText` sets the mark, since an edit is a read;
+`rejectMatchedText` deletes the row, so the record leaves the pool and `--all` lists it again; `unreviewedTexts()`
+lists every record with an unread matched text or an unread ABOUT, both texts, which is unread, and the checks. The
+snippet side: generation and confirmed replace null the mark, an edit sets it, a delete clears it, `markSnippetReviewed`
+sets it. Red first: 8 failed across three files on the missing columns and functions (42703; "is not a function");
+then 90 passed across matched-text, snippet-ownership, the matched-text route, the snippet route and the ask route;
+typecheck; lint; build. The route's PATCH test is new (a PATCH that left reviewed_at null would list a corrected text
+as unread). Nothing of 1b is built. Step level. Pushed, since the migration only creates; the backfill above is Adam's.
+
+**Every foreign key onto artists and its ON DELETE, read from production's catalogue (the coordinator's question):**
+records.artist_id NO ACTION; want_list.artist_id NO ACTION; artist_genres.artist_id CASCADE; artist_influences
+source_artist_id and target_artist_id CASCADE; artist_memberships group_artist_id and person_artist_id CASCADE;
+artist_match_candidates artist_id and candidate_artist_id CASCADE; artist_derived_acts origin_artist_id and
+derived_artist_id CASCADE. Eleven columns in seven tables. The before-SELECT counted records and memberships only; the
+two NO ACTION keys would have failed the DELETE safely, the five other cascades would not have been seen. Read for the
+empty row: artist_genres 0, artist_influences 0, records 0, want_list 0, artist_memberships 2 (as group), match
+candidates 0, derived acts 0. The before-SELECT below counts all seven.
+
+**The loop's shape (the coordinator, 22 Nov), for Q78's fifth question and Design's write-up:** the resolver is the
+preventive and the merge is the remedy, and they blocked each other: the duplicate held the id the resolver needed, and
+the resolver's run is what stops the duplicate recurring. Once Adam merges and sets Jeff Beck's Discogs id, 49 of 49
+collection artists hold ids and the condition is closed for every artist he owns; it reopens only for a new artist in
+the window between import and resolution. The surface is for a handful of duplicates ever in a known window, not a
+growing set.

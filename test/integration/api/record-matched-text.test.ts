@@ -222,3 +222,15 @@ describe('unauthenticated access', () => {
     expect(routeAuthMode(p)).toBe('session');
   });
 });
+
+describe('PATCH is a read (the coordinator, 22 Nov)', () => {
+  /** Fails against: a PATCH that writes the edit and leaves reviewed_at null, so a text Adam corrected still lists as unread. */
+  it('sets reviewed_at with the edit', async () => {
+    const id = await seedRecord();
+    await storeGeneratedMatchedText(id, 'Slow piano, sparse.', 'model-a');
+    expect((await row(id)).reviewedAt).toBeNull();
+    const response = await patch(id, { edited: 'Slow piano, and a little hiss.' });
+    expect(response.status).toBe(200);
+    expect((await row(id)).reviewedAt).toBeInstanceOf(Date);
+  });
+});

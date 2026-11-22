@@ -1,6 +1,6 @@
 import { afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { sql } from 'drizzle-orm';
-import { clearMatchedTextEdit, collectionTitles, editMatchedText, readMatchedText, recordsToDraft, storeGeneratedMatchedText } from '@/lib/db/queries/matched-text';
+import { clearMatchedTextEdit, collectionTitles, editMatchedText, markMatchedTextReviewed, readMatchedText, recordsToDraft, rejectMatchedText, storeGeneratedMatchedText, unreviewedTexts } from '@/lib/db/queries/matched-text';
 import { closeTestDb, getTestDb, truncateAll } from '../helpers/db';
 
 /**
@@ -145,5 +145,80 @@ describe('clearMatchedTextEdit', () => {
     expect(await clearMatchedTextEdit(id)).toEqual({ ok: true });
     expect(await row(id)).toBeUndefined();
     expect(await clearMatchedTextEdit(MISSING)).toEqual({ ok: false, reason: 'not_found' });
+  });
+});
+
+/**
+ * **The unreviewed mark (the coordinator, 22 Nov; Design's two requirements).** From unit two a text can enter the pool
+ * with nobody having read it, so the data says which texts Adam has read: `reviewed_at`, null until he marks, corrects
+ * or edits. The mechanical checks travel with the draft in `checks`, never the drafting model's own basis marks (§67;
+ * Q75). Fails against a store that marks its own output reviewed, a mark that touches the text, an edit that does not
+ * count as a read, a rejection that leaves the record in the pool, and a listing that shows a reviewed text or hides an
+ * unread ABOUT.
+ */
+const reviewed = async (id: string) =>
+  (await db.execute<{ reviewed_at: string | null; checks: unknown }>(sql`SELECT reviewed_at::text, checks FROM record_matched_text WHERE record_id = ${id}`)).rows[0];
+const CHECKS = { dropped: ['A sentence about the material.'], disagreements: [{ a: 1, b: 3, why: 'exclusivity beside a name' }], numbered: [2] };
+
+describe('reviewed_at and checks', () => {
+  it('a store leaves reviewed_at null, carries the mechanical checks, and a re-store makes the text unread again', async () => {
+    const id = await aRecord();
+    await storeGeneratedMatchedText(id, 'Solo piano, slow and sparse.', 'model-a', { checks: CHECKS });
+    expect(await reviewed(id)).toEqual({ reviewed_at: null, checks: CHECKS });
+    await markMatchedTextReviewed(id);
+    expect((await reviewed(id)).reviewed_at).not.toBeNull();
+    await storeGeneratedMatchedText(id, 'Redrafted.', 'model-a');
+    expect(await reviewed(id), 'a regeneration is a new text nobody has read').toEqual({ reviewed_at: null, checks: null });
+  });
+
+  it('a mark sets reviewed_at and nothing else; a mark with a corrected text writes it as Adam’s edit', async () => {
+    const id = await aRecord();
+    await storeGeneratedMatchedText(id, 'Solo piano, slow and sparse.', 'model-a');
+    expect(await markMatchedTextReviewed(id)).toEqual({ ok: true });
+    expect(await row(id)).toMatchObject({ generated: 'Solo piano, slow and sparse.', edited: null, edited_at: null });
+    expect((await reviewed(id)).reviewed_at).not.toBeNull();
+
+    const other = await aRecord();
+    await storeGeneratedMatchedText(other, 'Solo piano.', 'model-a');
+    expect(await markMatchedTextReviewed(other, { text: '  Solo piano, and tape hiss.  ' })).toEqual({ ok: true });
+    expect(await row(other)).toMatchObject({ generated: 'Solo piano.', edited: 'Solo piano, and tape hiss.' });
+    expect((await row(other)).edited_at).not.toBeNull();
+    expect((await reviewed(other)).reviewed_at).not.toBeNull();
+    expect(await markMatchedTextReviewed('62e4e7db-951d-441c-acf0-11be68ab4daf')).toEqual({ ok: false, reason: 'not_found' });
+  });
+
+  it('an edit is a read: editMatchedText sets reviewed_at', async () => {
+    const id = await aRecord();
+    await storeGeneratedMatchedText(id, 'Solo piano.', 'model-a');
+    await editMatchedText(id, 'Solo piano, slower.');
+    expect((await reviewed(id)).reviewed_at).not.toBeNull();
+  });
+
+  it('a rejection removes the row, so the record leaves the pool and is drafted again by --all', async () => {
+    const id = await aRecord();
+    await storeGeneratedMatchedText(id, 'Wrong in every sentence.', 'model-a');
+    expect((await recordsToDraft('all')).map((r) => r.id)).not.toContain(id);
+    expect(await rejectMatchedText(id)).toEqual({ ok: true });
+    expect(await row(id)).toBeUndefined();
+    expect((await recordsToDraft('all')).map((r) => r.id)).toContain(id);
+    expect(await rejectMatchedText('62e4e7db-951d-441c-acf0-11be68ab4daf')).toEqual({ ok: false, reason: 'not_found' });
+  });
+
+  it('unreviewedTexts lists each record with an unread matched text or an unread ABOUT, with both texts and which is unread', async () => {
+    const unreadBoth = await aRecord();
+    await db.execute(sql`UPDATE records SET snippet = 'An ABOUT nobody read.' WHERE id = ${unreadBoth}`);
+    await storeGeneratedMatchedText(unreadBoth, 'A text nobody read.', 'model-a', { checks: CHECKS });
+    const readBoth = await aRecord();
+    await db.execute(sql`UPDATE records SET snippet = 'A read ABOUT.', snippet_reviewed_at = now() WHERE id = ${readBoth}`);
+    await storeGeneratedMatchedText(readBoth, 'A read text.', 'model-a');
+    await markMatchedTextReviewed(readBoth);
+    const aboutOnly = await aRecord();
+    await db.execute(sql`UPDATE records SET snippet = 'Unread ABOUT, no matched text.' WHERE id = ${aboutOnly}`);
+    await aRecord();
+
+    const listed = await unreviewedTexts();
+    expect(listed.map((r) => r.id).sort()).toEqual([unreadBoth, aboutOnly].sort());
+    expect(listed.find((r) => r.id === unreadBoth)).toMatchObject({ artist: 'Store', title: 'Stored', about: 'An ABOUT nobody read.', aboutUnreviewed: true, matched: 'A text nobody read.', matchedUnreviewed: true, checks: CHECKS });
+    expect(listed.find((r) => r.id === aboutOnly)).toMatchObject({ about: 'Unread ABOUT, no matched text.', aboutUnreviewed: true, matched: null, matchedUnreviewed: false, checks: null });
   });
 });

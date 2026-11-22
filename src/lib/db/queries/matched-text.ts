@@ -9,16 +9,78 @@ import { isForeignKeyViolation } from '@/lib/api/errors';
  * `generated_at`, and nothing else, so an edit Adam has made outlives every regeneration. A blank is NULL with no model
  * or time, so "unknown" has one form and the record stays ineligible for the pick.
  */
-export async function storeGeneratedMatchedText(recordId: string, text: string | null, model: string): Promise<void> {
+export async function storeGeneratedMatchedText(recordId: string, text: string | null, model: string, options: { checks?: MatchedTextChecks } = {}): Promise<void> {
   const generated = text === null || text.trim() === '' ? null : text.trim();
-  const values = { recordId, generated, generatedModel: generated === null ? null : model, generatedAt: generated === null ? null : new Date() };
+  /* A store is a text nobody has read: reviewed_at goes null with it, whatever it was, and the checks are the new draft's or none (22 Nov). */
+  const values = { recordId, generated, generatedModel: generated === null ? null : model, generatedAt: generated === null ? null : new Date(), reviewedAt: null, checks: options.checks ?? null };
   await getDb()
     .insert(recordMatchedText)
     .values(values)
     .onConflictDoUpdate({
       target: recordMatchedText.recordId,
-      set: { generated: sql`excluded.generated`, generatedModel: sql`excluded.generated_model`, generatedAt: sql`excluded.generated_at` },
+      set: { generated: sql`excluded.generated`, generatedModel: sql`excluded.generated_model`, generatedAt: sql`excluded.generated_at`, reviewedAt: sql`excluded.reviewed_at`, checks: sql`excluded.checks` },
     });
+}
+
+/**
+ * **The mechanical checks that travel with a draft (Design, 22 Nov):** the sentences the client dropped for describing the
+ * material, the self-consistency disagreements (src/lib/matched-text/consistency.ts), and the indexes of sentences whose
+ * people-count exceeds the credited names. Never the drafting model's own basis marks (§67; Q75).
+ */
+export type MatchedTextChecks = { dropped: string[]; disagreements: Array<{ a: number; b: number; why: string }>; numbered: number[] };
+
+/**
+ * **Adam's mark (the coordinator, 22 Nov):** the text is read. With `text`, read and corrected: the correction is his edit,
+ * through the same columns §5.2's PATCH writes, so the pick reads it and a regeneration never replaces it. Nothing else
+ * moves. A record with no row has no text to mark, and is not found like a record that is not there.
+ */
+export async function markMatchedTextReviewed(recordId: string, options: { text?: string } = {}): Promise<MatchedTextWrite> {
+  const now = new Date();
+  const corrected = options.text === undefined ? null : options.text.trim();
+  const set = corrected === null ? { reviewedAt: now } : { reviewedAt: now, edited: corrected, editedAt: now };
+  const updated = await getDb().update(recordMatchedText).set(set).where(eq(recordMatchedText.recordId, recordId)).returning({ id: recordMatchedText.recordId });
+  return updated.length > 0 ? { ok: true } : { ok: false, reason: 'not_found' };
+}
+
+/**
+ * **Adam's rejection (22 Nov):** the row goes, so the record leaves the pool and `recordsToDraft('all')` lists it again;
+ * the next drafting pass writes a new row. Not a clear of `generated` alone: a row with every text null would still be a
+ * row, and §4.8's counts read rows.
+ */
+export async function rejectMatchedText(recordId: string): Promise<MatchedTextWrite> {
+  const deleted = await getDb().delete(recordMatchedText).where(eq(recordMatchedText.recordId, recordId)).returning({ id: recordMatchedText.recordId });
+  return deleted.length > 0 ? { ok: true } : { ok: false, reason: 'not_found' };
+}
+
+export type UnreviewedText = {
+  id: string;
+  artist: string;
+  title: string;
+  about: string | null;
+  aboutUnreviewed: boolean;
+  matched: string | null;
+  matchedUnreviewed: boolean;
+  checks: MatchedTextChecks | null;
+};
+
+/**
+ * **What Adam has not read (22 Nov):** every record whose matched text or ABOUT is present and unreviewed, with both texts
+ * so he reads them together, and which of the two is unread. The matched text is the effective one, his edit where there
+ * is one, since an edit is a read and an unread row has none.
+ */
+export async function unreviewedTexts(): Promise<UnreviewedText[]> {
+  return (await getDb().execute<UnreviewedText>(sql`
+    SELECT r.id, a.name AS artist, r.title,
+           nullif(r.snippet, '') AS about,
+           (nullif(r.snippet, '') IS NOT NULL AND r.snippet_reviewed_at IS NULL) AS "aboutUnreviewed",
+           coalesce(m.edited, m.generated) AS matched,
+           (coalesce(m.edited, m.generated) IS NOT NULL AND m.reviewed_at IS NULL) AS "matchedUnreviewed",
+           m.checks
+    FROM records r JOIN artists a ON a.id = r.artist_id
+    LEFT JOIN record_matched_text m ON m.record_id = r.id
+    WHERE (nullif(r.snippet, '') IS NOT NULL AND r.snippet_reviewed_at IS NULL)
+       OR (coalesce(m.edited, m.generated) IS NOT NULL AND m.reviewed_at IS NULL)
+    ORDER BY a.name, r.title`)).rows;
 }
 
 /** §5.2's six fields less `effective`, which the route derives. Every field null is a record with no row. */
@@ -65,8 +127,9 @@ export async function editMatchedText(recordId: string, text: string): Promise<M
   try {
     await getDb()
       .insert(recordMatchedText)
-      .values({ recordId, edited: text, editedAt: new Date() })
-      .onConflictDoUpdate({ target: recordMatchedText.recordId, set: { edited: sql`excluded.edited`, editedAt: sql`excluded.edited_at` } });
+      /* An edit is a read (22 Nov): reviewed_at moves with it, so a text Adam corrected never lists as unread. */
+      .values({ recordId, edited: text, editedAt: new Date(), reviewedAt: new Date() })
+      .onConflictDoUpdate({ target: recordMatchedText.recordId, set: { edited: sql`excluded.edited`, editedAt: sql`excluded.edited_at`, reviewedAt: sql`excluded.reviewed_at` } });
     return { ok: true };
   } catch (error) {
     if (isForeignKeyViolation(error)) return { ok: false, reason: 'not_found' };

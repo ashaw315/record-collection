@@ -296,6 +296,15 @@ export const records = pgTable(
      * three steps of spec describing storage that did not exist (NOTES).
      */
     snippetEditedAt: timestamp('snippet_edited_at', { withTimezone: true }),
+
+    /**
+     * When Adam read this ABOUT (the coordinator, 22 Nov). Null is a text nobody has read: a generation writes null, a
+     * regeneration writes null again, an edit sets it, since an edit is a read, and the review command sets it on his
+     * mark. It exists because from the import's drafting on an ABOUT arrives with nobody having read it, and
+     * `snippet_edited_at` cannot say so: the 55 he reviewed and never edited sit in the table exactly as an unread
+     * draft would. Backfilled once by Adam's own statement (NOTES, 22 Nov), from the record of how each of the 55 was stored, never assumed; 0037 adds the column alone, since a migration Code pushes only creates.
+     */
+    snippetReviewedAt: timestamp('snippet_reviewed_at', { withTimezone: true }),
     ...timestamps,
   },
   // No unique constraint on (artist_id, title): duplicate records are legal and
@@ -1073,6 +1082,21 @@ export const recordMatchedText = pgTable(
     generatedAt: timestamp('generated_at', { withTimezone: true }),
     edited: text('edited'),
     editedAt: timestamp('edited_at', { withTimezone: true }),
+    /**
+     * When Adam read this text (the coordinator, 22 Nov): null until he marks, corrects or edits it; a store writes null,
+     * since a regeneration is a text nobody has read. From unit two a text enters the pool unread, and `edited` cannot
+     * tell the 55 he reviewed from an auto-draft, which is why this is a column. The 55 were stored from a list of all
+     * 55 prepared by Code, not from his marks, so Adam's backfill (NOTES, 22 Nov) marks none of them: the review list
+     * opening on them is the record being honest, not a defect. 0037 adds the column alone.
+     */
+    reviewedAt: timestamp('reviewed_at', { withTimezone: true }),
+    /**
+     * The mechanical checks that travel with the draft (Design's question, 22 Nov): the sentences the client dropped,
+     * the self-consistency disagreements, and the sentences whose people-count exceeds the credited names. Never the
+     * drafting model's own basis marks (§67 rules them out of the sheet; Q75 has them as an unowned self-report, and a
+     * column is how a thing shown nowhere ends up shown somewhere).
+     */
+    checks: jsonb('checks'),
   },
   (t) => [
     check('record_matched_text_generated_not_blank', sql`${t.generated} IS NULL OR btrim(${t.generated}) <> ''`),
