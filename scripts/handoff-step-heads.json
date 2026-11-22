@@ -612,5 +612,15 @@
         "how": "anchors"
       }
     ]
+  },
+  {
+    "file": "Artist name without suffix",
+    "ref": "refs/drops/2026-11-21-02",
+    "heads": [
+      {
+        "head": "§T.4: one key for every name order",
+        "how": "anchors"
+      }
+    ]
   }
 ]

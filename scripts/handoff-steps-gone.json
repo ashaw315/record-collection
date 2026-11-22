@@ -22,5 +22,11 @@
     "by": "P4 watch and P6 count line 13 Nov",
     "how": "retired: P.4/held-wholly-in-view withdrew the sentence it quotes, and \"§P.4: five cells in the column host.\" carries what stands",
     "line": "Delete the step headed \"§P.4: the cell held in the count column.\" with its bullets and quote."
+  },
+  {
+    "head": "§T.4: one key for every name order",
+    "by": "Name sort key",
+    "how": "never a head in the tree: the file that inserted §T.4's step headed it \"the name sort key\", and \"Artist name without suffix\" (refs/drops/2026-11-21-02, applied 22 Nov) anchors on that step by this other name; its Display bullet went into the step the tree holds",
+    "line": "- **Unnumbered, for Code to number — §T.4: the name sort key.**"
   }
 ]

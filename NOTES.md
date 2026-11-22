@@ -59676,3 +59676,278 @@ presses, nothing written.
 
 **The five reasons all open "Released in YYYY, this is", a shape the prompt did not ask for;** Design may want the year
 placed otherwise, and the sentence is hers to judge from these five. Noted, not changed.
+
+## 22 Nov, small hours: the sync's state read for Adam; Design's year ruling against the number; gates
+
+**Gates.** 44972311403 on d27fe971 (the splitter) OK, 25m13s. 44973360243 on 68d3d9ac (the year unit) in progress.
+
+**Design's rungs against the number.** Rung one is what shipped: 145 where a year is required, the cap 188 untouched.
+The number for her, against the fold figures (188 is seven lines of reason wholly in view at 390 × 844 and 1440 × 900,
+160 six lines with one to spare): at the 160 target, 93 measured reasons ran 150 to 179 and a 17-character year clause
+put 4 of 93 over 188; at 145 on production, the five eighties reasons with their year ran 149 to 156, 32 to 39 under
+the cap and within six lines, no re-ask, nothing dropped. Rung two is not needed on this press; the figure returns with
+each era press as the hedge count does.
+
+**Adam's sync, read from the build, nothing inferred (the coordinator, 21 Nov).** The import is `POST
+/api/discogs/import-collection`, session-only and never scheduled (SPEC §5, A77): Adam presses "Import from Discogs" in
+Manage, logged in, and the run is answered as the four lines of §T.6 and stored in `discogs_import_runs`. Nothing
+automatic: the last run is 1 Nov (34 in his Discogs, 6 imported, 28 skipped, 0 failed). A synced record arrives with
+artist and label as name-only stubs (the artist's Discogs id on the row), the pressing found or created on the release
+id, the record with the item's conditions and the release's genres, the cover attached after the commit, the release
+year from the master where there is one and the pressing's otherwise, `matrix_runout` seeded only where empty and marked
+discogs, and the release detail cached, which is where the record page's tracklist and credits come from. It arrives
+with no ABOUT, no matched text, no embedding and no artist facts, none of which the import touches. A release any
+record already holds is skipped by release id, so running it is safe over the 55.
+
+**The pick is unaffected.** `matchedTextsFor` selects the pool's records that have matched text and no other, so a new
+record is invisible to the model until it is drafted, and the §P.6 line beneath the slot counts it ("N not
+described."); the latch holds (§4.8: record 56 arriving without matched text joins the ineligible count). He can sync
+now and draft later with no effect on an answer. Production tonight: 55 records, 55 with an ABOUT, 55 with matched text,
+latched, 0 without a year.
+
+**Duplicates.** The import matches an artist by its Discogs id first, then by the exact name without regard to case,
+and writes a review candidate only where Discogs' numbered suffix ("Smerz (2)") hides a bare name already here; any
+other spelling creates a second row. His pair would not be caught: "Blood, Sweat And Tears" (1 record, Discogs id
+168907, no MusicBrainz id) and "Blood, Sweat & Tears" (0 records, a MusicBrainz id, from a walk). 0 candidates are
+open, and the merge is reached only through a candidate's review in Manage, so this pair has no path in the UI today;
+merging it is a production write that needs a candidate row or a hand merge, the coordinator's call, not done. The 945
+artist rows against 55 records are the walks' (influences, lineups), not the import's.
+
+**Drafting cost, per record, measured 19 Nov on ten (scripts/time-describe.mts, docs/measurements/describe-timing):**
+Discogs fetches 1.3s median, the ABOUT 8.0s, the matched text 13.5s, 22.7s in all, 25.1s at most; two model calls on
+Anthropic's key (the ABOUT, then the matched text at claude-opus-5, about 950 tokens in and 1,640 out). The paths are
+the two scripts, each two passes with his reading between: `npm run abouts:draft -- --all` writes a review file to
+~/Downloads for every record without an ABOUT, he marks what holds, `npm run abouts:draft -- --store marked.txt` stores
+those; then `npm run matched:draft -- --all` and `npm run matched:draft -- --store marked.txt` the same way. N records
+is about N × 23 seconds of calls plus his two readings. The record page's "Write one" is the ungrounded single-record
+ABOUT and not the path that produced the 55.
+
+**Before he drafts (the coordinator's five, 22 Nov).** `--all` filters in both scripts: write-abouts.mts selects
+`r.snippet IS NULL OR length(trim(r.snippet)) = 0` (line 152) and write-matched-text.mts goes through `recordsToDraft('all')`,
+which selects `m.generated IS NULL AND m.edited IS NULL` (matched-text.ts:99). Neither drafts a record that has its
+text; the 55 cost nothing; the commands stand. `--store` takes the file's path as its argument, so the two mark files
+are his to name apart: `abouts-marked.txt` and `matched-marked.txt`. The matched-text prompt has not changed since the
+55 were stored on 19 Nov 16:35: no commit has touched matched-text-client.ts since, and the 19 Nov 22:43 commit to the
+script added the per-draft milliseconds only. The ABOUT prompt has changed once, 8fca891b on 20 Nov (Q37): the grounding
+now carries the artist's formation, home and members where the catalogue holds them, and the prompt says they are already
+in the database so the model does not recall them. A new record's ABOUT may therefore name the band's formation or
+members where the 55's do not; the matched text reads the same. The import never deletes and never overwrites: a release
+any record holds is skipped before anything is read (`alreadyHeld` → `continue`, collection-import.ts), and `importRelease`
+finds or creates and never updates a record, pressing or label, with two seeds into empty columns only: an artist row
+found by name with no Discogs id gains the release's id (Jeff Beck's class, 21 Nov), and a pressing found with an empty
+`matrix_runout` is seeded and marked discogs. Nothing a user entered is touched (§7.8). **An import is an addition,
+never a reconciliation:** his Discogs held 34 on 1 Nov against 55 here, so Discogs is not the collection's superset; the
+button adds what Discogs has and the app lacks, and removes nothing, in either direction.
+
+**The embedding, for Adam's model of it.** `record_embeddings` holds each ABOUT's vector for the ranking by nearness,
+the ask's first form; it is read in one place, the ask route's ranking branch (route.ts:108), which the latch has made
+unreachable since the pick engaged. Nothing in the live app reads it today, and the Mood Pick never did: the pick sends
+every eligible record's matched text to the model. It is written only by scripts/embed-abouts.mts.
+
+**The duplicate is the refusal (the coordinator's read, confirmed from the record and the schema).** `artists.musicbrainz_id`
+carries a partial unique index, `artists_musicbrainz_id_key` where not null (schema.ts:111). The resolver's own outcome
+on 20 Nov said so: Blood, Sweat And Tears resolved to f81d592c and was refused `held-by-other`, naming "Blood, Sweat &
+Tears" as the holder (NOTES, 20 Nov). On production tonight: the empty row 83456d38 holds the MBID and two membership
+rows (its members, from the walk), no genres, influences, candidates, derived acts, want-list rows or records; the record
+row 160ca967 holds Discogs id 168907, one record, no MBID, nothing else. No `musicbrainz_cache` row for the MBID, and
+formed year and origin are null on both. **Jeff Beck is not this shape:** one row, a17e6b3b, one record, no Discogs id
+and no MBID, no duplicate; its refusal was `shared-name` (three namesakes and no Discogs id to pick by), and the fix
+recorded 21 Nov stands, Adam setting the guitarist's Discogs artist id in the artist form, after which the resolver
+resolves it by link. **The statements, one transaction, for Adam, nothing run here:**
+
+    BEGIN;
+    UPDATE artist_memberships SET group_artist_id = '160ca967-1b01-4aa7-975e-31ac7c6eb9ef'
+      WHERE group_artist_id = '83456d38-8174-4f7f-a879-f1d45dcd85bc';
+    UPDATE artists SET musicbrainz_id = NULL WHERE id = '83456d38-8174-4f7f-a879-f1d45dcd85bc';
+    UPDATE artists SET musicbrainz_id = 'f81d592c-993f-4693-b53a-57db5a6257b9'
+      WHERE id = '160ca967-1b01-4aa7-975e-31ac7c6eb9ef' AND musicbrainz_id IS NULL;
+    DELETE FROM artists WHERE id = '83456d38-8174-4f7f-a879-f1d45dcd85bc';
+    COMMIT;
+
+The memberships move first because the delete cascades them; the record row has none, so no key collides. Expected
+after: `SELECT name, musicbrainz_id FROM artists WHERE lower(name) LIKE 'blood, sweat%'` returns one row, "Blood, Sweat
+And Tears" with f81d592c; `SELECT count(*) FROM artist_memberships WHERE group_artist_id = '160ca967-…'` returns 2. The
+resolver then reads the row as `already` and walks nothing, so formed year and origin stay null until a walk fetches
+them; 47 of 49 becomes 48 of 49 with the MBID. Not the merge module's path: `mergeArtists` is reached only through a
+candidate's review, and no candidate exists.
+
+**A gap in Manage, for Design (not built).** A duplicate artist can be merged only from the possible-duplicate review,
+and a candidate is written only where Discogs' numbered suffix hides a bare name already here. A duplicate that arises
+any other way, a walk creating the band under MusicBrainz's spelling while the import holds Discogs', as here, has no
+path in the app: the data would have to be shaped to fit the review to reach the merge. §4.3's review is the right
+surface and its asymmetry (distinct as easy as merge, merge confirmed) is right; what it lacks is a way for Adam to put
+two rows in front of it himself. Put to Design as the fifth design question on Q78, beside the attention surface.
+
+**Pricing the ceremony's removal (the coordinator, 22 Nov; not built).** The ask: on import, draft the ABOUT and the
+matched text for each new record, both review files written, nothing stored until he marks. The shape, not the hours:
+at 22.7s a record, 30 records is 11 minutes, and the import route answers in one function call, so it cannot sit in the
+press. Next's `after()` would run it after the response inside the same function, bounded by `maxDuration`, which the
+plan caps at 300s: about 12 records per import, and the function dies mid-draft past that. Beyond that it is a queue:
+a job table (a migration), a batch endpoint drafting a few records per call under its own `maxDuration`, and a trigger,
+for which the precedent exists, the GitHub Actions workflow that calls refresh-prices on a schedule. The part we do not
+have at all is the review file: the server cannot write to ~/Downloads, so drafts would be held server-side (a table)
+and either surfaced in Manage for marking, a surface Design has not ruled (Q72's open shape, the record page's
+attention state), or pulled down by a script, which is the ceremony back. So the honest price: the server path is a
+migration, a batch route, a workflow and a Design ruling, three or four units at least, and it is Q72's row. The path
+with no infrastructure is one local command drafting both texts for every record lacking them, writing both review
+files in one pass: `npm run describe:missing`, about one unit, the review exactly where it is. Recommended: the second
+now; the first is Q72 when its surface is ruled.
+
+## 22 Nov, morning: Design's third drop taken in, the suffix file applied at last; the paste answered; the import-to-searchable path priced
+
+**The year unit's gate passed:** 44973360243 on 68d3d9ac, all five jobs (commit-id, unit, e2e chromium, e2e mobile,
+verdict) success, 01:51 to 02:16 UTC.
+
+**Design's drop of 21 Nov, 22:07, taken in (refs/drops/2026-11-22-01, captured 09:30:58).** On disk from ~/Downloads and
+verified: the Mood Pick card at a2227bd14f3a040d, 77,509 bytes (the coordinator read bold 201 of 201, one more than
+47151337), the Table and Grid card at b65cb51be7a828d0, 157,817 bytes (byte-identical to the card he verified on the
+20th, resent, not rebuilt), and one change file, "Year not the opening", prose only, anchored on 47151337. drop-ref's
+report: §P.2 gains "The year is the reason's ground, not its opening: a reason opens on what the record is like, and the
+year stands where it shows the fit", with the five "Released in 1983, this is" openings as its occasion; §T.4 gains the
+suffix sentences the held file described; the §P.2 governs row is addressed by the new file, and the §T.4 row was
+reported unaddressed because the file that edits it ("Artist name without suffix") sits in the previous ref, not this
+drop. Applied: the Opening bullet after Release year in the model-pick step (§P.2's row stands, by the file); and, now
+that its card is in the tree, "Artist name without suffix" in whole: the Display bullet after the §T.4 step's last
+bullet and "And an artist's name drawn without Discogs' suffix." on the §T.4 governs row; the landed line rewritten from
+held to applied. Two guards spoke. The step-heads guard: the file anchors on a step headed "§T.4: one key for every name
+order", a head the tree never had (the file that inserted the step, "Name sort key", headed it "the name sort key"), so
+the mismatch is recorded in scripts/handoff-steps-gone.json with that file's insert line as its evidence, not excused
+by rewording Design's heading. The twins test: the §T.4 step grew after Done line 176 discharged it, so the line carries
+the step's clause as it now stands and says the Display bullet is open and the step Done in part until it is built.
+Intake OK after both: index 14 of 14, test/repo and the wall's unit file 992 passed. Nothing of either bullet is built;
+both are units for the coordinator's go, and the Display one he has asked for below.
+
+**The coordinator's paste of 22 Nov, answered.**
+
+*Sequencing.* The import's artist seed (an artist found by exact name with no Discogs id gains the release's id) is the
+empty Blood, Sweat row's shape: if a release credited "Blood, Sweat & Tears" by exact name before the merge, that row
+would gain an id and a record and the merge would need the record moved too. Matching is by Discogs id first, and the
+record row holds 168907, so a release naming that id lands on the record row; a release naming another Discogs artist
+id with that exact name would land on the empty row. So: if Adam imports before he merges, the before-SELECT below is
+re-run and must still read 0 records and 2 memberships on the empty row, or the statements are rewritten. Read again
+this morning, unchanged: 83456d38 holds the MBID, 0 records, 2 memberships; 160ca967 holds 168907, 1 record, 0.
+
+*The merge as three paste-ables, each with what it must show.* Before:
+
+```sql
+SELECT a.id, a.name, a.musicbrainz_id, a.discogs_artist_id,
+       (SELECT count(*) FROM records r WHERE r.artist_id = a.id) AS records,
+       (SELECT count(*) FROM artist_memberships m WHERE m.group_artist_id = a.id) AS memberships
+FROM artists a WHERE a.name ILIKE 'Blood, Sweat%' ORDER BY a.name;
+```
+
+Expected: two rows. `83456d38… | Blood, Sweat & Tears | f81d592c… | (null) | 0 | 2` and
+`160ca967… | Blood, Sweat And Tears | (null) | 168907 | 1 | 0`. Anything else: stop, nothing to run.
+
+```sql
+BEGIN;
+UPDATE artist_memberships SET group_artist_id = '160ca967-1b01-4aa7-975e-31ac7c6eb9ef'
+  WHERE group_artist_id = '83456d38-8174-4f7f-a879-f1d45dcd85bc';           -- UPDATE 2, or ROLLBACK
+UPDATE artists SET musicbrainz_id = NULL
+  WHERE id = '83456d38-8174-4f7f-a879-f1d45dcd85bc';                        -- UPDATE 1, or ROLLBACK
+UPDATE artists SET musicbrainz_id = 'f81d592c-993f-4693-b53a-57db5a6257b9'
+  WHERE id = '160ca967-1b01-4aa7-975e-31ac7c6eb9ef' AND musicbrainz_id IS NULL;  -- UPDATE 1, or ROLLBACK
+DELETE FROM artists WHERE id = '83456d38-8174-4f7f-a879-f1d45dcd85bc'
+  AND NOT EXISTS (SELECT 1 FROM records r WHERE r.artist_id = artists.id);   -- DELETE 1, or ROLLBACK
+COMMIT;
+```
+
+Each statement's expected count is beside it; a count that differs means the state is not the one read, and the word
+is ROLLBACK, not the next line. The DELETE is now guarded on the row holding no record, the coordinator's point.
+After: the same SELECT, expected one row, `160ca967… | Blood, Sweat And Tears | f81d592c… | 168907 | 1 | 2`.
+
+*A refusal count carries its reasons inline.* Built, test first: `refusalLine` in src/lib/musicbrainz/resolve-by-name.ts
+renders each refusal with its reason ("held by other: Blood, Sweat & Tears, 83456d38"; "shared name: 2 of 3 hits carry
+it"; "no hit: 0 of 1 hits carry the name"), and scripts/resolve-artist-facts.mts pushes that onto its summary line in
+place of the bare name. Three tests red on the missing function, then 13 passed in the file; typecheck; lint.
+
+*OPENAI_API_KEY stays, and the task stands.* The pick itself is the live consumer: `askPick` calls OpenAI and the ask
+route refuses by name without the key (src/app/api/ask/route.ts:68), and the matched-text audit uses it too. What is
+dead is the embedding half only: the vector's one reader is the ranking branch the latch made unreachable, and the
+embedding script (`npm run abouts:embed`) writes for that reader alone, so nothing would ever run it on purpose. The
+row for that is Q83 below. The key the task names is the pick's, so it does not come off.
+
+*The ceremony price is superseded* by the coordinator's second message; see the pricing below. The one check he asked
+for first is answered there.
+
+*The suffix rule, the two checks.* Manage holds an editable name input: ResourceTable edits every non-boolean field in
+place through an Input, the name first among them, and `startEdit` seeds the draft from `displayValue(row, field)`. So
+the hazard is exact: a strip applied inside displayValue would seed the edit with the stripped name and the next Enter
+would write it. The strip therefore applies at the drawn span and never to displayValue or the draft, and the step gets
+the assertion the coordinator named: open "Smerz (2)" in Manage, the input reads "Smerz (2)", save, the stored name
+still carries it (a component test of the input's value, and the artists route's PATCH leaving the name as sent). The
+same shape holds for the record form, whose artist field is a picker over ids. The reasons: the matched texts carry
+the suffixes in prose, since the drafting prompt names the artist as stored ("Smerz (2)", "The Ink Spots (3)" and
+"James Taylor (2)" each occur in .matched/drafts.json), so a reason quoting the text can carry one. The helper for
+prose matches the answer's own stored artist names only, each full name with its suffix replaced by its stripped form,
+nothing else; a bracketed number that is not the end of a pool record's stored name ("Vol. 2 (1973)", "take (2)") has
+no match and cannot be touched. The helper exists already: `stripDiscogsSuffix` in src/lib/musicbrainz/search-artist.ts
+(`\s\(\d{1,3}\)$`), the resolver's, which the card's "one helper" would move to a shared module and the drawing sites
+import. Production read: five stored names carry a suffix (Darkside (22), James Taylor (2), Protomartyr (2), Smerz (2),
+The Ink Spots (3); Protomartyr has no record), and no two draw alike once stripped, as the card says. Seen on the way:
+the artists table holds exact duplicate names without any suffix, Abbey Road three rows, Hard Day's Night, The Beetles,
+Two of Us and Pretzel Logic two each; not the suffix rule's concern, named here for the duplicate review.
+
+**The import-to-searchable path, priced as the coordinator's second message asks, and nothing else.**
+
+*The ABOUT dependency, first and on its own.* The matched-text draft takes the stored ABOUT as an input it may use and
+runs without it: the prompt reads "The record's ABOUT. You may use it, but it was written by a model from this material
+and its own knowledge, so anything resting on the ABOUT is marked inferred, never supported", and sends "none" where
+there is no ABOUT (src/lib/llm/matched-text-client.ts:77). So for the plumbing the two are independent: one call makes
+a record searchable, the ABOUT can follow on any schedule, and nothing waits on it. For the text's content they are
+not: every one of the 55 had an ABOUT when drafted, every one has at least one inferred sentence, and 314 of the 439
+sentences are inferred against 125 supported, though "inferred" covers the model's own knowledge as well as the ABOUT,
+so the ABOUT's own share is not separable from the data. A text drafted with no ABOUT stands on the Discogs material
+and the model's knowledge alone, and `recordsToDraft` skips a record whose text is stored, so an ABOUT drafted later
+does not refresh it unless the text is cleared first. The honest reading: independent, at a quality cost that is real
+and unmeasured.
+
+*Per-record searchable latency under it.* One model call, 13.5s median, 14.5s p90, 14.9s max (19 Nov, ten records,
+docs/measurements/describe-timing). No Discogs call at draft time: the import writes the release payload to
+discogs_cache (collection-import.ts:68), which the draft reads. Five records, drafted one after another, just over a
+minute after the import's response; the first is searchable at about 14 seconds.
+
+*The cap, verified rather than remembered.* The project runs Fluid compute on the Hobby plan (read from Vercel's API
+this morning: `resourceConfig.fluid: true`, team plan `hobby`), and with Fluid compute Hobby's default and maximum
+function duration are both 300 seconds (vercel.com/docs/functions/limitations). The import route exports no
+`maxDuration`, so it already runs at 300. The 60-second ceiling in rate-limit.ts's comment predates Fluid compute and
+is stale; noted, not edited. Next's `after()` runs inside the same 300 total, so the budget for drafting is 300 less
+the import itself (about 1.3s a new record, Discogs, plus the writes) less a margin: with a 30-second margin and ten
+new records, about 18 drafts; with thirty new, about 16. A draft is never started that cannot finish: the loop checks
+the remaining budget against the p90 before each call, which is what makes the overflow whole records rather than a
+half-draft killed with the function.
+
+*The overflow, reported cleanly.* The import answers before drafting starts, so the response cannot say what was
+drafted. The after-task writes its outcome onto the run's stored report (discogs_import_runs.report gains
+`drafting: { searchable: n, waiting: m, failed: [...] }`), which Manage's import report already reads back, so the
+report's lines gain "n now searchable; m waiting". The remedy for the waiting is the Import button again: a run skips
+every release already held, then drafts the records lacking text, so a second press drafts the next sixteen and
+nothing is queued anywhere. No table, no workflow.
+
+*The unreviewed mark.* "generated set and edited null" is not sufficient: `storeGeneratedMatchedText` writes generated,
+generated_model and generated_at only, so the 55 Adam marked are stored exactly as an auto-draft would be and the rule
+would read all 55 as unread. That is the argument for a column: `reviewed_at timestamptz null` on record_matched_text.
+The migration adds it and backfills `reviewed_at = generated_at` for every row present at migration, the one place the
+knowledge that the 55 were reviewed can enter, since the columns cannot tell them apart. The auto path leaves it null;
+the mark-file store sets it; an edit through the record page sets it, since an edit is a read.
+
+*The review path, so the automation defers the review rather than ending it.* `npm run matched:unreviewed`: lists every
+record with reviewed_at null, artist, title and text, and writes the same review file the drafting command writes, so
+Adam reads it as he reads a draft today; `--store marks.txt` sets reviewed_at on the ids he marks, and a rejection
+clears the text, which takes the record out of the pool until the next import press redrafts it. Crude, complete, the
+same two commands he already knows.
+
+*Held out, as asked:* the claim check and the year check, which read the text and do not care who has read it.
+
+*The unit cost.* Two units, a gate after (a migration is a gate).
+1. The mark and the review path: migration (column, backfill), schema, the store queries (reviewed_at on mark, on
+   edit), the unreviewed query, the command, tests for each. About six files.
+2. Import fires drafting: a `draftMatchedTextFor(records, budget)` in the matched-text library that drafts, stores
+   unreviewed and stops on budget; the import route's `after()` calling it and writing the drafting outcome to the run;
+   the import report's new line; the route's integration tests with Anthropic mocked (drafted and searchable; the
+   budget stopping with the waiting counted; a failed draft on its own line); the budget's unit tests. About eight
+   files, one decision, said here in advance since the count will trip.
+The matched-text client runs on the Anthropic key already in Vercel's environment (the snippet's) and goes through
+`callAnthropic`; whether it claims the shared rate-limit budget as the snippet does is to be checked in unit 2, since
+the import would be the first in-function caller of it. Per record: one call, about 950 tokens in and 1,640 out on
+claude-opus-5 (19 Nov). Not priced, by instruction: the queue, the review surface, the one-command local version.
