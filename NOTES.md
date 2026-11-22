@@ -59527,3 +59527,101 @@ replaces. drop-ref's report: the target's §P.2 and §P.3 changed, both carried 
 offered 20 Nov and still not on disk or in any ref. The landed list gains both. Of the new bullets, Reason subject is
 built (9f9cff83, with the "the notes" discrepancy above), In flight, Release year, Era phrases, Evidence hedges and
 Propose are not. Pushed at once as an intake; no gate, nothing under test changed.
+
+## 21 Nov, after that: the splitter held once and read against the drafts; 437 was wrong too; pick history is not persisted; eight records stands
+
+**The go (the coordinator, 21 Nov):** both, splitter first, so the year unit's production assertion lands against a
+correct claim check; separate commits. The finding to carry is the three copies, not the Rev.
+
+**Pick history is not persisted.** No table holds a pick's claims, reasons or drops: `llm_requests` is the Anthropic
+rate-limit log (kind, stamps, tokens, stop reason) and the pick is an OpenAI call that writes no row; `app_latches` holds
+the one latch. The route logs each drop through the logger (`the pick dropped <id> (<why>)`), which reaches Vercel's
+runtime logs and nowhere else; `vercel logs --environment production` returned no lines for the last hour, three days
+or seven, with no error, so nothing from 14 Nov on is readable there. Run 3 stays the only evidence: enough to fix the
+rule, not enough to know its rate. A drop that should be countable later needs a row written by the route, which is a
+feature, not this unit; not built.
+
+**Eight records stands.** Hot Tuna's two boundaries are two records, *Hot Tuna* and *First Pull Up, Then Pull Down*,
+each with "Rev. Gary Davis" in its matched text and in its ABOUT; Smerz's two are both in *Believer* ("Hester, Pt. 1" and
+"Pt. 2"). So nine boundaries in eight records: ABBA, Glenn Miller, Hot Tuna twice, OutKast, Simon & Garfunkel, Smerz,
+Sgt. Pepper.
+
+**437 was wrong too, and the chase found two more faults.** The coordinator's 439 is the drafting model's own sentence
+lists summed over `.matched/drafts.json` (18 Nov 16:51, the lists Q75's "125 of 439" was counted on); his 440 is
+`drafts-previous.json` and the 16 Nov file gives 438. The residual was not the three redrafts: every stored text equals
+its draft's in drafts.json (the 19 Nov 16:35 bulk write), so the lists are the stored texts' own. Read text for text,
+the joined count of 437 disagreed with the model's lists in three records, in two further classes:
+- **999, *The Biggest Prize In Sport*:** `"Stop! Stop!", "English Wipeout"` split at the title's own exclamation mark,
+  inside an open quotation; the model's eight were nine.
+- **Bob Dylan, *Greatest Hits Volume II*:** two sentences closing inside quotation marks, `With You." Side C` and
+  `Fall." Side D`, were no boundary at all, so Sides B, C and D were one sentence; the model's eight were six. None of
+  the three could have been cited alone.
+- **Hot Tuna, *Hot Tuna*:** the Rev. boundary was false and `"Mann's Fate." Dynamics` was missed; eight both ways, the
+  wrong eight.
+Fourteen misread boundaries in all over the 55 (nine abbreviations, one title's stop, three closing quotes, two more
+abbreviations in the ABOUTs), three classes, found because a total that matched was still checked item by item.
+
+**The fix, one rule in one module.** `src/lib/text/sentences.ts` holds `sentencesOf`: a sentence ends at `.` `!` or `?`
+with any closing quotation mark or bracket after it, before whitespace, except after a listed title or abbreviation
+(Rev., Mr., Mrs., Ms., Dr., St., Mt., Sgt., Jr., Sr., Vol., No., Pt., Op., Ft., Feat., Vs., Co., Inc., Ltd.), where the
+next word begins lowercase, or inside an open quotation (straight quotes by parity, curly by depth). No single-initial
+rule: "side A. The second" is a sentence end, and no stored text has an initial at a boundary. The pick's claim check
+(pick.ts), the ABOUT's fact checker (about-check.ts) and report-self-reference import it; audit-abouts imported the
+pick's and now imports the module's; report-false-splits.mts is deleted, its question answered, and
+`scripts/report-sentence-counts.mts` stands in its place as the instrument: it reads the rule against the drafting
+model's own sentence lists, text for text, which is an independent ground truth where the old script was a second copy
+of the rule. **Its reading after the fix: 55 matched texts, the rule 439 sentences, drafts.json 439, 0 disagreements.**
+One number. A fifth splitter sits in `scripts/named-tests.mjs`, splitting the handoff's prose for the in-form sentence
+pairing on the commit path: a different corpus, infrastructure under §10's gate rule, left alone and named here.
+
+**Tests first, red, then green.** `src/lib/text/sentences.test.ts` (five tests, one per class and the plain rule, each
+a stored boundary) failed on the missing module; pick.test.ts gained run 3's case, the whole Hot Tuna-shaped sentence
+cited and kept with the fragment at "Rev." still dropped, which failed with `ok: false` (no pick survived) against the
+old split; about-check.test.ts gained a bare-year claim across "Vol. 2" naming the whole sentence, which failed naming
+`"2 in 2019 and shelved."`. Then 114 passed across sentences, pick, about-check and the five matched-text files;
+typecheck clean; lint 0 errors, 6 warnings all in files this unit did not touch; build compiled. Step level. No e2e
+spec runs the splitter: every ask spec fulfils the route itself.
+
+**Design's count of stored citations falls away:** citations are not persisted (above). **The coordinator's caution
+stands on the row:** the rule makes the eleven joined sentences longer for the loose match, and three shorter; the
+rejection rate after the fix is to be read, not assumed. **"The notes" not added**, awaiting Design's word on the
+ambiguity (liner notes against the notes a horn plays), the material's precedent.
+
+Twelve paths, one decision: a shared rule and the callers that follow it, with the record. The §1 count trips on the
+fan-out; the coordinator named the shape ("one sentencesOf in one module, the three copies importing it") before it
+was built.
+
+**Design's second drop of 21 Nov taken in (refs/drops/2026-11-21-02, captured 19:56:48).** Two change files and the
+Mood Pick card at 4715133778596c8b, 76,986 bytes, matching the file's own figures (the coordinator verified it: bold
+200 of 200, none nested, both sentences present). "Year named for an era", anchored on 93838a6a which is applied:
+Design rules "the notes" a prompt rule only, by the material's precedent, since a horn plays notes too, so the check's
+list stands as built and the discrepancy logged this afternoon is closed her way; and where a phrase asks for a time, a
+reason names the record's release year. Applied to the handoff: the Reason subject bullet reworded as the file gives
+it (its wording matched exactly), the Year in the reason bullet after Era phrases, the §P.2 governs row appended. The
+coordinator's sequencing: the bullet is built inside the year unit, not as a pass after it. **"Artist name without
+suffix", resent, is held, nothing applied:** the file anchors on the Table and Grid card at b65cb51b, 157,817 bytes,
+and says its card is already in the tree; the card on disk is 6819d53f at 156,602 bytes and carries no sentence about
+a suffix, so the ruling is not in the repo's target (CLAUDE.md §4, build to targets); and its anchor step is headed
+"§T.4: the name sort key" on disk, not "one key for every name order". The record carries the reason. Its handoff
+bullet is applied when the card lands. The coordinator holds b65cb51b from an earlier verification and has neither
+6819d53f nor 67cd7cb2 in hand; the card on disk is what Code can read.
+
+**The cap, measured as the coordinator asked (his reading of the bound confirmed from pick.ts: 160 is the prompt's
+target, 188 the schema's maximum and the check's, a reason over it asked for again once for its record alone, the record
+left out if still over).** The spread under this bound is the two runs made with it, 19 Nov 17:30 and 20 Nov 04:14
+(the 16:41 run had no bound): 93 reasons, min 150, median 162, p90 169, max 179; 60 over the target today, none over
+188. With a 17-character year clause: median 179, p90 186, max 196, and **4 of 93 cross 188**, the four that stand over
+171 today. So the tail is at the ceiling: one reason in 23 would be asked for again, a second call on the era press,
+and dropped if still over, run 3's shape on the exact query type the ruling fixes. **Remedy 2 is built with the year
+unit:** where the phrase asks for a time the prompt's target is 145, the schema's maximum unchanged, Design's ruling
+untouched; by this spread (the model landing about two characters over its target) that puts the median near 164 with
+the clause and the p90 near 171, 17 under the ceiling.
+
+**The intake's guard, fixed on the way (commit path, under §10's gate).** The intake refused the held file twice over:
+`scripts/step-heads.mjs` recorded the anchor of every landed line alike, so "Artist name without suffix", held precisely
+because its anchor step and card are not in the tree, failed the check on the head it could not have (ABSENT "§T.4: one
+key for every name order"), and the check rewrote `scripts/handoff-step-heads.json` under itself (tree CHANGED). A held
+file's heads are not yet the handoff's to hold; they are recorded when the file is applied. Test first, red
+(`recordable is not a function`), then `recordable` leaves `applied: false` lines out of the record and `fromRefs`
+reads through it; 9 passed; the tool rewrote the record back to the committed one (71 heads, 55 files, 0 absent). The
+splitter's commit, refused once on the staged deletion and once on the unrecorded drop, follows this intake.

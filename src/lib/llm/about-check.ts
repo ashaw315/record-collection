@@ -1,5 +1,6 @@
 import type { DiscographyEntry, ReleaseFacts } from './about-grounding';
 import type { SnippetSubject } from './snippet-client';
+import { sentencesOf } from '@/lib/text/sentences';
 
 /**
  * The check after the note (the coordinator, 4 Nov): grounding reduces
@@ -31,7 +32,6 @@ export type Conflict = { kind: 'sequence' | 'date' | 'label' | 'personnel' | 'tr
 
 export type CheckSubject = { subject: SnippetSubject; year: number | null; facts: ReleaseFacts; discography: DiscographyEntry[] };
 
-const sentencesOf = (note: string) => note.split(/(?<=[.!?])\s+/).map((s) => s.trim()).filter((s) => s !== '');
 
 /*
   An album is one the endpoint calls an LP or an Album. A blank format is unknown, not an album: the

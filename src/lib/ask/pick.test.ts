@@ -152,6 +152,21 @@ describe('what code checks that structured output cannot', () => {
     ]);
   });
 
+  /*
+    Run 3 of the ten-run bench, 21 Nov: the model cited Hot Tuna's sentence word for word and the check dropped it as not
+    a whole sentence, because the splitter ended a sentence at "Rev." The pick lost a correct record to its own
+    instrument. Fails against a claim check splitting on `(?<=[.!?])\s+` alone.
+  */
+  it('keeps a whole sentence that holds an abbreviation, or closes inside quotation marks, and still drops the fragment either side of it', () => {
+    const pool: PickRecordText[] = [{ id: 'h7', text: 'Side one ends with Rev. Gary Davis\'s "Death Don\'t Have No Mercy," the gravest thing on the side. It closes on "Mann\'s Fate." Dynamics stay low throughout.' }];
+    const whole = 'Side one ends with Rev. Gary Davis\'s "Death Don\'t Have No Mercy," the gravest thing on the side.';
+    expect(readPick(reply({ verdict: 'answer', picks: [pick('h7', [whole])] }), pool, [])).toMatchObject({ ok: true, picks: [{ id: 'h7' }], dropped: [] });
+    expect(readPick(reply({ verdict: 'answer', picks: [pick('h7', ['Dynamics stay low throughout.'])] }), pool, [])).toMatchObject({ ok: true, picks: [{ id: 'h7' }], dropped: [] });
+    const r = readPick(reply({ verdict: 'answer', picks: [pick('h7', ['Side one ends with Rev.']), pick('i8', ['Loud throughout.'])] }), [...pool, { id: 'i8', text: 'Loud throughout.' }], []);
+    expect(r.ok && r.picks.map((p) => p.id)).toEqual(['i8']);
+    expect(r.ok && r.dropped.map((d) => d.why)).toEqual(['cites "Side one ends with Rev.", which is not a whole sentence of its text']);
+  });
+
   it('drops a pick that cites nothing: every recommendation rests on at least one stored sentence', () => {
     const r = readPick(reply({ verdict: 'answer', picks: [pick('a1', []), pick('c3', ['  ']), pick('e5', ['Big-band swing at dance tempos, strings and reeds layered thick.'])] }), POOL, []);
     expect(r.ok && r.picks.map((p) => p.id)).toEqual(['e5']);

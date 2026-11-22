@@ -1,4 +1,5 @@
 import { requireOpenAiKey } from '@/lib/openai/embeddings';
+import { sentencesOf } from '@/lib/text/sentences';
 
 /**
  * **The ask's model pick (§P.2, "the model pick, minimum"; SPEC §4.6; the coordinator, 13 and 14 Nov).** The model is
@@ -133,10 +134,9 @@ const loose = (s: string) => s.toLowerCase().replace(/\s+/g, ' ').trim();
 
 /*
   A claim is a whole stored sentence (the coordinator, 14 Nov): a fragment can support the opposite of what its record
-  says ("Not slow; aggressive throughout" holds "slow"), and a whole sentence carries its own qualification. A sentence
-  ends at . ! or ? before a space or the text's end, as the record's text is written.
+  says ("Not slow; aggressive throughout" holds "slow"), and a whole sentence carries its own qualification. Where a
+  sentence ends is the one shared rule in src/lib/text/sentences.ts (21 Nov), the ABOUT checker's and §67's sheet's too.
 */
-export const sentencesOf = (text: string): string[] => text.split(/(?<=[.!?])\s+/).map((s) => s.trim()).filter((s) => s !== '');
 
 type Envelope = { status?: string; incomplete_details?: { reason?: string } | null; output?: Array<{ type?: string; content?: Array<{ type?: string; text?: string; refusal?: string }> }> };
 

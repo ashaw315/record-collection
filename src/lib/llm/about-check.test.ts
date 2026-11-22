@@ -78,6 +78,11 @@ describe('checkNote: dates and date-ish phrasing against the record’s year', (
     const date = checkNote('Recorded in 2019 and shelved.', SMERZ).filter((c) => c.kind === 'date');
     expect(date.map((c) => c.claim)).toEqual([expect.stringMatching(/2019/)]);
   });
+  /* The sentence a conflict names is the whole sentence as written (the coordinator, 21 Nov): the splitter is the pick's, shared, and no longer ends a sentence at an abbreviation. Fails against a checker with its own split on `(?<=[.!?])\s+`. */
+  it('names the whole sentence a bare year sits in, across an abbreviation', () => {
+    const date = checkNote('Taped for Vol. 2 in 2019 and shelved. Issued on XL.', SMERZ).filter((c) => c.kind === 'date');
+    expect(date.map((c) => c.claim)).toEqual(['2019 in "Taped for Vol. 2 in 2019 and shelved."']);
+  });
 });
 
 describe('checkNote: the label', () => {

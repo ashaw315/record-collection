@@ -19,7 +19,7 @@ import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { sql } from 'drizzle-orm';
 import { getDb } from '@/db/client';
-import { sentencesOf } from '@/lib/ask/pick';
+import { sentencesOf } from '@/lib/text/sentences';
 import { groundingFromPayload, type ReleaseFacts } from '@/lib/llm/about-grounding';
 import { bearingCount } from '@/lib/llm/audit-bearing';
 import { auditConfig, auditDraft, auditRequest } from '@/lib/llm/matched-text-audit';
