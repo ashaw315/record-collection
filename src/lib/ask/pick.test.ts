@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { askPick, mentionsMaterial, PICK_SCHEMA, pickRequest, readPick, type PickRecordText, REASON_MAX, REASON_TARGET } from './pick';
+import { askPick, mentionsMaterial, PICK_SCHEMA, pickRequest, readPick, type PickRecordText, REASON_MAX, REASON_TARGET, REASON_TARGET_WITH_YEAR } from './pick';
 
 /**
  * **Step 3, unit 1: the model pick, server side (§P.2's "the model pick, minimum"; the coordinator, 13 and 14 Nov).**
@@ -13,12 +13,12 @@ import { askPick, mentionsMaterial, PICK_SCHEMA, pickRequest, readPick, type Pic
  * not here, and the names below say so where it matters.
  */
 const POOL: PickRecordText[] = [
-  { id: 'a1', text: 'Solo piano, slow and sparse, recorded close in a quiet room. Side two turns darker.' },
-  { id: 'b2', text: 'Loud, fast hardcore punk, thin and trebly, every song under two minutes.' },
-  { id: 'c3', text: 'Warm country croon over pedal steel and brushed drums, short and unhurried.' },
-  { id: 'd4', text: 'Mostly quiet acoustic guitar and voice, with two abrasive electric tracks on side one.' },
-  { id: 'e5', text: 'Big-band swing at dance tempos, strings and reeds layered thick.' },
-  { id: 'f6', text: 'Long modal jazz sides, a chant building to a storm and settling.' },
+  { id: 'a1', text: 'Solo piano, slow and sparse, recorded close in a quiet room. Side two turns darker.', year: 1983 },
+  { id: 'b2', text: 'Loud, fast hardcore punk, thin and trebly, every song under two minutes.', year: 1982 },
+  { id: 'c3', text: 'Warm country croon over pedal steel and brushed drums, short and unhurried.', year: 1971 },
+  { id: 'd4', text: 'Mostly quiet acoustic guitar and voice, with two abrasive electric tracks on side one.', year: null },
+  { id: 'e5', text: 'Big-band swing at dance tempos, strings and reeds layered thick.', year: 1956 },
+  { id: 'f6', text: 'Long modal jazz sides, a chant building to a storm and settling.', year: 1965 },
 ];
 
 /** A Responses API reply as the guide shapes it: the JSON text in the message item's output_text content. */
@@ -69,6 +69,33 @@ describe('the request', () => {
     expect(system).toMatch(/material/i);
     expect(system).toMatch(/credits/i);
     expect(system).toMatch(/what you were given/i);
+  });
+
+  /*
+    "Release year to the pick" (Design, 21 Nov; §P.2): the year goes to the pick with the text, from the record's row,
+    so an era phrase is answered from the stored year and not the drafting model's recall; "unknown" where none is
+    stored, so the model never guesses one. Every one of the 55 holds a year (read 21 Nov), and the route reports none.
+    Fails against the request of 20 Nov, whose lines were the id and the text alone.
+  */
+  it('carries each record’s release year beside its text, or says it is unknown', () => {
+    const user = pickRequest('x', POOL, [], { model: 'm', effort: 'low' }).input.find((m) => m.role === 'user')?.content ?? '';
+    expect(user).toContain('[a1] (released 1983) Solo piano, slow and sparse');
+    expect(user).toContain('[d4] (release year unknown) Mostly quiet acoustic guitar');
+  });
+
+  /*
+    "Year named for an era" (Design, 21 Nov): where the phrase asks for a time, a reason names the record's release year,
+    because the year is what shows the answer meets the phrase; the five eighties answers of 21 Nov were all 1980 to 1983
+    and no reason said so. "The notes" is a prompt rule only, by the material's precedent. And the cap, measured by the
+    coordinator: under the 160 target 93 reasons ran 150 to 179, and a 17-character year clause puts 4 of 93 over 188,
+    so where a year is required the target is 145 and the maximum unchanged. Fails against a prompt with no time rule.
+  */
+  it('tells the model to name the record’s release year as given where the phrase asks for a time, within a lower target, and rules out the notes', () => {
+    const system = pickRequest('x', POOL, [], { model: 'm', effort: 'low' }).input.find((m) => m.role === 'system')?.content ?? '';
+    expect(system).toMatch(/asks for a time[^\n]*release year/i);
+    expect(system).toContain(`about ${REASON_TARGET_WITH_YEAR} characters`);
+    expect(REASON_TARGET_WITH_YEAR).toBeLessThan(REASON_TARGET);
+    expect(system).toMatch(/the notes/i);
   });
 
   it('tells the model fewer is correct when fewer fit, that nothing fitting is an answer, never to pad, and to keep caveats', () => {
@@ -158,11 +185,11 @@ describe('what code checks that structured output cannot', () => {
     instrument. Fails against a claim check splitting on `(?<=[.!?])\s+` alone.
   */
   it('keeps a whole sentence that holds an abbreviation, or closes inside quotation marks, and still drops the fragment either side of it', () => {
-    const pool: PickRecordText[] = [{ id: 'h7', text: 'Side one ends with Rev. Gary Davis\'s "Death Don\'t Have No Mercy," the gravest thing on the side. It closes on "Mann\'s Fate." Dynamics stay low throughout.' }];
+    const pool: PickRecordText[] = [{ id: 'h7', text: 'Side one ends with Rev. Gary Davis\'s "Death Don\'t Have No Mercy," the gravest thing on the side. It closes on "Mann\'s Fate." Dynamics stay low throughout.', year: null }];
     const whole = 'Side one ends with Rev. Gary Davis\'s "Death Don\'t Have No Mercy," the gravest thing on the side.';
     expect(readPick(reply({ verdict: 'answer', picks: [pick('h7', [whole])] }), pool, [])).toMatchObject({ ok: true, picks: [{ id: 'h7' }], dropped: [] });
     expect(readPick(reply({ verdict: 'answer', picks: [pick('h7', ['Dynamics stay low throughout.'])] }), pool, [])).toMatchObject({ ok: true, picks: [{ id: 'h7' }], dropped: [] });
-    const r = readPick(reply({ verdict: 'answer', picks: [pick('h7', ['Side one ends with Rev.']), pick('i8', ['Loud throughout.'])] }), [...pool, { id: 'i8', text: 'Loud throughout.' }], []);
+    const r = readPick(reply({ verdict: 'answer', picks: [pick('h7', ['Side one ends with Rev.']), pick('i8', ['Loud throughout.'])] }), [...pool, { id: 'i8', text: 'Loud throughout.', year: null }], []);
     expect(r.ok && r.picks.map((p) => p.id)).toEqual(['i8']);
     expect(r.ok && r.dropped.map((d) => d.why)).toEqual(['cites "Side one ends with Rev.", which is not a whole sentence of its text']);
   });
@@ -282,7 +309,8 @@ describe('the call', () => {
     const aboutText = 'Brassy and quick, but the text offers period atmosphere, not evidence of a recent recording.';
     const replaced = replying(
       reply({ verdict: 'answer', picks: [pick('a1', [CLAIM_A], aboutText), pick('c3', [CLAIM_C])] }),
-      reply({ verdict: 'answer', picks: [pick('a1', [CLAIM_A], 'Brassy and quick, but a 1963 recording, not a recent one.')] }),
+      /* The stub named 1963 until 21 Nov; a1's release year is 1983, and a reason naming another year is now a fault of its own. */
+      reply({ verdict: 'answer', picks: [pick('a1', [CLAIM_A], 'Brassy and quick, but a 1983 recording, not a recent one.')] }),
     );
     const r = await askPick('big band but recorded recently', POOL, [], { fetchImpl: replaced });
     expect(replaced).toHaveBeenCalledTimes(2);
@@ -290,7 +318,7 @@ describe('the call', () => {
     expect(again).toContain('[a1]');
     expect(again).not.toContain('[c3]');
     expect(again).toMatch(/about the record, never about the text/i);
-    expect(r).toMatchObject({ ok: true, verdict: 'answer', picks: [{ id: 'a1', reason: 'Brassy and quick, but a 1963 recording, not a recent one.' }, { id: 'c3' }], dropped: [] });
+    expect(r).toMatchObject({ ok: true, verdict: 'answer', picks: [{ id: 'a1', reason: 'Brassy and quick, but a 1983 recording, not a recent one.' }, { id: 'c3' }], dropped: [] });
 
     const still = replying(
       reply({ verdict: 'answer', picks: [pick('a1', [CLAIM_A], aboutText), pick('c3', [CLAIM_C])] }),
@@ -300,6 +328,50 @@ describe('the call', () => {
       ok: true, verdict: 'answer', picks: [{ id: 'c3' }], dropped: [{ id: 'a1', why: expect.stringMatching(/spoke about its text \("the description"\) when asked again/) }],
     });
     expect(still).toHaveBeenCalledTimes(2);
+  });
+
+  /*
+    The year a reason names is checked against the year the pick was sent (the coordinator, 21 Nov): the year came out of
+    the model's recall and into the prompt from the record's row on Design's ground, and a reason naming a different year
+    puts the recall back on Adam's screen as a specific number, worse than the hedge it replaces; a reason naming a
+    different year is not naming the record's release year, so this enforces her words. A four-digit year against a
+    stored integer is the one check with no ambiguity. Where no year is stored, any year named is the model's own, and
+    fails the same way. None of the 93 measured reasons named a year, so the check reads nothing it should not. Re-asked
+    once, as for the cap, the record left out if still wrong. Fails against a pick that draws any year the model writes.
+  */
+  it('asks once more for a reason naming a year that is not the record’s release year, and keeps one naming the right year or none', async () => {
+    vi.stubEnv('OPENAI_API_KEY', 'sk-test');
+    const wrong = replying(
+      reply({ verdict: 'answer', picks: [pick('a1', [CLAIM_A], 'Glossy 1981 synth-pop for a bright party.'), pick('c3', [CLAIM_C], 'A 1971 croon for a slow Sunday.')] }),
+      reply({ verdict: 'answer', picks: [pick('a1', [CLAIM_A], 'Glossy 1983 synth-pop for a bright party.')] }),
+    );
+    const r = await askPick('something from the eighties', POOL, [], { fetchImpl: wrong });
+    expect(wrong).toHaveBeenCalledTimes(2);
+    const again = userOf(wrong, 1);
+    expect(again).toContain('[a1]');
+    expect(again).not.toContain('[c3]');
+    expect(again).toMatch(/release year/i);
+    expect(r).toMatchObject({ ok: true, verdict: 'answer', picks: [{ id: 'a1', reason: 'Glossy 1983 synth-pop for a bright party.' }, { id: 'c3' }], dropped: [] });
+
+    const still = replying(
+      reply({ verdict: 'answer', picks: [pick('a1', [CLAIM_A], 'Glossy 1981 synth-pop for a bright party.'), pick('c3', [CLAIM_C])] }),
+      reply({ verdict: 'answer', picks: [pick('a1', [CLAIM_A], 'Glossy 1982 synth-pop for a bright party.')] }),
+    );
+    expect(await askPick('something from the eighties', POOL, [], { fetchImpl: still })).toMatchObject({
+      ok: true, verdict: 'answer', picks: [{ id: 'c3' }], dropped: [{ id: 'a1', why: expect.stringMatching(/named 1982 where the record’s release year is 1983 when asked again/) }],
+    });
+    expect(still).toHaveBeenCalledTimes(2);
+  });
+
+  it('asks once more where a reason names a year and the record’s release year is unknown: a year named there is the model’s own', async () => {
+    vi.stubEnv('OPENAI_API_KEY', 'sk-test');
+    const guessed = replying(
+      reply({ verdict: 'answer', picks: [pick('d4', ['Mostly quiet acoustic guitar and voice, with two abrasive electric tracks on side one.'], 'Quiet guitar from 1974 with two loud tracks.')] }),
+      reply({ verdict: 'answer', picks: [pick('d4', ['Mostly quiet acoustic guitar and voice, with two abrasive electric tracks on side one.'], 'Quiet guitar from 1974 with two loud tracks.')] }),
+    );
+    const r = await askPick('something from the seventies', POOL, [], { fetchImpl: guessed });
+    expect(guessed).toHaveBeenCalledTimes(2);
+    expect(r).toMatchObject({ ok: false, reason: expect.stringMatching(/release year/) });
   });
 
   it('asks nothing again when every reason is within the bound', async () => {

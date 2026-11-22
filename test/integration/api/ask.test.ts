@@ -286,6 +286,8 @@ describe('POST /api/ask, the pick once coverage is complete, latched', () => {
   it('sends one body carrying the configured model and effort, the strict schema, every eligible record’s text and the named ids', async () => {
     const f = await seedFour();
     await coverAll(f);
+    await db.execute(sql`UPDATE records SET release_year = 1983 WHERE id = ${f.rain}`);
+    await db.execute(sql`UPDATE records SET release_year = 1970 WHERE id = ${f.sunday}`);
     vi.stubEnv('ASK_PICK_MODEL', 'gpt-from-env');
     vi.stubEnv('ASK_PICK_EFFORT', 'medium');
     const sent = pickReplies({ verdict: 'answer', picks: [{ id: f.sunday, reason: 'Slow strings.', claims: ['Strings and coffee, slow.'] }] });
@@ -296,8 +298,9 @@ describe('POST /api/ask, the pick once coverage is complete, latched', () => {
     expect(body.reasoning).toEqual({ effort: 'medium' });
     expect(body.text.format).toMatchObject({ type: 'json_schema', strict: true, schema: PICK_SCHEMA });
     const user = body.input.find((m) => m.role === 'user')?.content ?? '';
-    for (const [id, text] of [[f.rain, 'Rain on a tin roof. Slow and warm.'], [f.drive, 'Neon and quiet. A late drive.'], [f.sunday, 'Strings and coffee, slow.']] as const) {
-      expect(user, `the eligible ${id}, with its text`).toContain(`[${id}] ${text}`);
+    /* "Release year to the pick" (Design, 21 Nov): the record's own year beside its text, from its row, or unknown where none is stored. */
+    for (const [id, text] of [[f.rain, '(released 1983) Rain on a tin roof. Slow and warm.'], [f.drive, '(release year unknown) Neon and quiet. A late drive.'], [f.sunday, '(released 1970) Strings and coffee, slow.']] as const) {
+      expect(user, `the eligible ${id}, with its year and its text`).toContain(`[${id}] ${text}`);
     }
     expect(user).toMatch(new RegExp(`already named[^\\n]*${f.drive}`, 'i'));
   });

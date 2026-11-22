@@ -90,14 +90,16 @@ export async function countNotDescribed(): Promise<number> {
  * The pick's eligible records in a pool: those with matched text, each read as its edit where Adam has written one
  * and its generated text otherwise, never both (SPEC §4.6). A record with neither is not eligible (§P.6's pattern).
  */
-export async function matchedTextsFor(recordIds: readonly string[]): Promise<Array<{ id: string; text: string }>> {
+export async function matchedTextsFor(recordIds: readonly string[]): Promise<Array<{ id: string; text: string; year: number | null }>> {
   if (recordIds.length === 0) return [];
   const db = getDb();
+  /* The release year with the text ("Release year to the pick", Design, 21 Nov): the record's own row, null where none is stored. */
   const rows = await db
-    .select({ id: recordMatchedText.recordId, text: sql<string | null>`coalesce(${recordMatchedText.edited}, ${recordMatchedText.generated})` })
+    .select({ id: recordMatchedText.recordId, text: sql<string | null>`coalesce(${recordMatchedText.edited}, ${recordMatchedText.generated})`, year: records.releaseYear })
     .from(recordMatchedText)
+    .innerJoin(records, eq(records.id, recordMatchedText.recordId))
     .where(inArray(recordMatchedText.recordId, [...recordIds]));
-  return rows.filter((r): r is { id: string; text: string } => r.text !== null);
+  return rows.filter((r): r is { id: string; text: string; year: number | null } => r.text !== null);
 }
 
 /**

@@ -43,9 +43,9 @@ if (args.includes('--phrases')) {
   process.exit(0);
 }
 
-type Draft = { id: string; artist: string; title: string; text: string | null };
+type Draft = { id: string; artist: string; title: string; year: number | null; text: string | null };
 const drafts: Draft[] = JSON.parse(readFileSync(join(process.cwd(), '.matched', 'drafts.json'), 'utf8'));
-const pool: PickRecordText[] = drafts.filter((d) => d.text !== null).map((d) => ({ id: d.id, text: d.text as string }));
+const pool: PickRecordText[] = drafts.filter((d) => d.text !== null).map((d) => ({ id: d.id, text: d.text as string, year: d.year ?? null }));
 
 type Row = { phrase: string; verdict: string; reasons: Array<{ id: string; chars: number; reason: string }>; failed?: string };
 const rows: Row[] = [];

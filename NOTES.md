@@ -59625,3 +59625,54 @@ file's heads are not yet the handoff's to hold; they are recorded when the file 
 (`recordable is not a function`), then `recordable` leaves `applied: false` lines out of the record and `fromRefs`
 reads through it; 9 passed; the tool rewrote the record back to the committed one (71 heads, 55 files, 0 absent). The
 splitter's commit, refused once on the staged deletion and once on the unrecorded drop, follows this intake.
+
+## 21 Nov, night's end: the year unit, with Design's era bullet and the coordinator's year check folded in; the assertion in the step, passed on production
+
+**Scope (the coordinator's go, 21 Nov; §P.2 as the handoff's model-pick step now has it).** Release year: each record's
+release year goes to the pick beside its matched text, from its own row, "unknown" where none is stored (0 of the 55).
+Year in the reason: where the phrase asks for a time, each reason names the record's release year exactly as given,
+and the prompt's target is then 145, the coordinator's second remedy, chosen by the measurement above (4 of 93 over 188
+with the clause at 160); the maximum stays 188. Reason subject: "the notes" joins the prompt rule only, Design's
+ruling, the check unchanged. The year check, the coordinator's, enforcing Design's words: a reason naming a year that is
+not the record's release year as sent (or any year where none is sent) is asked for again once, as for the cap, and the
+record left out if still wrong, the fault named ("named 1982 where the record’s release year is 1983"). Every year
+named is checked, not only on era phrases: none of the 93 measured reasons named a year, so the check has read nothing
+it should not, and a bare year on Adam's screen reads as the record's whatever the phrase. Out of scope and not built:
+In flight and Propose (the indicator, Design's words and look first); Evidence hedges is a running count, 0 on this
+press; "Artist name without suffix" held (above).
+
+**Tests first, red for the right reasons, then green.** pick.test: the request carries "(released 1983)" or "(release
+year unknown)" (red: the lines were id and text); the prompt's time rule, 145 target and "the notes" (red: no rule); a
+wrong year re-asked and replaced by the right one or dropped naming both years (red: one call, the year drawn); a year
+named where none is stored re-asked and refused (red). ask.test: the route's one body carries each record's year from
+its row (red against the old line, which the test pinned; its expectation changed with the contract, said here). One
+fixture changed with the rule: the material re-ask stub replaced a text-speaking reason with "a 1963 recording" for a
+record now stamped 1983, which the year check faults on its own; it says 1983. Then 56 passed across pick, the ask route
+and the splitter; typecheck clean; lint 0 errors, 6 warnings in untouched files; build compiled. Step level. No e2e
+spec reaches the request (every ask spec fulfils the route). `matchedTextsFor` joins the record for its year;
+measure-reason-lengths carries the drafts' years; ask-bench-year.mts deleted, its rewriting replaced by the step's
+assertion.
+
+**The assertion in the step, on production (scripts/assert-era-pick.mts: the build's own askPick over production's 55,
+the request as the route sends it, reads only; load 3.6 before).** "something from the eighties": 13.1s, verdict answer,
+5 picked, 0 dropped, no re-ask. Break Out 1983, Sports 1983, Never Too Much 1981, Gaucho 1980, The Biggest Prize In Sport
+1980: every stored year 1980 to 1989, every reason naming its record's year, 149 to 156 characters (the 145 target
+landing 4 to 11 over, under 160), 0 evidence hedges. The reasons:
+- Break Out: "Released in 1983, this is glossy synth-and-drum-machine pop with stacked vocal harmonies, made for a party
+  or drive, with slower singing on side two."
+- Sports: "Released in 1983, this is punchy, harmony-packed band rock for driving or parties, with swinging choruses and
+  a darker song and soft ballad on side two."
+- Never Too Much: "Released in 1981, this is rich, layered soul with bass-driven dance momentum and massed harmonies,
+  easing into an exposed closing ballad for late evening."
+- Gaucho: "Released in 1980, this is polished, unhurried soul-jazz with electric piano, clean guitar and layered
+  voices, ideal for night driving or a cool evening in."
+- 999: "Released in 1980, this is fast, wiry punk-derived rock with shouted choruses and no quiet breaks, best turned up
+  for driving or getting chores done quickly."
+The control, "something for a rainy afternoon", names no time: 13.8s, 5 picked (Carpenters 1971, Ladies Of The Canyon
+1970, Donovan In Concert 1968, Hot Tuna 1970, Nashville Skyline 1969), 152 to 158 characters, no reason naming a year:
+a phrase naming no time adds no year requirement, and the model leaves the year out unasked. Hot Tuna's *Hot Tuna*,
+the record run 3 lost, is in this answer with three claims under the corrected splitter. ERA ASSERTION OK. Two live
+presses, nothing written.
+
+**The five reasons all open "Released in YYYY, this is", a shape the prompt did not ask for;** Design may want the year
+placed otherwise, and the sentence is hers to judge from these five. Noted, not changed.

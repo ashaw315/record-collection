@@ -17,7 +17,8 @@ import { sentencesOf } from '@/lib/text/sentences';
  * Outputs, read off OpenAI's models page on 14 Nov: "gpt-6.1-sol", "Near-Astra performance for complex work at a lower
  * cost". Effort is `ASK_PICK_EFFORT`, low by default, since the phone's loop waits on every press.
  */
-export type PickRecordText = { id: string; text: string };
+/* The record as the pick reads it: its matched text and its release year from its own row ("Release year to the pick", Design, 21 Nov), null where none is stored. */
+export type PickRecordText = { id: string; text: string; year: number | null };
 
 /*
   The reason's bound (§P.2, Design, 19 Nov: "set where it is written, not where it is drawn"), two numbers from
@@ -29,6 +30,13 @@ export type PickRecordText = { id: string; text: string };
 */
 export const REASON_TARGET = 160;
 export const REASON_MAX = 188;
+/*
+  The target where a year is required ("Year named for an era", Design, 21 Nov; the coordinator's remedy, measured): under
+  the 160 target 93 reasons ran 150 to 179, four over 171, and a year clause of about 17 characters puts those four over
+  188, run 3's shape on the era phrases this rule exists for. The model lands about two characters over its target, so
+  145 puts the clause's median near 164 and its p90 near 171. The maximum is unchanged: one field, one ceiling.
+*/
+export const REASON_TARGET_WITH_YEAR = 145;
 export type PickVerdict = 'answer' | 'nothing-fits' | 'requirement-unmet';
 export type Picked = { id: string; reason: string; claims: string[] };
 export type PickResult =
@@ -71,13 +79,15 @@ const SYSTEM = [
   'If nothing fits, set verdict "nothing-fits" and return at most one record as a stand-in to play in the meantime, its reason saying what it is not.',
   'If the phrase states a requirement (for example no vocals) that no fitting record meets, set verdict "requirement-unmet" and return the closest in feel as one stand-in, its reason naming the requirement and what the record has instead.',
   'Never return a record listed as already named.',
-  `Each reason is one sentence of about ${REASON_TARGET} characters, never more than ${REASON_MAX}, in the reader’s terms of sound and occasion, saying why this record answers the phrase. Do not quote the record’s text in the reason. The reason speaks about the record, never about the text, the description, the material, the credits, or what you were given: say what the record is, not what the text offers or fails to show. Carry any relevant caveat from the text into the reason rather than dropping it: a record that is slow with abrasive peaks is not simply gentle.`,
+  `Each reason is one sentence of about ${REASON_TARGET} characters, never more than ${REASON_MAX}, in the reader’s terms of sound and occasion, saying why this record answers the phrase. Do not quote the record’s text in the reason. The reason speaks about the record, never about the text, the description, the notes, the material, the credits, or what you were given: say what the record is, not what the text offers or fails to show. Carry any relevant caveat from the text into the reason rather than dropping it: a record that is slow with abrasive peaks is not simply gentle.`,
+  /* "Year named for an era" (Design, 21 Nov): the year is what shows an answer meets a phrase about a time; elsewhere it is the reason's to use or leave out. The year is the one sent, never recalled (the coordinator). */
+  `Each record’s release year is given beside its text, or marked unknown. Where the phrase asks for a time (an era, a decade, a year, how recent or how old), each reason names the record’s release year exactly as given, and is then about ${REASON_TARGET_WITH_YEAR} characters so the year fits within ${REASON_MAX}. Never write a year that was not given. Where the phrase asks for no time, the year is yours to use or leave out.`,
   'For each record, list in "claims" the whole sentences, copied exactly from that record’s text, that the reason rests on: at least one, and never part of a sentence.',
 ].join('\n');
 
 /** The Responses API body: the phrase, every eligible record's text by id, the run's named records, the strict schema. */
 export function pickRequest(phrase: string, pool: readonly PickRecordText[], named: readonly string[], config: { model: string; effort: string }) {
-  const records = pool.map((r) => `[${r.id}] ${r.text}`).join('\n');
+  const records = pool.map((r) => `[${r.id}] (${r.year === null ? 'release year unknown' : `released ${r.year}`}) ${r.text}`).join('\n');
   const user = `What they want to play: ${phrase}\n\nAlready named in this run: ${named.length === 0 ? 'none' : named.join(', ')}\n\nThe records:\n${records}`;
   return {
     model: config.model,
@@ -102,7 +112,7 @@ export function pickRequest(phrase: string, pool: readonly PickRecordText[], nam
 export function reaskRequest(phrase: string, records: readonly PickRecordText[], config: { model: string; effort: string }) {
   const request = pickRequest(phrase, records, [], config);
   const user = request.input.find((m) => m.role === 'user');
-  if (user !== undefined) user.content = `Asked again: each record below was chosen for this phrase, and the reason given ran past ${REASON_MAX} characters or spoke about the text rather than the record. Give each its one-sentence reason again, about ${REASON_TARGET} characters and never more than ${REASON_MAX}, about the record, never about the text, with its claims as before, and leave none out.\n\n${user.content}`;
+  if (user !== undefined) user.content = `Asked again: each record below was chosen for this phrase, and the reason given ran past ${REASON_MAX} characters, spoke about the text rather than the record, or named a year that is not the record’s release year as given. Give each its one-sentence reason again, about ${REASON_TARGET} characters (${REASON_TARGET_WITH_YEAR} where it names the year) and never more than ${REASON_MAX}, about the record, never about the text, naming no year but the release year given, with its claims as before, and leave none out.\n\n${user.content}`;
   return request;
 }
 
@@ -123,11 +133,29 @@ export function mentionsMaterial(reason: string): string | null {
   const hit = MATERIAL_PATTERN.exec(reason);
   return hit === null ? null : hit[1].toLowerCase();
 }
-/** Why a reason is asked for again, or null when it stands: over the bound, or about the text (§P.2's path for both). */
-function reasonFault(reason: string): string | null {
+/*
+  The year a reason names is the year the pick was sent (the coordinator, 21 Nov): the year left the model's recall for
+  the record's row on Design's ground, and a reason naming another year puts the recall back on Adam's screen as a
+  specific number, worse than the hedge it replaces, since he cannot tell 1981 from 1983 without looking it up. A reason
+  naming a different year is not naming the record's release year, so this enforces her words. Four digits against a
+  stored integer: the one check with no ambiguity. With no year stored, any year named is the model's own, and fails.
+*/
+const YEAR_PATTERN = /\b(1[89]\d\d|20\d\d)\b/g;
+export function wrongYear(reason: string, year: number | null): number | null {
+  for (const m of reason.matchAll(YEAR_PATTERN)) {
+    const named = Number(m[1]);
+    if (year === null || named !== year) return named;
+  }
+  return null;
+}
+
+/** Why a reason is asked for again, or null when it stands: over the bound, about the text, or naming a year that is not the record's (§P.2's path for all three). */
+function reasonFault(reason: string, year: number | null): string | null {
   if (reasonLength(reason) > REASON_MAX) return `was over the bound of ${REASON_MAX}`;
   const phrase = mentionsMaterial(reason);
-  return phrase === null ? null : `spoke about its text ("${phrase}")`;
+  if (phrase !== null) return `spoke about its text ("${phrase}")`;
+  const named = wrongYear(reason, year);
+  return named === null ? null : `named ${named} where the record’s release year is ${year ?? 'unknown'}`;
 }
 
 const loose = (s: string) => s.toLowerCase().replace(/\s+/g, ' ').trim();
@@ -202,24 +230,26 @@ export async function askPick(phrase: string, pool: readonly PickRecordText[], n
   if (!sent.ok) return sent;
   const first = readPick(sent.answer, pool, named);
   if (!first.ok) return first;
-  const over = first.picks.filter((p) => reasonFault(p.reason) !== null);
+  const yearOf = new Map(pool.map((r) => [r.id, r.year]));
+  const faultOf = (p: Picked) => reasonFault(p.reason, yearOf.get(p.id) ?? null);
+  const over = first.picks.filter((p) => faultOf(p) !== null);
   if (over.length === 0) return first;
   /* Asked again, once, for those records alone (§P.2); what comes back without a fault replaces, the rest is left out. */
   const records = pool.filter((r) => over.some((p) => p.id === r.id));
   const again = await post(reaskRequest(phrase, records, config));
   const reread = again.ok ? readPick(again.answer, records, []) : again;
-  const within = new Map(reread.ok ? reread.picks.filter((p) => reasonFault(p.reason) === null).map((p) => [p.id, p] as const) : []);
+  const within = new Map(reread.ok ? reread.picks.filter((p) => faultOf(p) === null).map((p) => [p.id, p] as const) : []);
   const picks: Picked[] = [];
   const dropped = [...first.dropped];
   for (const p of first.picks) {
-    if (reasonFault(p.reason) === null) { picks.push(p); continue; }
+    if (faultOf(p) === null) { picks.push(p); continue; }
     const re = within.get(p.id);
     if (re !== undefined) { picks.push({ ...p, reason: re.reason, claims: re.claims }); continue; }
     /* The fault named is the second answer's where there was one, since that is the reason left out. */
     const second = reread.ok ? reread.picks.find((q) => q.id === p.id) : undefined;
-    const fault = second === undefined ? reasonFault(p.reason) : reasonFault(second.reason);
+    const fault = second === undefined ? faultOf(p) : faultOf(second);
     dropped.push({ id: p.id, why: `its reason ${fault} when asked again${reread.ok ? '' : ` (${reread.reason})`}` });
   }
-  if (first.verdict === 'answer' && picks.length === 0) return { ok: false, reason: `every reason was over the bound of ${REASON_MAX} or spoke about the text when asked again` };
+  if (first.verdict === 'answer' && picks.length === 0) return { ok: false, reason: `every reason was over the bound of ${REASON_MAX}, spoke about the text or named a year that is not the record’s release year when asked again` };
   return { ok: true, verdict: first.verdict, picks, dropped };
 }
