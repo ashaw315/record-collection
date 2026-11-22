@@ -20,9 +20,10 @@ import { execSync } from 'node:child_process';
 import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
-import { recordsToDraft, storeGeneratedMatchedText } from '@/lib/db/queries/matched-text';
+import { markMatchedTextReviewed, recordsToDraft, storeGeneratedMatchedText } from '@/lib/db/queries/matched-text';
 import { groundingFromPayload } from '@/lib/llm/about-grounding';
 import { buildMatchedTextPrompt, createMatchedTextClient, getMatchedTextClient, matchedTextTransport } from '@/lib/llm/matched-text-client';
+import { mechanicalChecks } from '@/lib/matched-text/checks';
 import { disagreements } from '@/lib/matched-text/consistency';
 import { chooseDraft, mergeDrafts, parseMarked, storeLine } from '@/lib/matched-text/marks';
 import { parseReview, rebuildDrafts, renderReview, type ReviewDraft } from '@/lib/matched-text/review';
@@ -59,7 +60,9 @@ if (mode === 'store') {
     const { prefix } = mark;
     const d = chooseDraft(drafts, mark);
     if (d === undefined || d.text === null) { console.log(`${prefix}: no finished draft to store`); continue; }
-    await storeGeneratedMatchedText(d.id, d.text, MODEL);
+    /* His mark on the review file is his reading (22 Nov): the store carries the draft's mechanical checks and sets reviewed_at. */
+    await storeGeneratedMatchedText(d.id, d.text, MODEL, { checks: mechanicalChecks(d) });
+    await markMatchedTextReviewed(d.id);
     stored += 1;
     if ((d.dropped ?? []).length > 0) short += 1;
     console.log(storeLine(d));

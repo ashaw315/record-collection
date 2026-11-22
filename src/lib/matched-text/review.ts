@@ -47,7 +47,7 @@ const UNIT = new RegExp(`\\b(\\d+|${WORD})[- ](minutes?|seconds?|hours?|bpm|beat
 const ENSEMBLE = new RegExp(`\\b(\\d+|${WORD})[- ](piece|man|men|members?|musicians?|players?|singers?|voices?|drummers?|guitarists?|percussionists?|horns|strings|strong)\\b`, 'gi');
 /* A quoted title is not a figure; a single-quoted one opens after a space, which an apostrophe inside a word never does. */
 const unquoted = (text: string) => text.replace(/"[^"]*"|“[^”]*”|(^|\s)'[^']*'(?=[\s,.;:]|$)/g, '$1""');
-function needsChecking(text: string, credited: number): boolean {
+export function needsChecking(text: string, credited: number): boolean {
   const t = unquoted(text);
   if (UNIT.test(t) || /\d/.test(t)) return true;
   for (const m of t.matchAll(ENSEMBLE)) {

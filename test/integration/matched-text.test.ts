@@ -222,3 +222,17 @@ describe('reviewed_at and checks', () => {
     expect(listed.find((r) => r.id === aboutOnly)).toMatchObject({ about: 'Unread ABOUT, no matched text.', aboutUnreviewed: true, matched: null, matchedUnreviewed: false, checks: null });
   });
 });
+
+describe('unreviewedTexts orders newest first', () => {
+  /** Fails against an alphabetical order: the backlog of 55 would stand between Adam and a new import (the coordinator, 22 Nov). */
+  it('puts the most recently drafted text first, by the later of its matched text’s time and the record’s update', async () => {
+    const older = await aRecord();
+    await storeGeneratedMatchedText(older, 'Older.', 'model-a');
+    await db.execute(sql`UPDATE record_matched_text SET generated_at = now() - interval '2 days' WHERE record_id = ${older}`);
+    const newer = await aRecord();
+    await storeGeneratedMatchedText(newer, 'Newer.', 'model-a');
+    const listed = await unreviewedTexts();
+    expect(listed.map((r) => r.id)).toEqual([newer, older]);
+    expect(listed[0].since).toBeTruthy();
+  });
+});

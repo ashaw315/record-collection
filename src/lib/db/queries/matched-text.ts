@@ -61,6 +61,8 @@ export type UnreviewedText = {
   matched: string | null;
   matchedUnreviewed: boolean;
   checks: MatchedTextChecks | null;
+  /** The later of the matched text's time and the record's last update: the list is newest first, so a backlog never stands between Adam and a new import (the coordinator, 22 Nov). */
+  since: string;
 };
 
 /**
@@ -75,12 +77,13 @@ export async function unreviewedTexts(): Promise<UnreviewedText[]> {
            (nullif(r.snippet, '') IS NOT NULL AND r.snippet_reviewed_at IS NULL) AS "aboutUnreviewed",
            coalesce(m.edited, m.generated) AS matched,
            (coalesce(m.edited, m.generated) IS NOT NULL AND m.reviewed_at IS NULL) AS "matchedUnreviewed",
-           m.checks
+           m.checks,
+           greatest(m.generated_at, m.edited_at, r.updated_at)::text AS since
     FROM records r JOIN artists a ON a.id = r.artist_id
     LEFT JOIN record_matched_text m ON m.record_id = r.id
     WHERE (nullif(r.snippet, '') IS NOT NULL AND r.snippet_reviewed_at IS NULL)
        OR (coalesce(m.edited, m.generated) IS NOT NULL AND m.reviewed_at IS NULL)
-    ORDER BY a.name, r.title`)).rows;
+    ORDER BY greatest(m.generated_at, m.edited_at, r.updated_at) DESC NULLS LAST, a.name, r.title`)).rows;
 }
 
 /** §5.2's six fields less `effective`, which the route derives. Every field null is a record with no row. */

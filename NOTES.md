@@ -60002,6 +60002,14 @@ that lets a row rewrite through, since Vercel's build applies a pushed migration
 columns alone, which Code may push, and the backfill is one UPDATE Adam runs after the deploy, with its evidence:
 
 ```sql
+-- 1. Before. The target is the ABOUT's mark: table records, column snippet_reviewed_at. Nothing here names
+--    record_matched_text, whose reviewed_at stays null for all 55 by the ruling (the coordinator, 22 Nov).
+SELECT count(*) FILTER (WHERE snippet_reviewed_at IS NOT NULL) AS abouts_marked_read,
+       count(*)                                               AS abouts_stored
+FROM records WHERE nullif(snippet, '') IS NOT NULL;
+-- expected: 0 | 55
+
+-- 2. The backfill: records.snippet_reviewed_at, for the 55 ABOUTs Adam's own eyes were on.
 UPDATE records SET snippet_reviewed_at = updated_at
 WHERE snippet IS NOT NULL AND btrim(snippet) <> ''
   AND (left(id::text, 8) IN ('01ad99d8','028865b5','05d37b5f','068da93c','0a286e77','0af4723d','1611cb00','1bcbce5d',
@@ -60012,8 +60020,27 @@ WHERE snippet IS NOT NULL AND btrim(snippet) <> ''
     OR id IN ('e1e349f6-880f-4984-a310-b33a03153c03','e315c6a7-ac45-4dd3-a5d5-d58eeaa608a2')  -- Q47, his constraints
     OR left(id::text, 8) IN ('2be8579e','729c1a01','cdcf94cb','9a514311','c8bc3a1d','e73e1de1','307c2754','b19cd530',
     'ce57a185','d975683b'));                                             -- generated at his press on the record page
--- UPDATE 55, or the state is not the one read. No statement for record_matched_text: none of the 55 is shown reviewed.
+-- expected: UPDATE 55. Any other count: the state is not the one read, stop.
+
+-- 3. After, both tables. The ABOUTs moved; the matched texts did not.
+SELECT (SELECT count(*) FROM records WHERE nullif(snippet, '') IS NOT NULL AND snippet_reviewed_at IS NOT NULL) AS abouts_marked_read,
+       (SELECT count(*) FROM record_matched_text WHERE reviewed_at IS NULL)                                     AS matched_texts_still_unread;
+-- expected: 55 | 55. The second 55 is the thing that must not have moved; if it reads 0, the wrong column was written.
 ```
+
+**The principle the backfill applies (the coordinator, 22 Nov), reusable:** the column records whether Adam's own eyes
+were on that text, not whether a review happened. The ten page ABOUTs have it: he pressed generate, saw each one on the
+page with edit and delete beside it, and left it standing. The 55 matched texts do not: his hands ran the store and the
+coordinator's eyes did the reading, so review happened and his reading did not, and the column tracks the second. The
+two outcomes come from one rule. Whether he would rather have the 55 marked is his to say; the recommendation to him is
+to leave them, newest first in the list so the backlog never obstructs a new import, with Q74's four sentences among
+them and this the path to fixing them.
+
+**Before a DELETE on production, the pre-read covers every table with a foreign key onto the target (the coordinator,
+22 Nov), not the tables we happen to be thinking about.** Five of the seven referencing tables were outside the first
+before-SELECT and nine of the eleven columns cascade; the walk-created tribute rows each hold a derived-acts link, and
+the empty Blood, Sweat row came from the same walk, so a derived link on it was the normal shape for its provenance, not
+a remote possibility. It happens to hold none. We would not have known.
 
 Until he runs it every stored text reads as unread, the honest state of a column nobody has filled.
 
@@ -60044,3 +60071,89 @@ the resolver's run is what stops the duplicate recurring. Once Adam merges and s
 collection artists hold ids and the condition is closed for every artist he owns; it reopens only for a new artist in
 the window between import and resolution. The surface is for a handful of duplicates ever in a known window, not a
 growing set.
+
+**Unit one's second half, built and withdrawn before it was committed (Adam's call through the coordinator, 22 Nov).**
+The review command and its file were built test-first and run read-only against production (55 records, 55 ABOUTs and
+55 matched texts unread, newest first), and the ship was inside its check when the call came: don't build the review
+command or the review file. The column is the receipt for a gate we removed, a list is worth building only if he would
+work through it, and neither he nor the coordinator believes he would; a gate replaced by a nag is worse than a gate
+removed and admitted. The ship was stopped before its commit; nothing of the command reached main. Removed from the
+tree: scripts/review-unread.mts, src/lib/matched-text/unread.ts and its test, the `review:unread` script, the
+three-form store flag with them. Kept, because unit two and the sheet need them: `mechanicalChecks`
+(src/lib/matched-text/checks.ts, test first, red on the missing module), which unit two writes into `checks` at draft
+time so §67's sheet can read it when it arrives, asserted never to carry a basis mark; the unread query's `since` and
+its newest-first order, data that sits there; the two drafting stores setting the mark on what he marked, since his mark
+on the review file is his reading. What survives for Adam is the cheap part: the columns, which shipped, and a line on
+the record page saying the text has not been read, which Design already has going into the attention surface beside the
+Discogs-id conflict. The column's setter is §67's sheet, which replaces the review command in the queue: nothing else
+can change reviewed_at or correct a matched-text sentence, and Q74 has waited on exactly that surface since the 19th.
+**The order from here:** (1) unit two, import fires drafting, ahead of everything; (2) §67's sheet, priced before it is
+started; (3) the review list only if he ever asks.
+
+**The gate on the first half (45058007782) failed one test, fixed forward with the SPEC amended.** The unit job's one
+failure: test/integration/schema-conformance.test.ts asserted record_matched_text has exactly the six columns §4.6
+names, and the table now has eight. The test encodes the SPEC, so the SPEC moves first, by the precedent of 17 Nov
+(d7497a97, §4.6 amended on the coordinator's and Adam's word): §4.6's table gains `reviewed_at` and `checks` with the
+22 Nov rulings beside them, §4.2's gains `snippet_reviewed_at`, and the test names eight. commit-checked did not see
+it because the conformance test is in the full suite, not the document suite. 38 passed across conformance, the
+matched-text queries and the checks; typecheck; lint; build.
+
+**The backfill, rewritten for a column whose only consumer is the record-page line.** With no list, a column reading
+unread on all 55 would put the line on every record and mean nothing, the failure Design named for marking the pick's
+answers. So the matched texts are marked read except the ones with known errors, and the ABOUTs likewise, and the line
+shows on exactly the records that need him and on new imports until he reads them. **The two sets are different sets
+in different texts, seven records, eight texts.** Q74, the matched text (verified wrong 19 Nov, waiting on the sheet):
+Smerz, Believer (de2ad140) s1; Luther Vandross, Never Too Much (d7047c62) s5; ABBA, ABBA (309a4726) s3; The Blues
+Project, The Best Of The Blues Project (c893e66b) s8. Q82, the ABOUT (the adversarial pass, 21 Nov, Adam's through the
+About cell): Astrid Sonne, Great Doubt (e80a0cf3) "companion disc of edits"; Bob Dylan, Nashville Skyline (946db39b)
+"romp in the middle"; Luther Vandross, Never Too Much (d7047c62) "then"; Peter, Paul & Mary, (Ten) Years Together
+(8120765c) "the sequence runs". Never Too Much is in both sets, one error in each of its texts.
+
+```sql
+-- 1. Before. Two tables, two columns. Nothing has been written to either yet.
+SELECT (SELECT count(*) FROM records WHERE nullif(snippet, '') IS NOT NULL AND snippet_reviewed_at IS NOT NULL) AS abouts_read,
+       (SELECT count(*) FROM record_matched_text WHERE reviewed_at IS NOT NULL)                                  AS matched_texts_read;
+-- expected: 0 | 0
+
+-- 2. The ABOUTs: table records, column snippet_reviewed_at. Every stored ABOUT except the four with a known error (Q82).
+UPDATE records SET snippet_reviewed_at = updated_at
+WHERE nullif(snippet, '') IS NOT NULL
+  AND left(id::text, 8) NOT IN ('e80a0cf3', '946db39b', 'd7047c62', '8120765c');
+-- expected: UPDATE 51
+
+-- 3. The matched texts: table record_matched_text, column reviewed_at. Every stored text except the four with a
+--    verified-wrong sentence (Q74).
+UPDATE record_matched_text SET reviewed_at = generated_at
+WHERE generated IS NOT NULL
+  AND left(record_id::text, 8) NOT IN ('de2ad140', 'd7047c62', '309a4726', 'c893e66b');
+-- expected: UPDATE 51
+
+-- 4. After. Two counts of what moved, and the eight texts deliberately left, by name.
+SELECT (SELECT count(*) FROM records WHERE nullif(snippet, '') IS NOT NULL AND snippet_reviewed_at IS NOT NULL) AS abouts_read,
+       (SELECT count(*) FROM record_matched_text WHERE reviewed_at IS NOT NULL)                                  AS matched_texts_read;
+-- expected: 51 | 51
+SELECT a.name, r.title,
+       (nullif(r.snippet, '') IS NOT NULL AND r.snippet_reviewed_at IS NULL) AS about_unread,
+       (m.generated IS NOT NULL AND m.reviewed_at IS NULL)                     AS matched_text_unread
+FROM records r JOIN artists a ON a.id = r.artist_id LEFT JOIN record_matched_text m ON m.record_id = r.id
+WHERE (nullif(r.snippet, '') IS NOT NULL AND r.snippet_reviewed_at IS NULL) OR (m.generated IS NOT NULL AND m.reviewed_at IS NULL)
+ORDER BY a.name;
+-- expected: seven rows. ABBA (matched); Astrid Sonne (about); Bob Dylan (about); Luther Vandross (about AND matched);
+--           Peter, Paul & Mary (about); Smerz (2) (matched); The Blues Project (matched). Anything else: stop.
+```
+
+Any count other than 51 on step 2 or 3 means the state is not the one read, and the word is ROLLBACK (run the two
+UPDATEs inside BEGIN … COMMIT if he wants that word available). The earlier block with the evidence per ABOUT stands as
+the record of why the 55 ABOUTs are his; this one supersedes it as the statement to run.
+
+**The merge is done (Adam, 15:29): UPDATE 2, UPDATE 1, UPDATE 1, DELETE 1, COMMIT, the seven-table before-SELECT
+matching every count. 48 of 49.** The tail: formed year and origin stay null, and the resolver's script skips a row that
+holds an MBID ('already'), so nothing fetches them by itself. The one entry point for a single artist is the walk:
+Manage → Artists → the Blood, Sweat And Tears row → LINEUP ("Fetch lineup for Blood, Sweat And Tears"), which POSTs
+to /api/artists/{id}/lineup with the stored MBID and runs `walkLineup`: the band's formation and home filled where null
+(walk-lineup.ts:109, Q37's rule) and the memberships saved idempotently, so the two moved rows are kept, not doubled.
+One request a second to MusicBrainz under a 60-second function: a lineup past about fifty requests dies with the
+response, the rows already written stay, and a second press resumes. No script walks one artist, and the
+whole-collection resolver run would skip this row. Worth a row: a merge produces exactly this state, an id with no
+facts behind it, and the skip rule makes it permanent; the merge is not finished until the facts land, and the surface
+should know that (Q78).

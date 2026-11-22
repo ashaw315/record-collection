@@ -17,7 +17,7 @@
  * each note marked with Discogs' have, want and rating as the obscurity proxy.
  *
  * `--store` writes the drafts the file holds for the listed ids through the same path the page
- * uses, and no other.
+ * uses, and no other, and marks each read, since his mark on the review file is his reading (22 Nov).
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
@@ -25,7 +25,7 @@ import { join } from 'node:path';
 import { sql } from 'drizzle-orm';
 import { getDb } from '@/db/client';
 import { artistGroundingFacts } from '@/lib/db/queries/artists';
-import { findRecordSubject, storeGeneratedSnippet } from '@/lib/db/queries/snippet';
+import { findRecordSubject, markSnippetReviewed, storeGeneratedSnippet } from '@/lib/db/queries/snippet';
 import { getDiscogsClient } from '@/lib/discogs/client';
 import { checkNote, type Conflict } from '@/lib/llm/about-check';
 import { discographyOf, groundingFromPayload, type DiscographyEntry, type ReleaseFacts } from '@/lib/llm/about-grounding';
@@ -122,6 +122,8 @@ if (mode === 'store') {
     const d = drafts.find((x) => x.id.startsWith(prefix));
     if (d === undefined || d.note === null) { console.log(`${prefix}: no finished draft to store`); continue; }
     await storeGeneratedSnippet(d.id, d.note);
+    /* His mark is his reading (22 Nov): a stored draft he marked carries snippet_reviewed_at. */
+    await markSnippetReviewed(d.id);
     stored += 1;
     console.log(`${prefix}: stored (${d.artist} — ${d.title})`);
   }
