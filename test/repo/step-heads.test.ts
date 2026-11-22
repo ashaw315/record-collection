@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { absent, check, GONE, headsNamed, RECORD, staleGone } from '../../scripts/step-heads.mjs';
+import { absent, check, GONE, headsNamed, RECORD, recordable, staleGone } from '../../scripts/step-heads.mjs';
 
 /**
  * **A step a change file names is a step the handoff holds (the coordinator, 13 Nov).** Six of Design's unnumbered
@@ -30,6 +30,23 @@ describe('headsNamed reads the steps a change file names', () => {
       { head: "§P.4, §P.5 and §P.6: what the ask field's captures found", how: 'anchors' },
       { head: '§65: the tracklist and the credits', how: 'anchors' },
     ]);
+  });
+});
+
+/*
+ * A held file's anchor is not yet a step the handoff must hold (21 Nov). "Artist name without suffix" arrived anchored on
+ * a step and a card the tree does not have, which is why it was held with its reason; the record read its anchor as
+ * required all the same, and the intake that held it failed on the head it could not have. Its heads are recorded when
+ * it is applied. Fails against a fromRefs that reads every landed line alike.
+ */
+describe('recordable leaves a held file out of the record', () => {
+  it('keeps applied and partly applied files, and drops one held with nothing applied', () => {
+    const landed = [
+      { file: 'Applied', ref: 'refs/drops/1', applied: true },
+      { file: 'Partial', ref: 'refs/drops/1', applied: true, changes: [{ n: 1, applied: true }, { n: 2, applied: false }] },
+      { file: 'Held', ref: 'refs/drops/1', applied: false, why: 'its card is not in the tree' },
+    ];
+    expect(recordable(landed).map((e: { file: string }) => e.file)).toEqual(['Applied', 'Partial']);
   });
 });
 

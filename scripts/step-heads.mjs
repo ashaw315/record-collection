@@ -64,9 +64,16 @@ export function staleGone(handoff, gone) {
 const changeFile = (git, ref, name) => git('ls-tree', '--name-only', ref, 'docs/design/').split('\n')
   .find((f) => f === `docs/design/${name}` || f === `docs/design/${name}.md` || f.startsWith(`docs/design/${name} - for Code to apply`));
 
+/**
+ * The landed lines whose heads the handoff must hold: every file applied in whole or in part. A file held with nothing
+ * applied (21 Nov, "Artist name without suffix": anchored on a step and a card the tree did not have, which is why it was
+ * held) names a step the handoff cannot yet hold; its heads are recorded when it is applied.
+ */
+export const recordable = (landed) => landed.filter((e) => e.applied !== false);
+
 /** The record from the drop refs: each landed change file, read at its arrival ref, with the heads it names. */
 export function fromRefs(git) {
-  const landed = readFileSync(LANDED, 'utf8').trim().split('\n').map((l) => JSON.parse(l)).filter((x) => x.file);
+  const landed = recordable(readFileSync(LANDED, 'utf8').trim().split('\n').map((l) => JSON.parse(l)).filter((x) => x.file));
   const record = [];
   const unread = [];
   for (const e of landed) {

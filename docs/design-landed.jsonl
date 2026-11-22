@@ -127,3 +127,5 @@
 {"file":"Bound figure from what fits","ref":"refs/drops/2026-11-19-05","captured":"2026-11-19T21:08:08-05:00","applied":true}
 {"file":"Ask in flight and reason subject","ref":"refs/drops/2026-11-21-01","captured":"2026-11-21T17:42:43-05:00","applied":true}
 {"file":"Release year to the pick","ref":"refs/drops/2026-11-21-01","captured":"2026-11-21T17:42:43-05:00","applied":true}
+{"file": "Year named for an era", "ref": "refs/drops/2026-11-21-02", "captured": "2026-11-21T19:56:48-05:00", "applied": true}
+{"file": "Artist name without suffix", "ref": "refs/drops/2026-11-21-02", "captured": "2026-11-21T19:56:48-05:00", "applied": false, "why": "its target is not in the tree: the file anchors on the Table and Grid card at b65cb51b (157,817 bytes) and says the card is already in the tree, but the card on disk is 6819d53f at 156,602 bytes and carries no suffix sentence; and its anchor step is headed '\u00a7T.4: the name sort key', not 'one key for every name order'. Held until the card lands (CLAUDE.md \u00a74, build to targets)."}
