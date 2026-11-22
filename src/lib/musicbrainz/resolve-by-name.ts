@@ -77,3 +77,17 @@ export async function resolveArtistByName(artistId: string, options: { dryRun?: 
   const walk = await walkLineup(chosen.mbid);
   return { outcome: 'resolved', path: chosen.path, mbid: chosen.mbid, walk };
 }
+
+/**
+ * A refusal on the summary line, with its reason inline (the coordinator, 22 Nov). On 20 Nov the resolver answered
+ * "held-by-other" and named the holder, and the summary reached the coordinator as "2 refused: Blood, Sweat And Tears;
+ * Jeff Beck": the reason was the whole answer and the line dropped it, which cost a day. The holder's id is cut to its
+ * first eight characters, enough to find the row and short enough for a line.
+ */
+export function refusalLine(name: string, outcome: ResolveByNameOutcome | null): string {
+  if (outcome === null) return `${name} (no such artist)`;
+  if (outcome.outcome !== 'refused') return `${name} (not refused: ${outcome.outcome})`;
+  if (outcome.reason === 'held-by-other') return `${name} (held by other: ${outcome.holderName}, ${outcome.holderId.slice(0, 8)})`;
+  if (outcome.reason === 'shared-name') return `${name} (shared name: ${outcome.sameName} of ${outcome.hits} hits carry it)`;
+  return `${name} (no hit: ${outcome.sameName} of ${outcome.hits} hits carry the name)`;
+}

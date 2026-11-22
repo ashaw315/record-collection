@@ -3,7 +3,7 @@ import { sql } from 'drizzle-orm';
 import { getTestDb, truncateAll, closeTestDb } from '../helpers/db';
 import { artists } from '@/db/schema';
 import * as clientModule from '@/lib/musicbrainz/client';
-import { resolveArtistByName } from '@/lib/musicbrainz/resolve-by-name';
+import { refusalLine, resolveArtistByName } from '@/lib/musicbrainz/resolve-by-name';
 
 /**
  * **Q37's second half, part two (the coordinator's yes, 20 Nov): an artist with no MBID is resolved by name under the
@@ -151,5 +151,28 @@ describe('the exact path first: the Discogs artist id, looked up as a MusicBrain
     expect(await resolveArtistByName(darkside.id, { dryRun: true })).toEqual({ outcome: 'would-resolve', path: 'link', mbid: 'mb-darkside-nyc', name: 'DARKSIDE' });
     expect(await row(darkside.id)).toEqual({ musicbrainz_id: null, formed_year: null, origin_country: null });
     expect(mb.get, 'the lookup alone, no walk').toHaveBeenCalledTimes(1);
+  });
+});
+
+/**
+ * **A refusal count carries its reasons inline (the coordinator, 22 Nov).** On 20 Nov the resolver said "held by other"
+ * and named the holder, and the summary line reached the coordinator as "2 refused: Blood, Sweat And Tears; Jeff Beck":
+ * the reason was the whole answer and the line dropped it, which cost a day. Fails against a line that names the artist
+ * alone, and against one that gives the holder without its id.
+ */
+describe('refusalLine says why each artist was refused, on the summary line', () => {
+  it('names the holder and its id for an MBID another row holds', () => {
+    expect(refusalLine('Blood, Sweat And Tears', { outcome: 'refused', reason: 'held-by-other', holderId: '83456d38-8174-4f7f-a879-f1d45dcd85bc', holderName: 'Blood, Sweat & Tears' }))
+      .toBe('Blood, Sweat And Tears (held by other: Blood, Sweat & Tears, 83456d38)');
+  });
+
+  it('gives the hit counts for a shared name and for no hit', () => {
+    expect(refusalLine('Jeff Beck', { outcome: 'refused', reason: 'shared-name', sameName: 2, hits: 3 })).toBe('Jeff Beck (shared name: 2 of 3 hits carry it)');
+    expect(refusalLine('Carpenters', { outcome: 'refused', reason: 'no-hit', sameName: 0, hits: 1 })).toBe('Carpenters (no hit: 0 of 1 hits carry the name)');
+  });
+
+  it('says so for an artist the resolver did not find, and for an outcome that is not a refusal', () => {
+    expect(refusalLine('Nobody', null)).toBe('Nobody (no such artist)');
+    expect(refusalLine('Dire Straits', { outcome: 'already', mbid: 'mb-dire' })).toBe('Dire Straits (not refused: already)');
   });
 });

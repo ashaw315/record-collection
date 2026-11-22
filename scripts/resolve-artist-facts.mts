@@ -11,7 +11,7 @@
 */
 import { sql } from 'drizzle-orm';
 import { getDb } from '@/db/client';
-import { resolveArtistByName } from '@/lib/musicbrainz/resolve-by-name';
+import { refusalLine, resolveArtistByName } from '@/lib/musicbrainz/resolve-by-name';
 
 const apply = process.argv.includes('--apply');
 const db = getDb();
@@ -26,7 +26,8 @@ for (const r of rows) {
     byPath[outcome.path] += 1;
     console.log(`${r.name}: ${outcome.outcome === 'resolved' ? 'resolved' : 'would resolve'} by ${outcome.path} to ${outcome.mbid}${outcome.outcome === 'would-resolve' ? ` ${outcome.name}` : `; ${outcome.walk.text}`}`);
   } else {
-    refused.push(r.name);
+    /* The reason rides on the summary line (22 Nov): a count that drops it sends a reader back to the per-artist lines, or costs a day. */
+    refused.push(refusalLine(r.name, outcome));
     console.log(`${r.name}: REFUSED ${JSON.stringify(outcome)}`);
   }
 }
