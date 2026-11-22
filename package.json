@@ -29,6 +29,7 @@
     "discogs:tracklist-counts": "node --env-file=.env.local --conditions=react-server --import tsx scripts/report-tracklist-counts.mts",
     "abouts:draft": "node --env-file=.env.local --conditions=react-server --import tsx scripts/write-abouts.mts",
     "abouts:embed": "node --env-file=.env.local --conditions=react-server --import tsx scripts/embed-abouts.mts",
+    "review:unread": "node --env-file=.env.local --conditions=react-server --import tsx scripts/review-unread.mts",
     "matched:draft": "node --env-file=.env.local --conditions=react-server --import tsx scripts/write-matched-text.mts",
     "matched:audit": "node --env-file=.env.local --conditions=react-server --import tsx scripts/audit-matched-text.mts",
     "abouts:audit": "node --env-file=.env.local --conditions=react-server --import tsx scripts/audit-abouts.mts",

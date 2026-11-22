@@ -60098,53 +60098,63 @@ names, and the table now has eight. The test encodes the SPEC, so the SPEC moves
 it because the conformance test is in the full suite, not the document suite. 38 passed across conformance, the
 matched-text queries and the checks; typecheck; lint; build.
 
-**The backfill, rewritten for a column whose only consumer is the record-page line.** With no list, a column reading
-unread on all 55 would put the line on every record and mean nothing, the failure Design named for marking the pick's
-answers. So the matched texts are marked read except the ones with known errors, and the ABOUTs likewise, and the line
-shows on exactly the records that need him and on new imports until he reads them. **The two sets are different sets
-in different texts, seven records, eight texts.** Q74, the matched text (verified wrong 19 Nov, waiting on the sheet):
-Smerz, Believer (de2ad140) s1; Luther Vandross, Never Too Much (d7047c62) s5; ABBA, ABBA (309a4726) s3; The Blues
-Project, The Best Of The Blues Project (c893e66b) s8. Q82, the ABOUT (the adversarial pass, 21 Nov, Adam's through the
-About cell): Astrid Sonne, Great Doubt (e80a0cf3) "companion disc of edits"; Bob Dylan, Nashville Skyline (946db39b)
-"romp in the middle"; Luther Vandross, Never Too Much (d7047c62) "then"; Peter, Paul & Mary, (Ten) Years Together
-(8120765c) "the sequence runs". Never Too Much is in both sets, one error in each of its texts.
+**The backfill, ruled twice and settled (the coordinator, 22 Nov, evening): the ABOUT half only.** At 15:39 the ruling
+was to mark the matched texts read except the four with known errors, so the record-page line, the column's only
+consumer once the list was cut, would not fire on all 55; the coordinator reversed it the same evening, with Design: a
+true premise and the wrong conclusion, since it would write "Adam read this" into 51 rows where he did not, to make a
+display behave, corrupting the data to fix a view. The principle stands as written this morning: the column records
+whether his eyes were on that text, one record of review does not count as two, and the coordinator's reading of the
+55 is not his. So no backfill on matched text, all 55 unread, which is true; the ABOUTs unchanged, 43 marked, 2
+constrained, 10 seen one by one on the page, all 55 read. The display problem is solved in the display: the line can
+fire on a narrower condition, newly imported and unread, or unread with a known-wrong sentence against it; Design's
+line, and she scopes it. The statement Adam runs, the ABOUT half, with the second count being the thing that must not
+have moved:
 
 ```sql
--- 1. Before. Two tables, two columns. Nothing has been written to either yet.
-SELECT (SELECT count(*) FROM records WHERE nullif(snippet, '') IS NOT NULL AND snippet_reviewed_at IS NOT NULL) AS abouts_read,
-       (SELECT count(*) FROM record_matched_text WHERE reviewed_at IS NOT NULL)                                  AS matched_texts_read;
--- expected: 0 | 0
+-- 1. Before. The target is the ABOUT's mark: table records, column snippet_reviewed_at. Nothing here names
+--    record_matched_text, whose reviewed_at stays null for all 55 by the ruling.
+SELECT count(*) FILTER (WHERE snippet_reviewed_at IS NOT NULL) AS abouts_marked_read,
+       count(*)                                               AS abouts_stored
+FROM records WHERE nullif(snippet, '') IS NOT NULL;
+-- expected: 0 | 55
 
--- 2. The ABOUTs: table records, column snippet_reviewed_at. Every stored ABOUT except the four with a known error (Q82).
+-- 2. The backfill: records.snippet_reviewed_at, for the 55 ABOUTs Adam's own eyes were on.
 UPDATE records SET snippet_reviewed_at = updated_at
-WHERE nullif(snippet, '') IS NOT NULL
-  AND left(id::text, 8) NOT IN ('e80a0cf3', '946db39b', 'd7047c62', '8120765c');
--- expected: UPDATE 51
+WHERE snippet IS NOT NULL AND btrim(snippet) <> ''
+  AND (left(id::text, 8) IN ('01ad99d8','028865b5','05d37b5f','068da93c','0a286e77','0af4723d','1611cb00','1bcbce5d',
+    '1d4a4107','22d34772','309a4726','3505ac9c','3fc9c4fb','47b69af6','48461309','493d960e','52435f53','63d720c0',
+    '73ea635d','797a1ade','7a333685','7b9a5ee9','7cfdc4cb','7d953882','8120765c','946db39b','a950eb99','b1ac00c6',
+    'b38d7c37','b9bd16aa','bac64213','c61c5919','c893e66b','c8b0af3d','d7047c62','d962c494','dbcf97f0','de2ad140',
+    'e2e5edc0','e80a0cf3','e931d933','ed971f49','fadd5c0e')                                  -- his marks, 6 Nov
+    OR id IN ('e1e349f6-880f-4984-a310-b33a03153c03','e315c6a7-ac45-4dd3-a5d5-d58eeaa608a2')  -- Q47, his constraints
+    OR left(id::text, 8) IN ('2be8579e','729c1a01','cdcf94cb','9a514311','c8bc3a1d','e73e1de1','307c2754','b19cd530',
+    'ce57a185','d975683b'));                                             -- generated at his press on the record page
+-- expected: UPDATE 55. Any other count: the state is not the one read, stop.
 
--- 3. The matched texts: table record_matched_text, column reviewed_at. Every stored text except the four with a
---    verified-wrong sentence (Q74).
-UPDATE record_matched_text SET reviewed_at = generated_at
-WHERE generated IS NOT NULL
-  AND left(record_id::text, 8) NOT IN ('de2ad140', 'd7047c62', '309a4726', 'c893e66b');
--- expected: UPDATE 51
-
--- 4. After. Two counts of what moved, and the eight texts deliberately left, by name.
-SELECT (SELECT count(*) FROM records WHERE nullif(snippet, '') IS NOT NULL AND snippet_reviewed_at IS NOT NULL) AS abouts_read,
-       (SELECT count(*) FROM record_matched_text WHERE reviewed_at IS NOT NULL)                                  AS matched_texts_read;
--- expected: 51 | 51
-SELECT a.name, r.title,
-       (nullif(r.snippet, '') IS NOT NULL AND r.snippet_reviewed_at IS NULL) AS about_unread,
-       (m.generated IS NOT NULL AND m.reviewed_at IS NULL)                     AS matched_text_unread
-FROM records r JOIN artists a ON a.id = r.artist_id LEFT JOIN record_matched_text m ON m.record_id = r.id
-WHERE (nullif(r.snippet, '') IS NOT NULL AND r.snippet_reviewed_at IS NULL) OR (m.generated IS NOT NULL AND m.reviewed_at IS NULL)
-ORDER BY a.name;
--- expected: seven rows. ABBA (matched); Astrid Sonne (about); Bob Dylan (about); Luther Vandross (about AND matched);
---           Peter, Paul & Mary (about); Smerz (2) (matched); The Blues Project (matched). Anything else: stop.
+-- 3. After, both tables. The ABOUTs moved; the matched texts did not.
+SELECT (SELECT count(*) FROM records WHERE nullif(snippet, '') IS NOT NULL AND snippet_reviewed_at IS NOT NULL) AS abouts_marked_read,
+       (SELECT count(*) FROM record_matched_text WHERE reviewed_at IS NULL)                                     AS matched_texts_still_unread;
+-- expected: 55 | 55. The second 55 is the thing that must not have moved; if it reads 0, the wrong column was written.
 ```
 
-Any count other than 51 on step 2 or 3 means the state is not the one read, and the word is ROLLBACK (run the two
-UPDATEs inside BEGIN … COMMIT if he wants that word available). The earlier block with the evidence per ABOUT stands as
-the record of why the 55 ABOUTs are his; this one supersedes it as the statement to run.
+**The four known-wrong records, named for Design's line rather than for the backfill: two sets, in different texts,
+seven records, eight texts.** Q74, the matched text (verified wrong 19 Nov, waiting on §67's sheet): Smerz, Believer
+(de2ad140) s1; Luther Vandross, Never Too Much (d7047c62) s5; ABBA, ABBA (309a4726) s3; The Blues Project, The Best Of
+The Blues Project (c893e66b) s8. Q82, the ABOUT (the adversarial pass, 21 Nov, Adam's through the About cell): Astrid
+Sonne, Great Doubt (e80a0cf3) "companion disc of edits"; Bob Dylan, Nashville Skyline (946db39b) "romp in the middle";
+Luther Vandross, Never Too Much (d7047c62) "then"; Peter, Paul & Mary, (Ten) Years Together (8120765c) "the sequence
+runs". Never Too Much is in both sets, one error in each of its texts.
+
+**The review command, restored as a command and nothing more (the coordinator's amendment, 22 Nov, evening):** it was
+written and green and had run against production before the 15:39 cut, so it stays, scripts/review-unread.mts with
+src/lib/matched-text/unread.ts and its test, the files as they ran (the tree had lost them to the cut, and they were put
+back from the written version, 4 passed again, typecheck, lint). Not a surface, not a workflow put in front of Adam, and
+nothing grows it; §67's sheet is the column's setter and the correction surface, after unit two.
+
+**Four mechanisms caught something today before a person did, and the pattern is the point:** the twins test (the §T.4
+step grown after its Done line), the step-heads guard (a head the tree never had), the additive-migration guard (the
+backfill inside 0037), and the conformance test's column count (the schema changed by ruling, the SPEC not yet). Each
+was written after a person missed the same shape once. Keep writing them.
 
 **The merge is done (Adam, 15:29): UPDATE 2, UPDATE 1, UPDATE 1, DELETE 1, COMMIT, the seven-table before-SELECT
 matching every count. 48 of 49.** The tail: formed year and origin stay null, and the resolver's script skips a row that
