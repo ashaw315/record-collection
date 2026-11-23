@@ -120,6 +120,14 @@ describe('the script', () => {
       const committed = execFileSync('git', ['show', 'HEAD:docs/design/DESIGN-RULES.md'], { encoding: 'utf8' });
       expect(written.endsWith(committed)).toBe(true);
       expect(written.split('\n')[0]).toMatch(/DESIGN-RULES\.md as committed at/);
+      /*
+        The note says what it adds (the coordinator, 22 Nov): Design cited "No two change files share a name" at line 26 of
+        the 07d7dfec export and the tree held it at 24, the note and its blank line being the two. A cited number is
+        converted, not disputed. Fails against a note that does not name the offset, and against an offset that is not two.
+      */
+      expect(written.split('\n')[0]).toMatch(/This note and the blank line after it are the export's own two lines, so a line number read here is the file's plus two\./);
+      const bullet = (text: string) => text.split('\n').findIndex((l) => l.startsWith('- No two change files share a name')) + 1;
+      expect(bullet(written)).toBe(bullet(committed) + 2);
       expect(stdout).toContain(rules ?? 'DESIGN-RULES');
     } finally {
       rmSync(out, { recursive: true, force: true });

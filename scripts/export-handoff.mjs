@@ -85,7 +85,7 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
   */
   const rules = git('show', `HEAD:${RULES}`);
   const rulesPath = join(outDir, `DESIGN-RULES — export for Design, ${date} at ${sha}.md`);
-  writeFileSync(rulesPath, `Export note, not part of the file: this is the repository's DESIGN-RULES.md as committed at ${sha} on ${date}. It is read-only for Design: changes come back as change files anchored on this text, and this file never comes back whole.\n\n${rules}`);
+  writeFileSync(rulesPath, `Export note, not part of the file: this is the repository's DESIGN-RULES.md as committed at ${sha} on ${date}. It is read-only for Design: changes come back as change files anchored on this text, and this file never comes back whole. This note and the blank line after it are the export's own two lines, so a line number read here is the file's plus two.\n\n${rules}`);
   process.stdout.write(`${rulesPath}\n`);
   /*
     WITHDRAWALS beside them (the coordinator, 30 Oct): the index checks that
@@ -93,14 +93,14 @@ if (import.meta.url === pathToFileURL(process.argv[1] ?? '').href) {
     written. The derived comment at its foot comes with it, as HEAD holds it.
   */
   const withdrawalsPath = join(outDir, `WITHDRAWALS — export for Design, ${date} at ${sha}.md`);
-  writeFileSync(withdrawalsPath, `Export note, not part of the file: this is the repository's WITHDRAWALS.md as committed at ${sha} on ${date}. It is read-only for Design: changes come back as change files, and the machine-readable comment at its foot is derived by Code's script.\n\n${git('show', `HEAD:${WITHDRAWALS}`)}`);
+  writeFileSync(withdrawalsPath, `Export note, not part of the file: this is the repository's WITHDRAWALS.md as committed at ${sha} on ${date}. It is read-only for Design: changes come back as change files, and the machine-readable comment at its foot is derived by Code's script. This note and the blank line after it are the export's own two lines, so a line number read here is the file's plus two.\n\n${git('show', `HEAD:${WITHDRAWALS}`)}`);
   process.stdout.write(`${withdrawalsPath}\n`);
   /*
     ASSERTIONS-spec beside them (the coordinator, 2 Nov): Design authors its
     assertion text and could not read what landed. Design's copy is this one.
   */
   const assertionsPath = join(outDir, `ASSERTIONS-spec — export for Design, ${date} at ${sha}.md`);
-  writeFileSync(assertionsPath, `Export note, not part of the file: this is the repository's ASSERTIONS-spec.md as committed at ${sha} on ${date}. It is read-only for Design: changes come back as change files anchored on this text.\n\n${git('show', 'HEAD:scripts/ASSERTIONS-spec.md')}`);
+  writeFileSync(assertionsPath, `Export note, not part of the file: this is the repository's ASSERTIONS-spec.md as committed at ${sha} on ${date}. It is read-only for Design: changes come back as change files anchored on this text. This note and the blank line after it are the export's own two lines, so a line number read here is the file's plus two.\n\n${git('show', 'HEAD:scripts/ASSERTIONS-spec.md')}`);
   process.stdout.write(`${assertionsPath}\n`);
   /*
     The change files Code has applied beside them (Design's ask, the coordinator, 6 Nov): each by name with the
