@@ -622,5 +622,15 @@
         "how": "anchors"
       }
     ]
+  },
+  {
+    "file": "Import described line",
+    "ref": "refs/drops/2026-11-23-01",
+    "heads": [
+      {
+        "head": "§T.6: what the import described",
+        "how": "inserts"
+      }
+    ]
   }
 ]

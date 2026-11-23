@@ -134,7 +134,7 @@ The wall at rest is line, ink and paper; colour arrives with the pull. Everythin
 | §T.3 | The heading, the count, search and filters | The count and heading, search, the filters as a disclosure in the band, and in the sidebar the options opening in place and pushing the page down, with its return. And the reason line on a record that matched by tracklist or credits. |
 | §T.4 | The table | The table's rows, alignment, the Record column's slack, the Genre column and its separator, sort and the Sort control kept at every width, the sticky header row, and hover. And the key a name is ordered by, its leading English article dropped. And an artist's name drawn without Discogs' suffix. |
 | §T.5 | The grid | The grid’s covers, captions, spacing, column counts and Sort control. |
-| §T.6 | Ornament and colour, for every screen | Ornament, oxblood, the grey, corners and headings across every screen; the content measure; pending answers and reserved slots; the hit-area floor by pointer and how sets meet it; one focus ring for the app and Tab order; and each screen's pass: the want list, stats, manage with its Discogs import, the record form, look up, login, the dialog, the error and not-found pages. |
+| §T.6 | Ornament and colour, for every screen | Ornament, oxblood, the grey, corners and headings across every screen; the content measure; pending answers and reserved slots; the hit-area floor by pointer and how sets meet it; one focus ring for the app and Tab order; and each screen's pass: the want list, stats, manage with its Discogs import, the record form, look up, login, the dialog, the error and not-found pages. And the import report's line on what a press described. |
 | §P.1 | Where the feature is ruled, and where it is presented | Why the mood pick has its own target, why a view that can pull answers with the pull and every other view in place, and why the split is the pull and not the shelf, and what the target owns and points at. |
 | §P.2 | What an ask does | The toggles and ASK, the lean and why it only never empties, the run's named records and what counts as served, the pool under a filter and why paging does not narrow it, why it is not a filter, why a zoom is not a navigation, an answer ending when its host changes, and SURPRISE ME. And the ask field's phrase or title, the pool ranked by ABOUT, an answer being what is shown (one as a pull, five as cells), and the re-ask leaving out the last answer and the far answer's pair (the moods, the lean, one last-served and the loose fit as open withdrawn). And the model pick's reason, its nothing-fits answer and its run's end. And the text a record is matched by, by mode, and the title ask while the model picks. And how an answer's reason reaches the correcting sheet. And a reason speaking of the record, not its text. And the release year going to the pick with the text. And a reason naming the year where the phrase asks for a time. |
 | §P.3 | A second ask on the shelf | The first answer as §W's pull, the re-roll as a put back then a pull and the §W.8 sentence that gives its reason, the order between them left to Adam's use, an ask mid-motion, the record already out, and the unexplained put back. And an ask in flight. |
@@ -1038,6 +1038,14 @@ Its rows are in the governs table above, one per section; this section does not 
   - **Assert,** on one of the four, that saving one corrected sentence writes the whole text with only that sentence changed, and that clearing returns the generated text.
   > The sheet sets the text out a sentence at a time, and a press on a sentence opens that sentence alone for editing while the others stay as they read.
 
+- **Unnumbered, for Code to number — §T.6: what the import described.**
+  - **Below the report's four lines,** after a hairline, draw one line in their type. It counts the records this press drafted and stored matched text for, and the records in the collection still without matched text.
+  - **When none wait,** draw the all-caught-up wording.
+  - **Persist with the report,** as §T.6 rules, and replace it on the next run.
+  - **Assert:** an import of 14 with a cap of 10 draws "Described 10 of 14" with 4 waiting. A second press, which imports nothing, draws "Described 4" and all caught up. The four lines still sum to the Discogs count on both presses.
+  - **Capture** at 1280 and 390 after a real import, and report the line's wrap at 390.
+  > Beneath the report’s four lines, apart from them, one line says how many records this press described and how many in the collection still wait to be described, and where any wait it says that importing again describes them.
+
 No step: §G.7. It rules nothing. Hover and focus wait on Code's second pass, the breakpoint is settled and recorded in §G.8, and the eyebrow repetition is an observation, not a ruling.
 
 No step: §P.1. It rules where the feature is ruled and which view presents an answer; what that means for the build is in the steps for §P.3 and §P.4.
@@ -1114,6 +1122,7 @@ The provisionals in force, for the note in Maintaining this file that a provisio
 - **§P.2 · the reason as a press.** How the reason reads as something to press, in each host. Returns with the sheet step's capture. Open.
 - **§P.2 · the reason's bound.** The figure, set with the placement and §P.4's "wholly in view" as one decision after Adam's press. Returns with the model-pick step's report. Open. Adam judges it again at the model's own lengths (117 to 210, median 160, 64 reasons), not at 3a's stubbed 91 to 108. Closed 21 Nov by Adam's use on the phone: 160 by prompt, 188 by schema.
 - **§P.3 · the ask in flight.** The indicator's look, words and motion, for Adam on his phone. Open.
+- **§T.6 · the import's described line.** Its wording and wrap at 390. Returns from the step's capture. Open.
 
 ## Findings for screens without a pass
 

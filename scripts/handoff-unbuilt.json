@@ -68,5 +68,10 @@
     "head": "§67 and §P.2: the correcting sheet",
     "status": "unbuilt",
     "evidence": "Ruled 19 Nov (\"Correcting sheet\", the cards at 3a888958 and 17868a2f). The resource it builds on exists (src/app/api/records/[id]/matched-text/route.ts, 18 Nov) and nothing opens it from an answer: the ask's client type drops the claims the route returns (src/app/PickControl.tsx:39) and the reason is drawn, not pressed; checked 19 Nov."
+  },
+  {
+    "head": "§T.6: what the import described",
+    "status": "unbuilt",
+    "evidence": "Ruled 23 Nov (\"Import described line\", the card at 8f1ed443, superseding \"Import draft line\"). The data it draws exists: the import's drafting outcome on the stored run (report.drafting, src/lib/db/queries/import-runs.ts, 22 Nov) and the count of records still lacking matched text; Manage draws nothing of it yet (src/app/manage/import-report.ts, the four lines only); checked 23 Nov."
   }
 ]
