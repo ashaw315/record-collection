@@ -1,8 +1,11 @@
 /**
  * **The wait from press to answer as Adam meets it (§P.3's in-flight step, the Report bullet; step 3, unit 3b's second
- * half; the coordinator, 22 and 23 Nov): five presses of ASK on the grid at 390 × 844 and at 1440 × 900, on production,
- * each timed from the press to the first cover drawn, with the machine's load before and after, the spread, and the
- * longest named. Adam runs this: production is behind his session, and the figure is the one he meets.**
+ * half; the coordinator, 22 and 23 Nov): at 390 × 844 and 1440 × 900 on the grid, on production, five independent first
+ * presses (the page reloaded before each, so each sees the whole pool and no run history: the ordinary case, and the one
+ * the indicator is sized against) and then five consecutive presses on one page (the run leaving out what it named).
+ * Each press: the reply (the click to the ask route's reply plus two frames), the covers (from there to the last of the
+ * answer's covers painted, Design's boundary question), the cells and verdict returned, and the records sent and left
+ * out. Load before and after each run. Adam runs this: production is behind his session.**
  *
  *     read -rs "P?Password: "; echo; PROD_LOGIN_PASSWORD="$P" npm run press:measure; unset P
  *
@@ -12,10 +15,9 @@
  * two can be compared once and the local figure trusted after (the coordinator, 23 Nov: the number sizing the indicator
  * has to be the one Adam meets, so say the gap rather than assume it).
  *
- * What is timed: from the click on ASK to the first drawn `[data-pick-answer]` of a new answer, or the slot's message
- * changing where the pick answers with no record; polled every 16ms inside Playwright, so the reading is within a frame
- * of the draw. The route's own log line (total and model milliseconds) is the server side of the same press, read in
- * Vercel's logs within the hour; this is the client side, the network and the draw included.
+ * What is timed is named, so no fourth unnamed boundary joins the three reconciled on 23 Nov: the reply is not the paint
+ * of the first cover, and the gap between them is two frames unless the draw is slower; the covers figure is the rest,
+ * to the last cover decoded or failed. Once the indicator exists, the slot ceasing to show it is the better boundary.
  */
 import { appendFileSync, mkdirSync } from 'node:fs';
 import { loadavg } from 'node:os';
@@ -64,7 +66,22 @@ async function signIn(browser: Browser): Promise<Awaited<ReturnType<BrowserConte
   return state;
 }
 
-type Press = { press: number; ms: number; outcome: 'answered' | 'slot' | 'timed-out'; cells: number; slot: string };
+type Mode = 'independent' | 'consecutive';
+type Press = {
+  mode: Mode;
+  press: number;
+  /** From the click to the ask route's reply plus two frames: the boundary named in NOTES, 23 Nov. */
+  replyMs: number;
+  /** From that point to the last of the answer's covers decoded and painted (two frames after), or null where none was drawn. */
+  coversMs: number | null;
+  outcome: 'answered' | 'slot' | 'timed-out';
+  cells: number;
+  verdict: string | null;
+  /** The request's pool and exclusions: the records the prompt is built from are the pool less the excluded, where every pooled record has matched text, as production's 55 do. */
+  sent: number;
+  excluded: number;
+  slot: string;
+};
 
 /*
   The in-page code is a STRING, never a function (Adam's second run, 23 Nov): tsx transpiles through esbuild with
@@ -73,64 +90,111 @@ type Press = { press: number; ms: number; outcome: 'answered' | 'slot' | 'timed-
   evaluated as written and cannot regress when a transpiler option changes. e2e/measure-press-3b.spec.ts runs this
   script end to end against the suite's server, so the in-page path executes somewhere before it reaches him.
 */
-const ANSWER_STATE_JS = `(() => {
+const SLOT_JS = `(() => {
   const drawn = (el) => el.getClientRects().length > 0;
-  const cells = Array.from(document.querySelectorAll('[data-pick-answer]')).filter(drawn).map((el) => (el.querySelector('a') || {}).getAttribute ? (el.querySelector('a').getAttribute('href') || '') : '');
-  const slot = (Array.from(document.querySelectorAll('[data-pick-slot]')).filter(drawn)[0] || {}).textContent || '';
-  return { cells, slot };
+  return ((Array.from(document.querySelectorAll('[data-pick-slot]')).filter(drawn)[0] || {}).textContent || '').trim();
 })()`;
-type AnswerState = { cells: string[]; slot: string };
-/** What the answer looks like now: the drawn cells' links and the slot's text, read inside the page. */
-const answerState = (page: Page) => page.evaluate(ANSWER_STATE_JS) as Promise<AnswerState>;
+const FRAMES_JS = 'new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))';
+/*
+  Design's boundary question (23 Nov): the time from the reply to the last cover painted. The answer's own cells, by
+  their links, so a previous answer's covers already on screen are never read as this one's; a cover is done when its
+  image is complete (decoded, or failed, which is also the end of the wait) or the cell draws the no-cover square.
+*/
+const coversDoneJs = (ids: readonly string[]) => `(() => {
+  const want = ${JSON.stringify(ids.map((id) => `/records/${id}`))};
+  const drawn = (el) => el.getClientRects().length > 0;
+  const cells = Array.from(document.querySelectorAll('[data-pick-answer]')).filter(drawn);
+  const hrefs = cells.map((c) => (c.querySelector('a') && c.querySelector('a').getAttribute('href')) || '');
+  if (!want.every((h) => hrefs.includes(h))) return false;
+  return cells.filter((c, i) => want.includes(hrefs[i])).every((c) => {
+    const img = c.querySelector('img');
+    return img === null ? c.querySelector('[data-grid-cover="none"]') !== null : img.complete;
+  });
+})()`;
 
 /*
-  Press to answer is the route's reply plus the draw: the click, then the ask route's response, then two frames so the
-  answer is painted. Not "the drawn set changed": a re-ask can return the same records (the suite's five-record pool
-  does, and production can), and a detector waiting for a change would wait out its limit on a perfectly good answer.
+  Press to answer is the route's reply plus two frames: not "the drawn set changed", since a re-ask can return the same
+  records and a detector waiting for a change would wait out its limit on a good answer. The covers are timed after it.
 */
-async function pressOnce(page: Page, n: number): Promise<Press> {
+async function pressOnce(page: Page, mode: Mode, n: number, fill: boolean): Promise<Press> {
   const control = page.locator('[data-pick-control]').filter({ visible: true });
-  const field = control.locator('[data-ask-field]');
-  if (n === 1) await field.fill(PHRASE);
+  if (fill) await control.locator('[data-ask-field]').fill(PHRASE);
   const reply = page.waitForResponse((r) => r.url().includes('/api/ask') && r.request().method() === 'POST', { timeout: LIMIT_MS });
   const started = Date.now();
   await control.getByRole('button', { name: /^ask$/i }).click();
   const response = await reply.catch(() => null);
-  if (response === null) return { press: n, ms: Date.now() - started, outcome: 'timed-out', cells: 0, slot: '' };
-  const body = (await response.json().catch(() => null)) as { answers?: unknown[] } | null;
-  /* Two frames: the answer is in the DOM after the first commit and on screen after the next. */
-  await page.evaluate('new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))');
-  const ms = Date.now() - started;
-  const after = await answerState(page);
-  const answered = response.ok() && Array.isArray(body?.answers) && body.answers.length > 0;
-  return { press: n, ms, outcome: answered ? 'answered' : 'slot', cells: after.cells.length, slot: after.slot.trim() };
+  if (response === null) return { mode, press: n, replyMs: Date.now() - started, coversMs: null, outcome: 'timed-out', cells: 0, verdict: null, sent: 0, excluded: 0, slot: '' };
+  const request = (response.request().postDataJSON() ?? {}) as { pool?: unknown[]; exclude?: unknown[] };
+  const body = (await response.json().catch(() => null)) as { answers?: Array<{ recordId: string }>; verdict?: string | null } | null;
+  await page.evaluate(FRAMES_JS);
+  const replied = Date.now();
+  const ids = (body?.answers ?? []).map((a) => a.recordId);
+  let coversMs: number | null = null;
+  if (ids.length > 0) {
+    const done = await page.waitForFunction(coversDoneJs(ids), undefined, { polling: 16, timeout: LIMIT_MS }).then(() => true).catch(() => false);
+    if (done) {
+      await page.evaluate(FRAMES_JS);
+      coversMs = Date.now() - replied;
+    }
+  }
+  return {
+    mode,
+    press: n,
+    replyMs: replied - started,
+    coversMs,
+    outcome: response.ok() && ids.length > 0 ? 'answered' : 'slot',
+    cells: ids.length,
+    verdict: body?.verdict ?? null,
+    sent: Array.isArray(request.pool) ? request.pool.length : 0,
+    excluded: Array.isArray(request.exclude) ? request.exclude.length : 0,
+    slot: ids.length > 0 ? '' : ((await page.evaluate(SLOT_JS)) as string),
+  };
 }
 
 const median = (xs: number[]) => { const s = [...xs].sort((a, b) => a - b); return s.length % 2 === 1 ? s[(s.length - 1) / 2] : (s[s.length / 2 - 1] + s[s.length / 2]) / 2; };
 
+const s1 = (ms: number) => `${(ms / 1000).toFixed(1)}s`;
+const s2 = (ms: number) => `${(ms / 1000).toFixed(2)}s`;
+const spread = (xs: number[], f: (n: number) => string) => (xs.length === 0 ? 'none' : `min ${f(Math.min(...xs))}, median ${f(median(xs))}, max ${f(Math.max(...xs))}`);
+
+async function openGrid(page: Page) {
+  await page.goto(`${BASE}/?view=grid`, { timeout: 60_000 });
+  await page.locator('[data-collection-filters][data-hydrated="true"]').first().waitFor({ timeout: 60_000 });
+}
+
+/*
+  Two runs per width (the coordinator, 23 Nov, on Adam's first figures, where presses grew faster within a run):
+  independent first presses, the page reloaded before each so every press sees the whole pool and no run history, which
+  is the ordinary case and the one the indicator is sized against; then consecutive presses on one page, the run leaving
+  out what it has named, so the record count sent shows whether a shrinking prompt is what makes a run speed up.
+*/
 const browser = await chromium.launch();
 try {
   const session = await signIn(browser);
-  log(`measure-press: ${BASE}, "${PHRASE}", ${PRESSES} presses at each of ${VIEWPORTS.map((v) => v.name).join(' and ')}; load before ${load().join(' ')}`);
+  log(`measure-press: ${BASE}, "${PHRASE}", ${PRESSES} independent and ${PRESSES} consecutive presses at each of ${VIEWPORTS.map((v) => v.name).join(' and ')}; load before ${load().join(' ')}`);
+  log('  reply: the click to the ask route\'s reply plus two frames; covers: from there to the last cover painted');
   for (const viewport of VIEWPORTS) {
-    const context = await browser.newContext({ storageState: session, viewport: { width: viewport.width, height: viewport.height } });
-    const page = await context.newPage();
-    const loadBefore = load();
-    await page.goto(`${BASE}/?view=grid`, { timeout: 60_000 });
-    await page.locator('[data-collection-filters][data-hydrated="true"]').first().waitFor({ timeout: 60_000 });
-    const presses: Press[] = [];
-    for (let n = 1; n <= PRESSES; n += 1) {
-      const p = await pressOnce(page, n);
-      presses.push(p);
-      log(`  ${viewport.name}: press ${n} ${p.outcome} in ${(p.ms / 1000).toFixed(1)}s (${p.cells} cell(s)${p.slot === '' ? '' : `, slot "${p.slot}"`})`);
-      appendFileSync(out, `${JSON.stringify({ base: BASE, viewport: viewport.name, phrase: PHRASE, ...p, at: new Date().toISOString() })}\n`);
+    for (const mode of ['independent', 'consecutive'] as const) {
+      const context = await browser.newContext({ storageState: session, viewport: { width: viewport.width, height: viewport.height } });
+      const page = await context.newPage();
+      const loadBefore = load();
+      const presses: Press[] = [];
+      for (let n = 1; n <= PRESSES; n += 1) {
+        if (mode === 'independent' || n === 1) await openGrid(page);
+        const p = await pressOnce(page, mode, n, mode === 'independent' || n === 1);
+        presses.push(p);
+        log(`  ${viewport.name} ${mode}: press ${n} ${p.outcome}, reply ${s1(p.replyMs)}, covers ${p.coversMs === null ? 'none drawn' : `+${s2(p.coversMs)}`}, ${p.cells} cell(s), verdict ${p.verdict ?? 'none'}, ${p.sent} sent, ${p.excluded} left out${p.slot === '' ? '' : `, slot "${p.slot}"`}`);
+        appendFileSync(out, `${JSON.stringify({ base: BASE, viewport: viewport.name, phrase: PHRASE, ...p, at: new Date().toISOString() })}\n`);
+      }
+      const loadAfter = load();
+      const answered = presses.filter((p) => p.outcome !== 'timed-out');
+      const replies = answered.map((p) => p.replyMs);
+      const covers = answered.flatMap((p) => (p.coversMs === null ? [] : [p.coversMs]));
+      const longest = presses.reduce((a, b) => (b.replyMs > a.replyMs ? b : a));
+      log(`  ${viewport.name} ${mode}: ${answered.length} of ${PRESSES} answered; reply ${spread(replies, s1)}; covers after the reply ${spread(covers, s2)}; the longest press ${longest.press} at ${s1(longest.replyMs)}; load ${loadBefore.join(' ')} before and ${loadAfter.join(' ')} after`);
+      appendFileSync(out, `${JSON.stringify({ base: BASE, viewport: viewport.name, mode, summary: { answered: answered.length, replies, covers, longest }, load: { before: loadBefore, after: loadAfter } })}\n`);
+      await context.close();
     }
-    const loadAfter = load();
-    const answered = presses.filter((p) => p.outcome !== 'timed-out').map((p) => p.ms);
-    const longest = presses.reduce((a, b) => (b.ms > a.ms ? b : a));
-    log(`  ${viewport.name}: ${answered.length} of ${PRESSES} answered; min ${(Math.min(...answered) / 1000).toFixed(1)}s, median ${(median(answered) / 1000).toFixed(1)}s, max ${(Math.max(...answered) / 1000).toFixed(1)}s; the longest press ${longest.press} at ${(longest.ms / 1000).toFixed(1)}s; load ${loadBefore.join(' ')} before and ${loadAfter.join(' ')} after`);
-    appendFileSync(out, `${JSON.stringify({ base: BASE, viewport: viewport.name, summary: { answered: answered.length, min: Math.min(...answered), median: median(answered), max: Math.max(...answered), longest }, load: { before: loadBefore, after: loadAfter } })}\n`);
-    await context.close();
   }
   log(`measure-press: written to ${out}`);
 } finally {

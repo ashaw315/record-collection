@@ -40,7 +40,7 @@ async function pool(page: Page): Promise<string[]> {
   return records;
 }
 
-test('the script signs in, presses twice at 390 and at 1440 against the suite’s server, and writes a summary per viewport', async ({ page }, info) => {
+test('the script signs in and, at 390 and at 1440, presses twice independently and twice in a run against the suite’s server, timing the reply and the covers and naming the records sent', async ({ page }, info) => {
   const records = await pool(page);
   const out = mkdtempSync(join(tmpdir(), 'press-'));
   try {
@@ -61,16 +61,26 @@ test('the script signs in, presses twice at 390 and at 1440 against the suite’
     const text = `${r.stdout}${r.stderr}`;
     expect(text, 'no in-page helper is missing').not.toMatch(/__name is not defined/);
     expect(r.status, text.slice(-800)).toBe(0);
+    /*
+      The run of 23 Nov's second shape: independent first presses and a consecutive run per width, each press with its
+      reply, the covers' paint after it (new in-page code, executed here first), the cells and verdict, and the records
+      sent and left out. The suite's five records have no covers, so the covers' path ends on the no-cover square.
+    */
     for (const viewport of ['390', '1440']) {
-      expect(text).toMatch(new RegExp(`^  ${viewport}: press 1 answered in \\d+\\.\\ds`, 'm'));
-      expect(text).toMatch(new RegExp(`^  ${viewport}: press 2 (answered|slot) in \\d+\\.\\ds`, 'm'));
-      expect(text).toMatch(new RegExp(`^  ${viewport}: 2 of 2 answered; min [\\d.]+s, median [\\d.]+s, max [\\d.]+s; the longest press [12] at [\\d.]+s; load [\\d. ]+ before and [\\d. ]+ after`, 'm'));
+      for (const mode of ['independent', 'consecutive']) {
+        expect(text).toMatch(new RegExp(`^  ${viewport} ${mode}: press 1 answered, reply \\d+\\.\\ds, covers \\+\\d+\\.\\d\\ds, \\d cell\\(s\\), verdict \\w[\\w-]*, \\d+ sent, 0 left out$`, 'm'));
+        expect(text).toMatch(new RegExp(`^  ${viewport} ${mode}: 2 of 2 answered; reply min [\\d.]+s, median [\\d.]+s, max [\\d.]+s; covers after the reply min [\\d.]+s, median [\\d.]+s, max [\\d.]+s; the longest press [12] at [\\d.]+s; load [\\d. ]+ before and [\\d. ]+ after$`, 'm'));
+      }
+      /* The pool is the grid's whole page, every record the suite's database holds, not the seeded five. Independent presses see all of it every time; a consecutive second press leaves out what the first named. */
+      expect(text).toMatch(new RegExp(`^  ${viewport} independent: press 2 [a-z-]+, .*, \\d+ sent, 0 left out`, 'm'));
+      expect(text).toMatch(new RegExp(`^  ${viewport} consecutive: press 2 [a-z-]+, .*, \\d+ sent, [1-5] left out`, 'm'));
     }
     const files = readdirSync(out).filter((f) => f.endsWith('.jsonl'));
     expect(files, 'one measurement file').toHaveLength(1);
     const lines = readFileSync(join(out, files[0]), 'utf8').trim().split('\n').map((l) => JSON.parse(l) as Record<string, unknown>);
-    expect(lines.filter((l) => 'press' in l), 'four presses on record').toHaveLength(4);
-    expect(lines.filter((l) => 'summary' in l), 'two summaries').toHaveLength(2);
+    expect(lines.filter((l) => 'press' in l), 'eight presses on record').toHaveLength(8);
+    expect(lines.filter((l) => 'summary' in l), 'four summaries').toHaveLength(4);
+    expect(lines.filter((l) => 'press' in l).every((l) => typeof l.replyMs === 'number' && 'coversMs' in l && typeof l.sent === 'number'), 'each press carries its reply, covers and records sent').toBe(true);
   } finally {
     rmSync(out, { recursive: true, force: true });
     const db = getTestDb();

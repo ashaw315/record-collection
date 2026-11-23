@@ -60406,3 +60406,22 @@ and the route's checks case, red on the missing view and field; then 54 passed a
 failures on the way were my tests': the Save assertion matched the `disabled:` utility class rather than the attribute.
 Typecheck; lint; build. Step level. The second commit opens it from every host's reason, carries the claims through the
 client, discards the shelf queue on save, and runs the e2e and captures; the indicator goes ahead of it when ruled.
+
+**Adam's first figures, and the run that answers what they raised (the coordinator, 23 Nov).** His run, verified by the
+coordinator: 390, 23.1, 18.8, 18.6, 16.6, 16.5 (median 18.6, max 23.1); 1440, 19.4, 20.0, 19.2, 17.0, 15.2 (median
+19.2, max 20.0); load 2.89 at the 390 run's start and 5.19 at the 1440 run's, which was not slower, so the figures are
+model-bound. The ceiling is 23.1, not the 17 §P.3's step names; that is Design's, and the coordinator is sending it.
+The presses grew faster within a run. The likely cause is the pool: a run leaves out what it named, so a later press
+sends fewer records. **The script now measures what settles it, in one run:** five independent first presses per width
+(the page reloaded before each, the whole pool, no history: the ordinary case and the indicator's), then five
+consecutive; per press the reply (click to the route's reply plus two frames), the covers after it (to the last cover
+decoded and painted, Design's boundary question, with Thursday's blank tops on the phone as prior evidence of hundreds),
+the cells and verdict returned, and the records sent and left out. Input tokens are not observable from the client and
+the route does not log them; the records sent stand for the prompt's size, since every pooled record on production has
+matched text. **The fifth press's four cells:** a run-exhausted answer draws no cell and says so in the slot, so four
+cells is a four-record answer, not exhaustion; with 20 of 55 left out, 35 remained. The model has returned fewer than
+asked before (21 Nov: 8, 7, 10, 8 of ten). Probably the model's choice; the consecutive run's verdict and left-out count
+confirm it rather than leave it. **Exercised in CI before it reaches him:** the spec runs the reworked script against
+the suite's server, two presses of each kind at each width, the covers path ending on the no-cover square; red against
+the old script, then once on its own figure (the pool is the grid's whole page there, 22, not the seeded five), then 1
+passed. Twenty model calls on production, about seven minutes at his figures. His command is unchanged after a pull.
