@@ -60340,3 +60340,48 @@ zoom-out, with the rail as a column beside it; from 1044 to 1273 the far view's 
 band's cell. The grid Adam presses on is §P.4's grid host, which drew five covers already. Whether he opens the far view
 is not in the record; his phone presses of 20 Nov were the grid's band. The step is built, so the question no longer
 orders anything; it stands as a note on where the five cells live.
+
+**Production, as Adam left it (the coordinator's corrections, 23 Nov; read back here).** The ABOUT backfill ran at 21:11 on
+22 Nov in the Neon console: before 0 marked of 55, UPDATE 55, after 55 ABOUTs marked read and 55 matched texts still
+unread, the right column moved and the descriptions did not. The Blood, Sweat merge ran at 15:29 on 22 Nov with the
+seven-table before-SELECT matching every count, UPDATE 2, UPDATE 1, UPDATE 1, DELETE 1, COMMIT. Read back this morning:
+55 of 55 ABOUTs read, 55 of 55 matched texts unread, one Blood, Sweat row (160ca967) holding both ids with one record
+and two memberships, its formed year and origin null until the walk (Manage, LINEUP), 48 of 49 collection artists with
+an id. Both were production writes Adam made against statements written here, and neither reaches this record unless
+the coordinator says so; the list of what he has run is the one that would mislead if it disagreed with production.
+
+**f81e2e53 was a fix, not new work, and the window could not have been acted on.** In 055f0d6a (22:21) the after-task
+ran only when a press had stored something and drafted only that run's records, so "press Import again and it finishes
+them" was not true until f81e2e53 (22:53): 32 minutes plus the deploy. No import run exists on production since 22 Nov
+began, so no press fell in the window and nothing waited; the instruction was wrong for that half hour and harmless.
+
+**The sweep the coordinator asked for: an exit status read after a pipe on the ship or intake path.** Five shell scripts
+are on the path. Every one sets `pipefail` at its head: ship.sh (line 26), commit-checked.sh (23), gate.sh (57),
+ci-gate.sh (18), gate-report.sh (26). The judgements: ship.sh reads commit-checked's and ci-gate's `$?` directly with no
+pipe, its one pipe a report of the gate's id; commit-checked.sh judges `bash -o pipefail -c "$check" | tee` under its
+own pipefail, so tee cannot hide the check; gate.sh ends `report | tee` with `exit "${PIPESTATUS[0]}"`, the verdict's
+status and not tee's, and its one other judging pipe is `psql | grep -q`, where grep's answer is the question; the
+intake's one command, apply-code-region.mjs, spawns with `spawnSync` and reads `status`; the workflow judges each half
+by `tail -1 "$LOG" | grep -q '— OK'` after `|| true` on the runner, which is the summary-line judge by design (the
+runner's exit code is never the verdict). Sites that currently mask a failure: 0. Sites that could: 0 in the repository.
+The instance was my own chain, `node scripts/apply-code-region.mjs | tail -5 && scripts/ship.sh`, typed in the session
+under zsh with no pipefail, where tail's zero started the ship on a failed intake; it never reached a script. The
+general fix reaches no repository site; it reaches the hand that types chains, and is saved as a standing rule: a
+status read in a chain is read with no pipe before it, or from PIPESTATUS. Nothing fixed, as asked.
+
+**The press script failed on Adam's first real run, and now runs somewhere before it reaches him (the coordinator, 23
+Nov).** His second attempt signed in, logged load 4.05 3.88 3.93, and died at the first `page.evaluate`: `__name is
+not defined`. The cause is tsx's esbuild transpile with keepNames, which wraps every function in an injected `__name`
+helper; Playwright serialises a function's source into the page, where the helper does not exist. Every in-page call
+carried it. Fixed by the robust remedy: the in-page code is a string, evaluated as written, so no transpiler option can
+bring it back. On the way a second fault the stub exposed: the press was judged answered when the drawn set changed, and
+a re-ask that returns the same records (the suite's five-record pool does; production can) would have waited out its
+60-second limit on a good answer. A press is now the click, the ask route's reply, and two frames for the paint. The
+systemic point, the probe's first firing for the third time this weekend: the script's gate could run it only as far as
+its refusal, so its whole in-page path shipped unexecuted. e2e/measure-press-3b.spec.ts now runs the script itself as a
+child process against the suite's server, with the suite's password, the stub model, a seeded five-record pool and two
+presses at each viewport under a temporary output folder (`PRESS_PRESSES` and `PRESS_OUT_DIR`, refused against
+production as measure-window refuses its own overrides); red on the `__name` clash, then on the detector, then 1 passed.
+One press may have gone to the model before his run died: one call, no write, nothing to clean up. His load figures
+will carry what else he runs; the figure is reported with its load, not retried for a quiet machine, and the wait is
+nearly all the model call, so the load's share is small, stated when his numbers arrive. His command is unchanged.

@@ -29,7 +29,13 @@ if (password === undefined || password === '') {
 }
 const BASE = process.env.PRESS_BASE_URL ?? 'https://record-collection-rust.vercel.app';
 const PHRASE = process.env.PRESS_PHRASE ?? 'something for a rainy afternoon';
-const PRESSES = 5;
+const onProduction = process.env.PRESS_BASE_URL === undefined;
+/* Fixed by the rule on production; the overrides are for the suite's run against its own server, and are refused on production as measure-window refuses its own. */
+const PRESSES = process.env.PRESS_PRESSES === undefined ? 5 : Number(process.env.PRESS_PRESSES);
+if (onProduction && (PRESSES !== 5 || process.env.PRESS_OUT_DIR !== undefined)) {
+  process.stderr.write('measure-press: PRESS_PRESSES and PRESS_OUT_DIR change the measurement and are refused against production\n');
+  process.exit(2);
+}
 /* The two hosts Adam uses: the grid's band on the phone, the grid's sidebar on the desk. */
 const VIEWPORTS = [
   { name: '390', width: 390, height: 844 },
@@ -38,7 +44,7 @@ const VIEWPORTS = [
 /* Three times the longest press seen on production (16.8s, 20 Nov): a press past this is reported as such, not waited on. */
 const LIMIT_MS = 60_000;
 
-const outDir = join('docs', 'measurements', 'press-to-answer');
+const outDir = process.env.PRESS_OUT_DIR ?? join('docs', 'measurements', 'press-to-answer');
 mkdirSync(outDir, { recursive: true });
 const out = join(outDir, `${new Date().toISOString().replace(/[:.]/g, '-')}.jsonl`);
 const log = (line: string) => process.stdout.write(`${line}\n`);
@@ -60,39 +66,44 @@ async function signIn(browser: Browser): Promise<Awaited<ReturnType<BrowserConte
 
 type Press = { press: number; ms: number; outcome: 'answered' | 'slot' | 'timed-out'; cells: number; slot: string };
 
-/** What the answer looks like now: the drawn cells' ids and the slot's text, read inside the page. */
-const answerState = (page: Page) =>
-  page.evaluate(() => {
-    const drawn = (el: Element) => (el as HTMLElement).getClientRects().length > 0;
-    const cells = Array.from(document.querySelectorAll('[data-pick-answer]')).filter(drawn).map((el) => el.querySelector('a')?.getAttribute('href') ?? '');
-    const slot = Array.from(document.querySelectorAll('[data-pick-slot]')).filter(drawn)[0]?.textContent ?? '';
-    return { cells, slot };
-  });
+/*
+  The in-page code is a STRING, never a function (Adam's second run, 23 Nov): tsx transpiles through esbuild with
+  keepNames, which wraps every function in an injected `__name` helper, and Playwright serialises a function's source
+  into the page, where no such helper exists; the first `page.evaluate(fn)` threw `__name is not defined`. A string is
+  evaluated as written and cannot regress when a transpiler option changes. e2e/measure-press-3b.spec.ts runs this
+  script end to end against the suite's server, so the in-page path executes somewhere before it reaches him.
+*/
+const ANSWER_STATE_JS = `(() => {
+  const drawn = (el) => el.getClientRects().length > 0;
+  const cells = Array.from(document.querySelectorAll('[data-pick-answer]')).filter(drawn).map((el) => (el.querySelector('a') || {}).getAttribute ? (el.querySelector('a').getAttribute('href') || '') : '');
+  const slot = (Array.from(document.querySelectorAll('[data-pick-slot]')).filter(drawn)[0] || {}).textContent || '';
+  return { cells, slot };
+})()`;
+type AnswerState = { cells: string[]; slot: string };
+/** What the answer looks like now: the drawn cells' links and the slot's text, read inside the page. */
+const answerState = (page: Page) => page.evaluate(ANSWER_STATE_JS) as Promise<AnswerState>;
 
+/*
+  Press to answer is the route's reply plus the draw: the click, then the ask route's response, then two frames so the
+  answer is painted. Not "the drawn set changed": a re-ask can return the same records (the suite's five-record pool
+  does, and production can), and a detector waiting for a change would wait out its limit on a perfectly good answer.
+*/
 async function pressOnce(page: Page, n: number): Promise<Press> {
   const control = page.locator('[data-pick-control]').filter({ visible: true });
   const field = control.locator('[data-ask-field]');
   if (n === 1) await field.fill(PHRASE);
-  const before = await answerState(page);
+  const reply = page.waitForResponse((r) => r.url().includes('/api/ask') && r.request().method() === 'POST', { timeout: LIMIT_MS });
   const started = Date.now();
   await control.getByRole('button', { name: /^ask$/i }).click();
-  const changed = await page
-    .waitForFunction(
-      (prev) => {
-        const drawn = (el: Element) => (el as HTMLElement).getClientRects().length > 0;
-        const cells = Array.from(document.querySelectorAll('[data-pick-answer]')).filter(drawn).map((el) => el.querySelector('a')?.getAttribute('href') ?? '');
-        const slot = Array.from(document.querySelectorAll('[data-pick-slot]')).filter(drawn)[0]?.textContent ?? '';
-        return JSON.stringify(cells) !== JSON.stringify(prev.cells) || (slot !== prev.slot && slot.trim() !== '');
-      },
-      before,
-      { polling: 16, timeout: LIMIT_MS },
-    )
-    .then(() => true)
-    .catch(() => false);
+  const response = await reply.catch(() => null);
+  if (response === null) return { press: n, ms: Date.now() - started, outcome: 'timed-out', cells: 0, slot: '' };
+  const body = (await response.json().catch(() => null)) as { answers?: unknown[] } | null;
+  /* Two frames: the answer is in the DOM after the first commit and on screen after the next. */
+  await page.evaluate('new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))');
   const ms = Date.now() - started;
   const after = await answerState(page);
-  const outcome: Press['outcome'] = !changed ? 'timed-out' : JSON.stringify(after.cells) !== JSON.stringify(before.cells) ? 'answered' : 'slot';
-  return { press: n, ms, outcome, cells: after.cells.length, slot: after.slot.trim() };
+  const answered = response.ok() && Array.isArray(body?.answers) && body.answers.length > 0;
+  return { press: n, ms, outcome: answered ? 'answered' : 'slot', cells: after.cells.length, slot: after.slot.trim() };
 }
 
 const median = (xs: number[]) => { const s = [...xs].sort((a, b) => a - b); return s.length % 2 === 1 ? s[(s.length - 1) / 2] : (s[s.length / 2 - 1] + s[s.length / 2]) / 2; };
