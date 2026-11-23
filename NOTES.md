@@ -60267,3 +60267,26 @@ held collection drafting the nine left lacking, red (0 scheduled against 1), the
 drafter; typecheck; lint. "Import draft line" taken in as held, the coordinator's hold while Design corrects the rule:
 its card 48095d31 is on disk and in refs/drops/2026-11-22-03, not committed, so the tree's Table and Grid card stays
 b65cb51b for the corrected card to chain from; recorded with its why in the landed list.
+
+## 22 Nov, late: 3b's first half, the column host's five cells; the drafting gate's one failure; the second press
+
+**Step 3, unit 3b, the five cells (the coordinator's go, 22 Nov; §P.4's five-cell ruling), built as step 184.** The far
+view's column host draws the ask's answer as five cells two across in the count column, nearest first, 24 between and
+24 below the count's last line; the column scrolls where the five run past the window; on arrival the taller cell of
+the first row is brought into view by the least scroll that shows it whole. Tests first: the stage's describe moved from
+one cell to five (3 red against the stage), then 33 passed; the new spec at 1440 × 900 and × 768, both caption sets, 4
+passed, no flake. Three faults on the way, all the spec's: the grid's two tracks split the column so the cells sat 62
+apart, not 24 (the tracks are the cells' own 160 now); the four tests on four workers shared one phrase and drew across
+each other's pools (a phrase per pool now); the "un-wrapped" artists carried the seed suffix and wrapped, and the
+first-row figure was read with the column scrolled (the artists are seven characters now, and the figure is read with
+the page and the column at their top). The figure: the first row ends 399.4 below the page's top with un-wrapped
+captions and 418.9 with a two-line caption in the first row, at both heights, so the least window is 400 or 419, not
+494. Load: the first run 2.4 before and 16.3 after (27 tests, 66s, four workers, the two spec faults retried); the last
+6.3 before and 15.2 after (4 tests, 20s). Captures in docs/captures/pick-column-3b with their README. Step level: the
+component tests, the two specs on chromium, typecheck, lint, build. Not in this half: the press-to-answer report (3b's
+second half, the in-flight step's Report bullet), and the requirement-unmet slot wording, its own small step.
+
+**The drafting gate (45105552902) failed one test and it was fixed forward at 0221e235:** the draft-row test compares
+the whole row and `artistRowId` joined it after that file's last step-level run. Its commit message says 23 passed in
+the file; the run printed 21, a slip in the message, corrected here. Gate 45108560411 on the second-press fix and the
+gate on 0221e235 are the ones to read next.

@@ -512,9 +512,9 @@ if (offset !== null) offset.style.transform = '';
     if (channel === null) return;
     return channel.answerPulls(() => (far === null ? null : !far));
   }, [channel, far]);
-  /* §P.4's column host: the cell the control serves, drawn by the wall in the count column (`P.4/column-cell-drawing-pays`). */
-  const [pickCell, setPickCell] = useState<PickRecord | null>(null);
-  useEffect(() => channel?.hearCells(setPickCell), [channel]);
+  /* §P.4's column host: the cells the control serves, drawn by the wall in the count column (`P.4/column-cell-drawing-pays`; five since 3b). */
+  const [pickCells, setPickCells] = useState<readonly PickRecord[]>([]);
+  useEffect(() => channel?.hearCells(setPickCells), [channel]);
   useEffect(() => {
     if (pulls.length > 0 || queued.current === null) return;
     const id = queued.current;
@@ -694,7 +694,7 @@ if (offset !== null) offset.style.transform = '';
         onZoomIn={viewport > 0 && !isFarView(viewport) ? zoomIn : undefined}
         onZoomOut={viewport > 0 && !isFarView(viewport) ? zoomOut : undefined}
         framed={framed}
-        pickCell={pickCell}
+        pickCells={pickCells}
         askReason={askReason}
         onSeatClick={(id) => {
           if (pulls.length === 0 && queued.current === null) begin(id, 'out');

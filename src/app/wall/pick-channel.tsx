@@ -36,10 +36,10 @@ export type PickChannel = {
   ask: (named: string | null, carry?: AskCarry) => WallAnswer;
   /** The wall answers asks while mounted; the returned function stops it. */
   answerAsks: (answer: (named: string | null, carry: AskCarry) => WallAnswer) => () => void;
-  /** The control hands the wall the cell to draw in the count column, or none; the wall draws it only on the far view. */
-  showCell: (record: PickRecord | null) => void;
+  /** The control hands the wall the cells to draw in the count column, the nearest first, up to five (§P.4, 3b), or none; the wall draws them only on the far view. */
+  showCells: (records: readonly PickRecord[]) => void;
   /** The wall hears cells while mounted; the returned function stops it. */
-  hearCells: (hear: (record: PickRecord | null) => void) => () => void;
+  hearCells: (hear: (records: readonly PickRecord[]) => void) => () => void;
   /** The wall tells of every record that comes out, by an ask, its spine or the arrows, since §P.2 counts each as served. */
   pulled: (id: string) => void;
   /** The control hears what comes out while mounted; the returned function stops it. */
@@ -65,7 +65,7 @@ export function PickChannelProvider({ children }: { children: ReactNode }) {
     let answer: ((named: string | null, carry: AskCarry) => WallAnswer) | null = null;
     let hear: ((id: string) => void) | null = null;
     let hearView: (() => void) | null = null;
-    let hearCell: ((record: PickRecord | null) => void) | null = null;
+    let hearCell: ((records: readonly PickRecord[]) => void) | null = null;
     let pulls: (() => boolean | null) | null = null;
     return {
       ask: (named, carry = { reason: null, consolation: false }) => answer?.(named, carry) ?? { did: 'ignore', host: null },
@@ -89,7 +89,7 @@ export function PickChannelProvider({ children }: { children: ReactNode }) {
           if (hear === next) hear = null;
         };
       },
-      showCell: (record) => hearCell?.(record),
+      showCells: (records) => hearCell?.(records),
       hearCells: (next) => {
         hearCell = next;
         return () => {

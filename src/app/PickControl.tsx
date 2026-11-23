@@ -142,9 +142,9 @@ export function PickControl({ ruled = false, pool, answers = 'cell', withoutAbou
       }),
     [channel],
   );
-  /* The column host's cell is the wall's to draw (`P.4/column-cell-drawing-pays`): the first answer; it follows `drawn`, so ending the answer ends it there too. */
+  /* The column host's cells are the wall's to draw (`P.4/column-cell-drawing-pays`; five, two across, since 3b): the whole answer in rank order; it follows `drawn`, so ending the answer ends them there too. */
   useEffect(() => {
-    if (answers === 'wall') channel?.showCell(host === 'count-column' ? (drawn[0] ?? null) : null);
+    if (answers === 'wall') channel?.showCells(host === 'count-column' ? drawn : []);
   }, [answers, channel, host, drawn]);
 
   const byId = (id: string) => pool.find((record) => record.id === id);

@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { WallLabelled, type PullState } from './WallLabelled';
 import { RecordPanel } from './RecordPanel';
 import type { RecordSummary } from './summary';
@@ -43,7 +44,7 @@ export function WallStage({
   far = false,
   onZoomIn,
   onZoomOut,
-  pickCell = null,
+  pickCells = [],
   askReason = null,
   arrivalInMarkup = true,
   framed,
@@ -88,8 +89,8 @@ export function WallStage({
    */
   onZoomIn?: (id: string) => void;
   onZoomOut?: () => void;
-  /** §P.4's column host: the pick's answer, drawn in the count column beneath the count on the far view, or nothing. */
-  pickCell?: PickRecord | null;
+  /** §P.4's column host: the pick's answer, up to five cells in rank order, drawn in the count column beneath the count on the far view, or none. */
+  pickCells?: readonly PickRecord[];
   /** §P.2 (unit 3a): the reason the ask gave for the record it pulled, shown in that record's facts and no other's. */
   askReason?: { id: string; reason: string; consolation?: boolean } | null;
   /**
@@ -205,6 +206,20 @@ export function WallStage({
     Both views carry the count, and while unmeasured both are in the document
     (§W.26): the far view's markers are its own so nothing resolves to both.
   */
+  /*
+    §P.4 (3b): "When the answer appears, put its first row wholly inside the window wherever the page is scrolled." The
+    taller of the first row's two cells is brought into view by the least scroll that shows it whole; the rest run below
+    and the column scrolls to reach them. Runs when the cells change, so a re-ask places its new first row too.
+  */
+  const answersRef = useRef<HTMLUListElement>(null);
+  useEffect(() => {
+    const list = answersRef.current;
+    if (list === null || pickCells.length === 0) return;
+    const row = Array.from(list.children).slice(0, 2) as HTMLElement[];
+    const tallest = row.reduce<HTMLElement | null>((best, el) => (best === null || el.getBoundingClientRect().bottom > best.getBoundingClientRect().bottom ? el : best), null);
+    tallest?.scrollIntoView({ block: 'nearest' });
+  }, [pickCells]);
+
   const count = (far: boolean) => (
     <div data-region={far ? 'count-far' : 'count'}>
       <div className={LABEL}>COLLECTION</div>
@@ -263,10 +278,19 @@ export function WallStage({
         COLLECTION and its count, at §T.5's 160, and the drawing does not change." The near view's answer is the
         pull, so it draws none. 24 below, as the band's cell is below the slot: no ruling gives this figure.
       */}
-      {far && pickCell !== null ? (
-        <div data-pick-answer="" className="relative mt-[24px] w-[160px]">
-          <GridCell id={pickCell.id} title={pickCell.title} artist={pickCell.artist} cover={pickCell.cover} reason={pickCell.reason ?? null} consolation={pickCell.consolation === true} />
-        </div>
+      {far && pickCells.length > 0 ? (
+        /*
+          §P.4's five-cell ruling (21 Nov; 3b): "five cells, two across, the nearest first, with §T.5's 24 between them",
+          24 below the count's last line (the build drew 18, which the card calls a defect). Each at §T.5's 160, so two
+          across take 344 of the column's 420; the tracks are the cells' own 160, not the column split in two, so the 24 is between the cells and not the tracks (the first e2e run measured 62). The rest run below, whole, and the column scrolls to reach them.
+        */
+        <ul ref={answersRef} data-pick-answers="" className="relative mt-[24px] grid grid-cols-[160px_160px] gap-[24px]">
+          {pickCells.map((cell, index) => (
+            <li key={cell.id} data-pick-answer="" data-rank={index + 1} className="relative w-[160px]">
+              <GridCell id={cell.id} title={cell.title} artist={cell.artist} cover={cell.cover} reason={cell.reason ?? null} consolation={cell.consolation === true} />
+            </li>
+          ))}
+        </ul>
       ) : null}
     </div>
   );
@@ -300,7 +324,8 @@ export function WallStage({
   const farView = (
     <div data-region="far" className="flex h-[calc(100vh-var(--app-nav-height,0px))] flex-row overflow-hidden p-[34px]">
       {/* §W.31: the count column, and the vertical between it and the drawing — the far view's second line. */}
-      <div className="relative w-[420px] shrink-0">
+      {/* The column scrolls where §P.4's five cells run past the window (3b): the drawing beside it stays whole and still. */}
+      <div className="relative h-full w-[420px] shrink-0 overflow-y-auto">
         {count(true)}
         <div
           data-line="facts-drawing"

@@ -391,24 +391,31 @@ describe('Turn over shows the back on the same face (§W.7)', () => {
 });
 
 /*
-  §P.4 (Design, 27 Oct, `P.4/column-cell-drawing-pays`): "Where the far view
-  draws its rail as a column, the cell stands in the count column, beneath
-  COLLECTION and its count, at §T.5's 160, and the drawing does not change."
-  The wall draws it, since the count column is the wall's; the rail's control
-  hands it over through the pick channel.
+  §P.4 (Design, 27 Oct, `P.4/column-cell-drawing-pays`; the five-cell ruling, 21 Nov): "In the column host the answer is
+  five cells, two across, the nearest first, with §T.5's 24 between them", in the count column beneath COLLECTION and its
+  count, at §T.5's 160, and the drawing does not change. The wall draws them, since the count column is the wall's; the
+  rail's control hands them over through the pick channel. Until 3b the stage drew one cell; this describe moved with the
+  ruling (the test encoded the one-cell build).
 */
-describe('§P.4: the column host’s cell, in the count column', () => {
+describe('§P.4: the column host’s cells, in the count column', () => {
   const cell = { id: 'z', title: 'Wired', artist: 'Jeff Beck', cover: 'https://c/wired.jpg' };
+  const five = ['v', 'w', 'x', 'y', 'z'].map((id) => ({ ...cell, id, title: `Title ${id}` }));
   const countColumn = (html: string) => /<div data-region="count-far"[\s\S]*?<\/div>\s*<div\s+data-line="facts-drawing"/.exec(html)?.[0] ?? '';
 
-  it('draws the cell inside the count column, after the count, at 160 wide', () => {
-    const html = render({ far: true, pickCell: cell });
+  it('draws the five inside the count column, after the count, each at 160, ranked nearest first, in a two-across grid 24 apart and 24 below', () => {
+    const html = render({ far: true, pickCells: five });
     const column = countColumn(html);
     expect(column, 'the count column was found').not.toBe('');
-    expect(column, 'the cell is in the count column').toContain('data-pick-answer=""');
-    expect(column.indexOf('data-pick-answer'), 'beneath COLLECTION and its count').toBeGreaterThan(column.indexOf('wall-count-far'));
-    expect(/<div data-pick-answer=""[^>]*class="([^"]*)"/.exec(column)?.[1] ?? '', '§T.5’s 160').toContain('w-[160px]');
-    expect(column).toContain('Wired');
+    expect(column.match(/data-pick-answer=""/g), 'five cells').toHaveLength(5);
+    expect(column.indexOf('data-pick-answers'), 'beneath COLLECTION and its count').toBeGreaterThan(column.indexOf('wall-count-far'));
+    const list = /<ul data-pick-answers=""[^>]*class="([^"]*)"/.exec(column)?.[1] ?? '';
+    expect(list, 'two across, each track the cell’s 160 so the gap is between cells').toContain('grid-cols-[160px_160px]');
+    expect(list, '§T.5’s 24 between them').toContain('gap-[24px]');
+    expect(list, '24 below the count’s last line').toContain('mt-[24px]');
+    expect([...column.matchAll(/data-rank="(\d)"/g)].map((m) => m[1]), 'nearest first').toEqual(['1', '2', '3', '4', '5']);
+    for (const m of column.matchAll(/<li data-pick-answer=""[^>]*class="([^"]*)"/g)) expect(m[1], '§T.5’s 160').toContain('w-[160px]');
+    expect(column).toContain('Title v');
+    expect(column).toContain('Title z');
   });
 
   /* Step 3, unit 3a (§P.2): on the shelf the reason stands in the pulled record's facts, for the record the ask pulled and no other. Fails against a stage that hands the panel no reason (WallStage.tsx, the RecordPanel). */
@@ -426,17 +433,17 @@ describe('§P.4: the column host’s cell, in the count column', () => {
     const reason = 'Slow and warm, though with vocals throughout where none were asked for; the closest in feel.';
     expect(render({ pull: { id: 'b', direction: 'out', ms: OUT_MS }, askReason: { id: 'b', reason, consolation: true } })).toContain('data-testid="panel-consolation"');
     expect(render({ pull: { id: 'b', direction: 'out', ms: OUT_MS }, askReason: { id: 'b', reason } })).not.toContain('panel-consolation');
-    expect(countColumn(render({ far: true, pickCell: { ...cell, reason, consolation: true } }))).toContain('data-grid-consolation');
-    expect(countColumn(render({ far: true, pickCell: { ...cell, reason } }))).not.toContain('data-grid-consolation');
+    expect(countColumn(render({ far: true, pickCells: [{ ...cell, reason, consolation: true }] }))).toContain('data-grid-consolation');
+    expect(countColumn(render({ far: true, pickCells: [{ ...cell, reason }] }))).not.toContain('data-grid-consolation');
   });
 
   /* Step 3, unit 3a (§P.2): the answer's reason travels with the cell into the count column. Fails against a cell drawn without its reason (WallStage.tsx, the GridCell in the count column). */
   it('draws the answer’s reason in the count column’s cell, beneath its caption', () => {
-    const column = countColumn(render({ far: true, pickCell: { ...cell, reason: 'Loud and fast throughout, for a room that wants waking.' } }));
+    const column = countColumn(render({ far: true, pickCells: [{ ...cell, reason: 'Loud and fast throughout, for a room that wants waking.' }] }));
     expect(column).toContain('data-grid-reason');
     expect(column).toContain('Loud and fast throughout, for a room that wants waking.');
     expect(column.indexOf('data-grid-reason'), 'after the artist').toBeGreaterThan(column.indexOf('data-grid-artist'));
-    expect(countColumn(render({ far: true, pickCell: cell })), 'a cell served without a reason draws none').not.toContain('data-grid-reason');
+    expect(countColumn(render({ far: true, pickCells: [cell] })), 'a cell served without a reason draws none').not.toContain('data-grid-reason');
   });
 
   /* The markup only: that the drawing's FIT is unchanged is a layout fact, measured by pick-answer-156's ink before and after. */
@@ -444,11 +451,11 @@ describe('§P.4: the column host’s cell, in the count column', () => {
     const svg = (html: string) => /<svg data-wall="overview"[\s\S]*?<\/svg>/.exec(html)?.[0] ?? '';
     const without = svg(render({ far: true }));
     expect(without, 'the precondition: the overview was found').not.toBe('');
-    expect(svg(render({ far: true, pickCell: cell }))).toBe(without);
+    expect(svg(render({ far: true, pickCells: five }))).toBe(without);
   });
 
   it('draws no cell on the near view, whose answer is the pull, nor on the far view with nothing served', () => {
-    expect(render({ far: false, pickCell: cell })).not.toContain('data-pick-answer');
-    expect(render({ far: true, pickCell: null })).not.toContain('data-pick-answer');
+    expect(render({ far: false, pickCells: five })).not.toContain('data-pick-answer');
+    expect(render({ far: true, pickCells: [] })).not.toContain('data-pick-answer');
   });
 });
