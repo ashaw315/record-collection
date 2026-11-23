@@ -32,7 +32,9 @@ async function pool(page: Page): Promise<string[]> {
     const artist = (await (await page.request.post('/api/artists', { data: { name: `Press ${k} ${phrase.slice(-6)}` } })).json()) as { id: string };
     trackArtist(artist.id);
     const about = `${phrase} ${k}: a record for the press.`;
-    const [row] = (await db.execute<{ id: string }>(sql`INSERT INTO records (artist_id, title, snippet) VALUES (${artist.id}::uuid, ${`Press ${k}`}, ${about}) RETURNING id`)).rows;
+    /* Years so the half pass's filter leaves part of the pool: the suite's own year filter is yearTo=1901, which only A and B meet. */
+    const year = k === 'A' || k === 'B' ? 1900 : 1990;
+    const [row] = (await db.execute<{ id: string }>(sql`INSERT INTO records (artist_id, title, snippet, release_year) VALUES (${artist.id}::uuid, ${`Press ${k}`}, ${about}, ${year}) RETURNING id`)).rows;
     records.push(row.id);
     const vector = stubEmbedding(about);
     await db.execute(sql`INSERT INTO record_embeddings (record_id, about_hash, model, dims, vector, embedded_at) VALUES (${row.id}::uuid, ${aboutHash(about)}, ${EMBEDDING_MODEL}, ${vector.length}, ${JSON.stringify(vector)}::jsonb, now())`);
@@ -56,6 +58,7 @@ test('the script signs in and, at 390 and at 1440, presses twice independently a
         PRESS_PHRASE: phrase,
         PRESS_PRESSES: '2',
         PRESS_OUT_DIR: out,
+        PRESS_HALF_QUERY: 'yearTo=1901',
       },
     });
     const text = `${r.stdout}${r.stderr}`;
@@ -67,7 +70,7 @@ test('the script signs in and, at 390 and at 1440, presses twice independently a
       sent and left out. The suite's five records have no covers, so the covers' path ends on the no-cover square.
     */
     for (const viewport of ['390', '1440']) {
-      for (const mode of ['independent', 'consecutive']) {
+      for (const mode of ['independent', 'half', 'consecutive']) {
         expect(text).toMatch(new RegExp(`^  ${viewport} ${mode}: press 1 answered, reply \\d+\\.\\ds, covers \\+\\d+\\.\\d\\ds, \\d cell\\(s\\), verdict \\w[\\w-]*, \\d+ sent, 0 left out$`, 'm'));
         expect(text).toMatch(new RegExp(`^  ${viewport} ${mode}: 2 of 2 answered; reply min [\\d.]+s, median [\\d.]+s, max [\\d.]+s; covers after the reply min [\\d.]+s, median [\\d.]+s, max [\\d.]+s; the longest press [12] at [\\d.]+s; load [\\d. ]+ before and [\\d. ]+ after$`, 'm'));
       }
@@ -78,9 +81,12 @@ test('the script signs in and, at 390 and at 1440, presses twice independently a
     const files = readdirSync(out).filter((f) => f.endsWith('.jsonl'));
     expect(files, 'one measurement file').toHaveLength(1);
     const lines = readFileSync(join(out, files[0]), 'utf8').trim().split('\n').map((l) => JSON.parse(l) as Record<string, unknown>);
-    expect(lines.filter((l) => 'press' in l), 'eight presses on record').toHaveLength(8);
-    expect(lines.filter((l) => 'summary' in l), 'four summaries').toHaveLength(4);
-    expect(lines.filter((l) => 'press' in l).every((l) => typeof l.replyMs === 'number' && 'coversMs' in l && typeof l.sent === 'number'), 'each press carries its reply, covers and records sent').toBe(true);
+    expect(lines.filter((l) => 'press' in l), 'twelve presses on record').toHaveLength(12);
+    expect(lines.filter((l) => 'summary' in l), 'six summaries').toHaveLength(6);
+    expect(lines.filter((l) => 'press' in l).every((l) => typeof l.replyMs === 'number' && 'coversMs' in l && typeof l.sent === 'number' && Array.isArray(l.ids)), 'each press carries its reply, covers, records sent and answer ids').toBe(true);
+    /* The half pass sends a smaller pool than the whole: the slope's second point is a different point. */
+    const sentBy = (mode: string) => lines.filter((l) => l.mode === mode && 'press' in l).map((l) => Number(l.sent));
+    expect(Math.max(...sentBy('half')), 'the filtered pool is smaller').toBeLessThan(Math.min(...sentBy('independent')));
   } finally {
     rmSync(out, { recursive: true, force: true });
     const db = getTestDb();

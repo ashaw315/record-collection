@@ -60425,3 +60425,58 @@ confirm it rather than leave it. **Exercised in CI before it reaches him:** the 
 the suite's server, two presses of each kind at each width, the covers path ending on the no-cover square; red against
 the old script, then once on its own figure (the pool is the grid's whole page there, 22, not the seeded five), then 1
 passed. Twenty model calls on production, about seven minutes at his figures. His command is unchanged after a pull.
+
+**The consecutive run is not a pool-size experiment: the prompt carries every pooled record on every press (read in the
+code, 23 Nov, before the slope was built on it).** The route builds the pick's records from the page's whole pool
+(`matchedTextsFor(pool)`, route.ts:53) and hands the run's named ids to `askPick` separately; `pickRequest` writes them
+into the prompt as a line, "Already named in this run: …", above all the records (pick.ts:90), and the pick drops a named
+record only after the reply (pick.ts:196). So every press of Adam's run sent 55 records' texts, and a later press sent
+slightly more, the named list growing. The speed-up within a run is therefore not the prompt shrinking. What is left:
+a warm function and connection after the first press (separable in the new run, where every independent press is a
+cold page but not necessarily a cold function); provider-side prompt caching, which favours an identical prefix (the
+system text is the same on every press, and an independent press repeats its whole prompt exactly, so the independent
+presses may read faster for a reason that is not the ordinary case either); and noise at five points. The script's
+"sent" column is the pool and is 55 throughout; "left out" is the named list's length, not records removed. **The
+scaling concern stands on the code rather than on these figures:** every record's text goes to the model on every
+press, so the prompt is linear in the collection. Measuring the slope needs the pool itself varied, which the page
+does by filtering: the pool is what the grid shows, so a filter that leaves about half the collection, pressed
+independently, is a second point at fixed everything else. Not built; proposed.
+
+**The slope's second point folded into the run Adam has not made yet (the coordinator, 23 Nov).** The coordinator's
+seconds-per-hundred figures are void, not uncertain: they rested on a pool that never shrank. A third pass joins the
+script: five independent presses on the grid filtered by `yearTo=1974`, which leaves 28 of production's 55 (27 after),
+read from production today; everything else fixed. Each press also records its answer's ids. The spec seeds years so
+its own filter halves the suite's pool, asserts the half pass sends a smaller pool than the whole, and was red against
+the previous script (no half lines), then 1 passed. Thirty model calls now, about ten minutes at his figures. **What the
+run can and cannot separate in the within-run speed-up:** press one against presses two to five of the independent
+set separates a cold first press from the rest; it does not separate a warm function from the provider caching a
+repeated prompt, since the independent presses repeat their prompt exactly and a warm function serves them too. Both
+predict the same shape. Separating them needs either the route logging the provider's cached-token count (a server
+line, not built) or independent presses that vary the phrase, which changes the prompt being measured. Said plainly:
+this run cannot tell those two apart.
+
+**Design's second measurement, scoped and not built: the price of bounding the pool to the ranking's top N.** The
+question: if the model were handed only the ranking's nearest N records, how often would a record it picks today fall
+outside them, for a few values of N. The pieces exist: `record_embeddings` holds 55 of 55, `rankByNearness` ranks a
+pool by a phrase's vector (the ask route's dead branch), and `askPick` is today's pick. No answers are on record to read
+it against: pick history is not persisted (21 Nov), so "answers already given" means Adam's run's own ids, which the
+script now records, and a bench. **The script:** for each of a set of phrases (Adam's six production phrases of 13 Nov,
+the eighties and the rainy afternoon, about ten), ask the pick over the full 55 as production does (one model call
+each), embed the phrase (one embedding call for all), rank the 55, and report for N in 10, 15, 20, 30 and 40 the share
+of picked records outside the top N, per phrase and overall, with the rank of every pick named. Read-only; about ten
+model calls and one embedding call; one unit with a CI path against the stub model, as the press script has. **One
+caveat that may decide it:** the stored vectors are of the ABOUTs, while the pick reads the matched texts, so a bound
+built on today's vectors ranks by a different text than the model chooses by. The measurement should report both:
+ranked by the ABOUT vectors as stored, and by the matched texts embedded fresh (55 texts, one embedding call, nothing
+stored). If the two disagree, that is itself a finding for Design.
+
+**Adam's second run, read by the coordinator (23 Nov).** Covers paint 30ms after the reply almost everywhere, 200ms at
+worst and only where covers replace covers on a live page: Design's first branch, the indicator ends at the reply.
+Independent against consecutive: medians within half a second at both widths; 390 consecutive declined again, 18.7 to
+14.7, 1440 consecutive was flat, the independent presses show no trend. The within-run speed-up did not reproduce as a
+general effect, and the cold first press did not either (the 23.1 of the first run has no second; the maximum over these
+twenty is 20.9). Noise at five points is the explanation written down; warm function and prompt caching are both
+unsupported. "55 sent" on every line confirms in the data what the code said. Load 1.3 to 1.9 against 2.7 to 5.2 in the
+first run with the same times: a clean negative on load, so his figures do not need a quiet machine. The four-cell
+press recurred at the same position (Q85). His pull read "Already up to date", so the half pass was not on main when he
+ran; it ships now and becomes a short run of its own.

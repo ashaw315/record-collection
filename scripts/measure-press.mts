@@ -2,7 +2,8 @@
  * **The wait from press to answer as Adam meets it (§P.3's in-flight step, the Report bullet; step 3, unit 3b's second
  * half; the coordinator, 22 and 23 Nov): at 390 × 844 and 1440 × 900 on the grid, on production, five independent first
  * presses (the page reloaded before each, so each sees the whole pool and no run history: the ordinary case, and the one
- * the indicator is sized against) and then five consecutive presses on one page (the run leaving out what it named).
+ * the indicator is sized against), five more on a grid filtered to about half the collection (the slope's second point,
+ * since every pooled record's text goes to the model on every press), and then five consecutive presses on one page.
  * Each press: the reply (the click to the ask route's reply plus two frames), the covers (from there to the last of the
  * answer's covers painted, Design's boundary question), the cells and verdict returned, and the records sent and left
  * out. Load before and after each run. Adam runs this: production is behind his session.**
@@ -66,7 +67,7 @@ async function signIn(browser: Browser): Promise<Awaited<ReturnType<BrowserConte
   return state;
 }
 
-type Mode = 'independent' | 'consecutive';
+type Mode = 'independent' | 'half' | 'consecutive';
 type Press = {
   mode: Mode;
   press: number;
@@ -81,6 +82,8 @@ type Press = {
   sent: number;
   excluded: number;
   slot: string;
+  /** The answer's record ids in rank order: the run's own answers, so Design's top-N question (23 Nov) can be read against them offline. */
+  ids: string[];
 };
 
 /*
@@ -123,7 +126,7 @@ async function pressOnce(page: Page, mode: Mode, n: number, fill: boolean): Prom
   const started = Date.now();
   await control.getByRole('button', { name: /^ask$/i }).click();
   const response = await reply.catch(() => null);
-  if (response === null) return { mode, press: n, replyMs: Date.now() - started, coversMs: null, outcome: 'timed-out', cells: 0, verdict: null, sent: 0, excluded: 0, slot: '' };
+  if (response === null) return { mode, press: n, replyMs: Date.now() - started, coversMs: null, outcome: 'timed-out', cells: 0, verdict: null, sent: 0, excluded: 0, slot: '', ids: [] };
   const request = (response.request().postDataJSON() ?? {}) as { pool?: unknown[]; exclude?: unknown[] };
   const body = (await response.json().catch(() => null)) as { answers?: Array<{ recordId: string }>; verdict?: string | null } | null;
   await page.evaluate(FRAMES_JS);
@@ -148,6 +151,7 @@ async function pressOnce(page: Page, mode: Mode, n: number, fill: boolean): Prom
     sent: Array.isArray(request.pool) ? request.pool.length : 0,
     excluded: Array.isArray(request.exclude) ? request.exclude.length : 0,
     slot: ids.length > 0 ? '' : ((await page.evaluate(SLOT_JS)) as string),
+    ids,
   };
 }
 
@@ -157,8 +161,15 @@ const s1 = (ms: number) => `${(ms / 1000).toFixed(1)}s`;
 const s2 = (ms: number) => `${(ms / 1000).toFixed(2)}s`;
 const spread = (xs: number[], f: (n: number) => string) => (xs.length === 0 ? 'none' : `min ${f(Math.min(...xs))}, median ${f(median(xs))}, max ${f(Math.max(...xs))}`);
 
-async function openGrid(page: Page) {
-  await page.goto(`${BASE}/?view=grid`, { timeout: 60_000 });
+/*
+  The slope's second point (the coordinator, 23 Nov): the pick sends every pooled record's text on every press, so the
+  pool is the variable, and the grid's pool is what it shows. A filter leaving about half the collection, pressed
+  independently with everything else fixed: on production `yearTo=1974` leaves 28 of 55 (27 after), read 23 Nov.
+*/
+const HALF_QUERY = process.env.PRESS_HALF_QUERY ?? 'yearTo=1974';
+
+async function openGrid(page: Page, query = '') {
+  await page.goto(`${BASE}/?view=grid${query === '' ? '' : `&${query}`}`, { timeout: 60_000 });
   await page.locator('[data-collection-filters][data-hydrated="true"]').first().waitFor({ timeout: 60_000 });
 }
 
@@ -171,17 +182,18 @@ async function openGrid(page: Page) {
 const browser = await chromium.launch();
 try {
   const session = await signIn(browser);
-  log(`measure-press: ${BASE}, "${PHRASE}", ${PRESSES} independent and ${PRESSES} consecutive presses at each of ${VIEWPORTS.map((v) => v.name).join(' and ')}; load before ${load().join(' ')}`);
+  log(`measure-press: ${BASE}, "${PHRASE}", ${PRESSES} independent, ${PRESSES} independent on a pool filtered by ${HALF_QUERY}, and ${PRESSES} consecutive presses at each of ${VIEWPORTS.map((v) => v.name).join(' and ')}; load before ${load().join(' ')}`);
   log('  reply: the click to the ask route\'s reply plus two frames; covers: from there to the last cover painted');
   for (const viewport of VIEWPORTS) {
-    for (const mode of ['independent', 'consecutive'] as const) {
+    for (const mode of ['independent', 'half', 'consecutive'] as const) {
       const context = await browser.newContext({ storageState: session, viewport: { width: viewport.width, height: viewport.height } });
       const page = await context.newPage();
       const loadBefore = load();
       const presses: Press[] = [];
       for (let n = 1; n <= PRESSES; n += 1) {
-        if (mode === 'independent' || n === 1) await openGrid(page);
-        const p = await pressOnce(page, mode, n, mode === 'independent' || n === 1);
+        const fresh = mode !== 'consecutive' || n === 1;
+        if (fresh) await openGrid(page, mode === 'half' ? HALF_QUERY : '');
+        const p = await pressOnce(page, mode, n, fresh);
         presses.push(p);
         log(`  ${viewport.name} ${mode}: press ${n} ${p.outcome}, reply ${s1(p.replyMs)}, covers ${p.coversMs === null ? 'none drawn' : `+${s2(p.coversMs)}`}, ${p.cells} cell(s), verdict ${p.verdict ?? 'none'}, ${p.sent} sent, ${p.excluded} left out${p.slot === '' ? '' : `, slot "${p.slot}"`}`);
         appendFileSync(out, `${JSON.stringify({ base: BASE, viewport: viewport.name, phrase: PHRASE, ...p, at: new Date().toISOString() })}\n`);
