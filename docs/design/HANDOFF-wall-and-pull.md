@@ -1002,11 +1002,13 @@ Its rows are in the governs table above, one per section; this section does not 
   - **A title ask:** where the phrase is a record's title, send that record's matched text as the phrase, and leave the record out. Send no titles. Assert "the doors" as a title ask, with The Doors not among the answers. Where the title is a record in the collection with no matched text, ask as an ordinary phrase, and have the slot name the record and say it hasn't been described yet. Assert it on a seeded record with no matched text.
   - **Draw the reason** where the card says. Draw the stand-in as one record with its reason, and draw the run's end as a message in the slot with no record.
   - **Bound the reason** in the prompt and in the schema's maximum. Hold the prompt target at 160 until Adam has judged the placement, the bound and §P.4's "wholly in view" together. Report the model's spread of reason lengths under it. A reason over the bound is re-asked, not truncated. Assert that no drawn reason exceeds the bound.
-  - **In flight:** draw the slot's working indicator for the length of the call. It moves unless reduced motion is set, and then it's still. Keep the drawn answer until the new one arrives.
+  - **In flight:** draw the slot's working indicator for the length of the call, as a motion with no visible end, count or estimate of time left. It moves unless reduced motion is set, and then it's still. Keep the drawn answer until the new one arrives.
     - **Field:** keep the ask field enabled and editable while a request is in flight. Assert typing during flight is kept.
     - **Press handling:** ASK with the same phrase starts no request. ASK with a changed phrase abandons the request in flight and asks again. SURPRISE ME abandons it and answers. An abandoned request's answer is never drawn.
     - **Report** the wait from press to answer as Adam meets it, at 390 and 1440 on production, with the load figure, the spread, and the longest of five presses.
     - **Assert:** a second ASK with the same phrase starts no request; a changed phrase ends with only the second answer drawn; SURPRISE ME during flight draws its record and no late ask answer.
+    - **Indicator words:** at five seconds into a wait, add one line of words to the slot, proposed as "Reading the whole collection…", beside the motion, which carries on. End both at the reply. Measure the line at the rail's 112 and at 320 and 1280. If it takes two lines at 112, send the widths back rather than cutting.
+    - **Assert:** a stubbed wait of 30 seconds keeps the motion running and the words drawn throughout. Both clear at the reply. Under reduced motion, the words alone are drawn from the press.
   - **Reason subject:** add a prompt rule and a check that a reason speaks of the record, never of its text. Fail on mentions of "the text" or "the description"; "the notes" is a prompt rule only, and re-ask once, as for the cap.
   - **Release year:** send each record's Release year with its matched text, or "unknown" where none is stored. Report how many of the 55 have none.
   - **Opening:** prompt that the reason opens on the record's sound or occasion, with the year placed where it shows the fit, never as the first words. Assert on "something from the eighties" that no reason begins with "Released" or a year, and that no two reasons in one answer share their first three words. Keep the 145 target.
@@ -1121,7 +1123,7 @@ The provisionals in force, for the note in Maintaining this file that a provisio
 - **§67 · the correcting sheet.** Its look and words at 1440 × 900 and 390, from the sheet step's capture. Its head at 390 with the keyboard up, judged by Adam on his phone, since no capture draws the keyboard. Open.
 - **§P.2 · the reason as a press.** How the reason reads as something to press, in each host. Returns with the sheet step's capture. Open.
 - **§P.2 · the reason's bound.** The figure, set with the placement and §P.4's "wholly in view" as one decision after Adam's press. Returns with the model-pick step's report. Open. Adam judges it again at the model's own lengths (117 to 210, median 160, 64 reasons), not at 3a's stubbed 91 to 108. Closed 21 Nov by Adam's use on the phone: 160 by prompt, 188 by schema.
-- **§P.3 · the ask in flight.** The indicator's look, words and motion, for Adam on his phone. Open.
+- **§P.3 · the ask in flight.** The indicator's look, words and motion, for Adam on his phone. The words' threshold, proposed at five seconds, and their wording, judged by Adam on his phone against waits near 18 seconds. Open.
 - **§T.6 · the import's described line.** Its wording and wrap at 390. Returns from the step's capture. Open.
 
 ## Findings for screens without a pass

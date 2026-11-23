@@ -632,5 +632,15 @@
         "how": "inserts"
       }
     ]
+  },
+  {
+    "file": "Indicator any length",
+    "ref": "refs/drops/2026-11-23-02",
+    "heads": [
+      {
+        "head": "§P.2: the model pick, minimum",
+        "how": "anchors"
+      }
+    ]
   }
 ]
