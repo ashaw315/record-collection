@@ -60290,3 +60290,53 @@ second half, the in-flight step's Report bullet), and the requirement-unmet slot
 the whole row and `artistRowId` joined it after that file's last step-level run. Its commit message says 23 passed in
 the file; the run printed 21, a slip in the message, corrected here. Gate 45108560411 on the second-press fix and the
 gate on 0221e235 are the ones to read next.
+
+## 23 Nov, small hours: 3b's second half, the press-to-answer measurement, as a script Adam runs; the figures reconciled; the far view named
+
+**The order the coordinator asked for, 3b-ii ahead of 3b-i, was overtaken by the tree:** 3b-i was built and in its ship
+chain when the message arrived, and it landed at b983e800 (step 184; gate 45254282538). The chain's first attempt
+carried the §9 flaw itself: the intake's NOT OK went through a pipe into tail, the ship started on tail's zero, and the
+check was stopped by hand; the second attempt read the intake's exit directly. Two real failures under it, both mine:
+the new spec's screenshot line did not carry WRITE_CAPTURES on the line itself, which captures-unchanged reads line by
+line; and step 184 discharged a step still on the unbuilt list. The third of the first run's three was the load (37,
+swap 7.9 of 9.2 GB after the evening's e2e runs), not a test.
+
+**3b-ii, the wait from press to answer as Adam meets it (§P.3's in-flight step, its Report bullet).** The script
+(`scripts/measure-press.mts`, `npm run press:measure`) follows measure-window's shape: production behind Adam's session,
+the password from the environment only and never a file, the session in memory, nothing written to the collection.
+Five presses of ASK on the grid at 390 × 844 and at 1440 × 900, each timed from the click to the first cover drawn or
+the slot's message changing, polled every 16ms; per viewport the spread (min, median, max), the longest press named,
+and the machine's load before and after; the lines to docs/measurements/press-to-answer/. **It is Adam's to run, and
+the figure arrives with his run:** the app's password is held here only as its hash, so neither the deployed app nor a
+local production build (which logs in against the same hash) can be pressed from this machine. His command:
+
+```
+read -rs "P?Password: "; echo; PROD_LOGIN_PASSWORD="$P" npm run press:measure; unset P
+```
+
+and for the gap the coordinator asked to have said rather than assumed, the same against a local production build:
+
+```
+npm run build && npm run start &   # on this machine, with .env.local
+read -rs "P?Password: "; echo; PRESS_BASE_URL=http://localhost:3000 PROD_LOGIN_PASSWORD="$P" npm run press:measure; unset P
+```
+
+The two outputs name the gap once; the expectation, stated rather than assumed: the wait is nearly all the model call,
+which is the same call from either base, so the gap is the page's load and one network hop, well under a second
+against twelve to seventeen. Verified so far: the script refuses by name without the password, typecheck, lint.
+
+**The figures that drifted, reconciled.** Three numbers, one event measured at three boundaries on three days. The
+bench of 19 Nov, eight phrases from this machine: the model call alone, 7.3 to 15.2s, median 12.3. The take bench of 21
+Nov, one phrase three times: the model call alone, 11.3, 9.8, 10.1s, median 10.1. Production's route log of 20 Nov, two
+presses from Adam's phone: the route's total, 16.8 and 12.5s, the model 16.6 and 12.5 inside it, the route adding 44 and
+119ms. So "12 to 17 seconds" was press-to-answer bar the network and the draw, each milliseconds to low hundreds, and
+"10.1" was the call inside a press on a quieter day with one phrase; nothing else accounts for the difference. The
+indicator is sized for the production figure, 12 to 17, the longest seen 16.8, and the script's five presses per
+viewport replace both benches with the number as he meets it.
+
+**The far view's column host, for the coordinator's question on where 3b-i sits.** The column host is the far view at
+1440 and wider: the whole collection drawn as an object, reached from the shelf by the count's "THE WHOLE COLLECTION →"
+zoom-out, with the rail as a column beside it; from 1044 to 1273 the far view's rail is a band and its answer the
+band's cell. The grid Adam presses on is §P.4's grid host, which drew five covers already. Whether he opens the far view
+is not in the record; his phone presses of 20 Nov were the grid's band. The step is built, so the question no longer
+orders anything; it stands as a note on where the five cells live.
