@@ -77,7 +77,8 @@ describe('GET /api/records/:id/matched-text', () => {
     const response = await get(id);
 
     expect(response.status).toBe(200);
-    expect((await response.json()).data).toEqual({ generated: null, generatedModel: null, generatedAt: null, edited: null, editedAt: null, effective: null });
+    /* `checks` joined the answer for §67's sheet (23 Nov), the contract widened; a record with no row answers it null with the rest. */
+    expect((await response.json()).data).toEqual({ generated: null, generatedModel: null, generatedAt: null, edited: null, editedAt: null, checks: null, effective: null });
   });
 
   /** Fails against: a GET answering nulls for a record that does not exist. */
@@ -232,5 +233,18 @@ describe('PATCH is a read (the coordinator, 22 Nov)', () => {
     const response = await patch(id, { edited: 'Slow piano, and a little hiss.' });
     expect(response.status).toBe(200);
     expect((await row(id)).reviewedAt).toBeInstanceOf(Date);
+  });
+});
+
+describe('GET carries the checks (§67’s sheet, 23 Nov)', () => {
+  /** Fails against: a GET that leaves out `checks`, so the sheet has nothing to show beside a sentence with a figure to check. */
+  it('answers the mechanical checks stored with the draft, and null where none were', async () => {
+    const id = await seedRecord();
+    const checks = { dropped: ['A sentence about the material.'], disagreements: [], numbered: [2] };
+    await storeGeneratedMatchedText(id, 'Slow piano. Two horns.', 'model-a', { checks });
+    const { data } = await (await get(id)).json();
+    expect(data.checks).toEqual(checks);
+    const bare = await seedRecord();
+    expect((await (await get(bare)).json()).data.checks).toBeNull();
   });
 });

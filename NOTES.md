@@ -60385,3 +60385,24 @@ production as measure-window refuses its own overrides); red on the `__name` cla
 One press may have gone to the model before his run died: one call, no write, nothing to clean up. His load figures
 will carry what else he runs; the figure is reported with its load, not retried for a quiet machine, and the wait is
 nearly all the model call, so the load's share is small, stated when his numbers arrive. His command is unchanged.
+
+**The press figure's boundary, named before the figures come (the coordinator, 23 Nov).** The script's number is the
+click to the ask route's reply plus two frames, not the first cover painted: a proxy for the paint, chosen because the
+drawn set can be the same set again and the paint has no mark of its own yet. The gap between the two boundaries is
+two frames, about 33ms at 60Hz, and nothing else unless the client's draw takes longer than a frame; the route's reply
+is the whole of the model's wait. When the indicator exists, the slot ceasing to show it is the paint observation,
+immune to repeated records, and the better boundary for any later run. Reported beside the figures, with his load.
+
+**§67's sheet, first commit (the coordinator's go, 23 Nov): the sheet's logic and its view, not yet opened from anywhere.**
+`src/lib/matched-text/sheet.ts`: the text set out by the claim check's own sentence rule, one sentence replaced, an
+emptied one removed, one typed as two stored as two, the whole text joined back so saving one sentence changes only it,
+and the sentence to open on arrival, the first a claim names whole, none where none does. `src/app/ask/SheetView.tsx`:
+the reason as the head, the sentences in order with the named one open as a field and the rest pressable, no support
+marking, Save only when dirty, Clear only where an edit exists, the mechanical checks at one line beside the sentences,
+and the asking line before a clear or a dirty close ("Close without saving?", "Clear the edit and return to the
+generated text?", Proposed). The route's GET now answers `checks`; the route test's "every field null" expectation moved
+with the contract, said here and in the test. Tests first: the module's six, red on the missing module; the view's five
+and the route's checks case, red on the missing view and field; then 54 passed across the four files. Two of the
+failures on the way were my tests': the Save assertion matched the `disabled:` utility class rather than the attribute.
+Typecheck; lint; build. Step level. The second commit opens it from every host's reason, carries the claims through the
+client, discards the shelf queue on save, and runs the e2e and captures; the indicator goes ahead of it when ruled.

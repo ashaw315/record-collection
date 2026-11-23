@@ -93,11 +93,13 @@ export type MatchedTextState = {
   generatedAt: Date | null;
   edited: string | null;
   editedAt: Date | null;
+  /** The mechanical checks stored with the draft (22 Nov), for §67's sheet to show beside a sentence; null where none were stored. */
+  checks: MatchedTextChecks | null;
 };
 
 export type MatchedTextWrite = { ok: true } | { ok: false; reason: 'not_found' };
 
-const NO_ROW: MatchedTextState = { generated: null, generatedModel: null, generatedAt: null, edited: null, editedAt: null };
+const NO_ROW: MatchedTextState = { generated: null, generatedModel: null, generatedAt: null, edited: null, editedAt: null, checks: null };
 
 /**
  * **The record's matched text, or null where the record does not exist.** Two absences kept apart, as the snippet's are
@@ -112,6 +114,7 @@ export async function readMatchedText(recordId: string): Promise<MatchedTextStat
       generatedAt: recordMatchedText.generatedAt,
       edited: recordMatchedText.edited,
       editedAt: recordMatchedText.editedAt,
+      checks: sql<MatchedTextChecks | null>`${recordMatchedText.checks}`,
     })
     .from(records)
     .leftJoin(recordMatchedText, eq(recordMatchedText.recordId, records.id))

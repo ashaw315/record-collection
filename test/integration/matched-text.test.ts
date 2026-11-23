@@ -94,7 +94,8 @@ describe('readMatchedText', () => {
   it('is null for a record that does not exist, and every field null for a record with no row', async () => {
     expect(await readMatchedText(MISSING)).toBeNull();
     const id = await aRecord();
-    expect(await readMatchedText(id)).toEqual({ generated: null, generatedModel: null, generatedAt: null, edited: null, editedAt: null });
+    /* `checks` joined the state for §67's sheet (23 Nov); a record with no row answers it null with the rest. */
+    expect(await readMatchedText(id)).toEqual({ generated: null, generatedModel: null, generatedAt: null, edited: null, editedAt: null, checks: null });
   });
 
   it('reads both halves of a row', async () => {
