@@ -168,9 +168,31 @@ describe('import fires drafting (Adam, through the coordinator, 22 Nov)', () => 
 
     pending.length = 0;
     aboutWrite.mockClear();
+    matchedWrite.mockResolvedValue({ ok: true, text: 'Drafted on the second press.', sentences: [{ text: 'Drafted on the second press.', basis: 'inferred' }], unknown: [], dropped: [], ...observed });
     const again = await post();
     expect(again.status).toBe(200);
     expect(((await again.json()) as { report: { imported: unknown[] } }).report.imported.length, 'every release already held').toBe(0);
-    expect(pending.length, 'nothing new to draft, nothing scheduled').toBe(0);
+    /*
+      The feature's own remedy for the overflow is the next press (the coordinator, 22 Nov): a run that stores nothing
+      still drafts the records lacking text. The first build scheduled drafting only when the press had stored something,
+      so the press meant to finish the work did nothing; the coordinator's question found it.
+    */
+    expect(pending.length, 'the press that stored nothing still drafts what lacks text').toBe(1);
+    await Promise.all(pending);
+    const second = await runRow();
+    expect(second.imported.length, 'this press stored none').toBe(0);
+    expect(second.drafting?.searchable.length, 'and drafted the nine still lacking text').toBe(9);
+    expect(second.drafting?.waiting).toEqual([]);
+    expect((await matchedTextsFor(stored.imported.map((i) => i.recordId))).length).toBe(9);
+  });
+
+  it('a press with nothing to draft schedules nothing: every release held and every record described', async () => {
+    spyClient();
+    await post();
+    await Promise.all(pending);
+    pending.length = 0;
+    const again = await post();
+    expect(again.status).toBe(200);
+    expect(pending.length).toBe(0);
   });
 });

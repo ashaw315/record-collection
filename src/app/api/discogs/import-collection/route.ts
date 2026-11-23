@@ -6,7 +6,7 @@ import { DiscogsError, getDiscogsClient } from '@/lib/discogs/client';
 import { discogsErrorResponse } from '@/lib/discogs/errors';
 import { runImport } from '@/lib/db/queries/collection-import';
 import { runAfter } from '@/lib/import/after';
-import { draftAfterImport } from '@/lib/import/draft-after-import';
+import { draftAfterImport, toDraft } from '@/lib/import/draft-after-import';
 
 /**
  * SPEC.md §5 `POST /api/discogs/import-collection` (A77, step 18): the token
@@ -47,8 +47,14 @@ export const POST = withErrorHandling('api.discogs.import-collection.POST', asyn
     const startedAt = Date.now();
     const discogs = getDiscogsClient();
     const run = await runImport(discogs);
-    /* After the response, inside the function (the seam is faked in tests): nothing to draft, nothing scheduled. */
-    if (run.report.imported.length > 0) runAfter(() => draftAfterImport(run, discogs, startedAt));
+    /*
+      After the response, inside the function (the seam is faked in tests). What is drafted is this run's records first
+      and then every record still lacking matched text, in that order, so the press that stored nothing still finishes
+      the last press's overflow: the feature's remedy for the budget's cut is the next press (the coordinator, 22 Nov),
+      and the first build scheduled nothing when a press stored nothing. Nothing to draft, nothing scheduled.
+    */
+    const ids = await toDraft(run);
+    if (ids.length > 0) runAfter(() => draftAfterImport(run, discogs, startedAt, ids));
     return NextResponse.json(run, { status: 200 });
   } catch (error) {
     if (error instanceof DiscogsError) return discogsErrorResponse(error);

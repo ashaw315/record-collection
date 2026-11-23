@@ -60242,3 +60242,28 @@ same call at any viewport, same route, same model, same pool, and the viewport c
 ten seconds; a phone's network moves it the wrong way if at all. Design's branch, over three seconds, is fired several
 times over by every measurement, so she can rule the indicator without 3b's capture; 3b still wants building for its own
 sake and for step 170, after import fires drafting and before §67's sheet unless the sheet prices small.
+
+**The suffix record closed (the coordinator, 22 Nov, late).** "Artist name suffix resent" never reached this machine and may
+never: relayed on the path the first file went missing on, and its only substantive change was the step heading, which
+was already resolved on placement to the heading the tree holds. So the record says what happened rather than waiting:
+the suffix ruling was applied from "Artist name without suffix" at 07d7dfec, the heading resolved on placement to
+"§T.4: the name sort key" and the mismatch logged in handoff-steps-gone.json; the resend superseded it by name and
+carries no further change; its line in docs/design-landed.jsonl says so, with no drop ref. **The rule to keep, the
+coordinator's:** an anchor that does not resolve is refused and reported, and the fix comes back from Design; the
+WITHDRAWALS anchor got that treatment three hours after the suffix anchor got the halfway one, inferred and logged, and
+the later behaviour is the one that stands.
+
+**The coordinator's question about the second press found a defect in the shipped remedy, fixed forward (22 Nov,
+22:40).** Three answers from the code. (1) A press makes a run row whether or not it stores anything: `runImport`
+records every run, and Manage draws the latest by finished time, so the second press's report (nine skipped, none
+imported) replaces the first's on the page. (2) What this press stored and what this press drafted are already two
+fields on the run: `report.imported` is the stored, `report.drafting.searchable` the drafted, with `waiting` and
+`failed` beside it; Design's corrected line can count the drafted and the waiting without a schema change. (3) The
+shipped after-task ran only when the press had stored something, and drafted only the run's own records, so the
+"press Import again" remedy for the budget's overflow drafted nothing: the press that was to finish the work did no
+work. The question found it. Now a press drafts this run's stored records first and then every record still lacking
+matched text (`toDraft`), and schedules nothing only when there is nothing to draft. Test first: the second press on a
+held collection drafting the nine left lacking, red (0 scheduled against 1), then 12 passed across the route and the
+drafter; typecheck; lint. "Import draft line" taken in as held, the coordinator's hold while Design corrects the rule:
+its card 48095d31 is on disk and in refs/drops/2026-11-22-03, not committed, so the tree's Table and Grid card stays
+b65cb51b for the corrected card to chain from; recorded with its why in the landed list.

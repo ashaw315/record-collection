@@ -5,6 +5,7 @@ import { discographyOf } from '@/lib/llm/about-grounding';
 import { getMatchedTextClient } from '@/lib/llm/matched-text-client';
 import { getSnippetClient } from '@/lib/llm/snippet-client';
 import { logger } from '@/lib/logger';
+import { recordsToDraft } from '@/lib/db/queries/matched-text';
 import { draftImported } from './draft-imported';
 
 /** The function's whole duration (src/app/api/discogs/import-collection/route.ts exports it), and the margin kept back from it. */
@@ -18,8 +19,18 @@ export const DRAFTING_MARGIN_MS = 30_000;
  * figures accrue where Adam reads them. Never throws: a failure is a record's line on the run, and the run row is the
  * report of record, since the response left before any of this began.
  */
-export async function draftAfterImport(run: ImportRun, discogs: DiscogsClient, requestStartedAt: number): Promise<void> {
-  const ids = run.report.imported.map((item) => item.recordId);
+/**
+ * What a press drafts, in order: the records this run stored, then every record still lacking matched text, so the
+ * overflow a budget cut left behind is finished by the next press, whether or not that press stores anything (the
+ * coordinator's question, 22 Nov, which found the first build drafting only what the press had stored).
+ */
+export async function toDraft(run: ImportRun): Promise<string[]> {
+  const stored = run.report.imported.map((item) => item.recordId);
+  const lacking = (await recordsToDraft('all')).map((r) => r.id).filter((id) => !stored.includes(id));
+  return [...stored, ...lacking];
+}
+
+export async function draftAfterImport(run: ImportRun, discogs: DiscogsClient, requestStartedAt: number, ids: readonly string[]): Promise<void> {
   try {
     const outcome = await draftImported(ids, {
       snippet: getSnippetClient(),
