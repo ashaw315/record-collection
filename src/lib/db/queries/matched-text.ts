@@ -152,7 +152,7 @@ export async function clearMatchedTextEdit(recordId: string): Promise<MatchedTex
   return { ok: true };
 }
 
-export type DraftRow = { id: string; artist: string; title: string; year: number | null; about: string | null; payload: unknown };
+export type DraftRow = { id: string; artist: string; title: string; year: number | null; about: string | null; payload: unknown; artistRowId: string };
 
 /**
  * **The records the drafting script drafts (scripts/write-matched-text.mts):** by short id prefix, or every record with
@@ -160,9 +160,12 @@ export type DraftRow = { id: string; artist: string; title: string; year: number
  * context, and the cached Discogs payload, or null where none is cached. The prefixes go as one array parameter: its
  * first form, `= ANY((…))`, was a row constructor, which failed the script's first real run (42809) before any call.
  */
-export async function recordsToDraft(selection: { prefixes: readonly string[] } | 'all'): Promise<DraftRow[]> {
+export async function recordsToDraft(selection: { prefixes: readonly string[] } | { ids: readonly string[] } | 'all'): Promise<DraftRow[]> {
   const where = selection === 'all'
     ? sql`m.generated IS NULL AND m.edited IS NULL`
+    /* The import's drafter (22 Nov) names whole ids, in the import's order, so the budget's cut falls on the records imported last. */
+    : 'ids' in selection
+      ? (selection.ids.length === 0 ? sql`false` : inArray(sql`r.id::text`, [...selection.ids]))
     /*
       inArray over the expression, which Drizzle writes as a parameterised IN list, one parameter per prefix: nothing is
       concatenated into the SQL. Its first form, = ANY((…)), was a row constructor (42809), and = ANY(${array}) is the
@@ -170,7 +173,7 @@ export async function recordsToDraft(selection: { prefixes: readonly string[] } 
     */
     : inArray(sql`left(r.id::text, 8)`, [...selection.prefixes]);
   return (await getDb().execute<DraftRow>(sql`
-    SELECT r.id, a.name AS artist, r.title, r.release_year AS year, nullif(r.snippet, '') AS about, c.payload
+    SELECT r.id, a.name AS artist, r.title, r.release_year AS year, nullif(r.snippet, '') AS about, c.payload, r.artist_id AS "artistRowId"
     FROM records r JOIN artists a ON a.id = r.artist_id
     LEFT JOIN pressings p ON p.id = r.pressing_id
     LEFT JOIN discogs_cache c ON c.discogs_release_id = p.discogs_release_id

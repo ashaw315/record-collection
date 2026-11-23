@@ -34,9 +34,12 @@ const WINDOW_MS = 60 * 60 * 1000;
  * So an uncompleted claim expires instead. A row claimed and never completed is
  * exactly the timeout signature.
  *
- * **90 seconds is derived from the platform, not chosen.** `vercel.json` sets
- * `maxDuration` to Hobby's 60s ceiling, so nothing can still be running at 90s
- * — the platform has already killed it. That margin is what makes this unable
+ * **90 seconds is derived from the platform, not chosen.** The LLM routes each
+ * export `maxDuration = 60`, so nothing of theirs can still be running at 90s —
+ * the platform has already killed it. (The sentence here once said vercel.json
+ * set 60 as Hobby's ceiling; since Fluid compute the plan's ceiling is 300, the
+ * import route runs at it for its drafting (22 Nov), and that route does not
+ * spend this budget. The 60 that matters here is the routes' own.) That margin is what makes this unable
  * to evict a LIVE call, which is the only way the rule could do harm: evicting
  * a claim whose request is still in flight would admit an eleventh concurrent
  * call against a budget of ten. **If the ceiling ever rises, this must rise

@@ -13,7 +13,7 @@ import { ImportFromDiscogs, ImportReport } from './ImportFromDiscogs';
  * interaction and the placement are the e2e spec's (`import-159.spec.ts`).
  */
 const report = collectionReportFromFixtures();
-const run = { report, finishedAt: '2026-10-28T21:05:00.000Z' };
+const run = { id: '6f3b2c1e-0000-4000-8000-000000000000', report, finishedAt: '2026-10-28T21:05:00.000Z' };
 const lineOf = (html: string, key: string) => {
   const chunk = html.split('<li data-import-line="').find((c) => c.startsWith(`${key}"`));
   if (chunk === undefined) throw new Error(`no line ${key} in ${html}`);

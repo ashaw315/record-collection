@@ -60009,9 +60009,12 @@ SELECT count(*) FILTER (WHERE snippet_reviewed_at IS NOT NULL) AS abouts_marked_
 FROM records WHERE nullif(snippet, '') IS NOT NULL;
 -- expected: 0 | 55
 
--- 2. The backfill: records.snippet_reviewed_at, for the 55 ABOUTs Adam's own eyes were on.
+-- 2. The backfill: records.snippet_reviewed_at, for the 55 ABOUTs Adam's own eyes were on. The same predicate as
+--    step 1, so the counts cannot disagree on a whitespace-only snippet (there are none; the coordinator's note).
+--    updated_at is the row's last change, not the ABOUT's generation, so the stamp is approximately right rather than
+--    right: fine for a mark whose value nothing reads, only its presence.
 UPDATE records SET snippet_reviewed_at = updated_at
-WHERE snippet IS NOT NULL AND btrim(snippet) <> ''
+WHERE nullif(snippet, '') IS NOT NULL
   AND (left(id::text, 8) IN ('01ad99d8','028865b5','05d37b5f','068da93c','0a286e77','0af4723d','1611cb00','1bcbce5d',
     '1d4a4107','22d34772','309a4726','3505ac9c','3fc9c4fb','47b69af6','48461309','493d960e','52435f53','63d720c0',
     '73ea635d','797a1ade','7a333685','7b9a5ee9','7cfdc4cb','7d953882','8120765c','946db39b','a950eb99','b1ac00c6',
@@ -60118,9 +60121,12 @@ SELECT count(*) FILTER (WHERE snippet_reviewed_at IS NOT NULL) AS abouts_marked_
 FROM records WHERE nullif(snippet, '') IS NOT NULL;
 -- expected: 0 | 55
 
--- 2. The backfill: records.snippet_reviewed_at, for the 55 ABOUTs Adam's own eyes were on.
+-- 2. The backfill: records.snippet_reviewed_at, for the 55 ABOUTs Adam's own eyes were on. The same predicate as
+--    step 1, so the counts cannot disagree on a whitespace-only snippet (there are none; the coordinator's note).
+--    updated_at is the row's last change, not the ABOUT's generation, so the stamp is approximately right rather than
+--    right: fine for a mark whose value nothing reads, only its presence.
 UPDATE records SET snippet_reviewed_at = updated_at
-WHERE snippet IS NOT NULL AND btrim(snippet) <> ''
+WHERE nullif(snippet, '') IS NOT NULL
   AND (left(id::text, 8) IN ('01ad99d8','028865b5','05d37b5f','068da93c','0a286e77','0af4723d','1611cb00','1bcbce5d',
     '1d4a4107','22d34772','309a4726','3505ac9c','3fc9c4fb','47b69af6','48461309','493d960e','52435f53','63d720c0',
     '73ea635d','797a1ade','7a333685','7b9a5ee9','7cfdc4cb','7d953882','8120765c','946db39b','a950eb99','b1ac00c6',
@@ -60167,3 +60173,72 @@ response, the rows already written stay, and a second press resumes. No script w
 whole-collection resolver run would skip this row. Worth a row: a merge produces exactly this state, an id with no
 facts behind it, and the skip rule makes it permanent; the merge is not finished until the facts land, and the surface
 should know that (Q78).
+
+**Design's line, condition 2, the marker checked (the coordinator's question, 22 Nov, evening; nothing built).** "Stored
+by an import since the migration and not yet read": reviewed_at is null on all 55 old matched texts and on every new
+one, so the column alone cannot tell them apart. The date comparison holds on production: the 55 rows' generated_at run
+from 16:35:32 to 16:35:35 UTC on 19 Nov, none null; 0037 was applied to production at 18:41:23 UTC on 22 Nov
+(drizzle.__drizzle_migrations, the deploy of 87f0858d); 0 rows have a generated_at at or after it. So the condition is
+`reviewed_at IS NULL AND generated_at >= MATCHED_TEXT_TRACKING_START`, the constant named once in code as that applied
+time, with its provenance in the comment. A cleaner marker exists in the data by accident and not by design: `checks` is
+null on all 55 (stored before the column) and unit two writes it on every import draft, while the drafting script's
+store also writes it and sets reviewed_at, so `reviewed_at IS NULL AND checks IS NOT NULL` is "import-drafted and
+unread" today with no date at all; but it couples the line to the checks column's history, and the explicit truth would
+be a provenance column written by unit two (`drafted_by`, additive). The date constant needs no schema and says what it
+means; recommended now, with provenance for unit two if Design wants the line to outlive the constant. Not a backfill
+in another hat: nothing is written. **Reject then redraft:** `rejectMatchedText` deletes the row, so the next import
+press inserts a new one through `storeGeneratedMatchedText`, generated_at `new Date()` and reviewed_at null; the
+on-conflict path sets both likewise, so a regeneration without a rejection refreshes the stamp too (the test "a
+re-store makes the text unread again" asserts reviewed_at; the fresh stamp is asserted on the insert and read from the
+on-conflict set, not yet asserted on the re-store). Condition 1 held entirely, as asked: no store for the verified-error
+list, and the four are not put into `checks`, which carries mechanical findings only.
+
+## 22 Nov, evening: import fires drafting, built; the in-flight timing line; the drops of the evening
+
+**Import fires drafting (Adam's requirement through the coordinator, 22 Nov; the go at 21:15), built, both passes.** The
+import answers as before, then every record it stored is drafted after the response inside the same function: the
+ABOUT first (the snippet client with the cached release's grounding, the artist's Discogs releases fetched with the
+route's client for the discography, the artist's own facts from the catalogue), stored with `snippet_reviewed_at`
+null; then the matched text from the stored ABOUT and the cached material, stored with `reviewed_at` null and its
+mechanical checks (`src/lib/import/draft-imported.ts`, `draftImported`). The budget is whole records: before each
+record the loop asks whether a p90 record (ABOUT 9.1s plus matched text 14.5s, 19 Nov; `PER_RECORD_BUDGET_MS` 24s)
+would still finish inside what is left of the function's 300 seconds after the import's own time and a 30-second margin
+(`src/lib/import/draft-after-import.ts`), and stops where it would not; the rest are waiting, nothing of theirs written,
+and the next press of Import drafts them, since a run skips what is held and drafts what lacks text. A failed ABOUT is a
+named failure and the matched text is still drafted with no ABOUT; a failed matched text leaves the record out of the
+pool; a client that throws is that record's failure and the next record is still drafted. The outcome goes onto the
+stored run under the report's `drafting` key (`recordDraftingOutcome`; `ImportRun` carries its id now) and to the log,
+since the response has already left; the route schedules it through one seam, `runAfter` (Next's `after()`, which has
+no request scope in a handler called directly, so the tests fake the seam to run inline and hand the promise back) and
+exports `maxDuration = 300`, Hobby's maximum and default under Fluid compute, so the budget the drafter keeps is the one
+the platform enforces. Not drawn: the report's lines are §T.6's four, which partition the run, and a drafting line would
+be a fifth element, so Manage reads `drafting` and draws nothing of it until Design rules its line; the figures are on
+the run row and in the log meanwhile. The rate limiter's stale "Hobby's 60s ceiling" comment is corrected: the LLM
+routes' own 60 is what its 90 derives from, and the import route does not spend that budget. Tests first, red:
+`draftImported`'s four (both texts stored unread with checks and the record in the pool, the matched text reading the
+ABOUT just stored; the budget's cut on whole records, nothing of a waiting record written; a failed ABOUT reported and
+the matched text drafted with none, a failed matched text leaving the pool untouched; a throwing client as one record's
+failure) and the route's two (answers first with no `drafting` in the body, the after-task drafting all nine and
+writing the outcome onto the run with the rest of the report untouched, nine in the pool, nothing marked read; a
+failing client as nine named failures with the response still 200, and a second import that stores nothing scheduling
+nothing). The budget test's first arithmetic was mine: its stub spent half a record per record, so starting the second
+was right by the rule, and the test now spends one p90 record per record. The route test's first run counted 14 ABOUT
+calls for 9 records: an earlier test's after-task was still drafting when the next test began, so the harness lets
+pending tasks land before truncating. The fresh `generated_at` on the on-conflict path is asserted now, as the
+coordinator asked, and passed on its first run, since the path already wrote it: a guard on an untested path, not new
+behaviour. Then 7 passed in the route file, 4 in the drafter's, 22 in the matched-text queries'; typecheck (the Manage
+component test's run fixture gained the id the type now carries); lint; build. Step level. The gate it dispatches
+covers the unreviewed mark's two halves and this.
+
+**The in-flight timing line for Design (the coordinator, 22 Nov, 21:00).** The two figures are the same event measured
+at two boundaries on two days: the model call. The bench of 19 Nov, eight phrases from this machine at the pick's
+effort, ran 7.3 to 15.2s, median 12.3; the take bench of 21 Nov, three five-picks of one phrase, 11.3, 9.8 and 10.1s,
+median 10.1. Production's own route log on 20 Nov carries two presses from Adam's phone: total 16,760ms with the model
+at 16,641, and 12,529 with the model at 12,485; the route adds 44 and 119ms. So "12 to 17 seconds a press" is the
+route's total on production, which is press-to-answer bar the network to the phone and the client's draw, each
+milliseconds to low hundreds; "10 to 12" is the bench's model call on a quieter day. The figure the indicator has to
+cover is the production one: 12 to 17 seconds, the longest seen 16.8. At 390 the number stands, since the call is the
+same call at any viewport, same route, same model, same pool, and the viewport changes rendering, milliseconds against
+ten seconds; a phone's network moves it the wrong way if at all. Design's branch, over three seconds, is fired several
+times over by every measurement, so she can rule the indicator without 3b's capture; 3b still wants building for its own
+sake and for step 170, after import fires drafting and before §67's sheet unless the sheet prices small.

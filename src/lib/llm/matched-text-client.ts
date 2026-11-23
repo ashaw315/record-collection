@@ -21,6 +21,8 @@ import { callAnthropic, type AnthropicRequest, type Effort, type Observed } from
  * Description writing stays on Anthropic's key, locally (the coordinator, 14 Nov), as the ABOUT drafts are made.
  */
 const MODEL = 'claude-opus-5';
+/** The model the drafts are stored under, for the import's drafter (22 Nov) to write the same name the script does. */
+export const MATCHED_TEXT_MODEL = MODEL;
 export const MATCHED_TEXT_MAX_TOKENS = 16_000;
 /* Medium, not the snippet's low: drafting runs once per record, offline, where a concrete and correct description matters more than the seconds, unlike the pick on the phone. */
 const MATCHED_TEXT_EFFORT: Effort = 'medium';

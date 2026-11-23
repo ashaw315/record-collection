@@ -10,7 +10,7 @@ import { mapCollectionItem, type Omission } from '@/lib/discogs/collection-map';
 import { masterYear } from '@/lib/discogs/master-year';
 import { findFormatByName } from './formats';
 import { importRelease } from './discogs-import';
-import { recordImportRun, type ImportRun } from './import-runs';
+import { recordImportRun, type DraftingOutcome, type ImportRun } from './import-runs';
 import { writeMoodSets } from './record-moods';
 import { runTagging, type Tagger } from '@/lib/moods/tagging';
 import { describeError } from '@/lib/errors/describe';
@@ -45,7 +45,8 @@ export type FailedItem = { releaseId: number; title: string | null; artist: stri
  * never derived from the three lists: §T.6's four lines add up to it, and a check against a
  * total computed from the same lists would pass whatever the partition did.
  */
-export type CollectionReport = { username: string; total: number; imported: ImportedItem[]; skipped: SkippedItem[]; failed: FailedItem[] };
+/** `drafting` arrives after the response, written onto the stored run by the import's drafter (22 Nov); absent while it runs and on runs before it existed. */
+export type CollectionReport = { username: string; total: number; imported: ImportedItem[]; skipped: SkippedItem[]; failed: FailedItem[]; drafting?: DraftingOutcome };
 
 /** The record holding the release, by title and artist, or null when no record does. */
 async function alreadyHeld(releaseId: number): Promise<{ title: string; artist: string } | null> {

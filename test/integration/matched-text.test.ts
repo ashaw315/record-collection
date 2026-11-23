@@ -236,3 +236,17 @@ describe('unreviewedTexts orders newest first', () => {
     expect(listed[0].since).toBeTruthy();
   });
 });
+
+describe('a re-store refreshes the stamp', () => {
+  /** Fails against an on-conflict set that leaves generated_at as it was: a redraft would carry the old text's time, and Design's line (reviewed_at null and generated_at after the tracking start) would miss it. */
+  it('writes a fresh generated_at on the on-conflict path, so a regeneration reads as new', async () => {
+    const id = await aRecord();
+    await storeGeneratedMatchedText(id, 'First.', 'model-a');
+    await db.execute(sql`UPDATE record_matched_text SET generated_at = now() - interval '3 days' WHERE record_id = ${id}`);
+    const before = (await row(id)).generated_at;
+    await storeGeneratedMatchedText(id, 'Second.', 'model-a');
+    const after = (await row(id)).generated_at;
+    expect(after).not.toBe(before);
+    expect(new Date(after ?? 0).getTime()).toBeGreaterThan(Date.now() - 60_000);
+  });
+});

@@ -4,6 +4,26 @@ import { getTestDb, truncateAll, closeTestDb } from '../../helpers/db';
 import * as clientModule from '@/lib/discogs/client';
 import * as taggerModule from '@/lib/llm/mood-tagger-client';
 import { POST } from '@/app/api/discogs/import-collection/route';
+import { matchedTextsFor } from '@/lib/db/queries/ask';
+
+/*
+  Import fires drafting (22 Nov): the two model clients are faked at their getters, as the snippet route's tests fake
+  theirs, and the after-task's scheduler is faked to run inline and hand its promise back, since Next's after() has no
+  request scope in a handler called directly. Nothing here reaches a socket.
+*/
+const aboutWrite = vi.fn();
+const matchedWrite = vi.fn();
+const pending: Promise<unknown>[] = [];
+vi.mock('@/lib/llm/snippet-client', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/llm/snippet-client')>();
+  return { ...actual, getSnippetClient: () => ({ write: aboutWrite }) };
+});
+vi.mock('@/lib/llm/matched-text-client', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@/lib/llm/matched-text-client')>();
+  return { ...actual, getMatchedTextClient: () => ({ write: matchedWrite }) };
+});
+vi.mock('@/lib/import/after', () => ({ runAfter: (work: () => Promise<unknown>) => { pending.push(work()); } }));
+const observed = { stopReason: 'end_turn', inputTokens: 1, outputTokens: 1 };
 
 /**
  * SPEC.md §5 `POST /api/discogs/import-collection`, session-only, no body,
@@ -15,7 +35,14 @@ import { POST } from '@/app/api/discogs/import-collection/route';
 const db = getTestDb();
 
 beforeEach(async () => {
+  /* An earlier test's after-task may still be drafting; let it land before the tables are emptied, or its calls count against the next test. */
+  await Promise.allSettled(pending);
   await truncateAll();
+  pending.length = 0;
+  aboutWrite.mockReset();
+  matchedWrite.mockReset();
+  aboutWrite.mockResolvedValue({ ok: true, snippet: 'An ABOUT from the import.', ...observed });
+  matchedWrite.mockResolvedValue({ ok: true, text: 'Slow piano, sparse.', sentences: [{ text: 'Slow piano, sparse.', basis: 'inferred' }], unknown: [], dropped: [], ...observed });
 });
 
 afterEach(() => {
@@ -100,4 +127,50 @@ describe('POST /api/discogs/import-collection', () => {
   });
 
   /* Unauthenticated: the middleware answers 401 for every /api/ path (SPEC §3) before this handler runs; see the note above. */
+});
+
+describe('import fires drafting (Adam, through the coordinator, 22 Nov)', () => {
+  const runRow = async () => (await db.execute<{ report: { imported: Array<{ recordId: string }>; drafting?: { searchable: string[]; waiting: string[]; failed: unknown[] } } }>(`SELECT report FROM discogs_import_runs ORDER BY finished_at DESC LIMIT 1`)).rows[0].report;
+
+  /** Fails against: a route that answers without scheduling the drafting, one that drafts before answering (the response would carry it), and an outcome written anywhere but the stored run. */
+  it('answers first, then drafts every imported record after the response and writes the outcome onto the stored run; each is in the pool', async () => {
+    spyClient();
+    const res = await post();
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { report: { imported: Array<{ recordId: string }>; drafting?: unknown } };
+    expect(body.report.drafting, 'the response leaves before a draft starts').toBeUndefined();
+    expect(pending.length, 'one after-task scheduled').toBe(1);
+    await Promise.all(pending);
+    const ids = body.report.imported.map((i) => i.recordId);
+    const stored = await runRow();
+    expect(stored.drafting?.searchable.slice().sort()).toEqual(ids.slice().sort());
+    expect(stored.drafting?.waiting).toEqual([]);
+    expect(stored.drafting?.failed).toEqual([]);
+    expect(stored.imported.length, 'the rest of the report untouched').toBe(9);
+    expect((await matchedTextsFor(ids)).length).toBe(9);
+    expect(aboutWrite).toHaveBeenCalledTimes(9);
+    expect(matchedWrite).toHaveBeenCalledTimes(9);
+    const marks = (await db.execute<{ n: number }>(`SELECT count(*)::int AS n FROM record_matched_text WHERE reviewed_at IS NOT NULL`)).rows[0];
+    expect(marks.n, 'stored unread').toBe(0);
+  });
+
+  /** Fails against: a drafter that lets a client's failure throw out of the after-task, losing the outcome for every other record. */
+  it('a client that fails is a named failure on the run and the response is still 200; an import that stores nothing drafts nothing', async () => {
+    spyClient();
+    matchedWrite.mockRejectedValue(new Error('ANTHROPIC_API_KEY is not set'));
+    const res = await post();
+    expect(res.status).toBe(200);
+    await Promise.all(pending);
+    const stored = await runRow();
+    expect(stored.drafting?.searchable).toEqual([]);
+    expect(stored.drafting?.failed.length).toBe(9);
+    expect(stored.drafting?.failed[0]).toMatchObject({ stage: 'matched', reason: 'ANTHROPIC_API_KEY is not set' });
+
+    pending.length = 0;
+    aboutWrite.mockClear();
+    const again = await post();
+    expect(again.status).toBe(200);
+    expect(((await again.json()) as { report: { imported: unknown[] } }).report.imported.length, 'every release already held').toBe(0);
+    expect(pending.length, 'nothing new to draft, nothing scheduled').toBe(0);
+  });
 });

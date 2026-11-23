@@ -5,6 +5,8 @@ import { withErrorHandling } from '@/lib/api/handler';
 import { DiscogsError, getDiscogsClient } from '@/lib/discogs/client';
 import { discogsErrorResponse } from '@/lib/discogs/errors';
 import { runImport } from '@/lib/db/queries/collection-import';
+import { runAfter } from '@/lib/import/after';
+import { draftAfterImport } from '@/lib/import/draft-after-import';
 
 /**
  * SPEC.md §5 `POST /api/discogs/import-collection` (A77, step 18): the token
@@ -17,6 +19,14 @@ import { runImport } from '@/lib/db/queries/collection-import';
  * when it finished.
  */
 const bodySchema = z.object({}).strict();
+
+/**
+ * **Import fires drafting (Adam, through the coordinator, 22 Nov).** The import answers as before, then every record it
+ * stored is drafted after the response, the ABOUT and the matched text, inside this same function's duration: 300
+ * seconds, Hobby's maximum and default under Fluid compute, stated here so the budget the drafter keeps is the one the
+ * platform enforces. The import itself takes what it takes first; the drafter keeps a margin and stops on whole records.
+ */
+export const maxDuration = 300;
 
 export const POST = withErrorHandling('api.discogs.import-collection.POST', async (request: Request) => {
   const text = await request.text();
@@ -34,7 +44,11 @@ export const POST = withErrorHandling('api.discogs.import-collection.POST', asyn
   try {
     /* The run, recorded and answered with when it finished: §T.6's report survives leaving Manage, read back from §4.2's `discogs_import_runs`. */
     /* No tagger: the moods are retired (§P.2; Adam, 14 Nov), so an import writes no mood sets. record_moods is kept until Adam rules on dropping it. */
-    const run = await runImport(getDiscogsClient());
+    const startedAt = Date.now();
+    const discogs = getDiscogsClient();
+    const run = await runImport(discogs);
+    /* After the response, inside the function (the seam is faked in tests): nothing to draft, nothing scheduled. */
+    if (run.report.imported.length > 0) runAfter(() => draftAfterImport(run, discogs, startedAt));
     return NextResponse.json(run, { status: 200 });
   } catch (error) {
     if (error instanceof DiscogsError) return discogsErrorResponse(error);
