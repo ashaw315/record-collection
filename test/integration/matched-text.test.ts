@@ -67,10 +67,12 @@ describe('recordsToDraft and collectionTitles', () => {
     expect((await recordsToDraft('all')).map((r) => r.id)).toEqual([c]);
   });
 
-  it('carries what the prompt needs: artist, title, year, the ABOUT, and the cached payload or null', async () => {
+  it('carries what the prompt needs: artist, title, year, the ABOUT, the cached payload or null, and the artist’s row for its facts', async () => {
     const [a] = await three();
     await db.execute(sql`UPDATE records SET snippet = 'An ABOUT.' WHERE id = ${a}`);
-    expect(await recordsToDraft({ prefixes: [a.slice(0, 8)] })).toEqual([{ id: a, artist: 'Store', title: 'Stored', year: null, about: 'An ABOUT.', payload: null }]);
+    /* The artist's row id joined the row for the import's drafter (22 Nov), which reads the artist's formation and home for the ABOUT's grounding; gate 45105552902 caught the widened row. */
+    const { artist_id } = (await db.execute<{ artist_id: string }>(sql`SELECT artist_id FROM records WHERE id = ${a}`)).rows[0];
+    expect(await recordsToDraft({ prefixes: [a.slice(0, 8)] })).toEqual([{ id: a, artist: 'Store', title: 'Stored', year: null, about: 'An ABOUT.', payload: null, artistRowId: artist_id }]);
   });
 
   it('reads every record’s id, title and artist for the diagnostic', async () => {
