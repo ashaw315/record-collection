@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { outsideTopN, permutationP, ranksOfPicks, spearman } from './top-n';
+import { criticalR, outsideTopN, permutationP, ranksOfPicks, spearman } from './top-n';
 
 /**
  * **Design's top-N measurement, its arithmetic (23 Nov):** for each answer, each picked record's rank among the pool by
@@ -51,5 +51,21 @@ describe('permutationP', () => {
     expect(permutationP(xs, xs, 2000, 7)).toBeLessThan(0.01);
     expect(permutationP(xs.map(() => 0), xs, 500, 7)).toBe(1);
     expect(permutationP(xs, xs, 500, 7)).toBe(permutationP(xs, xs, 500, 7));
+  });
+});
+
+describe('criticalR', () => {
+  /* The coordinator, 24 Nov: "not supported" arrives with what could have been seen, the |r| that would have cleared p < 0.05 at the base's n, read off the same shuffles. Fails against a percentile taken at the wrong end, one-sided, or not of the absolute value: for 20 untied values the tabled two-sided 0.05 value is about 0.447. */
+  it('is the |r| a shuffle reaches only 5% of the time, two-sided, agreeing with the tabled value for 20 untied ranks', () => {
+    const xs = Array.from({ length: 20 }, (_, i) => i);
+    const c = criticalR(xs, xs, 20000, 7);
+    expect(c).toBeGreaterThan(0.42);
+    expect(c).toBeLessThan(0.48);
+  });
+  it('rises as the base shrinks, and is null where a variable is constant and no figure exists', () => {
+    const small = Array.from({ length: 8 }, (_, i) => i);
+    const large = Array.from({ length: 40 }, (_, i) => i);
+    expect(criticalR(small, small, 5000, 7) ?? 0).toBeGreaterThan(criticalR(large, large, 5000, 7) ?? 1);
+    expect(criticalR(small.map(() => 0), small, 500, 7)).toBeNull();
   });
 });

@@ -13,7 +13,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { cosine } from '@/lib/ask/rank';
-import { permutationP, spearman } from '@/lib/ask/top-n';
+import { criticalR, permutationP, spearman } from '@/lib/ask/top-n';
 import { matchedTextsFor } from '@/lib/db/queries/ask';
 import { collectionTitles } from '@/lib/db/queries/matched-text';
 import { embedTexts } from '@/lib/openai/embeddings';
@@ -69,6 +69,9 @@ const correlate = (ids: string[], label: string) => {
   const sims = ids.map((id) => variety.get(id) ?? 1);
   const lens = ids.map((id) => lengthOf.get(id) ?? 0);
   log(`  ${label}: across the ${ids.length} records picked at least once (${rates.filter((r) => r === 0).length} of them never beyond ${N}, tied at zero), the deep rate's rank correlation, ties at their average rank, with length ${spearman(rates, lens).toFixed(2)} (two-sided permutation p ${permutationP(rates, lens, 10000, 24).toFixed(3)}), with self-similarity (a record's mean cosine among its own sentences; higher is a narrower text) ${spearman(rates, sims).toFixed(2)} (two-sided permutation p ${permutationP(rates, sims, 10000, 24).toFixed(3)})`);
+  /* The coordinator, 24 Nov: a figure always arrives with what this base could have detected; untested only where no figure exists. */
+  const critical = criticalR(rates, sims, 10000, 24);
+  log(critical === null ? `    ${label}: untested, no figure exists (no record here ranked beyond ${N}, or self-similarity constant)` : `    ${label}: n = ${ids.length} records; |r| self-similarity needed to clear two-sided p < 0.05 at this base ${critical.toFixed(2)}, so an effect weaker than that could not have been detected`);
 };
 correlate(picked, 'all records');
 if (excluded.length > 0) correlate(picked.filter((id) => !excluded.some((x) => id.startsWith(x))), `without ${excluded.map(name).join('; ')}`);

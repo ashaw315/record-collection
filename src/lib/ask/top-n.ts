@@ -63,3 +63,22 @@ export function permutationP(a: readonly number[], b: readonly number[], shuffle
   }
   return atLeast / shuffles;
 }
+
+/**
+ * **What a base could have shown (the coordinator, 24 Nov):** the |r| that would have cleared two-sided p < 0.05 at this
+ * base, read off the same seeded shuffles as `permutationP`, the 95th percentile of the null's |r|. Null where a variable is
+ * constant, since then no figure exists at all.
+ */
+export function criticalR(a: readonly number[], b: readonly number[], shuffles: number, seed: number): number | null {
+  if (!Number.isFinite(spearman(a, b))) return null;
+  let state = seed >>> 0 || 1;
+  const random = () => { state ^= state << 13; state >>>= 0; state ^= state >>> 17; state ^= state << 5; state >>>= 0; return state / 4294967296; };
+  const shuffled = [...a];
+  const nulls: number[] = [];
+  for (let n = 0; n < shuffles; n += 1) {
+    for (let i = shuffled.length - 1; i > 0; i -= 1) { const j = Math.floor(random() * (i + 1)); [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]; }
+    nulls.push(Math.abs(spearman(shuffled, b)));
+  }
+  nulls.sort((x, y) => x - y);
+  return nulls[Math.ceil(0.95 * nulls.length) - 1];
+}
