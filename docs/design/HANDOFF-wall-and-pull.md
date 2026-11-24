@@ -1052,7 +1052,7 @@ Its rows are in the governs table above, one per section; this section does not 
 - **Unnumbered, for Code to number — §P.2: the pool bound's top-N rerun.**
   - **The corpus, in three blocks,** each labelled with its source in the report:
     1. **Adam's:** the phrases Adam gives, verbatim. If he gives none, say so and run the other two blocks.
-    2. **Code's:** "sunday morning", "cooking dinner" and "a long night drive", from the 13 Nov centring report. If the 23 Nov top-N corpus used these same phrases, say so.
+    2. **The 23 Nov corpus:** the 24 phrases of the 23 Nov top-N run, verbatim as Code holds them, each with its stated source. Rerunning them gives the earlier 12% its spread, since that figure stood on one run per phrase. Design hasn't listed them, so none comes from recall.
     3. **Design's:** one ask of each shape the other blocks don't cover:
        - "something like Aja", a title ask;
        - "no vocals", a requirement;
@@ -1062,7 +1062,7 @@ Its rows are in the governs table above, one per section; this section does not 
     1. the corpus with each phrase's source;
     2. for each phrase, the picked records outside the ranking's top 10, 20 and 30;
     3. the rates per block, then overall.
-  - **Report** how the misses at N=30 spread across records, and whether the deep-ranked picks are the records with the longest or most varied matched texts.
+  - **Report** how the misses at N=30 and N=20 spread across records, as counts per record, and whether the records that take most of the misses on 23 Nov take most of them again.
   - **Assert nothing:** this is a measurement and builds nothing.
   No quote: the ruling this step serves, whether §P.2 bounds the pool, isn't written yet, and the far and tie sentences it would rest on are held. When the bound is ruled, its sentence becomes this step's quote.
 

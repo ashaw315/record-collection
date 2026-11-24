@@ -60688,3 +60688,18 @@ only in a script's usage example, and the 23 Nov corpus used none of them as wri
 mislabelling she corrected. Not substituted. The option with a real provenance: the twenty phrases written on 19 Nov to
 resemble his asks, documented as ours in the 23 Nov corpus; if block two means "phrases we wrote", three from there. Her
 call which three, or whether to drop the block. The rerun is held for her answer as well as Adam's.
+
+**"Top-N block two replaced" taken in (refs/drops/2026-11-24-03), found on disk by name.** It edits the landed step in
+place: block two becomes the 24 phrases of the 23 Nov run with their stated sources, and the spread bullet asks for the
+misses at N = 30 and 20 as counts per record and whether the same records take most of them again. Its file carries no
+refusal condition, against Design's own rule; treated as standing: both anchors, text she wrote and Code applied
+verbatim, resolved exactly once. "Top-N rerun corpus sourced", which it supersedes, never reached this machine; recorded
+as superseded with no drop ref. **The rerun's corpus, deduplicated with Adam's block winning (the coordinator, 24 Nov):**
+block two holds two of his phrases verbatim and one asked on his behalf, so a phrase he names in block one runs there
+only and leaves block two, the move named in the report (`dedupeCorpus`, src/lib/ask/corpus.ts, test first, red on the
+missing module, then 1 passed; exercised end to end on a two-line corpus, one model call, the output not kept). The
+script prints the corpus with each phrase's block and source before any figure, says plainly when block one is empty,
+and reports its model calls and wall time. Staged at docs/measurements/top-n/corpus-second-round.tsv: block two's 24
+(two adam-logged, two on his behalf, twenty ours of 19 Nov) and block three's three ("something like Aja", "no vocals",
+"angry"); block one waits for Adam. **Its size:** 27 phrases three times is 81 model calls before Adam's block, about 100
+with it, roughly half an hour at 18 seconds a pick, all on this machine. Held for Adam, with the day's-end fallback.

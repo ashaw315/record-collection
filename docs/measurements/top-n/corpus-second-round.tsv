@@ -1,12 +1,32 @@
-# The second round's corpus (23 Nov), held until Adam says what he has typed: his answer replaces the reported lines and
-# outranks both Design's memory and the coordinator's. One phrase a line, "group<TAB>phrase". Run with
+# The top-N rerun (24 Nov), three blocks as Design set them: block one Adam's phrases verbatim (empty until he gives them),
+# block two the 24 phrases of the 23 Nov run with their stated sources, block three Design's three shapes. A phrase Adam
+# names leaves block two (scripts/measure-top-n.mts reports the move). Columns: block<TAB>source<TAB>phrase. Run with
 #   node --env-file=.env.local --conditions=react-server --import tsx scripts/measure-top-n.mts --corpus=docs/measurements/top-n/corpus-second-round.tsv
-adam-logged	something calm
-adam-logged	cooking dinner, people over
-adam-reported	feels like winter
-adam-reported	quiet, warm
-adam-reported	quiet and sad
-adam-reported	quiet, alone, late
-adam-reported	something from the eighties
-adam-reported	big band
-# ours-kinds: Design's three shapes his do not cover; her exact wording to be filled from her file when it is on disk.
+# block-1-adam lines go here when he answers.
+block-2-23-nov	adam-logged	something calm
+block-2-23-nov	adam-logged	cooking dinner, people over
+block-2-23-nov	on-his-behalf	something for a rainy afternoon
+block-2-23-nov	on-his-behalf	something from the eighties
+block-2-23-nov	ours-19-nov	something slow for tonight
+block-2-23-nov	ours-19-nov	loud guitars for cleaning the flat
+block-2-23-nov	ours-19-nov	quiet music with no vocals for reading
+block-2-23-nov	ours-19-nov	a record for a dinner with friends that nobody has to talk over
+block-2-23-nov	ours-19-nov	bright and fast for a sunny morning
+block-2-23-nov	ours-19-nov	something sad to sit with
+block-2-23-nov	ours-19-nov	jazz for late at night
+block-2-23-nov	ours-19-nov	a long instrumental stretch I can get lost in
+block-2-23-nov	ours-19-nov	warm and crackly, something old
+block-2-23-nov	ours-19-nov	dense and strange, for paying attention
+block-2-23-nov	ours-19-nov	something to dance to in the kitchen
+block-2-23-nov	ours-19-nov	soft voices and acoustic guitars
+block-2-23-nov	ours-19-nov	big orchestral sweep
+block-2-23-nov	ours-19-nov	a record that gets heavier as it goes
+block-2-23-nov	ours-19-nov	music for a grey afternoon
+block-2-23-nov	ours-19-nov	funky and tight, nothing abrasive
+block-2-23-nov	ours-19-nov	a side I can put on and not touch
+block-2-23-nov	ours-19-nov	rough, live-sounding rock
+block-2-23-nov	ours-19-nov	gentle enough for a child falling asleep
+block-2-23-nov	ours-19-nov	something that starts quiet and ends loud
+block-3-design	title ask	something like Aja
+block-3-design	requirement	no vocals
+block-3-design	single-word mood	angry

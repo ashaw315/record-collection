@@ -23,6 +23,7 @@
 import { appendFileSync, mkdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { askPick } from '@/lib/ask/pick';
+import { dedupeCorpus } from '@/lib/ask/corpus';
 import { outsideTopN, ranksOfPicks } from '@/lib/ask/top-n';
 import { matchedTextsFor } from '@/lib/db/queries/ask';
 import { collectionTitles } from '@/lib/db/queries/matched-text';
@@ -50,15 +51,24 @@ const FIRST_RUN: Array<{ phrase: string; group: string }> = [
     'a side I can put on and not touch', 'rough, live-sounding rock', 'gentle enough for a child falling asleep', 'something that starts quiet and ends loud',
   ].map((phrase) => ({ phrase, group: 'ours-bench' })),
 ];
-const phrases = corpusFile === undefined
+const listed: Array<{ phrase: string; group: string; source?: string }> = corpusFile === undefined
   ? FIRST_RUN
-  : readFileSync(corpusFile, 'utf8').split('\n').map((l) => l.trim()).filter((l) => l !== '' && !l.startsWith('#')).map((l) => { const [group, ...rest] = l.split('\t'); return { group, phrase: rest.join('\t') }; });
+  /* "group<TAB>phrase", or "group<TAB>source<TAB>phrase" where a block holds phrases of several sources (24 Nov). */
+  : readFileSync(corpusFile, 'utf8').split('\n').map((l) => l.trim()).filter((l) => l !== '' && !l.startsWith('#')).map((l) => { const cols = l.split('\t'); return cols.length >= 3 ? { group: cols[0], source: cols[1], phrase: cols.slice(2).join('\t') } : { group: cols[0], phrase: cols.slice(1).join('\t') }; });
+/* Adam's block wins (the coordinator, 24 Nov): a phrase in two blocks runs once, in the first, and the move is reported. */
+const { corpus: deduped, moved } = dedupeCorpus(listed);
+const phrases = deduped as Array<{ phrase: string; group: string; source?: string }>;
 const NS = [10, 20, 30];
 
 const log = (line: string) => process.stdout.write(`${line}\n`);
 const titles = await collectionTitles();
 const pool = await matchedTextsFor(titles.map((t) => t.id));
-log(`measure-top-n: ${phrases.length} phrases, ${RUNS} run(s) each, groups ${[...new Set(phrases.map((p) => p.group))].join(', ')}; a pool of ${pool.length} records with matched text${corpusFile === undefined ? '' : `; corpus ${corpusFile}`}`);
+const started = Date.now();
+log(`measure-top-n: ${phrases.length} phrases, ${RUNS} run(s) each, ${phrases.length * RUNS} model calls; a pool of ${pool.length} records with matched text${corpusFile === undefined ? '' : `; corpus ${corpusFile}`}`);
+log('measure-top-n: the corpus first, each phrase with its block and source');
+for (const g of [...new Set(phrases.map((p) => p.group))]) log(`  ${g}, ${phrases.filter((p) => p.group === g).length} phrases: ${phrases.filter((p) => p.group === g).map((p) => `"${p.phrase}"${p.source === undefined ? '' : ` (${p.source})`}`).join(', ')}`);
+if (listed.some((l) => l.group.startsWith('block-1')) === false) log('  block one is empty: Adam has given no phrases, and the rates below carry no block of his');
+log(moved.length === 0 ? '  moved between blocks: none' : `  moved to the block that names them first: ${moved.map((m) => `"${m.phrase}" from ${m.from} to ${m.to}`).join('; ')}`);
 
 const textVectors = await embedTexts(pool.map((r) => r.text));
 const phraseVectors = await embedTexts(phrases.map((p) => p.phrase));
@@ -95,5 +105,6 @@ log('measure-top-n: then the corpus, and the rates per group');
 log(`  all, ${answers.length} answers: beyond ${rates(answers)}`);
 for (const g of [...new Set(phrases.map((p) => p.group))]) log(`  ${g}, ${answers.filter((a) => a.group === g).length} answers: beyond ${rates(answers.filter((a) => a.group === g))}`);
 appendFileSync(out, `${JSON.stringify({ summary: { runs: RUNS, groups: [...new Set(phrases.map((p) => p.group))].map((g) => ({ group: g, rates: NS.map((n) => ({ n, ...outsideTopN(answers.filter((a) => a.group === g).map((a) => a.ranks), n) })) })) } })}\n`);
+log(`measure-top-n: ${phrases.length * RUNS} model calls and two embedding calls in ${((Date.now() - started) / 60000).toFixed(1)} minutes`);
 log(`measure-top-n: written to ${out}`);
 process.exit(0);
