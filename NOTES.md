@@ -60554,3 +60554,10 @@ is worse than none.
 **A new surface that observes state finds the faults nothing watched (the coordinator, 23 Nov):** the indicator was the
 first thing to observe the in-flight state, and two latent faults surfaced with it. Expect the same whenever a surface
 watches state nothing watched before (Q86).
+
+**Re-measured after the deploy, the same five covers through production's optimiser at 320 (23 Nov,
+docs/measurements/cover-paint/2026-11-24T01-17-45-605Z.jsonl):** no throttle, last cover 0.56s after the reply (0.32s
+before); fast 3G 1.16s (14.4s before); slow 3G 3.99s (52.8s before). The 2.05 MB PNG comes back at 320 as 48.9 KB to a
+client that takes PNG, less as WebP. The unthrottled row is slower than before because four of the five were the
+optimiser's first request at that size (one was warmed by the readiness check), so their time includes the resize; later
+presses are served from its cache. Design rules against these figures.
