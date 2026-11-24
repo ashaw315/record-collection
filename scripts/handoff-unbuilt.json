@@ -73,5 +73,10 @@
     "head": "§P.2: the pool bound's top-N rerun",
     "status": "unbuilt",
     "evidence": "Set 24 Nov (\"Top-N rerun corpus unquoted\"), a measurement with no quote since the bound's ruling is unwritten. The script takes the corpus (scripts/measure-top-n.mts --corpus, 23 Nov); held for Adam's block one, and blocks two and three by end of day if he gives none (the coordinator, 24 Nov); checked 24 Nov."
+  },
+  {
+    "head": "§67: the open field and the head",
+    "status": "unbuilt",
+    "evidence": "Set 24 Nov (\"Sheet field and head\"), on the card 262aebe1, rebuilt from the f02069f1 sent with \"Sheet from the record page\" by reverting that file's two edits and matched by hash, since that card and its file are held."
   }
 ]

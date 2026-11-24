@@ -1068,6 +1068,13 @@ Its rows are in the governs table above, one per section; this section does not 
   - **Assert nothing:** this is a measurement and builds nothing.
   No quote: the ruling this step serves, whether §P.2 bounds the pool, isn't written yet, and the far and tie sentences it would rest on are held. When the bound is ruled, its sentence becomes this step's quote.
 
+- **Unnumbered, for Code to number — §67: the open field and the head.**
+  - **Field:** size the open sentence's field to the sentence's own height, growing as it's typed. It never scrolls inside itself.
+  - **Head:** where the head's height plus the open field's height exceeds the space above the keyboard, let the head scroll with the text. Keep the open field in view.
+  - **Assert:** Never Too Much's open sentence shows whole with no inner scroll, at 390 and 1440. At 390, with the reason at 188 characters and a 300-pixel keyboard inset, the open field is wholly in view.
+  - **Capture** both at 390, and send them to Adam to judge with the keyboard up on his phone.
+  > The open sentence’s field is as tall as the sentence, so the whole sentence shows while it is edited, and nothing scrolls inside it.
+
 No step: §G.7. It rules nothing. Hover and focus wait on Code's second pass, the breakpoint is settled and recorded in §G.8, and the eyebrow repetition is an observation, not a ruling.
 
 No step: §P.1. It rules where the feature is ruled and which view presents an answer; what that means for the build is in the steps for §P.3 and §P.4.
@@ -1140,7 +1147,7 @@ The provisionals in force, for the note in Maintaining this file that a provisio
 - **§P.4 · the column host's five.** "How the run past the window reads is provisional until captured at 1440 × 900 and × 768, on the tallest five, for Adam to judge." Returns from the five-cells step. Open.
 - **§P.5 · the field at four lines in the rail.** How the wrapped field reads in the rail as a column. Returns from the wrap step's capture, for Adam. Open. The fold-640 captures are fit to judge from. The 497.5 above the control is fixed furniture, and the drawing region is the window's height by construction, so the three seeded records don't change any figure in them.
 - **§P.2 · the model pick's words.** The reason's length and fit in each host, the nothing-fits wording, and the run's-end wording. Returns from the model-pick step's capture, for Adam. Open.
-- **§67 · the correcting sheet.** Its look and words at 1440 × 900 and 390, from the sheet step's capture. Its head at 390 with the keyboard up, judged by Adam on his phone, since no capture draws the keyboard. Open.
+- **§67 · the correcting sheet.** Its look and words at 1440 × 900 and 390, from the sheet step's capture. Its head at 390 with the keyboard up, judged by Adam on his phone, since no capture draws the keyboard. Open. And the head at 390 when the reason is at its cap, now ruled to scroll away where it would hide the open sentence.
 - **§P.2 · the reason as a press.** How the reason reads as something to press, in each host. Returns with the sheet step's capture. Open.
 - **§P.2 · the reason's bound.** The figure, set with the placement and §P.4's "wholly in view" as one decision after Adam's press. Returns with the model-pick step's report. Open. Adam judges it again at the model's own lengths (117 to 210, median 160, 64 reasons), not at 3a's stubbed 91 to 108. Closed 21 Nov by Adam's use on the phone: 160 by prompt, 188 by schema.
 - **§P.3 · the ask in flight.** The indicator's look, words and motion, for Adam on his phone. The words' threshold, proposed at five seconds, and their wording, judged by Adam on his phone against waits near 18 seconds. Open.

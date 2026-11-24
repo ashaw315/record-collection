@@ -662,5 +662,15 @@
         "how": "anchors"
       }
     ]
+  },
+  {
+    "file": "Sheet field and head",
+    "ref": "refs/drops/2026-11-24-04",
+    "heads": [
+      {
+        "head": "§67: the open field and the head",
+        "how": "inserts"
+      }
+    ]
   }
 ]
