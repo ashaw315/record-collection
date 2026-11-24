@@ -60724,3 +60724,20 @@ just inside the usual line, and none shown at N = 20; it rests on the eight reco
 zero, with Hot Tuna the most varied and most missed among them, so one record carries much of it. Neither "withdrawn" nor
 "holds" is right: a weak signal at one N on 98 picks, which the rerun's three runs a phrase can confirm or lose. The
 concentration on counts stands either way.
+
+**§67's correcting sheet, built as step 185 (the second commit; the coordinator's order, 24 Nov: the sheet ahead of the
+rerun).** Opened from an answer's reason in every host through one sheet at the root: the reason is a button in the grid's
+cell (the band's and the far view's column's too) and in the shelf's panel, carrying the record, the reason and the claims,
+which the client's types now carry from the route. The host reads §5.2's resource, opens on arrival the sentence named,
+saves the whole text through PATCH (marking it read) and tells the page, so the shelf discards its queue. A plain store
+rather than a context, since the hosts sit in separate trees. **The e2e was written after the hosts' code, not before,** a
+breach of the order: it was shown red against two staged faults before it was kept (the queue not discarded, the claims
+dropped at the cell), then 4 passed. Two faults of the spec's own on the way: the text arrives after a cold dev server
+compiles the route (the spec waits for it), and the dev badge sat over Save (hidden, as the other specs do). The grid
+cell's component test moved with the ruling. The eight specs that draw a reason, 62 passed (load 9.6 before, 34.1 after).
+Captured on the four known errors with the wrong sentence open, the head at a 188-character reason
+(docs/captures/correcting-sheet/, README); the four texts read from production into a fixture, and Q74's numbering
+checked against the shared splitter (scripts/print-sheet-four.mts): each number picks out the sentence Q74 describes. For
+Design with the captures: the open field is three rows, so a long sentence scrolls inside it, and the head takes five
+lines at 390 with a reason at the bound. Adam can now correct Q74's four from the sheet; Q82's four ABOUTs are the record
+page's About cell, unchanged.

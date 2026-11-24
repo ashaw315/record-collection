@@ -4,6 +4,7 @@ import localFont from 'next/font/local';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { probesOpen } from '@/lib/probes';
 import './globals.css';
+import { CorrectingSheetHost } from './ask/CorrectingSheetHost';
 
 /**
  * Two faces, each doing a job.
@@ -56,6 +57,8 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
     <html lang="en" className={`${sans.variable} ${mono.variable} h-full antialiased`} data-e2e-probes={probesOpen() ? '1' : undefined}>
       <body className="flex min-h-full flex-col bg-background text-foreground">
         <TooltipProvider>{children}</TooltipProvider>
+        {/* §67's correcting sheet: one for the page, opened from an answer's reason in any host (24 Nov). */}
+        <CorrectingSheetHost />
       </body>
     </html>
   );

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { GridCover } from './GridCover';
 import { LABEL } from './records/[id]/grid-type';
+import { ReasonButton } from './ask/ReasonButton';
 
 /**
  * **§T.5's cell: the cover, its title and artist beneath it, and the whole
@@ -9,7 +10,7 @@ import { LABEL } from './records/[id]/grid-type';
  * component and cannot drift. The link covers the cell by its `::after`, so
  * the element holding the cell is `relative`.
  */
-export function GridCell({ id, title, artist, cover, reason = null, consolation = false }: { id: string; title: string; artist: string; cover: string | null; reason?: string | null; consolation?: boolean }) {
+export function GridCell({ id, title, artist, cover, reason = null, consolation = false, claims = [] }: { id: string; title: string; artist: string; cover: string | null; reason?: string | null; claims?: readonly string[]; consolation?: boolean }) {
   return (
     <>
       {/* §P.2: a record beside the nothing-fits message "is a consolation ... labelled as the closest available", so it never reads as an answer. "Closest available" is Proposed. */}
@@ -37,7 +38,8 @@ export function GridCell({ id, title, artist, cover, reason = null, consolation 
       */}
       {reason !== null && reason !== '' && (
         <p data-grid-reason="" className="mt-[6px] text-prose">
-          {reason}
+          {/* §67 (24 Nov): the reason opens the correcting sheet on the sentence it rests on. */}
+          <ReasonButton recordId={id} reason={reason} claims={claims} />
         </p>
       )}
     </>

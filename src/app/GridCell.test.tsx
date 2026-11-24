@@ -18,8 +18,9 @@ describe('GridCell with a reason (§P.2)', () => {
     const at = (marker: string) => html.indexOf(marker);
     expect(at('data-grid-reason'), 'the reason is drawn').toBeGreaterThan(-1);
     expect(at('data-grid-reason'), 'beneath the artist, which ends the caption').toBeGreaterThan(at('data-grid-artist'));
-    const reasonTag = /<p data-grid-reason=""[^>]*class="([^"]*)"[^>]*>([^<]*)<\/p>/.exec(html);
-    expect(reasonTag?.[2], 'the model’s sentence, whole').toBe(reason);
+    /* Moved with §67's sheet (24 Nov): the reason is the button that opens the correcting sheet, so the sentence sits inside it; it is still whole and in the prose register. */
+    const reasonTag = /<p data-grid-reason=""[^>]*class="([^"]*)"[^>]*><button[^>]*data-open-sheet=""[^>]*>([^<]*)<\/button><\/p>/.exec(html);
+    expect(reasonTag?.[2], 'the model’s sentence, whole, as the sheet’s button').toBe(reason);
     expect(reasonTag?.[1] ?? '', 'the prose register, as the slot’s message is').toContain('text-prose');
   });
 

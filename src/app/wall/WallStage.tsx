@@ -92,7 +92,7 @@ export function WallStage({
   /** §P.4's column host: the pick's answer, up to five cells in rank order, drawn in the count column beneath the count on the far view, or none. */
   pickCells?: readonly PickRecord[];
   /** §P.2 (unit 3a): the reason the ask gave for the record it pulled, shown in that record's facts and no other's. */
-  askReason?: { id: string; reason: string; consolation?: boolean } | null;
+  askReason?: { id: string; reason: string; consolation?: boolean; claims?: readonly string[] } | null;
   /**
    * §W.29: whether the composition carries its arrival offset in the markup.
    * True on the server and for the first client render, so hydration
@@ -156,6 +156,8 @@ export function WallStage({
         <RecordPanel
           summary={summary}
           reason={askReason !== null && askReason.id === arriving.id ? askReason.reason : null}
+          recordId={arriving.id}
+          claims={askReason !== null && askReason.id === arriving.id ? (askReason.claims ?? []) : []}
           consolation={askReason !== null && askReason.id === arriving.id && askReason.consolation === true}
           alwaysExpanded
           onTurnOver={onTurnOver ?? (() => undefined)}
@@ -287,7 +289,7 @@ export function WallStage({
         <ul ref={answersRef} data-pick-answers="" className="relative mt-[24px] grid grid-cols-[160px_160px] gap-[24px]">
           {pickCells.map((cell, index) => (
             <li key={cell.id} data-pick-answer="" data-rank={index + 1} className="relative w-[160px]">
-              <GridCell id={cell.id} title={cell.title} artist={cell.artist} cover={cell.cover} reason={cell.reason ?? null} consolation={cell.consolation === true} />
+              <GridCell id={cell.id} title={cell.title} artist={cell.artist} cover={cell.cover} reason={cell.reason ?? null} claims={cell.claims ?? []} consolation={cell.consolation === true} />
             </li>
           ))}
         </ul>

@@ -2,6 +2,7 @@ import Link from 'next/link';
 import type { RecordSummary } from './summary';
 import { HAIRLINE, INK, LABEL, LABEL_INK } from '../records/[id]/grid-type';
 import { HIT_ALONE } from '@/app/hit-area';
+import { ReasonButton } from '../ask/ReasonButton';
 
 /**
  * **The pulled record's facts, in the record screen's order (§W.19).**
@@ -33,6 +34,8 @@ import { HIT_ALONE } from '@/app/hit-area';
 export function RecordPanel({
   summary,
   reason = null,
+  recordId = null,
+  claims = [],
   consolation = false,
   onTurnOver,
   onPutBack,
@@ -41,6 +44,9 @@ export function RecordPanel({
   summary: RecordSummary;
   /** §P.2 (unit 3a): the ask's one-sentence reason, where this record was pulled by an ask; null where it was pulled by its spine or the arrows. */
   reason?: string | null;
+  /** §67 (24 Nov): the pulled record and the sentences the reason rests on, so the reason opens the correcting sheet. */
+  recordId?: string | null;
+  claims?: readonly string[];
   /** §P.2: the pull is a consolation, a stand-in beside the nothing-fits message, labelled so it never reads as an answer. */
   consolation?: boolean;
   onTurnOver: () => void;
@@ -78,7 +84,7 @@ export function RecordPanel({
             </p>
           )}
           <p data-testid="panel-reason" className={`${consolation ? 'mt-[6px]' : 'mt-[18px]'} text-prose leading-[1.55] ${INK}`}>
-            {reason}
+            {recordId === null ? reason : <ReasonButton recordId={recordId} reason={reason} claims={claims} />}
           </p>
         </>
       )}

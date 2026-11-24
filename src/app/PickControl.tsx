@@ -5,6 +5,7 @@ import { askSlotMessage, SLOT_MESSAGES, type AskVerdict } from '@/lib/ask/slot';
 import { drawSurprise } from '@/lib/ask/surprise';
 import { pressInFlight } from '@/lib/ask/in-flight';
 import { PickWorking } from './PickWorking';
+import { onSheetSaved } from './ask/sheet-store';
 import { GridCell } from './GridCell';
 import { usePickChannel, type CellHost, type PickRecord } from './wall/pick-channel';
 import { CONTROL_LABEL, HAIRLINE, INK, LABEL, LABEL_TYPE } from './records/[id]/grid-type';
@@ -34,13 +35,14 @@ const MESSAGES = SLOT_MESSAGES;
 const WORDS_AFTER_MS = 5_000;
 
 /** What the control shows for one answer: the record, the pick's reason (null where there is none), and whether it is a consolation beside a nothing-fits message (§P.2). */
-type Answer = { id: string; reason: string | null; consolation?: boolean };
+/* §67 (24 Nov): each answer carries the whole stored sentences its reason rests on, so the sheet opens on one of them. */
+type Answer = { id: string; reason: string | null; consolation?: boolean; claims?: readonly string[] };
 
 type AskAnswer = {
   mode?: 'ranking' | 'pick';
   verdict?: AskVerdict | null;
   /* §P.2 (unit 3a): each answer carries the model's reason; the ranking's answers carry none. */
-  answers: Array<{ recordId: string; reason?: string }>;
+  answers: Array<{ recordId: string; reason?: string; claims?: string[] }>;
   from: 'phrase' | 'title';
   askedFrom: string | null;
   undescribed?: string | null;
@@ -150,6 +152,8 @@ export function PickControl({ ruled = false, pool, answers = 'cell', withoutAbou
   /* §P.4: where the far view's cell stands, from the wall's answer: beneath the control, or in the count column, which the wall draws. */
   const [host, setHost] = useState<CellHost>('here');
   const channel = usePickChannel();
+  /* §67: the shelf's queue is discarded on a save, since a queued record was chosen on the text before the correction. */
+  useEffect(() => onSheetSaved(() => setQueue([])), []);
   useEffect(
     () =>
       channel?.hearPulls((id) => {
@@ -178,11 +182,11 @@ export function PickControl({ ruled = false, pool, answers = 'cell', withoutAbou
     const records: PickRecord[] = [];
     for (const a of answersToShow) {
       const record = byId(a.id);
-      if (record !== undefined) records.push({ ...record, reason: a.reason, consolation: a.consolation === true });
+      if (record !== undefined) records.push({ ...record, reason: a.reason, consolation: a.consolation === true, claims: a.claims ?? [] });
     }
     const first = records[0];
     if (first === undefined) return;
-    const answer = answers === 'wall' ? (channel?.ask(first.id, { reason: first.reason ?? null, consolation: first.consolation === true }) ?? { did: 'ignore', host: null }) : { did: 'cannot-pull', host: 'here' as const };
+    const answer = answers === 'wall' ? (channel?.ask(first.id, { reason: first.reason ?? null, consolation: first.consolation === true, claims: first.claims ?? [] }) ?? { did: 'ignore', host: null }) : { did: 'cannot-pull', host: 'here' as const };
     if (answer.did !== 'cannot-pull') {
       /* §P.3: "Where the pick names the record already out, nothing moves", and the slot says so. */
       if (answer.did === 'stay') setMessage(MESSAGES.only);
@@ -238,7 +242,7 @@ export function PickControl({ ruled = false, pool, answers = 'cell', withoutAbou
         setDrawn([]);
         return;
       }
-      const answered: Answer[] = body.answers.map((a) => ({ id: a.recordId, reason: a.reason ?? null }));
+      const answered: Answer[] = body.answers.map((a) => ({ id: a.recordId, reason: a.reason ?? null, claims: a.claims ?? [] }));
       const ids = answered.map((a) => a.id);
       const undescribedTitle = body.undescribed ? byId(body.undescribed)?.title : undefined;
       const slot = askSlotMessage({ ok: true, status: response.status, unanswerable: body.unanswerable, answered: ids.length, verdict: body.verdict ?? null, undescribedTitle });
@@ -398,7 +402,7 @@ export function PickControl({ ruled = false, pool, answers = 'cell', withoutAbou
         <ul data-pick-answers="" className="relative mt-[24px] flex flex-col gap-[18px]">
           {drawn.map((record, index) => (
             <li key={record.id} data-pick-answer="" data-rank={index + 1} className="w-[160px]">
-              <GridCell id={record.id} title={record.title} artist={record.artist} cover={record.cover} reason={record.reason ?? null} consolation={record.consolation === true} />
+              <GridCell id={record.id} title={record.title} artist={record.artist} cover={record.cover} reason={record.reason ?? null} claims={record.claims ?? []} consolation={record.consolation === true} />
             </li>
           ))}
         </ul>

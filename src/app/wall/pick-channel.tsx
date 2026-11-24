@@ -11,10 +11,10 @@ import type { PickAnswer } from './reroll';
 /** A record the pick can serve, with what §T.5's cell draws. */
 /* No moods since 14 Nov: the moods are retired (§P.2; Adam, 14 Nov) and nothing read the set the page loaded for each record. */
 /** A pool's record; as an answer it carries the pick's reason (§P.2, unit 3a), which a pool row and a SURPRISE ME draw do not. */
-export type PickRecord = { id: string; title: string; artist: string; cover: string | null; reason?: string | null; consolation?: boolean };
+export type PickRecord = { id: string; title: string; artist: string; cover: string | null; reason?: string | null; consolation?: boolean; claims?: readonly string[] };
 
 /** What an ask carries with the record it names (§P.2): the pick's reason, and whether the record is a consolation beside a nothing-fits message. */
-export type AskCarry = { reason: string | null; consolation: boolean };
+export type AskCarry = { reason: string | null; consolation: boolean; claims?: readonly string[] };
 
 /**
  * Where the far view's cell stands (§P.4): `here`, beneath the control, in
