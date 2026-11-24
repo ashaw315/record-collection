@@ -60703,3 +60703,24 @@ and reports its model calls and wall time. Staged at docs/measurements/top-n/cor
 (two adam-logged, two on his behalf, twenty ours of 19 Nov) and block three's three ("something like Aja", "no vocals",
 "angry"); block one waits for Adam. **Its size:** 27 phrases three times is 81 model calls before Adam's block, about 100
 with it, roughly half an hour at 18 seconds a pick, all on this machine. Held for Adam, with the day's-end fallback.
+
+**The withdrawal rested on my own statistical fault, and the corrected figure reinstates the hypothesis at N = 30 only,
+weakly (24 Nov).** The coordinator asked why the variety figure read 0.19 and the self-similarity figure −0.18 when one
+is the other inverted. Two causes: the sentence embeddings were re-fetched each run, so close self-similarity values could
+swap order; and the report's rank function broke ties by list order instead of giving tied values their average rank,
+which Spearman requires. Miss rates are heavily tied (29 of 37 records never beyond 30), so the tie rule moved the figure
+most. Fixed in the library, test first (`spearman` and `averageRanks` in src/lib/ask/top-n.ts, red on the missing function,
+the expected value worked by hand: 8 over the root of 80), with a seeded permutation test beside it (`permutationP`,
+10,000 shuffles), since with that many ties the usual 0.33 line assumes too much. **The one figure the report now
+carries, stable across three fresh embeddings:**
+
+| | length | self-similarity (higher is a narrower text) |
+|---|---|---|
+| N = 30, rank correlation with a record's deep rate | 0.02, p 0.93 | −0.34, p 0.040 |
+| N = 20 | −0.04, p 0.81 | −0.20, p 0.23 |
+
+Read plainly: length has nothing to do with it. Variety has a weak relation at N = 30, more varied texts missed more,
+just inside the usual line, and none shown at N = 20; it rests on the eight records with any miss against 29 tied at
+zero, with Hot Tuna the most varied and most missed among them, so one record carries much of it. Neither "withdrawn" nor
+"holds" is right: a weak signal at one N on 98 picks, which the rerun's three runs a phrase can confirm or lose. The
+concentration on counts stands either way.

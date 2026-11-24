@@ -13,6 +13,7 @@
  */
 import { readFileSync } from 'node:fs';
 import { cosine } from '@/lib/ask/rank';
+import { permutationP, spearman } from '@/lib/ask/top-n';
 import { matchedTextsFor } from '@/lib/db/queries/ask';
 import { collectionTitles } from '@/lib/db/queries/matched-text';
 import { embedTexts } from '@/lib/openai/embeddings';
@@ -56,10 +57,11 @@ for (const [id, n] of [...byRecord].sort((a, b) => b[1] - a[1])) {
 /* The hypothesis, across every record picked at least once: does a record's deep rate rise with length, or with variety (lower mean cosine)? Spearman's rank correlation, since neither is linear by any rule. */
 const picked = [...new Set(picks.map((p) => p.recordId))];
 const deepRate = (id: string) => picks.filter((p) => p.recordId === id && p.rank > N).length / picks.filter((p) => p.recordId === id).length;
-const ranksOf = (xs: number[]) => { const order = xs.map((x, i) => [x, i] as const).sort((a, b) => a[0] - b[0]); const r = new Array<number>(xs.length); order.forEach(([, i], k) => { r[i] = k + 1; }); return r; };
-const spearman = (a: number[], b: number[]) => { const ra = ranksOf(a), rb = ranksOf(b); const n = a.length; const ma = (n + 1) / 2; let num = 0, da = 0, db = 0; for (let i = 0; i < n; i += 1) { num += (ra[i] - ma) * (rb[i] - ma); da += (ra[i] - ma) ** 2; db += (rb[i] - ma) ** 2; } return num / Math.sqrt(da * db); };
+/* Spearman with ties at their average rank, from the tested library (24 Nov: the first form ranked ties by list order). */
 const rates = picked.map(deepRate);
-log(`  across the ${picked.length} records picked at least once, the deep rate's rank correlation with length ${spearman(rates, picked.map((id) => lengthOf.get(id) ?? 0)).toFixed(2)}, with self-similarity (a record's mean cosine among its own sentences; higher is a narrower text) ${spearman(rates, picked.map((id) => variety.get(id) ?? 1)).toFixed(2)}; at n = 37 a rank correlation needs about 0.33 to clear the usual significance line, so a figure below that is no support either way`);
+const sims = picked.map((id) => variety.get(id) ?? 1);
+const lens = picked.map((id) => lengthOf.get(id) ?? 0);
+log(`  across the ${picked.length} records picked at least once (${rates.filter((r) => r === 0).length} of them never beyond ${N}, tied at zero), the deep rate's rank correlation, ties at their average rank, with length ${spearman(rates, lens).toFixed(2)} (permutation p ${permutationP(rates, lens, 10000, 24).toFixed(3)}), with self-similarity (a record's mean cosine among its own sentences; higher is a narrower text) ${spearman(rates, sims).toFixed(2)} (permutation p ${permutationP(rates, sims, 10000, 24).toFixed(3)})`);
 const deepIds = [...byRecord.keys()];
 const median = (xs: number[]) => { const s = [...xs].sort((a, b) => a - b); return s.length % 2 ? s[(s.length - 1) / 2] : (s[s.length / 2 - 1] + s[s.length / 2]) / 2; };
 log(`  median length: the deep-ranked records ${median(deepIds.map((id) => lengthOf.get(id) ?? 0))}, all 55 ${median(split.map((r) => r.length))}; median self-similarity: the deep-ranked ${median(deepIds.map((id) => variety.get(id) ?? 1)).toFixed(3)}, all 55 ${median(split.map((r) => variety.get(r.id) ?? 1)).toFixed(3)}`);
