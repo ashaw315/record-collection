@@ -75,7 +75,7 @@ test('a 30-second wait: the motion runs without end throughout, the words join i
     await page.clock.runFor(4_900);
     await expect(words(page)).toHaveCount(0);
     await page.clock.runFor(200);
-    await expect(words(page), 'words at five seconds').toHaveText('Reading the whole collection…');
+    await expect(words(page), 'words at five seconds').toHaveText('Reading your records…');
     await page.clock.runFor(25_000);
     expect(await motion(page), 'still running at thirty seconds').toEqual({ playState: 'running', iterations: Infinity });
     await expect(words(page)).toHaveCount(1);
@@ -96,7 +96,7 @@ test('under reduced motion the line is still and the words are drawn from the pr
     await field(page).fill('something slow');
     await askButton(page).click();
     await expect.poll(() => held.length).toBe(1);
-    await expect(words(page), 'words from the press').toHaveText('Reading the whole collection…');
+    await expect(words(page), 'words from the press').toHaveText('Reading your records…');
     expect((await motion(page))?.playState, 'the line still').toBe('none');
     await answer(held[0], ids.slice(0, 1));
     await expect(control(page).locator('[data-pick-working]')).toHaveCount(0);

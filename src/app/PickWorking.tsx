@@ -6,7 +6,7 @@
  * the slot", at five seconds (Proposed, for Adam on his phone), which the control times; under reduced motion the line is
  * still and the words are drawn from the press. Both end at the reply. The wording is Proposed.
  */
-export const WORKING_WORDS = 'Reading the whole collection…';
+export const WORKING_WORDS = 'Reading your records…';
 
 export function PickWorking({ words }: { words: boolean }) {
   return (

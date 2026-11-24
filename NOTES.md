@@ -60611,3 +60611,20 @@ Summer's A Love Trilogy at 51 for "funky and tight". Two answers are thin eviden
 written phrases are ours, so the figure stands for asks like these rather than for his. Read-only; the measurement was
 Design's to ask for and she asked. Q87 (persisting the pick's answers) and Q88 (the sleeve modal's unannounced load)
 opened.
+
+**§P.3's cover ground, asserted, with the no-shift property the coordinator added (23 Nov, "Covers fill in place").** The
+build already did what the ruling asks, by §33's older rule: the grid's cover square keeps its size through aspect-ratio
+before any image, and the image stays invisible until it has loaded and its shape is known, so there is no partial band
+and no spinner, and the title and reason are drawn at once. e2e/cover-ground.spec.ts holds it at 390 on chromium's slow
+3G with the covers from a host the test holds and releases: the ground 160 square before the cover, the title and reason
+drawn, no image visible while it loads, and nothing moving when it arrives (ground, title and reason keep their tops and
+heights). It passed on its first run, so it was shown red against three staged faults before it was kept: the square's
+reserved size removed (red at the square), the image drawn while loading (red at no partial cover), and the square
+released when the cover arrives. That third fault first stayed green, because the test's cover was square, 208 by 208,
+and a square cover arriving into a square ground moves nothing reserved or not: the coordinator's point exactly. The
+cover is now a wide 320 × 200 fixture, and the fault turns it red (the ground lost its height). Then green on the build.
+**The words become "Reading your records…"**, tests first (red, then 2 passed), the in-flight spec moved with them; 9
+passed on chromium across both specs and 8 on mobile. **The rail's measure, re-read with the new words:** still three
+lines, the words 54 wide in a slot 112 wide; one line in the sidebar and the band at 129. The cause is now plain: the
+words sit beside the 48-pixel motion with a 10-pixel gap, so at the rail's 112 they have 54 pixels whatever they say.
+Those widths go back to Design, not a cut.

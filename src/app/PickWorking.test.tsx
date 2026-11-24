@@ -22,6 +22,6 @@ describe('PickWorking', () => {
   it('draws the words beside the motion past the threshold, the motion carrying on', () => {
     const html = renderToStaticMarkup(<PickWorking words />);
     expect(html).toMatch(/data-pick-working-motion=""/);
-    expect(html).toMatch(/<span[^>]*data-pick-working-words=""[^>]*>Reading the whole collection…<\/span>/);
+    expect(html).toMatch(/<span[^>]*data-pick-working-words=""[^>]*>Reading your records…<\/span>/);
   });
 });
