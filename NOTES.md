@@ -60671,3 +60671,20 @@ under embedding in both texts, not the same failure. **Block two's attribution:*
 step before No step: §G.7., with no quote, since the ruling it serves is unwritten; listed unbuilt. "Top-N rerun corpus"
 held as superseded by name, its borrowed quote of §P.2's reason sentence the coordinator's correction and Design's. The
 run is held for Adam's block; by the day's end, blocks two and three, block one named empty.
+
+**The widest-text hypothesis withdrawn, said plainly (the coordinator, 24 Nov).** At n = 37 a Spearman correlation needs
+about 0.33 to clear the usual significance line; the figures were 0.01 with length and, named now as the quantity it is,
+−0.18 with self-similarity (a record's mean cosine among its own sentences, higher being a narrower text; the earlier
+"0.19 with variety" was the same figure inverted). Negative means more varied texts are missed slightly more, the
+direction the Hot Tuna sentence describes, and it is no support, not half support. **What survives is the
+concentration, on counts and no theory:** at N = 30 Hot Tuna's self-titled loses 4 of its 5 picks and carries a third of
+all misses; one record nearly unreachable, not everyone losing a little. Hot Tuna's embedding is unreliable in both
+directions (near everything under the ABOUTs on 13 Nov, deep under the matched texts on 23 Nov): a data question about
+that record (Q89).
+
+**Block two, back to Design before the run (the coordinator, 24 Nov).** Its three phrases ("sunday morning", "cooking
+dinner", "a long night drive") have no documented source: the 13 Nov report names no phrases, "sunday morning" appears
+only in a script's usage example, and the 23 Nov corpus used none of them as written. Labelled "Code's" they repeat the
+mislabelling she corrected. Not substituted. The option with a real provenance: the twenty phrases written on 19 Nov to
+resemble his asks, documented as ours in the 23 Nov corpus; if block two means "phrases we wrote", three from there. Her
+call which three, or whether to drop the block. The rerun is held for her answer as well as Adam's.
