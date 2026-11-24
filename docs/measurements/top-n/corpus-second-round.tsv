@@ -1,0 +1,12 @@
+# The second round's corpus (23 Nov), held until Adam says what he has typed: his answer replaces the reported lines and
+# outranks both Design's memory and the coordinator's. One phrase a line, "group<TAB>phrase". Run with
+#   node --env-file=.env.local --conditions=react-server --import tsx scripts/measure-top-n.mts --corpus=docs/measurements/top-n/corpus-second-round.tsv
+adam-logged	something calm
+adam-logged	cooking dinner, people over
+adam-reported	feels like winter
+adam-reported	quiet, warm
+adam-reported	quiet and sad
+adam-reported	quiet, alone, late
+adam-reported	something from the eighties
+adam-reported	big band
+# ours-kinds: Design's three shapes his do not cover; her exact wording to be filled from her file when it is on disk.

@@ -60628,3 +60628,23 @@ passed on chromium across both specs and 8 on mobile. **The rail's measure, re-r
 lines, the words 54 wide in a slot 112 wide; one line in the sidebar and the band at 129. The cause is now plain: the
 words sit beside the 48-pixel motion with a 10-pixel gap, so at the rail's 112 they have 54 pixels whatever they say.
 Those widths go back to Design, not a cut.
+
+**The rail's words, for Design as a width, not a line count (the coordinator, 23 Nov):** in the shelf rail the words get
+54 pixels, the 112 slot less the 48-pixel motion and the 10-pixel gap beside it. "Reading your records…" is 21
+characters and no wording fits on one line in 54, so rewording cannot solve it; the constraint is the layout. She rules
+the layout, with 54 in front of her.
+
+**Design's top-N second round, prepared and held (the coordinator, 23 Nov).** Her method is kept whole: three runs a
+phrase, reported per phrase before any rate, the corpus and its misses before the rates, and rates per group, since a
+rate low overall and high on title asks decides the bound differently. Her nine phrases are not run as given: only two
+of Adam's are recorded verbatim, and three of hers appear in no record. The coordinator has asked Adam what he has typed;
+his answer outranks both memories. `scripts/measure-top-n.mts --corpus=<file>` now takes a grouped corpus (adam-logged,
+adam-reported, adam-confirmed, ours-kinds, ours-bench), three runs each by default, per phrase first; exercised once on a
+one-phrase corpus (one model call, the smoke's file not kept). The corpus is staged at
+docs/measurements/top-n/corpus-second-round.tsv: his two logged phrases and the six he reported in conversation, marked
+reported, not logged; Design's three kind-filling phrases (a title ask, a requirement, a single-word mood) go in as
+ours-kinds when her exact wording is on disk. Not run.
+
+**Layout stability is asserted with a cover that is not square (the coordinator, 23 Nov):** a square fixture cannot fail
+a no-shift assertion, since a square cover arriving into a square ground moves nothing reserved or not;
+test/fixtures/covers/wide-320x200.png is the default for any such assertion.
