@@ -60648,3 +60648,26 @@ ours-kinds when her exact wording is on disk. Not run.
 **Layout stability is asserted with a cover that is not square (the coordinator, 23 Nov):** a square fixture cannot fail
 a no-shift assertion, since a square cover arriving into a square ground moves nothing reserved or not;
 test/fixtures/covers/wide-320x200.png is the default for any such assertion.
+
+**Where the first top-N run's misses fall, and the widest-text hypothesis tested (the coordinator and Design, 24 Nov;
+scripts/report-top-n-spread.mts on docs/measurements/top-n/2026-11-24T02-10-07-826Z.jsonl).** At N = 30 the 12 misses fall
+on 8 records: Hot Tuna's self-titled 4 of its 5 picks, Nashville Skyline 2 of 3, and six records one each. Concentrated
+in part: one record carries a third of them and is nearly unreachable under that bound; the rest is spread. At N = 20 the
+21 fall on 15 records, Hot Tuna 4 and Darkside's Psychic 3. **The hypothesis, that the deep-ranked picks are the longest
+or most varied texts, does not hold generally:** across the 37 records picked at least once, a record's deep rate has a
+rank correlation of 0.01 with its length and 0.19 with its variety at N = 30 (−0.03 and 0.09 at 20); the deep-ranked
+records' median length is 1,630 characters against 1,666 for all 55, and their median variety (the mean cosine between a
+record's own sentences, lower ranging further) 0.415 against 0.428. It fits its best example: Hot Tuna's text is the most
+varied of the deep-ranked, 0.378, and the most often missed. So the structural argument holds for Hot Tuna and is not
+shown for the rest; 98 picks is a small base, and the rerun's three runs a phrase will say more. **Hot Tuna on 13 Nov:**
+that report ranked by the ABOUT vectors and names no phrases for Hot Tuna, only "rank 1 for three unrelated phrases" of
+Adam's six, never recorded verbatim; so whether today's three are the same three cannot be read. In the ABOUT space it
+was a hub, near everything; in the matched-text space it sits deep for asks the model picks it for. The same record odd
+under embedding in both texts, not the same failure. **Block two's attribution:** the 13 Nov report lists no phrases;
+"sunday morning" appears only in a script's usage example, and the 23 Nov corpus used "cooking dinner, people over", not
+"cooking dinner", and neither of the other two. Said to Design rather than substituted.
+
+**"Top-N rerun corpus unquoted" taken in (refs/drops/2026-11-24-02),** found on disk by name: the §P.2 pool-bound rerun
+step before No step: §G.7., with no quote, since the ruling it serves is unwritten; listed unbuilt. "Top-N rerun corpus"
+held as superseded by name, its borrowed quote of §P.2's reason sentence the coordinator's correction and Design's. The
+run is held for Adam's block; by the day's end, blocks two and three, block one named empty.

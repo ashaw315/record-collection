@@ -642,5 +642,15 @@
         "how": "anchors"
       }
     ]
+  },
+  {
+    "file": "Top-N rerun corpus unquoted",
+    "ref": "refs/drops/2026-11-24-02",
+    "heads": [
+      {
+        "head": "§P.2: the pool bound's top-N rerun",
+        "how": "inserts"
+      }
+    ]
   }
 ]

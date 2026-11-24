@@ -1049,6 +1049,23 @@ Its rows are in the governs table above, one per section; this section does not 
   - **Capture** at 1280 and 390 after a real import, and report the line's wrap at 390.
   > Beneath the report’s four lines, apart from them, one line says how many records this press described and how many in the collection still wait to be described, and where any wait it says that importing again describes them.
 
+- **Unnumbered, for Code to number — §P.2: the pool bound's top-N rerun.**
+  - **The corpus, in three blocks,** each labelled with its source in the report:
+    1. **Adam's:** the phrases Adam gives, verbatim. If he gives none, say so and run the other two blocks.
+    2. **Code's:** "sunday morning", "cooking dinner" and "a long night drive", from the 13 Nov centring report. If the 23 Nov top-N corpus used these same phrases, say so.
+    3. **Design's:** one ask of each shape the other blocks don't cover:
+       - "something like Aja", a title ask;
+       - "no vocals", a requirement;
+       - "angry", a single-word mood.
+  - **Run** each phrase three times, independently, with the matched texts embedded fresh.
+  - **Report, in this order:**
+    1. the corpus with each phrase's source;
+    2. for each phrase, the picked records outside the ranking's top 10, 20 and 30;
+    3. the rates per block, then overall.
+  - **Report** how the misses at N=30 spread across records, and whether the deep-ranked picks are the records with the longest or most varied matched texts.
+  - **Assert nothing:** this is a measurement and builds nothing.
+  No quote: the ruling this step serves, whether §P.2 bounds the pool, isn't written yet, and the far and tie sentences it would rest on are held. When the bound is ruled, its sentence becomes this step's quote.
+
 No step: §G.7. It rules nothing. Hover and focus wait on Code's second pass, the breakpoint is settled and recorded in §G.8, and the eyebrow repetition is an observation, not a ruling.
 
 No step: §P.1. It rules where the feature is ruled and which view presents an answer; what that means for the build is in the steps for §P.3 and §P.4.

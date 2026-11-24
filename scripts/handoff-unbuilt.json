@@ -73,5 +73,10 @@
     "head": "§T.6: what the import described",
     "status": "unbuilt",
     "evidence": "Ruled 23 Nov (\"Import described line\", the card at 8f1ed443, superseding \"Import draft line\"). The data it draws exists: the import's drafting outcome on the stored run (report.drafting, src/lib/db/queries/import-runs.ts, 22 Nov) and the count of records still lacking matched text; Manage draws nothing of it yet (src/app/manage/import-report.ts, the four lines only); checked 23 Nov."
+  },
+  {
+    "head": "§P.2: the pool bound's top-N rerun",
+    "status": "unbuilt",
+    "evidence": "Set 24 Nov (\"Top-N rerun corpus unquoted\"), a measurement with no quote since the bound's ruling is unwritten. The script takes the corpus (scripts/measure-top-n.mts --corpus, 23 Nov); held for Adam's block one, and blocks two and three by end of day if he gives none (the coordinator, 24 Nov); checked 24 Nov."
   }
 ]
