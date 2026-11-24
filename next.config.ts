@@ -2,6 +2,16 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /**
+   * **The grid's covers through the optimiser (23 Nov).** Production's covers are served as stored, up to 3.1 MB, into
+   * 160-pixel cells; src/lib/images/cover-src.ts asks for them at 320 through `/_next/image`. The blob store's hosts are
+   * the only remote source, and 320 joins Next's default image sizes so the width is one the optimiser serves. Hobby's
+   * allowance is 5,000 transformations a month, counted on cache misses: about ninety covers at one width.
+   */
+  images: {
+    remotePatterns: [{ protocol: 'https', hostname: '*.public.blob.vercel-storage.com' }],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 320, 384],
+  },
+  /**
    * **A separate build directory under test, so the E2E server and the
    * developer's dev server can run at once.**
    *

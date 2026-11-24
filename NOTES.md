@@ -60524,3 +60524,33 @@ the cause; the covers' weight on a cellular link is. Design's pre-registered sec
 state is hers to rule. Two facts beside it for that ruling: the reply is a sixth of fast 3G's cover time, and the covers
 are four times the pixels a 160 cell needs at three device pixels, so their weight is also the build's to reduce (a
 sized variant or the image optimiser, which the grid's comment says is not configured for blob URLs).
+
+**The covers' weight, measured before fixing, then fixed (the coordinator, 23 Nov).** The waterfall, on the first run's
+own five: all five requests start together at 20ms, so there is no queueing and no request overhead to speak of, and no
+optimiser works anywhere on the path, since the grid drew the blob URL directly. It is bytes, almost all in one file: a
+2.05 MB PNG, an upload rather than a Discogs JPEG, ends at 14.4s on fast 3G alone, the four JPEGs beside it by 4.6s.
+**Correction to my own report:** "about 450 KB an answer" weighed a different random five than the run drew; the run's
+five were 2.59 MB. The probe chose covers at random, so the second run's 5.3s was another set, not a second measurement;
+it now reuses a run's covers on request (PROBE_COVERS_FROM). Production's 90 covers: median 99 KB, 90th percentile 1,165
+KB, largest 3,122 KB, 18 over 300 KB, seven of them 2 to 3 MB PNGs; 71 JPEG, 11 WebP, 8 PNG. **The fix:** the grid's
+covers, which are also the pick's answer cells, go through Next's optimiser at 320, twice the cell
+(src/lib/images/cover-src.ts; next.config's remotePatterns for the blob hosts and 320 among imageSizes); a data URL and
+any other host draw as they are. No production write: stored thumbnails would need a backfill Adam runs; Hobby allows
+5,000 transformations a month counted on cache misses, about ninety covers at one width. Test first: the helper's three,
+red on the missing module, including that the width is one the config serves and the host one it allows; then the
+GridCell tests; the thirteen specs that assert grid covers, 117 passed (load 1.8 before, 34.6 after); typecheck; lint;
+build. Not in scope: the shelf's covers and the record page, which draw their own; reported for a later unit. The
+re-measure follows the deploy, on the same five, through production's optimiser.
+
+**The drop ref of "Indicator any length" regenerated (the coordinator, 23 Nov):** captured after the edit, it held the
+handoff with the change already in it. Rebuilt with the handoff as the tree held it before the file was applied, the same
+parent and capture time; refs/drops/2026-11-23-02 moved from 4d9f2807 to 7aa7db3d, its only difference that handoff.
+
+**Embedding the 55 matched texts, priced for Design's top-N measurement:** 92,023 characters, about 23,000 tokens, one
+call to text-embedding-3-small, well under a tenth of a cent and about two seconds; nothing need be stored. The bench's
+picks dominate the cost, about ten calls to the pick's model. Not run on the ABOUT vectors: a figure from the wrong text
+is worse than none.
+
+**A new surface that observes state finds the faults nothing watched (the coordinator, 23 Nov):** the indicator was the
+first thing to observe the in-flight state, and two latent faults surfaced with it. Expect the same whenever a surface
+watches state nothing watched before (Q86).

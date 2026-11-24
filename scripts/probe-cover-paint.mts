@@ -11,7 +11,7 @@
  * Read-only: it reads five cover URLs from the database and fetches them as any visitor would. In-page code is strings,
  * never functions (tsx's injected __name, 23 Nov). Writes docs/measurements/cover-paint/ and its screenshots.
  */
-import { appendFileSync, mkdirSync } from 'node:fs';
+import { appendFileSync, mkdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { chromium } from '@playwright/test';
 import { sql } from 'drizzle-orm';
@@ -26,9 +26,23 @@ const PROFILES = [
 const SHOTS_MS = [500, 1000, 2000, 4000, 8000];
 const LIMIT_MS = 60_000;
 
-const urls = (await getDb().execute<{ url: string }>(sql`SELECT url FROM images WHERE image_type = 'cover' AND url LIKE 'https://%' ORDER BY random() LIMIT 5`)).rows.map((r) => r.url);
+/*
+  The five covers: random unless named. A random five differs run to run, and the first run's 14.4s against the second's
+  5.3s on fast 3G was two different sets of covers, not two measurements of one (23 Nov); PROBE_COVERS_FROM names an
+  earlier run's measurement file, whose covers are reused, so a before and an after compare like with like.
+*/
+const fromRun = process.env.PROBE_COVERS_FROM;
+const urls = fromRun !== undefined
+  ? (JSON.parse(readFileSync(fromRun, 'utf8').trim().split('\n')[0]) as { urls: string[] }).urls
+  : (await getDb().execute<{ url: string }>(sql`SELECT url FROM images WHERE image_type = 'cover' AND url LIKE 'https://%' ORDER BY random() LIMIT 5`)).rows.map((r) => r.url);
 if (urls.length < 5) throw new Error(`probe-cover-paint: ${urls.length} covers with a URL; five are needed`);
 
+/*
+  After the fix (23 Nov): PROBE_OPTIMISER_BASE names a deployment, and each cover is fetched as the grid now asks for it,
+  through that deployment's `/_next/image` at the grid's width, which the middleware leaves open without a session.
+*/
+const optimiser = process.env.PROBE_OPTIMISER_BASE;
+const drawn = optimiser === undefined ? urls : urls.map((u) => `${optimiser}/_next/image?url=${encodeURIComponent(u)}&w=320&q=75`);
 const outDir = join('docs', 'measurements', 'cover-paint');
 const stamp = new Date().toISOString().replace(/[:.]/g, '-');
 const shotDir = join(outDir, stamp);
@@ -47,6 +61,7 @@ const PAGE = `<!doctype html><html><head><meta name="viewport" content="width=de
 /* Insert the five as the reply does, recording per cover when bytes first decode to a size (first paint) and when complete. */
 const insertJs = (list: readonly string[]) => `(() => {
   const t0 = performance.now();
+  window.__t0 = t0;
   window.__cover = [];
   const ul = document.getElementById('cells');
   ${JSON.stringify(list)}.forEach((u, i) => {
@@ -70,7 +85,7 @@ const READ_JS = 'window.__cover';
 
 const browser = await chromium.launch();
 try {
-  log(`probe-cover-paint: five production covers at 390 × 844, inserted as an answer, under ${PROFILES.map((p) => p.name).join(', ')}, cold cache each`);
+  log(`probe-cover-paint: five production covers ${optimiser === undefined ? 'as stored' : `through ${optimiser}'s optimiser at 320`}, at 390 × 844, inserted as an answer, under ${PROFILES.map((p) => p.name).join(', ')}, cold cache each`);
   for (const profile of PROFILES) {
     const context = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 3, isMobile: true, hasTouch: true });
     const page = await context.newPage();
@@ -79,7 +94,7 @@ try {
     await cdp.send('Network.setCacheDisabled', { cacheDisabled: true });
     await cdp.send('Network.emulateNetworkConditions', { offline: false, latency: profile.latency, downloadThroughput: profile.down, uploadThroughput: profile.up });
     await page.setContent(PAGE);
-    await page.evaluate(insertJs(urls));
+    await page.evaluate(insertJs(drawn));
     const started = Date.now();
     for (const at of SHOTS_MS) {
       const wait = at - (Date.now() - started);
@@ -88,11 +103,26 @@ try {
     }
     await page.waitForFunction(`${READ_JS}.every((c) => c.complete !== null)`, undefined, { timeout: LIMIT_MS }).catch(() => undefined);
     const covers = (await page.evaluate(READ_JS)) as Array<{ i: number; first: number | null; complete: number | null }>;
+    /*
+      The waterfall (the coordinator, 23 Nov: of fast 3G's 14.4s, how much is transfer and how much is overhead). Resource
+      Timing per cover, relative to the insert: when the request was queued, sent, first byte, last byte, and the bytes.
+      Cross-origin, so the detailed phases read 0 unless the store sends Timing-Allow-Origin; start, end and duration
+      always read, and the queueing shows as the gap between one cover's start and its first byte.
+    */
+    const waterfall = (await page.evaluate(`(() => {
+      const t0 = window.__t0 || 0;
+      return performance.getEntriesByType('resource').filter((e) => e.initiatorType === 'img').map((e) => ({
+        name: e.name.slice(-24), start: e.startTime - t0, requestStart: e.requestStart ? e.requestStart - t0 : null,
+        responseStart: e.responseStart ? e.responseStart - t0 : null, end: e.responseEnd - t0,
+        transfer: e.transferSize, body: e.encodedBodySize, protocol: e.nextHopProtocol,
+      }));
+    })()`)) as Array<{ name: string; start: number; requestStart: number | null; responseStart: number | null; end: number; transfer: number; body: number; protocol: string }>;
+    for (const w of waterfall) log(`    ${profile.name} ${w.name}: start ${(w.start / 1000).toFixed(2)}s, first byte ${w.responseStart === null ? 'hidden' : `${(w.responseStart / 1000).toFixed(2)}s`}, end ${(w.end / 1000).toFixed(2)}s, ${w.body} bytes, ${w.protocol || 'protocol hidden'}`);
     const done = covers.map((c) => c.complete).filter((n): n is number => n !== null);
     const firsts = covers.map((c) => c.first).filter((n): n is number => n !== null);
     const s = (ms: number) => `${(ms / 1000).toFixed(2)}s`;
     log(`  ${profile.name}: first paint ${firsts.length === 0 ? 'none' : `${s(Math.min(...firsts))} to ${s(Math.max(...firsts))}`}; complete ${done.length} of 5, the last at ${done.length === 0 ? 'none' : s(Math.max(...done))}`);
-    appendFileSync(out, `${JSON.stringify({ profile: profile.name, covers, urls })}\n`);
+    appendFileSync(out, `${JSON.stringify({ profile: profile.name, covers, waterfall, urls, optimiser: optimiser ?? null })}\n`);
     await context.close();
   }
   log(`probe-cover-paint: written to ${out}, screenshots in ${shotDir}`);

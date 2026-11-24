@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from 'react';
 import { coverTreatment, type CoverTreatment } from './records/[id]/cover-fit';
+import { coverSrc } from '@/lib/images/cover-src';
 
 /**
  * **A record's cover in the grid (§T.5): the record page's rule, in a
@@ -38,7 +39,7 @@ export function GridCover({ url }: { url: string | null }) {
       <img
         ref={read}
         data-cover-treatment={treatment ?? undefined}
-        src={url}
+        src={coverSrc(url)}
         alt=""
         /*
           Step 164, §W.8: the grid is also in the wall page's markup, under
