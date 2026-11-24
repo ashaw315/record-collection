@@ -194,15 +194,23 @@ test.describe('the control with the model pick’s replies (stubbed /api/ask)', 
     }
   });
 
-  test('ignores a reply to a phrase since changed, and takes no second press while a request is in flight (interim)', async ({ page }) => {
+  /*
+    Moved with the ruling (CLAUDE.md §2): this case held the interim rule of 14 Nov, both presses ignored in flight and
+    a reply ignored once the phrase was edited. "Ask in flight presses and field" (22 Nov) withdrew it (WITHDRAWALS,
+    P.3/both-ignored-in-flight): the same phrase is still ignored, but typing is honoured for the next press and no
+    longer lets the ask go, so the reply to A lands, and the next ASK asks B. e2e/pick-in-flight.spec.ts holds the rest.
+  */
+  test('takes no second press of the same phrase in flight; typing a new phrase keeps the ask, its reply is drawn, and the next press asks the new phrase', async ({ page }) => {
     const artistId = await fixture(page, 3);
     try {
       const records = await ids(page, artistId);
       let calls = 0;
+      const phrases: string[] = [];
       let release: () => void = () => undefined;
       const held = new Promise<void>((resolve) => { release = resolve; });
       await page.route('**/api/ask', async (route) => {
         calls += 1;
+        phrases.push((route.request().postDataJSON() as { phrase: string }).phrase);
         await held;
         await route.fulfill({ json: { mode: 'pick', verdict: 'answer', answers: [{ recordId: records[0].id, reason: 'r', claims: ['c'] }], from: 'phrase', askedFrom: null, undescribed: null, unanswerable: false } });
       });
@@ -213,8 +221,10 @@ test.describe('the control with the model pick’s replies (stubbed /api/ask)', 
       expect(calls, 'the second press, the first in flight, sends nothing').toBe(1);
       await control(page).locator('[data-ask-field]').fill(B);
       release();
-      await page.waitForTimeout(500);
-      expect(await cells(page), 'the reply to A, landing under B, draws nothing').toEqual([]);
+      await expect.poll(async () => (await cells(page)).length, { message: 'the reply to A is drawn: typing did not let it go' }).toBe(1);
+      await control(page).getByRole('button', { name: /^ask$/i }).click();
+      await expect.poll(() => phrases.length).toBe(2);
+      expect(phrases[1], 'the next press asks with what the field then holds').toBe(B);
     } finally {
       await removeRecordsFor(artistId);
     }

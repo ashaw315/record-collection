@@ -60480,3 +60480,31 @@ unsupported. "55 sent" on every line confirms in the data what the code said. Lo
 first run with the same times: a clean negative on load, so his figures do not need a quiet machine. The four-cell
 press recurred at the same position (Q85). His pull read "Already up to date", so the half pass was not on main when he
 ran; it ships now and becomes a short run of its own.
+
+**§P.3's ask in flight, built: the indicator, the words, the live field and the press handling (the In flight bullet of
+the model-pick step; "Ask in flight presses and field", 22 Nov; "Indicator any length", 23 Nov).** Ten files carrying
+one decision, the bullet as ruled, named here before the count is read as several. The slot draws `PickWorking` for the
+length of the call: a hairline whose dashes drift by exactly one period per loop, so the loop has no seam to count and
+nothing in it ends or estimates; at five seconds (Proposed) the words "Reading the whole collection…" (Proposed) join it;
+under reduced motion the line is still and the words are drawn from the press; both end at the reply, and the drawn
+answer stays until replaced. A press in flight is decided by `pressInFlight` (src/lib/ask/in-flight.ts): ASK with the
+same phrase is ignored, a changed phrase lets the ask go and asks again, SURPRISE ME lets it go and answers; a let-go
+reply is never drawn, since its request number is no longer the latest. **Two faults found on the way, both in the
+code before this step:** the `finally` cleared the in-flight state for any reply, current or not, which with
+abandonment would end the new ask's indicator when the old reply landed (only the current request ends it now); and
+typing a changed phrase already let the ask go, by 2b's interim rule of 14 Nov, which with the indicator would have left
+the slot working for an ask nothing could end. The ruling settles the second: typing is honoured for the next press and
+no longer lets the ask go. The ask-run-history case that held the interim rule moved with the ruling (withdrawal
+P.3/both-ignored-in-flight), its body saying so; its first half, the same phrase ignored, still holds. Tests first: the
+decision's three cases and the indicator's two, red on the missing modules, then 5 passed; the control's component
+tests 9 passed; e2e/pick-in-flight.spec.ts, the route held and answered by the test and the page's clock paused so a
+30-second wait takes no 30 seconds: the motion running without end at 0 and 30 seconds, no words at 4.9, words at 5.1
+and throughout, both cleared at the reply; reduced motion; the field live and typing kept; the same phrase no request; a
+changed phrase with the replies answered in reverse, only the second drawn; SURPRISE ME answering and the late reply
+drawing nothing. Its first run failed on an installed clock flowing in real time (paused now) and on the typing fault
+above. Then 8 passed on chromium and 8 on mobile (the spec joins the mobile project's list: the indicator is judged on
+his phone, a config change and so a gate); the ten specs that press the control, 79 passed and the moved one 6 of 6;
+typecheck; lint; build. **The words' line, measured as the step asks:** in the shelf rail at 1280 it takes three lines,
+the words 63 wide in a slot 112 wide; in the grid sidebar at 1280 and the band at 320, one line, 170 wide in slots of 300
+and 284. Three lines at the rail is more than two, so the widths go back to Design rather than the words being cut.
+Load 2.0 before and 10.8 after the first run; 14.1 before the wider run.

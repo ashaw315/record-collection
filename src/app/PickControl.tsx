@@ -3,6 +3,8 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { askSlotMessage, SLOT_MESSAGES, type AskVerdict } from '@/lib/ask/slot';
 import { drawSurprise } from '@/lib/ask/surprise';
+import { pressInFlight } from '@/lib/ask/in-flight';
+import { PickWorking } from './PickWorking';
 import { GridCell } from './GridCell';
 import { usePickChannel, type CellHost, type PickRecord } from './wall/pick-channel';
 import { CONTROL_LABEL, HAIRLINE, INK, LABEL, LABEL_TYPE } from './records/[id]/grid-type';
@@ -28,6 +30,8 @@ function fitToPhrase(el: HTMLTextAreaElement) {
 
 /* §P.6's slot messages live in `src/lib/ask/slot.ts`, written to fit the slot at the rail's width (one line). */
 const MESSAGES = SLOT_MESSAGES;
+/* §P.3's words threshold, Proposed at five seconds ("Indicator any length", 23 Nov), for Adam to judge on his phone. */
+const WORDS_AFTER_MS = 5_000;
 
 /** What the control shows for one answer: the record, the pick's reason (null where there is none), and whether it is a consolation beside a nothing-fits message (§P.2). */
 type Answer = { id: string; reason: string | null; consolation?: boolean };
@@ -103,6 +107,26 @@ export function PickControl({ ruled = false, pool, answers = 'cell', withoutAbou
   /* A stable id, as the rail's search field has (`rail-search`): the Tab walk names an input by it. One control stands in the shelf's rail and one in the sidebar, so the two never share a document's id. */
   const fieldId = answers === 'wall' ? 'rail-ask' : 'sidebar-ask';
   const [asking, setAsking] = useState(false);
+  /* The phrase the ask in flight was made with: a press with the same phrase is ignored, a changed one lets it go (§P.3, 22 Nov). */
+  const askingPhrase = useRef('');
+  /*
+    §P.3's indicator words ("Indicator any length", 23 Nov): at five seconds into a wait, Proposed, timed here so a test's
+    clock can move it; under reduced motion the motion is still and the words are drawn from the press.
+  */
+  const [slow, setSlow] = useState(false);
+  /* Read when the control mounts on the client; the words are never drawn on the server, so the first render cannot disagree. */
+  const [reduced, setReduced] = useState(() => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  useEffect(() => {
+    const query = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const change = () => setReduced(query.matches);
+    query.addEventListener('change', change);
+    return () => query.removeEventListener('change', change);
+  }, []);
+  useEffect(() => {
+    if (!asking) return;
+    const timer = window.setTimeout(() => setSlow(true), WORDS_AFTER_MS);
+    return () => window.clearTimeout(timer);
+  }, [asking]);
   /* The slot's message: cleared by the next answer, and with the view. */
   const [message, setMessage] = useState('');
   /*
@@ -172,8 +196,9 @@ export function PickControl({ ruled = false, pool, answers = 'cell', withoutAbou
 
   /** ASK: the phrase or a title to the route, the pool as ids, the run's shown records left out. */
   const ask = async () => {
-    /* Interim, pending Design (the coordinator, 14 Nov): a press while a request is in flight does nothing, as §P.3 treats an ask while a record moves. */
-    if (askInert || asking) return;
+    if (askInert) return;
+    /* §P.3 (22 Nov): the same phrase in flight is ignored; a changed phrase lets the ask in flight go and asks again, the old reply never drawn since its number is no longer the latest. */
+    if (pressInFlight(asking ? { phrase: askingPhrase.current } : null, { kind: 'ask', phrase }) === 'ignore') return;
     const asked = phrase.trim();
     let exclude = shown;
     if (runPhrase.current !== asked) {
@@ -189,6 +214,8 @@ export function PickControl({ ruled = false, pool, answers = 'cell', withoutAbou
       return;
     }
     const mine = (request.current += 1);
+    askingPhrase.current = asked;
+    setSlow(false);
     setAsking(true);
     try {
       const response = await fetch('/api/ask', {
@@ -248,7 +275,8 @@ export function PickControl({ ruled = false, pool, answers = 'cell', withoutAbou
       }
       show(answered);
     } finally {
-      setAsking(false);
+      /* Only the ask still current ends the indicator: a reply let go must not clear the wait of the ask that replaced it. */
+      if (mine === request.current) setAsking(false);
     }
   };
 
@@ -257,6 +285,11 @@ export function PickControl({ ruled = false, pool, answers = 'cell', withoutAbou
     const id = drawSurprise(pool.map((record) => record.id), shown, Math.random);
     /* §P.6: "An ask the pool cannot answer draws nothing." */
     if (id === null) return;
+    /* §P.3 (22 Nov): SURPRISE ME in flight lets the ask go and answers at once; the reply, when it comes, is never drawn. */
+    if (asking) {
+      request.current += 1;
+      setAsking(false);
+    }
     setMessage('');
     if (drawn.length === 1 && drawn[0]?.id === id) setMessage(MESSAGES.only);
     /* A draw by chance has no reason (§P.2: SURPRISE ME ignores the ask field). */
@@ -286,11 +319,13 @@ export function PickControl({ ruled = false, pool, answers = 'cell', withoutAbou
           onChange={(event) => {
             const next = event.target.value.replace(/\r?\n/g, ' ');
             setPhrase(next);
-            /* A different phrase ends the run: its queue goes, and a reply in flight for it is ignored on arrival. */
-            if (next.trim() !== runPhrase.current) {
-              request.current += 1;
-              setQueue([]);
-            }
+            /*
+              A different phrase ends the run's queue. It no longer lets an ask in flight go: since "Ask in flight presses
+              and field" (22 Nov) only ASK with a changed phrase or SURPRISE ME does, and typing is honoured for the next
+              press. 2b's interim rule (14 Nov) ignored the reply on any edit, which with the indicator would have left the
+              slot working for an ask nothing could end.
+            */
+            if (next.trim() !== runPhrase.current) setQueue([]);
           }}
           onKeyDown={(event) => {
             if (event.key === 'Enter') {
@@ -335,7 +370,8 @@ export function PickControl({ ruled = false, pool, answers = 'cell', withoutAbou
       )}
       {/* §P.6's message, "as proposed there" (§P.4). */}
       <p role="status" data-pick-slot="" className="min-h-[1lh] text-prose">
-        {message}
+        {/* §P.3: the slot says the pick is working for the length of the call, and the drawn answer stays until replaced. */}
+        {asking ? <PickWorking words={slow || reduced} /> : message}
       </p>
       {/*
         §P.4: "the covers in rank order beneath the control", each at §T.5's 160, the least a cover is, 24 below the

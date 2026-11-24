@@ -278,6 +278,12 @@
  * survive until 90°, which is the thing that could not be made to work. What
  * remains reads as the record swinging into view.
  */
+/* §P.3's indicator (23 Nov): the dashes move by exactly one period, 12px, each loop, so the loop has no seam to count. */
+@keyframes pick-work {
+  from { background-position: 0 0; }
+  to { background-position: 12px 0; }
+}
+
 @keyframes record-turn {
   from {
     transform: rotateY(-92deg);

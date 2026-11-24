@@ -264,6 +264,8 @@ export default defineConfig({
         /genre-column-155\.spec\.ts$/,
         /* The ask field's wrap (§P.5, 13 Nov): its growth is scripted because WebKit is the phone's engine, so the bands at 390 run on it. */
         /ask-wrap-184\.spec\.ts$/,
+        /* §P.3's indicator (23 Nov): judged by Adam on his phone, so its motion, its words and reduced motion run on the phone's engine. */
+        /pick-in-flight\.spec\.ts$/,
         /* Steps 113 and 114: the sidebar, its figures and rings, and the header's full width, on the phone's engine. */
         /sidebar-113\.spec\.ts$/,
         /header-114\.spec\.ts$/,
