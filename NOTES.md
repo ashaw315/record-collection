@@ -60587,3 +60587,27 @@ growing collection does not approach it soon. Tests first: the large width, the 
 then 566 passed across the helper, the prefetch, the stage and the record page; the cover specs and the shelf's pull,
 124 passed (load 5.2 before, 47.2 after); typecheck; lint; build. The suites' covers are data URLs, which the helper
 leaves alone, so the e2e confirms nothing else moved; the deployed sizes are read after the deploy.
+
+**Design's top-N measurement, run (23 Nov). The corpus first, because the figure's worth depends on it.** No stored set
+of answers exists: pick history is not persisted, the route's production log carries counts only, and the press files in
+the repo hold 30 presses of one phrase with no record ids. "The answers already given" had no referent, so the corpus was
+generated: 24 phrases asked of `askPick` over the whole pool as production builds it (55 records with matched text), no
+run history, one model call each. Two are Adam's verbatim ("something calm", "cooking dinner, people over"; the other four
+of his six were never recorded verbatim); two were asked of production on his behalf ("something for a rainy afternoon",
+"something from the eighties"); twenty were written on 19 Nov to resemble his asks. Ranked by the matched texts embedded
+fresh (55 texts, one call, nothing stored), never the ABOUT vectors. 24 answers, 98 picks (two answers were
+requirement-unmet with one record). **The figure (docs/measurements/top-n/2026-11-24T02-10-07-826Z.jsonl,
+scripts/measure-top-n.mts, its arithmetic unit-tested in src/lib/ask/top-n.test.ts):**
+
+| N | all 24 answers | Adam's two |
+|---|---|---|
+| 10 | 44 of 98 outside, 45% | 6 of 10, 60% |
+| 20 | 21 of 98, 21% | 1 of 10, 10% |
+| 30 | 12 of 98, 12% | 1 of 10, 10% |
+
+So a bound at 30 records would have changed about one pick in eight; at 10, nearly half. Picks reach deep: Hot Tuna's
+self-titled at rank 34, 38 and 46 for "something calm", "something slow for tonight" and "a child falling asleep"; Donna
+Summer's A Love Trilogy at 51 for "funky and tight". Two answers are thin evidence for Adam's own asks, and the twenty
+written phrases are ours, so the figure stands for asks like these rather than for his. Read-only; the measurement was
+Design's to ask for and she asked. Q87 (persisting the pick's answers) and Q88 (the sleeve modal's unannounced load)
+opened.
