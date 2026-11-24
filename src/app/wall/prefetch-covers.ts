@@ -1,3 +1,4 @@
+import { COVER_LARGE_WIDTH, coverSrc } from '@/lib/images/cover-src';
 /**
  * §W.8: "The wall fetches its covers after it has hydrated, at low priority,
  * and fetches a pulled record's cover at once if it has not arrived."
@@ -28,7 +29,8 @@ export function prefetchCovers(seats: readonly { coverUrl: string | null }[], ma
     seen.add(seat.coverUrl);
     const image = make();
     image.fetchPriority = 'low';
-    image.src = seat.coverUrl;
+    /* The size the pulled face draws, through the optimiser (23 Nov): the face asks for the same URL, so this still warms it. */
+    image.src = coverSrc(seat.coverUrl, COVER_LARGE_WIDTH);
     made.push(image);
   }
   return made;

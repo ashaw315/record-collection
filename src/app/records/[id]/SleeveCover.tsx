@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { coverTreatment, type CoverTreatment } from './cover-fit';
 import { SleeveModal } from './SleeveModal';
+import { COVER_LARGE_WIDTH, coverSrc } from '@/lib/images/cover-src';
 
 /**
  * The record page's cover, drawn in its square (§33).
@@ -152,7 +153,8 @@ export function SleeveCover({
           ref={read}
           data-cover=""
           data-cover-treatment={treatment ?? undefined}
-          src={url}
+          /* The size the record page draws, through the optimiser (23 Nov); the sleeve's modal draws the photograph as stored. */
+          src={coverSrc(url, COVER_LARGE_WIDTH)}
           alt=""
           onLoad={(event) => read(event.currentTarget)}
           onError={() => setFailed(true)}

@@ -16,6 +16,7 @@ import { MICRO_PX } from '../type-scale';
 import { LABEL } from '../records/[id]/grid-type';
 import { SLEEVE_LEADING, sleeveTitle } from './sleeve-type';
 import { PlainBackImprint } from './PlainBackImprint';
+import { COVER_LARGE_WIDTH, coverSrc } from '@/lib/images/cover-src';
 
 /**
  * The wall at 1:1 — faces plus labels (The Wall 5b §4, D2; §W).
@@ -221,7 +222,7 @@ export function WallLabelled({
             record.backUrl !== null ? (
               <image
                 data-back={seat.id}
-                href={record.backUrl}
+                href={coverSrc(record.backUrl, COVER_LARGE_WIDTH)}
                 x={inset}
                 y={inset}
                 width={DEPTH - inset * 2}
@@ -239,7 +240,7 @@ export function WallLabelled({
           ) : record.coverUrl !== null ? (
             <image
               data-cover={seat.id}
-              href={record.coverUrl}
+              href={coverSrc(record.coverUrl, COVER_LARGE_WIDTH)}
               x={inset}
               y={inset}
               width={DEPTH - inset * 2}

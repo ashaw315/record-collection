@@ -7,8 +7,14 @@
  * takes neither. The width must be one of next.config's `images.imageSizes`, or the optimiser answers 400.
  */
 export const COVER_WIDTH = 320;
+/**
+ * The shelf's pulled face and the record page's cover (23 Nov): measured at 433 to 448 CSS px for the face and 480 to 546
+ * for the record page on the laptop, and 390 on the phone, so near 1080 at two and three device pixels; one width for
+ * both so they share each transformation. The optimiser never enlarges, so a 600-pixel source comes back at 600.
+ */
+export const COVER_LARGE_WIDTH = 1080;
 const BLOB = /^https:\/\/[a-z0-9]+\.public\.blob\.vercel-storage\.com\//;
 
-export function coverSrc(url: string): string {
-  return BLOB.test(url) ? `/_next/image?url=${encodeURIComponent(url)}&w=${COVER_WIDTH}&q=75` : url;
+export function coverSrc(url: string, width: number = COVER_WIDTH): string {
+  return BLOB.test(url) ? `/_next/image?url=${encodeURIComponent(url)}&w=${width}&q=75` : url;
 }

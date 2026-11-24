@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { COVER_LARGE_WIDTH, coverSrc } from '@/lib/images/cover-src';
 import { renderToStaticMarkup } from 'react-dom/server';
 import '../../../test/component/next-navigation';
 import { WallStage } from './WallStage';
@@ -457,5 +458,17 @@ describe('§P.4: the column host’s cells, in the count column', () => {
   it('draws no cell on the near view, whose answer is the pull, nor on the far view with nothing served', () => {
     expect(render({ far: false, pickCells: five })).not.toContain('data-pick-answer');
     expect(render({ far: true, pickCells: [] })).not.toContain('data-pick-answer');
+  });
+});
+
+/* 23 Nov: the pulled face draws a blob cover and back through the optimiser at the shelf's width, the URL the prefetch fetched. Fails against a face drawn from the stored file. */
+describe('the pulled face’s photographs, at the size the shelf draws', () => {
+  it('draws a blob cover and back through the optimiser at 1080', () => {
+    const blob = 'https://z29f9nqxxuy5nwb2.public.blob.vercel-storage.com/records/a/cover.png';
+    const back = 'https://z29f9nqxxuy5nwb2.public.blob.vercel-storage.com/records/a/back.jpg';
+    const front = render({ seats: [seat('a', { coverUrl: blob }), seat('b')], pull: { id: 'a', direction: 'out', ms: OUT_MS } });
+    expect(front).toContain(`href="${coverSrc(blob, COVER_LARGE_WIDTH).replace(/&/g, '&amp;')}"`);
+    const turned = render({ seats: [seat('a', { backUrl: back }), seat('b')], pull: { id: 'a', direction: 'out', ms: OUT_MS }, side: 'back' });
+    expect(turned).toContain(`href="${coverSrc(back, COVER_LARGE_WIDTH).replace(/&/g, '&amp;')}"`);
   });
 });

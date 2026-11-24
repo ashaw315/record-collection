@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { prefetchCovers } from './prefetch-covers';
+import { COVER_LARGE_WIDTH, coverSrc } from '@/lib/images/cover-src';
 
 /**
  * §W.8: "The wall fetches its covers after it has hydrated, at low priority."
@@ -41,5 +42,12 @@ describe('prefetchCovers', () => {
     const kept = prefetchCovers([{ coverUrl: null }, { coverUrl: null }], () => { calls += 1; return fake(); });
     expect(calls).toBe(0);
     expect(kept).toEqual([]);
+  });
+
+  /* 23 Nov: the shelf fetches a cover at the size it draws, through the optimiser, and the pulled face draws the same URL, so the prefetch still warms the pull. Fails against a prefetch of the stored file. */
+  it('fetches a blob cover through the optimiser at the shelf’s width, the URL the pulled face draws', () => {
+    const blob = 'https://z29f9nqxxuy5nwb2.public.blob.vercel-storage.com/records/a/cover.png';
+    const made = prefetchCovers([{ coverUrl: blob }], fake);
+    expect(made.map((m) => m.src)).toEqual([coverSrc(blob, COVER_LARGE_WIDTH)]);
   });
 });

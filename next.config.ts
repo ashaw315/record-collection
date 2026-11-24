@@ -5,11 +5,15 @@ const nextConfig: NextConfig = {
    * **The grid's covers through the optimiser (23 Nov).** Production's covers are served as stored, up to 3.1 MB, into
    * 160-pixel cells; src/lib/images/cover-src.ts asks for them at 320 through `/_next/image`. The blob store's hosts are
    * the only remote source, and 320 joins Next's default image sizes so the width is one the optimiser serves. Hobby's
-   * allowance is 5,000 transformations a month, counted on cache misses: about ninety covers at one width.
+   * allowance is 5,000 transformations a month, counted on cache misses and stale reads; the optimised copies inherit the
+   * blob store's 30-day lifetime, so a cover costs one transformation per width per 30 days: 55 drawn covers at 320 and
+   * 1080 and 18 backs at 1080, about 128, against 5,000, room until a collection of about 2,400 records.
    */
   images: {
     remotePatterns: [{ protocol: 'https', hostname: '*.public.blob.vercel-storage.com' }],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 320, 384],
+    /* Next's defaults, stated so a test can read that 1080, the shelf's and the record page's width, is among them. */
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
   },
   /**
    * **A separate build directory under test, so the E2E server and the

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import nextConfig from '../../../next.config';
-import { COVER_WIDTH, coverSrc } from './cover-src';
+import { COVER_LARGE_WIDTH, COVER_WIDTH, coverSrc } from './cover-src';
 
 /**
  * **A grid cover is fetched at the size its cell shows (the coordinator, 23 Nov, on the throttled phone probe).** The
@@ -22,8 +22,14 @@ describe('coverSrc', () => {
     expect(coverSrc('https://i.discogs.com/x.jpg')).toBe('https://i.discogs.com/x.jpg');
   });
 
-  it('asks for a width the config serves, from a host the config allows', () => {
+  it('asks the shelf and the record page’s width, 1080, measured from what they draw (433 to 546 CSS px at 2 and 3 device pixels)', () => {
+    expect(COVER_LARGE_WIDTH).toBe(1080);
+    expect(coverSrc(BLOB, COVER_LARGE_WIDTH)).toBe(`/_next/image?url=${encodeURIComponent(BLOB)}&w=1080&q=75`);
+  });
+
+  it('asks for widths the config serves, from a host the config allows', () => {
     expect(nextConfig.images?.imageSizes ?? []).toContain(COVER_WIDTH);
+    expect(nextConfig.images?.deviceSizes ?? [], 'a device size, stated in the config so this can read it').toContain(COVER_LARGE_WIDTH);
     const allowed = (nextConfig.images?.remotePatterns ?? []).some((p) => typeof p !== 'string' && 'hostname' in p && p.protocol === 'https' && p.hostname === '*.public.blob.vercel-storage.com');
     expect(allowed, 'the blob store’s hosts are allowed').toBe(true);
   });

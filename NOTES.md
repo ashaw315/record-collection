@@ -60561,3 +60561,29 @@ before); fast 3G 1.16s (14.4s before); slow 3G 3.99s (52.8s before). The 2.05 MB
 client that takes PNG, less as WebP. The unthrottled row is slower than before because four of the five were the
 optimiser's first request at that size (one was warmed by the readiness check), so their time includes the resize; later
 presses are served from its cache. Design rules against these figures.
+
+**The first-request figure, said plainly so it is not read as the fix's cost:** the unthrottled time rising from 0.32s to
+0.56s after the fix is the optimiser resizing each cover the first time it is asked for at that size. It is not seen
+twice: the resized copy is cached for 30 days, so every later press is served from the cache.
+
+**My diagnosis was right in its arithmetic and wrong in its input, and so was the coordinator's (23 Nov):** 2.59 MB at
+fast 3G is about 13s against 14.4 measured and about 52s at slow 3G against 52.8, transfer-bound throughout; "450 KB" was
+a different five covers. What a figure was weighed from is asked before anything is built on it.
+
+**Design's cover branch, as measured, for her ruling:** her pre-registered threshold was fast 3G under one second; it
+came in at 1.16s, so strictly the first branch did not fire. The coordinator sends it as measured, with the note that
+she set the threshold when the alternative was 14.4s and it is now 3.99s at slow 3G.
+
+**The optimiser extended to the shelf and the record page (the coordinator, 23 Nov).** Measured first
+(e2e/measure/face-size.spec.ts, report-only): the shelf draws a pulled face at 433 CSS px at 1440 and 448 at 1920; the
+record page draws its cover at 480 and 546 on the laptop and the phone's full 390. At two and three device pixels both
+are near 1080, a Next device size, so one width serves both and they share each transformation; the optimiser never
+enlarges, so a 600-pixel source comes back at 600. The shelf's prefetch, its pulled face (cover and back) and the record
+page's cover ask for `coverSrc(url, 1080)`; the prefetch and the face ask for the same URL, so the prefetch still warms
+the pull, asserted. The sleeve's modal still draws the photograph as stored. **Headroom:** the optimised copies inherit
+the blob store's 30-day lifetime, so a cover costs one transformation per width per 30 days: 55 drawn covers at 320 and
+1080 and 18 backs at 1080, about 128 against Hobby's 5,000 a month, room until a collection of about 2,400 records; a
+growing collection does not approach it soon. Tests first: the large width, the prefetch and the pulled face, 4 red,
+then 566 passed across the helper, the prefetch, the stage and the record page; the cover specs and the shelf's pull,
+124 passed (load 5.2 before, 47.2 after); typecheck; lint; build. The suites' covers are data URLs, which the helper
+leaves alone, so the e2e confirms nothing else moved; the deployed sizes are read after the deploy.
