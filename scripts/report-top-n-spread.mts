@@ -24,8 +24,12 @@ const N = Number(process.argv[3] ?? 30);
 /* The coordinator, 24 Nov: the hypothesis came from Hot Tuna, so the correlation is reported with every record and again without the one(s) named here. */
 const excluded = (process.argv.find((a) => a.startsWith('--exclude='))?.slice('--exclude='.length) ?? '').split(',').filter((x) => x !== '');
 if (file === undefined) throw new Error('report-top-n-spread: name a measure-top-n run file');
-const rows = readFileSync(file, 'utf8').trim().split('\n').map((l) => JSON.parse(l) as { ok?: boolean; ranks?: Array<{ recordId: string; rank: number; name: string }> });
-const picks = rows.filter((r) => r.ok === true).flatMap((r) => r.ranks ?? []);
+const rows = readFileSync(file, 'utf8').trim().split('\n').map((l) => JSON.parse(l) as { ok?: boolean; group?: string; source?: string; ranks?: Array<{ recordId: string; rank: number; name: string }> });
+/* The coordinator, 24 Nov: the deciding figure is taken on the blocks that did not inform the hypothesis, so the report can be confined to named groups (a run file before 23 Nov's --corpus names its group as source). */
+const groups = (process.argv.find((a) => a.startsWith('--groups='))?.slice('--groups='.length) ?? '').split(',').filter((x) => x !== '');
+const answered = rows.filter((r) => r.ok === true && (groups.length === 0 || groups.includes(r.group ?? r.source ?? '')));
+if (groups.length > 0 && answered.length === 0) throw new Error(`report-top-n-spread: no answers in groups ${groups.join(', ')}`);
+const picks = answered.flatMap((r) => r.ranks ?? []);
 
 const titles = await collectionTitles();
 const pool = await matchedTextsFor(titles.map((t) => t.id));
@@ -47,7 +51,7 @@ const lengthOf = new Map(split.map((r) => [r.id, r.length]));
 
 const deep = picks.filter((p) => p.rank > N);
 const log = (line: string) => process.stdout.write(`${line}\n`);
-log(`report-top-n-spread: ${file}, ${picks.length} picks, ${deep.length} ranked beyond ${N}`);
+log(`report-top-n-spread: ${file}${groups.length === 0 ? ', every group' : `, groups ${groups.join(', ')} only`}, ${answered.length} answers, ${picks.length} picks, ${deep.length} ranked beyond ${N}`);
 const byRecord = new Map<string, number>();
 for (const p of deep) byRecord.set(p.recordId, (byRecord.get(p.recordId) ?? 0) + 1);
 log(`  the ${deep.length} spread across ${byRecord.size} records:`);
