@@ -60508,3 +60508,19 @@ typecheck; lint; build. **The words' line, measured as the step asks:** in the s
 the words 63 wide in a slot 112 wide; in the grid sidebar at 1280 and the band at 320, one line, 170 wide in slots of 300
 and 284. Three lines at the rail is more than two, so the widths go back to Design rather than the words being cut.
 Load 2.0 before and 10.8 after the first run; 14.1 before the wider run.
+
+**Adam's blank cover tops, reproduced on a throttled phone link (Design's question through the coordinator, 23 Nov).**
+The press runs measured covers 30ms after the reply on this machine's own link; the condition they could not see is a
+phone's network. `scripts/probe-cover-paint.mts` draws an answer as the grid's band does at 390 × 844 (five 160 cells,
+`loading="lazy"`, a cold cache) with five real covers from production's public blob store, inserted at once as a reply
+inserts them, under no throttle, Chrome's fast 3G and slow 3G. The covers are unoptimised progressive JPEGs, 600 square,
+52 to 133 KB each, about 450 KB an answer, for a 160 cell. **Figures (docs/measurements/cover-paint/2026-11-24T00-18-07
+-196Z.jsonl, screenshots beside it):** no throttle, the last cover complete 0.32s after the reply; fast 3G, the first
+bytes of each at 0.7 to 1.3s and the last complete at 14.4s; slow 3G, 2.2 to 4.5s and 52.8s. **What the phone shows on
+the way:** at 2s on fast 3G one square holds only a cover's top band with the rest empty, and another is wholly blank;
+at 4s on slow 3G the same, and the covers that have arrived are soft. That is the report as he gave it: the wait was not
+the cause; the covers' weight on a cellular link is. Design's pre-registered second branch applies on a phone's link
+(hundreds of milliseconds or more): whether the indicator holds until the covers paint or each cell carries its own empty
+state is hers to rule. Two facts beside it for that ruling: the reply is a sixth of fast 3G's cover time, and the covers
+are four times the pixels a 160 cell needs at three device pixels, so their weight is also the build's to reduce (a
+sized variant or the image optimiser, which the grid's comment says is not configured for blob URLs).
