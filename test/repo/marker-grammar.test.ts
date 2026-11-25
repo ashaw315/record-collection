@@ -101,12 +101,22 @@ describe('markersIn: every marker in a card’s prose, wherever it sits', () => 
 describe('the Record Detail 8a card', () => {
   const markers = markersIn(plainText(readFileSync('docs/design/Record Detail 8a - build target.dc.html', 'utf8')));
 
-  it('holds 110 markers, 9 not opening a sentence, all four Withdrawn in part among those', () => {
-    /* 110 since "Sheet from the record page mended" (24 Nov): its §24 marker opens a sentence, so the 9 mid-sentence stay 9; the refused f02069f1 spliced it mid-sentence and made them 10. */
+  it('holds 110 markers, 8 not opening a sentence, all four Withdrawn in part among those', () => {
+    /* 110 since "Sheet from the record page mended" (24 Nov): its §24 marker opens a sentence, so the 9 mid-sentence stayed 9; the refused f02069f1 spliced it mid-sentence and made them 10. 8 since "Nav three verbs and 45 splice mended" (25 Nov): Q91's §45 marker, "Superseded by §47:", now follows its sentence's full stop. The 8 open a block under a numbered heading (§13, 17, 19, 23, 28, 30, 31, 32), which the flattened text joins without a boundary; none is a splice. */
     expect(markers).toHaveLength(110);
     const mid = markers.filter((m) => !m.opensSentence);
-    expect(mid).toHaveLength(9);
+    expect(mid).toHaveLength(8);
     expect(mid.filter((m) => m.parsed.verb === 'Withdrawn' && m.parsed.scope === 'part' && !m.parsed.narrowed)).toHaveLength(4);
+  });
+
+  it('names each marker not opening a sentence by its numbered heading, and none is in §45', () => {
+    /* By the nearest preceding NUMBERED heading ("45 · The title fits…"), never the nearest of any kind: the card's
+       uppercase captions are not sections (the coordinator, 25 Nov), and §45 was twice misnamed from a § the text mentions. */
+    const text = plainText(readFileSync('docs/design/Record Detail 8a - build target.dc.html', 'utf8'));
+    const headings = [...text.matchAll(/(?<![\d§.])\b(\d{1,2}[a-z]?) · /g)].map((m) => ({ at: m.index ?? 0, n: m[1] }));
+    expect(headings).toHaveLength(56);
+    const sections = markers.filter((m) => !m.opensSentence).map((m) => headings.filter((h) => h.at < m.start).pop()?.n);
+    expect(sections).toEqual(['13', '17', '19', '23', '28', '30', '31', '32']);
   });
 
   it('holds 21 distinct openers with the references normalised, and 29 partial markers plus one Narrowed', () => {
