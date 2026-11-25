@@ -672,5 +672,15 @@
         "how": "inserts"
       }
     ]
+  },
+  {
+    "file": "Sheet from the record page mended",
+    "ref": "refs/drops/2026-11-24-05",
+    "heads": [
+      {
+        "head": "§24 and §67: the sheet from the record page",
+        "how": "inserts"
+      }
+    ]
   }
 ]

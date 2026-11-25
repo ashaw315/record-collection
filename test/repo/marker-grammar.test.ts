@@ -101,8 +101,9 @@ describe('markersIn: every marker in a card’s prose, wherever it sits', () => 
 describe('the Record Detail 8a card', () => {
   const markers = markersIn(plainText(readFileSync('docs/design/Record Detail 8a - build target.dc.html', 'utf8')));
 
-  it('holds 109 markers, 9 not opening a sentence, all four Withdrawn in part among those', () => {
-    expect(markers).toHaveLength(109);
+  it('holds 110 markers, 9 not opening a sentence, all four Withdrawn in part among those', () => {
+    /* 110 since "Sheet from the record page mended" (24 Nov): its §24 marker opens a sentence, so the 9 mid-sentence stay 9; the refused f02069f1 spliced it mid-sentence and made them 10. */
+    expect(markers).toHaveLength(110);
     const mid = markers.filter((m) => !m.opensSentence);
     expect(mid).toHaveLength(9);
     expect(mid.filter((m) => m.parsed.verb === 'Withdrawn' && m.parsed.scope === 'part' && !m.parsed.narrowed)).toHaveLength(4);

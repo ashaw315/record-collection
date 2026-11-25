@@ -70,7 +70,7 @@ The wall at rest is line, ink and paper; colour arrives with the pull. Everythin
 | §21 | The ornament library | The canonical list of the six archetypes, solo and pair, curved plan primitives, the refusal of free silhouettes, the page-edge and cell-edge rules, ornament fixed per screen, and the two counting units. The pair's availability is narrowed by §26. |
 | §22 | The colour lands on a form that can carry it | The eligibility rule for the base step and how the hash advances when no form qualifies. The corrected worst-record input. Where the cube's smallness is stated and who owns it. Also: a guard against an arrangement with no carrier large enough, which has not occurred; the floor holds by construction. When it fires it advances the hash; it inherits §31’s advance cap, which bounds that loop, and the quiet fallback at the cap. Withdrawn in part by §46. |
 | §23 | The construction cell is four columns | The build-vs-drawing defect in the cell, the upper band at 4 / 4 / 4, the cover and its bar and black square, and §22 as a guard expected to bind nowhere. Withdrawn in part by §32 and §33. |
-| §24 | Edit and Delete record go in the top nav | Both verbs at AppHeader's far right through one named actions slot, the separator, and the confirmation. Supersedes §13's placement. |
+| §24 | Edit and Delete record go in the top nav | Both verbs at AppHeader's far right through one named actions slot, the separator, and the confirmation. Supersedes §13's placement. And the matched text's verb before Edit (two verbs withdrawn). |
 | §25 | Ornament specimen, size raised, distribution | The specimen sheet, the refusal of organic outlines, the size rule, the ladder's values and which marks take which, the pair test, the minimum face, and the distribution rules. Releases §13's ornament hold. Withdrawn in part by §26 and §57. |
 | §26 | The page as a whole: section shape and ornament together | The solid's top face (withdrawn tint top), the lower region's row spans, the shared frame, where each figure and flat sits, and the one-edge clip rule. Also: which ornaments the one-edge clip reaches, and the two placement rules by host. Withdrawn in part by §31. And the tracklist's row, and row numbers as names (five rows withdrawn). |
 | §27 | The eyebrow returns to the flow; the band stays 547; fixtures come from the collection | The eyebrow back in the content flow, the band's delta, and the standing fixture rule with its three instances. |
@@ -1075,6 +1075,14 @@ Its rows are in the governs table above, one per section; this section does not 
   - **Capture** both at 390, and send them to Adam to judge with the keyboard up on his phone.
   > The open sentence’s field is as tall as the sentence, so the whole sentence shows while it is edited, and nothing scrolls inside it.
 
+- **Unnumbered, for Code to number — §24 and §67: the sheet from the record page.**
+  - **Add the verb** to AppHeader's actions slot on the record page, before Edit, in the slot's type.
+  - **Open §67's sheet** for that record on the effective text, with no sentence open and no reason at the head.
+  - **Assert:** for each of Smerz's Believer, Never Too Much and The Blues Project, the sheet opens from the record page without an ask.
+  - **Measure** the slot's row at 390 and 1440 with three verbs, and report whether it still takes one row at 390, per §G.8.
+  - **Capture** both widths.
+  > The record’s verbs stay together after the app’s own right-hand glyphs, behind the same hairline: the matched text’s, then Edit, then Delete record, so the one irreversible act stays last.
+
 No step: §G.7. It rules nothing. Hover and focus wait on Code's second pass, the breakpoint is settled and recorded in §G.8, and the eyebrow repetition is an observation, not a ruling.
 
 No step: §P.1. It rules where the feature is ruled and which view presents an answer; what that means for the build is in the steps for §P.3 and §P.4.
@@ -1152,6 +1160,7 @@ The provisionals in force, for the note in Maintaining this file that a provisio
 - **§P.2 · the reason's bound.** The figure, set with the placement and §P.4's "wholly in view" as one decision after Adam's press. Returns with the model-pick step's report. Open. Adam judges it again at the model's own lengths (117 to 210, median 160, 64 reasons), not at 3a's stubbed 91 to 108. Closed 21 Nov by Adam's use on the phone: 160 by prompt, 188 by schema.
 - **§P.3 · the ask in flight.** The indicator's look, words and motion, for Adam on his phone. The words' threshold, proposed at five seconds, and their wording, judged by Adam on his phone against waits near 18 seconds. Open.
 - **§T.6 · the import's described line.** Its wording and wrap at 390. Returns from the step's capture. Open.
+- **§24 · the sheet's verb.** Its word, "Matched text", and the slot's row at 390 with three verbs. Returns from the step's capture. Open.
 
 ## Findings for screens without a pass
 

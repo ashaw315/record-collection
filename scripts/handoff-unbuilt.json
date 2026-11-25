@@ -78,5 +78,10 @@
     "head": "§67: the open field and the head",
     "status": "unbuilt",
     "evidence": "Set 24 Nov (\"Sheet field and head\"), on the card 262aebe1, rebuilt from the f02069f1 sent with \"Sheet from the record page\" by reverting that file's two edits and matched by hash, since that card and its file are held."
+  },
+  {
+    "head": "§24 and §67: the sheet from the record page",
+    "status": "unbuilt",
+    "evidence": "Set 24 Nov (\"Sheet from the record page mended\", card 8381cf48), Q90: the only route by which Adam reaches the sheet on a record he chooses; the four corrections wait on it."
   }
 ]
