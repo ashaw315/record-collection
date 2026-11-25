@@ -960,5 +960,20 @@
     "states": [
       "look provisional"
     ]
+  },
+  {
+    "id": "step-187",
+    "before": "- **Unnumbered, for Code to number — §P.2: the pool bound's top-N rerun.**",
+    "why": "Code's number for Design's unnumbered §P.2 top-N rerun step, run 25 Nov and marked Done as run by \"Pool unbounded on measured ranks\" (25 Nov).",
+    "text": "187. **Done: run; it builds nothing.** **§P.2 — the pool bound's top-N rerun: Code's number for that step.** Run three times per phrase with the matched texts embedded fresh (`docs/measurements/top-n/2026-11-25T03-23-38-502Z.jsonl`, committed with b5e103f0); blocks two and three ran, Adam giving no block one. §P.2's ruling \"Pool unbounded on measured ranks\" (card 8081f8f4) is written from its ranks and is now this step's quote.",
+    "discharges": [
+      {
+        "head": "§P.2: the pool bound's top-N rerun",
+        "clause": "- **Unnumbered, for Code to number — §P.2: the pool bound's top-N rerun.**\n  - **The corpus, in three blocks,** each labelled with its source in the report:\n    1. **Adam's:** the phrases Adam gives, verbatim. If he gives none, say so and run the other two blocks.\n    2. **The 23 Nov corpus:** the 24 phrases of the 23 Nov top-N run, verbatim as Code holds them, each with its stated source. Rerunning them gives the earlier 12% its spread, since that figure stood on one run per phrase. Design hasn't listed them, so none comes from recall.\n    3. **Design's:** one ask of each shape the other blocks don't cover:\n       - \"something like Aja\", a title ask;\n       - \"no vocals\", a requirement;\n       - \"angry\", a single-word mood.\n  - **Run** each phrase three times, independently, with the matched texts embedded fresh.\n  - **Report, in this order:**\n    1. the corpus with each phrase's source;\n    2. for each phrase, the picked records outside the ranking's top 10, 20 and 30;\n    3. the rates per block, then overall.\n  - **Report** how the misses at N=30 and N=20 spread across records, as counts per record, and whether the records that take most of the misses on 23 Nov take most of them again.\n  - **Assert nothing:** this is a measurement and builds nothing.\n  > The pick reads every eligible record: no ranking by distance narrows the pool before the model sees it."
+      }
+    ],
+    "states": [
+      "built, nothing owed"
+    ]
   }
 ]
