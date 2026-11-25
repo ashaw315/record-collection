@@ -114,7 +114,7 @@ describe('the Record Detail 8a card', () => {
        uppercase captions are not sections (the coordinator, 25 Nov), and §45 was twice misnamed from a § the text mentions. */
     const text = plainText(readFileSync('docs/design/Record Detail 8a - build target.dc.html', 'utf8'));
     const headings = [...text.matchAll(/(?<![\d§.])\b(\d{1,2}[a-z]?) · /g)].map((m) => ({ at: m.index ?? 0, n: m[1] }));
-    expect(headings).toHaveLength(56);
+    expect(headings, 'A tripwire, not a defect: the card has gained or lost a numbered section. Count the card\'s "N · Title" headings, update 56 to match, and check the section list below still names the right ones.').toHaveLength(56);
     const sections = markers.filter((m) => !m.opensSentence).map((m) => headings.filter((h) => h.at < m.start).pop()?.n);
     expect(sections).toEqual(['13', '17', '19', '23', '28', '30', '31', '32']);
   });
