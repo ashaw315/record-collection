@@ -682,5 +682,15 @@
         "how": "inserts"
       }
     ]
+  },
+  {
+    "file": "Pool unbounded on measured ranks",
+    "ref": "refs/drops/2026-11-25-03",
+    "heads": [
+      {
+        "head": "§P.2: the pool bound's top-N rerun",
+        "how": "anchors"
+      }
+    ]
   }
 ]
