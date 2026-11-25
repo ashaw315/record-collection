@@ -72,4 +72,11 @@ describe('SheetView', () => {
     expect(render({ asking: null })).not.toContain('data-sheet-asking');
     expect(render({ openIndex: null })).not.toContain('data-sheet-open');
   });
+  it('from the record page, with no answer behind it: no reason at the head, Close still on its row, and no sentence open (§67, 24 Nov)', () => {
+    const html = render({ reason: null, openIndex: null, draft: '' });
+    expect(html).not.toContain('data-sheet-reason');
+    expect(html).toContain('data-sheet-close');
+    expect(html).not.toContain('data-sheet-open=');
+    expect(html.match(/data-sheet-sentence=/g)).toHaveLength(3);
+  });
 });

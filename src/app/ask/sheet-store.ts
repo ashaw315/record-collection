@@ -5,7 +5,8 @@
  * queue, as §67 has it, since a queued record was chosen on the text before the correction. A plain store rather than a
  * context, because the hosts sit in separate trees on one page.
  */
-export type SheetRequest = { recordId: string; reason: string; claims: readonly string[] };
+/* reason is null where no answer opened the sheet: from the record page's verb (§67, 24 Nov). */
+export type SheetRequest = { recordId: string; reason: string | null; claims: readonly string[] };
 
 let current: SheetRequest | null = null;
 const watchers = new Set<() => void>();

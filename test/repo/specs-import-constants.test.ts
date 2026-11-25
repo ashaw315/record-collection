@@ -177,6 +177,10 @@ const GOVERNED = [
   /* Step 171 (8 Nov): the record band's first-painted and settled heights, measured cold; its 900 is NO_SCROLL_HEIGHT, imported. */
   'e2e/capture/band-43-measure.capture.ts',
   'e2e/capture/covers-group-165.capture.ts',
+  /* Q90, step 186 (24 Nov): the record page's Matched text verb, its spec, the slot's three-verb measure and the capture. */
+  'e2e/sheet-from-record-page.spec.ts',
+  'e2e/measure/actions-slot-three-verbs.spec.ts',
+  'e2e/capture/sheet-from-record-page.capture.ts',
 ];
 
 /** The values a record-screen spec must not type. */

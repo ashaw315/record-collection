@@ -2,6 +2,7 @@ import { displayedCover, imagesShown, newestOfType } from './gallery-order';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { AppHeader } from '@/components/AppHeader';
+import { MatchedTextVerb } from './MatchedTextVerb';
 import { DeleteRecord } from './DeleteRecord';
 import { NAV_TYPE } from '@/components/nav-type';
 import { ImageGallery } from './ImageGallery';
@@ -106,8 +107,9 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
   return (
     <>
       {/*
-        §24: the record's two verbs ride the nav's `actions` slot, in this
-        order, and this page is the only one that fills it. 11px mono
+        §24: the record's verbs ride the nav's `actions` slot, the matched
+        text's, then Edit, then Delete record, so the irreversible act stays
+        last (24 Nov), and this page is the only one that fills it. 11px mono
         uppercase in ink — the nav's own type — so they cost no height. Delete
         record asks before it acts, naming the record, which is how §13's
         worry (the app's only irreversible act in chrome) is kept.
@@ -115,6 +117,7 @@ export default async function RecordPage({ params, searchParams }: PageProps<'/r
       <AppHeader
         actions={
           <>
+            <MatchedTextVerb recordId={id} />
             <Link
               data-control="edit"
               href={`/records/${id}/edit`}

@@ -15,12 +15,17 @@ registerCleanup();
  * The slot's two boundaries were 762 and 449 with the slot at .09em; step
  * 80 (5 Oct) gave the slot the header's own .12em (159.66 wide) and they
  * were re-measured by layout, the slot forced in line: 768 beside the links,
- * 454 beside the control. Each boundary is asserted on both sides.
+ * 454 beside the control. Q90 (24 Nov) put a third verb, Matched text, first
+ * in the slot, 107 wider, and both boundaries moved by exactly that, measured
+ * to the pixel by e2e/measure/actions-slot-three-verbs.spec.ts: 875 beside the
+ * links, 561 beside the control. A measurement of the build that changed, not a
+ * ruling that moved. Each boundary is asserted on both sides, and each band
+ * inside as well, so a width that was once an edge (768, 454) stays covered.
  */
 
 const MENU_BELOW = 584;
-const SLOT_WITH_LINKS = 768;
-const SLOT_WITH_CONTROL = 454;
+const SLOT_WITH_LINKS = 875;
+const SLOT_WITH_CONTROL = 561;
 const INK = 'oklch(0.19 0.008 60)';
 
 async function seedRecord(page: Page): Promise<string> {
@@ -177,17 +182,21 @@ test.describe('§G.8: the open menu', () => {
 
 test.describe('§G.8: the record detail’s four forms, each boundary from both sides', () => {
   /* Fails against step 74's header: the slot took its own row everywhere below 1440 and the links wrapped below 584. */
-  test('links and slot in line from 768; links with the slot below from 584; control and slot in line from 454; control with the slot below under it', async ({ page }) => {
+  test('links and slot in line from 875; links with the slot below from 584; control and slot in line from 561; control with the slot below under it', async ({ page }) => {
     const id = await seedRecord(page);
     const cases: Array<[number, boolean, boolean]> = [
       /* width, links shown, slot in line */
       [1000, true, true],
       [SLOT_WITH_LINKS, true, true],
       [SLOT_WITH_LINKS - 1, true, false],
+      /* Inside each band, not only at its edges: 768 and 454 were the two-verb edges. */
+      [768, true, false],
       [MENU_BELOW, true, false],
       [MENU_BELOW - 1, false, true],
+      [572, false, true],
       [SLOT_WITH_CONTROL, false, true],
       [SLOT_WITH_CONTROL - 1, false, false],
+      [454, false, false],
       [390, false, false],
     ];
     for (const [width, links, inline] of cases) {

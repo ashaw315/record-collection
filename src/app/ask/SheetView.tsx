@@ -12,7 +12,8 @@ import { LABEL } from '../records/[id]/grid-type';
  * (SheetView.test.tsx); CorrectingSheet holds the state and the route.
  */
 export type SheetViewProps = {
-  reason: string;
+  /* Null from the record page, where no answer opened the sheet (§67, 24 Nov): no reason at the head. */
+  reason: string | null;
   sentences: readonly string[];
   openIndex: number | null;
   draft: string;
@@ -50,9 +51,11 @@ export function SheetView({ reason, sentences, openIndex, draft, hasEdit, dirty,
       {/* The head: the reason, held in view while the text scrolls; CLOSE on its row as the sleeve's is (§M). */}
       <div data-sheet-head="" className="box-border shrink-0 border-b border-border px-[18px] py-[14px]">
         <div className="flex items-start gap-[18px]">
-          <p data-sheet-reason="" className="text-prose leading-[1.55]">
-            {reason}
-          </p>
+          {reason !== null && (
+            <p data-sheet-reason="" className="text-prose leading-[1.55]">
+              {reason}
+            </p>
+          )}
           <button type="button" data-sheet-close="" onClick={onClose} className={`${CONTROL} ml-auto shrink-0`}>
             Close
           </button>

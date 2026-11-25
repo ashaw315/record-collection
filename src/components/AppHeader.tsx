@@ -58,21 +58,22 @@ const LINKS = [
 /*
   §G.8 (step 76): the widths the header changes form at, measured and
   asserted from both sides in `nav-menu-76.spec.ts`. 584: the wordmark and
-  five links set on one row; below it, the menu, on every screen. 768: the
-  record detail's slot also fits beside the links. 454: the slot fits
+  five links set on one row; below it, the menu, on every screen. 875: the
+  record detail's slot also fits beside the links. 561: the slot fits
   beside the wordmark and the control. The two slot widths were 762 and
   449 with the slot at .09em; step 80 gave it the header's .12em (159.66)
-  and they were re-measured by layout. Constants rather than measured at
+  and they were re-measured by layout, 768 and 454; Q90 put Matched text
+  first in the slot, 107 wider, and both moved by exactly that. Constants rather than measured at
   run time, so the first paint is the right form; the type is fixed-pitch,
   so the widths are the type's and do not vary by screen. The classes
-  below spell them as `max-[584px]` (below 584), `max-[768px]` and
-  `min-[454px]`, because Tailwind cannot read a constant into a class.
+  below spell them as `max-[584px]` (below 584), `max-[875px]` and
+  `min-[561px]`, because Tailwind cannot read a constant into a class.
 */
 export const MENU_BELOW = 584;
 /** §G.2: the header's row is 52, and the 1px rule beneath it makes the 53. */
 const ROW_HEIGHT = 52;
-export const SLOT_WITH_LINKS = 768;
-export const SLOT_WITH_CONTROL = 454;
+export const SLOT_WITH_LINKS = 875;
+export const SLOT_WITH_CONTROL = 561;
 
 /** Not current: the label colour (§G.1); current: ink and 500 with §3's underline. */
 function linkTone(active: boolean) {
@@ -387,12 +388,12 @@ export function AppHeader({ actions }: { actions?: React.ReactNode } = {}) {
           <div
             data-slot="actions"
             /*
-              §G.8's four forms: in line after the links from 768; its own
-              row, right-aligned, from 584 to 767; in line after the control
-              from 454 to 583; its own row below 454. Its own row is drawn 44,
+              §G.8's four forms: in line after the links from 875; its own
+              row, right-aligned, from 584 to 874; in line after the control
+              from 561 to 583; its own row below 561. Its own row is drawn 44,
               which no ruling gives.
             */
-            className="ml-auto flex shrink-0 items-center gap-3 whitespace-nowrap max-[768px]:order-2 max-[768px]:h-[44px] max-[768px]:basis-full max-[768px]:justify-end max-[584px]:ml-0 min-[454px]:max-[584px]:order-none min-[454px]:max-[584px]:h-auto min-[454px]:max-[584px]:basis-auto"
+            className="ml-auto flex shrink-0 items-center gap-3 whitespace-nowrap max-[875px]:order-2 max-[875px]:h-[44px] max-[875px]:basis-full max-[875px]:justify-end max-[584px]:ml-0 min-[561px]:max-[584px]:order-none min-[561px]:max-[584px]:h-auto min-[561px]:max-[584px]:basis-auto"
           >
             <span
               data-hairline=""
