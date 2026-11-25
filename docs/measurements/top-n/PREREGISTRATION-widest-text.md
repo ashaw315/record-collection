@@ -51,9 +51,22 @@ The rerun's rows are filled in after it runs, and nothing above changes. Self-si
 |---|---|---|---|
 | first (24 Nov, 02:10) | 30 | -0.34, p 0.040; n 37, critical 0.33 | -0.26, p 0.123; n 36, critical 0.33 |
 | first (24 Nov, 02:10) | 20 | -0.20, p 0.233; n 37, critical 0.32 | -0.14, p 0.404; n 36, critical 0.33 |
-| rerun, blocks one and three (deciding) | 30 | | |
-| rerun, blocks one and three | 20 | | |
-| rerun, block two (replication) | 30 | | |
-| rerun, block two | 20 | | |
-| rerun, pooled (context) | 30 | | |
-| rerun, pooled | 20 | | |
+| rerun, blocks one and three (deciding) | 30 | untested: block one empty. As description only, +0.76, p 0.059; n 8, critical 0.76 | the same: Hot Tuna is not among the 8. +0.76, p 0.059; n 8, critical 0.76 |
+| rerun, blocks one and three | 20 | untested. +0.76, p 0.059; n 8, critical 0.76 | +0.76, p 0.059; n 8, critical 0.76 |
+| rerun, block two (replication) | 30 | -0.29, p 0.072; n 39, critical 0.32 | -0.22, p 0.193; n 38, critical 0.32 |
+| rerun, block two | 20 | -0.23, p 0.163; n 39, critical 0.31 | -0.17, p 0.307; n 38, critical 0.33 |
+| rerun, pooled (context) | 30 | -0.10, p 0.545; n 39, critical 0.32 | -0.01, p 0.932; n 38, critical 0.32 |
+| rerun, pooled | 20 | -0.15, p 0.367; n 39, critical 0.31 | -0.09, p 0.593; n 38, critical 0.33 |
+
+## The rerun's result (24 Nov, run 2026-11-25T03-23-38-502Z, 81 answers, three per phrase; read with scripts/report-top-n-spread.mts)
+
+**Untested.** Block one is empty, because Adam gave no phrases, so the deciding base is block three's three phrases. That is the case Amendment 1 names: the figure is reported as a description, and nothing is concluded from it. It is not a failure of the run.
+
+**As description only:** the deciding base gives +0.76, p 0.059, n 8, critical 0.76. It runs in the direction opposite to the hypothesis, and it doesn't clear the threshold. All 12 of its deep picks come from one phrase, "no vocals", whose four instrumental records (Wired, Super Rich, Great Gershwin, Bitches Brew) rank 40th to 50th every time. The other two phrases put nothing beyond 10. So the figure describes one phrase, not a tendency.
+
+**Block two, the replication, without Hot Tuna:** -0.22, p 0.193, at N = 30, against a critical 0.32 at n 38. The direction matches the first run's -0.26, and the size is short of what this base could detect. With Hot Tuna it is -0.29, p 0.072. At N = 20 the figures are -0.17 and -0.23. Block two re-asks the phrases that suggested the hypothesis, so it can repeat the first run's description but can't confirm it.
+
+**Pooled, as context:** -0.01 without Hot Tuna at N = 30, n 38.
+
+The hypothesis stays open and untested. Deciding it needs phrases that didn't suggest it, which means block one.
+

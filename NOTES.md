@@ -60741,3 +60741,10 @@ checked against the shared splitter (scripts/print-sheet-four.mts): each number 
 Design with the captures: the open field is three rows, so a long sentence scrolls inside it, and the head takes five
 lines at 390 with a reason at the bound. Adam can now correct Q74's four from the sheet; Q82's four ABOUTs are the record
 page's About cell, unchanged.
+
+**24 Nov — apply-code-region adds a revised region text beside the old one, uncommitted (step 186).** The intake
+replaces a region's text only where that text is in git history (`regionHistory`). So editing an entry's text in
+scripts/handoff-code-region.json after a first uncommitted apply wrote it, then applying again, restores a SECOND
+copy and leaves the first: two "186." lines. The index caught it (assertion 3 failed, 4 document tests failed), and
+the stale copy was removed by hand and checked against the newer one. Q92. Not fixed: the fix belongs to the commit path
+(a gate change). Until then, don't re-apply after an uncommitted region edit, or remove the old line first.
