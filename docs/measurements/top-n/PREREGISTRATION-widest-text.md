@@ -70,3 +70,9 @@ The rerun's rows are filled in after it runs, and nothing above changes. Self-si
 
 The hypothesis stays open and untested. Deciding it needs phrases that didn't suggest it, which means block one.
 
+
+## Closed (the coordinator, 25 Nov)
+
+**Proposed, tested three ways, never supported outside its generating data, closed on the deciding base as untested.** The one figure that cleared, −0.34 on the first run with all records, includes Hot Tuna, the record the hypothesis came from. Every other look fails or runs the other way: the first run without Hot Tuna (−0.26), block two with and without it (−0.29, −0.22), block three as description (+0.76), pooled (−0.01). The question decides nothing: Design's lean on the bound rests on the concentration of deep picks, not on this. The pre-registration and its two amendments stay as the record of how it was tested. It is not reopened if Adam's phrases arrive later for another purpose.
+
+**Kept from the rerun, found while looking for something else:** "no vocals" puts all four of its picks (Wired, Super Rich, Great Gershwin, Bitches Brew) at ranks 40 to 50, in all three runs. A bound at 30 would leave that ask none of its answers. Block two's "quiet music with no vocals for reading" returns requirement-unmet with Psychic at 31, also outside a bound at 30. Design's other two shapes don't fail: "something like Aja" picks Gaucho at 7 in all three runs, and "angry" picks at 1, 2 and 7 in all three.
