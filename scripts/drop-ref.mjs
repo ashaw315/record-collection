@@ -2,7 +2,9 @@
 /**
  * **docs/design as captured when a Design drop lands, before anything runs against it.**
  *
- *     node scripts/drop-ref.mjs    # on arrival, before the index; exits 1 on the committed state
+ *     node scripts/drop-ref.mjs    # on arrival, before the index; exits 1 on the committed state,
+ *                                  # and on a change file in ~/Downloads that nothing captured
+ *                                  # (DROP_REF_DOWNLOADS names another folder)
  *
  * Keeps docs/design as it stands on disk at capture, ignored files included, as a commit
  * under refs/drops/<date>-NN whose parent is the drop before it. It goes in
@@ -20,8 +22,8 @@
  * compare two with `git diff <a> <b>`.
  */
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { existsSync, mkdtempSync, readdirSync, rmSync, statSync } from 'node:fs';
+import { homedir, tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { blocksOf, diffProse, sentencesOf } from './export-diff.mjs';
@@ -248,10 +250,53 @@ function landedLists(from, to, refs) {
   return lines;
 }
 
+/**
+ * The change files in ~/Downloads whose bytes are not among `known`, the blobs every drop ref and docs/design hold.
+ * By bytes, not name: a resend under a name already captured is a new file. Only change files, never cards: a held
+ * drop's card differs from docs/design's by design, and the change file that sent a card names it.
+ */
+export function downloadsOnly(entries, known) {
+  return entries.filter((e) => changeFileName(e.name) !== null && /\.md$/.test(e.name) && !known.has(e.blob)).map((e) => e.name);
+}
+
+/*
+  The presence check reaches ~/Downloads (the coordinator, 24 Nov, after Q90): "Artist name suffix resent" reached
+  Downloads and never docs/design, and this script, reading only docs/design, said nothing had arrived.
+*/
+function downloadsCheck(tree, refs) {
+  const dir = process.env.DROP_REF_DOWNLOADS ?? join(homedir(), 'Downloads');
+  if (!existsSync(dir)) return { refused: false, lines: [`  Downloads not found at ${dir}: not looked in`] };
+  const entries = readdirSync(dir)
+    .filter((name) => changeFileName(name) !== null && /\.md$/.test(name) && statSync(join(dir, name)).isFile())
+    .map((name) => ({ name, blob: git(['hash-object', '--', join(dir, name)]) }));
+  const known = new Set([tree, ...refs].flatMap((t) => git(['ls-tree', '-r', t, '--', DIR]).split('\n').filter(Boolean).map((l) => l.split(/\s+/)[2])));
+  const only = downloadsOnly(entries, known);
+  if (only.length === 0) return { refused: false, lines: [`  Downloads: ${entries.length} change file${entries.length === 1 ? '' : 's'}, all captured or on disk`] };
+  return {
+    refused: true,
+    lines: [
+      ...only.map((name) => `  in Downloads and not captured: "${name}"`),
+      `${only.length} change file(s) in ${dir} that no drop ref and nothing in ${DIR} holds byte for byte: copy each into ${DIR} and run this again. No ref was recorded.`,
+    ],
+  };
+}
+
 function main() {
   const existing = git(['for-each-ref', '--format=%(refname)', PREFIX]).split('\n').filter(Boolean).sort();
   const previous = existing.at(-1);
   const tree = treeOfDisk();
+  const downloads = downloadsCheck(tree, existing);
+  if (downloads.refused) {
+    process.stderr.write(`${downloads.lines.join('\n')}\n`);
+    return 1;
+  }
+  const code = capture(existing, previous, tree);
+  /* Last, so the capture's own first line still opens the output. */
+  process.stdout.write(`${downloads.lines.join('\n')}\n`);
+  return code;
+}
+
+function capture(existing, previous, tree) {
   if (previous !== undefined && git(['rev-parse', `${previous}^{tree}`]) === tree) {
     process.stdout.write(`The same as ${previous}: nothing new has arrived, and no ref was recorded.\n`);
     return 0;

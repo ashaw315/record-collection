@@ -3,7 +3,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it, vi } from 'vitest';
-import { changedSections, nextRefName, offeredMissing, offeredNames, rowAddressed, unattributedChanges } from '../../scripts/drop-ref.mjs';
+import { changedSections, downloadsOnly, nextRefName, offeredMissing, offeredNames, rowAddressed, unattributedChanges } from '../../scripts/drop-ref.mjs';
 import { headingOf } from '../../scripts/export-diff.mjs';
 import { underLoad } from '../helpers/spawn-budget';
 
@@ -40,10 +40,17 @@ function repo() {
   /* Not in the commit and ignored: a drop's new file looks like this until it is let in. */
   writeFileSync(join(dir, 'docs', 'design', 'Ignored.dc.html'), '<p>An ignored file is part of the drop.</p>\n');
   const write = (name: string, text: string) => writeFileSync(join(dir, 'docs', 'design', name), text);
-  const run = () => execFileSync('node', [SCRIPT], { cwd: dir, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+  /* Never the machine's own ~/Downloads: each repo gets its own, and a test can name one that does not exist. */
+  const downloads = join(dir, 'Downloads');
+  mkdirSync(downloads);
+  let downloadsDir = downloads;
+  const useDownloads = (path: string) => { downloadsDir = path; };
+  const download = (name: string, text: string) => writeFileSync(join(downloads, name), text);
+  const env = () => ({ ...process.env, DROP_REF_DOWNLOADS: downloadsDir });
+  const run = () => execFileSync('node', [SCRIPT], { cwd: dir, encoding: 'utf8', env: env(), stdio: ['ignore', 'pipe', 'pipe'] });
   const attempt = () => {
     try {
-      return { status: 0, output: execFileSync('node', [SCRIPT], { cwd: dir, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }) };
+      return { status: 0, output: execFileSync('node', [SCRIPT], { cwd: dir, encoding: 'utf8', env: env(), stdio: ['ignore', 'pipe', 'pipe'] }) };
     } catch (e) {
       const err = e as { status: number; stdout: string; stderr: string };
       return { status: err.status, output: `${err.stdout}${err.stderr}` };
@@ -55,7 +62,7 @@ function repo() {
     git('commit', '-q', '-am', 'intake');
   };
   const drops = () => git('for-each-ref', '--format=%(refname)', 'refs/drops/').split('\n').filter(Boolean);
-  return { dir, git, write, run, attempt, intake, drops, done: () => rmSync(dir, { recursive: true, force: true }) };
+  return { dir, git, write, download, useDownloads, run, attempt, intake, drops, done: () => rmSync(dir, { recursive: true, force: true }) };
 }
 
 describe('nextRefName', () => {
@@ -449,6 +456,89 @@ describe('the landed lists: an offered file that has not arrived', () => {
       expect(clean).not.toContain('not on disk or in any ref:');
       expect(clean).toContain('landed lists: 1 offered file named by the new change files, all on disk or in a ref');
       expect(clean).toMatch(/only as complete as Design’s landed lists/);
+    } finally {
+      r.done();
+    }
+  });
+});
+
+/*
+  The presence check reaches ~/Downloads (the coordinator, 24 Nov, after Q90). "Artist name suffix resent" reached
+  ~/Downloads and never docs/design, and drop-ref, which looks only at docs/design, said nothing was missing; the
+  coordinator recorded three losses where the record holds one. A change file whose bytes no drop ref and no file in
+  docs/design hold has not been captured, so the drop waits for it rather than being captured without it.
+*/
+describe('drop-ref: a change file in ~/Downloads that nothing captured', () => {
+  it('names the change files whose bytes are not among the known blobs, and nothing that is not a change file', () => {
+    const entries = [
+      { name: 'Lost - for Code to apply.md', blob: 'b1' },
+      { name: 'Captured - for Code to apply.md', blob: 'b2' },
+      { name: 'Captured - for Code to apply.md (resent)', blob: 'b9' },
+      { name: 'Resent under the same name - for Code to apply.md', blob: 'b3' },
+      { name: 'Mood Pick - build target.dc.html', blob: 'b4' },
+      { name: 'invoice.pdf', blob: 'b5' },
+    ];
+    expect(downloadsOnly(entries, new Set(['b2']))).toEqual(['Lost - for Code to apply.md', 'Resent under the same name - for Code to apply.md']);
+    expect(downloadsOnly(entries, new Set(['b1', 'b2', 'b3']))).toEqual([]);
+  });
+
+  it('refuses to capture while a change file sits in Downloads only, naming it, and captures once it is copied in', () => {
+    const r = repo();
+    try {
+      r.run();
+      r.download('Lost - for Code to apply.md', '# Lost - for Code to apply\n\nProse.\n');
+      r.download('invoice.pdf', 'not a drop');
+      const refused = r.attempt();
+      expect(refused.status).toBe(1);
+      expect(refused.output).toContain('in Downloads and not captured: "Lost - for Code to apply.md"');
+      expect(refused.output).not.toContain('invoice.pdf');
+      /* Refused before the "same as" check: docs/design unchanged is exactly what a file left in Downloads looks like. */
+      expect(refused.output).not.toMatch(/same as refs\/drops/i);
+      expect(r.drops()).toHaveLength(1);
+      r.write('Lost - for Code to apply.md', '# Lost - for Code to apply\n\nProse.\n');
+      const out = r.run();
+      expect(out).toContain('Downloads: 1 change file, all captured or on disk');
+      expect(r.drops()).toHaveLength(2);
+    } finally {
+      r.done();
+    }
+  });
+
+  it('refuses a resend under a name docs/design already holds when the bytes differ', () => {
+    const r = repo();
+    try {
+      r.write('Same - for Code to apply.md', '# Same - for Code to apply\n\nFirst.\n');
+      r.run();
+      r.download('Same - for Code to apply.md', '# Same - for Code to apply\n\nCorrected.\n');
+      const refused = r.attempt();
+      expect(refused.status).toBe(1);
+      expect(refused.output).toContain('"Same - for Code to apply.md"');
+    } finally {
+      r.done();
+    }
+  });
+
+  it('accepts a Downloads copy that only an earlier ref holds, the disk having moved on', () => {
+    const r = repo();
+    try {
+      r.write('Old - for Code to apply.md', '# Old - for Code to apply\n\nAs sent.\n');
+      r.run();
+      r.download('Old - for Code to apply.md', '# Old - for Code to apply\n\nAs sent.\n');
+      r.write('Old - for Code to apply.md', '# Old - for Code to apply\n\nChanged on disk since.\n');
+      expect(r.attempt().status).toBe(0);
+    } finally {
+      r.done();
+    }
+  });
+
+  it('says so when there is no Downloads folder, and captures: absent is reported, not read as empty', () => {
+    const r = repo();
+    try {
+      r.useDownloads(join(r.dir, 'no-such-folder'));
+      const out = r.run();
+      expect(out).toContain('Downloads not found at');
+      expect(out).toContain('not looked in');
+      expect(r.drops()).toHaveLength(1);
     } finally {
       r.done();
     }
