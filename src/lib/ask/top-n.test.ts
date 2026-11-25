@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { criticalR, outsideTopN, permutationP, ranksOfPicks, spearman } from './top-n';
+import { criticalR, negationReading, outsideTopN, permutationP, ranksOfPicks, spearman } from './top-n';
 
 /**
  * **Design's top-N measurement, its arithmetic (23 Nov):** for each answer, each picked record's rank among the pool by
@@ -67,5 +67,32 @@ describe('criticalR', () => {
     const large = Array.from({ length: 40 }, (_, i) => i);
     expect(criticalR(small, small, 5000, 7) ?? 0).toBeGreaterThan(criticalR(large, large, 5000, 7) ?? 1);
     expect(criticalR(small.map(() => 0), small, 500, 7)).toBeNull();
+  });
+});
+
+/*
+ * The negation test's reading rule (PREREGISTRATION-negation.md, 25 Nov), fixed before the run. Ordering only (the
+ * coordinator, 25 Nov): the reading compares each record's rank under "instrumental" with its rank under "no vocals" and
+ * nothing else. No bound appears here, so no case below can turn on where 30 falls.
+ */
+describe('negationReading', () => {
+  const rec = (instrumental: number, noVocals: number, unstable = false) => ({ instrumental, noVocals, unstable });
+
+  it('reads consistent when all four rank shallower under "instrumental" than under "no vocals"', () => {
+    expect(negationReading([rec(3, 40), rec(44, 45), rec(46, 47), rec(49, 50)])).toBe('consistent');
+  });
+
+  it('reads not consistent when any one record is not shallower, equal rank included', () => {
+    expect(negationReading([rec(3, 40), rec(8, 45), rec(12, 47), rec(51, 50)])).toBe('not consistent');
+    expect(negationReading([rec(3, 40), rec(8, 45), rec(12, 47), rec(50, 50)])).toBe('not consistent');
+  });
+
+  it('lets an unstable record meet no reading: undetermined unless a stable record already refutes', () => {
+    expect(negationReading([rec(3, 40), rec(8, 45), rec(12, 47, true), rec(20, 50)])).toBe('undetermined');
+    expect(negationReading([rec(3, 40), rec(8, 45), rec(12, 47, true), rec(51, 50)])).toBe('not consistent');
+  });
+
+  it('refuses anything but the four records', () => {
+    expect(() => negationReading([rec(3, 40), rec(8, 45), rec(12, 47)])).toThrow(/four/);
   });
 });

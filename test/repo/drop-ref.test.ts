@@ -469,6 +469,8 @@ describe('the landed lists: an offered file that has not arrived', () => {
   docs/design hold has not been captured, so the drop waits for it rather than being captured without it.
 */
 describe('drop-ref: a change file in ~/Downloads that nothing captured', () => {
+  const DOWNLOADS_SCOPE = 'Change files only, never cards: a card without its change file is not actionable, and the change file, once copied in, brings the card it names with it.';
+
   it('names the change files whose bytes are not among the known blobs, and nothing that is not a change file', () => {
     const entries = [
       { name: 'Lost - for Code to apply.md', blob: 'b1' },
@@ -492,12 +494,15 @@ describe('drop-ref: a change file in ~/Downloads that nothing captured', () => {
       expect(refused.status).toBe(1);
       expect(refused.output).toContain('in Downloads and not captured: "Lost - for Code to apply.md"');
       expect(refused.output).not.toContain('invoice.pdf');
+      /* The scope is stated in the check's own message, so it reads as chosen (the coordinator, 25 Nov). */
+      expect(refused.output).toContain(DOWNLOADS_SCOPE);
       /* Refused before the "same as" check: docs/design unchanged is exactly what a file left in Downloads looks like. */
       expect(refused.output).not.toMatch(/same as refs\/drops/i);
       expect(r.drops()).toHaveLength(1);
       r.write('Lost - for Code to apply.md', '# Lost - for Code to apply\n\nProse.\n');
       const out = r.run();
       expect(out).toContain('Downloads: 1 change file, all captured or on disk');
+      expect(out).toContain(DOWNLOADS_SCOPE);
       expect(r.drops()).toHaveLength(2);
     } finally {
       r.done();

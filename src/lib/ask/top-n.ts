@@ -82,3 +82,16 @@ export function criticalR(a: readonly number[], b: readonly number[], shuffles: 
   nulls.sort((x, y) => x - y);
   return nulls[Math.ceil(0.95 * nulls.length) - 1];
 }
+
+/**
+ * **The negation test's reading (PREREGISTRATION-negation.md; ordering only, the coordinator, 25 Nov):** whether the
+ * positive form ranks each of "no vocals"'s four records shallower than the negated form does. No bound enters it, since
+ * 30 was chosen for the ruling's question and the outcome would otherwise turn on where it falls. A record whose rank
+ * moved between the two invocations cannot be shown shallower or not, so it meets no reading; one stable refutation
+ * still settles it.
+ */
+export function negationReading(records: ReadonlyArray<{ instrumental: number; noVocals: number; unstable: boolean }>): 'consistent' | 'not consistent' | 'undetermined' {
+  if (records.length !== 4) throw new Error(`the reading is over the four records, given ${records.length}`);
+  if (records.some((r) => !r.unstable && !(r.instrumental < r.noVocals))) return 'not consistent';
+  return records.some((r) => r.unstable) ? 'undetermined' : 'consistent';
+}

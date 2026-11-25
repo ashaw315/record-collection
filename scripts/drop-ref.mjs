@@ -263,6 +263,8 @@ export function downloadsOnly(entries, known) {
   The presence check reaches ~/Downloads (the coordinator, 24 Nov, after Q90): "Artist name suffix resent" reached
   Downloads and never docs/design, and this script, reading only docs/design, said nothing had arrived.
 */
+const DOWNLOADS_SCOPE = '  Change files only, never cards: a card without its change file is not actionable, and the change file, once copied in, brings the card it names with it.';
+
 function downloadsCheck(tree, refs) {
   const dir = process.env.DROP_REF_DOWNLOADS ?? join(homedir(), 'Downloads');
   if (!existsSync(dir)) return { refused: false, lines: [`  Downloads not found at ${dir}: not looked in`] };
@@ -271,12 +273,13 @@ function downloadsCheck(tree, refs) {
     .map((name) => ({ name, blob: git(['hash-object', '--', join(dir, name)]) }));
   const known = new Set([tree, ...refs].flatMap((t) => git(['ls-tree', '-r', t, '--', DIR]).split('\n').filter(Boolean).map((l) => l.split(/\s+/)[2])));
   const only = downloadsOnly(entries, known);
-  if (only.length === 0) return { refused: false, lines: [`  Downloads: ${entries.length} change file${entries.length === 1 ? '' : 's'}, all captured or on disk`] };
+  if (only.length === 0) return { refused: false, lines: [`  Downloads: ${entries.length} change file${entries.length === 1 ? '' : 's'}, all captured or on disk`, DOWNLOADS_SCOPE] };
   return {
     refused: true,
     lines: [
       ...only.map((name) => `  in Downloads and not captured: "${name}"`),
       `${only.length} change file(s) in ${dir} that no drop ref and nothing in ${DIR} holds byte for byte: copy each into ${DIR} and run this again. No ref was recorded.`,
+      DOWNLOADS_SCOPE,
     ],
   };
 }
