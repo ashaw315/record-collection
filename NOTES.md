@@ -60770,3 +60770,25 @@ The marker-grammar inventory (test/repo/marker-grammar.test.ts) read only the li
 **The two nested bold pairs (Design's change file, 27 Nov), read against the question "a wrap rather than a replacement?"** Both were in the card when it first entered git (5f3ecf10, 23 Sep, still the live target), so no earlier form exists in the repo. No other copy on disk holds one either: the 7a card and the "(1)" copy carry neither passage.
 - **§5.2, "So: <inner>lightness clamped into the band, chroma clamped down only, no chroma floor</inner> — the floor is the one part of the clamp that stays withdrawn…".** This is one sentence. The inner run is its live formula and the outer continues it. The paragraph's opening, "Chroma is clamped down only. The floor is withdrawn", agrees with it. No superseded text stands inside, so it reads as emphasis within emphasis.
 - **§2.1, "<outer><inner>Upper band: 4 / 4 / 4 — corrected by §23; this read 4 / 3 / 5, and the paragraph below is the original measurement, which rounded…</inner> Upper band (original): 4 / 3 / 5. Lower band: 3 / 2 / 2 / 2 / 3.</outer>".** This has the wrap's shape. A correction sits at the front of the original's own bold run, and the original's figure is kept, relabelled "(original)". It is labelled rather than silent, so it is not a superseded sentence posing as live. But it says "the paragraph below is the original measurement", and the original is not a paragraph below: it is the rest of the same bold run, in the same paragraph. That sentence was written for a placement it did not get. "corrected by §23" is also outside the declared forms. It predates 4152be58 (it was there on 23 Sep), so if it is a wrapped edit it comes from an earlier pass, not a third instance from that drop. Held for Design. Not flattened: it folds into whatever next touches that file.
+
+## 27 Nov (second): the index and the inventory over every card the index reads
+
+The coordinator asked whether the index (declared withdrawal sentences: six prefixes, case-sensitive, in `<p>` paragraphs inside numbered sections) and the marker inventory (`markersIn`: the grammar, from the verb to a colon, over the flattened text, quotes scrubbed) disagree anywhere live. The emulation uses the index's own `sections`, `stripTags` and `collapse`, matches one to one by opener, and reproduces check-index's total: **344**, as assertion 7 prints.
+
+| card | index | inventory | index only | inventory only |
+|---|---|---|---|---|
+| Record Detail 8a (live) | 105 | 110 | 0 | 5 |
+| Record Detail 8a settled 1-10 | 14 | 13 | 1 | 0 |
+| Wall and Pull | 35 | 37 | 0 | 2 |
+| Mood Pick | 74 | 74 | 0 | 0 |
+| Table and Grid | 99 | 99 | 0 | 0 |
+| Nav | 12 | 12 | 0 | 0 |
+| Record Modal | 5 | 5 | 0 | 0 |
+
+- **Index only:** just the settled file's §5.4 comma form (NOTES, 27 Nov). It is closed and predates the grammar.
+- **Inventory only, all live:** 7 markers in forms the grammar admits and the six prefixes do not. §21 "Narrowed by §26:". §31 "Withdrawn with the frame:" and "Superseded as measurements, not as rulings:". §55 "Superseded on the real collection:" and "Superseded by later rulings, not by the fixture:". §W "Withdrawn with it:". §W.12 "Withdrawn above §W.26's fork by §W.29:". No entry in WITHDRAWALS.md quotes any of them, and assertion 9's reverse check cannot see them, since it scans only for the six prefixes. Q95.
+- **My first emulation was wrong twice, and both errors were caught by reconciling against assertion 7's 344.** I read every `<p>` in the file, not only those inside sections, which counted the quoted example in the live card's reader note ("one read “Withdrawn within §33: stated plainly…”"). And my opener matching was loose, not one to one.
+
+## 27 Nov: closed here
+
+The project stopped at Adam's finish line, held by the coordinator: his eight sentence corrections, the LINEUP press on Blood, Sweat And Tears, and Jeff Beck's Discogs id. **`STATE.md` at the repo root is the state at close**: what is parked and why, what step 170 would have been, what Q95 waits on from Design, the never-run negation pre-registration, and the last gate (45436187072, GREEN WITH FLAKES, not OK, unread until now; none since). Nothing was started after this entry.
