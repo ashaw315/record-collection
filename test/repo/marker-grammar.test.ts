@@ -126,3 +126,25 @@ describe('the Record Detail 8a card', () => {
     expect(markers.filter((m) => m.parsed.narrowed)).toHaveLength(1);
   });
 });
+
+/*
+  Q94 (the coordinator, 26 Nov, pinned after Design's §7 mend, "Settled 7 splice mended", 27 Nov): the settled file takes
+  nothing but withdrawal sentences, so a marker fault is likeliest there and least likely to be seen, and until now no
+  inventory read it. Two splices were ever found across both Record Detail files, both from drop 4152be58 (29 Sep): §45
+  in the live card and §7 here, both mended. Every other marker not opening a sentence opens a block.
+*/
+describe('the Record Detail 8a settled card, §1 to §10', () => {
+  const text = plainText(readFileSync('docs/design/Record Detail 8a - settled 1-10.dc.html', 'utf8'));
+  const markers = markersIn(text);
+
+  it('holds 13 markers, 2 not opening a sentence, each opening a block under §4.1 and §4.2', () => {
+    /* 13 is the grammar's count: the colon makes a marker. §5.4's "Superseded in part by §5.1, which gives…" is a declared
+       withdrawal sentence (the index's assertion 7 pairs it) and reaches a full stop before any colon, so it is not one. */
+    expect(markers).toHaveLength(13);
+    /* Numbered headings here carry a decimal ("4.1 · The inventory…"); the capital after the dot keeps "11 × 14 · 10" out. */
+    const headings = [...text.matchAll(/(?<![\d§.])\b(\d{1,2}(?:\.\d)?) · (?=[A-Z])/g)].map((m) => ({ at: m.index ?? 0, n: m[1] }));
+    expect(headings, 'A tripwire, not a defect: the settled card has gained or lost a numbered section. Count its "N · Title" headings, update 27 to match, and check the section list below.').toHaveLength(27);
+    const sections = markers.filter((m) => !m.opensSentence).map((m) => headings.filter((h) => h.at < m.start).pop()?.n);
+    expect(sections).toEqual(['4.1', '4.2']);
+  });
+});
